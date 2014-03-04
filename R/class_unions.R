@@ -1,0 +1,6 @@
+setOldClass("expression")
+setClassUnion("listOrExpression", c("list", "expression"))
+setClassUnion("characterOrNULL", c("character", "NULL"))
+setClassUnion("environmentOrNULL", c("environment", "NULL"))
+setClassUnion("subIndex", c("character", "logical", "numeric", "missing"))
+setOldClass("package_version")
