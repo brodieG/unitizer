@@ -331,3 +331,13 @@ env_name <- function(env) {
   if(!is.environment(env)) stop("Argument `env` must be an environment")
   sub("<environment: (.*)>", "\\1", capture.output(print.default(env)))
 }
+
+#' Functions To Ignore
+#' 
+#' Ignored functions are not considered tests if they are called from
+#' the top level.
+#' 
+#' @keywords internal
+
+funs.ignore <- list(base::`<-`, base::library)
+

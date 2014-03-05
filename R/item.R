@@ -199,8 +199,7 @@ setMethod("+", c("testorItems", "testorItemOrNULL"),
     if(is.null(e2)) return(e1)
     if(
       is.call(e2@call) &&
-      identical(e2@call[[1]], quote(`<-`)) && 
-      identical(eval(e2@call[[1]], e2@env), base::`<-`)
+      any(vapply(funs.ignore, identical, logical(1L), eval(e2@call[[1L]], e2@env)))
     ) {
       e2@ignore <- TRUE
     }
