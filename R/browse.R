@@ -205,15 +205,17 @@ browse_testor_items <- function(
   print(H3(title))
   max.out <- 15L
   max.err <- 3L
-  screen_out <- function(txt, max.len, file=stdout()) {
+  screen_out <- function(txt, max.len=getOption("testor.test.out.lines"), file=stdout()) {
+    if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
+      stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
     if(out.len <- length(txt)) {
-      cat(txt[1L:min(out.len, max.len)], sep="\n", file=file)
+      cat(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], sep="\n", file=file)
       if(out.len > max.len) {
-        cat("... truncated", out.len - max.len, "lines, review object directly if you wish to see all output\n", file=stderr())
+        cat("... truncated", out.len - max.len[[2]], "lines, review object directly if you wish to see all output\n", file=stderr())
   } } }
   new.opts <- append(valid.opts.def, c(U="[U]ndo"), after=2L)
   cat(
-    detail, "For each item, choose whether to ", tolower(prompt), 
+    detail, " For each item, choose whether to ", tolower(prompt), 
     " (", paste0(new.opts, collapse=", "), "):\n\n", sep=""
   )
   action <- NULL
@@ -231,8 +233,8 @@ browse_testor_items <- function(
     if(is(show.fail, "testorItemsTestsErrors") && !items.main[[i]]@ignore) {
       cat(as.character(show.fail[[i]]), sep="\n")
     } 
-    if(show.msg) screen_out(items.main[[i]]@data@message, 3L, stderr())
-    if(show.out) screen_out(items.main[[i]]@data@output, 15L)
+    if(show.msg) screen_out(items.main[[i]]@data@message, max.len=getOption("testor.test.msg.lines"), stderr())
+    if(show.out) screen_out(items.main[[i]]@data@output)
     
     # Default to "Y" action for ignored items; this means new items and 
     # failed/error tests will get replaced with new value, whereas reference
@@ -285,7 +287,7 @@ browse_testor_items <- function(
     )
     prompt.val <- testor_prompt(prompt, browse.eval.env, help, new.opts, hist.con)
     if(identical(prompt.val, "U")) {
-      if(identical(i, 1L)) {
+      if(i <= min(which(!ignored(items.main)))) {
         message("Nothing left to undo in \"", title,"\"")
         next
       } else {

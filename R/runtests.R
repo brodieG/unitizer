@@ -212,8 +212,9 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
 # OF CREATING THE FILES IN THE INNERMOST PART OF THE LOOP IS GREAT, BUT
 # MIGHT BE CAUSING OVERHEAD.
 
-# DID WE END UP GIVING UP ON DEBUG MODE DUE TO THE INABILITY TO TEE
-# STDOUT?
+# Debugging partially implemented by disabling captures, but really,
+# that's not real debugging.  Unfortunately, because we capture std.err
+# and we can't tee that, there is no good debugging to implement.
 # 
 #------------------------------------------------------------------------
 

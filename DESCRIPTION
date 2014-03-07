@@ -15,7 +15,7 @@ Description: Stores objects produced by test scripts so that they
     generates the assertions.
 Version: 0.3.1
 Author: Brodie Gaslam
-Maintainer: Brodie Gaslam <brodieDOTgaslamYAHOO>
+Maintainer: Brodie Gaslam <brodieDOTgaslam@MARISSAMAYERSCOMPANY.com>
 Depends:
     R (>= 3.0.1)
 Imports:
@@ -41,6 +41,7 @@ Collate:
     'is.R'
     'ls.R'
     'onload.R'
+    'parse.R'
     'runtests.R'
     'test_eval.R'
     'testor-package.r'
