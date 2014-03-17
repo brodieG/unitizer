@@ -98,16 +98,74 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
 comments_assign <- function(expr, comment.dat) {
   if(!identical(length(unique(comment.dat$parent)), 1L))
     stop("Logic Error: there were multiple parent ids in argument `comment.dat`; this should not happen")
+  if(!length(expr)) return(expr)
+  
+  # Make sure `comment.dat` is in format we understand
+  # Theory: everything not "COMMENT" should be included, except:
+  # - opening parens on second row (these denote a function call)
+  # - closing braces of any kind on last row
+  # Additionally, in order for stuff to match up properly, anything that is not
+  # "expr" needs to be moved to the front (in theory, should be at most one thing
+  # and should be an infix operator of some sort)
+  
+  brac.close <- c("'}'", "']'", "')'")
+  brac.open <- c("'{'", "'['", "'('")
+  non.exps <- c("SYMBOL", "STR_CONST", "NUM_CONST")
+  ops <- c(
+    paste0("'", c("-", "+", "!", "~", "?", ":", "*", "/", "^", "$", "@"), "'"),
+    "SPECIAL", "GT", "GL", "LT", "LE", "EQ", "NE", "AND", "AND2", "OR", "OR2", 
+    "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
+  )  # note these should never show up at top level: "NS_GET", "NS_GET_INT"
+  if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", brac.close))
+    stop("Logic Error: unexpected ending token in parse data; contact maintainer.")
+  if(length(which(comment.dat$token %in% brac.open)) > 1L || length(which(comment.dat$token %in% brac.close)) > 1L)
+    stop("Logic Error: more than one bracket at top level; contact maintainer.")
+  if(length(brac.pos <- which(comment.dat$token %in% brac.close)) && !identical(brac.pos, nrow(comment.dat)))
+    stop("Logic Error: closing brackets may only be on last row; contact maintainer.")
+  if(
+    !is.na(brac.pos <- match(comment.dat$token, brac.open[-3L])) && brac.pos > 1L ||
+    !is.na(brac.pos <- match(comment.dat$token, brac.open[3L])) && brac.pos > 2L
+  ) stop("Logic Error: opening brackets may only be on first row, or second if paren; contact maintainer.")
+  if(!identical(which(brac.open %in% comment.dat$token), which(brac.close %in% comment.dat$token)))
+    stop("Logic Error: mismatched brackets; contact maintainer.")
+  # extra.toks <- if(any(brac.open %in% comment.dat$token)) 2L else 1L
+  # Trim our data to just what matters:
+
+  comm.notcomm <- subset(
+    comment.dat, 
+    !token %in% c(brac.close, "','", "COMMENT") & !(token == "'('" & 1L:length(token) == 2L) 
+  )
+  if(!identical(nrow(comm.notcomm), length(expr))) {
+    stop("Argument `expr` length cannot be matched with values in `comment.dat`")
+  }
+  # at this point, must be all expressions, an opening bracket, or an operator of some
+  # sort, and iff the operator is @ or $, or if there is only one item in the data frame
+  # then it can be NUM_CONST or STR_CONST or symbol for the second one
+  
+  if(any(c("'$'", "'@'") %in% comm.notcomm$token)) {
+    if(!identical(nrow(comm.notcomm), 3L))
+      stop("Logic Error: top level statement with `@` or `$` must be three elements long")
+    if(!identical(comm.notcomm$token[[3L]], "SYMBOL"))
+      stop("Logic Error: right argument to `@` or `$` must be a symbol")
+    if(!identical(comm.notcomm$token[[1L]], "expr"))
+      stop("Logic Error: left argument to `@` or `$` must be an expression")
+  } else if (nrow(comm.notcomm) == 1L) {
+    if(!comm.notcomm$token[[1L]] %in% non.exps)
+      stop("Logic Error: single element parent levels must be symbol or constant")
+  } else if (length(which(comm.notcomm$token == "expr")) < nrow(comm.notcomm) - 1L) {
+    stop("Logic Error: in most cases all but at most one token must be of type `expr`; contact maintainer.")
+  }
+  # for the purposes of this process, constants and symbols are basically expressions
+
+  comm.notcomm <- transform(comm.notcomm, token=ifelse(token %in% non.exps, "expr", token))
+
+  if(!any(comm.notcomm$token %in% c("expr", brac.open, ops)))
+    stop("Logic Error: unexpected tokens in parse data; contact maintainer.")
 
   # what comments are on same line as something else
 
   comm.comm <- subset(comment.dat, token=="COMMENT")
-  comm.expr <- subset(comment.dat, token=="expr")
-  comm.notcomm <- subset(comment.dat, (token %in% c("'['", "'{'", "expr")) | (token == "'('" & 1:nrow(comment.dat) == 1L))
-  
-  if(!identical(nrow(comm.notcomm), length(expr))) {
-    stop("Argument `expr` length cannot be matched with values in `comment.dat`")
-  }
+  comm.expr <- subset(comm.notcomm, token=="expr")
 
   comm.expr <- transform(  # identify whether a token is the first or last on it's line
     comm.expr, 
@@ -138,9 +196,10 @@ comments_assign <- function(expr, comment.dat) {
   )
   # Assign comments to matching expression in attributes
   
+  expr.order <- order(comm.notcomm$token == "expr")  # necessary b/c order not same as in expression where operator is first
   for(i in seq_along(comm.comm$match)) {
     if(is.na(comm.comm$match[[i]])) next
-    expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
+    expr.pos <- match(which(comm.notcomm$id == comm.comm$match[[i]]), expr.order)
     if(!identical(length(expr.pos), 1L)) stop("Logic Error; contact maintainer.")
     attr(expr[[expr.pos]], "comment") <- c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
   }
