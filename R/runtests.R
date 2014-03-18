@@ -124,21 +124,25 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
         "the tests, and then re-generate the `testor` with the new version of `testor`."
   ) } }
   testor@id <- store.id
+  parent.env(testor@zero.env) <- par.frame
+  list2env(getItemFuns, testor@zero.env)     # functions for accessing testorItem contents
+  test.env <- new.env(parent=testor@items.new@base.env)
+  wd <- getwd()                              # in case user changes it through tests
+  on.exit(message("Exited before storing results; tests were not saved or changed."))  # In case interrupted or some such
+
+  # Parse the test file
+
   if(inherits(try(tests.parsed <- parse(test.file)), "try-error")) {
     stop("Unable to parse `test.file`; see prior error for details.")
   }
   if(!length(tests.parsed)) {
     message("No tests in ", test.file, "; nothing to do here.")
     return(TRUE)
-  }  
-  wd <- getwd()
-  parent.env(testor@zero.env) <- par.frame
-  list2env(getItemFuns, testor@zero.env)     # functions for accessing testorItem contents
-  test.env <- new.env(parent=testor@items.new@base.env)
-
-  # Evaluate the parsed calls
+  }
+  tests.parsed <- parse_data_assign(tests.parsed)
   
-  on.exit(message("Exited before storing results; tests were not saved or changed."))  # In case interrupted or some such
+  # Evaluate the parsed calls
+
   tests <- new("testorTests") + tests.parsed
   testor <- testor + tests
 
@@ -190,8 +194,6 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
 # FIGURE OUT HOW TO INCORPORATE `evaluate`?  IN PARTICULAR, THE REPLAY
 # FEATURE SEEMS INTERESTING.
 # 
-# REPLACEMENTS (e.g. `names<-`) NEED TO BE MADE IGNORED.  ALSO `library`?
-
 # DO WE REALLY WANT TO ALLOW EXECUTION IN INTERACTIVE MODE WITH STDERR()
 # AND STDOUT() CAPTURED? SEEMS A BIT WEIRD TO ALLOW IT.
 # 
@@ -244,24 +246,6 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
 # ACCEPT ALL (HIDDEN?) OPTION
 # 
 # RESPONSIVENESS OF COMMAND LINE IS A LITTLE SLOW; WHY?
-
-#------------------------------------------------------------------------
-
-# Strategy for parsing comments:
-# 
-# Look up all entries with parent == 0; these are the top level entries
-# All the comments that are -id are top level comments. The id refers to the
-# next statement. Comments don't have parents when they are the last thing in
-# the file.  So logic, using getParseData():
-#
-# 
-# - Get all top level ids
-# - Get all comments that have -ids or 0 ids
-# - For each comment with -id, check whether comment line is same as the previous
-#   top level comment end line
-#   + if yes, associate with that statement
-#   + if not, associate with the -id statement
-#  - For zero ids, just check if on same line as last top level statement
 
 #------------------------------------------------------------------------
 

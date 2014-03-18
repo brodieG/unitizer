@@ -25,6 +25,7 @@ setMethod("exec", "ANY", valueClass="testorItem",
     std.out.capt <- tempfile()
     std.err.capt.con <- set_text_capture(std.err.capt, "message")
     std.out.capt.con <- set_text_capture(std.out.capt, "output")
+    x.to.eval <- `attributes<-`(x, NULL)
 
     # Manage unexpected outcomes
 
@@ -35,7 +36,7 @@ setMethod("exec", "ANY", valueClass="testorItem",
       file.remove(std.err.capt, std.out.capt)
       stop(
         "Unexpectedly exited evaluation attempt when executing test expression\n> ", 
-        paste0(deparse(x), collapse=""), 
+        paste0(deparse(x.to.eval), collapse=""), 
         "\nmake sure you are not calling `runtests` inside a `tryCatch`/`try` block or ",
         "invoking a restart defined outside `runtests`; if you are not, contact ",
         "package maintainer."
@@ -52,7 +53,7 @@ setMethod("exec", "ANY", valueClass="testorItem",
 
     withCallingHandlers(
       withRestarts(
-        value <- withVisible(eval(x, test.env)),
+        value <- withVisible(eval(x.to.eval, test.env)),
         abort=function() aborted <<- TRUE
       ),
       condition=function(cond) {conditions[[length(conditions) + 1L]] <<- cond}
@@ -74,7 +75,7 @@ setMethod("exec", "ANY", valueClass="testorItem",
       }
     }
     new(
-      "testorItem", call=x, value=value$value, conditions=conditions, output=capt$output, 
-      message=capt$message, aborted=aborted, env=test.env
+      "testorItem", call=x.to.eval, value=value$value, conditions=conditions, output=capt$output, 
+      message=capt$message, aborted=aborted, env=test.env, comment=attr(x, "comment")
     )
 } )

@@ -277,7 +277,7 @@ parse_data_assign <- function(expr) {
 prsdat_reduce <- function(parse.dat) {
   parse.dat.red <- subset(
     parse.dat, 
-    !token %in% c(brac.close, "','", "COMMENT") & !(token == "'('" & 1L:length(token) == 2L) 
+    !token %in% c(brac.close, name.toks, "','", "COMMENT") & !(token == "'('" & 1L:length(token) == 2L) 
   )
   # at this point, must be all expressions, an opening bracket, or an operator of some
   # sort, and iff the operator is @ or $, or if there is only one item in the data frame
@@ -291,8 +291,8 @@ prsdat_reduce <- function(parse.dat) {
     if(!identical(parse.dat.red$token[[1L]], "expr"))
       stop("Logic Error: left argument to `@` or `$` must be an expression")
   } else if (nrow(parse.dat.red) == 1L) {
-    if(!parse.dat.red$token[[1L]] %in% non.exps)
-      stop("Logic Error: single element parent levels must be symbol or constant")
+    if(!parse.dat.red$token[[1L]] %in% c("expr", non.exps))
+      stop("Logic Error: single element parent levels must be symbol or constant or expr")
   } else if (length(which(parse.dat.red$token == "expr")) < nrow(parse.dat.red) - 1L) {
     stop("Logic Error: in most cases all but at most one token must be of type `expr`; contact maintainer.")
   }
@@ -312,4 +312,5 @@ ops <- c(
   "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
 )
 ops.other <- c("NS_GET", "NS_GET_INT")  # note these should never show up at top level
-valid.tokens <- c(brac.close, brac.open, non.exps, ops, ops.other, "expr", "COMMENT", "','")
+name.toks <- c("EQ_SUB", "SYMBOL_SUB")  
+valid.tokens <- c(brac.close, brac.open, non.exps, ops, ops.other, name.toks, "expr", "COMMENT", "','")

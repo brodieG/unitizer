@@ -35,7 +35,6 @@ setClass(
 #' Full Representation Of an Evaluated \code{`testor`} Test
 #' 
 #' @slot call the call that is tested
-#' @slot comment description of what the call is testing (or whatever, frankly)
 #' @slot reference whether this is a reference or new \code{`testorItem`}
 #' @slot ignore whether this test should be treated as a test or just a step
 #'   towards compiling a test
@@ -48,11 +47,11 @@ setClass(
   representation(
     call="ANY",
     id="integer",
-    comment="character",
     reference="logical",
     env="environmentOrNULL",
     ignore="logical",
     ls="data.frame",
+    comment="characterOrNULL",
     data="testorItemData"
   ),
   prototype(
@@ -79,8 +78,8 @@ setMethod("initialize", "testorItem", function(.Object, ...) {
   dots.all <- list(...)
   if(!("call" %in% names(dots.all))) stop("Argument `call` is required")
   .Object@call <- dots.all$call
-  if("comment" %in% names(dots.all)) .Object@comment <- dots$comment
   if("env" %in% names(dots.all)) .Object@env <- dots.all$env
+  if("comment" %in% names(dots.all)) .Object@comment <- dots.all$comment
   dots <- dots.all[!(names(dots.all) %in% slotNames(.Object))]
   .Object@data <- do.call("new", c(list("testorItemData"), dots))
   .Object

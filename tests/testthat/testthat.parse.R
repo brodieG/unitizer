@@ -54,6 +54,10 @@ local( {
       ),
       comm_extract(testor:::parse_data_assign(prs))
     )
+    expect_equal(info="EQ_SUB and SYMBOL_SUB test",
+      structure(list(NULL, "# the data", class = c("# the label", "#the equal sign",  "# the class")), .Names = c("", "", "class")),
+      lapply(testor:::parse_data_assign(parse(text="structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))[[1]], attr, "comment")
+    )
   } )
 } )
 

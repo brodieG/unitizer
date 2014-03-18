@@ -82,6 +82,7 @@ setMethod("browse", c("testor"), valueClass="testor",
       )
     }
     # The following allows review of the deleted items
+    
     if(removed <- length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {
       print(H2("Missing Tests"))
       cat(
@@ -210,7 +211,7 @@ browse_testor_items <- function(
       stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
     if(out.len <- length(txt)) {
       cat(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], sep="\n", file=file)
-      if(out.len > max.len) {
+      if(out.len > max.len[[1]]) {
         cat("... truncated", out.len - max.len[[2]], "lines, review object directly if you wish to see all output\n", file=stderr())
   } } }
   new.opts <- append(valid.opts.def, c(U="[U]ndo"), after=2L)
@@ -228,7 +229,8 @@ browse_testor_items <- function(
   items.len <- length(items.main)
   i <- 1L
 
-  while(i <= items.len) {    
+  while(i <= items.len) {
+    cat(items.main[[i]]@comment, sep="\n")
     cat(deparse_prompt(items.main[[i]]@call), sep="\n")
     if(is(show.fail, "testorItemsTestsErrors") && !items.main[[i]]@ignore) {
       cat(as.character(show.fail[[i]]), sep="\n")
