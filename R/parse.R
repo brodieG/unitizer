@@ -67,14 +67,59 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   } else if (any(par.ids) < 0) {
     stop("Argument `par.ids` contains values less than zero, but that is only allowed when `top.level` == 0L")
   }
-  ancestry_descend <- function(par.id) {
+  ancestry_climb <- function(par.id) {
     par.id <- abs(par.id)
     if(identical(par.id, top.level)) return(par.id)
     new.id <- abs(par.ids[match(par.id, ids)])
     if(identical(new.id, top.level)) return(par.id) else if (is.na(new.id)) return(new.id)
     Recall(new.id)
   }
-  vapply(par.ids, ancestry_descend, integer(1L))
+  vapply(par.ids, ancestry_climb, integer(1L))
+}
+
+ancestry_descend <- function(ids, par.ids, id, level=0L) {
+  children <- ids[par.ids == id]
+  if(length(children)) {
+    do.call(rbind, 
+      c(
+        list(cbind(children, level)), 
+        lapply(children, ancestry_descend, ids=ids, par.ids=par.ids, level=level + 1L)
+    ) )
+  } else {
+    matrix(integer(), ncol=2)
+} }
+
+exprlist_remove <- function(parse.dat) {
+  # Find all the children
+  z <- with(parse.dat, ancestry_descend(id, parent, 0L))
+  levels <- z[match(dat$id, z[, "children"]), "level"]
+  # Find first `exprlist`
+  exprlist <- with(parse.dat[order(levels),], head(id[token == "exprlist"], 1L))
+  if(!length(exprlist)) return(parse.data)
+  # Find all the children of the `exprlist`
+  z <- with(parse.dat, ancestry_descend(id, parent, exprlist))
+  levels <- z[match(dat$id, z[, "children"]), "level"]  
+  expr <- with(parse.dat[order(levels),], head(id[token == "expr"], 1L))
+  expr.level <- z[z[, 1L] == expr, 2L]
+  # Verify that children meet expectations
+  dat.to.check <- subset(parse.dat, id %in% z[z[, 2L] <= expr.level, 1L])
+  if(!all(dat.to.check$token %in% c("expr", "exprlist", "';'", "COMMENT")))
+    stop("Logic Error: Unexpected tokens when attempting to remove `exprlist`; contact maintainer.")
+  if(!identical(length(which(dat.to.check$token == "expr")), 1L))
+    stop("Logic Error: There should only be one `expr` token when attempting to remove `exprlist`; contact maintainer.")
+  # Replace original `exprlist` with `expr` by updating parent of `expr`
+  # and update all parent relationships
+  browser()
+  parse.dat.mod <- parse.dat
+  parse.dat.mod[parse.dat.mod$id == expr, "parent"] <- parse.dat.mod[parse.dat.mod$id == exprlist, "parent"]
+  parse.dat.mod <- parse.dat.mod[parse.dat.mod$id != exprlist, ] # remove exprlist
+  parse.dat.mod <- subset(parse.dat.mod, !(id %in% dat.to.check$id) | id == expr | token == "COMMENT")
+  parse.dat.mod[parse.dat.mod$id %in% dat.to.check$id & parse.dat.mod$id != expr, "parent"] <- expr
+  # Check nothing screwed up
+  if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
+    stop("Logic Error: `exprlist` excision did not work!")
+  # if any "exprlist" remaining, repeat
+  if(any(parse.dat.mod$token == "exprlist")) Recall(parse.dat.mod) else parse.dat.mod
 }
 
 #' Assign Comments From Parse Data to Expression Elements
@@ -109,12 +154,17 @@ comments_assign <- function(expr, comment.dat) {
   # "expr" needs to be moved to the front (in theory, should be at most one thing
   # and should be an infix operator of some sort)
 
-  if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", non.exps, brac.close))
+  if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", non.exps, brac.close, "';'"))
     stop("Logic Error: unexpected ending token in parse data; contact maintainer.")
   if(length(which(comment.dat$token %in% brac.open)) > 1L || length(which(comment.dat$token %in% brac.close)) > 1L)
     stop("Logic Error: more than one bracket at top level; contact maintainer.")
-  if(length(brac.pos <- which(comment.dat$token %in% brac.close)) && !identical(brac.pos, nrow(comment.dat)))
-    stop("Logic Error: closing brackets may only be on last row; contact maintainer.")
+  if(length(brac.pos <- which(comment.dat$token %in% brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
+    if(
+      !identical(comment.dat$token[brac.pos], "')'") || 
+      !identical(brac.pos, nrow(comment.dat) - 1L) || 
+      !identical(comment.dat$token[[1L]], "FUNCTION")
+    ) stop("Logic Error: closing brackets may only be on last row, unless a paren and part of a functions formal definition; contact maintainer.")
+  }    
   if(
     !is.na(brac.pos <- match(comment.dat$token, brac.open[-3L])) && brac.pos > 1L ||
     !is.na(brac.pos <- match(comment.dat$token, brac.open[3L])) && brac.pos > 2L
@@ -130,7 +180,7 @@ comments_assign <- function(expr, comment.dat) {
   }
   # for the purposes of this process, constants and symbols are basically expressions
 
-  comm.notcomm <- transform(comm.notcomm, token=ifelse(token %in% non.exps, "expr", token))
+  comm.notcomm <- transform(comm.notcomm, token=ifelse(token %in% c(exps, non.exps, non.exps.extra), "expr", token))
 
   # what comments are on same line as something else
 
@@ -204,6 +254,15 @@ comments_assign <- function(expr, comment.dat) {
 #' @return an expression with comments retrieved from the parse attached
 #'   to the appropriate sub-expressions/calls as a "comment" \code{`\link{attr}`}
 
+# MAIN PROBLEM RIGHT NOW IS THAT `exprlist` FUCK EVERYTHING BECAUSE
+# THEY GENERATE PARENT LEVEL PARSE DATA, BUT THERE IS NO CORRESPONDING
+# ELEMENT IN THE expression
+# NEED FUNCTION THAT WILL DIVE IN AND REPLACE exprlist WITH THE CORRESPONDING
+# EXPRESSION NESTED WITHIN. HAVE TESTED ALREADY AND IT SEEMS LIKE EVERY
+# EXPR LIST WILL EVENTURALLY RESOLVE TO AN EXPRESSION AND A SEMI COLON
+# AT SOME POINT, THOUGH THERE MAY BE MULTIPLE NEXTED exprlists.  SO NEED
+# TO DIVE IN, AND CHECK THAT ALL THE STUFF BEING DISCARDED HAS NO CHILDREN
+
 parse_data_assign <- function(expr) {
   if(!is.expression(expr)) stop("Argument `expr` must be an expression")
   parse.dat <- getParseData(expr)
@@ -219,6 +278,8 @@ parse_data_assign <- function(expr) {
   parse.dat <- transform(parse.dat, parent=ifelse(parent < 0, 0L, parent))
 
   prsdat_recurse <- function(expr, parse.dat, top.level) {
+    browser()
+    parse.dat <- prsdat_remove_fun(parse.dat)
     par.ids <- with(parse.dat, top_level_parse_parents(id, parent, top.level))
     parse.dat.split <- split(parse.dat, par.ids)
     prsdat.par <- parse.dat.split[[as.character(top.level)]]
@@ -245,9 +306,19 @@ parse_data_assign <- function(expr) {
     ) ) {
       stop("Logic Error: expression parse data overlapping; contact maintainer")
     }
-    # For each parent expression, assign comments
+    # For each parent expression, assign comments; parent expressions that include
+    # a function definition have to exclude the formals part (which is a pairlist)
+    # because the `getParseData` output does not produce a parent element for the
+    # formals; in practice this shouldn't have any impact because test items will
+    # never be at such a low level (i.e. any comments at this level would never
+    # be shown anyway).
 
-    expr <- comments_assign(expr, prsdat.par)
+    assignable.elems <- vapply(
+      expr, 
+      function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x), 
+      logical(1L)
+    )
+    expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)
 
     # Now do the same for the child expression by recursively calling this function
     # until there are no children left, but need to be careful here because we only
@@ -257,19 +328,33 @@ parse_data_assign <- function(expr) {
     # are terminal leaves anyway.
     
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
+    if(!identical(nrow(prsdat.par.red), length(which(assignable.elems))))
+      stop("Logic Error: mismatch between expression and parse data; contact maintainer.")   
     j <- 1
-    for(i in 1:nrow(prsdat.par.red)) {
-      if(prsdat.par.red$terminal[[i]]) next
-      expr[[i]] <- Recall(expr[[i]], prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
-      j <- j + 1  
-    }
+    if(!is.expression(expr) && !is.call(expr)) {
+      if(term.len <- length(which(!prsdat.par.red$terminal)) > 1L) {
+        stop("Logic Error: terminal expression has more than one token, contact maintainer.")        
+      } else if (term.len) {
+        expr <- Recall(expr, prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
+      }
+    } else {
+      for(i in 1:nrow(prsdat.par.red)) {
+        if(prsdat.par.red$terminal[[i]]) next
+        expr[assignable.elems][[i]] <- 
+          Recall(expr[assignable.elems][[i]], prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
+        j <- j + 1  
+    } }
     expr
   }
   prsdat_recurse(expr, parse.dat, top.level=0L)
 }
 #' Reduce Parsed Data to Just the Things That should Exist In Expression
 #' 
+#' additionally, special handling due to function and formals not getting wrapped
+#' in their own `expr` (why the FUCK!!!!)
+#' 
 #' @keywords internal
+#' @aliases prsdat_remove_fun
 #' @param parse.dat top level parse data
 #' @return parse data reduced to key elements, ordered so that infix operators
 #'   show up first instead of in middle
@@ -277,7 +362,7 @@ parse_data_assign <- function(expr) {
 prsdat_reduce <- function(parse.dat) {
   parse.dat.red <- subset(
     parse.dat, 
-    !token %in% c(brac.close, name.toks, "','", "COMMENT") & !(token == "'('" & 1L:length(token) == 2L) 
+    !token %in% c(brac.close, name.toks, seps, "COMMENT") & !(token == "'('" & 1L:length(token) == 2L) 
   )
   # at this point, must be all expressions, an opening bracket, or an operator of some
   # sort, and iff the operator is @ or $, or if there is only one item in the data frame
@@ -291,26 +376,44 @@ prsdat_reduce <- function(parse.dat) {
     if(!identical(parse.dat.red$token[[1L]], "expr"))
       stop("Logic Error: left argument to `@` or `$` must be an expression")
   } else if (nrow(parse.dat.red) == 1L) {
-    if(!parse.dat.red$token[[1L]] %in% c("expr", non.exps))
+    if(!parse.dat.red$token[[1L]] %in% c("expr", non.exps, non.exps.extra))
       stop("Logic Error: single element parent levels must be symbol or constant or expr")
-  } else if (length(which(parse.dat.red$token == "expr")) < nrow(parse.dat.red) - 1L) {
-    stop("Logic Error: in most cases all but at most one token must be of type `expr`; contact maintainer.")
+  } else if (length(which(parse.dat.red$token %in% exps)) < nrow(parse.dat.red) - 1L) {
+    stop("Logic Error: in most cases all but at most one token must be of type `expr` or `exprlist`; contact maintainer.")
   }
-  parse.dat.red[order(parse.dat.red$token %in% c("expr", non.exps)), ]
+  parse.dat.red[order(parse.dat.red$token %in% c(exps, non.exps, non.exps.extra)), ]
 }
+prsdat_remove_fun <- function(parse.dat) {
+  if(identical(parse.dat$token[[1L]], "FUNCTION")) {  
+    par.clos.pos <- match("')'", parse.dat$token)
+    if(is.na(par.clos.pos)) stop("Logic Error; failed attempting to parse function block; contact maintainer")
+    par.op.pos <- match("'('", parse.dat$token[1:par.clos.pos])
+    if(is.na(par.op.pos)) 
+    if(!identical(par.op.pos, 2L) && !identical(unique(parse.dat$token[2L:(par.op.pos - 1L)]), "COMMENT"))
+      stop("Logic Error; failed attempting to parse function block; contact maintainer")
+    subset(
+      parse.dat, 
+      1L:nrow(parse.dat) > par.clos.pos | identical(token, "COMMENT") | 1L:nrow(parse.dat) == 1L
+    )
+  } else {
+    parse.dat
+} }
 #' Variables re-used by parse functions
 #' 
 #' @keywords internal
-#' @aliases brac.open, non.exps, ops, ops.other, valid.tokens
+#' @aliases brac.open, exps, non.exps, non.exps.extra, ops, ops.other, valid.tokens
 
 brac.close <- c("'}'", "']'", "')'")
 brac.open <- c("'{'", "'['", "'('")
-non.exps <- c("SYMBOL", "SYMBOL_FUNCTION_CALL", "STR_CONST", "NUM_CONST")
-ops <- c(
+exps <- c("expr", "exprlist")
+seps <- c("','", "';'")
+non.exps <- c("SYMBOL", "STR_CONST", "NUM_CONST")  # in addition to `expr`, these are the ones that can get comments attached
+non.exps.extra <- c("SYMBOL_FUNCTION_CALL", "FUNCTION")
+ops <- c(                                                                             
   paste0("'", c("-", "+", "!", "~", "?", ":", "*", "/", "^", "$", "@"), "'"),
   "SPECIAL", "GT", "GL", "LT", "LE", "EQ", "NE", "AND", "AND2", "OR", "OR2", 
   "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
 )
 ops.other <- c("NS_GET", "NS_GET_INT")  # note these should never show up at top level
-name.toks <- c("EQ_SUB", "SYMBOL_SUB")  
-valid.tokens <- c(brac.close, brac.open, non.exps, ops, ops.other, name.toks, "expr", "COMMENT", "','")
+name.toks <- c("EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS")  # these cannot have comments attached to them
+valid.tokens <- c(brac.close, brac.open, non.exps, non.exps.extra, ops, ops.other, name.toks, exps, "COMMENT", seps)

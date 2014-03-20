@@ -58,6 +58,26 @@ local( {
       structure(list(NULL, "# the data", class = c("# the label", "#the equal sign",  "# the class")), .Names = c("", "", "class")),
       lapply(testor:::parse_data_assign(parse(text="structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))[[1]], attr, "comment")
     )
+    expect_equal(info="exprlist test",
+      list(NULL, NULL, NULL),
+      lapply(testor:::parse_data_assign(parse(text="{hello; ;farewell}"))[[1]], attr, "comment")
+    )
+    expect_equal(info="exprlist test",
+      list(NULL, NULL, NULL),
+      lapply(testor:::parse_data_assign(parse(text="{hello; ;farewell}"))[[1]], attr, "comment")
+    )
+
+
+    
+
+  } )
+  test_that("Ancestry Descend", {
+    dat <- getParseData(parse(text="{function(x) NULL;; #comment\n}"))
+    expect_equal(info
+      structure(c(21L, 1L, 18L, 16L, 19L, 15L, 14L, 11L, 9L, 2L, 3L,  4L, 5L, 8L, 7L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L,  4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children",  "level"))),
+      ancestry_descend(dat$id, dat$parent, 0L)
+    )
+
   } )
 } )
 
