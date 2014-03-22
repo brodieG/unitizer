@@ -71,12 +71,17 @@ local( {
     
 
   } )
-  test_that("Ancestry Descend", {
+  test_that("Clean up Parse Data", {
     dat <- getParseData(parse(text="{function(x) NULL;; #comment\n}"))
-    expect_equal(info
+    expect_equal(info="Ancestry Descend",
       structure(c(21L, 1L, 18L, 16L, 19L, 15L, 14L, 11L, 9L, 2L, 3L,  4L, 5L, 8L, 7L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L,  4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children",  "level"))),
-      ancestry_descend(dat$id, dat$parent, 0L)
+      testor:::ancestry_descend(dat$id, dat$parent, 0L)
     )
+    expect_equal(info="Excise `exprlist`",
+      c("expr", "'{'", "expr", "FUNCTION", "'('", "SYMBOL_FORMALS",  "')'", "NULL_CONST", "expr", "COMMENT", "'}'"),
+      testor:::exprlist_remove(dat)$token
+    )
+
 
   } )
 } )

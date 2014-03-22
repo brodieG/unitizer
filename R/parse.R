@@ -91,30 +91,30 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
 
 exprlist_remove <- function(parse.dat) {
   # Find all the children
+  browser()
   z <- with(parse.dat, ancestry_descend(id, parent, 0L))
-  levels <- z[match(dat$id, z[, "children"]), "level"]
+  levels <- z[match(parse.dat$id, z[, "children"]), "level"]
   # Find first `exprlist`
   exprlist <- with(parse.dat[order(levels),], head(id[token == "exprlist"], 1L))
   if(!length(exprlist)) return(parse.data)
   # Find all the children of the `exprlist`
   z <- with(parse.dat, ancestry_descend(id, parent, exprlist))
-  levels <- z[match(dat$id, z[, "children"]), "level"]  
+  levels <- z[match(parse.dat$id, z[, "children"]), "level"]  
   expr <- with(parse.dat[order(levels),], head(id[token == "expr"], 1L))
   expr.level <- z[z[, 1L] == expr, 2L]
   # Verify that children meet expectations
   dat.to.check <- subset(parse.dat, id %in% z[z[, 2L] <= expr.level, 1L])
   if(!all(dat.to.check$token %in% c("expr", "exprlist", "';'", "COMMENT")))
     stop("Logic Error: Unexpected tokens when attempting to remove `exprlist`; contact maintainer.")
-  if(!identical(length(which(dat.to.check$token == "expr")), 1L))
-    stop("Logic Error: There should only be one `expr` token when attempting to remove `exprlist`; contact maintainer.")
   # Replace original `exprlist` with `expr` by updating parent of `expr`
   # and update all parent relationships
-  browser()
   parse.dat.mod <- parse.dat
-  parse.dat.mod[parse.dat.mod$id == expr, "parent"] <- parse.dat.mod[parse.dat.mod$id == exprlist, "parent"]
-  parse.dat.mod <- parse.dat.mod[parse.dat.mod$id != exprlist, ] # remove exprlist
-  parse.dat.mod <- subset(parse.dat.mod, !(id %in% dat.to.check$id) | id == expr | token == "COMMENT")
-  parse.dat.mod[parse.dat.mod$id %in% dat.to.check$id & parse.dat.mod$id != expr, "parent"] <- expr
+  #parse.dat.mod[parse.dat.mod$id == expr, "parent"] <- parse.dat.mod[parse.dat.mod$id == exprlist, "parent"]
+  parse.dat.mod <- parse.dat.mod[!parse.dat.mod$id %in% c(exprlist, dat.to.check$id), ] # remove exprlist and stuff we're about to add back
+  parse.dat.mod <- rbind(
+    parse.dat.mod, 
+    transform(subset(dat.to.check, token != "';'"), parent=subset(parse.dat, id==exprlist)$parent)
+  )
   # Check nothing screwed up
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
     stop("Logic Error: `exprlist` excision did not work!")
