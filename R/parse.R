@@ -260,6 +260,7 @@ parse_data_assign <- function(file, text=NULL) {
   prsdat_recurse <- function(expr, parse.dat, top.level) {
     if(identical(parse.dat$token[[1L]], "FUNCTION")) parse.dat <- prsdat_fix_fun(parse.dat)
     if(identical(parse.dat$token[[1L]], "FOR")) parse.dat <- prsdat_fix_for(parse.dat)
+    if(identical(parse.dat$token[[1L]], "IF")) parse.dat <- prsdat_fix_if(parse.dat)
 
     par.ids <- with(parse.dat, top_level_parse_parents(id, parent, top.level))
     parse.dat.split <- split(parse.dat, par.ids)
@@ -376,6 +377,8 @@ prsdat_reduce <- function(parse.dat) {
 #'     up a level, and then removes formals
 #'   \item \code{`prsdat_fix_for`} brings contents of `forcond` to same level as
 #'     `for` to match up with expression
+#'   \item \code{`prsdat_fix_for`} extracts expression from the condition (though
+#'     apparently not from `ifcond`)
 #'   \item \code{`prsdat_fix_exprlist`} excises the \code{`exprlist`} portions of
 #'     \code{`exprlist`} as those don't exist in the expressions proper
 #'   \item \code{`prsdat_find_paren`} returns locations of first set
@@ -387,7 +390,7 @@ prsdat_reduce <- function(parse.dat) {
 #' @param parse.dat a data frame of the type produced by \code{`\link{getParseData}`}
 #' @return \itemize{
 #'   \item for \code{`parsdat_fix*`}, a data frame of the type produced by \code{`\link{getParseData}`}
-#'   \item for \code{`parsdat_find_paren`}, a length two integer vector
+#'   \item for \code{`parsdat_find_paren`}, a length two integer vector with the ids of the parens
 #' }
 
 prsdat_fix_fun <- function(parse.dat) {
@@ -415,6 +418,21 @@ prsdat_fix_for <- function(parse.dat) {
     stop("Logic error: `forcond` should have exactly one 'IN' in position 2L")
   parse.dat.mod <- subset(parse.dat, !token %in% c("forcond", "IN") & ! id %in% par.range)
   `[<-`(parse.dat.mod, parse.dat.mod$parent == par.level, "parent", parse.dat[1L, "parent"])
+}
+prsdat_fix_if <- function(parse.dat) {
+  if(!identical(parse.dat$token[[1L]], "IF")) 
+    stop("Argument `parse.dat` must start with an 'IF' token.")
+  par.id <- parse.dat$parent[[1L]]
+  par.range <- prsdat_find_paren(parse.dat)
+  early.tokens <- parse.dat$token[1L:(which(parse.dat$id == par.range[[1L]]) - 1L)]
+  if(any(! early.tokens %in% c("IF", "COMMENT")) || !identical(length(which(early.tokens == "IF")), 1L))
+    stop("Logic Error: could not parse IF statement; contact maintainer.")
+  parse.delete <- subset(parse.dat, parent == par.id & token %in% c("'('", "')'", "ELSE"))
+  if(!identical(nrow(parse.delete), 3L))
+    stop("Logic Error: unexpected number of IF statement sub-components; contact maintainer.")
+  if(any(parse.dat$parent %in% parse.delete$id))
+    stop("Logic Error: unexpected parent relationships in IF statement; contact maintainer.")
+  subset(parse.dat, ! id %in% parse.delete$id)
 }
 prsdat_find_paren <- function(parse.dat) {
   par.clos.pos <- match("')'", parse.dat$token)
@@ -481,12 +499,12 @@ brac.open <- c("'{'", "'['", "'('")
 exps <- c("expr", "exprlist")
 seps <- c("','", "';'")       # no comments on these as they are just removed
 non.exps <- c("SYMBOL", "STR_CONST", "NUM_CONST", "NULL_CONST")        # in addition to `expr`, these are the ones that can get comments attached
-non.exps.extra <- c("SYMBOL_FUNCTION_CALL", "FUNCTION", "FOR", "NEXT", "BREAK")  # these can also get comments attached
+non.exps.extra <- c("SYMBOL_FUNCTION_CALL", "FUNCTION", "FOR", "NEXT", "BREAK", "IF")  # these can also get comments attached
 ops <- c(                                                                             
   paste0("'", c("-", "+", "!", "~", "?", ":", "*", "/", "^", "$", "@"), "'"),
-  "SPECIAL", "GT", "GL", "LT", "LE", "EQ", "NE", "AND", "AND2", "OR", "OR2", 
+  "SPECIAL", "GT", "GE", "LT", "LE", "EQ", "NE", "AND", "AND2", "OR", "OR2", 
   "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
 )
 ops.other <- c("NS_GET", "NS_GET_INT")  # note these should never show up at top level
-name.toks <- c("EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS", "IN", "forcond")  # these cannot have comments attached to them
+name.toks <- c("EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS", "IN", "forcond", "ELSE")  # these cannot have comments attached to them
 valid.tokens <- c(brac.close, brac.open, non.exps, non.exps.extra, ops, ops.other, name.toks, exps, "COMMENT", seps)

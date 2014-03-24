@@ -7,6 +7,7 @@ local( {
   dat <- getParseData(prs)
   dat$parent <- pmax(0L, dat$parent)
   dat.split <- dat.split.2 <- par.ids.3 <- NULL
+  if.text <- "if # IFFY\n(x > 3 # ifcond\n){ hello\n #whome to attach?\n} else #final\ngoodbye"
 
   test_that("Top Level Parents Identified Correctly", {
     expect_equal(info="Identified top level parents?",
@@ -60,6 +61,10 @@ local( {
       structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),  
       as.list(testor:::prsdat_fix_for(getParseData(parse(text="for(i in x) {if(x) break else next}"))[-1L, ]))[c("id", "parent", "token")]
     )
+    expect_equal(info="`if` cleanup",
+      list(c(1L, 2L, 13L, 5L, 7L, 6L, 8L, 9L, 10L, 26L, 15L, 16L, 18L, 21L, 24L, 29L, 31L, 33L), c("IF", "COMMENT", "expr", "SYMBOL", "expr", "GT", "NUM_CONST", "expr", "COMMENT", "expr", "'{'", "SYMBOL", "expr", "COMMENT", "'}'", "COMMENT", "SYMBOL", "expr")),
+      unname(as.list(testor:::prsdat_fix_if(getParseData(parse(text=if.text))[-1,])[c("id", "token")]))
+    )
   } )
   test_that("Full Parse Works Properly", {
     expect_equal(info="Full Comment Parse",
@@ -78,5 +83,10 @@ local( {
       list(NULL, list(NULL, list(NULL), list("#in counter"), list("#incounter again", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list("# first comment", list(NULL), list(NULL), list(NULL)), list(NULL), list("#second comment"), list(NULL, list(NULL), list(NULL), list(NULL)), list("#lastcomment ")))),
       testor:::comm_extract(testor:::parse_data_assign(text="for(i #in counter\nin 1:10#incounter again\n) {x + y; # first comment\n; next; yo #second comment\n x / y; break; #lastcomment \n;}"))
     )
+    expect_equal(info="`if` statement",
+      list(NULL, list(NULL, list("# IFFY"), list("# ifcond", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL)), list("#final"))),
+      testor:::comm_extract(testor:::parse_data_assign(text=if.text))
+    )
+
   } )
 } )
