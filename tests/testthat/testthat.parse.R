@@ -2,7 +2,8 @@ library(testthat)
 library(testor)
 
 local( {
-  prs <- parse("tests/testthat/parse.data/file1.R")
+  prs.file <- "tests/testthat/parse.data/file1.R"
+  prs <- parse(prs.file)
   dat <- getParseData(prs)
   dat$parent <- pmax(0L, dat$parent)
   dat.split <- dat.split.2 <- par.ids.3 <- NULL
@@ -45,15 +46,15 @@ local( {
     )
     expect_equal(info="Excise `exprlist`",
       c("expr", "'{'", "expr", "FUNCTION", "'('", "SYMBOL_FORMALS",  "')'", "NULL_CONST", "expr", "COMMENT", "'}'"),
-      testor:::exprlist_remove(dat)$token
+      testor:::prsdat_fix_exprlist(dat)$token
     )
     expect_equal(info="Another `exprlist` test",
       list(c(0L, 18L, 3L, 18L, 12L, 18L, 18L), c("expr", "'{'", "NUM_CONST",  "expr", "NUM_CONST", "expr", "'}'")),
-      unname(as.list(testor:::exprlist_remove(getParseData(parse(text="{1 ; ; ;2;}")))[c("parent", "token")]))
+      unname(as.list(testor:::prsdat_fix_exprlist(getParseData(parse(text="{1 ; ; ;2;}")))[c("parent", "token")]))
     )
-    expect_equal(info="Yet another `exprlist`"
+    expect_equal(info="Yet another `exprlist`",
       list(c(0L, 22L, 3L, 22L, 9L, 22L, 22L, 17L, 22L, 22L), c("expr",  "'{'", "NULL_CONST", "expr", "SYMBOL", "expr", "COMMENT", "SYMBOL",  "expr", "'}'")),
-      unname(as.list(testor:::exprlist_remove(getParseData(parse(text="{NULL; yowza; #comment\nhello\n}")))[c("parent", "token")]))
+      unname(as.list(testor:::prsdat_fix_exprlist(getParseData(parse(text="{NULL; yowza; #comment\nhello\n}")))[c("parent", "token")]))
     )
     expect_equal(info="`for` cleanup",
       structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),  
@@ -62,29 +63,20 @@ local( {
   } )
   test_that("Full Parse Works Properly", {
     expect_equal(info="Full Comment Parse",
-      list(NULL, 
-        list("# This is an early comment", list(NULL), list(NULL), list(NULL)), 
-        list(c("# multi", "# line", "# comment", "# and another!"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), 
-        list(NULL, list(NULL), list(NULL), 
-          list(NULL, list(NULL), 
-            list(c("# test that were not crazy", "# TRUE hopefully"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), 
-            list("# Still not crazy", list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL))
-        ) ) ),
-        list(NULL, list(NULL), list(NULL, list(NULL), list(NULL), list(NULL))), 
-        list("# and this comment belongs to whom?", list(NULL), list(NULL)), 
-        list("# and I?", list(NULL), list(NULL))
-      ),
-      comm_extract(testor:::parse_data_assign(prs))
+      list(NULL, list("# This is an early comment", list(NULL), list(NULL), list(NULL)), list(c("# multi", "# line", "# comment", "# and another!"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL, list(NULL), list(c("# test that were not crazy", "# TRUE hopefully"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), list("# Still not crazy", list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL,      list(NULL), list(NULL), list(NULL))))), list(NULL, list(NULL), list(NULL, list(NULL), list(NULL), list(NULL))), list("# and this comment belongs to whom?", list(NULL), list(NULL)), list("# and I?", list(NULL), list(NULL))),
+      testor:::comm_extract(testor:::parse_data_assign(prs.file))
     )
     expect_equal(info="EQ_SUB and SYMBOL_SUB test",
-      structure(list(NULL, "# the data", class = c("# the label", "#the equal sign",  "# the class")), .Names = c("", "", "class")),
-      lapply(testor:::parse_data_assign(parse(text="structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))[[1]], attr, "comment")
+      list(NULL, structure(list(NULL, list(NULL), list("# the data", list(NULL), list(NULL), list(NULL)), class = list(c("# the label", "#the equal sign", "# the class"))), .Names = c("", "", "", "class"))),
+      testor:::comm_extract(testor:::parse_data_assign(text = "structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))
     )
     expect_equal(info="Function with `exprlist`",
       list(NULL, list(NULL, list("#first arg"), structure(list(NULL, x = list(NULL), y = list(NULL)), .Names = c("", "x", "y")), list("#second arg with default", list(NULL), list("# first comment", list(NULL), list(NULL), list(NULL)), list("#second comment"), list("#lastcomment ", list(NULL), list(NULL), list(NULL))), list(NULL, list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL)))),
       testor:::comm_extract(testor:::parse_data_assign(text="function(x #first arg\n, y=25 #second arg with default\n) {x + y; # first comment\n; yo #second comment\n x / y; #lastcomment \n;}"))
     )
+    expect_equal(info="`for` loop",
+      list(NULL, list(NULL, list(NULL), list("#in counter"), list("#incounter again", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list("# first comment", list(NULL), list(NULL), list(NULL)), list(NULL), list("#second comment"), list(NULL, list(NULL), list(NULL), list(NULL)), list("#lastcomment ")))),
+      testor:::comm_extract(testor:::parse_data_assign(text="for(i #in counter\nin 1:10#incounter again\n) {x + y; # first comment\n; next; yo #second comment\n x / y; break; #lastcomment \n;}"))
+    )
   } )
 } )
-
-
