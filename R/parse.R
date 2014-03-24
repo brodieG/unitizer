@@ -91,30 +91,14 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
 
 exprlist_remove <- function(parse.dat) {
   # Find all the children
-  browser()
   z <- with(parse.dat, ancestry_descend(id, parent, 0L))
   levels <- z[match(parse.dat$id, z[, "children"]), "level"]
   # Find first `exprlist`
   exprlist <- with(parse.dat[order(levels),], head(id[token == "exprlist"], 1L))
-  if(!length(exprlist)) return(parse.data)
-  # Find all the children of the `exprlist`
-  z <- with(parse.dat, ancestry_descend(id, parent, exprlist))
-  levels <- z[match(parse.dat$id, z[, "children"]), "level"]  
-  expr <- with(parse.dat[order(levels),], head(id[token == "expr"], 1L))
-  expr.level <- z[z[, 1L] == expr, 2L]
-  # Verify that children meet expectations
-  dat.to.check <- subset(parse.dat, id %in% z[z[, 2L] <= expr.level, 1L])
-  if(!all(dat.to.check$token %in% c("expr", "exprlist", "';'", "COMMENT")))
-    stop("Logic Error: Unexpected tokens when attempting to remove `exprlist`; contact maintainer.")
-  # Replace original `exprlist` with `expr` by updating parent of `expr`
-  # and update all parent relationships
-  parse.dat.mod <- parse.dat
-  #parse.dat.mod[parse.dat.mod$id == expr, "parent"] <- parse.dat.mod[parse.dat.mod$id == exprlist, "parent"]
-  parse.dat.mod <- parse.dat.mod[!parse.dat.mod$id %in% c(exprlist, dat.to.check$id), ] # remove exprlist and stuff we're about to add back
-  parse.dat.mod <- rbind(
-    parse.dat.mod, 
-    transform(subset(dat.to.check, token != "';'"), parent=subset(parse.dat, id==exprlist)$parent)
-  )
+  exprlist.par <- subset(parse.dat, id == exprlist)$parent
+  # Promote all children and remove semi-colons and actual exprlist
+  parse.dat.mod <- subset(parse.dat, id != exprlist & (parent != exprlist | token != "';'"))
+  parse.dat.mod[parse.dat.mod$parent == exprlist, ]$parent <- exprlist.par
   # Check nothing screwed up
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
     stop("Logic Error: `exprlist` excision did not work!")
@@ -244,28 +228,39 @@ comments_assign <- function(expr, comment.dat) {
 #'     ignore them.  Also, parantheses should only be kept if they are the
 #'     topmost item, as otherwise they are part of a function call and
 #'     should be ignored.
+#'   \item Comments inside function formals are not assigned to the formals
+#'     proper
+#'   \item `exprlist` tokens are removed completely b/c as far as we can
+#'     tell they are not part of the parsed object (but exist in parse
+#'     data).
+#'   \item known issue: comments in formals after a line break are assigned
+#'     to the body of the function as opposed to \code{`function`}, but this
+#'     should not be apparent in common use.
 #' }
 #' Note that as a result of this trial and error interpretation of 
 #' \code{`\link{getParseData}`} it is likely that comment parsing is
 #' not 100% robust.
 #' 
+#' Due to some reference weirdness going on when dealing directly with
+#' expressions had to change this function to accept text/file rather
+#' than an expression as an input (but even that didn't fix it!!!)
+#' 
 #' @seealso comments_assign, getParseData, parse
-#' @param an expression produced by \code{`\link{parse}`}
+#' @param expr.main an expression produced by \code{`\link{parse}`}
 #' @return an expression with comments retrieved from the parse attached
 #'   to the appropriate sub-expressions/calls as a "comment" \code{`\link{attr}`}
 
-# MAIN PROBLEM RIGHT NOW IS THAT `exprlist` FUCK EVERYTHING BECAUSE
-# THEY GENERATE PARENT LEVEL PARSE DATA, BUT THERE IS NO CORRESPONDING
-# ELEMENT IN THE expression
-# NEED FUNCTION THAT WILL DIVE IN AND REPLACE exprlist WITH THE CORRESPONDING
-# EXPRESSION NESTED WITHIN. HAVE TESTED ALREADY AND IT SEEMS LIKE EVERY
-# EXPR LIST WILL EVENTURALLY RESOLVE TO AN EXPRESSION AND A SEMI COLON
-# AT SOME POINT, THOUGH THERE MAY BE MULTIPLE NEXTED exprlists.  SO NEED
-# TO DIVE IN, AND CHECK THAT ALL THE STUFF BEING DISCARDED HAS NO CHILDREN
-
-parse_data_assign <- function(expr) {
-  if(!is.expression(expr)) stop("Argument `expr` must be an expression")
-  parse.dat <- getParseData(expr)
+parse_data_assign <- function(file, text=NULL) {
+  if(!is.null(text)) {
+    if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
+    expr <- try(parse(text=text))
+  } else {
+    expr <- try(parse(file))
+  }
+  if(inherits(expr, "try-error"))
+    stop("Failed attempting to parse inputs; see previous errors for details")
+  expr <- comm_reset(expr)
+  parse.dat <- exprlist_remove(getParseData(expr))
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
   if(!identical(names(parse.dat), c("line1", "col1", "line2", "col2", "id", "parent", "token",  "terminal", "text")))
@@ -278,8 +273,9 @@ parse_data_assign <- function(expr) {
   parse.dat <- transform(parse.dat, parent=ifelse(parent < 0, 0L, parent))
 
   prsdat_recurse <- function(expr, parse.dat, top.level) {
-    browser()
-    parse.dat <- prsdat_remove_fun(parse.dat)
+    if(identical(parse.dat$token[[1L]], "FUNCTION")) parse.dat <- prsdat_fix_fun(parse.dat)
+    if(identical(parse.dat$token[[1L]], "FOR")) parse.dat <- prsdat_fix_for(parse.dat)
+
     par.ids <- with(parse.dat, top_level_parse_parents(id, parent, top.level))
     parse.dat.split <- split(parse.dat, par.ids)
     prsdat.par <- parse.dat.split[[as.character(top.level)]]
@@ -318,8 +314,13 @@ parse_data_assign <- function(expr) {
       function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x), 
       logical(1L)
     )
-    expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)
-
+    if(!is.call(expr) && !is.expression(expr)) {
+      if(!identical(length(assignable.elems), 1L))
+        stop("Logic Error: expression is terminal token yet multiple assignable elems; contact maintainer.")
+      if(isTRUE(assignable.elems)) expr <- comments_assign(expr, prsdat.par)
+    } else {
+      expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)      
+    }
     # Now do the same for the child expression by recursively calling this function
     # until there are no children left, but need to be careful here because we only
     # need to call this for non-terminal leaves of the parse tree.  Simply removing
@@ -383,21 +384,88 @@ prsdat_reduce <- function(parse.dat) {
   }
   parse.dat.red[order(parse.dat.red$token %in% c(exps, non.exps, non.exps.extra)), ]
 }
-prsdat_remove_fun <- function(parse.dat) {
-  if(identical(parse.dat$token[[1L]], "FUNCTION")) {  
-    par.clos.pos <- match("')'", parse.dat$token)
-    if(is.na(par.clos.pos)) stop("Logic Error; failed attempting to parse function block; contact maintainer")
-    par.op.pos <- match("'('", parse.dat$token[1:par.clos.pos])
-    if(is.na(par.op.pos)) 
-    if(!identical(par.op.pos, 2L) && !identical(unique(parse.dat$token[2L:(par.op.pos - 1L)]), "COMMENT"))
-      stop("Logic Error; failed attempting to parse function block; contact maintainer")
-    subset(
-      parse.dat, 
-      1L:nrow(parse.dat) > par.clos.pos | identical(token, "COMMENT") | 1L:nrow(parse.dat) == 1L
-    )
+#' Functions to Adjust Parse Data To Match Expression
+#' 
+#' \itemize{
+#'   \item \code{`prsdat_fix_fun`} extract all comments from formals and brings them
+#'     up a level, and then removes formals
+#'   \item \code{`prsdat_fix_for`} brings contents of `forcond` to same level as
+#'     `for` to match up with expression
+#'   \item \code{`prsdat_find_paren`} returns locations of first set
+#'     of open and close parens
+#' }
+#' 
+#' @keywords internal
+#' @aliases prsdat_fix_for, prsdat_find_paren
+#' @param parse.dat a data frame of the type produced by \code{`\link{getParseData}`}
+#' @return \itemize{
+#'   \item for \code{`parsdat_fix*`}, a data frame of the type produced by \code{`\link{getParseData}`}
+#'   \item for \code{`parsdat_find_paren`}, a length two integer vector
+#' }
+
+prsdat_fix_fun <- function(parse.dat) {
+  if(!identical(parse.dat$token[[1L]], "FUNCTION"))
+    stop("Argument `parse.dat` must start with a 'FUNCTION' token.")
+  subset(
+    parse.dat, 
+    1L:nrow(parse.dat) > which(id == prsdat_find_paren(parse.dat)[[2]]) | token == "COMMENT" | 1L:nrow(parse.dat) == 1L
+  )
+}
+prsdat_fix_for <- function(parse.dat) {
+  if(!identical(parse.dat$token[[1L]], "FOR")) 
+    stop("Argument `parse.dat` must start with a 'FOR' token.")
+  if(!identical(parse.dat$token[parse.dat$token != "COMMENT"][[2]], "forcond")) 
+    stop("Argument `parse.dat` does not have token `forcond` in expected location")  
+  if(!identical(length(which(parse.dat$token == "forcond")), 1L))
+    stop("Argument `parse.dat` should have exactly one `forcond` token")  
+  par.range <- prsdat_find_paren(parse.dat)
+  par.level <- subset(parse.dat, id == par.range[[1]])$parent
+  tokens <- tail(head(subset(parse.dat, parent==par.level)$token, -1L), -1L)
+  tokens.no.comm <- tokens[tokens != "COMMENT"]
+  if(!identical(length(tokens.no.comm), 3L))
+    stop("Logic error: `forcond` should have three elements")
+  if(!identical(which(tokens.no.comm == "IN"), 2L))
+    stop("Logic error: `forcond` should have exactly one 'IN' in position 2L")
+  parse.dat.mod <- subset(parse.dat, !token %in% c("forcond", "IN") & ! id %in% par.range)
+  `[<-`(parse.dat.mod, parse.dat.mod$parent == par.level, "parent", parse.dat[1L, "parent"])
+}
+prsdat_find_paren <- function(parse.dat) {
+  par.clos.pos <- match("')'", parse.dat$token)
+  if(is.na(par.clos.pos)) stop("Logic Error; failed attempting to parse function block; contact maintainer")
+  par.op.pos <- match("'('", parse.dat$token[1:par.clos.pos])
+  if(is.na(par.op.pos)) 
+  if(!identical(par.op.pos, 2L) && !identical(unique(parse.dat$token[2L:(par.op.pos - 1L)]), "COMMENT"))
+    stop("Logic Error; failed attempting to `for` function block; contact maintainer")
+  c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
+}
+#' Utility Function to Extract Comments From Expression
+#' 
+#' These are the comments attached by \code{`\link{parse_data_assign}`}
+
+comm_extract <- function(x) {
+  if(length(x) > 1L || is.expression(x)) {
+    return(c(list(attr(x, "comment")), lapply(x, comm_extract)))
   } else {
-    parse.dat
-} }
+    return(list(attr(x, "comment")))
+} } 
+
+#' Utility Function to Reset Comments
+#' 
+#' Required due to bizarre behavior (bug?) where some expression attributes
+#' appear to have reference like behavior even when they are re-generated
+#' from scratch from a text expression (wtf, really).
+
+comm_reset <- function(x) {
+  attr(x, "comment") <- NULL
+  if(is.pairlist(x)) return(x)
+  if(length(x) > 1L || is.expression(x)) {
+    for(i in seq_along(x))
+    x[[i]] <- Recall(x[[i]])
+  }
+  x
+}
+
+
 #' Variables re-used by parse functions
 #' 
 #' @keywords internal

@@ -6,7 +6,6 @@ local( {
   dat <- getParseData(prs)
   dat$parent <- pmax(0L, dat$parent)
   dat.split <- dat.split.2 <- par.ids.3 <- NULL
-  comm_extract <- function(x) if(length(x) > 1L) return(c(list(attr(x, "comment")), lapply(x, comm_extract))) else return(list(attr(x, "comment")))
 
   test_that("Top Level Parents Identified Correctly", {
     expect_equal(info="Identified top level parents?",
@@ -38,6 +37,29 @@ local( {
       list(NULL, c("# test that were not crazy", "# TRUE hopefully" ), "# Still not crazy")
     )
   } )
+  test_that("Clean up Parse Data", {
+    dat <- getParseData(parse(text="{function(x) NULL;; #comment\n}"))
+    expect_equal(info="Ancestry Descend",
+      structure(c(21L, 1L, 18L, 16L, 19L, 15L, 14L, 11L, 9L, 2L, 3L,  4L, 5L, 8L, 7L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L,  4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children",  "level"))),
+      testor:::ancestry_descend(dat$id, dat$parent, 0L)
+    )
+    expect_equal(info="Excise `exprlist`",
+      c("expr", "'{'", "expr", "FUNCTION", "'('", "SYMBOL_FORMALS",  "')'", "NULL_CONST", "expr", "COMMENT", "'}'"),
+      testor:::exprlist_remove(dat)$token
+    )
+    expect_equal(info="Another `exprlist` test",
+      list(c(0L, 18L, 3L, 18L, 12L, 18L, 18L), c("expr", "'{'", "NUM_CONST",  "expr", "NUM_CONST", "expr", "'}'")),
+      unname(as.list(testor:::exprlist_remove(getParseData(parse(text="{1 ; ; ;2;}")))[c("parent", "token")]))
+    )
+    expect_equal(info="Yet another `exprlist`"
+      list(c(0L, 22L, 3L, 22L, 9L, 22L, 22L, 17L, 22L, 22L), c("expr",  "'{'", "NULL_CONST", "expr", "SYMBOL", "expr", "COMMENT", "SYMBOL",  "expr", "'}'")),
+      unname(as.list(testor:::exprlist_remove(getParseData(parse(text="{NULL; yowza; #comment\nhello\n}")))[c("parent", "token")]))
+    )
+    expect_equal(info="`for` cleanup",
+      structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),  
+      as.list(testor:::prsdat_fix_for(getParseData(parse(text="for(i in x) {if(x) break else next}"))[-1L, ]))[c("id", "parent", "token")]
+    )
+  } )
   test_that("Full Parse Works Properly", {
     expect_equal(info="Full Comment Parse",
       list(NULL, 
@@ -58,31 +80,10 @@ local( {
       structure(list(NULL, "# the data", class = c("# the label", "#the equal sign",  "# the class")), .Names = c("", "", "class")),
       lapply(testor:::parse_data_assign(parse(text="structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))[[1]], attr, "comment")
     )
-    expect_equal(info="exprlist test",
-      list(NULL, NULL, NULL),
-      lapply(testor:::parse_data_assign(parse(text="{hello; ;farewell}"))[[1]], attr, "comment")
+    expect_equal(info="Function with `exprlist`",
+      list(NULL, list(NULL, list("#first arg"), structure(list(NULL, x = list(NULL), y = list(NULL)), .Names = c("", "x", "y")), list("#second arg with default", list(NULL), list("# first comment", list(NULL), list(NULL), list(NULL)), list("#second comment"), list("#lastcomment ", list(NULL), list(NULL), list(NULL))), list(NULL, list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL)))),
+      testor:::comm_extract(testor:::parse_data_assign(text="function(x #first arg\n, y=25 #second arg with default\n) {x + y; # first comment\n; yo #second comment\n x / y; #lastcomment \n;}"))
     )
-    expect_equal(info="exprlist test",
-      list(NULL, NULL, NULL),
-      lapply(testor:::parse_data_assign(parse(text="{hello; ;farewell}"))[[1]], attr, "comment")
-    )
-
-
-    
-
-  } )
-  test_that("Clean up Parse Data", {
-    dat <- getParseData(parse(text="{function(x) NULL;; #comment\n}"))
-    expect_equal(info="Ancestry Descend",
-      structure(c(21L, 1L, 18L, 16L, 19L, 15L, 14L, 11L, 9L, 2L, 3L,  4L, 5L, 8L, 7L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L,  4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children",  "level"))),
-      testor:::ancestry_descend(dat$id, dat$parent, 0L)
-    )
-    expect_equal(info="Excise `exprlist`",
-      c("expr", "'{'", "expr", "FUNCTION", "'('", "SYMBOL_FORMALS",  "')'", "NULL_CONST", "expr", "COMMENT", "'}'"),
-      testor:::exprlist_remove(dat)$token
-    )
-
-
   } )
 } )
 
