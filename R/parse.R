@@ -54,7 +54,6 @@
 #' @param top.level the id of the top level
 #' @return integer the top level parent ids for \code{`ids`}
 
-
 top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   if(!is.integer(ids) || !is.integer(par.ids) || !identical(length(ids), length(par.ids)))
     stop("Arguments `ids` and `par.ids` must be equal length integer vectors")
@@ -76,7 +75,6 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   }
   vapply(par.ids, ancestry_climb, integer(1L))
 }
-
 ancestry_descend <- function(ids, par.ids, id, level=0L) {
   children <- ids[par.ids == id]
   if(length(children)) {
@@ -88,9 +86,6 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
   } else {
     matrix(integer(), ncol=2)
 } }
-
-
-
 #' Assign Comments From Parse Data to Expression Elements
 #' 
 #' Based on parse data from \code{`\link{getParseData}`}, figures
@@ -123,11 +118,11 @@ comments_assign <- function(expr, comment.dat) {
   # "expr" needs to be moved to the front (in theory, should be at most one thing
   # and should be an infix operator of some sort)
 
-  if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", non.exps, brac.close, "';'"))
+  if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", tk.lst$non.exps, tk.lst$brac.close, "';'"))
     stop("Logic Error: unexpected ending token in parse data; contact maintainer.")
-  if(length(which(comment.dat$token %in% brac.open)) > 1L || length(which(comment.dat$token %in% brac.close)) > 1L)
+  if(length(which(comment.dat$token %in% tk.lst$brac.open)) > 1L || length(which(comment.dat$token %in% tk.lst$brac.close)) > 1L)
     stop("Logic Error: more than one bracket at top level; contact maintainer.")
-  if(length(brac.pos <- which(comment.dat$token %in% brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
+  if(length(brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
     if(
       !identical(comment.dat$token[brac.pos], "')'") || 
       !identical(brac.pos, nrow(comment.dat) - 1L) || 
@@ -135,10 +130,10 @@ comments_assign <- function(expr, comment.dat) {
     ) stop("Logic Error: closing brackets may only be on last row, unless a paren and part of a functions formal definition; contact maintainer.")
   }    
   if(
-    !is.na(brac.pos <- match(comment.dat$token, brac.open[-3L])) && brac.pos > 1L ||
-    !is.na(brac.pos <- match(comment.dat$token, brac.open[3L])) && brac.pos > 2L
+    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) && brac.pos > 1L ||
+    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[3L])) && brac.pos > 2L
   ) stop("Logic Error: opening brackets may only be on first row, or second if paren; contact maintainer.")
-  if(!identical(which(brac.open %in% comment.dat$token), which(brac.close %in% comment.dat$token)))
+  if(!identical(which(tk.lst$brac.open %in% comment.dat$token), which(tk.lst$brac.close %in% comment.dat$token)))
     stop("Logic Error: mismatched brackets; contact maintainer.")
   # extra.toks <- if(any(brac.open %in% comment.dat$token)) 2L else 1L
   # Trim our data to just what matters:
@@ -149,8 +144,10 @@ comments_assign <- function(expr, comment.dat) {
   }
   # for the purposes of this process, constants and symbols are basically expressions
 
-  comm.notcomm <- transform(comm.notcomm, token=ifelse(token %in% c(exps, non.exps, non.exps.extra), "expr", token))
-
+  comm.notcomm <- transform(
+    comm.notcomm, 
+    token=ifelse(token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra), "expr", token)
+  )
   # what comments are on same line as something else
 
   comm.comm <- subset(comment.dat, token=="COMMENT")
@@ -252,7 +249,7 @@ parse_data_assign <- function(file, text=NULL) {
     stop("Argument `expr` produced parse data with unexpected column names")
   if(!identical(unname(vapply(parse.dat, class, "")), c("integer", "integer", "integer", "integer", "integer", "integer",  "character", "logical", "character")))
     stop("Argument `expr` produced data with unexpected column data types")
-  if(!all(parse.dat$token %in% valid.tokens))
+  if(!all(parse.dat$token %in% unlist(tk.lst)))
     stop("Logic Error: unexpected tokens in parse data; contact maintainer.")
 
   parse.dat <- transform(parse.dat, parent=ifelse(parent < 0, 0L, parent))
@@ -349,7 +346,8 @@ parse_data_assign <- function(file, text=NULL) {
 prsdat_reduce <- function(parse.dat) {
   parse.dat.red <- subset(
     parse.dat, 
-    !token %in% c(brac.close, name.toks, seps, "COMMENT") & !(token == "'('" & 1L:length(token) == 2L) 
+    !token %in% c(tk.lst$brac.close, tk.lst$unassign, tk.lst$seps, "COMMENT") & 
+    !(token == "'('" & 1L:length(token) == 2L) 
   )
   # at this point, must be all expressions, an opening bracket, or an operator of some
   # sort, and iff the operator is @ or $, or if there is only one item in the data frame
@@ -358,17 +356,22 @@ prsdat_reduce <- function(parse.dat) {
   if(any(c("'$'", "'@'") %in% parse.dat.red$token)) {
     if(!identical(nrow(parse.dat.red), 3L))
       stop("Logic Error: top level statement with `@` or `$` must be three elements long")
-    if(!identical(parse.dat.red$token[[3L]], "SYMBOL"))
-      stop("Logic Error: right argument to `@` or `$` must be a symbol")
     if(!identical(parse.dat.red$token[[1L]], "expr"))
       stop("Logic Error: left argument to `@` or `$` must be an expression")
+    if(identical(parse.dat.red$token, "'@'") && !identical(parse.dat.red$token[[3L]], "SLOT"))
+      stop("Logic Error: right argument to `@` must be SLOT")
+    if(identical(parse.dat.red$token, "'$'") && !identical(parse.dat.red$token[[3L]], "SYMBOL"))
+      stop("Logic Error: right argument to `$` must be SYMBOL")
   } else if (nrow(parse.dat.red) == 1L) {
-    if(!parse.dat.red$token[[1L]] %in% c("expr", non.exps, non.exps.extra))
+    if(!parse.dat.red$token[[1L]] %in% c("expr", tk.lst$non.exps, tk.lst$non.exps.extra))
       stop("Logic Error: single element parent levels must be symbol or constant or expr")
-  } else if (length(which(parse.dat.red$token %in% c(exps, non.exps, non.exps.extra))) < nrow(parse.dat.red) - 1L) {
+  } else if (
+    length(which(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra))) < 
+      nrow(parse.dat.red) - 1L
+  ) {
     stop("Logic Error: in most cases all but at most one token must be of type `expr` or `exprlist`; contact maintainer.")
   }
-  parse.dat.red[order(parse.dat.red$token %in% c(exps, non.exps, non.exps.extra)), ]
+  parse.dat.red[order(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra)), ]
 }
 #' Functions to Adjust Parse Data To Match Expression
 #' 
@@ -487,24 +490,35 @@ comm_reset <- function(x) {
   }
   x
 }
-
-
-#' Variables re-used by parse functions
+#' Listing on known tokens
 #' 
 #' @keywords internal
-#' @aliases brac.open, exps, non.exps, non.exps.extra, ops, ops.other, valid.tokens
-
-brac.close <- c("'}'", "']'", "')'")
-brac.open <- c("'{'", "'['", "'('")
-exps <- c("expr", "exprlist")
-seps <- c("','", "';'")       # no comments on these as they are just removed
-non.exps <- c("SYMBOL", "STR_CONST", "NUM_CONST", "NULL_CONST")        # in addition to `expr`, these are the ones that can get comments attached
-non.exps.extra <- c("SYMBOL_FUNCTION_CALL", "FUNCTION", "FOR", "NEXT", "BREAK", "IF")  # these can also get comments attached
-ops <- c(                                                                             
-  paste0("'", c("-", "+", "!", "~", "?", ":", "*", "/", "^", "$", "@"), "'"),
-  "SPECIAL", "GT", "GE", "LT", "LE", "EQ", "NE", "AND", "AND2", "OR", "OR2", 
-  "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
+tk.lst <- list(
+  comment="COMMENT",
+  brac.close=c("'}'", "']'", "')'"),
+  brac.open=c("'{'", "'['", "'('"),
+  exps=c("expr", "exprlist"),
+  seps=c("','", "';'"),                                          # no comments on these as they are just removed
+  non.exps=c(                                                    # in addition to `expr`, these are the ones that can get comments attached 
+    "SYMBOL", "STR_CONST", "NUM_CONST", "NULL_CONST",
+    "SLOT", "NEXT", "BREAK"
+  ),  
+  non.exps.extra=c(                                              # these can also get comments attached, but shouldn't be at the end of a parse data block
+    "SYMBOL_FUNCTION_CALL", "FUNCTION", "FOR", 
+    "IF", "REPEAT"
+  ),  
+  ops=c(                                                                             
+    paste0(
+      "'", 
+      c("-", "+", "!", "~", "?", ":", "*", "/", "^", "$", "@"), 
+      "'"
+    ),
+    "SPECIAL", "GT", "GE", "LT", "LE", "EQ", "NE", "AND", "AND2",
+    "OR", "OR2", "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
+  ),
+  ops.other=c("NS_GET", "NS_GET_INT"),                            # note these should never show up at top level
+  unassign=c(                                                    # these cannot have comments attached to them 
+    "EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS", 
+    "IN", "forcond", "ELSE"
+  )
 )
-ops.other <- c("NS_GET", "NS_GET_INT")  # note these should never show up at top level
-name.toks <- c("EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS", "IN", "forcond", "ELSE")  # these cannot have comments attached to them
-valid.tokens <- c(brac.close, brac.open, non.exps, non.exps.extra, ops, ops.other, name.toks, exps, "COMMENT", seps)

@@ -87,6 +87,12 @@ local( {
       list(NULL, list(NULL, list("# IFFY"), list("# ifcond", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL)), list("#final"))),
       testor:::comm_extract(testor:::parse_data_assign(text=if.text))
     )
-
+    expect_equal(info="formula",
+      list(NULL, list("# hello", list(NULL), list(NULL), list(NULL)), list("#yowza", list(NULL), list("#bust a move"))),
+      testor:::comm_extract(testor:::parse_data_assign(text = ". + x # hello\n#yowza\n~#bust a move\ny"))
+    )
+    expect_equal(info="`repeat`",
+      list(NULL, list(NULL, list("#first"), list(NULL, list(NULL), list("#comm", list(NULL), list(NULL)), list(NULL)))),
+      testor:::comm_extract(testor:::parse_data_assign(text = "repeat #first\n{runif(10); #comm\nbreak;}"))
   } )
 } )
