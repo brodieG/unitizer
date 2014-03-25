@@ -73,7 +73,7 @@ local( {
     )
     expect_equal(info="EQ_SUB and SYMBOL_SUB test",
       list(NULL, structure(list(NULL, list(NULL), list("# the data", list(NULL), list(NULL), list(NULL)), class = list(c("# the label", "#the equal sign", "# the class"))), .Names = c("", "", "", "class"))),
-      testor:::comm_extract(testor:::parse_data_assign(text = "structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))
+      testor:::comm_extract(testor:::parse_data_assign(text="structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))
     )
     expect_equal(info="Function with `exprlist`",
       list(NULL, list(NULL, list("#first arg"), structure(list(NULL, x = list(NULL), y = list(NULL)), .Names = c("", "x", "y")), list("#second arg with default", list(NULL), list("# first comment", list(NULL), list(NULL), list(NULL)), list("#second comment"), list("#lastcomment ", list(NULL), list(NULL), list(NULL))), list(NULL, list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL)))),
@@ -88,11 +88,20 @@ local( {
       testor:::comm_extract(testor:::parse_data_assign(text=if.text))
     )
     expect_equal(info="formula",
-      list(NULL, list("# hello", list(NULL), list(NULL), list(NULL)), list("#yowza", list(NULL), list("#bust a move"))),
-      testor:::comm_extract(testor:::parse_data_assign(text = ". + x # hello\n#yowza\n~#bust a move\ny"))
+      list(NULL, list("# hello", list(NULL), list(NULL), list(NULL)), list("#yowza", list("#bust a move"), list(NULL))),
+      testor:::comm_extract(testor:::parse_data_assign(text=". + x # hello\n#yowza\n~#bust a move\ny"))
     )
     expect_equal(info="`repeat`",
       list(NULL, list(NULL, list("#first"), list(NULL, list(NULL), list("#comm", list(NULL), list(NULL)), list(NULL)))),
-      testor:::comm_extract(testor:::parse_data_assign(text = "repeat #first\n{runif(10); #comm\nbreak;}"))
+      testor:::comm_extract(testor:::parse_data_assign(text="repeat #first\n{runif(10); #comm\nbreak;}"))
+    )
+    expect_equal(info="S4 slot",
+      list(NULL, list(NULL, list(NULL), list(NULL, list("#comment"), list(NULL), list(NULL)), list(NULL))),
+      testor:::comm_extract(testor:::parse_data_assign(text="test@#comment\nhello <- 3"))
+    )
+    expect_equal(info="`while`",
+      list(NULL, list(NULL, list(NULL), list("# a comment", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL)))),
+      testor:::comm_extract(testor:::parse_data_assign(text="while(x > 5 # a comment\n) { hello; goodbye } #yay"))
+    )
   } )
 } )

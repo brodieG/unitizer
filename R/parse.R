@@ -146,7 +146,8 @@ comments_assign <- function(expr, comment.dat) {
 
   comm.notcomm <- transform(
     comm.notcomm, 
-    token=ifelse(token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra), "expr", token)
+    token=ifelse(
+      token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$ops), "expr", token)
   )
   # what comments are on same line as something else
 
@@ -258,6 +259,7 @@ parse_data_assign <- function(file, text=NULL) {
     if(identical(parse.dat$token[[1L]], "FUNCTION")) parse.dat <- prsdat_fix_fun(parse.dat)
     if(identical(parse.dat$token[[1L]], "FOR")) parse.dat <- prsdat_fix_for(parse.dat)
     if(identical(parse.dat$token[[1L]], "IF")) parse.dat <- prsdat_fix_if(parse.dat)
+    if(identical(parse.dat$token[[1L]], "WHILE")) parse.dat <- prsdat_fix_while(parse.dat)
 
     par.ids <- with(parse.dat, top_level_parse_parents(id, parent, top.level))
     parse.dat.split <- split(parse.dat, par.ids)
@@ -422,21 +424,25 @@ prsdat_fix_for <- function(parse.dat) {
   parse.dat.mod <- subset(parse.dat, !token %in% c("forcond", "IN") & ! id %in% par.range)
   `[<-`(parse.dat.mod, parse.dat.mod$parent == par.level, "parent", parse.dat[1L, "parent"])
 }
-prsdat_fix_if <- function(parse.dat) {
-  if(!identical(parse.dat$token[[1L]], "IF")) 
-    stop("Argument `parse.dat` must start with an 'IF' token.")
+prsdat_fix_simple <- function(parse.dat, tok) {
+  if(! tok %in% c("IF", "WHILE")) stop("Logic Error, this function only supports 'IF' and 'WHILE' tokens")
+  if(!identical(parse.dat$token[[1L]], tok)) 
+    stop("Argument `parse.dat` must start with an '", tok, "' token.")
   par.id <- parse.dat$parent[[1L]]
   par.range <- prsdat_find_paren(parse.dat)
   early.tokens <- parse.dat$token[1L:(which(parse.dat$id == par.range[[1L]]) - 1L)]
-  if(any(! early.tokens %in% c("IF", "COMMENT")) || !identical(length(which(early.tokens == "IF")), 1L))
-    stop("Logic Error: could not parse IF statement; contact maintainer.")
+  if(any(! early.tokens %in% c(tok, "COMMENT")) || !identical(length(which(early.tokens == tok)), 1L))
+    stop("Logic Error: could not parse ", tok, " statement; contact maintainer.")
   parse.delete <- subset(parse.dat, parent == par.id & token %in% c("'('", "')'", "ELSE"))
-  if(!identical(nrow(parse.delete), 3L))
-    stop("Logic Error: unexpected number of IF statement sub-components; contact maintainer.")
+  if(! nrow(parse.delete) %in% c(2L, 3L))
+    stop("Logic Error: unexpected number of ", tok, " statement sub-components; contact maintainer.")
   if(any(parse.dat$parent %in% parse.delete$id))
-    stop("Logic Error: unexpected parent relationships in IF statement; contact maintainer.")
+    stop("Logic Error: unexpected parent relationships in ", tok, " statement; contact maintainer.")
   subset(parse.dat, ! id %in% parse.delete$id)
 }
+prsdat_fix_if <- function(parse.dat) prsdat_fix_simple(parse.dat, "IF")
+prsdat_fix_while <- function(parse.dat) prsdat_fix_simple(parse.dat, "WHILE")
+
 prsdat_find_paren <- function(parse.dat) {
   par.clos.pos <- match("')'", parse.dat$token)
   if(is.na(par.clos.pos)) stop("Logic Error; failed attempting to parse function block; contact maintainer")
@@ -492,7 +498,25 @@ comm_reset <- function(x) {
 }
 #' Listing on known tokens
 #' 
+#' As of this writing, the following tokens from \file{src/main/gram.c} are
+#' not handled:
+#' 
+#'      [,1]           [,2]             [,3]                [,4]            
+#' [1,] "'\\n'"        "cr"             "ifcond"            "sub"           
+#' [2,] "'%'"          "END_OF_INPUT"   "INCOMPLETE_STRING" "sublist"       
+#' [3,] "$accept"      "equal_assign"   "LBB"               "SYMBOL_PACKAGE"
+#' [4,] "$end"         "error"          "LINE_DIRECTIVE"    "TILDE"         
+#' [5,] "$undefined"   "ERROR"          "LOW"               "UMINUS"        
+#' [6,] "COLON_ASSIGN" "expr_or_assign" "NOT"               "UNOT"          
+#' [7,] "cond"         "formlist"       "prog"              "UPLUS"     
+#' 
+#' So far, we have not been able to produce \code{`getParseData`} data frames
+#' that contain them.  It may not be possible to do so for all of them.  For
+#' example, \code{`INCOMPLETE_STRING`} shows up during a parse error, so could
+#' never be part of a fully parsed expression.
+#' 
 #' @keywords internal
+
 tk.lst <- list(
   comment="COMMENT",
   brac.close=c("'}'", "']'", "')'"),
@@ -505,7 +529,7 @@ tk.lst <- list(
   ),  
   non.exps.extra=c(                                              # these can also get comments attached, but shouldn't be at the end of a parse data block
     "SYMBOL_FUNCTION_CALL", "FUNCTION", "FOR", 
-    "IF", "REPEAT"
+    "IF", "REPEAT", "WHILE"
   ),  
   ops=c(                                                                             
     paste0(
