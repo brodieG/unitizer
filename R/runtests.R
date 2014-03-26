@@ -132,15 +132,13 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
 
   # Parse the test file
 
-  if(inherits(try(tests.parsed <- parse(test.file)), "try-error")) {
+  if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
     stop("Unable to parse `test.file`; see prior error for details.")
   }
   if(!length(tests.parsed)) {
     message("No tests in ", test.file, "; nothing to do here.")
     return(TRUE)
-  }
-  tests.parsed <- parse_data_assign(tests.parsed)
-  
+  }  
   # Evaluate the parsed calls
 
   tests <- new("testorTests") + tests.parsed

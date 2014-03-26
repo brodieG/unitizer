@@ -69,39 +69,39 @@ local( {
   test_that("Full Parse Works Properly", {
     expect_equal(info="Full Comment Parse",
       list(NULL, list("# This is an early comment", list(NULL), list(NULL), list(NULL)), list(c("# multi", "# line", "# comment", "# and another!"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL, list(NULL), list(c("# test that were not crazy", "# TRUE hopefully"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), list("# Still not crazy", list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL,      list(NULL), list(NULL), list(NULL))))), list(NULL, list(NULL), list(NULL, list(NULL), list(NULL), list(NULL))), list("# and this comment belongs to whom?", list(NULL), list(NULL)), list("# and I?", list(NULL), list(NULL))),
-      testor:::comm_extract(testor:::parse_data_assign(prs.file))
+      testor:::comm_extract(testor:::parse_with_comments(prs.file))
     )
     expect_equal(info="EQ_SUB and SYMBOL_SUB test",
       list(NULL, structure(list(NULL, list(NULL), list("# the data", list(NULL), list(NULL), list(NULL)), class = list(c("# the label", "#the equal sign", "# the class"))), .Names = c("", "", "", "class"))),
-      testor:::comm_extract(testor:::parse_data_assign(text="structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))
+      testor:::comm_extract(testor:::parse_with_comments(text="structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"))
     )
     expect_equal(info="Function with `exprlist`",
       list(NULL, list(NULL, list("#first arg"), structure(list(NULL, x = list(NULL), y = list(NULL)), .Names = c("", "x", "y")), list("#second arg with default", list(NULL), list("# first comment", list(NULL), list(NULL), list(NULL)), list("#second comment"), list("#lastcomment ", list(NULL), list(NULL), list(NULL))), list(NULL, list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL), list(NULL)))),
-      testor:::comm_extract(testor:::parse_data_assign(text="function(x #first arg\n, y=25 #second arg with default\n) {x + y; # first comment\n; yo #second comment\n x / y; #lastcomment \n;}"))
+      testor:::comm_extract(testor:::parse_with_comments(text="function(x #first arg\n, y=25 #second arg with default\n) {x + y; # first comment\n; yo #second comment\n x / y; #lastcomment \n;}"))
     )
     expect_equal(info="`for` loop",
       list(NULL, list(NULL, list(NULL), list("#in counter"), list("#incounter again", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list("# first comment", list(NULL), list(NULL), list(NULL)), list(NULL), list("#second comment"), list(NULL, list(NULL), list(NULL), list(NULL)), list("#lastcomment ")))),
-      testor:::comm_extract(testor:::parse_data_assign(text="for(i #in counter\nin 1:10#incounter again\n) {x + y; # first comment\n; next; yo #second comment\n x / y; break; #lastcomment \n;}"))
+      testor:::comm_extract(testor:::parse_with_comments(text="for(i #in counter\nin 1:10#incounter again\n) {x + y; # first comment\n; next; yo #second comment\n x / y; break; #lastcomment \n;}"))
     )
     expect_equal(info="`if` statement",
       list(NULL, list(NULL, list("# IFFY"), list("# ifcond", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL)), list("#final"))),
-      testor:::comm_extract(testor:::parse_data_assign(text=if.text))
+      testor:::comm_extract(testor:::parse_with_comments(text=if.text))
     )
     expect_equal(info="formula",
       list(NULL, list("# hello", list(NULL), list(NULL), list(NULL)), list("#yowza", list("#bust a move"), list(NULL))),
-      testor:::comm_extract(testor:::parse_data_assign(text=". + x # hello\n#yowza\n~#bust a move\ny"))
+      testor:::comm_extract(testor:::parse_with_comments(text=". + x # hello\n#yowza\n~#bust a move\ny"))
     )
     expect_equal(info="`repeat`",
       list(NULL, list(NULL, list("#first"), list(NULL, list(NULL), list("#comm", list(NULL), list(NULL)), list(NULL)))),
-      testor:::comm_extract(testor:::parse_data_assign(text="repeat #first\n{runif(10); #comm\nbreak;}"))
+      testor:::comm_extract(testor:::parse_with_comments(text="repeat #first\n{runif(10); #comm\nbreak;}"))
     )
     expect_equal(info="S4 slot",
       list(NULL, list(NULL, list(NULL), list(NULL, list("#comment"), list(NULL), list(NULL)), list(NULL))),
-      testor:::comm_extract(testor:::parse_data_assign(text="test@#comment\nhello <- 3"))
+      testor:::comm_extract(testor:::parse_with_comments(text="test@#comment\nhello <- 3"))
     )
     expect_equal(info="`while`",
       list(NULL, list(NULL, list(NULL), list("# a comment", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL)))),
-      testor:::comm_extract(testor:::parse_data_assign(text="while(x > 5 # a comment\n) { hello; goodbye } #yay"))
+      testor:::comm_extract(testor:::parse_with_comments(text="while(x > 5 # a comment\n) { hello; goodbye } #yay"))
     )
   } )
 } )

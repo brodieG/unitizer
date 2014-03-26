@@ -233,7 +233,7 @@ comments_assign <- function(expr, comment.dat) {
 #' @return an expression with comments retrieved from the parse attached
 #'   to the appropriate sub-expressions/calls as a "comment" \code{`\link{attr}`}
 
-parse_data_assign <- function(file, text=NULL) {
+parse_with_comments <- function(file, text=NULL) {
   if(!is.null(text)) {
     if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
     expr <- try(parse(text=text))
@@ -354,7 +354,6 @@ prsdat_reduce <- function(parse.dat) {
   # at this point, must be all expressions, an opening bracket, or an operator of some
   # sort, and iff the operator is @ or $, or if there is only one item in the data frame
   # then it can be NUM_CONST or STR_CONST or symbol for the second one
-  
   if(any(c("'$'", "'@'") %in% parse.dat.red$token)) {
     if(!identical(nrow(parse.dat.red), 3L))
       stop("Logic Error: top level statement with `@` or `$` must be three elements long")
@@ -365,8 +364,9 @@ prsdat_reduce <- function(parse.dat) {
     if(identical(parse.dat.red$token, "'$'") && !identical(parse.dat.red$token[[3L]], "SYMBOL"))
       stop("Logic Error: right argument to `$` must be SYMBOL")
   } else if (nrow(parse.dat.red) == 1L) {
-    if(!parse.dat.red$token[[1L]] %in% c("expr", tk.lst$non.exps, tk.lst$non.exps.extra))
-      stop("Logic Error: single element parent levels must be symbol or constant or expr")
+    if(!parse.dat.red$token[[1L]] %in% c("expr", tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$brac.open)) {
+      stop("Logic Error: single element parent levels must be symbol or constant or expr")      
+    }
   } else if (
     length(which(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra))) < 
       nrow(parse.dat.red) - 1L
@@ -491,9 +491,9 @@ comm_reset <- function(x) {
   attr(x, "comment") <- NULL
   if(is.pairlist(x)) return(x)
   if(length(x) > 1L || is.expression(x)) {
-    for(i in seq_along(x))
-    x[[i]] <- Recall(x[[i]])
-  }
+    for(i in seq_along(x)) {
+      if(is.null(x[[i]])) next else x[[i]] <- Recall(x[[i]])      
+  } }
   x
 }
 #' Listing on known tokens
@@ -525,10 +525,10 @@ tk.lst <- list(
   seps=c("','", "';'"),                                          # no comments on these as they are just removed
   non.exps=c(                                                    # in addition to `expr`, these are the ones that can get comments attached 
     "SYMBOL", "STR_CONST", "NUM_CONST", "NULL_CONST",
-    "SLOT", "NEXT", "BREAK"
+    "SLOT", "NEXT", "BREAK", "SYMBOL_FUNCTION_CALL"
   ),  
   non.exps.extra=c(                                              # these can also get comments attached, but shouldn't be at the end of a parse data block
-    "SYMBOL_FUNCTION_CALL", "FUNCTION", "FOR", 
+    "FUNCTION", "FOR", 
     "IF", "REPEAT", "WHILE"
   ),  
   ops=c(                                                                             
