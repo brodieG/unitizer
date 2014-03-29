@@ -3,7 +3,7 @@ fun <- function(a=1, bravo, card=25, ..., xar=list("aurochs", 1), z) {}
 
 # Need to add tests:
 # - with complex objects? (did I mean in the definition? Or the call??)
-NULL
+(NULL)
 # These should be identical to match.call()
 
 body(fun) <- parse(text="{print(match_call()); print(match.call())}")

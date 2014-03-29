@@ -187,7 +187,8 @@ comments_assign <- function(expr, comment.dat) {
     if(is.na(comm.comm$match[[i]])) next
     expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
     if(!identical(length(expr.pos), 1L)) stop("Logic Error; contact maintainer.")
-    attr(expr[[expr.pos]], "comment") <- c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
+    if(!is.null(expr[[expr.pos]])) 
+      attr(expr[[expr.pos]], "comment") <- c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
   }
   expr
 }
@@ -219,6 +220,10 @@ comments_assign <- function(expr, comment.dat) {
 #'   \item known issue: comments in formals after a line break are assigned
 #'     to the body of the function as opposed to \code{`function`}, but this
 #'     should not be apparent in common use.
+#'   \item you cannot attach comments to \code{`NULL`}, if you must use 
+#'     \code{`(NULL)`}.  This is a feature, as it proivdes a way to put
+#'     comments in the file without them showing up during \code{`testor`}
+#'     use.
 #' }
 #' Note that as a result of this trial and error interpretation of 
 #' \code{`\link{getParseData}`} it is likely that comment parsing is
@@ -298,12 +303,12 @@ parse_with_comments <- function(file, text=NULL) {
       expr, 
       function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x), 
       logical(1L)
-    )
+    )      
     if(!is.call(expr) && !is.expression(expr)) {
-      if(!identical(length(assignable.elems), 1L))
+      if(!length(assignable.elems) %in% c(1L))
         stop("Logic Error: expression is terminal token yet multiple assignable elems; contact maintainer.")
       if(isTRUE(assignable.elems)) expr <- comments_assign(expr, prsdat.par)
-    } else {
+    } else if (!is.null(expr)) {
       expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)      
     }
     # Now do the same for the child expression by recursively calling this function
@@ -312,6 +317,8 @@ parse_with_comments <- function(file, text=NULL) {
     # non terminal leaves from call should leave everything in correct order because
     # the only time there are order mismatches are with infix operators and those
     # are terminal leaves anyway.
+    
+    if(!any(vapply(prsdat.children, function(child) any(child$token == "COMMENT"), logical(1L)))) return(expr)
     
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
     if(!identical(nrow(prsdat.par.red), length(which(assignable.elems))))
