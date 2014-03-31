@@ -2,7 +2,7 @@ library(testthat)
 library(testor)
 
 local( {
-  prs.file <- "tests/testthat/parse.data/file1.R"
+  prs.file <- "tests/testthat/data/file1.R"
   prs <- parse(prs.file)
   dat <- getParseData(prs)
   dat$parent <- pmax(0L, dat$parent)
@@ -103,7 +103,7 @@ local( {
       list(NULL, list(NULL, list(NULL), list("# a comment", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL)))),
       testor:::comm_extract(testor:::parse_with_comments(text="while(x > 5 # a comment\n) { hello; goodbye } #yay"))
     )
-    test.comp <- testor:::comm_extract(testor:::parse_with_comments("tests/testthat/parse.data/file2.R"))
+    test.comp <- testor:::comm_extract(testor:::parse_with_comments("tests/testthat/data/file2.R"))
 
     expect_equal(info="A more complex test",
       list(c("# Need to add tests:", "# - with complex objects? (did I mean in the definition? Or the call??)"), "# These should be identical to match.call()"),

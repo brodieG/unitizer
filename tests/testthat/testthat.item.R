@@ -187,7 +187,7 @@ local( {
   test_that("Misc", {
     fun <- function() quote(stop("This error should not be thrown"))
     expect_true(info="Make sure tests that return calls work",
-      is(new("testorItem", value=fun(), call=quote(fun())), "testorItem")
+      is(new("testorItem", value=fun(), call=quote(fun()), env=sys.frame(sys.parent() + 1L)), "testorItem")
     )
     # Nested environment hand waving can break down under certain circumstances
     # this first one should work because there are no tests until after all

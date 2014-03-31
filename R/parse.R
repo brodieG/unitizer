@@ -207,8 +207,8 @@ comments_assign <- function(expr, comment.dat) {
 #'   \item The only tokens that count as elements in an expression are
 #'     opening brackets and \code{`expr`}; this assumption is necessary
 #'     to allow mapping the parsed data back to the expression.  What
-#'     confuses the issue a bit is that operators (e.g. \code{`:`} or
-#'     \code{`%in%`}, etc.) show up at the top level, but you can actually
+#'     confuses the issue a bit is that operators show up at the top level, 
+#'     but you can actually
 #'     ignore them.  Also, parantheses should only be kept if they are the
 #'     topmost item, as otherwise they are part of a function call and
 #'     should be ignored.
@@ -227,7 +227,7 @@ comments_assign <- function(expr, comment.dat) {
 #' }
 #' Note that as a result of this trial and error interpretation of 
 #' \code{`\link{getParseData}`} it is likely that comment parsing is
-#' not 100% robust.
+#' not 100 percent robust.
 #' 
 #' Due to some reference weirdness going on when dealing directly with
 #' expressions had to change this function to accept text/file rather
@@ -236,7 +236,7 @@ comments_assign <- function(expr, comment.dat) {
 #' @seealso comments_assign, getParseData, parse
 #' @param expr.main an expression produced by \code{`\link{parse}`}
 #' @return an expression with comments retrieved from the parse attached
-#'   to the appropriate sub-expressions/calls as a "comment" \code{`\link{attr}`}
+#'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 
 parse_with_comments <- function(file, text=NULL) {
   if(!is.null(text)) {

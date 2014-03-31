@@ -11,7 +11,7 @@ parse_with_comments(file, text = NULL)
 \value{
 an expression with comments retrieved from the parse
 attached to the appropriate sub-expressions/calls as a
-"comment" \code{`\link{attr}`}
+\dQuote{comment} \code{`\link{attr}`}
 }
 \description{
 In order to implement this we had to make several
@@ -28,24 +28,23 @@ only tokens that count as elements in an expression are
 opening brackets and \code{`expr`}; this assumption is
 necessary to allow mapping the parsed data back to the
 expression.  What confuses the issue a bit is that
-operators (e.g. \code{`:`} or \code{`%in%`}, etc.) show up
-at the top level, but you can actually ignore them.  Also,
-parantheses should only be kept if they are the topmost
-item, as otherwise they are part of a function call and
-should be ignored.  \item Comments inside function formals
-are not assigned to the formals proper \item `exprlist`
-tokens are removed completely b/c as far as we can tell
-they are not part of the parsed object (but exist in parse
-data).  \item known issue: comments in formals after a line
-break are assigned to the body of the function as opposed
-to \code{`function`}, but this should not be apparent in
-common use.  \item you cannot attach comments to
-\code{`NULL`}, if you must use \code{`(NULL)`}.  This is a
-feature, as it proivdes a way to put comments in the file
-without them showing up during \code{`testor`} use. } Note
-that as a result of this trial and error interpretation of
-\code{`\link{getParseData}`} it is likely that comment
-parsing is not 100% robust.
+operators show up at the top level, but you can actually
+ignore them.  Also, parantheses should only be kept if they
+are the topmost item, as otherwise they are part of a
+function call and should be ignored.  \item Comments inside
+function formals are not assigned to the formals proper
+\item `exprlist` tokens are removed completely b/c as far
+as we can tell they are not part of the parsed object (but
+exist in parse data).  \item known issue: comments in
+formals after a line break are assigned to the body of the
+function as opposed to \code{`function`}, but this should
+not be apparent in common use.  \item you cannot attach
+comments to \code{`NULL`}, if you must use \code{`(NULL)`}.
+This is a feature, as it proivdes a way to put comments in
+the file without them showing up during \code{`testor`}
+use. } Note that as a result of this trial and error
+interpretation of \code{`\link{getParseData}`} it is likely
+that comment parsing is not 100 percent robust.
 }
 \details{
 Due to some reference weirdness going on when dealing

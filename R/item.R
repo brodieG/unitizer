@@ -78,7 +78,7 @@ setMethod("initialize", "testorItem", function(.Object, ...) {
   dots.all <- list(...)
   if(!("call" %in% names(dots.all))) stop("Argument `call` is required")
   .Object@call <- dots.all$call
-  if("env" %in% names(dots.all)) .Object@env <- dots.all$env else .Object@env <- parent.frame()
+  if("env" %in% names(dots.all)) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&
     any(vapply(funs.ignore, identical, logical(1L), eval(.Object@call[[1L]], .Object@env)))
