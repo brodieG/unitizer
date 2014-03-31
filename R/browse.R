@@ -230,7 +230,7 @@ browse_testor_items <- function(
   i <- 1L
 
   while(i <= items.len) {
-    cat(items.main[[i]]@comment, sep="\n")
+    if(length(items.main[[i]]@comment)) cat(items.main[[i]]@comment, sep="\n")
     cat(deparse_prompt(items.main[[i]]@call), sep="\n")
     if(is(show.fail, "testorItemsTestsErrors") && !items.main[[i]]@ignore) {
       cat(as.character(show.fail[[i]]), sep="\n")
