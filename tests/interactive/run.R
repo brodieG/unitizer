@@ -1,5 +1,5 @@
 library(testor)
-runtests("tests/interactive/testor/testor.tests.R")
-runtests("tests/interactive/testor/testor1.tests.R", "tests/interactive/testor/testor.tests.rds")
-runtests("tests/interactive/testor/testor2.tests.R", "tests/interactive/testor/testor.tests.rds")
+# runtests("tests/interactive/testor/testor.tests.R")
+# runtests("tests/interactive/testor/testor1.tests.R", "tests/interactive/testor/testor.tests.rds")
+# runtests("tests/interactive/testor/testor2.tests.R", "tests/interactive/testor/testor.tests.rds")
 runtests("tests/interactive/testor/testor3.tests.R", "tests/interactive/testor/testor.tests.rds")

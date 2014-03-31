@@ -42,11 +42,11 @@ setMethod("browse", c("testor"), valueClass="testor",
     for(i in unique(x@section.parent)) {  # Loop through parent sections
       sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
       if(
-        sum(vapply(x@sections[which(x@section.parent == i)], length, integer(1L))) == 0L | 
+        sum(vapply(x@sections[which(x@section.parent == i)], length, integer(1L))) == 0L || 
         ( 
-          length(which(x@tests.fail & sect.map)) == 0L & 
-          length(which(x@tests.new & sect.map)) == 0L & 
-          length(which(x@tests.error & sect.map)) == 0L
+          length(which(x@tests.fail & sect.map & !ignored(x@items.new))) == 0L && 
+          length(which(x@tests.new & sect.map & !ignored(x@items.new))) == 0L && 
+          length(which(x@tests.error & sect.map & !ignored(x@items.new))) == 0L
         )
       ) {
          next

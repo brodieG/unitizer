@@ -249,6 +249,7 @@ parse_with_comments <- function(file, text=NULL) {
     stop("Failed attempting to parse inputs; see previous errors for details")
   expr <- comm_reset(expr)
   parse.dat <- prsdat_fix_exprlist(getParseData(expr))
+  if(!nrow(parse.dat)) return(expr)
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
   if(!identical(names(parse.dat), c("line1", "col1", "line2", "col2", "id", "parent", "token",  "terminal", "text")))
