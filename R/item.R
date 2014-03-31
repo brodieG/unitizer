@@ -78,10 +78,16 @@ setMethod("initialize", "testorItem", function(.Object, ...) {
   dots.all <- list(...)
   if(!("call" %in% names(dots.all))) stop("Argument `call` is required")
   .Object@call <- dots.all$call
-  if("env" %in% names(dots.all)) .Object@env <- dots.all$env
+  if("env" %in% names(dots.all)) .Object@env <- dots.all$env else .Object@env <- parent.frame()
+  if(
+    is.call(.Object@call) &&
+    any(vapply(funs.ignore, identical, logical(1L), eval(.Object@call[[1L]], .Object@env)))
+  ) {
+    .Object@ignore <- TRUE
+  }
   if("comment" %in% names(dots.all)) .Object@comment <- dots.all$comment
   dots <- dots.all[!(names(dots.all) %in% slotNames(.Object))]
-  .Object@data <- do.call("new", c(list("testorItemData"), dots))
+  .Object@data <- do.call("new", c(list("testorItemData"), dots), quote=TRUE)
   .Object
 } )
 #' Collection of \code{`\link{testorItem-class}`} Object
@@ -187,6 +193,7 @@ setGeneric("ignored", function(x, ...) standardGeneric("ignored"))
 #' time of this writing, top level assignments are included in this group.
 
 setMethod("ignored", "testorItems", function(x, ...) vapply(as.list(x), function(y) y@ignore, logical(1L)))
+setMethod("ignored", "testorItem", function(x, ...) x@ignore)
   
 # - Multi Object Methods -------------------------------------------------------
 
@@ -196,12 +203,6 @@ setMethod("ignored", "testorItems", function(x, ...) vapply(as.list(x), function
 setMethod("+", c("testorItems", "testorItemOrNULL"), 
   function(e1, e2) {
     if(is.null(e2)) return(e1)
-    if(
-      is.call(e2@call) &&
-      any(vapply(funs.ignore, identical, logical(1L), eval(e2@call[[1L]], e2@env)))
-    ) {
-      e2@ignore <- TRUE
-    }
     e1 <- append(e1, list(e2))
     e1
 } )

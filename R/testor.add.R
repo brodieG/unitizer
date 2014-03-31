@@ -87,7 +87,7 @@ setMethod("+", c("testor", "testorTestsOrExpression"), valueClass="testor",
         next
       }
       e1 <- e1 + item  # store evaluated test and compare it to reference one
-      test.env <- new.env(parent=test.env)
+      if(!ignored(item)) test.env <- new.env(parent=test.env)  # ignored items share environment with subsequent items
       i <- i + 1L
     }
     e1

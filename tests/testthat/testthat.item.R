@@ -138,7 +138,7 @@ local( {
     )
     expect_equal(info="environment object status",
       i.ls.bind$status,
-      c("*", "", "*", "*", "", "", "", "", "", "", "", "", "'", "**",  "*", "*", "*", "", "", "", "", "", "", "'", "", "**", "**", "*",  "*", "*", "", "'", "", "**", "**", "*", "*", "*")
+      c("", "", "*", "*", "", "", "", "", "", "", "", "", "'", "**", "*", "", "", "", "", "", "", "", "", "'", "", "**", "**", "*", "*", "*", "", "'", "", "**", "**", "*", "*", "*")
     )
     expect_equal(unique(do.call(rbind, i.ls[!which.ref])$status), "", info="new items should all have normal status")
   } )
@@ -156,7 +156,7 @@ local( {
     assign(".ref", my.testor5@items.ref[[my.testor5@items.new.map[[3]]]]@data@value, env.val)
     expect_equal(
       evalq(testor:::testor_ls(), env.eval),
-      structure(list(new = c("a", "b"), ref = c("a*", "b"), tests = c(".new",  ".ref")), .Names = c("new", "ref", "tests"), class = "testor_ls", mods = "*")
+      structure(list(new = c("a", "b"), ref = c("a", "b"), tests = c(".new", ".ref")), .Names = c("new", "ref", "tests"), class = "testor_ls", mods = character(0))
     )
     env.obj <- new.env(parent=my.testor5@items.new[[9]]@env)
     env.val <- new.env(parent=env.obj)
@@ -177,5 +177,27 @@ local( {
     expect_error(new("testorItemTestsFuns", output=all.equal, value=function(x, y, z) TRUE), "invalid class .* object")
     expect_error(new("testorItemTestsFuns", output=all.equal, value=function(x, y=1, z=1) TRUE), "invalid class .* object")
     expect_error(new("testorItemTestsFuns", cabbage=all.equal), "Can't initialize invalid slots .*cabbage")
+  } )
+  new.exps3 <- expression(a <- function() b(), b <- function() TRUE, a())
+  my.testor6 <- new("testor", id=3, zero.env=new.env())
+  new.exps4 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
+  my.testor7 <- new("testor", id=4, zero.env=new.env())
+  x <- my.testor7 + new.exps4
+  
+  test_that("Misc", {
+    fun <- function() quote(stop("This error should not be thrown"))
+    expect_true(info="Make sure tests that return calls work",
+      is(new("testorItem", value=fun(), call=quote(fun())), "testorItem")
+    )
+    # Nested environment hand waving can break down under certain circumstances
+    # this first one should work because there are no tests until after all
+    # the pieces necessary to run `a()` are defined:
+    
+    expect_true(info="This is where `testor` nested environments fail",
+      is(my.testor6 + new.exps3, "testor")
+    )
+    # this should break because the NULL forces `b` to be stored in a different
+    # environment to `a`.    
+    expect_equal(x@items.new[[4]]@data@message, "Error in a() : could not find function \"b\"")
   } )
 } )
