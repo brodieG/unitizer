@@ -1,19 +1,26 @@
 \name{top_level_parse_parents}
 \alias{top_level_parse_parents}
-\title{Searches Through Generation Until it Finds Top Level}
+\title{Searches Through Generations Until it Finds Top Level}
 \usage{
-top_level_parse_parents(ids, par.ids)
+top_level_parse_parents(ids, par.ids, top.level = 0L)
 }
 \arguments{
   \item{ids}{integer the ids to look through}
 
   \item{par.ids}{integer the parenthood relationships}
+
+  \item{top.level}{the id of the top level}
 }
 \value{
 integer the top level parent ids for \code{`ids`}
 }
 \description{
 Returns the id of the ancestor that is just before
-\code{`id==0`}
+\code{`top.level`}, or \code{`top.level`} if the parent
+already is \code{`top.level`}. The idea is to reduce the
+set of parents for all elements to just the top level
+parents as this allows us to split the parse data into
+sections, including the calls that were direct children of
+top level, as well as the children to those sections.
 }
 

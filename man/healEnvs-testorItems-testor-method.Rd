@@ -15,7 +15,7 @@
 \code{`testorItems-class`}
 }
 \description{
-This is necessary because when we a let the user pick and
+This is necessary because when we let the user pick and
 chose which tests to store and which ones to reject, there
 may no longer be a clear ancestry chain within the
 remaining tests.

@@ -1,0 +1,20 @@
+\name{prsdat_reduce}
+\alias{prsdat_reduce}
+\alias{prsdat_remove_fun}
+\title{Reduce Parsed Data to Just the Things That should Exist In Expression}
+\usage{
+prsdat_reduce(parse.dat)
+}
+\arguments{
+  \item{parse.dat}{top level parse data}
+}
+\value{
+parse data reduced to key elements, ordered so that infix
+operators show up first instead of in middle
+}
+\description{
+additionally, special handling due to function and formals
+not getting wrapped in their own `expr` (why the FUCK!!!!)
+}
+\keyword{internal}
+

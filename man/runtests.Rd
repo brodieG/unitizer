@@ -59,6 +59,57 @@ nothing preventing you from using:
   details.
 }
 
+\section{What Constitutes at Test}{
+  Any expression present in the test file with the
+  exception of assignment operations and a few special
+  cases are tests.  So, for example in: \code{ a <- 5 b <-
+  6 a + b } Only the third line is considered a test.  The
+  other two lines will be evaluated but they will not be
+  treated as tests.  If you wish for an assignment
+  expression to be treated as test you can just wrap it in
+  parentheses: \code{ (a <- 5) # this is considered a test
+  b <- 6 # this is not a / b # this is considered a test }
+}
+
+\section{Test Evaluation}{
+  Very roughly speaking, tests are evaluated as they would
+  be if you source the test file from the command line.
+  There is however one major difference: each test is
+  evaluated in its own environment.  The illusion works
+  because each new test environment has for parent the
+  lexically preceding test's environment, so when a test is
+  evaluated, it has access to all previously defined
+  objects because R descends through all parent
+  environments looking for an object if it isn't present in
+  the evaluation environment.
+
+  The illusion, isn't perfect though.  Consider: \code{ a
+  <- function() b() b <- function() TRUE a() } In this
+  case, when we evaluate `a()` we must step back two
+  environments to find `a`, but that's okay.  The problem
+  is that once inside `a`, we must now evaluate `b()`, but
+  `b` is defined in a child environment, not a parent
+  environment so R's object lookup fails.
+
+  Now, the above example actually works because as noted in
+  "What Constitutes a Test", environments are only defined
+  for tests, an neither the `a` or `b` assignments are
+  tests, so both `a` and `b` are assigned to the
+  environment of the `a()` call.  However, this really
+  breaks: \code{ a <- function() b() NULL b <- function()
+  TRUE a() } Since NULL is a valid test, `a` is assigned to
+  the NULL test environment, and `b` is assigned to the
+  `a()` call test environment, and the illusion is
+  shattered.
+
+  If you are getting weird "object not found" errors when
+  you run your tests, but the same code doesn't generate
+  those errors when run directly in the command line, the
+  illusion could be failing you.  Make sure that you assign
+  all the variables necessary right ahead of the test so
+  they will all get stored in the same environment.
+}
+
 \section{Result Capture}{
   In order to properly capture output, this function must
   mess with streams and options.  In particular, it will do
@@ -109,6 +160,19 @@ nothing preventing you from using:
   not seem to be a way around this since we have to use
   \code{`\link{withCallingHandlers}`} so that test
   statements after non-aborting conditions are run.
+}
+
+\section{Browsing}{
+  \code{`testor`} provides an interactive environment to
+  browse the results of the tests.  This environment is
+  designed to closely mimic the R command line, but it is
+  not the R command line.  The most obvious difference is
+  that the prompt is different, but there are more subtle
+  differences you need to be aware of.
+
+  You will be prompted after each test to accept the test,
+  reject it, or do something else.  At the promopt, you can
+  evaluate expressions like you
 }
 \seealso{
 \code{`\link{get_store}`}
