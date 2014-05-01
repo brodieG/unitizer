@@ -150,8 +150,9 @@ setMethod("registerItem", c("testor", "testorItem"),
     if(length(e1@items.new.map) > 0L) {
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
       items.already.matched <- Filter(Negate(is.na), e1@items.new.map)
-      item.map <- match(call.dep, e1@items.ref.calls.deparse[-items.already.matched]) 
-      e1@items.new.map <- c(e1@items.new.map, item.map <- idx.vec[-items.already.matched][item.map])      
+      items.already.matched.vec <- if(!length(items.already.matched)) TRUE else -items.already.matched
+      item.map <- match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec]) 
+      e1@items.new.map <- c(e1@items.new.map, item.map <- idx.vec[items.already.matched.vec][item.map])      
     } else {
       e1@items.new.map <- c(e1@items.new.map, item.map <- match(call.dep, e1@items.ref.calls.deparse))
     }

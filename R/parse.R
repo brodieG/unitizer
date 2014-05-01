@@ -201,7 +201,8 @@ comments_assign <- function(expr, comment.dat) {
 #'     for all intents and purposes
 #'   \item All content tokens (i.e. anything other than brackets, commas,
 #'     etc.) are contained inside an \code{`expr`}, even if the only thing the
-#'     `expr` contains is a simple constant.
+#'     `expr` contains is a simple constant (note some exceptions exist to
+#'     this (search for FUCK in the source).
 #'   \item Comments are not content tokens and can exist on the top level
 #'     without being wrapped in an \code{`expr`}
 #'   \item The only tokens that count as elements in an expression are
@@ -480,6 +481,9 @@ prsdat_fix_exprlist <- function(parse.dat) {
 
 #' Utility Function to Extract Comments From Expression
 #' 
+#' Note that when dealing with expressions the very first item will typically
+#' be NULL to allow for logic that works with nested structures
+#' 
 #' These are the comments attached by \code{`\link{parse_data_assign}`}
 
 comm_extract <- function(x) {
@@ -512,7 +516,7 @@ comm_reset <- function(x) {
 #'      [,1]           [,2]             [,3]                [,4]            
 #' [1,] "'\\n'"        "cr"             "ifcond"            "sub"           
 #' [2,] "'%'"          "END_OF_INPUT"   "INCOMPLETE_STRING" "sublist"       
-#' [3,] "$accept"      "equal_assign"   "LBB"               "SYMBOL_PACKAGE"
+#' [3,] "$accept"      "equal_assign"   "LBB"               
 #' [4,] "$end"         "error"          "LINE_DIRECTIVE"    "TILDE"         
 #' [5,] "$undefined"   "ERROR"          "LOW"               "UMINUS"        
 #' [6,] "COLON_ASSIGN" "expr_or_assign" "NOT"               "UNOT"          
@@ -537,7 +541,7 @@ tk.lst <- list(
   ),  
   non.exps.extra=c(                                              # these can also get comments attached, but shouldn't be at the end of a parse data block
     "FUNCTION", "FOR", 
-    "IF", "REPEAT", "WHILE"
+    "IF", "REPEAT", "WHILE", "SYMBOL_PACKAGE"                    # not 100% sure SYMBOL_PACKAGE belongs here; it can't possibly have comments right after it on the same line
   ),  
   ops=c(                                                                             
     paste0(
@@ -548,7 +552,7 @@ tk.lst <- list(
     "SPECIAL", "GT", "GE", "LT", "LE", "EQ", "NE", "AND", "AND2",
     "OR", "OR2", "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
   ),
-  ops.other=c("NS_GET", "NS_GET_INT"),                            # note these should never show up at top level
+  ops.other=c("NS_GET", "NS_GET_INT"),                           # note these should never show up at top level
   unassign=c(                                                    # these cannot have comments attached to them 
     "EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS", 
     "IN", "forcond", "ELSE"

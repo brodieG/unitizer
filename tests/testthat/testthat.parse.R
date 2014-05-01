@@ -109,5 +109,14 @@ local( {
       list(c("# Need to add tests:", "# - with complex objects? (did I mean in the definition? Or the call??)"), "# These should be identical to match.call()"),
       lapply(test.comp[4:5], `[[`, 1)
     )
+    expect_equal(info="Added SYMBOL_PACKAGE token",
+      list(NULL, list(c("# a comment before", "#a comment after"))),
+      testor:::comm_extract(testor:::parse_with_comments(text="# a comment before\ntestor:::browse()  #a comment after"))
+    )
+    expect_equal(info="Added SYMBOL_PACKAGE token v2",
+      list(NULL, list(c("# a comment before", "#a comment after"))),
+      testor:::comm_extract(testor:::parse_with_comments(text="# a comment before\ntestor::browse()  #a comment after"))
+    )
+    
   } )
 } )

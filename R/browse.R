@@ -203,9 +203,6 @@ browse_testor_items <- function(
   
   # Start cycle
 
-  print(H3(title))
-  max.out <- 15L
-  max.err <- 3L
   screen_out <- function(txt, max.len=getOption("testor.test.out.lines"), file=stdout()) {
     if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
       stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
@@ -215,10 +212,13 @@ browse_testor_items <- function(
         cat("... truncated", out.len - max.len[[2]], "lines, review object directly if you wish to see all output\n", file=stderr())
   } } }
   new.opts <- append(valid.opts.def, c(U="[U]ndo"), after=2L)
-  cat(
-    detail, " For each item, choose whether to ", tolower(prompt), 
-    " (", paste0(new.opts, collapse=", "), "):\n\n", sep=""
-  )
+  items.len <- length(items.main)
+  if(!(all.ignored <- all(ignored(items.main)))) {
+    print(H3(title))
+    cat(
+      detail, " For each item, choose whether to ", tolower(prompt), 
+      " (", paste0(new.opts, collapse=", "), "):\n\n", sep=""
+  ) }
   action <- NULL
   item_select <- function(action, idx) {   # Translate Y/N to an action
     switch(actions[[action]],                  
@@ -226,18 +226,18 @@ browse_testor_items <- function(
       B=items.ref[idx],
       C=NULL
   ) }
-  items.len <- length(items.main)
   i <- 1L
 
   while(i <= items.len) {
-    if(length(items.main[[i]]@comment)) cat(items.main[[i]]@comment, sep="\n")
-    cat(deparse_prompt(items.main[[i]]@call), sep="\n")
-    if(is(show.fail, "testorItemsTestsErrors") && !items.main[[i]]@ignore) {
-      cat(as.character(show.fail[[i]]), sep="\n")
-    } 
-    if(show.msg) screen_out(items.main[[i]]@data@message, max.len=getOption("testor.test.msg.lines"), stderr())
-    if(show.out) screen_out(items.main[[i]]@data@output)
-    
+    if(!all.ignored) {
+      if(length(items.main[[i]]@comment)) cat(items.main[[i]]@comment, sep="\n")
+      cat(deparse_prompt(items.main[[i]]@call), sep="\n")
+      if(is(show.fail, "testorItemsTestsErrors") && !items.main[[i]]@ignore) {
+        cat(as.character(show.fail[[i]]), sep="\n")
+      } 
+      if(show.msg) screen_out(items.main[[i]]@data@message, max.len=getOption("testor.test.msg.lines"), stderr())
+      if(show.out) screen_out(items.main[[i]]@data@output)      
+    }
     # Default to "Y" action for ignored items; this means new items and 
     # failed/error tests will get replaced with new value, whereas reference
     # items will always be omitted.  The latter might seem strange, but
