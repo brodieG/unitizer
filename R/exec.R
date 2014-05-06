@@ -53,14 +53,15 @@ setMethod("exec", "ANY", valueClass="testorItem",
 
     withCallingHandlers(
       withRestarts(
-        value <- withVisible(eval(x.to.eval, test.env)),
+        {
+          value <- withVisible(eval(x.to.eval, test.env))
+          if(value$visible) {
+            if(isS4(value$value)) show(value$value) else print(value$value)
+        } },
         abort=function() aborted <<- TRUE
       ),
       condition=function(cond) {conditions[[length(conditions) + 1L]] <<- cond}
     )
-    if(value$visible) {
-      if(isS4(value$value)) show(value$value) else print(value$value)
-    }
     on.exit(NULL)
     options(warn=warn.opt)
     options(error=err.opt)
