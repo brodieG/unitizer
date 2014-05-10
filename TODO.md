@@ -51,6 +51,12 @@ Self evident
   that was used in the evaluation of the reference test; need to think about
   now to handle this (throw warning whenever such objects are accessed?)
 
+## Environments
+
+* Should run in an empty environment by default, with option to run with globalenv
+  as parent?  Had some confusing issues crop up as a result of a variable getting
+  picked up from globalenv
+
 ## Internal
 
 * There is heavy usage of `parent.env<-`, what do we do about the note in docs
@@ -81,6 +87,8 @@ Self evident
 ## Misc
 
 * should run faster
+* provide feedback on what testor is doing while it is running tests (i.e.
+  fancy progress bar)
 * backup of the testor .rds file should be created
 * provide facilities to upate testor id when testors are moved, though
   typically the testor should always be in the same relative location

@@ -137,8 +137,10 @@ setMethod("browse", c("testor"), valueClass="testor",
 #   list (the original store) and "C" means return NULL.  The first value
 #   corresponds to the action on user typing `Y`, the second the action on 
 #   user typing `N`.
-# @param show.msg logical whether to show stderr produced during evaluation
-# @param show.out logical whether to show stdout produced during evaluation
+# @param show.msg logical whether to automatically show stderr produced during 
+#   evaluation
+# @param show.out logical whether to automatically show stdout produced during 
+#   evaluation
 # @param show.fail FALSE, or a testorItemsTestsErrors-class object if you want
 #   to show the details of failure
 # @param items.new the new testor_items
@@ -235,7 +237,15 @@ browse_testor_items <- function(
       if(is(show.fail, "testorItemsTestsErrors") && !items.main[[i]]@ignore) {
         cat(as.character(show.fail[[i]]), sep="\n")
       } 
-      if(show.msg) screen_out(items.main[[i]]@data@message, max.len=getOption("testor.test.msg.lines"), stderr())
+      # If there are conditions that showed up in main that are not in reference
+      # show the message
+
+      if(!is.null(items.new) && !is.null(items.ref) && 
+        !isTRUE(all.equal(items.new[[i]]@data@conditions, items.ref[[i]]@data@conditions)) ||
+        show.msg
+      ) {
+        screen_out(items.main[[i]]@data@message, max.len=getOption("testor.test.msg.lines"), stderr())
+      }
       if(show.out) screen_out(items.main[[i]]@data@output)      
     }
     # Default to "Y" action for ignored items; this means new items and 
