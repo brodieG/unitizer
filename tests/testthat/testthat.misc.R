@@ -46,7 +46,6 @@ test_that("strtrunc", {
   expect_error(testor:::strtrunc(5, "hollywood is for starlets"))
 } )
 test_that("environment name tools", {
-
   env1 <- new.env(parent=globalenv())
   env2 <- new.env(parent=env1)
   env3 <- new.env(parent=env2)
@@ -58,4 +57,16 @@ test_that("environment name tools", {
     identical(length(envanc), 5L) && 
     identical(envanc[[5L]], "R_GlobalEnv")
   )
+} )
+test_that("deparse peek", {
+  expr1 <- quote(1 + 1 + 3)
+  expr2 <- quote(
+    for(i in 1:100) {
+      loop.val <- sample(1:1000, 200, replace=TRUE)
+      loop.val <- loop.val * 200 / 3000 * mean(runif(20000))
+  } )
+  testor:::deparse_peek(expr1, 20L)
+  testor:::deparse_peek(expr1, 3L)
+  testor:::deparse_peek(expr1, 5L)
+  testor:::deparse_peek(expr2, 40L)
 } )

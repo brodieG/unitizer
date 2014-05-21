@@ -98,7 +98,8 @@ setClass("testorItems", contains="testorList",
     base.env="environment"    # should be enclosure of first item
   ),  
   validity=function(object) {
-    if(!all(vapply(object@.items, is, logical(1L), "testorItem"))) return("slot `items` may only contain objects \"testorItem\"")
+    if(!all(vapply(object@.items, is, logical(1L), "testorItem"))) 
+      return("slot `items` may only contain objects \"testorItem\"")
     TRUE
 } )
 setClassUnion("testorItemsOrNULL", c("testorItems", "NULL"))

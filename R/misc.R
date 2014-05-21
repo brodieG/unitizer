@@ -15,25 +15,22 @@ deparse_prompt <- function(expr) {
   prompt.vec <- c(prompt, rep(continue, length(expr.deparsed) - 1L))
   paste0(prompt.vec, expr.deparsed)
 }
+#' Deparse, but only provide first X characters
+#' 
+#' @keywords internal
+#' @param expr a language object
+#' @param len int a one length integer noting how many characters we want 
 
-# deparse_peek <- function(expr, len) {
-  
-#   flatten <- function(x) {
-#     if(is.call(x)) {
-#       if(identical(x[[1]], quote({))) {
-#         return(lapply(x[[-1L]], flatten))
-#       } else if (length(tail(x, 1L)) > 1L && identical(tail(x, 1L)[[1L]], quote({) {
-#         return(lapply(x[[-1L]], flatten))
-#       }
-#     } 
-#   }
-
-#   expr.deparsed <- deparse(expr, width.cutoff=(getOption("width") - pad - 3L))
-#   if(length(expr.deparsed) < 1L) {
-#     stop("Logic Error: don't know what to do with zero length expr")
-#   }
-#   if(length(expr.deparsed) == 1L) expr.deparsed else paste0(expr.deparsed[1L], "...")
-# }
+deparse_peek <- function(expr, len) {
+  if(!is.integer(len) || length(len) != 1L || len < 4L)
+    stop("Argument `len` must be an integer greater than zero and length four")
+  chr <- paste0(sub("\n", " ", deparse(expr), collapse="")
+  if(nchar(chr) > len) {
+    paste0(substr(chr, 1L, len), "...")
+  } else {
+    chr
+  }
+}
 #' Print Only First X characters
 #' 
 #' @keywords internal
@@ -340,4 +337,17 @@ env_name <- function(env) {
 #' @keywords internal
 
 funs.ignore <- list(base::`<-`, base::library)
+
+#' Display helper function
+#' 
+#' @keywords internal
+
+screen_out <- function(txt, max.len=getOption("testor.test.out.lines"), file=stdout()) {
+  if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
+    stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
+  if(out.len <- length(txt)) {
+    cat(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], sep="\n", file=file)
+    if(out.len > max.len[[1]]) {
+      cat("... truncated", out.len - max.len[[2]], "lines, review object directly if you wish to see all output\n", file=stderr())
+} } }
 

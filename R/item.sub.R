@@ -94,6 +94,8 @@ setClass(
     if(!all(tests)) return("\"testorItemsTestsErrors\" may only contain objects of class \"testorItemTestsErrors\"")
     TRUE
 } )
+setClassUnion("testorItemsTestsErrorsOrLogical", c("testorItemsTestsErrors", "logical"))
+
 #' Convert An Error Into Character
 #' @keywords internal
 
@@ -119,6 +121,8 @@ setMethod("as.character", "testorItemTestsErrors",
     } }
     chr
 } )
+
+
 #' Store Functions for New vs. Reference Test Comparisons
 #' 
 #' \code{`testorItemTestsFuns`} contains the functions used to compare the results

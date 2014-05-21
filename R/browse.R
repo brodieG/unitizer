@@ -1,4 +1,6 @@
 #' @include testor.R
+#' @include misc.R
+#' @include browse.struct.R
 
 setGeneric("browse", function(x, ...) standardGeneric("browse"))
 valid.opts.def <- c(Y="[Y]es", N="[N]o", Q="[Q]uit", H="[H]elp")
@@ -13,7 +15,7 @@ valid.opts.def <- c(Y="[Y]es", N="[N]o", Q="[Q]uit", H="[H]elp")
 #' }
 #' Because a lot of the logic for browsing these three types of situations is
 #' shared, that logic has been split off into \code{`\link{browse_testor_items}`}.
-#' The key is that that funciton will return the items that are supposed to be
+#' The key is that that function will return the items that are supposed to be
 #' stored in the testor.  These items will either be new or reference ones
 #' based on user decisions.
 #' 
@@ -33,89 +35,23 @@ setMethod("browse", c("testor"), valueClass="testor",
     savehistory()
     on.exit(loadhistory())
 
-    # The following is a translation layer between the old way of doing things,
-    # and the new S4 way; at some point this should be rationalized but this
-    # was a way to get it working faster.
+    testor.browse <- browsePrep(x)   # Group tests by section and outcome for review
 
-    items.1 <- items.2 <- items.3 <- items.4 <- new("testorItems")
-    mult.sects <- sum(vapply(x@sections, function(y) if(length(y)) 1L else 0L, integer(1L))) > 1L
-    for(i in unique(x@section.parent)) {  # Loop through parent sections
-      sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
-      if(
-        sum(vapply(x@sections[which(x@section.parent == i)], length, integer(1L))) == 0L || 
-        ( 
-          length(which(x@tests.fail & sect.map & !ignored(x@items.new))) == 0L && 
-          length(which(x@tests.new & sect.map & !ignored(x@items.new))) == 0L && 
-          length(which(x@tests.error & sect.map & !ignored(x@items.new))) == 0L
-        )
-      ) {
-         next
-      }
-      if(mult.sects) {
-        print(H2(x@sections[[i]]@title)) 
-      }
-      items.1 <- items.1 + browse_testor_items(
-        title=paste0("Review ", length(which(x@tests.fail & sect.map & !ignored(x@items.new))), " Failed Tests"), 
-        detail="Reference test does not match new test from test script.",
-        prompt="Overwrite item in store with new value", 
-        actions=c(Y="A", N="B"), items.new=x@items.new[x@tests.fail & sect.map],
-        show.fail=x@tests.errorDetails[x@tests.fail & sect.map], 
-        items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]]
-      )
-      items.2 <- items.2 + browse_testor_items(
-        title=paste0("Review ", length(which(x@tests.new & sect.map & !ignored(x@items.new))), " New Calls"), 
-        detail="Test script contains tests not present in testor.",
-        prompt="Add new item to store", actions=c(Y="A", N="C"), 
-        show.msg=TRUE, show.out=TRUE, items.new=x@items.new[x@tests.new & sect.map]
-      )
-      items.4 <- items.4 + browse_testor_items(
-        title=paste0("Review ", length(which(x@tests.error & sect.map & !ignored(x@items.new))), " Corrupted Tests"), 
-        detail=paste0(
-          "Reference tests cannot be compared to new tests because errors occurred ",
-          "while attempting comparison. Please review the error and contemplate using ",
-          "a different comparison function with `testor_sect`."
-        ),
-        prompt="Overwrite item in store with new value", 
-        actions=c(Y="A", N="B"), items.new=x@items.new[x@tests.error & sect.map],
-        show.fail=x@tests.errorDetails[x@tests.error & sect.map], 
-        items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]]
-      )
-    }
-    # The following allows review of the deleted items
-    
-    if(removed <- length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {
-      print(H2("Missing Tests"))
-      cat(
-        "The following ", removed, " tests are in the reference testor but not ",
-        "in the test file:\n", sep=""
-      )
-      lapply(as.list(x@items.ref)[is.na(x@items.ref.map) & !ignored(x@items.ref)], function(y) cat(deparse_prompt(y@call), sep="\n"))
-      cat(text <- "Review tests prior to removal", "([Y]es, [N]o, [Q]uit, [H]elp)?\n")
-      help <- paste0(
-        "If you press N, tests no longer present in test file will be discarded; if you press Y ",
-        "you will have an opportunity to review tests individually to see if you want to keep them ",
-        "or not."
-      )
-      if(identical(testor_prompt(text, new.env(parent=x@base.env), help), "Y")) {
-        items.3 <- browse_testor_items(
-          title="Review Calls to Remove", detail="The following test exists in testor but not in the new test script.", 
-          prompt="Remove item from store", actions=c(Y="C", N="B"), 
-          items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)]
-    ) } }
-    x@changes@removed <- c(
-      length(which(is.na(x@items.ref.map) & !ignored(x@items.ref))) - length(!ignored(items.3)), 
-      length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))
+    while(!done(testor.browse <- reviewNext(testor.browse))) NULL # Interactively review all tests
+ 
+    # Get summary of changes
+
+    keep <- !testor.browse@mapping@ignored
+    changes <- split(
+      testor.browse@mapping@review.val[keep], 
+      testor.browse@mapping@review.type[keep]
     )
-    x@changes@failed <- c(
-      length(which(itemsType(items.1) == "new" & !ignored(items.1))), 
-      length(which(x@tests.status == "Fail" & !ignored(x@items.new)))
-    )
-    x@changes@new <- c(length(which(!ignored(items.2))), length(which(x@tests.new & !ignored(x@items.new))))
-    x@changes@error <- c(
-      length(which(itemsType(items.4) == "new" & !ignored(items.4))), 
-      length(which(x@tests.status == "Error" & !ignored(x@items.new)))
-    )
-    items.ref <- x@items.new[x@tests.status == "Pass"] + items.1 + items.2 + items.3 + items.4
+    change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
+    for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
+
+    items.user <- processInput(testor.browse)
+
+    items.ref <- x@items.new[x@tests.status == "Pass"] + items.user
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
     zero.env <- new.env(parent=parent.env(x@zero.env))
@@ -123,210 +59,155 @@ setMethod("browse", c("testor"), valueClass="testor",
     testor + items.ref
 } )
 
-# Manage The Interactive Portion of testor
-# 
-# Rationalizes the code to vet failed tests, added tests, and removed tests.
-# Based on user input return a list of the testor_items that will eventually
-# be stored.
-# 
-# @keywords internal
-# @param title character 1 length current test types (failed, added, removed)
-# @param prompt character 1 length what to prompt the user to do
-# @param actions character 2 length containing c("A", "B", "C"), where "A"
-#   means return value from new item list, "B" return value from old item
-#   list (the original store) and "C" means return NULL.  The first value
-#   corresponds to the action on user typing `Y`, the second the action on 
-#   user typing `N`.
-# @param show.msg logical whether to automatically show stderr produced during 
-#   evaluation
-# @param show.out logical whether to automatically show stdout produced during 
-#   evaluation
-# @param show.fail FALSE, or a testorItemsTestsErrors-class object if you want
-#   to show the details of failure
-# @param items.new the new testor_items
-# @param items.ref the reference items
-# @return a testor_items list
+#' Bring up Review of Next test
+#' 
+#' Generally we will go from one test to the next, where the next test is 
+#' determined by the value of \code{`x@last.id`}.  This means it is possible
+#' to affect the browsing order by modifying \code{`x@last.id`}.
+#' 
+#' This method is in charge of displaying all the output for review.
+#' 
+#' @keywords internal
 
-browse_testor_items <- function(
-  title, prompt, detail, actions, show.out=FALSE, show.msg=FALSE, 
-  show.fail=FALSE, items.new=NULL, items.ref=NULL
-) {
-  if(!is.null(items.ref) & !is.null(items.new) & (!identical(length(items.ref), length(items.new)))) {
-    stop("Ref list must have the same number of items as new list, or be NULL")
-  } else if (
-    !is.character(actions) | !all(actions %in% c("A", "B", "C")) | length(actions) != length(unique(actions)) | 
-    is.null(names(actions)) | !all(names(actions) %in% c("Y", "N"))
-  ) {
-    stop("`actions` input incorrect")
-  } else if (!is(items.new, "testorItemsOrNULL")) {
-    stop("`items.new` must be \"testorItems\" or NULL")
-  } else if (!is(items.ref, "testorItemsOrNULL")) {
-    stop("`items.ref` must be \"testor_items\" or NULL")
-  } else if (!is.logical(show.out) || length(show.out) != 1L) {
-    stop("Argument `show.out` must be a 1 length logical")
-  } else if (!is.logical(show.msg) || length(show.msg) != 1L) {
-    stop("Argument `show.msg` must be a 1 length logical")
-  } else if (
-    !is(show.fail, "testorItemsTestsErrors") && 
-    !(is.logical(show.fail) && identical(length(show.fail), 1L))
-  ) {
-    stop("Argument `show.fail` must be a 1 length logical or a \"testorItemsTestsErrors\" object")
-  } else if (!is.character(prompt) || length(prompt) != 1L) {
-    stop("Argument `prompt` must be a 1 length character")
-  } else if (!is.character(detail) || length(detail) != 1L) {
-    stop("Argument `prompt` must be a 1 length character")
-  }
-  # set up local history
+setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
+setMethod("reviewNext", c("testorBrowse"), 
+  function(x, ...) {
+    curr.id <- x@last.id + 1L
+    x@last.id <- curr.id
+    new.opts <- append(valid.opts.def, c(U="[U]ndo"), after=2L)
 
-  hist.file <- tempfile()
-  hist.con <- file(hist.file, "at")
-  cat("## <testor> (original history will be restored on exit)\n", file=hist.con)
-  loadhistory(showConnections()[as.character(hist.con), "description"])
-  on.exit({close(hist.con); file.remove(hist.file);})
+    last.reviewed.sec <- x@mapping[x@mapping$item.id == x@last.reviewed, "sec.id"]
+    last.reviewed.sub.sec <- x@mapping[x@mapping$item.id == x@last.reviewed, "sub.sec.id"]
+    curr.sec <- x@mapping[x@mapping$item.id == curr.id, "sec.id"]
+    curr.sub.sec <- x@mapping[x@mapping$item.id == curr.id, "sub.sec.id"]
+    curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
+    id.rel <- x@mapping[x@mapping$item.id == curr.id, "item.id.rel"]
 
-  # Browsing environments; note that the only time there ever is
-  # a secondary environment is when both new and ref items are defined
-  # and in that case, the secondary environment is always the reference
-  # environment
-
-  browse.eval.env <- new.env(parent=globalenv())
-  if(!is.null(items.new)) {
-    items.main <- items.new
-  } else if (!is.null(items.ref)) {
-    items.main <- items.ref
-  } else {
-    stop("Logic Error; contact package maintainer.")
-  }
-  base.env.pri <- parent.env(items.main@base.env)
-  # Which items are we going to cycle through
-
-  item.list <- new("testorItems", base.env=items.main@base.env)
-  if(length(items.main) < 1L) return(item.list)
-  
-  # Start cycle
-
-  screen_out <- function(txt, max.len=getOption("testor.test.out.lines"), file=stdout()) {
-    if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
-      stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
-    if(out.len <- length(txt)) {
-      cat(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], sep="\n", file=file)
-      if(out.len > max.len[[1]]) {
-        cat("... truncated", out.len - max.len[[2]], "lines, review object directly if you wish to see all output\n", file=stderr())
-  } } }
-  new.opts <- append(valid.opts.def, c(U="[U]ndo"), after=2L)
-  items.len <- length(items.main)
-  if(!(all.ignored <- all(ignored(items.main)))) {
-    print(H3(title))
-    cat(
-      detail, " For each item, choose whether to ", tolower(prompt), 
-      " (", paste0(new.opts, collapse=", "), "):\n\n", sep=""
-  ) }
-  action <- NULL
-  item_select <- function(action, idx) {   # Translate Y/N to an action
-    switch(actions[[action]],                  
-      A=items.new[idx],
-      B=items.ref[idx],
-      C=NULL
-  ) }
-  i <- 1L
-
-  while(i <= items.len) {
-    if(!all.ignored) {
-      if(length(items.main[[i]]@comment)) cat(items.main[[i]]@comment, sep="\n")
-      cat(deparse_prompt(items.main[[i]]@call), sep="\n")
-      if(is(show.fail, "testorItemsTestsErrors") && !items.main[[i]]@ignore) {
-        cat(as.character(show.fail[[i]]), sep="\n")
-      } 
-      # If there are conditions that showed up in main that are not in reference
-      # show the message
-
-      if(!is.null(items.new) && !is.null(items.ref) && 
-        !isTRUE(all.equal(items.new[[i]]@data@conditions, items.ref[[i]]@data@conditions)) ||
-        show.msg
+    if(        # Print Section title if appropriate
+      !identical(last.reviewed.sec, curr.sec) && 
+      !all(x@mapping$ignored[x@mapping$sec.id == curr.sec]) &&
+      length(unique(x@mapping$section.id[!x@mapping$ignored])) > 1L
+    ) {
+      print(h2(x[[curr.sec]]@section.title))  
+    }
+    if(        # Print sub-section title if appropriate
+      !identical(last.reviewed.sub.sec, curr.sub.sec) &&
+      !all(x@mapping$ignored[x@mapping$sub.sec.id == curr.sub.sec])
       ) {
-        screen_out(items.main[[i]]@data@message, max.len=getOption("testor.test.msg.lines"), stderr())
-      }
-      if(show.out) screen_out(items.main[[i]]@data@output)      
-    }
-    # Default to "Y" action for ignored items; this means new items and 
-    # failed/error tests will get replaced with new value, whereas reference
-    # items will always be omitted.  The latter might seem strange, but
-    # at this point we're prioritizing being able to recreate tests that
-    # come from the most current files, so reference tests just have to
-    # make do with a substandard environment
+      print(H3(curr.obj@title))
+      cat(
+        curr.sub.sec.obj@detail, " For each item, choose whether to ", 
+        tolower(curr.sub.sec.obj@prompt), 
+        " (", paste0(new.opts, collapse=", "), "):\n\n", sep=""
+    ) }
+    # Retrieve actual tests objects
 
-    if(items.main[[i]]@ignore) {  
-      item.list <- item.list + item_select("Y", i)
-      i <- i + 1L
-      next
-    }
+    item.new <- if(!is.null(curr.sub.sec.obj@items.new)) 
+      curr.sub.sec.obj@items.new[[id.rel]]
+    item.ref <- if(!is.null(curr.sub.sec.obj@items.ref)) 
+      curr.sub.sec.obj@items.ref[[id.rel]]
+    item.main <- if(is.null(item.new)) item.ref else item.new
+
+    if(length(item.main@comment)) cat(item.main@comment, sep="\n")
+    cat(deparse_prompt(item.main@call), sep="\n")
+    if(is(show.fail, "testorItemsTestsErrors") && !item.main@ignore) {
+      cat(as.character(curr.obj@show.fail[[id.rel]]), sep="\n")
+    } 
+    # If there are conditions that showed up in main that are not in reference
+    # show the message
+
+    if(!is.null(item.new) && !is.null(item.ref) && 
+      !isTRUE(all.equal(item.new@data@conditions, item.ref@data@conditions)) ||
+      show.msg
+    ) {
+      screen_out(
+        item.main@data@message, 
+        max.len=getOption("testor.test.msg.lines"), stderr()
+    ) }
+    if(show.out) screen_out(item.main@data@output)
+
+    # No need to do anything else with ignored tests since default action for 
+    # them is "Y", so return those
+
+    if(x@mapping$ignored[[curr.id]]) return(x)  
+
+    if(x@mapping$reviewed[[curr.id]]) {
+      message(
+        "Test has been reviewed with user input: \"", 
+        x@mapping$review.val[[curr.id]], "\""
+    ) }      
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the testorItem values and the child 
     # environment containing the actual testor items.  This is so that when
     # user evaluates `.new` or `.ref` they see the value, but then we can 
-    # easily retrieve teh full object with the `get*` functions.
+    # easily retrieve the full object with the `get*` functions.
     
     var.list <- list()        
     var.sub.list <- list()
-    if(!is.null(items.new)) {
-      var.list <- c(var.list, list(.new=items.new[[i]]))
-      var.sub.list <- c(var.sub.list, list(.new=items.new[[i]]@data@value))
+    if(!is.null(item.new)) {
+      var.list <- c(var.list, list(.new=item.new))
+      var.sub.list <- c(var.sub.list, list(.new=item.new@data@value))
     }
-    if(!is.null(items.ref)) {
-      var.list <- c(var.list, list(.ref=items.ref[[i]])) 
-      var.sub.list <- c(var.sub.list, list(.ref=items.ref[[i]]@data@value))
+    if(!is.null(item.ref)) {
+      var.list <- c(var.list, list(.ref=item.ref)) 
+      var.sub.list <- c(var.sub.list, list(.ref=item.ref@data@value))
     }
-    browse.par.env <- list2env(var.list, parent=items.main[[i]]@env)
+    browse.par.env <- list2env(var.list, parent=item.main@env)
     browse.env <- list2env(var.sub.list, parent=browse.par.env)
     parent.env(browse.eval.env) <- browse.env
 
-    env.sec <- if(!is.null(items.new) && !is.null(items.ref)) items.ref[[i]]@env else NULL
+    env.sec <- if(!is.null(item.new) && !is.null(item.ref)) item.ref@env else NULL
     assign("ls", testor_ls, base.env.pri)
     if(!is.null(env.sec)) {
       assign("ref", function(x) eval(substitute(x), env.sec), base.env.pri)
     } else {      
-      assign("ref", function(x) message("`ref` is only active when there is an active secondary environment"), base.env.pri)
-    }
+      assign(
+        "ref", 
+        function(x) {
+          message(
+            "`ref` is only active when there is an active secondary environment"
+        ) },
+        base.env.pri
+    ) }
     get.msg <- character()
-    if(!is.null(items.new)) get.msg <- "`getTest(.new)`"
-    if(!is.null(items.ref)) get.msg <- c(get.msg, "`getTest(.ref)`")
+    if(!is.null(item.new)) get.msg <- "`getTest(.new)`"
+    if(!is.null(item.ref)) get.msg <- c(get.msg, "`getTest(.ref)`")
     help <- paste0(
       "Type ls() to see what objects are available to inspect, and use ",
       paste0(get.msg, collapse=" or "),
-      " to see more details about the test (see documentation for `getTest` for details ",
-      "on other accessor functions such as ", 
+      " to see more details about the test (see documentation for `getTest` ",
+      "for details on other accessor functions such as ", 
       paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."
     )
+    # User input
+
     prompt.val <- testor_prompt(prompt, browse.eval.env, help, new.opts, hist.con)
-    if(identical(prompt.val, "U")) {
-      if(i <= min(which(!ignored(items.main)))) {
-        message("Nothing left to undo in \"", title,"\"")
-        next
-      } else {
-        if(length(item.list)) item.list[[length(item.list)]] <- NULL
-        i <- i - 1L
-        next
-    } }
-    item <- item_select(prompt.val, i)
-    item.list <- item.list + item
-    i <- i + 1L
-    if(i > items.len) {
-      cat(
-        "You have completed \"", title, "\", do you wish to continue (", 
-        paste0(new.opts[-2L], collapse=", "), ")?", sep=""
-      )
-      prompt.val <- testor_prompt(
-        "Continue", browse.eval.env, 
-        "[Y]es to continue, [U]ndo to undo last decision, [Q]uit to exit and discard all changes.", 
-        new.opts[-2L]
-      )
-      if(identical(prompt.val, "U")) {
-        if(length(item.list)) item.list[[length(item.list)]] <- NULL
-        i <- i - 1L
-        next
-  } } } 
-  return(item.list)
-}
+    if(identical(prompt.val, "U")) {          # Undo
+      if(curr.id == 1L) {
+        message("At first reviewable item; nothing to undo")
+        return(x)
+      }
+      x@last.id <- curr.id - 1L
+    } else if (identical(prompt.val, "R")) {  # Navigation Prompt
+      show(x)
+
+    } else {
+      x@mapping$reviewed[[curr.id]] <- TRUE
+      x@mapping$review.val[[curr.id]] <- prompt.val
+      x@last.id <- x@last.reviewed <- curr.id
+    }
+    x
+  }
+)
+
+
+
+
+# NEED TO EXPAND testor_prompt TO HANDLE NUMERIC INPUTS, MIGHT HAVE TO RETHINK
+# A LITTLE HOW THIS IS IMPLEMENTED; MAYBE IF A NUMBER PASS A VALIDATOR?  HAS
+# TO HAPPEN INSIDE testor_prompt DUE TO THE LOOP.
+
+
 #' Handles The Actual User Interaction
 #' 
 #' @keywords internal

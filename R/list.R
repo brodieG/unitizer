@@ -194,3 +194,17 @@ setMethod("c", c("testorList"),
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")
 } )
+
+
+setMethod("split", "testorBrowseSection", 
+  function(x, f, drop=FALSE, ...) {
+
+} )
+
+setMethod("split<-", "testorBrowseSection", 
+  function(x, f, drop=FALSE, ...) {
+
+} )
+
+
+

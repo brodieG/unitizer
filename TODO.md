@@ -87,12 +87,15 @@ Self evident
 ## Misc
 
 * should run faster
+* provide option to only run new tests?  Makes incremental work on a large
+  file easier so not everything has to be re-run
 * provide feedback on what testor is doing while it is running tests (i.e.
   fancy progress bar)
 * backup of the testor .rds file should be created
 * provide facilities to upate testor id when testors are moved, though
   typically the testor should always be in the same relative location
   to the script that runs it.
+* partial save
 
 ---
 
