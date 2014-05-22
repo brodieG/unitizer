@@ -51,8 +51,8 @@ setReplaceMethod("[", signature(x="testorList", i="subIndex"),
 setReplaceMethod("[[", signature(x="testorList", i="subIndex"),
   function(x, i, value) {
     pointer.reset <- (
-      is.numeric(i) && floor(i[[1]]) <= x@.pointer ||
-      is.character(i) && match(i[[1]], names(x)) <= x@pointer
+      is.numeric(i) && floor(i[[1L]]) <= x@.pointer ||
+      is.character(i) && match(i[[1L]], names(x)) <= x@pointer
     ) && is.null(value)
     x@.items[[i]] <- value
     if(pointer.reset) x@.pointer <- x@.pointer - 1L
@@ -194,17 +194,3 @@ setMethod("c", c("testorList"),
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")
 } )
-
-
-setMethod("split", "testorBrowseSection", 
-  function(x, f, drop=FALSE, ...) {
-
-} )
-
-setMethod("split<-", "testorBrowseSection", 
-  function(x, f, drop=FALSE, ...) {
-
-} )
-
-
-

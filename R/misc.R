@@ -24,7 +24,7 @@ deparse_prompt <- function(expr) {
 deparse_peek <- function(expr, len) {
   if(!is.integer(len) || length(len) != 1L || len < 4L)
     stop("Argument `len` must be an integer greater than zero and length four")
-  chr <- paste0(sub("\n", " ", deparse(expr), collapse="")
+  chr <- paste0(sub("\n", " ", deparse(expr), collapse=""))
   if(nchar(chr) > len) {
     paste0(substr(chr, 1L, len), "...")
   } else {

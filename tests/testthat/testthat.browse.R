@@ -40,4 +40,22 @@ local( {
     assign("item", .new, eval.env)
     expect_error(evalq(testor:::getItemFuns[["getConds"]](item), eval.env))
   } )
+  # Create 
+
+  items <- expression(
+    library(stats),
+    testor_sect("Section 1", {
+      1 + 1
+      runif(20)
+      matrix(1:9, 3)
+    } )
+    testor_sect("Section 2", {
+      1 + 20
+      sample(20)
+      matrix(1:9, ncol=3)
+      lm(x ~ y, data.frame(x=1:10, y=c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))
+    } )
+  )
+  my.testor <- new("testor", id=1, zero.env=new.env())
+  browsePrep(my.testor)
 } )

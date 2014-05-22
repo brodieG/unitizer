@@ -74,7 +74,6 @@ setMethod("reviewNext", c("testorBrowse"),
   function(x, ...) {
     curr.id <- x@last.id + 1L
     x@last.id <- curr.id
-    new.opts <- append(valid.opts.def, c(U="[U]ndo"), after=2L)
 
     last.reviewed.sec <- x@mapping[x@mapping$item.id == x@last.reviewed, "sec.id"]
     last.reviewed.sub.sec <- x@mapping[x@mapping$item.id == x@last.reviewed, "sub.sec.id"]
@@ -82,6 +81,7 @@ setMethod("reviewNext", c("testorBrowse"),
     curr.sub.sec <- x@mapping[x@mapping$item.id == curr.id, "sub.sec.id"]
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
     id.rel <- x@mapping[x@mapping$item.id == curr.id, "item.id.rel"]
+    furthest.reviewed <- max(which(x@mapping@reviewed))
 
     if(        # Print Section title if appropriate
       !identical(last.reviewed.sec, curr.sec) && 
@@ -97,8 +97,7 @@ setMethod("reviewNext", c("testorBrowse"),
       print(H3(curr.obj@title))
       cat(
         curr.sub.sec.obj@detail, " For each item, choose whether to ", 
-        tolower(curr.sub.sec.obj@prompt), 
-        " (", paste0(new.opts, collapse=", "), "):\n\n", sep=""
+        tolower(curr.sub.sec.obj@prompt),":\n\n", sep=""
     ) }
     # Retrieve actual tests objects
 
@@ -172,17 +171,32 @@ setMethod("reviewNext", c("testorBrowse"),
     get.msg <- character()
     if(!is.null(item.new)) get.msg <- "`getTest(.new)`"
     if(!is.null(item.ref)) get.msg <- c(get.msg, "`getTest(.ref)`")
+    
+    # We went back in our tests, now give option to go back to furthest along
+    # reviewed test
+
+    help.extra <- "."
+    opts.extra <- character()
+    if(furthest.reviewed > curr.id) {
+      help.extra <- ", U to go to first unreviewed test."
+      opts.extra <- c(U="[U]nreviewed")
+    }
     help <- paste0(
       "Type ls() to see what objects are available to inspect, and use ",
       paste0(get.msg, collapse=" or "),
       " to see more details about the test (see documentation for `getTest` ",
       "for details on other accessor functions such as ", 
-      paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."
+      paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), "), B to go ",
+      "back to the previous test, and see a listing of all previously reviewed "
+      "test with the option to revisit them", help.extra
     )
     # User input
 
-    prompt.val <- testor_prompt(prompt, browse.eval.env, help, new.opts, hist.con)
-    if(identical(prompt.val, "U")) {          # Undo
+    prompt.val <- testor_prompt(
+      prompt, browse.env=browse.eval.env, help=help,
+      extra.opts=c(B="[B]ack", R="[R]eview", opts.extra), hist.con=hist.con
+    )
+    if(identical(prompt.val, "B")) {          # Go back to previous
       if(curr.id == 1L) {
         message("At first reviewable item; nothing to undo")
         return(x)
@@ -190,7 +204,22 @@ setMethod("reviewNext", c("testorBrowse"),
       x@last.id <- curr.id - 1L
     } else if (identical(prompt.val, "R")) {  # Navigation Prompt
       show(x)
-
+      exit.fun <- function(x) {
+        valid.vals <- x@mapping@item.id[x@mapping@reviewed]
+        if(!isTRUE(x %in% valid.vals)) {
+          message(
+            "Input must be integer-like and in ", 
+            paste(range(valid.vals), sep="-")
+          )
+          return(FALSE)
+        }
+        return(TRUE)
+      } 
+      x@last.id <- testor_prompt(
+        prompt="Type in number of test you wish to review:",
+        browse.env=emptyenv(), exit.fun=exit.fun, valid.opts=character(), 
+        extra.opts="Type an integer-like number corresponding to a test"
+      )
     } else {
       x@mapping$reviewed[[curr.id]] <- TRUE
       x@mapping$review.val[[curr.id]] <- prompt.val
@@ -199,16 +228,20 @@ setMethod("reviewNext", c("testorBrowse"),
     x
   }
 )
-
-
-
-
-# NEED TO EXPAND testor_prompt TO HANDLE NUMERIC INPUTS, MIGHT HAVE TO RETHINK
-# A LITTLE HOW THIS IS IMPLEMENTED; MAYBE IF A NUMBER PASS A VALIDATOR?  HAS
-# TO HAPPEN INSIDE testor_prompt DUE TO THE LOOP.
-
-
 #' Handles The Actual User Interaction
+#' 
+#' Will keep accepting user input until either:
+#' \itemize{
+#'   \item User types one of the names of \code{`valid.opts`}, typically "Y" or 
+#'     "N"
+#'   \item User types "Q"
+#'   \item User inputs an expression that when evaluated and fed to 
+#'     \code{`exit.condition`} returns TRUE
+#' }
+#' The set-up is intended to replicate something similar to what happens when
+#' code hits a \code{`browse()`} statement.  User expressions are evaluated
+#' and output to screen, and special expressions as described above cause the
+#' evaluation loop to terminate.
 #' 
 #' @keywords internal
 #' @seealso browse_testor_items
@@ -219,23 +252,30 @@ setMethod("reviewNext", c("testorBrowse"),
 #' @param hist.con connection to save history to
 
 testor_prompt <- function(
-  text, browse.env, help=character(), 
-  valid.opts=valid.opts.def, hist.con=NULL
+  text, browse.env=globalenv(), help=character(), 
+  valid.opts=c(Y="[Y]es", N="[N]o"), hist.con=NULL,
+  extra.opts=character(), exit.condition=function() FALSE
 ) {  
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
+  if(!is.environment(browse.env))
+    stop("Argument `browse.env` must be an environment")
   repeat {
-    opts <- paste0("(", paste0(valid.opts, collapse=", "), ")?")
+    opts <- paste0(
+      "(", 
+      paste0(c(valid.opts, extra.opts, "[Q]uit", "[H]elp"), collapse=", "), 
+      ")?"
+    )
     while(inherits(try(val <- faux_prompt("testor> ")), "try-error")) NULL 
-    if(
-      length(val) == 1L && is.symbol(val[[1]]) && 
-      as.character(val[[1]]) %in% names(valid.opts) && 
-      !(as.character(val[[1]]) %in% c("Q", "H"))
+    if(  # Input matches one of the options
+      length(val) == 1L && is.symbol(val[[1L]]) && 
+      as.character(val[[1L]]) %in% names(valid.opts) && 
+      !(as.character(val[[1L]]) %in% c("Q", "H")) && nchar(val[[1L]])
     ) {
-      return(as.character(val[[1]]))
-    } else if (length(val) == 1L && identical(val[[1]], quote(Q))) {
+      return(as.character(val[[1L]]))
+    } else if (length(val) == 1L && identical(val[[1L]], quote(Q))) {
       stop("User quit.")
-    } else if (length(val) == 1L && identical(val[[1]], quote(H))) {
+    } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
       if(!length(help)) {
         cat("No help available.", paste(text, opts), sep="\n")
       } else {
@@ -247,7 +287,7 @@ testor_prompt <- function(
     on.exit(options(warn=warn.opt))
     if(warn.opt != 1L) options(warn=1L)
 
-    evaled <- vapply(val, 
+    evaled <- lapply(val, 
       function(x) {
         res <- NULL
         withRestarts(
@@ -269,14 +309,17 @@ testor_prompt <- function(
           loadhistory(showConnections()[as.character(hist.con), "description"])
         }
         if(is.null(res)) {
-          return(FALSE)  
+          return(list(FALSE, res))  
         } else {
           if(res$visible) print(res$value)
-          return(TRUE)
-      } },
-      logical(1L)
-    )
-    if(!all(evaled) || identical(length(evaled), 0L)) cat(text, opts)
+          return(list(TRUE, res$value))
+    } } )    
+    if(
+      !all(vapply(evaled, `[[`, logical(1L), 1L)) || 
+      identical(length(evaled), 0L) 
+    ) cat(text, opts)
+    last.val <- evaled[[length(evaled)]][[2L]]
+    if(exit.condition(last.val)) return(last.val)  # exit loop if value meets exit condition
   }
 }
 

@@ -33,6 +33,7 @@ Collate:
     'test.R'
     'change.R'
     'testor.R'
+    'browse.struct.R'
     'browse.R'
     'capture.R'
     'exec.R'
