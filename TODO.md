@@ -39,7 +39,6 @@ Self evident
 * should we keep objects that user creates while browsing across tests?  
   probably, but we don't right now.
 * accept all (hidden?) option
-* what do we do with default section that has values scattered throughout?
 * super confusing when using title & expr for testor_sect when accidentally
   putting expr in title since checking that title is a string forces
   evaluation of expr? how to check without causing problems? the issue
@@ -51,11 +50,18 @@ Self evident
   that was used in the evaluation of the reference test; need to think about
   now to handle this (throw warning whenever such objects are accessed?)
 
+### Order of Tests
+
+* what do we do with default section that has values scattered throughout?
+* And how to make it clear that tests are ordered first by test outcome, and as
+  a result a display order will not be the same as the order in the file?
+  Document clearly?
+
 ## Environments
 
-* Should run in an empty environment by default, with option to run with globalenv
-  as parent?  Had some confusing issues crop up as a result of a variable getting
-  picked up from globalenv
+* Should run in an empty environment by default, with option to run with 
+  globalenv as parent?  Had some confusing issues crop up as a result of a 
+  variable getting picked up from globalenv
 
 ## Internal
 

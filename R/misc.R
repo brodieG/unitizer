@@ -20,11 +20,14 @@ deparse_prompt <- function(expr) {
 #' @keywords internal
 #' @param expr a language object
 #' @param len int a one length integer noting how many characters we want 
+#' @param width passed on to 
 
-deparse_peek <- function(expr, len) {
+deparse_peek <- function(expr, len, width=500L) {
   if(!is.integer(len) || length(len) != 1L || len < 4L)
-    stop("Argument `len` must be an integer greater than zero and length four")
-  chr <- paste0(sub("\n", " ", deparse(expr), collapse=""))
+    stop("Argument `len` must be an integer greater than four")
+  if(!is.integer(width) || length(width) != 1L || width < 1L)
+    stop("Argument `width` must be an integer greater than zero")
+  chr <- paste0(sub("\n", " ", deparse(expr, width)), collapse="")
   if(nchar(chr) > len) {
     paste0(substr(chr, 1L, len), "...")
   } else {
@@ -52,11 +55,11 @@ strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE)
 }
 #' Print a header
 #' 
+#' @keywords internal
 #' @aliases print.H2, print.H3, print.header
 #' @param x a 1 length character vector
 #' @param margin one of "both", "top", "bottom", "none", weather to add newlines at top or bottom
 #' @return 1 length character vector
-#' @method print H1
 #' @S3method print H1
 
 print.H1 <- function(x, ...) {
@@ -67,7 +70,7 @@ print.H1 <- function(x, ...) {
     paste0(
       "| ", 
       paste0(
-        text.wrapped <- text_wrap(x, width - 4L), 
+        text.wrapped <- unlist(text_wrap(x, width - 4L), use.names=FALSE), 
         vapply((width - 4L) - nchar(text.wrapped), function(x) paste0(rep(" ", x), collapse=""), character(1L))
       ),
       " |"
@@ -76,23 +79,18 @@ print.H1 <- function(x, ...) {
   )
   NextMethod()
 }
-#' @method print H2
 #' @S3method print H2
 
 print.H2 <- function(x, ...) {
   x <- header_help(x, pad.char="=")
   NextMethod()
 }
-
-#' @method print H3
 #' @S3method print H3
 
 print.H3 <- function(x, ...) {
   x <- header_help(x, pad.char="-")
   NextMethod()
 }
-
-#' @method print header
 #' @S3method print header
 
 print.header <- function(x, margin="bottom", ...) {
@@ -106,11 +104,12 @@ print.header <- function(x, margin="bottom", ...) {
   invisible(x)
 }
 
-# Helper function for single line headers
-# 
-# @param x the contents of the header
-# @param ... unused, for compatibility with print generic
-# @param pad.char which character to use to form the header structure
+#' Helper function for single line headers
+#' 
+#' @keywords internal
+#' @param x the contents of the header
+#' @param ... unused, for compatibility with print generic
+#' @param pad.char which character to use to form the header structure
 
 header_help <- function(x, ..., pad.char="-") {
   if(inherits(try(par.call <- sys.call(-1L), silent=TRUE), "try-error") ||
@@ -130,8 +129,8 @@ header_help <- function(x, ..., pad.char="-") {
 #' Header objects are 1 length character vectors that are printed with text 
 #' formatting that highlight their "headerness". 
 #' 
+#' @keywords internal
 #' @seealso \code{`\link{print.header}`}
-#' @export
 #' @aliases H1, H2, H3
 #' @param x 1 length character vector to turn into a header
 #' @param level 1 length integer, what level to make a header 
@@ -145,20 +144,93 @@ header <- function(x, level) {
   }
   structure(x, class=c(paste0("H", level), "header"))
 }
-#' @export
-
 H1 <- function(x) header(x, 1L)
-
-#' @export
-
 H2 <- function(x) header(x, 2L)
-
-#' @export
-
 H3 <- function(x) header(x, 3L)
+
+#' Create List Objects
+#' 
+#' Turns a character vector into list items.
+#' 
+#' Currently doesn't support nested lists, but this might be added in the future.
+#' 
+#' @keywords internal
+#' @aliases OL
+#' @param x character vector of items to make a list out of
+#' @return OL/UL object
+
+UL <- function(x) {
+  if(!is.character(x)) stop("Argument `x` must be a character vector")
+  structure(x, class=c("UL", "bullet"))
+}
+OL <- function(x) {
+  if(!is.character(x)) stop("Argument `x` must be a character vector")
+  structure(x, class=c("OL", "bullet"))
+}
+#' Print Methods for \code{`\link{UL}`} and \code{`\link{OL}`} objects
+#' 
+#' @keywords internal
+#' @S3method print bullet
+#' @param x object to print
+#' @param width integer how many characters to wrap at, if set to 0 will auto
+#'   detect width with \code{getOptions("width")}
+#' @return invisibly a character vector with one element per line printed
+
+print.bullet <- function(x, width=0L, ...) {
+  cat(rendered <- as.character(x, width), sep="\n")
+  invisible(rendered)
+}
+#' Produce Character Vector Representation of Bullet Lists
+#' 
+#' @param x object to render
+#' @param ... dots
+#' @return character vector containing rendered object, where each element
+#'   corresponds to a line
+#' @S3method as.character bullet
+
+as.character.bullet <- function(x, width=0L, pre, ...) {
+  if(!is.numeric(width) || length(width) != 1L || width < 0) {
+    stop("Argument `width` must be a one length positive numeric.")
+  }
+  width <- round(width)
+  if(width == 0) width <- getOption("width")
+  screen.width <- width - max(nchar(pre))
+  if(screen.width < 8L) width <- 8L
+  items <- text_wrap(unclass(x), screen.width) 
+  unname(
+    unlist(
+      mapply(SIMPLIFY=FALSE,
+        function(content, bullet) {
+          paste0(
+            c(
+              bullet, 
+              rep(
+                paste0(rep(" ", nchar(bullet)), collapse=""), 
+                length(content) - 1L
+            ) ),
+            content
+        ) },
+        items, pre
+) ) ) }
+#' @S3method as.character UL
+
+as.character.UL <- function(x, width=0L, ...) {
+  bullets <- rep("- ", length(x))
+  NextMethod(pre=bullets)
+}
+#' @S3method as.character OL
+
+as.character.OL <- function(x, width=0L, ...) {
+  bullets <- paste0(format(1:length(x)), ". ")
+  NextMethod(pre=bullets)
+}
 
 #' Wrap Text At Fixed Column Width
 #' 
+#' Some day this should be upgraded to break at whitespaces or use hyphens 
+#' instead of wrapping arbitrarily at spec'ed width
+#' 
+#' @keywords internal
 #' @param x character vector
 #' @param width integer vector with
 #' @return a list with, for each item in \code{`x`}, a character vector
@@ -171,14 +243,14 @@ text_wrap <- function(x, width) {
   if(!identical((length(x) %% length(width)), 0L)) {
     stop("Argument `x` must be a multiple in length of argument `width`")
   }
-  unlist(
-    use.names=FALSE,
-    mapply(
-      x, width, SIMPLIFY=FALSE,
-      FUN=function(x.sub, width.sub) {
-        breaks <- ceiling(nchar(x.sub) / width.sub)
-        substr(rep(x.sub, breaks), start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub)
-} ) ) }
+  mapply(
+    x, width, SIMPLIFY=FALSE,
+    FUN=function(x.sub, width.sub) {
+      breaks <- ceiling(nchar(x.sub) / width.sub)
+      substr(
+        rep(x.sub, breaks), 
+        start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
+) } ) }
 
 #' Compare Lists of Conditions
 #' 

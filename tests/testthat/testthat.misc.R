@@ -3,23 +3,26 @@ library(testor)
 
 test_that("Text wrapping", {
   var <- "humpty dumpty sat on a truck and had a big dump"
-  expect_true(all(nchar(testor:::text_wrap(var, 10)) <= 10))
+  expect_true(all(nchar(unlist(testor:::text_wrap(var, 10))) <= 10))
   var2 <- rep(var, 4)
-  expect_true(all(nchar(wrp <- testor:::text_wrap(var2, c(20, 15))) <= 20) && length(wrp) == 14)
+  expect_true(
+    all(nchar(wrp <- unlist(testor:::text_wrap(var2, c(20, 15)))) <= 20) &&
+    length(wrp) == 14
+  )
 } )
 test_that("Headers", {
   # these basically require visual inspection
 
-  print(H1("hello world"))
-  print(H2("hello world"))
-  print(H3("hello world"))
+  print(testor:::H1("hello world"))
+  print(testor:::H2("hello world"))
+  print(testor:::H3("hello world"))
 
-  expect_error(print(H1(rep_len("hello world", 10)))) # cause an error
-  print(H1(paste0(rep_len("hello world", 10), collapse=" ")))
-  print(H2(paste0(rep_len("hello world", 10), collapse=" ")))
+  expect_error(print(testor:::H1(rep_len("hello world", 10)))) # cause an error
+  print(testor:::H1(paste0(rep_len("hello world", 10), collapse=" ")))
+  print(testor:::H2(paste0(rep_len("hello world", 10), collapse=" ")))
 
   "No margin"
-  print(H2("No margin"), margin="none")
+  print(testor:::H2("No margin"), margin="none")
   "No margin"
 } )
 test_that("Sweet'n short descriptions work",{
@@ -65,8 +68,27 @@ test_that("deparse peek", {
       loop.val <- sample(1:1000, 200, replace=TRUE)
       loop.val <- loop.val * 200 / 3000 * mean(runif(20000))
   } )
-  testor:::deparse_peek(expr1, 20L)
-  testor:::deparse_peek(expr1, 3L)
-  testor:::deparse_peek(expr1, 5L)
-  testor:::deparse_peek(expr2, 40L)
+  expect_equal("1 + 1 + 3", testor:::deparse_peek(expr1, 20L))
+  expect_error(testor:::deparse_peek(expr1, 3L))
+  expect_equal("1 + 1...", testor:::deparse_peek(expr1, 5L))
+  expect_equal(
+    "for (i in 1:100) {    loop.val <- sample...",
+    testor:::deparse_peek(expr2, 40L)
+  )
+} )
+test_that("(Un)ordered Lists", {
+  vec <- c(
+    "hello htere how are you blah blah blah blah blah", 
+    "this is helpful you know", 
+    "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+    letters[1:10]
+  )
+  expect_equal(
+    c(" 1. hello htere how are you blah blah blah blah blah", " 2. this is helpful you know", " 3. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut la", "    bore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris ", "    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate vel", "    it esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, ",  "    sunt in culpa qui officia deserunt mollit anim id est laborum.", " 4. a", " 5. b", " 6. c", " 7. d", " 8. e", " 9. f", "10. g", "11. h", "12. i", "13. j"),
+    print(testor:::OL(vec), 100)
+  )
+  expect_equal(
+    c("- hello htere how are you blah blah blah blah blah", "- this is helpful you know", "- Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labo", "  re et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi", "   ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit ess", "  e cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in ",  "  culpa qui officia deserunt mollit anim id est laborum.", "- a", "- b", "- c", "- d", "- e", "- f", "- g", "- h", "- i", "- j"),
+    print(testor:::UL(vec), 100)
+  )
 } )

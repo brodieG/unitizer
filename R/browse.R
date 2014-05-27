@@ -32,10 +32,17 @@ valid.opts.def <- c(Y="[Y]es", N="[N]o", Q="[Q]uit", H="[H]elp")
 setMethod("browse", c("testor"), valueClass="testor",
   function(x, ...) {
 
-    savehistory()
-    on.exit(loadhistory())
+    # set up local history
+
+    savehistory()    
+    hist.file <- tempfile()
+    hist.con <- file(hist.file, "at")
+    cat("## <testor> (original history will be restored on exit)\n", file=hist.con)
+    loadhistory(showConnections()[as.character(hist.con), "description"])
+    on.exit({close(hist.con); file.remove(hist.file); loadhistory()})
 
     testor.browse <- browsePrep(x)   # Group tests by section and outcome for review
+    testor.browse@hist.con <- hist.con
 
     while(!done(testor.browse <- reviewNext(testor.browse))) NULL # Interactively review all tests
  
@@ -62,8 +69,8 @@ setMethod("browse", c("testor"), valueClass="testor",
 #' Bring up Review of Next test
 #' 
 #' Generally we will go from one test to the next, where the next test is 
-#' determined by the value of \code{`x@last.id`}.  This means it is possible
-#' to affect the browsing order by modifying \code{`x@last.id`}.
+#' determined by the value of \code{`x@@last.id`}.  This means it is possible
+#' to affect the browsing order by modifying \code{`x@@last.id`}.
 #' 
 #' This method is in charge of displaying all the output for review.
 #' 
@@ -75,26 +82,33 @@ setMethod("reviewNext", c("testorBrowse"),
     curr.id <- x@last.id + 1L
     x@last.id <- curr.id
 
-    last.reviewed.sec <- x@mapping[x@mapping$item.id == x@last.reviewed, "sec.id"]
-    last.reviewed.sub.sec <- x@mapping[x@mapping$item.id == x@last.reviewed, "sub.sec.id"]
-    curr.sec <- x@mapping[x@mapping$item.id == curr.id, "sec.id"]
-    curr.sub.sec <- x@mapping[x@mapping$item.id == curr.id, "sub.sec.id"]
+    if(x@last.reviewed) {
+      last.reviewed.sec <- x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
+      last.reviewed.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
+      furthest.reviewed <- max(which(x@mapping@reviewed))
+    } else {
+      last.reviewed.sec <- last.reviewed.sub.sec <- furthest.reviewed <- 0L
+    }
+    curr.sec <- x@mapping@sec.id[[which(x@mapping@item.id == curr.id)]]
+    curr.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == curr.id)]]
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
-    id.rel <- x@mapping[x@mapping$item.id == curr.id, "item.id.rel"]
-    furthest.reviewed <- max(which(x@mapping@reviewed))
+    id.rel <- x@mapping@item.id.rel[[which(x@mapping@item.id == curr.id)]]
 
+    valid.opts <- c(
+      Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview", Q="[Q]uit", H="[H]elp"
+    )
     if(        # Print Section title if appropriate
       !identical(last.reviewed.sec, curr.sec) && 
-      !all(x@mapping$ignored[x@mapping$sec.id == curr.sec]) &&
-      length(unique(x@mapping$section.id[!x@mapping$ignored])) > 1L
+      !all(x@mapping@ignored[x@mapping@sec.id == curr.sec]) &&
+      length(unique(x@mapping@sec.id[!x@mapping@ignored])) > 1L
     ) {
-      print(h2(x[[curr.sec]]@section.title))  
+      print(H2(x[[curr.sec]]@section.title))  
     }
     if(        # Print sub-section title if appropriate
       !identical(last.reviewed.sub.sec, curr.sub.sec) &&
-      !all(x@mapping$ignored[x@mapping$sub.sec.id == curr.sub.sec])
+      !all(x@mapping@ignored[x@mapping@sub.sec.id == curr.sub.sec])
       ) {
-      print(H3(curr.obj@title))
+      print(H3(curr.sub.sec.obj@title))
       cat(
         curr.sub.sec.obj@detail, " For each item, choose whether to ", 
         tolower(curr.sub.sec.obj@prompt),":\n\n", sep=""
@@ -105,35 +119,43 @@ setMethod("reviewNext", c("testorBrowse"),
       curr.sub.sec.obj@items.new[[id.rel]]
     item.ref <- if(!is.null(curr.sub.sec.obj@items.ref)) 
       curr.sub.sec.obj@items.ref[[id.rel]]
-    item.main <- if(is.null(item.new)) item.ref else item.new
+    if(is.null(item.new)) {
+      item.main <- item.ref
+      base.env.pri <- parent.env(curr.sub.sec.obj@items.ref@base.env)
+    } else {
+      item.main <- item.new
+      base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
+    }
 
     if(length(item.main@comment)) cat(item.main@comment, sep="\n")
     cat(deparse_prompt(item.main@call), sep="\n")
-    if(is(show.fail, "testorItemsTestsErrors") && !item.main@ignore) {
-      cat(as.character(curr.obj@show.fail[[id.rel]]), sep="\n")
+    if(
+      is(curr.sub.sec.obj@show.fail, "testorItemsTestsErrors") && 
+      !item.main@ignore
+    ) {
+      cat(as.character(curr.sub.sec.obj@show.fail[[id.rel]]), sep="\n")
     } 
     # If there are conditions that showed up in main that are not in reference
     # show the message
 
     if(!is.null(item.new) && !is.null(item.ref) && 
       !isTRUE(all.equal(item.new@data@conditions, item.ref@data@conditions)) ||
-      show.msg
+      curr.sub.sec.obj@show.msg
     ) {
       screen_out(
         item.main@data@message, 
         max.len=getOption("testor.test.msg.lines"), stderr()
     ) }
-    if(show.out) screen_out(item.main@data@output)
+    if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
 
     # No need to do anything else with ignored tests since default action for 
     # them is "Y", so return those
 
-    if(x@mapping$ignored[[curr.id]]) return(x)  
-
-    if(x@mapping$reviewed[[curr.id]]) {
+    if(x@mapping@ignored[[curr.id]]) return(x)  
+    if(x@mapping@reviewed[[curr.id]]) {
       message(
         "Test has been reviewed with user input: \"", 
-        x@mapping$review.val[[curr.id]], "\""
+        x@mapping@review.val[[curr.id]], "\""
     ) }      
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the testorItem values and the child 
@@ -153,7 +175,7 @@ setMethod("reviewNext", c("testorBrowse"),
     }
     browse.par.env <- list2env(var.list, parent=item.main@env)
     browse.env <- list2env(var.sub.list, parent=browse.par.env)
-    parent.env(browse.eval.env) <- browse.env
+    browse.eval.env <- new.env(parent=browse.env)
 
     env.sec <- if(!is.null(item.new) && !is.null(item.ref)) item.ref@env else NULL
     assign("ls", testor_ls, base.env.pri)
@@ -175,26 +197,30 @@ setMethod("reviewNext", c("testorBrowse"),
     # We went back in our tests, now give option to go back to furthest along
     # reviewed test
 
-    help.extra <- "."
-    opts.extra <- character()
-    if(furthest.reviewed > curr.id) {
-      help.extra <- ", U to go to first unreviewed test."
-      opts.extra <- c(U="[U]nreviewed")
-    }
-    help <- paste0(
-      "Type ls() to see what objects are available to inspect, and use ",
-      paste0(get.msg, collapse=" or "),
-      " to see more details about the test (see documentation for `getTest` ",
-      "for details on other accessor functions such as ", 
-      paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), "), B to go ",
-      "back to the previous test, and see a listing of all previously reviewed "
-      "test with the option to revisit them", help.extra
+    help.prompt <- paste(
+      "In addition to any valid R expression, you may type the following",
+      "at the prompt (without backticks):"
     )
+    help.opts <- c(
+      "`B` to go Back to the previous test",
+      "`R` to see a listing of all previously reviewed tests",
+      if(furthest.reviewed > curr.id) "\"U\" to go to first unreviewed test",
+      "`ls()` to see what objects are available to inspect",
+      paste0(collapse="",
+        paste0(get.msg, collapse=" or "),
+        "to see more details about the test (see documentation for `getTest` ",
+        "for details on other accessor functions such as (",
+        paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."
+    ) )
+    if(furthest.reviewed > curr.id) {
+      valid.opts <- append(valid.opts, c(U="[U]nreviewed"), after=4L)
+    }
     # User input
 
     prompt.val <- testor_prompt(
-      prompt, browse.env=browse.eval.env, help=help,
-      extra.opts=c(B="[B]ack", R="[R]eview", opts.extra), hist.con=hist.con
+      curr.sub.sec.obj@prompt, browse.env=browse.eval.env, 
+      help=c(help.prompt, as.character(UL(help.opts))),
+      valid.opts=valid.opts, hist.con=x@hist.con
     )
     if(identical(prompt.val, "B")) {          # Go back to previous
       if(curr.id == 1L) {
@@ -204,7 +230,7 @@ setMethod("reviewNext", c("testorBrowse"),
       x@last.id <- curr.id - 1L
     } else if (identical(prompt.val, "R")) {  # Navigation Prompt
       show(x)
-      exit.fun <- function(x) {
+      exit.fun <- function(x) {               # keep re-prompting until user types in valid value
         valid.vals <- x@mapping@item.id[x@mapping@reviewed]
         if(!isTRUE(x %in% valid.vals)) {
           message(
@@ -214,16 +240,25 @@ setMethod("reviewNext", c("testorBrowse"),
           return(FALSE)
         }
         return(TRUE)
-      } 
-      x@last.id <- testor_prompt(
-        prompt="Type in number of test you wish to review:",
-        browse.env=emptyenv(), exit.fun=exit.fun, valid.opts=character(), 
-        extra.opts="Type an integer-like number corresponding to a test"
+      }
+      nav.help <- paste0(
+        "You may re-review any of the tests that you have already reviewed by ",
+        "selecting that test's number.  The numbering is not continuous because ",
+        "some statements in the store are not considered tests (e.g. assignments)."
       )
-    } else {
-      x@mapping$reviewed[[curr.id]] <- TRUE
-      x@mapping$review.val[[curr.id]] <- prompt.val
+      x@last.id <- testor_prompt(
+        text="Type in number of test you wish to review:", help=nav.help,
+        browse.env=emptyenv(), exit.condition=exit.fun, 
+        valid.opts=c(
+          "Type an integer-like number corresponding to a test", 
+          Q="[Q]uit", H="[H]elp"
+      ) )
+    } else if (prompt.val %in% c("Y", "N")) {
+      x@mapping@reviewed[[curr.id]] <- TRUE
+      x@mapping@review.val[[curr.id]] <- prompt.val
       x@last.id <- x@last.reviewed <- curr.id
+    } else {
+      stop("Logic Error: `testor_prompt` returned unexpected value; contact maintainer")
     }
     x
   }
@@ -253,19 +288,14 @@ setMethod("reviewNext", c("testorBrowse"),
 
 testor_prompt <- function(
   text, browse.env=globalenv(), help=character(), 
-  valid.opts=c(Y="[Y]es", N="[N]o"), hist.con=NULL,
-  extra.opts=character(), exit.condition=function() FALSE
+  valid.opts, hist.con=NULL, exit.condition=function(...) FALSE
 ) {  
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
   if(!is.environment(browse.env))
     stop("Argument `browse.env` must be an environment")
+  opts.txt <- paste0("(", paste0(valid.opts, collapse=", "), ")?")
   repeat {
-    opts <- paste0(
-      "(", 
-      paste0(c(valid.opts, extra.opts, "[Q]uit", "[H]elp"), collapse=", "), 
-      ")?"
-    )
     while(inherits(try(val <- faux_prompt("testor> ")), "try-error")) NULL 
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) && 
@@ -277,9 +307,9 @@ testor_prompt <- function(
       stop("User quit.")
     } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
       if(!length(help)) {
-        cat("No help available.", paste(text, opts), sep="\n")
+        cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        cat(help, paste(text, opts), sep="\n")
+        cat(help, "", paste(text, opts.txt), sep="\n")
       }
       next
     }
@@ -317,11 +347,11 @@ testor_prompt <- function(
     if(
       !all(vapply(evaled, `[[`, logical(1L), 1L)) || 
       identical(length(evaled), 0L) 
-    ) cat(text, opts)
-    last.val <- evaled[[length(evaled)]][[2L]]
-    if(exit.condition(last.val)) return(last.val)  # exit loop if value meets exit condition
-  }
-}
+    ) cat(text, opts.txt)
+    if(length(evaled)) {
+      last.val <- evaled[[length(evaled)]][[2L]]  # exit loop if value meets exit condition
+      if(exit.condition(last.val)) return(last.val)
+} } }
 
 #' Retrieves Additional Info About Test
 #' 

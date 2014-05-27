@@ -167,6 +167,7 @@ setMethod("done", "testorList",
 #' @param values the object to append
 #' @param after a subscript, after which the values are to be appended.
 
+setGeneric("append")
 setMethod("append", c("testorList", "ANY"), 
   function(x, values, after=length(x)) {
     attempt <- try(
@@ -194,3 +195,28 @@ setMethod("c", c("testorList"),
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")
 } )
+
+#' Append Factors
+#' 
+#' Note this is not related to \code{`\link{append,testorList,ANY-method}`} 
+#' except in as much as it is the same generic, so it just got thrown in here.
+#' 
+#' @keywords internal
+
+setMethod("append", c("factor", "factor"), 
+  function(x, values, after=length(x)) {
+    if(!identical(attributes(x), attributes(values))) NextMethod()
+    if(
+      !is.numeric(after) || round(after) != after || length(after) != 1L ||
+      after > length(x) || after < 0L
+    ) stop("Argument after must be integer like between 0 and length(x)")
+    if(!length(values)) return(x)
+    len.x <- length(x)
+    length(x) <- length(x) + length(values)
+    if(after < len.x) {
+      x[(after + 1L + length(values)):length(x)] <- x[(after + 1L):(len.x)]  
+    }
+    x[(after + 1L):(after + length(values))] <- values
+    x
+  }
+)

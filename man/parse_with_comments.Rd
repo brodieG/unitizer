@@ -21,10 +21,11 @@ assumptions about the behaviour of
 top level for all intents and purposes \item All content
 tokens (i.e. anything other than brackets, commas, etc.)
 are contained inside an \code{`expr`}, even if the only
-thing the `expr` contains is a simple constant.  \item
-Comments are not content tokens and can exist on the top
-level without being wrapped in an \code{`expr`} \item The
-only tokens that count as elements in an expression are
+thing the `expr` contains is a simple constant (note some
+exceptions exist to this (search for FUCK in the source).
+\item Comments are not content tokens and can exist on the
+top level without being wrapped in an \code{`expr`} \item
+The only tokens that count as elements in an expression are
 opening brackets and \code{`expr`}; this assumption is
 necessary to allow mapping the parsed data back to the
 expression.  What confuses the issue a bit is that

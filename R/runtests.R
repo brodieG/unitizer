@@ -244,7 +244,10 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
     "Pressing Y will replace the previous testor with a new one updated with all the ",
     "changes you approved."
   )
-  act <- testor_prompt("Update testor", new.env(par.frame), help)
+  act <- testor_prompt(
+    "Update testor", new.env(par.frame), help, 
+    valid.opts=c(Y="[Y]es", N="[N]o", Q="[Q]uit", H="[H]elp")
+  )
   if(identical(act, "Y")) {
     if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
     success <- try(set_store(store.id, testor))

@@ -92,7 +92,6 @@ setMethod("initialize", "testor",
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
     .Object
 } )
-
 setMethod("length", "testor", 
   function(x) {
     len.vec <- unique(c(length(x@items.new), length(x@items.new.map), length(x@items.new.calls.deparse)))

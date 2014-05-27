@@ -76,4 +76,23 @@ local( {
     lst <- testor:::append(lst, list(matrix(1:9, nrow=3)), 5L)
     expect_equal(curr.point + 3L, lst@.pointer)
   } )
+  test_that("Append Factors Works", {
+    vec <- factor(letters[1:3], levels=letters)
+    vec2 <- factor(letters[10:15], levels=letters)
+    
+    expect_equal(
+      structure(c(1L, 2L, 3L, 10L, 11L, 12L, 13L, 14L, 15L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"), class = "factor"),
+      append(vec, vec2)
+    )
+    expect_equal(
+      structure(c(1L, 2L, 10L, 11L, 12L, 13L, 14L, 15L, 3L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"), class = "factor"),
+      append(vec, vec2, 2)
+    )
+    expect_equal(
+      structure(c(10L, 11L, 12L, 13L, 1L, 2L, 3L, 14L, 15L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"), class = "factor"),
+      append(vec2, vec, 4)
+    )
+    expect_error(append(vec2, vec, 20))
+    expect_error(append(vec2, vec, -5))
+  } )
 } )

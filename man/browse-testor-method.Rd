@@ -20,7 +20,7 @@ reference tests but no the new file } Because a lot of the
 logic for browsing these three types of situations is
 shared, that logic has been split off into
 \code{`\link{browse_testor_items}`}. The key is that that
-funciton will return the items that are supposed to be
+function will return the items that are supposed to be
 stored in the testor.  These items will either be new or
 reference ones based on user decisions.
 }

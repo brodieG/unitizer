@@ -14,6 +14,9 @@ a list with, for each item in \code{`x`}, a character
 vector of the item wrapped to length \code{`width`}
 }
 \description{
-Wrap Text At Fixed Column Width
+Some day this should be upgraded to break at whitespaces or
+use hyphens instead of wrapping arbitrarily at spec'ed
+width
 }
+\keyword{internal}
 

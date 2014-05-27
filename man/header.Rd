@@ -24,4 +24,5 @@ printed with text formatting that highlight their
 \seealso{
 \code{`\link{print.header}`}
 }
+\keyword{internal}
 

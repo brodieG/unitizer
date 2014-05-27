@@ -40,22 +40,49 @@ local( {
     assign("item", .new, eval.env)
     expect_error(evalq(testor:::getItemFuns[["getConds"]](item), eval.env))
   } )
-  # Create 
+  # Create a bunch of expressions for testing, has to be done outside of 
+  # `test_that`
 
-  items <- expression(
+  exps1 <- expression(
+    library(stats),
+    testor_sect("Section 1", {
+      runif(20)
+      stop("woohoo")
+    } ),
+    testor_sect("Section 2", {
+      sample(20)
+    } )
+  )
+  exps2 <- expression(
     library(stats),
     testor_sect("Section 1", {
       1 + 1
       runif(20)
+      stop("woohoo")
+      var <- 200
       matrix(1:9, 3)
-    } )
+    } ),
     testor_sect("Section 2", {
       1 + 20
+      var1 <- list(1, 2, 3)
       sample(20)
       matrix(1:9, ncol=3)
       lm(x ~ y, data.frame(x=1:10, y=c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))
     } )
   )
-  my.testor <- new("testor", id=1, zero.env=new.env())
-  browsePrep(my.testor)
+  my.testor <- new("testor", id=1, zero.env=new.env())  
+  my.testor <- my.testor + exps1
+  my.testor2 <- new("testor", id=2, zero.env=new.env())
+  my.testor2 <- my.testor2 + my.testor@items.new          # make previous items into reference items
+  my.testor2 <- my.testor2 + exps2                        # now add back items to compare
+
+  test_that("testorBrowse correctly processes testor for display", {
+    
+    testor.prepped <- testor:::browsePrep(my.testor2)
+    expect_equal(
+      c("Section 1", "  1. runif(20) ------------------------------------ Failed:Y", "  2. 1 + 1 ----------------------------------------    New:Y", "  4. matrix(1:9, 3) -------------------------------    New:Y", "Section 2", "  5. sample(20) ----------------------------------- Failed:Y", "  6. 1 + 20 ---------------------------------------    New:Y", "  8. matrix(1:9, ncol = 3) ------------------------    New:Y", "  9. lm(x ~ y, data.frame(x = 1:10, y = c(5, 3... -    New:Y"),
+      testor:::render(testor.prepped, 60)
+    )
+  } )
+
 } )
