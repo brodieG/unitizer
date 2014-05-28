@@ -46,15 +46,14 @@ setMethod("browsePrep", "testor",
         show.fail=x@tests.errorDetails[x@tests.error & sect.map], 
         items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]]
       )
-      testor.browse <- testor.browse + browse.sect
     }
     if(length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {  # Removed tests
       browse.sect <- browse.sect + new(
         "testorBrowseSubSectionRemoved", 
         items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)]
       )
-      testor.browse <- testor.browse + browse.sect
     }
+    testor.browse <- testor.browse + browse.sect
     testor.browse
   }
 )
@@ -135,7 +134,7 @@ setClass("testorBrowse", contains="testorList",
 #' @keywords internal
 
 setMethod("show", "testorBrowse", function(object) {
-  obj.rendered <- render(object)
+  obj.rendered <- as.character(object)
   cat(obj.rendered, sep="\n")
   invisible(obj.rendered)
 } )
@@ -153,52 +152,53 @@ setGeneric("render", function(object, ...) standardGeneric("render"))
 #' @return character vector, one element per line, for use with e.g.
 #'   \code{`cat(x, sep=\n`)}
 
-setMethod("render", "testorBrowse", 
-  function(object, width=0L, ...) {
+setMethod("as.character", "testorBrowse", 
+  function(x, width=0L, ...) {
     if(!is.numeric(width) || width < 0 || length(width) != 1L) {
       stop("Argument `width` must be a one length numeric.")
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
-    out.calls <- character(sum(!object@mapping@ignored))
-    out.calls.idx <- integer(sum(!object@mapping@ignored))
-    out.sec <- character(length(unique(object@mapping@sec.id[!object@mapping@ignored])))
+    tests.to.show <- !x@mapping@ignored & x@mapping@reviewed
+    out.calls <- character(sum(tests.to.show))
+    out.calls.idx <- integer(sum(tests.to.show))
+    out.sec <- character(length(unique(x@mapping@sec.id[tests.to.show])))
     out.sec.idx <- integer(length(out.sec))
     out <- character(length(out.calls) + length(out.sec))
 
     # Work on figuring out all the various display lengths
     
     min.deparse.len <- 20L   
-    disp.len <- width.max - 12L - 6L - max(nchar(object@mapping@item.id))
+    disp.len <- width.max - 12L - 6L - max(nchar(x@mapping@item.id))
     if(disp.len < min.deparse.len) {
       warning("Selected display width too small, will be ignored")
       disp.len <- min.deparse.len
     }
     sec.id.prev <- 0L
-    item.id.formatted <- format(object@mapping@item.id)
+    item.id.formatted <- format(x@mapping@item.id)
     review.formatted <- format(
-      paste(object@mapping@review.type, object@mapping@review.val, sep=":"), 
+      paste(x@mapping@review.type, x@mapping@review.val, sep=":"), 
       justify="right"
-    )[!object@mapping@ignored]
+    )[tests.to.show]
     j <- k <- l <- 0L
 
-    for(i in object@mapping@item.id) {
-      if(object@mapping@ignored[[i]]) next
+    for(i in x@mapping@item.id) {
+      if(!tests.to.show[[i]]) next
       j <- j + 1L
       l <- l + 1L
       
-      sec.id <- object@mapping@sec.id[[i]]
-      sub.sec.id <- object@mapping@sub.sec.id[[i]]
-      id.rel <- object@mapping@item.id.rel[[i]]
+      sec.id <- x@mapping@sec.id[[i]]
+      sub.sec.id <- x@mapping@sub.sec.id[[i]]
+      id.rel <- x@mapping@item.id.rel[[i]]
       
-      item <- if(is.null(object[[sec.id]][[sub.sec.id]]@items.new[[id.rel]])) {
-        object[[sec.id]][[sub.sec.id]]@items.ref[[id.rel]]
+      item <- if(is.null(x[[sec.id]][[sub.sec.id]]@items.new[[id.rel]])) {
+        x[[sec.id]][[sub.sec.id]]@items.ref[[id.rel]]
       } else {
-        object[[sec.id]][[sub.sec.id]]@items.new[[id.rel]]
+        x[[sec.id]][[sub.sec.id]]@items.new[[id.rel]]
       }
       if(!identical(sec.id.prev, sec.id)) {
         k <- k + 1L
-        out.sec[[k]] <- object[[sec.id]]@section.title
+        out.sec[[k]] <- x[[sec.id]]@section.title
         out.sec.idx[[k]] <- l
         sec.id.prev <- sec.id
         l <- l + 1L
@@ -345,7 +345,7 @@ setClass("testorBrowseSubSection",
     show.msg="logical",
     show.fail="testorItemsTestsErrorsOrLogical"
   ),
-  prototype=list(show.msg=FALSE),
+  prototype=list(show.msg=FALSE, show.fail=FALSE, show.out=FALSE),
   validity=function(object) {
     if(
       !is.null(object@items.ref) && !is.null(object@items.new) && 
@@ -403,7 +403,7 @@ setClass("testorBrowseSubSectionFailed", contains="testorBrowseSubSection",
     title="Failed",
     prompt="Overwrite item in store with new value",
     detail="Reference test does not match new test from test script.",
-    actions=c(Y="A", N="B"), show.out=FALSE
+    actions=c(Y="A", N="B")
 ) )
 setClass("testorBrowseSubSectionNew", contains="testorBrowseSubSection",
   prototype=list(
@@ -421,14 +421,14 @@ setClass("testorBrowseSubSectionCorrupted", contains="testorBrowseSubSection",
       "while attempting comparison. Please review the error and contemplate using ",
       "a different comparison function with `testor_sect`."
     ),
-    actions=c(Y="A", N="B"), show.out=FALSE
+    actions=c(Y="A", N="B")
 ) )
 setClass("testorBrowseSubSectionRemoved", contains="testorBrowseSubSection",
   prototype=list(
     title="Removed",
     prompt="Remove item from store",
     detail="The following test exists in testor but not in the new test script.",
-    actions=c(Y="C", N="B"), show.out=FALSE
+    actions=c(Y="C", N="B")
 ) )
 
 #' @keywords internal

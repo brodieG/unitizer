@@ -80,12 +80,11 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("testorBrowse"), 
   function(x, ...) {
     curr.id <- x@last.id + 1L
-    x@last.id <- curr.id
-
     if(x@last.reviewed) {
       last.reviewed.sec <- x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
       last.reviewed.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
-      furthest.reviewed <- max(which(x@mapping@reviewed))
+      furthest.reviewed <- if(length(which(x@mapping@reviewed))) 
+        max(which(x@mapping@reviewed)) else 0L
     } else {
       last.reviewed.sec <- last.reviewed.sub.sec <- furthest.reviewed <- 0L
     }
@@ -126,7 +125,6 @@ setMethod("reviewNext", c("testorBrowse"),
       item.main <- item.new
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
     }
-
     if(length(item.main@comment)) cat(item.main@comment, sep="\n")
     cat(deparse_prompt(item.main@call), sep="\n")
     if(
@@ -225,14 +223,21 @@ setMethod("reviewNext", c("testorBrowse"),
     if(identical(prompt.val, "B")) {          # Go back to previous
       if(curr.id == 1L) {
         message("At first reviewable item; nothing to undo")
+        x@last.reviewed <- curr.id
         return(x)
       }
       x@last.id <- curr.id - 1L
+      return(x)
     } else if (identical(prompt.val, "R")) {  # Navigation Prompt
+      if(!length(x@mapping@item.id[x@mapping@reviewed])) {
+        message("No reviewed tests yet")
+        x@last.reviewed <- curr.id
+        return(x)
+      }
       show(x)
-      exit.fun <- function(x) {               # keep re-prompting until user types in valid value
+      exit.fun <- function(y) {               # keep re-prompting until user types in valid value
         valid.vals <- x@mapping@item.id[x@mapping@reviewed]
-        if(!isTRUE(x %in% valid.vals)) {
+        if(!isTRUE(y %in% valid.vals)) {
           message(
             "Input must be integer-like and in ", 
             paste(range(valid.vals), sep="-")
@@ -248,7 +253,7 @@ setMethod("reviewNext", c("testorBrowse"),
       )
       x@last.id <- testor_prompt(
         text="Type in number of test you wish to review:", help=nav.help,
-        browse.env=emptyenv(), exit.condition=exit.fun, 
+        browse.env=parent.env(base.env.pri), exit.condition=exit.fun, 
         valid.opts=c(
           "Type an integer-like number corresponding to a test", 
           Q="[Q]uit", H="[H]elp"

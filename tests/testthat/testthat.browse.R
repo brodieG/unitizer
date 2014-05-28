@@ -77,11 +77,18 @@ local( {
   my.testor2 <- my.testor2 + exps2                        # now add back items to compare
 
   test_that("testorBrowse correctly processes testor for display", {
-    
+    # force all tests to be reviewed so they will be shown
     testor.prepped <- testor:::browsePrep(my.testor2)
+    testor.prepped@mapping@reviewed <- rep(TRUE, length(testor.prepped@mapping@reviewed))
     expect_equal(
       c("Section 1", "  1. runif(20) ------------------------------------ Failed:Y", "  2. 1 + 1 ----------------------------------------    New:Y", "  4. matrix(1:9, 3) -------------------------------    New:Y", "Section 2", "  5. sample(20) ----------------------------------- Failed:Y", "  6. 1 + 20 ---------------------------------------    New:Y", "  8. matrix(1:9, ncol = 3) ------------------------    New:Y", "  9. lm(x ~ y, data.frame(x = 1:10, y = c(5, 3... -    New:Y"),
-      testor:::render(testor.prepped, 60)
+      as.character(testor.prepped, 60)
+    )
+    # Alternating tests
+    testor.prepped@mapping@reviewed <- as.logical(seq(length(testor.prepped@mapping@reviewed)) %% 2)
+    expect_equal(
+      c("Section 1", "  1. runif(20) ------------------------------------ Failed:Y", "Section 2", "  5. sample(20) ----------------------------------- Failed:Y", "  9. lm(x ~ y, data.frame(x = 1:10, y = c(5, 3... -    New:Y"),
+      as.character(testor.prepped, 60)
     )
   } )
 

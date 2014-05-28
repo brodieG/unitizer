@@ -5,8 +5,8 @@
 #' add new test, remove old test).
 
 setClass("testorChanges",
-  representation(failed="integer", new="integer", removed="integer", error="integer"),
-  prototype(failed=integer(2L), new=integer(2L), removed=integer(2L), error=integer(2L)),
+  representation(failed="integer", new="integer", removed="integer", corrupted="integer"),
+  prototype(failed=integer(2L), new=integer(2L), removed=integer(2L), corrupted=integer(2L)),
   validity=function(object) {
     for(i in slotNames(object)) {
       if((len <- length(slot(object, i))) > 0L && len != 2L) {
@@ -26,7 +26,7 @@ setMethod("show", "testorChanges",
     if(object@failed[[1L]]) cat("- Replace", object@failed[[1L]] ,"out of", object@failed[[2L]], "failed tests\n")
     if(object@new[[1L]]) cat("- Add", object@new[[1L]] , "out of", object@new[[2L]], "new tests\n")
     if(object@removed[[1L]]) cat("- Remove", object@removed[[1L]], "out of", object@removed[[2L]], "removed tests\n")
-    if(object@error[[1L]]) cat("- Replace", object@error[[1L]], "out of", object@error[[2L]], "tests with errors\n")
+    if(object@corrupted[[1L]]) cat("- Replace", object@corrupted[[1L]], "out of", object@corrupted[[2L]], "tests with errors\n")
   }
 )
 #' Return Sum of Total Changes
