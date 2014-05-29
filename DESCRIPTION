@@ -13,7 +13,7 @@ Description: Stores objects produced by test scripts so that they
     frameworks is that it greatly simplifies assertions designed to
     test complex output since the previously run correct output
     generates the assertions.
-Version: 0.3.1
+Version: 0.3.2
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodieDOTgaslam@MARISSAMAYERSCOMPANY.com>
 Depends:
@@ -47,3 +47,4 @@ Collate:
     'runtests.R'
     'testor-package.r'
     'testor.add.R'
+    'upgrade.R'
