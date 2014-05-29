@@ -88,6 +88,8 @@ setMethod("reviewNext", c("testorBrowse"),
     } else {
       last.reviewed.sec <- last.reviewed.sub.sec <- furthest.reviewed <- 0L
     }
+    x@last.reviewed <- curr.id
+
     curr.sec <- x@mapping@sec.id[[which(x@mapping@item.id == curr.id)]]
     curr.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == curr.id)]]
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
@@ -152,7 +154,7 @@ setMethod("reviewNext", c("testorBrowse"),
     if(x@mapping@ignored[[curr.id]]) return(x)  
     if(x@mapping@reviewed[[curr.id]]) {
       message(
-        "Test has been reviewed with user input: \"", 
+        "You are re-reviewing a test; previous selection was: \"", 
         x@mapping@review.val[[curr.id]], "\""
     ) }      
     # Create evaluation environment; these are really two nested environments,
@@ -223,45 +225,48 @@ setMethod("reviewNext", c("testorBrowse"),
     if(identical(prompt.val, "B")) {          # Go back to previous
       if(curr.id == 1L) {
         message("At first reviewable item; nothing to undo")
-        x@last.reviewed <- curr.id
         return(x)
       }
-      x@last.id <- curr.id - 1L
+      prev.tests <- x@mapping@item.id[!x@mapping@ignored] < curr.id
+      x@last.id <- if(length(prev.tests)) max(prev.tests) - 1L else 0L
       return(x)
     } else if (identical(prompt.val, "R")) {  # Navigation Prompt
       if(!length(x@mapping@item.id[x@mapping@reviewed])) {
         message("No reviewed tests yet")
-        x@last.reviewed <- curr.id
         return(x)
-      }
-      show(x)
-      exit.fun <- function(y) {               # keep re-prompting until user types in valid value
-        valid.vals <- x@mapping@item.id[x@mapping@reviewed]
-        if(!isTRUE(y %in% valid.vals)) {
-          message(
-            "Input must be integer-like and in ", 
-            paste(range(valid.vals), sep="-")
-          )
-          return(FALSE)
-        }
-        return(TRUE)
       }
       nav.help <- paste0(
         "You may re-review any of the tests that you have already reviewed by ",
         "selecting that test's number.  The numbering is not continuous because ",
         "some statements in the store are not considered tests (e.g. assignments)."
       )
-      x@last.id <- testor_prompt(
-        text="Type in number of test you wish to review:", help=nav.help,
-        browse.env=parent.env(base.env.pri), exit.condition=exit.fun, 
-        valid.opts=c(
-          "Type an integer-like number corresponding to a test", 
-          Q="[Q]uit", H="[H]elp"
-      ) )
+      nav.opts <- c(
+        "An integer-like number corresponding to a test",  Q="[Q]uit", H="[H]elp"
+      )
+      nav.prompt <- "What test do you wish to review"
+      cat(nav.prompt, " (", paste(nav.opts, sep=", "), ")?\n\n", sep="")
+      show(x)
+      exit.fun <- function(y) {               # keep re-prompting until user types in valid value
+        valid.vals <- x@mapping@item.id[x@mapping@reviewed]
+        if(!isTRUE(y %in% valid.vals)) {
+          message(
+            "Input must be integer-like and in ", 
+            paste0(range(valid.vals), collapse="-")
+          )
+          return(FALSE)
+        }
+        return(TRUE)
+      }
+      x@last.id <- as.integer(
+        testor_prompt(
+          text=nav.prompt, help=nav.help,
+          browse.env=parent.env(base.env.pri), exit.condition=exit.fun, 
+          valid.opts=nav.opts
+      ) ) - 1L   # - 1L required due to how we navigate, need to set last.id to value prior
     } else if (prompt.val %in% c("Y", "N")) {
       x@mapping@reviewed[[curr.id]] <- TRUE
       x@mapping@review.val[[curr.id]] <- prompt.val
-      x@last.id <- x@last.reviewed <- curr.id
+      x@last.id <- curr.id
     } else {
       stop("Logic Error: `testor_prompt` returned unexpected value; contact maintainer")
     }
