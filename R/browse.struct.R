@@ -12,7 +12,7 @@ NULL
 #' @keywords internal
 
 setGeneric("browsePrep", function(x, ...) standardGeneric("browsePrep"))
-setMethod("browsePrep", "testor", 
+setMethod("browsePrep", "testor", valueClass="testorBrowse",
   function(x, ...) {
     testor.browse <- new("testorBrowse")
     for(i in unique(x@section.parent)) {                           # Loop through parent sections
@@ -46,14 +46,19 @@ setMethod("browsePrep", "testor",
         show.fail=x@tests.errorDetails[x@tests.error & sect.map], 
         items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]]
       )
+      testor.browse <- testor.browse + browse.sect
     }
     if(length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {  # Removed tests
+      browse.sect <- new(
+        "testorBrowseSection", section.id=0L, 
+        section.title="Removed Items"
+      )
       browse.sect <- browse.sect + new(
         "testorBrowseSubSectionRemoved", 
         items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)]
       )
+      testor.browse <- testor.browse + browse.sect
     }
-    testor.browse <- testor.browse + browse.sect
     testor.browse
   }
 )
@@ -152,7 +157,7 @@ setGeneric("render", function(object, ...) standardGeneric("render"))
 #' @return character vector, one element per line, for use with e.g.
 #'   \code{`cat(x, sep=\n`)}
 
-setMethod("as.character", "testorBrowse", 
+setMethod("as.character", "testorBrowse", valueClass="character",
   function(x, width=0L, ...) {
     if(!is.numeric(width) || width < 0 || length(width) != 1L) {
       stop("Argument `width` must be a one length numeric.")
@@ -235,7 +240,7 @@ setMethod("as.character", "testorBrowse",
 #' 
 #' @keywords internal
 
-setMethod("done", "testorBrowse",
+setMethod("done", "testorBrowse", valueClass="logical",
   function(x, ...) {
     isTRUE(x@last.id >= max(x@mapping@item.id))
 } )
@@ -254,17 +259,17 @@ setMethod("processInput", "testorBrowse", valueClass="testorItems",
     items <- new("testorItems")
     for(i in x@mapping@item.id) {
       sec <- x@mapping@sec.id[[i]]        # while it was nice to have mapping as an object for validation, this is terrible
-      sub.sec <- x@mapping@sec.id[[i]]
+      sub.sec <- x@mapping@sub.sec.id[[i]]
       id.rel <- x@mapping@item.id.rel[[i]]
       input <- x@mapping@review.val[[i]]
-      input.translate <- x[[sec]][[sub.sec]]@action[[input]]
-
+      input.translate <- x[[sec]][[sub.sec]]@actions[[input]]
       items <- items + switch(
         input.translate,                  
-        A=x[[sec]][[sub.sec]]@items.new[id.rel],
-        B=x[[sec]][[sub.sec]]@items.ref[id.rel],
+        A=x[[sec]][[sub.sec]]@items.new[[id.rel]],
+        B=x[[sec]][[sub.sec]]@items.ref[[id.rel]],
         C=NULL
-    ) }
+      ) 
+    }
     items
 } )
 #' Represents a \code{`testor_sect`}
@@ -284,7 +289,7 @@ setClass("testorBrowseSection", contains="testorList",
 #' 
 #' @keywords internal
 
-setMethod("+", c("testorBrowse", "testorBrowseSection"), 
+setMethod("+", c("testorBrowse", "testorBrowseSection"), valueClass="testorBrowse",
   function(e1, e2) {
     e1 <- append(e1, list(e2))
     item.count <- unlist(lapply(as.list(e2), length))
@@ -312,8 +317,6 @@ setMethod("+", c("testorBrowse", "testorBrowseSection"),
     e1
   }
 )
-
-
 #' Represents A Section/Action Type when Browsing
 #' 
 #' @keywords internal
@@ -377,10 +380,10 @@ setClass("testorBrowseSubSection",
     TRUE
   }
 )
-setMethod("length", "testorBrowseSubSection", 
+setMethod("length", "testorBrowseSubSection", valueClass="logical",
   function(x) max(length(x@items.new), length(x@items.ref))
 )
-setMethod("ignored", "testorBrowseSubSection",
+setMethod("ignored", "testorBrowseSubSection", valueClass="logical",
   function(x, ...) {
     sub.sect <- if(is.null(x@items.new)) x@items.ref else x@items.new
     vapply(as.list(sub.sect), ignored, logical(1L))
@@ -391,7 +394,7 @@ setMethod("ignored", "testorBrowseSubSection",
 #' Uses \code{`title`} slot
 
 setGeneric("makeTitle", function(x, ...) standardGeneric("makeTitle"))
-setMethod("makeTitle", "testorBrowseSubSection", 
+setMethod("makeTitle", "testorBrowseSubSection", valueClass="character",
   function(x, ...) paste0("Review ", length(x), " ", x@title, " Tests")
 )
 
