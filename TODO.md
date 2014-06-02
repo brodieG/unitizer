@@ -30,9 +30,6 @@ Self evident
 
 ## Browse
 
-* more advanced undo
-** view of what we've done so far
-** ability to undo in other sections
 * smart quit: save stuff we've done so far
 * performance problems from too many nested environments? decided 
   to collapse non-tests into tests to limit  of environments
@@ -65,7 +62,7 @@ Self evident
 
 ## Internal
 
-* There is heavy usage of `parent.env<-`, what do we do about the note in docs
+* There is heavy usage of `parent.env<-`, what do we do about the note in R docs
   stating this might be removed in the future?
 * need to think through intialize methods so hopefully we can avoid instantiating
   with .items argument for testorlist inheritors since that's a bit weird 

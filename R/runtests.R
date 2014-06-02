@@ -253,31 +253,9 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
   testor <- browse(testor, env=new.env(par.frame))
   on.exit(NULL)  # main failure points are now over so don't need to alert on failure
 
-  if(length(testor@changes) == 0L) {
-    message("No items to store; there either were no changes or you didn't accept any changes.")
-    return(TRUE)
-  } 
-  print(H2("Confirm Changes"))
-  cat("You are about to IRREVERSIBLY:\n")
-
-  show(testor@changes)
-  message("Update testor ([Y]es, [N]o, [Q]uit, [H]elp)?")
-  help <- paste0(
-    "Pressing Y will replace the previous testor with a new one updated with all the ",
-    "changes you approved."
-  )
-  act <- testor_prompt(
-    "Update testor", new.env(par.frame), help, 
-    valid.opts=c(Y="[Y]es", N="[N]o", Q="[Q]uit", H="[H]elp")
-  )
-  if(identical(act, "Y")) {
-    if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
-    success <- try(set_store(store.id, testor))
-    setwd(new.wd)
-    if(!inherits(success, "try-error")) message("testor updated")
-    return(success)    
-  } else {
-    message("testor changes NOT saved")
-  }
-  return(FALSE)
+  if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
+  success <- try(set_store(store.id, testor))
+  setwd(new.wd)
+  if(!inherits(success, "try-error")) message("testor updated")
+  return(success)    
 }
