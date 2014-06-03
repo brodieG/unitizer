@@ -30,7 +30,6 @@ Self evident
 
 ## Browse
 
-* smart quit: save stuff we've done so far
 * performance problems from too many nested environments? decided 
   to collapse non-tests into tests to limit  of environments
 * should we keep objects that user creates while browsing across tests?  
@@ -98,7 +97,6 @@ Self evident
 * provide facilities to upate testor id when testors are moved, though
   typically the testor should always be in the same relative location
   to the script that runs it.
-* partial save
 
 ---
 

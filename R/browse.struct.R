@@ -80,7 +80,7 @@ setMethod("browsePrep", "testor", valueClass="testorBrowse",
 #' @slot item.id unique, 1 incrementing up to total number of reviewable items
 #' @slot item.id.rel non-unique, unique within each sec/sub.sec
 #' @slot reviewed whether a test has been reviewed
-#' @slot review.val what action the user decided ("Y") is default
+#' @slot review.val what action the user decided ("N") is default
 #' @keywords internal
 
 setClass("testorBrowseMapping", 
@@ -303,7 +303,7 @@ setMethod("+", c("testorBrowse", "testorBrowseSection"), valueClass="testorBrows
       sub.sec.id=rep(
         seq_along(item.count), item.count
       ),
-      review.val=rep("Y", sum(item.count)),                  # Default Action is Yes
+      review.val=rep("N", sum(item.count)),       # Default Action is No so that when we quit early, only reviewed stuff is kept
       reviewed=rep(FALSE, sum(item.count)),
       review.type=factor(
         rep(test.types, item.count), 

@@ -221,7 +221,11 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
   list2env(getItemFuns, testor@zero.env)     # functions for accessing testorItem contents
   test.env <- new.env(parent=testor@items.new@base.env)
   wd <- getwd()                              # in case user changes it through tests
-  on.exit(message("Exited before storing results; tests were not saved or changed."))  # In case interrupted or some such
+  on.exit(                                   # In case interrupted or some such 
+    message(
+      "Unexpectedly exited before storing results; ",
+      "tests were not saved or changed."
+  ) )
 
   # Parse the test file
 
@@ -247,11 +251,17 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
     if(any(tail(testor.summary, 1L)[, -1L] > 0L)) {  # Passed tests are first column
       stop("Newly generated tests do not match testor; please run in interactive mode to see why")
   } }
-  # Interactively decide what to keep / override / etc.; Action "A" is use new item, "B" is use
-  # old item, and "C" is do nothing.  Additionally, prepare testor 
-  
-  testor <- browse(testor, env=new.env(par.frame))
+  # Interactively decide what to keep / override / etc.
+    
+  testor <- withRestarts(
+    browse(testor, env=new.env(par.frame)),
+    earlyExit=function() {
+      message("User quit without storing any tests")
+      FALSE
+    }
+  )
   on.exit(NULL)  # main failure points are now over so don't need to alert on failure
+  if(!is(testor, "testor")) return(TRUE)
 
   if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
   success <- try(set_store(store.id, testor))

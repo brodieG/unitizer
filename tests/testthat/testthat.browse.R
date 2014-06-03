@@ -83,6 +83,7 @@ local( {
   test_that("testorBrowse correctly processes testor for display", {
     # force all tests to be reviewed so they will be shown
     testor.prepped@mapping@reviewed <- rep(TRUE, length(testor.prepped@mapping@reviewed))
+    testor.prepped@mapping@review.val <- rep("Y", length(testor.prepped@mapping@reviewed))
     expect_equal(
       c("Section 1", "   1. runif(20) -----------------------------------  Failed:Y", "   2. 1 + 1 ---------------------------------------     New:Y", "   4. matrix(1:9, 3) ------------------------------     New:Y", "Section 2", "   5. sample(20) ----------------------------------  Failed:Y", "   6. 1 + 20 --------------------------------------     New:Y", "   8. matrix(1:9, ncol = 3) -----------------------     New:Y", "   9. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  10. \"I'll be removed\" --------------------------- Removed:Y",  "  11. \"I too will be removed\" --------------------- Removed:Y", "  12. \"I three will be removed\" ------------------- Removed:Y"),
       as.character(testor.prepped, 60)
@@ -101,6 +102,7 @@ local( {
     # removed test means don't keep it)
 
     testor.prepped@mapping@reviewed <- rep(TRUE, length(testor.prepped@mapping@reviewed))
+    testor.prepped@mapping@review.val <- rep("Y", length(testor.prepped@mapping@reviewed))
     # Assume user accepted all tests
     expect_equal(
       list(quote(runif(20)), quote(1 + 1), quote(var <- 200), quote(matrix(1:9, 3)), quote(sample(20)), quote(1 + 20), quote(var1 <- list(1, 2, 3)), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5))))),

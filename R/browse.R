@@ -48,7 +48,8 @@ setMethod("browse", c("testor"), valueClass="testor",
     testor.browse@hist.con <- hist.con  # User expression to this file for use in history
 
     repeat {
-      while(!done(testor.browse <- reviewNext(testor.browse))) NULL # Interactively review all tests
+      testor.browse <- reviewNext(testor.browse)
+      while(!done(testor.browse)) NULL # Interactively review all tests
       
       # Get summary of changes
 
@@ -85,7 +86,7 @@ setMethod("browse", c("testor"), valueClass="testor",
         testor.browse <- user.input
         next
       } else if (identical(user.input, "Q")) {
-        stop("User Quit")
+        invokeRestart("earlyExit")
       } else if (identical(user.input, "Y")) {
         break
       }
@@ -274,7 +275,6 @@ setMethod("reviewNext", c("testorBrowse"),
     ) {
       return(x.mod)  
     } else if (x.mod %in% c("Y", "N")) {
-
       # Actual user input
 
       x@mapping@reviewed[[curr.id]] <- TRUE
@@ -282,6 +282,25 @@ setMethod("reviewNext", c("testorBrowse"),
       x@last.id <- curr.id
     } else if (identical(x.mod, "U")) {
       x@last.id <- max(x@mapping@item.id[x@mapping@reviewed])
+    } else if (identical(x.mod, "Q")) {
+      quit.prompt <- "Save Reviewed Changes"
+      quit.opts <- c(Y="[Y]es", N="[N]o")
+      cat(quit.prompt, " (", paste0(quit.opts, collapse=", "), ")?", sep="")
+      user.input <- testor_prompt(
+        quit.prompt, browse.env=parent.env(base.env.pri), 
+        valid.opts=quit.opts, hist.con=x@hist.con,
+        help=c(
+          "Pressing \"Y\" will store the changes you have reviewed so far, and ",
+          "you will also get a chance to re-review the changes if you wish. ",
+          "Pressing \"N\" will discard all reviewed changes."
+      ) )
+      if(identical(user.input, "Y")) {
+        return(x)
+      } else if (user.input %in% c("N", "Q")) {
+        invokeRestart("earlyExit")
+      } else {
+        stop("Logic Error: Unexpected user input; contact maintainer.")
+      } 
     } else {
       stop("Logic Error: `testor_prompt` returned unexpected value; contact maintainer")
     }

@@ -50,7 +50,7 @@ testor_prompt <- function(
     ) {
       return(as.character(val[[1L]]))
     } else if (length(val) == 1L && identical(val[[1L]], quote(Q))) {
-      stop("User quit.")
+      return("Q")
     } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
       if(!length(help)) {
         cat("No help available.", "", paste(text, opts.txt), sep="\n")
