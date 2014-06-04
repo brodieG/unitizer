@@ -1,4 +1,4 @@
-# unitizeR - Turn Arbitrary Code into Unit Tests
+### unitizeR - Turn Arbitrary Code into Unit Tests
 
 One of the more important purposes of unit tests is to ensure that previously tested functionality does not break as a result of changes to the code base.  `unitizer` seeks to simplify this aspect of unit testing by taking advantage of the following:
 
@@ -8,7 +8,7 @@ One of the more important purposes of unit tests is to ensure that previously te
 
 `unitizer` evaluates arbitrary expressions and stores them along with the result of their evaluation.  Re-running the same `unitizer` then compares the new results for each expression to the previously stored results.  If there are any differences `unitizer` breaks out into an interactive mode to allow comparison of the old evaluation to the new one, and if necessary, update the tests.
 
-# But Why?
+### But Why?
 
 There are some noteworthy benefits to this approach, in particular:
 
@@ -22,7 +22,7 @@ Points 2. and 3. are gravy.  For example, for 3., you can easily test that your 
 
 One aspect of evaluation that isn't currently captured but hopefully will be in the future are side effects such as plots.
 
-# How Do I Use It?
+### How Do I Use It?
 
 There are several ways to use `unitizer`, but the simplest one is to create a file with your test expressions.  For example, if we were the author of the `lm` function, we might have:
 
@@ -52,7 +52,7 @@ Later on, you can just re-run:
 
 If everything is working as before then all the tests will pass and you can keep coding merrily.  If you introduced regressions, then `unitizer` will highlight the failing tests and allow you to review them interactively.  If you added more tests to the file since the last time you ran `unitize`, those tests will be added to the RDS subject to your review.
 
-# Extreme Programming with `unitizer`
+### Extreme Programming with `unitizer`
 
 One way to approach unit testing is write the unit tests before you even develop the functionality.  This ensures that the tests are actually written, and it also serves as a documentation of sorts since presumably all aspects of functionality will have some explicit test assigned.  For example, an extreme programming file for the `times_two` function might look like so:
 
