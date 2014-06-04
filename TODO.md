@@ -31,27 +31,25 @@ Self evident
 ## Browse
 
 * performance problems from too many nested environments? decided 
-  to collapse non-tests into tests to limit  of environments
+  to collapse non-tests into tests to limit  of environments, not clear
+  whether this is actually an issue
 * should we keep objects that user creates while browsing across tests?  
   probably, but we don't right now.
 * accept all (hidden?) option
-* super confusing when using title & expr for testor_sect when accidentally
-  putting expr in title since checking that title is a string forces
-  evaluation of expr? how to check without causing problems? the issue
-  here is for subsections? blergh, leave title first, can skip it if you
-  want subsections without title by specifying expr=
 * Current behavior of automatically storing new non-tests and discarding 
   reference non tests can be potentially confusing to someone examining the
   environment and not realizing the object they are looking at is not the same
   that was used in the evaluation of the reference test; need to think about
   now to handle this (throw warning whenever such objects are accessed?)
 
-### Order of Tests
+## Order of Tests
 
 * what do we do with default section that has values scattered throughout?
 * And how to make it clear that tests are ordered first by test outcome, and as
   a result a display order will not be the same as the order in the file?
   Document clearly?
+* removed tests coming last?  Trying to match them back to a section is too
+  onerous, and besides, likely wouldn't have them in the same spot anyway.
 
 ## Environments
 
@@ -97,6 +95,11 @@ Self evident
 * provide facilities to upate testor id when testors are moved, though
   typically the testor should always be in the same relative location
   to the script that runs it.
+
+## Extreme Programing
+
+* add an extreme programing mode that requires new tests to evaluate to TRUE
+  or NULL or some such
 
 ---
 
