@@ -62,19 +62,29 @@ testor_prompt <- function(
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     on.exit(options(warn=warn.opt))
     if(warn.opt != 1L) options(warn=1L)
+    trace.res <- NULL
 
     evaled <- lapply(val, 
       function(x) {
         res <- NULL
+        trace.res <<- NULL
+        passed.eval <- FALSE
         withRestarts(
-          withCallingHandlers(
-            res <- eval(call("withVisible", x), browse.env),
+          withCallingHandlers( 
+            {
+              res <- eval(call("withVisible", x), browse.env)
+              passed.eval <<- TRUE
+              if(res$visible) if(isS4(res$value)) show(res$value) else print(res$value)
+            },
             warning=function(e) {
               warning(simpleCondition(conditionMessage(e), x))
               invokeRestart("muffleWarning")
             },
             error=function(e) {
               message(simpleCondition(paste0("Error: ", conditionMessage(e), "\n"), x))
+              call.stack <- head(sys.calls(), -2L)
+              if(!passed.eval) call.stack[(-3L):(-2L) + length(call.stack)] <- NULL
+              trace.res <<- call.stack # withVisible adds another 2 levels
               invokeRestart("abort")
             }
           ),
@@ -87,7 +97,6 @@ testor_prompt <- function(
         if(is.null(res)) {
           return(list(FALSE, res))  
         } else {
-          if(res$visible) print(res$value)
           return(list(TRUE, res$value))
     } } )    
     if(
@@ -97,7 +106,9 @@ testor_prompt <- function(
     if(length(evaled)) {
       last.val <- evaled[[length(evaled)]][[2L]]  # exit loop if value meets exit condition
       if(exit.condition(last.val)) return(last.val)
-} } }
+    }
+    if(!is.null(trace.res)) set_trace(trace.res)
+} }
 #' Wrapper Around User Interaction
 #' 
 #' Specifically for cases were user has the choice to input something or to try

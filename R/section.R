@@ -86,9 +86,9 @@ setMethod("length", "testorSection", function(x) x@length)
 #' @export
 #' @param title character 1 length title for the section, can be omitted
 #'   though if you do omit it you will have to refer to the subsequent
-#'   arguments by name (i.e. `\code{`testor_sect(expr=...)`})
-#' @param test expression(s), most commonly a call to \code{`{`} with 
-#'   several calls (see examples)
+#'   arguments by name (i.e. \code{`testor_sect(expr=...)`})
+#' @param test expression(s), most commonly a call to \code{`{}`} with 
+#'   several calls inside (see examples)
 #' @param details character more detailed description of what the purpose
 #'   of the section is
 #' @param compare a function or a \code{`\link{testorItemTestsFuns-class}`}

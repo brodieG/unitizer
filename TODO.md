@@ -36,11 +36,16 @@ Self evident
 * should we keep objects that user creates while browsing across tests?  
   probably, but we don't right now.
 * accept all (hidden?) option
+* "aborted mismatch" confusing, it means in reference to one test caused an
+  execution abortion, whereas the other one didn't, but no one will have any
+  idea what that means (e.g. there was a stop in one, but not in the other)
 * Current behavior of automatically storing new non-tests and discarding 
   reference non tests can be potentially confusing to someone examining the
   environment and not realizing the object they are looking at is not the same
   that was used in the evaluation of the reference test; need to think about
   now to handle this (throw warning whenever such objects are accessed?)
+* lack of traceback when browsing an error is a bit of a problem; is there
+  a way to provide one?
 
 ## Order of Tests
 
@@ -121,4 +126,5 @@ Self evident
   every now and then (this may no longer be a problem).
 * Line wrapping doesn't seem to be well implemented; headers end well, but
   text output seems to overflow by a word or so.
-  
+* history restoration failed when using browser() in browse() and quitting from
+  both
