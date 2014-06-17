@@ -168,6 +168,25 @@
 
 runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
 
+  # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
+
+  call.stack <- sys.calls()
+  if(
+    any(
+      vapply(
+        call.stack, FUN.VALUE=logical(1L),
+        function(x) 
+          is.symbol(x[[1]]) && 
+          as.character(x[[1]]) %in% 
+          c("withCallingHandlers", "withRestarts", "tryCatch")
+    ) )
+  ) warning(
+    "It appears you are running testor inside an error handling function such ",
+    "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
+    "discouraged as it may cause unpredictable behavior from `testor` in the ",
+    "event tests produce conditions / errors.  We strongly recommend you re-run",
+    "your tests outside of such handling functions."
+  )
   # Retrieve or create testor environment
 
   par.frame <- parent.frame()
@@ -194,7 +213,7 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
       help <- paste0("Pressing Y will upgrade your `testor` to the newest version if possible")
       act <- testor_prompt(
         "Upgrade testor", new.env(par.frame), help, 
-        valid.opts=c(Y="[Y]es", N="[N]o", Q="[Q]uit", H="[H]elp")
+        valid.opts=c(Y="[Y]es", N="[N]o")
       )
       msg <- paste0(
         "If you don't wish to / can't automatically upgrade your testor you can re-",

@@ -1,3 +1,7 @@
+#' @include exec.R
+
+NULL
+
 #' Handles The Actual User Interaction
 #' 
 #' Will keep accepting user input until either:
@@ -43,6 +47,7 @@ testor_prompt <- function(
   opts.txt <- paste0("(", paste0(valid.opts, collapse=", "), ")?")
   repeat {
     while(inherits(try(val <- faux_prompt("testor> ")), "try-error")) NULL 
+
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) && 
       as.character(val[[1L]]) %in% names(valid.opts) && 
@@ -64,50 +69,35 @@ testor_prompt <- function(
     if(warn.opt != 1L) options(warn=1L)
     trace.res <- NULL
 
-    evaled <- lapply(val, 
-      function(x) {
-        res <- NULL
-        trace.res <<- NULL
-        passed.eval <- FALSE
-        withRestarts(
-          withCallingHandlers( 
-            {
-              res <- eval(call("withVisible", x), browse.env)
-              passed.eval <<- TRUE
-              if(res$visible) if(isS4(res$value)) show(res$value) else print(res$value)
-            },
-            warning=function(e) {
-              warning(simpleCondition(conditionMessage(e), x))
-              invokeRestart("muffleWarning")
-            },
-            error=function(e) {
-              message(simpleCondition(paste0("Error: ", conditionMessage(e), "\n"), x))
-              call.stack <- head(sys.calls(), -2L)
-              if(!passed.eval) call.stack[(-3L):(-2L) + length(call.stack)] <- NULL
-              trace.res <<- call.stack # withVisible adds another 2 levels
-              invokeRestart("abort")
-            }
-          ),
-          abort=function(e) NULL
-        )
-        if(!is.null(hist.con)) {
-          cat(deparse(x), file=hist.con, sep="\n")
-          loadhistory(showConnections()[as.character(hist.con), "description"])
-        }
-        if(is.null(res)) {
-          return(list(FALSE, res))  
-        } else {
-          return(list(TRUE, res$value))
-    } } )    
-    if(
-      !all(vapply(evaled, `[[`, logical(1L), 1L)) || 
-      identical(length(evaled), 0L) 
-    ) cat(text, opts.txt)
-    if(length(evaled)) {
-      last.val <- evaled[[length(evaled)]][[2L]]  # exit loop if value meets exit condition
-      if(exit.condition(last.val)) return(last.val)
+    # Note `val` here is the expression the user inputted, not the result of the
+    # evaluation.  The latter will be in res$value
+
+    res <- eval_user_exp(val, browse.env)
+
+    # store / record history
+      
+    if(!is.null(hist.con)) {
+      cat(deparse(val), file=hist.con, sep="\n")
+      loadhistory(showConnections()[as.character(hist.con), "description"])    
     }
-    if(!is.null(trace.res)) set_trace(trace.res)
+    # go through conditions and issue warnings and errors as appropriate; note
+    # one issue here is that we don't really know whether these warnings/errors
+    # were really emitted by warning() and stop()
+
+    lapply(
+      res$conditions,
+      function(x) {
+        cond.type <- if(identical(class(x), c("simpleWarning", "warning", "condition"))) {
+          "Warning"
+        } else if(identical(class(x), c("simpleError", "error", "condition"))) {
+          "Error"
+        }
+        if(!is.null(cond.type))
+          message(cond.type, " in ", getCall(x), " : ", conditionMessage(x))
+    } )
+    if(res$aborted || !length(val)) cat(text, opts.txt)  # error or no user input, re-prompt user
+    if(exit.condition(res$value)) return(res$value)      # user result allows break of prompt loop
+    if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
 #' Wrapper Around User Interaction
 #' 

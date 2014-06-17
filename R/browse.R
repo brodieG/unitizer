@@ -39,7 +39,16 @@ setMethod("browse", c("testor"), valueClass="testor",
     hist.con <- file(hist.file, "at")
     cat("## <testor> (original history will be restored on exit)\n", file=hist.con)
     loadhistory(showConnections()[as.character(hist.con), "description"])
-    on.exit({close(hist.con); file.remove(hist.file); loadhistory()})
+    
+    # Revert history and trace on exit
+
+    #curr.trace <- .Traceback
+    on.exit( {
+      close(hist.con); 
+      file.remove(hist.file); 
+      loadhistory();
+      #assign(".Traceback", curr.trace, envir=getNamespace("base"))
+    } )
 
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
@@ -49,7 +58,7 @@ setMethod("browse", c("testor"), valueClass="testor",
 
     repeat {
       testor.browse <- reviewNext(testor.browse)
-      while(!done(testor.browse)) NULL # Interactively review all tests
+      if(!done(testor.browse)) next # Interactively review all tests
       
       # Get summary of changes
 
@@ -199,9 +208,15 @@ setMethod("reviewNext", c("testorBrowse"),
     if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
 
     # No need to do anything else with ignored tests since default action for 
-    # them is "Y", so return those
+    # them is "Y", so return those (actually, is N now?).  Not clear if we also
+    # need to set reviewed to TRUE
 
-    if(x@mapping@ignored[[curr.id]]) return(x)
+    if(x@mapping@ignored[[curr.id]]) {
+      # x@mapping@reviewed[[curr.id]] <- TRUE
+      # x@mapping@review.val[[curr.id]] <- x.mod
+      x@last.id <- curr.id      
+      return(x)
+    }
 
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the testorItem values and the child 

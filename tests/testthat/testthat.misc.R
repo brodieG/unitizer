@@ -92,3 +92,10 @@ test_that("(Un)ordered Lists", {
     print(testor:::UL(vec), 100)
   )
 } )
+test_that("Messing with traceback", {
+  warning("Missing traceback tests")
+  # Main problem with this is that there may not be a good way to cause a trace
+  # back to register while not also stopping execution of this file, so not
+  # sure if this can be tested
+} )
+
