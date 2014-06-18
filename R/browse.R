@@ -195,7 +195,7 @@ setMethod("reviewNext", c("testorBrowse"),
       cat(as.character(curr.sub.sec.obj@show.fail[[id.rel]]), sep="\n")
     } 
     # If there are conditions that showed up in main that are not in reference
-    # show the message
+    # show the message, and set the trace if relevant
 
     if(!is.null(item.new) && !is.null(item.ref) && 
       !isTRUE(all.equal(item.new@data@conditions, item.ref@data@conditions)) ||
@@ -204,7 +204,9 @@ setMethod("reviewNext", c("testorBrowse"),
       screen_out(
         item.main@data@message, 
         max.len=getOption("testor.test.msg.lines"), stderr()
-    ) }
+      )
+      set_trace(item.main@trace)
+    }
     if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
 
     # No need to do anything else with ignored tests since default action for 
@@ -336,7 +338,9 @@ setMethod("reviewNext", c("testorBrowse"),
 #' @keywords internal
 
 getItemData <- function(x, name, what, env) {
-  if(!(name %in% c(".new", ".ref"))) stop("testor::get* functions may only be called on the test objects (`.new`, or `.ref`).")
+  if(!(name %in% c(".new", ".ref"))) {
+    stop("testor::get* functions may only be called on the test objects (`.new`, or `.ref`).")
+  }
   if(!(is.environment(env))) stop("Argument `env` must be an environment")
   if(inherits(obj <- try(get(name, inherits=FALSE, envir=env), silent=TRUE), "try-error")) {
     stop("Requested test object `", name, "` is not defined for this test.")

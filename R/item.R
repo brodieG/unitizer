@@ -52,6 +52,7 @@ setClass(
     ignore="logical",
     ls="data.frame",
     comment="characterOrNULL",
+    trace="list",
     data="testorItemData"
   ),
   prototype(
@@ -86,6 +87,7 @@ setMethod("initialize", "testorItem", function(.Object, ...) {
     .Object@ignore <- TRUE
   }
   if("comment" %in% names(dots.all)) .Object@comment <- dots.all$comment
+  if("trace" %in% names(dots.all)) .Object@trace <- dots.all$trace
   dots <- dots.all[!(names(dots.all) %in% slotNames(.Object))]
   .Object@data <- do.call("new", c(list("testorItemData"), dots), quote=TRUE)
   .Object

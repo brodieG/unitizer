@@ -76,25 +76,10 @@ testor_prompt <- function(
 
     # store / record history
       
-    if(!is.null(hist.con)) {
-      cat(deparse(val), file=hist.con, sep="\n")
+    if(!is.null(hist.con) && length(val) == 1L) {
+      cat(deparse(val[[1L]]), file=hist.con, sep="\n")
       loadhistory(showConnections()[as.character(hist.con), "description"])    
     }
-    # go through conditions and issue warnings and errors as appropriate; note
-    # one issue here is that we don't really know whether these warnings/errors
-    # were really emitted by warning() and stop()
-
-    lapply(
-      res$conditions,
-      function(x) {
-        cond.type <- if(identical(class(x), c("simpleWarning", "warning", "condition"))) {
-          "Warning"
-        } else if(identical(class(x), c("simpleError", "error", "condition"))) {
-          "Error"
-        }
-        if(!is.null(cond.type))
-          message(cond.type, " in ", getCall(x), " : ", conditionMessage(x))
-    } )
     if(res$aborted || !length(val)) cat(text, opts.txt)  # error or no user input, re-prompt user
     if(exit.condition(res$value)) return(res$value)      # user result allows break of prompt loop
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`

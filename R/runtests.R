@@ -245,7 +245,6 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
       "Unexpectedly exited before storing results; ",
       "tests were not saved or changed."
   ) )
-
   # Parse the test file
 
   if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {

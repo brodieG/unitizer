@@ -66,11 +66,11 @@ setMethod("exec", "ANY", valueClass="testorItem",
       test.fun <- try(eval(x[[1L]], test.env), silent=TRUE)
       if(identical(test.fun, testor_sect)) {
         stop("Failed instantiating a testor section:\n", paste0(capt$message, "\n"))
-      }
-    }
+    } }
     new(
-      "testorItem", call=x.to.eval, value=res$value, conditions=res$conditions, output=capt$output, 
-      message=capt$message, aborted=res$aborted, env=test.env, comment=attr(x, "comment")
+      "testorItem", call=x.to.eval, value=res$value, conditions=res$conditions, 
+      output=capt$output, message=capt$message, aborted=res$aborted, 
+      env=test.env, comment=attr(x, "comment"), trace=res$trace
     )
 } )
 #' Utility function to evaluate user expressions
@@ -85,7 +85,7 @@ eval_user_exp <- function(testorUSEREXP, env ) {
   passed.eval <- FALSE
   aborted <- FALSE
   conditions <- list()
-  trace <- NULL
+  trace <- list()
   testorTESTRES <- NULL
 
   withRestarts(
@@ -94,8 +94,8 @@ eval_user_exp <- function(testorUSEREXP, env ) {
         trace.base <- sys.calls()
         value <- withVisible(eval(testorUSEREXP, env))
         passed.eval <<- TRUE
+        testorTESTRES <- value$value
         if(value$visible) {
-          testorTESTRES <- value$value
           if(isS4(testorTESTRES)) show(testorTESTRES) else print(testorTESTRES)
       } },
       condition=function(cond) {
@@ -103,7 +103,6 @@ eval_user_exp <- function(testorUSEREXP, env ) {
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()
           trace <<- get_trace(trace.base, trace.new, passed.eval)
-          invokeRestart("abort")
       } }   
     ),
     abort=function() aborted <<- TRUE
@@ -133,7 +132,7 @@ eval_user_exp <- function(testorUSEREXP, env ) {
 #' @return TRUE (only purpose of this is side effect)
 
 set_trace <- function(trace) {
-  assign(".Traceback", trace, envir=getNamespace("base"))
+  if(length(trace)) assign(".Traceback", trace, envir=getNamespace("base"))
   TRUE
 }
 #' Collect the Call Stack And Clean-up

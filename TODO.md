@@ -124,14 +124,15 @@ Self evident
 
 # Bugs
 
-* Unreproduced: when running `match_call` tests, after accepting 2 changes and 
+* When quitting early and agreeing to save, prompt just seems to revert to going
+  back through remaining tests
+* history restoration failed when using browser() in browse() and quitting from
+  both; might be related to quit(), also affects options(warn=)
+* unclear why it was necessary to export fileOrNULL for it to work (and why
+  it stopped working, this is in relation to the hist.con object)* Unreproduced: when running `match_call` tests, after accepting 2 changes and 
   keeping one reference test, re-running caused testor to not recognized any of 
   the tests as having been run
 * make sure ls doesn't get defined in global env!! right now it seems to be,
   every now and then (this may no longer be a problem).
 * Line wrapping doesn't seem to be well implemented; headers end well, but
   text output seems to overflow by a word or so.
-* history restoration failed when using browser() in browse() and quitting from
-  both; might be related to quit(), also affects options(warn=)
-* unclear why it was necessary to export fileOrNULL for it to work (and why
-  it stopped working, this is in relation to the hist.con object)
