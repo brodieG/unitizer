@@ -39,7 +39,6 @@ setClass(
     TRUE 
   }
 )
-
 setMethod("initialize", "testorItemTestFun", function(.Object, ...) {
   dots <- list(...)
   if(!("fun" %in% names(dots))) stop("Argument `fun` required.")
@@ -121,8 +120,6 @@ setMethod("as.character", "testorItemTestsErrors",
     } }
     chr
 } )
-
-
 #' Store Functions for New vs. Reference Test Comparisons
 #' 
 #' \code{`testorItemTestsFuns`} contains the functions used to compare the results
@@ -153,7 +150,7 @@ setClass(
   ),
   prototype(
     value=new("testorItemTestFun", fun=all.equal),
-    conditions=new("testorItemTestFun", fun=compare_conditions),
+    conditions=new("testorItemTestFun", fun=all.equal),
     output=new("testorItemTestFun", fun=function(target, current) TRUE),
     message=new("testorItemTestFun", fun=function(target, current) TRUE),
     aborted=new("testorItemTestFun", fun=identical)

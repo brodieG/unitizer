@@ -68,7 +68,8 @@ setMethod("exec", "ANY", valueClass="testorItem",
         stop("Failed instantiating a testor section:\n", paste0(capt$message, "\n"))
     } }
     new(
-      "testorItem", call=x.to.eval, value=res$value, conditions=res$conditions, 
+      "testorItem", call=x.to.eval, value=res$value, 
+      conditions=structure(res$conditions, class="condition_list"), 
       output=capt$output, message=capt$message, aborted=res$aborted, 
       env=test.env, comment=attr(x, "comment"), trace=res$trace
     )
@@ -95,17 +96,20 @@ eval_user_exp <- function(testorUSEREXP, env ) {
         value <- withVisible(eval(testorUSEREXP, env))
         passed.eval <<- TRUE
         testorTESTRES <- value$value
-        if(value$visible) {
+        if(value$visible && length(testorUSEREXP)) {
           if(isS4(testorTESTRES)) show(testorTESTRES) else print(testorTESTRES)
       } },
       condition=function(cond) {
+        attr(cond, "printed") <- passed.eval
         conditions[[length(conditions) + 1L]] <<- cond
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()
           trace <<- get_trace(trace.base, trace.new, passed.eval)
       } }   
     ),
-    abort=function() aborted <<- TRUE
+    abort=function() {
+      aborted <<- structure(TRUE, printed=passed.eval)
+    }
   )
   list(
     value=testorTESTRES,

@@ -1,4 +1,5 @@
 setOldClass("expression")
+setOldClass("condition_list")
 setClassUnion("listOrExpression", c("list", "expression"))
 setClassUnion("characterOrNULL", c("character", "NULL"))
 setClassUnion("environmentOrNULL", c("environment", "NULL"))

@@ -16,5 +16,11 @@ setMethod("upgrade", "testor", valueClass="testor",
       )
       object@changes <- changes
     }
+    if(object@version < "0.3.3") {
+      for(i in 1:length(object@items.ref)) {
+        object@items.ref[[i]]@data@conditions <- 
+          structure(object@items.ref[[i]]@data@conditions, class="condition_list")
+      }  
+    } 
     object
 } )

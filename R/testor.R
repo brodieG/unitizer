@@ -196,7 +196,10 @@ setMethod("testItem", c("testor", "testorItem"),
         err.msg <- paste0("comparison function `", slot(section@compare, i)@fun.name, "`")
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
-          test.error.tpl[[i]] <- new("testorItemTestError", value=paste0(err.msg, " produced error: ", test.res), compare.err=TRUE)
+          test.error.tpl[[i]] <- new(
+            "testorItemTestError", value=paste0(err.msg, " produced error: ", test.res), 
+            compare.err=TRUE
+          )
         } else if(isTRUE(test.res)) {
           test.result[[i]] <- TRUE
           next
@@ -205,7 +208,9 @@ setMethod("testItem", c("testor", "testorItem"),
           test.error.tpl[[i]] <- new("testorItemTestError", value=test.res)
         } else if(identical(test.res, FALSE)) {
           test.status <- "Fail"
-          test.error.tpl[[i]] <- new("testorItemTestError", value=paste0(err.msg, " found a mismatch"))
+          test.error.tpl[[i]] <- new(
+            "testorItemTestError", value=paste0(err.msg, " found a mismatch")
+          )
         } else {
           test.status <- "Error"
           msg <- paste0(err.msg, " returned something other than TRUE or character vector")

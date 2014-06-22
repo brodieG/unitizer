@@ -22,7 +22,7 @@ setClass(
   "testorItemData", 
   representation(
     value="ANY", 
-    conditions="list", 
+    conditions="condition_list", 
     output="character", 
     message="character",
     aborted="logical"      # more generally, should this be a withRestarts slot?

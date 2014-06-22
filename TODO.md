@@ -126,6 +126,8 @@ Self evident
 
 * When quitting early and agreeing to save, prompt just seems to revert to going
   back through remaining tests
+* Trace for print method errors doesn't seem to work right; the print piece is 
+  missing
 * history restoration failed when using browser() in browse() and quitting from
   both; might be related to quit(), also affects options(warn=)
 * unclear why it was necessary to export fileOrNULL for it to work (and why

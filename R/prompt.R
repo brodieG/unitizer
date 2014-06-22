@@ -135,7 +135,7 @@ navigate_prompt <- function(
       "some statements in the store are not considered tests (e.g. assignments)."
     )
     nav.opts <- c(
-      "An integer-like number corresponding to a test",  Q="[Q]uit", H="[H]elp"
+      "An integer-like number corresponding to a test"
     )
     nav.prompt <- "What test do you wish to review"
     cat(nav.prompt, " (", paste0(nav.opts, collapse=", "), ")?\n\n", sep="")

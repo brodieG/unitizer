@@ -92,10 +92,50 @@ test_that("(Un)ordered Lists", {
     print(testor:::UL(vec), 100)
   )
 } )
-test_that("Messing with traceback", {
-  warning("Missing traceback tests")
-  # Main problem with this is that there may not be a good way to cause a trace
-  # back to register while not also stopping execution of this file, so not
-  # sure if this can be tested
-} )
+# test_that("Messing with traceback", {
+#   warning("Missing traceback tests")
+#   # Main problem with this is that there may not be a good way to cause a trace
+#   # back to register while not also stopping execution of this file, so not
+#   # sure if this can be tested
+# } )
 
+test_that("Compare Conditions", {
+  lst1 <- structure(class="condition_list",
+    list(
+      simpleWarning("warning", quote(yo + yo)),
+      simpleWarning("warning2", quote(yo2 + yo)),
+      simpleWarning("warning3", quote(yo3 + yo)),
+      simpleError("error1", quote(make_an_error()))
+  ) )
+  lst2 <- structure(class="condition_list",
+    list(
+      simpleWarning("warning", quote(yo + yo)),
+      simpleWarning("warning2", quote(yo2 + yo)),
+      simpleError("error1", quote(make_an_error()))
+  ) )
+  expect_true(all.equal(lst1, lst1))
+  expect_equal(
+    "`target` and `current` do not have the same number of conditions (4 vs 3)",
+    all.equal(lst1, lst2)
+  )
+  expect_equal(
+    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, target is 'Error', but current is 'Warning'"),
+    all.equal(lst2, lst1[1L:3L])
+  )
+  expect_equal(
+    c("There are 2 condition mismatches; showing first mismatch at condition #1", "Warning condition messages do not match"),
+    all.equal(lst2, lst1[2L:4L])
+  )
+  attr(lst1[[3L]], "printed") <- TRUE
+
+  expect_equal(
+    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, target is 'Error', but current is 'Warning'", "Condition mismatch involves print/show methods; carefully review conditions with `getConds(.new)` and `getConds(.ref)` as just typing `.ref.` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch."),
+    all.equal(lst2, lst1[1L:3L])
+  )
+  attr(lst1[[3L]], "printed") <- NULL
+  lst1[[2L]] <- simpleWarning("warning2", quote(yo2 + yoyo))
+  expect_equal(
+    c("There is 1 condition mismatch; showing first mismatch at condition #2", "Warning condition calls do not match"),
+    all.equal(lst2, lst1[c(1L:2L, 4L)])
+  )
+} )

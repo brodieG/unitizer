@@ -188,12 +188,7 @@ setMethod("reviewNext", c("testorBrowse"),
     ) }
     if(length(item.main@comment)) cat(item.main@comment, sep="\n")
     cat(deparse_prompt(item.main@call), sep="\n")
-    if(
-      is(curr.sub.sec.obj@show.fail, "testorItemsTestsErrors") && 
-      !item.main@ignore
-    ) {
-      cat(as.character(curr.sub.sec.obj@show.fail[[id.rel]]), sep="\n")
-    } 
+    
     # If there are conditions that showed up in main that are not in reference
     # show the message, and set the trace if relevant
 
@@ -207,7 +202,21 @@ setMethod("reviewNext", c("testorBrowse"),
       )
       set_trace(item.main@trace)
     }
-    if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
+    if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)    
+
+    # If test failed, show details of failure
+
+    if(
+      is(curr.sub.sec.obj@show.fail, "testorItemsTestsErrors") && 
+      !item.main@ignore
+    ) {
+      cat(
+        c(
+          "Test Failed Because:", 
+          as.character(curr.sub.sec.obj@show.fail[[id.rel]])
+        ), 
+        sep="\n"
+    ) } 
 
     # No need to do anything else with ignored tests since default action for 
     # them is "Y", so return those (actually, is N now?).  Not clear if we also
@@ -313,6 +322,7 @@ setMethod("reviewNext", c("testorBrowse"),
             "Pressing \"N\" will discard all reviewed changes."
         ) )
         if(identical(user.input, "Y")) {
+          x@last.id <- max(x@mapping@item.id)
           return(x)
         } else if (user.input %in% c("N", "Q")) {
           invokeRestart("earlyExit")
