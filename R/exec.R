@@ -94,7 +94,7 @@ eval_user_exp <- function(testorUSEREXP, env ) {
       {
         trace.base <- sys.calls()
         value <- withVisible(eval(testorUSEREXP, env))
-        passed.eval <<- TRUE
+        passed.eval <- TRUE
         testorTESTRES <- value$value
         if(value$visible && length(testorUSEREXP)) {
           if(isS4(testorTESTRES)) show(testorTESTRES) else print(testorTESTRES)
