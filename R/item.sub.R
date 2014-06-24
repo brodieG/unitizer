@@ -134,6 +134,7 @@ setMethod("as.character", "testorItemTestsErrors",
 #'     in the reference list with \code{`\link{all.equal}`}
 #'   \item output: not compared (too variable, e.g. screen widths, etc.)
 #'   \item message: not compared (note this is presumably included in \code{`conditions`})
+#'   \item aborted: not compared (also implied in conditions, hopefully)   
 #' }
 #' @seealso \code{`\link{testorTest-class}`}
 #' @examples
@@ -153,7 +154,7 @@ setClass(
     conditions=new("testorItemTestFun", fun=all.equal),
     output=new("testorItemTestFun", fun=function(target, current) TRUE),
     message=new("testorItemTestFun", fun=function(target, current) TRUE),
-    aborted=new("testorItemTestFun", fun=identical)
+    aborted=new("testorItemTestFun", fun=function(target, current) TRUE)
 ) )
 #' Ensures Functions are In Correct Format
 #' 

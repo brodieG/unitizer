@@ -273,11 +273,22 @@ all.equal.condition_list <- function(target, current, ...) {
     !all(vapply(current, inherits, FALSE, "condition"))
   ) return("`target` or `current` are not both lists of conditions")
 
+  print.show.err <- paste0(
+    "Condition mismatch may involve print/show methods; carefully review ",
+    "conditions with `getConds(.new)` and `getConds(.ref)` as just ",
+    "typing `.ref` or `.new` at the prompt will invoke print/show methods, ",
+    "which themselves may be the cause of the mismatch."
+  )
   if(length(target) != length(current)) {
     return(
-      paste0(
-        "`target` and `current` do not have the same number of conditions (",
-        length(target), " vs ", length(current), ")"
+      c(
+        paste0(
+          "`target` and `current` do not have the same number of conditions (",
+          length(target), " vs ", length(current), ")"
+        ),
+        if(any(unlist(lapply(append(target, current), attr, "printed")))) {
+          print.show.err
+        }
   ) ) }
   cond.len <- min(length(target), length(current))
   
@@ -291,12 +302,7 @@ all.equal.condition_list <- function(target, current, ...) {
 
       err.msg <- all.equal(target[[x]], current[[x]])
       if(!isTRUE(err.msg) && (target.printed || current.printed)) {
-        err.msg <- c(err.msg, paste0(
-          "Condition mismatch involves print/show methods; carefully review ",
-          "conditions with `getConds(.new)` and `getConds(.ref)` as just ",
-          "typing `.ref.` or `.new` at the prompt will invoke print/show methods, ",
-          "which themselves may be the cause of the mismatch."
-        ) )
+        err.msg <- c(err.msg,  )
       }
       err.msg
   } )
