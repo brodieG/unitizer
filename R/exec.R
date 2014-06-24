@@ -88,6 +88,7 @@ eval_user_exp <- function(testorUSEREXP, env ) {
   conditions <- list()
   trace <- list()
   testorTESTRES <- NULL
+  print.type <- ""
 
   withRestarts(
     withCallingHandlers(
@@ -97,14 +98,22 @@ eval_user_exp <- function(testorUSEREXP, env ) {
         passed.eval <- TRUE
         testorTESTRES <- value$value
         if(value$visible && length(testorUSEREXP)) {
-          if(isS4(testorTESTRES)) show(testorTESTRES) else print(testorTESTRES)
+          if(isS4(testorTESTRES)) {
+            print.type <- "show"
+            show(testorTESTRES)
+          } else {
+            print.type <- "print"
+            print(testorTESTRES)
+          }
       } },
       condition=function(cond) {
         attr(cond, "printed") <- passed.eval
         conditions[[length(conditions) + 1L]] <<- cond
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()
-          trace <<- get_trace(trace.base, trace.new, passed.eval)
+          trace <<- get_trace(
+            trace.base, trace.new, passed.eval, print.type, testorUSEREXP
+          )
       } }   
     ),
     abort=function() {
@@ -159,9 +168,12 @@ set_trace <- function(trace) {
 #'   \code{`sys.calls`}
 #' @param passsed.eval whether the evaluatation succeeded in the first step (see
 #'   details)
+#' @param print.type character(1L) one of "print", "show", or ""
+#' @param exp the expression to sub in to the print/show statements if we passed
+#'   eval
 #' @keywords internal
 
-get_trace <- function(trace.base, trace.new, passed.eval) {
+get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
   
   # because withCallingHandlers/withRestarts don't register when calling
   # sys.calls() within them, but do when calling sys.calls() from the handling
@@ -179,6 +191,24 @@ get_trace <- function(trace.base, trace.new, passed.eval) {
     trace.new[seq_along(trace.base)] <- NULL
     if(length(trace.new) >= 7L || (passed.eval && length(trace.new) >= 4L)) {
       trace.new[1L:(if(passed.eval) 4L else 7L)] <- NULL
+      if(passed.eval) {
+        # Find any calls from the beginning that are length 2 and start with
+        # print/show and then replace the part inside the print/show call with
+        # the actual call
+
+        exp.to.rep <- cumsum(
+          vapply(
+            trace.new, FUN.VALUE=logical(1L),
+            function(x) {
+              length(x) == 2L & 
+              grepl(paste0("^", print.type, "(\\..*)?$"), as.character(x[[1L]]))
+        } ) ) == 1L:length(trace.new)
+        trace.new <- lapply(seq_along(exp.to.rep),
+          function(idx) {
+            if(exp.to.rep[[idx]]) {
+              `[[<-`(trace.new[[idx]], 2L, exp[[length(exp)]])
+            } else trace.new[[idx]]
+      } ) }  
       if(length(trace.new) >= 2L) return(lapply(rev(head(trace.new, -2L)), deparse))
   } } 
   stop("Logic Error: couldn't extract trace; contact maintainer.")
