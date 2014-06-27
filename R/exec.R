@@ -98,14 +98,17 @@ eval_user_exp <- function(testorUSEREXP, env ) {
         passed.eval <- TRUE
         testorTESTRES <- value$value
         if(value$visible && length(testorUSEREXP)) {
+          print.env <- new.env(parent=env)
+          assign("testorTESTRES", testorTESTRES, envir=print.env)
           if(isS4(testorTESTRES)) {
             print.type <- "show"
-            show(testorTESTRES)
+            evalq(show(testorTESTRES), print.env)
           } else {
             print.type <- "print"
-            print(testorTESTRES)
-          }
-      } },
+            evalq(print(testorTESTRES), print.env)
+        } } 
+        NULL
+      },
       condition=function(cond) {
         attr(cond, "printed") <- passed.eval
         conditions[[length(conditions) + 1L]] <<- cond
@@ -188,9 +191,20 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
         function(x) identical(trace.base[[x]], trace.new[[x]])
     ) )
   ) {
+    if(
+      !identical(       # likely invoked through signalCondition rather than stop
+        trace.new[[length(trace.new)]], 
+        quote(h(simpleError(msg, call)))
+      )
+    ) {
+      return(list())
+    }
     trace.new[seq_along(trace.base)] <- NULL
-    if(length(trace.new) >= 7L || (passed.eval && length(trace.new) >= 4L)) {
-      trace.new[1L:(if(passed.eval) 4L else 7L)] <- NULL
+    if(is.function(trace.new[[length(trace.new)]])) {
+      is.function(trace.new[[length(trace.new)]]) 
+    }
+    if(length(trace.new) >= 7L || (passed.eval && length(trace.new) >= 6L)) {
+      trace.new[1L:(if(passed.eval) 6L else 7L)] <- NULL
       if(passed.eval) {
         # Find any calls from the beginning that are length 2 and start with
         # print/show and then replace the part inside the print/show call with
@@ -206,7 +220,10 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
         trace.new <- lapply(seq_along(exp.to.rep),
           function(idx) {
             if(exp.to.rep[[idx]]) {
-              `[[<-`(trace.new[[idx]], 2L, exp[[length(exp)]])
+              `[[<-`(
+                trace.new[[idx]], 2L, 
+                if(is.expression(exp)) exp[[length(exp)]] else exp
+              )
             } else trace.new[[idx]]
       } ) }  
       if(length(trace.new) >= 2L) return(lapply(rev(head(trace.new, -2L)), deparse))

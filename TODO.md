@@ -32,7 +32,8 @@ Self evident
 
 * performance problems from too many nested environments? decided 
   to collapse non-tests into tests to limit  of environments, not clear
-  whether this is actually an issue
+  whether this is actually an issue, much of the issues seems to be from the
+  history file getting large, and appears to affect normal browsing() as well.
 * should we keep objects that user creates while browsing across tests?  
   probably, but we don't right now.
 * accept all (hidden?) option
@@ -126,13 +127,11 @@ Self evident
 
 * When quitting early and agreeing to save, prompt just seems to revert to going
   back through remaining tests
-* Trace for print method errors doesn't seem to work right; the print piece is 
-  missing
 * history restoration failed when using browser() in browse() and quitting from
   both; might be related to quit(), also affects options(warn=)
 * unclear why it was necessary to export fileOrNULL for it to work (and why
   it stopped working, this is in relation to the hist.con object)* Unreproduced: when running `match_call` tests, after accepting 2 changes and 
-  keeping one reference test, re-running caused testor to not recognized any of 
+* keeping one reference test, re-running caused testor to not recognized any of 
   the tests as having been run
 * make sure ls doesn't get defined in global env!! right now it seems to be,
   every now and then (this may no longer be a problem).

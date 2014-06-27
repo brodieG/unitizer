@@ -1,39 +1,54 @@
 library(testthat)
 library(testor)
 
-local( {
-  trace1 <- NULL
-  trace2 <- NULL
-  fun <- function() stop("Yowza")
-  fun.call <- quote(fun())
 
-  withRestarts( # has to be outside test_that
-    withCallingHandlers(
-      {
-        trace.base <- sys.calls()
-        withVisible(eval(fun.call))
-      },
-      error=function(cond) {
-        trace1 <<- testor:::get_trace(trace.base, sys.calls(), FALSE)
-        trace2 <<- testor:::get_trace(trace.base, sys.calls(), TRUE)
-        invokeRestart("abort")
-      } 
-    ),
-    abort=function() NULL
-  )
-  test_that("Trace Retrieval", {
+test_that("Invisible Expression", {
+  exp <- quote(invisible(x <- 1:30))
+  expect_equal(1:30, testor:::eval_user_exp(exp, globalenv())$value)
+} )
+local( {
+  # `eval_user_exp` must be evaluated outside of test_that; also not that by 
+  # design this will output stuff to stderr and stdout
+
+  test.obj.s3 <- structure("hello", class="test_obj")
+  setClass("testObj", list(a="character"))
+  test.obj.s4 <- new("testObj", a="goodday")
+  print.test_obj <- function(x, ...) stop("Error in Print")
+  setMethod("show", "testObj", function(object) stop("Error in Show"))
+  fun_signal <- function() signalCondition(simpleError("Error in Function", sys.call()))
+  fun_error <- function() stop("Error in function 2")
+  fun_s3 <- function() test.obj.s3
+  fun_s4 <- function() test.obj.s4
+  eval.env <- sys.frame(sys.nframe())
+
+  ex1 <- testor:::eval_user_exp(expression(fun_signal()), eval.env)
+  ex2 <- testor:::eval_user_exp(expression(fun_error()), eval.env)
+  ex3 <- testor:::eval_user_exp(expression(fun_s3()), eval.env)
+  ex4 <- testor:::eval_user_exp(expression(fun_s4()), eval.env)
+  ex5 <- testor:::eval_user_exp(expression(sum(1:20)), eval.env)
+
+  test_that("User Expression Evaluation", {
     expect_equal(
-      list("stop(\"Yowza\")", "fun()"),
-      trace1
+      structure(list(value = NULL, aborted = FALSE, conditions = list(structure(list(message = "Error in Function", call = quote(fun_signal())), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = FALSE)), trace = list()), .Names = c("value", "aborted", "conditions", "trace")),
+      ex1   # a condition error, signaled, not stop (hence no aborted, etc.)
     )
     expect_equal(
-      list("stop(\"Yowza\")", "fun()", "eval(expr, envir, enclos)", "eval(fun.call)", "withVisible(eval(fun.call))"),
-      trace2
+      structure(list(value = NULL, aborted = structure(TRUE, printed = FALSE), conditions = list(structure(list(message = "Error in function 2", call = quote(fun_error())), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = FALSE)), trace = list("stop(\"Error in function 2\")", "fun_error()")), .Names = c("value", "aborted", "conditions", "trace")),
+      ex2   # a stop
+    )
+    expect_equal(
+      structure(list(value = structure("hello", class = "test_obj"), aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Print", call = quote(print.test_obj(testorTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Print\")", "print.test_obj(fun_s3())", "print(fun_s3())")), .Names = c("value", "aborted", "conditions", "trace")),
+      ex3   # a stop in print
+    )
+    expect_equal(
+      structure(list(aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Show", call = quote(show(testorTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Show\")", "show(fun_s4())", "show(fun_s4())")), .Names = c("aborted", "conditions", "trace")),
+      ex4[-1L]   # a stop in show, have to remove 1L because S4 object doesn't deparse
+    )
+    expect_equal(
+      structure(list(value = 210L, aborted = FALSE, conditions = list(), trace = list()), .Names = c("value", "aborted", "conditions", "trace")),
+      ex5   # a normal expression 
     )
   } )
-  test_that("Invisible Expression", {
-    exp <- quote(invisible(x <- 1:30))
-    expect_equal(1:30, testor:::eval_user_exp(exp, globalenv())$value)
-  } )
+
 } )
 
