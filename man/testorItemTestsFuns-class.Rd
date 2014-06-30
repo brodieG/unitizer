@@ -17,6 +17,7 @@ are carried out as follows (i.e. this is what the default
     in the reference list with \code{`\link{all.equal}`}
   \item output: not compared (too variable, e.g. screen widths, etc.)
   \item message: not compared (note this is presumably included in \code{`conditions`})
+  \item aborted: not compared (also implied in conditions, hopefully)
 }
 }
 \examples{

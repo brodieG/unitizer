@@ -61,6 +61,7 @@ setMethod("+", c("testor", "testorTestsOrExpression"), valueClass="testor",
     sect.end <- 0L  # Used to track if there is an active section and to manage nested sections 
 
     test.env <- new.env(parent=e1@items.new@base.env)
+    chr.width <- getOption("width")
     
     repeat {
       if(done(e2 <- nextItem(e2))) break 
@@ -89,7 +90,10 @@ setMethod("+", c("testor", "testorTestsOrExpression"), valueClass="testor",
       e1 <- e1 + item  # store evaluated test and compare it to reference one
       if(!ignored(item)) test.env <- new.env(parent=test.env)  # ignored items share environment with subsequent items
       i <- i + 1L
+      cat("\r", rep(" ", chr.width), sep="")
+      cat("\rRunning: ", substr(deparse(item@call)[[1L]], 1L, max(30L, chr.width - 5L)))
     }
+    cat("\r", rep(" ", chr.width), "\r\n", sep="")
     e1
 } )
 

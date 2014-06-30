@@ -351,6 +351,7 @@ all.equal.condition <- function(target, current, ...) {
 #' Prints A list of Conditions
 #' 
 #' @keywords internal
+#' @S3method print condition_list
 #' @param x a condition_list object (list of conditions)
 #' @param width how many total chars the conditions should be displayed to
 #' @return x, invisibly

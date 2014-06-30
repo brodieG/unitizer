@@ -168,29 +168,14 @@
 
 runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
 
-  # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
-
-  call.stack <- sys.calls()
-  if(
-    any(
-      vapply(
-        call.stack, FUN.VALUE=logical(1L),
-        function(x) 
-          is.symbol(x[[1]]) && 
-          as.character(x[[1]]) %in% 
-          c("withCallingHandlers", "withRestarts", "tryCatch")
-    ) )
-  ) warning(
-    "It appears you are running testor inside an error handling function such ",
-    "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
-    "discouraged as it may cause unpredictable behavior from `testor` in the ",
-    "event tests produce conditions / errors.  We strongly recommend you re-run",
-    "your tests outside of such handling functions."
-  )
   # Retrieve or create testor environment
 
   par.frame <- parent.frame()
-  if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file)) stop("Argument `test.file` must be a valid path to a file")
+  if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file)) 
+    stop("Argument `test.file` must be a valid path to a file")
+
+  print(H1(paste0("testor for: ", test.file, collapse="")))
+
   if(inherits(try(testor <- get_store(store.id)), "try-error")) {
     stop("Unable to retrieve/create `testor` at location ", store.id, "; see prior errors for details.")
   }
@@ -228,6 +213,11 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
         ) {
           stop("Unable to upgrade. ", msg)
         }
+        success <- try(set_store(store.id, testor))
+        setwd(new.wd)
+        if(!inherits(success, "try-error")) 
+          message("testor upgraded; please re-run tests")
+        return(success)    
       } else {
         stop("Cannot proceed with out of date `testor`. ", msg)
       } 
@@ -235,6 +225,27 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
       stop("Logic Error: testor appears corrupted in some way; contact maintainer.")
     }
   }
+  # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
+
+  call.stack <- sys.calls()
+  if(
+    any(
+      vapply(
+        call.stack, FUN.VALUE=logical(1L),
+        function(x) 
+          is.symbol(x[[1]]) && 
+          as.character(x[[1]]) %in% 
+          c("withCallingHandlers", "withRestarts", "tryCatch")
+    ) )
+  ) warning(
+    "It appears you are running testor inside an error handling function such ",
+    "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
+    "discouraged as it may cause unpredictable behavior from `testor` in the ",
+    "event tests produce conditions / errors.  We strongly recommend you re-run",
+    "your tests outside of such handling functions."
+  )
+  # Setup the new testor
+
   testor@id <- store.id
   parent.env(testor@zero.env) <- par.frame
   list2env(getItemFuns, testor@zero.env)     # functions for accessing testorItem contents
@@ -261,7 +272,6 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
 
   # Summary view of deltas and changes
 
-  print(H1(paste0("testor for: ", test.file, collapse="")))
   print(testor.summary <- summary(testor))
   cat("\n")
 
@@ -279,6 +289,11 @@ runtests <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
     }
   )
   on.exit(NULL)  # main failure points are now over so don't need to alert on failure
+  
+  # There are two conditions where return value the previous statement isn't a
+  # testor, 1. if the restart is invoked, 2. if all tests passed in which case
+  # there is nothing to do.
+
   if(!is(testor, "testor")) return(TRUE)
 
   if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd

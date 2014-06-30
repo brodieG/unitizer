@@ -56,55 +56,58 @@ setMethod("browse", c("testor"), valueClass="testor",
     testor.browse <- browsePrep(x)      # Group tests by section and outcome for review
     testor.browse@hist.con <- hist.con  # User expression to this file for use in history
 
-    repeat {
-      testor.browse <- reviewNext(testor.browse)
-      if(!done(testor.browse)) next # Interactively review all tests
-      
-      # Get summary of changes
+    if(!length(testor.browse)) {
+      message("All tests passed; nothing to store.")
+      return(TRUE)
+    } else if(length(testor.browse)) {
+      repeat {
+        testor.browse <- reviewNext(testor.browse)
+        if(!done(testor.browse)) next # Interactively review all tests
+        
+        # Get summary of changes
 
-      keep <- !testor.browse@mapping@ignored
-      changes <- split(
-        testor.browse@mapping@review.val[keep], 
-        testor.browse@mapping@review.type[keep]
-      )
-      change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
-      for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
-
-      print(H2("Confirm Changes"))
-      if(length(x@changes) == 0L) {
-        message(
-          "No items to store; there either were no changes or you didn't ",
-          "accept  any changes."
+        keep <- !testor.browse@mapping@ignored
+        changes <- split(
+          testor.browse@mapping@review.val[keep], 
+          testor.browse@mapping@review.type[keep]
         )
-      } else {
-        message("You are about to IRREVERSIBLY:")
-        show(x@changes)
-      }
-      valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
-      help <- paste0(
-        "Pressing Y will replace the previous testor with a new one updated ",
-        "with all the changes you approved, pressing R will allow you to ",
-        "re-review your choices."
-      )
-      user.input <- navigate_prompt(
-        testor.browse, curr.id=max(testor.browse@mapping@item.id), 
-        text="Update Testor", browse.env1=x@zero.env, 
-        valid.opts=valid.opts
-      )
-      if(is(user.input, "testorBrowse")) {
-        testor.browse <- user.input
-        next
-      } else if (identical(user.input, "Q")) {
-        invokeRestart("earlyExit")
-      } else if (identical(user.input, "Y")) {
-        break
-      }
-      stop("Logic Error; unexpected user input, contact maintainer.")
-    } 
+        change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
+        for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
+
+        print(H2("Confirm Changes"))
+        if(length(x@changes) == 0L) {
+          message(
+            "No items to store; there either were no changes or you didn't ",
+            "accept  any changes."
+          )
+        } else {
+          message("You are about to IRREVERSIBLY:")
+          show(x@changes)
+        }
+        valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
+        help <- paste0(
+          "Pressing Y will replace the previous testor with a new one updated ",
+          "with all the changes you approved, pressing R will allow you to ",
+          "re-review your choices."
+        )
+        user.input <- navigate_prompt(
+          testor.browse, curr.id=max(testor.browse@mapping@item.id), 
+          text="Update Testor", browse.env1=x@zero.env, 
+          valid.opts=valid.opts
+        )
+        if(is(user.input, "testorBrowse")) {
+          testor.browse <- user.input
+          next
+        } else if (identical(user.input, "Q")) {
+          invokeRestart("earlyExit")
+        } else if (identical(user.input, "Y")) {
+          break
+        }
+        stop("Logic Error; unexpected user input, contact maintainer.")
+    } }
     # Create the new testor
 
     items.user <- processInput(testor.browse)
-
     items.ref <- x@items.new[x@tests.status == "Pass"] + items.user
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
