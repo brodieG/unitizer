@@ -8,7 +8,7 @@ hello <- 25
 
 matrix(1:9, 3)  # and another!
 
-testor_sect("here is a section", {
+unitizer_sect("here is a section", {
   # test that were not crazy
 
   1 + 1 == 2   # TRUE hopefully

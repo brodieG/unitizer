@@ -14,8 +14,8 @@ set_text_capture <- function(file.name, type) {
   if(!is.character(file.name) || !identical(length(file.name), 1L)) {
     stop("Argument `file.name` must be a 1 length character.")
   }
-  if(isTRUE(getOption("testor.disable.capt"))) {
-    warning(type, " capture disabled (see getOption(testor.disable.capt))")
+  if(isTRUE(getOption("unitizer.disable.capt"))) {
+    warning(type, " capture disabled (see getOption(unitizer.disable.capt))")
     return(FALSE)
   }
   if(identical(type, "message")) {
@@ -91,7 +91,7 @@ get_capture <- function(std.err.capt.con, std.err.capt, std.out.capt.con, std.ou
     {
       message <- get_text_capture(std.err.capt.con, std.err.capt, "message")  # Do message first, so we can see subsequent errors
       output <- get_text_capture(std.out.capt.con, std.out.capt, "output")
-      if(isTRUE(getOption("testor.show.output"))) {
+      if(isTRUE(getOption("unitizer.show.output"))) {
         cat(c(message, "\n"), file=stderr(), sep="\n")
         cat(c(output, "\n"), sep="\n")
       }

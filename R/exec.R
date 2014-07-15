@@ -1,4 +1,4 @@
-#' @include testor.R
+#' @include unitizer.R
 
 NULL
 
@@ -11,9 +11,9 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 #' @keywords internal
 #' @param test the call to test
 #' @param test.env the environment to evaluate the \code{`test`} in 
-#' @return a \code{`\link{testorItem-class}`} object
+#' @return a \code{`\link{unitizerItem-class}`} object
 
-setMethod("exec", "ANY", valueClass="testorItem",
+setMethod("exec", "ANY", valueClass="unitizerItem",
   function(x, test.env) {
     if(!is.environment(test.env)) stop("Argument `test.env` must be an environment.")
     # Prep message and std output capture, note this is reset with every test expression
@@ -62,13 +62,13 @@ setMethod("exec", "ANY", valueClass="testorItem",
     # Revert settings, get captured messages, if any and if user isn't capturing already
 
     capt <- get_capture(std.err.capt.con, std.err.capt, std.out.capt.con, std.out.capt)
-      if(aborted & is.call(x)) {   # check to see if `testor_sect` failed
+      if(aborted & is.call(x)) {   # check to see if `unitizer_sect` failed
       test.fun <- try(eval(x[[1L]], test.env), silent=TRUE)
-      if(identical(test.fun, testor_sect)) {
-        stop("Failed instantiating a testor section:\n", paste0(capt$message, "\n"))
+      if(identical(test.fun, unitizer_sect)) {
+        stop("Failed instantiating a unitizer section:\n", paste0(capt$message, "\n"))
     } }
     new(
-      "testorItem", call=x.to.eval, value=res$value, 
+      "unitizerItem", call=x.to.eval, value=res$value, 
       conditions=structure(res$conditions, class="condition_list"), 
       output=capt$output, message=capt$message, aborted=res$aborted, 
       env=test.env, comment=attr(x, "comment"), trace=res$trace
@@ -77,35 +77,35 @@ setMethod("exec", "ANY", valueClass="testorItem",
 #' Utility function to evaluate user expressions
 #' 
 #' @keywords internal
-#' @param testorUSEREXP an expression to evaluate
+#' @param unitizerUSEREXP an expression to evaluate
 #' @param env environment the environment to evaluate the expression in 
 #' @return TBD
-#' @seealso exec, testor_prompt
+#' @seealso exec, unitizer_prompt
 
-eval_user_exp <- function(testorUSEREXP, env ) {
+eval_user_exp <- function(unitizerUSEREXP, env ) {
   passed.eval <- FALSE
   aborted <- FALSE
   conditions <- list()
   trace <- list()
-  testorTESTRES <- NULL
+  unitizerTESTRES <- NULL
   print.type <- ""
 
   withRestarts(
     withCallingHandlers(
       {
         trace.base <- sys.calls()
-        value <- withVisible(eval(testorUSEREXP, env))
+        value <- withVisible(eval(unitizerUSEREXP, env))
         passed.eval <- TRUE
-        testorTESTRES <- value$value
-        if(value$visible && length(testorUSEREXP)) {
+        unitizerTESTRES <- value$value
+        if(value$visible && length(unitizerUSEREXP)) {
           print.env <- new.env(parent=env)
-          assign("testorTESTRES", testorTESTRES, envir=print.env)
-          if(isS4(testorTESTRES)) {
+          assign("unitizerTESTRES", unitizerTESTRES, envir=print.env)
+          if(isS4(unitizerTESTRES)) {
             print.type <- "show"
-            evalq(show(testorTESTRES), print.env)
+            evalq(show(unitizerTESTRES), print.env)
           } else {
             print.type <- "print"
-            evalq(print(testorTESTRES), print.env)
+            evalq(print(unitizerTESTRES), print.env)
         } } 
         NULL
       },
@@ -115,7 +115,7 @@ eval_user_exp <- function(testorUSEREXP, env ) {
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()
           trace <<- get_trace(
-            trace.base, trace.new, passed.eval, print.type, testorUSEREXP
+            trace.base, trace.new, passed.eval, print.type, unitizerUSEREXP
           )
       } }   
     ),
@@ -124,7 +124,7 @@ eval_user_exp <- function(testorUSEREXP, env ) {
     }
   )
   list(
-    value=testorTESTRES,
+    value=unitizerTESTRES,
     aborted=aborted,
     conditions=conditions,
     trace=trace

@@ -1,2 +1,2 @@
-library(testor)
-runtests("tests/testor/assign.tests.R")
+library(unitizer)
+unitize("tests/unitizer/assign.tests.R")

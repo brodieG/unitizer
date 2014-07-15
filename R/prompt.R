@@ -18,7 +18,7 @@ NULL
 #' evaluation loop to terminate.
 #' 
 #' @keywords internal
-#' @seealso browse_testor_items
+#' @seealso browse_unitizer_items
 #' @param text the prompt text to display
 #' @param browse.env the environment to evaluate user expressions in; typically
 #'   this will contain interesting objects (use \code{ls()} to review)
@@ -32,7 +32,7 @@ NULL
 #'   cause the prompt loop to exit
 #' @return mixed allowable user input
 
-testor_prompt <- function(
+unitizer_prompt <- function(
   text, browse.env=globalenv(), help=character(), 
   valid.opts, hist.con=NULL, exit.condition=function(...) FALSE
 ) {  
@@ -46,7 +46,7 @@ testor_prompt <- function(
   # should validate other parameters as well
   opts.txt <- paste0("(", paste0(valid.opts, collapse=", "), ")?")
   repeat {
-    while(inherits(try(val <- faux_prompt("testor> ")), "try-error")) NULL 
+    while(inherits(try(val <- faux_prompt("unitizer> ")), "try-error")) NULL 
 
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) && 
@@ -89,9 +89,9 @@ testor_prompt <- function(
 #' Specifically for cases were user has the choice to input something or to try
 #' to navigate to another test.
 #' 
-#' @seealso testor_prompt
-#' @inheritParams testor_prompt
-#' @param x a testor.browse object
+#' @seealso unitizer_prompt
+#' @inheritParams unitizer_prompt
+#' @param x a unitizer.browse object
 #' @param browse.env1 environment to have user review tests, run commands, etc
 #' @param browse.env2 navigation environment
 #' @param curr.id which id we are currently browsing
@@ -101,12 +101,12 @@ navigate_prompt <- function(
   x, curr.id, text, browse.env1=globalenv(), browse.env2=globalenv(), 
   help=character(), valid.opts
 ) {
-  if(!is(x, "testorBrowse")) {
-    stop("Logic Error, expected testorBrowse object as param `x`; contact maintainer.")
+  if(!is(x, "unitizerBrowse")) {
+    stop("Logic Error, expected unitizerBrowse object as param `x`; contact maintainer.")
   }
   # User input
 
-  prompt.val <- testor_prompt(
+  prompt.val <- unitizer_prompt(
     text, browse.env=browse.env1, help=help, valid.opts=valid.opts, 
     hist.con=x@hist.con
   )
@@ -151,7 +151,7 @@ navigate_prompt <- function(
       }
       return(TRUE)
     }
-    nav.id <- testor_prompt(
+    nav.id <- unitizer_prompt(
       text=nav.prompt, help=nav.help,
       browse.env=browse.env2, exit.condition=exit.fun, 
       valid.opts=nav.opts

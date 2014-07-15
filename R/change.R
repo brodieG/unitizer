@@ -1,10 +1,10 @@
 #' Summary of Changes
 #' 
-#' Changes arise any time a user, through the interactive testor mode,
+#' Changes arise any time a user, through the interactive unitizer mode,
 #' requests the storing of a change (accept new version of failed test,
 #' add new test, remove old test).
 
-setClass("testorChanges",
+setClass("unitizerChanges",
   representation(failed="integer", new="integer", removed="integer", corrupted="integer"),
   prototype(failed=integer(2L), new=integer(2L), removed=integer(2L), corrupted=integer(2L)),
   validity=function(object) {
@@ -21,7 +21,7 @@ setClass("testorChanges",
 #' Print Out A Summary Of the Changes
 #' @keywords internal
 
-setMethod("show", "testorChanges",
+setMethod("show", "unitizerChanges",
   function(object) {
     if(object@failed[[1L]]) cat("- Replace", object@failed[[1L]] ,"out of", object@failed[[2L]], "failed tests\n")
     if(object@new[[1L]]) cat("- Add", object@new[[1L]] , "out of", object@new[[2L]], "new tests\n")
@@ -32,4 +32,4 @@ setMethod("show", "testorChanges",
 #' Return Sum of Total Changes
 #' @keywords internal
 
-setMethod("length", "testorChanges", function(x) sum(vapply(slotNames(x), function(y) slot(x, y)[[1L]], 1L)))
+setMethod("length", "unitizerChanges", function(x) sum(vapply(slotNames(x), function(y) slot(x, y)[[1L]], 1L)))

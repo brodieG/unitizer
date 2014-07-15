@@ -1,18 +1,18 @@
-testor_sect("basic tests", {
+unitizer_sect("basic tests", {
   1 + 1 + 1/10^16
   print("heya")
   stop("wow")
 } )
-testor_sect("strict tests", compare=identical, {
+unitizer_sect("strict tests", compare=identical, {
   1 + 2 + 1/10^16
   print("heya there")
   warning("wow")
 } )
-testor_sect("I care about screen output", compare=new("testorItemTestsFuns", output=all.equal), {
+unitizer_sect("I care about screen output", compare=new("unitizerItemTestsFuns", output=all.equal), {
   sqrt(2) + 3 ^ 5
   {print(paste0("heya there how's it going", sample(1:1000, 1))); NULL}
 } )
-testor_sect("Compare error", compare=sample, {
+unitizer_sect("Compare error", compare=sample, {
   6 + 2 + 1/10^16
   matrix(1:9, nrow=3)
   message("random wow")

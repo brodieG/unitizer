@@ -6,24 +6,24 @@ NULL
 
 #' Contains Representation For a Section of Tests
 #' 
-#' \code{`testorSectionExpression-class`} contains the actual expressions that
-#' belong to the section, whereas \code{`testorSection-class`} only contains
-#' the meta data.  The latter objects are used within \code{`\link{testor-class}`},
+#' \code{`unitizerSectionExpression-class`} contains the actual expressions that
+#' belong to the section, whereas \code{`unitizerSection-class`} only contains
+#' the meta data.  The latter objects are used within \code{`\link{unitizer-class}`},
 #' whereas the former is really just a temporary object until we can generate
 #' the latter.
 #' 
-#' @aliases testorSectionExpression-class
+#' @aliases unitizerSectionExpression-class
 #' @slot title 1 lenght character, the name of the section
 #' @slot details character vector containing additional info on the section
 #' @slot compare functions to compare the various aspects of a \code{`\link{testItem}`}
 #' @slot length tracks size of the section
 
 setClass(
-  "testorSection",
+  "unitizerSection",
   representation(
     title="character",
     details="character",
-    compare="testorItemTestsFuns",
+    compare="unitizerItemTestsFuns",
     length="integer",
     parent="integer"
   ),
@@ -34,7 +34,7 @@ setClass(
     if(length(object@parent) != 1L) return("slot `@parent` must be a 1 length integer")
   }
 )
-setMethod("initialize", "testorSection",
+setMethod("initialize", "unitizerSection",
   function(.Object, ...) {
     if(!("title" %in% (dot.names <- names(list(...))))) {
       return(callNextMethod(.Object, title="<untitled>", ...))
@@ -43,32 +43,32 @@ setMethod("initialize", "testorSection",
     }
     callNextMethod()
 } )
-setClass("testorSectionExpression", contains="testorList",
+setClass("unitizerSectionExpression", contains="unitizerList",
   representation(
     title="characterOrNULL", 
     details="character",
-    compare="testorItemTestsFuns"
+    compare="unitizerItemTestsFuns"
   )
 )
-setClassUnion("testorSectionExpressionOrExpression", c("testorSectionExpression", "testorSection", "expression"))
+setClassUnion("unitizerSectionExpressionOrExpression", c("unitizerSectionExpression", "unitizerSection", "expression"))
 
-setMethod("length", "testorSection", function(x) x@length)
+setMethod("length", "unitizerSection", function(x) x@length)
 
-#' Define a \code{`testor`} Section
+#' Define a \code{`unitizer`} Section
 #' 
-#' The purpose of \code{`testor`} sections is to allow the user to tag a
+#' The purpose of \code{`unitizer`} sections is to allow the user to tag a
 #' group of test expressions with meta information as well as to modify the
 #' comparison functions used when determining whether the newly evaluated 
 #' values match the reference values.
 #' 
-#' \code{`testor`} will compare values as well as some side effects from
+#' \code{`unitizer`} will compare values as well as some side effects from
 #' the test expression evaluation.  If you wish to modify the comparison function
 #' for the value of the test expressions then all you need to do is pass your 
 #' comparison function as the \code{`compare`} argument.
 #' 
 #' If you wish to modify the comparison functions for the side effects (e.g.
 #' screen output or conditions), then you need to pass a 
-#' \code{`\link{testorItemTestsFuns-class}`} object intialized with the
+#' \code{`\link{unitizerItemTestsFuns-class}`} object intialized with the
 #' appropriate functions (see example).
 #' 
 #' @note if you want to modify the functions used to compare conditions,
@@ -86,41 +86,41 @@ setMethod("length", "testorSection", function(x) x@length)
 #' @export
 #' @param title character 1 length title for the section, can be omitted
 #'   though if you do omit it you will have to refer to the subsequent
-#'   arguments by name (i.e. \code{`testor_sect(expr=...)`})
+#'   arguments by name (i.e. \code{`unitizer_sect(expr=...)`})
 #' @param test expression(s), most commonly a call to \code{`{}`} with 
 #'   several calls inside (see examples)
 #' @param details character more detailed description of what the purpose
 #'   of the section is
-#' @param compare a function or a \code{`\link{testorItemTestsFuns-class}`}
+#' @param compare a function or a \code{`\link{unitizerItemTestsFuns-class}`}
 #'   object
 #' @examples
-#' testor_sect("Custom Tests", {
+#' unitizer_sect("Custom Tests", {
 #'   my_fun("a", FALSE)
 #'   my_fun(845, TRUE)
 #' })
-#' testor_sect("Compare With Identical", 
+#' unitizer_sect("Compare With Identical", 
 #'   {
 #'     my_exact_fun(6L)
 #'     my_exact_fun("hello")
 #'   },
 #'   compare=identical
 #' )
-#' testor_sect("Compare With Identical", 
+#' unitizer_sect("Compare With Identical", 
 #'   {
 #'     my_exact_fun(6L)
 #'     my_exact_fun("hello")
 #'   },
 #'   compare=identical
 #' )
-#' testor_sect("Compare With Identical For Screen Output", 
+#' unitizer_sect("Compare With Identical For Screen Output", 
 #'   {
 #'     my_exact_fun(6L)
 #'     my_exact_fun("hello")
 #'   },
-#'   compare=new("testorItemTestsFuns", value=identical, output=identical)
+#'   compare=new("unitizerItemTestsFuns", value=identical, output=identical)
 #' )
-testor_sect <- function(title=NULL, expr=expression(), details=character(), compare=new("testorItemTestsFuns")) {
-  if(!is(compare, "testorItemTestsFuns") & !is.function(compare)) stop("Argument `compare` must be \"testorItemTestsFuns\" or a function")
+unitizer_sect <- function(title=NULL, expr=expression(), details=character(), compare=new("unitizerItemTestsFuns")) {
+  if(!is(compare, "unitizerItemTestsFuns") & !is.function(compare)) stop("Argument `compare` must be \"unitizerItemTestsFuns\" or a function")
   if(!is.character(details)) stop("Argument `details` must be character")
   if(!is.null(title) && (!is.character(title) || length(title) != 1L)) stop("Argument `title` must be a 1 length character vector.")
   exp.sub <- substitute(expr)
@@ -135,12 +135,12 @@ testor_sect <- function(title=NULL, expr=expression(), details=character(), comp
   if (!is.expression(expr)) {
     stop("Argument `expr` must be an expression, or an unevaluated call that evaluates to an expression or `{`.")
   }
-  if(!is(compare, "testorItemTestsFuns")) {
+  if(!is(compare, "unitizerItemTestsFuns")) {
     if(is.function(compare)) {
       compare <- try(
         new(
-          "testorItemTestsFuns", 
-          value=new("testorItemTestFun", fun=compare, fun.name=deparse_fun(substitute(compare)))
+          "unitizerItemTestsFuns", 
+          value=new("unitizerItemTestFun", fun=compare, fun.name=deparse_fun(substitute(compare)))
       ) )
       if(inherits(compare, "try-error")) {
         stop("Problem with provided function for argument `compare`; see previous errors for details")
@@ -148,10 +148,10 @@ testor_sect <- function(title=NULL, expr=expression(), details=character(), comp
     } else stop("Logic Error: contact package maintainer.")
   }
   if(length(expr) < 1L) {
-    warning("`testor_sect` \"", strtrunc(title, 15), "\" is empty.")
+    warning("`unitizer_sect` \"", strtrunc(title, 15), "\" is empty.")
     return(NULL)
   }
-  attempt <- try(new("testorSectionExpression", title=title, .items=expr, details=details, compare=compare))
-  if(inherits(attempt, "try-error")) stop("Failed instantiating `testorSection`; see previous error for details.")
+  attempt <- try(new("unitizerSectionExpression", title=title, .items=expr, details=details, compare=compare))
+  if(inherits(attempt, "try-error")) stop("Failed instantiating `unitizerSection`; see previous error for details.")
   attempt
 } 

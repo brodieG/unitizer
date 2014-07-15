@@ -6,12 +6,12 @@
 updateLs(x, ...)
 }
 \arguments{
-\item{x}{the \code{`\link{testorItem-class}`}}
+\item{x}{the \code{`\link{unitizerItem-class}`}}
 
 \item{base.env}{the last environment to search through for objects}
 }
 \value{
-\code{`\link{testorItem-class}`} object with updated
+\code{`\link{unitizerItem-class}`} object with updated
   \code{`ls`} field and environment reference parent
 }
 \description{
@@ -26,7 +26,7 @@ where objects of different status are marked like so:
   \item ': object exists in browsing environment, but not the same as
      it was when test was evalaluated
   \item *: object was present during test evaluation but is not
-     available in testor anymore
+     available in unitizer anymore
   \item **: object was not present during test evaluation, but exists
      in current environment
 }

@@ -1,10 +1,10 @@
 library(testthat)
-library(testor)
+library(unitizer)
 
 
 test_that("Invisible Expression", {
   exp <- quote(invisible(x <- 1:30))
-  expect_equal(1:30, testor:::eval_user_exp(exp, globalenv())$value)
+  expect_equal(1:30, unitizer:::eval_user_exp(exp, globalenv())$value)
 } )
 local( {
   # `eval_user_exp` must be evaluated outside of test_that; also not that by 
@@ -21,11 +21,11 @@ local( {
   fun_s4 <- function() test.obj.s4
   eval.env <- sys.frame(sys.nframe())
 
-  ex1 <- testor:::eval_user_exp(expression(fun_signal()), eval.env)
-  ex2 <- testor:::eval_user_exp(expression(fun_error()), eval.env)
-  ex3 <- testor:::eval_user_exp(expression(fun_s3()), eval.env)
-  ex4 <- testor:::eval_user_exp(expression(fun_s4()), eval.env)
-  ex5 <- testor:::eval_user_exp(expression(sum(1:20)), eval.env)
+  ex1 <- unitizer:::eval_user_exp(expression(fun_signal()), eval.env)
+  ex2 <- unitizer:::eval_user_exp(expression(fun_error()), eval.env)
+  ex3 <- unitizer:::eval_user_exp(expression(fun_s3()), eval.env)
+  ex4 <- unitizer:::eval_user_exp(expression(fun_s4()), eval.env)
+  ex5 <- unitizer:::eval_user_exp(expression(sum(1:20)), eval.env)
 
   test_that("User Expression Evaluation", {
     expect_equal(
@@ -37,11 +37,11 @@ local( {
       ex2   # a stop
     )
     expect_equal(
-      structure(list(value = structure("hello", class = "test_obj"), aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Print", call = quote(print.test_obj(testorTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Print\")", "print.test_obj(fun_s3())", "print(fun_s3())")), .Names = c("value", "aborted", "conditions", "trace")),
+      structure(list(value = structure("hello", class = "test_obj"), aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Print", call = quote(print.test_obj(unitizerTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Print\")", "print.test_obj(fun_s3())", "print(fun_s3())")), .Names = c("value", "aborted", "conditions", "trace")),
       ex3   # a stop in print
     )
     expect_equal(
-      structure(list(aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Show", call = quote(show(testorTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Show\")", "show(fun_s4())", "show(fun_s4())")), .Names = c("aborted", "conditions", "trace")),
+      structure(list(aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Show", call = quote(show(unitizerTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Show\")", "show(fun_s4())", "show(fun_s4())")), .Names = c("aborted", "conditions", "trace")),
       ex4[-1L]   # a stop in show, have to remove 1L because S4 object doesn't deparse
     )
     expect_equal(

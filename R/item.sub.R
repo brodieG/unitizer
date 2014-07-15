@@ -9,13 +9,13 @@ NULL
 
 #' Virtual Class To Enforce Slots on Subclasses
 #' 
-#' Used for \code{`\link{testorItemsTestFuns}`} and \code{`\link{testorItemTestsErrors}`}
+#' Used for \code{`\link{unitizerItemsTestFuns}`} and \code{`\link{unitizerItemTestsErrors}`}
 #' @keywords internal
 
-setClass("testorItemTests", contains="VIRTUAL",
+setClass("unitizerItemTests", contains="VIRTUAL",
   validity=function(object) {
-    if(!isTRUE(msg <- all.equal(sort(slotNames(getClass(object))), sort(slotNames("testorItemData"))))) {
-      return("slots must be defined as ", deparse(slotNames("testorItemData")))
+    if(!isTRUE(msg <- all.equal(sort(slotNames(getClass(object))), sort(slotNames("unitizerItemData"))))) {
+      return("slots must be defined as ", deparse(slotNames("unitizerItemData")))
     }
     TRUE
   }
@@ -24,7 +24,7 @@ setClass("testorItemTests", contains="VIRTUAL",
 #' @keywords internal
 
 setClass(
-  "testorItemTestFun",
+  "unitizerItemTestFun",
   representation(fun="function", fun.name="character"),
   validity=function(object) {
     frms <- formals(object@fun)
@@ -39,7 +39,7 @@ setClass(
     TRUE 
   }
 )
-setMethod("initialize", "testorItemTestFun", function(.Object, ...) {
+setMethod("initialize", "unitizerItemTestFun", function(.Object, ...) {
   dots <- list(...)
   if(!("fun" %in% names(dots))) stop("Argument `fun` required.")
   if(!("fun.name" %in% names(dots))) {
@@ -53,16 +53,16 @@ setMethod("initialize", "testorItemTestFun", function(.Object, ...) {
 #' 
 #' There various nested objects involved:
 #' \itemize{
-#'   \item \code{`testorItemTestError`} contains the error produced from a comparison
-#'   \item \code{`testorItemTestsErrors`} aggregates the errors for each slot of an item
-#'   \item \code{`testorItemsTestsErrors`} aggregates all the errors for the 
-#'      \code{`\link{testor-class}`} object
+#'   \item \code{`unitizerItemTestError`} contains the error produced from a comparison
+#'   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot of an item
+#'   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the 
+#'      \code{`\link{unitizer-class}`} object
 #' }
 #' 
-#' @aliases testorItemsTestsErrors-class, testorItemTestsErrors-class
+#' @aliases unitizerItemsTestsErrors-class, unitizerItemTestsErrors-class
 #' @keywords internal
 
-setClass("testorItemTestError",
+setClass("unitizerItemTestError",
   representation(
     value="characterOrNULL",
     compare.err="logical"
@@ -71,34 +71,34 @@ setClass("testorItemTestError",
   validity=function(object) {
     if(!identical(length(object@compare.err), 1L)) return("slot `@compare.err` must be a 1 length logical")
 } )
-setClass("testorItemTestsErrors", contains="testorItemTests",
+setClass("unitizerItemTestsErrors", contains="unitizerItemTests",
   representation(
-    value="testorItemTestError",
-    conditions="testorItemTestError",
-    output="testorItemTestError",
-    message="testorItemTestError",
-    aborted="testorItemTestError"
+    value="unitizerItemTestError",
+    conditions="unitizerItemTestError",
+    output="unitizerItemTestError",
+    message="unitizerItemTestError",
+    aborted="unitizerItemTestError"
 ) )
-setMethod("initialize", "testorItemTestsErrors",
+setMethod("initialize", "unitizerItemTestsErrors",
   function(.Object, ...) {
     dots <- list(...)
     if(!all(s.n <- names(dots) %in% slotNames(.Object))) stop("Unused arguments ", paste0(deparse(names(dots)[!s.n])))
-    for(i in seq_along(dots)) if(is.null(dots[[i]])) dots[[i]] <- new("testorItemTestError")
+    for(i in seq_along(dots)) if(is.null(dots[[i]])) dots[[i]] <- new("unitizerItemTestError")
     do.call(callNextMethod, c(list(.Object), dots))
 } )
 setClass(
-  "testorItemsTestsErrors", contains="testorList",
+  "unitizerItemsTestsErrors", contains="unitizerList",
   validity=function(object) {
-    tests <- vapply(as.list(object), is, logical(1L), class2="testorItemTestsErrors")
-    if(!all(tests)) return("\"testorItemsTestsErrors\" may only contain objects of class \"testorItemTestsErrors\"")
+    tests <- vapply(as.list(object), is, logical(1L), class2="unitizerItemTestsErrors")
+    if(!all(tests)) return("\"unitizerItemsTestsErrors\" may only contain objects of class \"unitizerItemTestsErrors\"")
     TRUE
 } )
-setClassUnion("testorItemsTestsErrorsOrLogical", c("testorItemsTestsErrors", "logical"))
+setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
 
 #' Convert An Error Into Character
 #' @keywords internal
 
-setMethod("as.character", "testorItemTestsErrors", 
+setMethod("as.character", "unitizerItemTestsErrors", 
   function(x, ...) {
     err.lst <- list()
     for(i in slotNames(x)) {
@@ -122,12 +122,12 @@ setMethod("as.character", "testorItemTestsErrors",
 } )
 #' Store Functions for New vs. Reference Test Comparisons
 #' 
-#' \code{`testorItemTestsFuns`} contains the functions used to compare the results
+#' \code{`unitizerItemTestsFuns`} contains the functions used to compare the results
 #' and side effects of running test expresssions.
 #' 
-#' By default, the comparison for each of the \code{`testorItem-class`} elements
+#' By default, the comparison for each of the \code{`unitizerItem-class`} elements
 #' are carried out as follows (i.e. this is what the default 
-#' \code{`testorItemTestsFuns-class`} is populated with)
+#' \code{`unitizerItemTestsFuns-class`} is populated with)
 #' \itemize{
 #'   \item value: compared using \code{`\link{all.equal}`}
 #'   \item conditions: each item in this list is compared to the corresponding item
@@ -136,44 +136,44 @@ setMethod("as.character", "testorItemTestsErrors",
 #'   \item message: not compared (note this is presumably included in \code{`conditions`})
 #'   \item aborted: not compared (also implied in conditions, hopefully)   
 #' }
-#' @seealso \code{`\link{testorTest-class}`}
+#' @seealso \code{`\link{unitizerTest-class}`}
 #' @examples
-#' new("testorItemTestsFuns", value=identical)  # use `identical` instead of `all.equal` to compare values
+#' new("unitizerItemTestsFuns", value=identical)  # use `identical` instead of `all.equal` to compare values
 
 setClass(
-  "testorItemTestsFuns", contains="testorItemTests",
+  "unitizerItemTestsFuns", contains="unitizerItemTests",
   representation(
-    value="testorItemTestFun",
-    conditions="testorItemTestFun",
-    output="testorItemTestFun",
-    message="testorItemTestFun",
-    aborted="testorItemTestFun"
+    value="unitizerItemTestFun",
+    conditions="unitizerItemTestFun",
+    output="unitizerItemTestFun",
+    message="unitizerItemTestFun",
+    aborted="unitizerItemTestFun"
   ),
   prototype(
-    value=new("testorItemTestFun", fun=all.equal),
-    conditions=new("testorItemTestFun", fun=all.equal),
-    output=new("testorItemTestFun", fun=function(target, current) TRUE),
-    message=new("testorItemTestFun", fun=function(target, current) TRUE),
-    aborted=new("testorItemTestFun", fun=function(target, current) TRUE)
+    value=new("unitizerItemTestFun", fun=all.equal),
+    conditions=new("unitizerItemTestFun", fun=all.equal),
+    output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
+    message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
+    aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)
 ) )
 #' Ensures Functions are In Correct Format
 #' 
 #' Also, allows the user to specify functions directly instead of having
-#' to instantiate \code{`\link{testorItemTestFun-class}`} for each function.
+#' to instantiate \code{`\link{unitizerItemTestFun-class}`} for each function.
 #' Finally, recovers the deparsed passed function name.
 #' @keywords internal
 
-setMethod("initialize", "testorItemTestsFuns", function(.Object, ...) {
+setMethod("initialize", "unitizerItemTestsFuns", function(.Object, ...) {
   dots <- list(...)
   if(!all(err.slots <- names(dots) %in% slotNames(getClass(.Object)))) 
     stop("Can't initialize invalid slots ", deparse(names(dots)[!err.slots]))
   fun.names <- vapply(substitute(list(...))[-1L], deparse_fun, character(1L))
   if(!all(names(fun.names) %in% names(dots))) stop("Logic Error: contact package maintainer.")
   for(i in names(dots)) {
-    slot(.Object, i) <- if(is(dots[[i]], "testorItemTestFun")) {
+    slot(.Object, i) <- if(is(dots[[i]], "unitizerItemTestFun")) {
       dots[[i]]
     } else {
-      new("testorItemTestFun", fun=dots[[i]], fun.name=fun.names[[i]])
+      new("unitizerItemTestFun", fun=dots[[i]], fun.name=fun.names[[i]])
   } }
   .Object
 } )

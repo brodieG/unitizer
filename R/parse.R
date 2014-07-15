@@ -17,7 +17,7 @@
 # 
 # After this, need to break up the data frame into pieces based on what the 
 # top level parent is.  This is fine and well, though we need to reset the
-# top level parents so we can do this recursively for testor_sect
+# top level parents so we can do this recursively for unitizer_sect
 # 
 # Unfortunately, this gets seriously complicated by the fact that comments
 # inside calls have for parent the call, irrespective of where they are.
@@ -223,7 +223,7 @@ comments_assign <- function(expr, comment.dat) {
 #'     should not be apparent in common use.
 #'   \item you cannot attach comments to \code{`NULL`}, if you must use 
 #'     \code{`(NULL)`}.  This is a feature, as it proivdes a way to put
-#'     comments in the file without them showing up during \code{`testor`}
+#'     comments in the file without them showing up during \code{`unitizer`}
 #'     use.
 #' }
 #' Note that as a result of this trial and error interpretation of 

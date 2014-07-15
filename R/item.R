@@ -8,18 +8,18 @@ NULL
 
 # - Classes -------------------------------------------------------------------
 
-#' Data Produced During Evaluation of \code{`testor`} Test
+#' Data Produced During Evaluation of \code{`unitizer`} Test
 #' 
-#' Kept separate from the \code{`\link{testorItem-class}`} because these
+#' Kept separate from the \code{`\link{unitizerItem-class}`} because these
 #' are the slots that get compared from the new item to the reference items
 #' which means there are a whole bunch of other classes that need to have the
-#' same structure as this (e.g. \code{`\link{testorItemTestsFun}`}) and by
+#' same structure as this (e.g. \code{`\link{unitizerItemTestsFun}`}) and by
 #' definining it we let those other classes confirm they have the correct
 #' structure.
 #' @keywords internal
 
 setClass(
-  "testorItemData", 
+  "unitizerItemData", 
   representation(
     value="ANY", 
     conditions="condition_list", 
@@ -32,10 +32,10 @@ setClass(
       return("slot `conditions` may only contain \"condition\" objects")
     TRUE
 } )
-#' Full Representation Of an Evaluated \code{`testor`} Test
+#' Full Representation Of an Evaluated \code{`unitizer`} Test
 #' 
 #' @slot call the call that is tested
-#' @slot reference whether this is a reference or new \code{`testorItem`}
+#' @slot reference whether this is a reference or new \code{`unitizerItem`}
 #' @slot ignore whether this test should be treated as a test or just a step
 #'   towards compiling a test
 #' @slot environment the environment the test was evaluated in, should contain
@@ -43,7 +43,7 @@ setClass(
 #' @slot data the container for the results of the evaluation of \code{`call`}
 
 setClass(
-  "testorItem", 
+  "unitizerItem", 
   representation(
     call="ANY",
     id="integer",
@@ -53,7 +53,7 @@ setClass(
     ls="data.frame",
     comment="characterOrNULL",
     trace="list",
-    data="testorItemData"
+    data="unitizerItemData"
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L, 
@@ -68,20 +68,21 @@ setClass(
     TRUE
   }
 )
-setClassUnion("testorItemOrNULL", c("testorItem", "NULL"))
-#' Initialize A \code{`\link{testorItem-class}`}
+setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
+#' Initialize A \code{`\link{unitizerItem-class}`}
 #' 
 #' Makes the fact that most of the data needs to be part of a 
-#' \code{`\link{testorItemData-class}`} object transparent to the user.
+#' \code{`\link{unitizerItemData-class}`} object transparent to the user.
 #' @keywords internal
 
-setMethod("initialize", "testorItem", function(.Object, ...) {
+setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
   if(!("call" %in% names(dots.all))) stop("Argument `call` is required")
   .Object@call <- dots.all$call
   if("env" %in% names(dots.all)) .Object@env <- dots.all$env
   if(
-    is.call(.Object@call) &&
+    is.call(.Object@call) && 
+    exists(as.character(.Object@call[[1L]]), .Object@env) &&
     any(vapply(funs.ignore, identical, logical(1L), eval(.Object@call[[1L]], .Object@env)))
   ) {
     .Object@ignore <- TRUE
@@ -89,30 +90,30 @@ setMethod("initialize", "testorItem", function(.Object, ...) {
   if("comment" %in% names(dots.all)) .Object@comment <- dots.all$comment
   if("trace" %in% names(dots.all)) .Object@trace <- dots.all$trace
   dots <- dots.all[!(names(dots.all) %in% slotNames(.Object))]
-  .Object@data <- do.call("new", c(list("testorItemData"), dots), quote=TRUE)
+  .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
-#' Collection of \code{`\link{testorItem-class}`} Object
+#' Collection of \code{`\link{unitizerItem-class}`} Object
 #' @keywords internal
 
-setClass("testorItems", contains="testorList", 
+setClass("unitizerItems", contains="unitizerList", 
   representation(
     base.env="environment"    # should be enclosure of first item
   ),  
   validity=function(object) {
-    if(!all(vapply(object@.items, is, logical(1L), "testorItem"))) 
-      return("slot `items` may only contain objects \"testorItem\"")
+    if(!all(vapply(object@.items, is, logical(1L), "unitizerItem"))) 
+      return("slot `items` may only contain objects \"unitizerItem\"")
     TRUE
 } )
-setClassUnion("testorItemsOrNULL", c("testorItems", "NULL"))
+setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 
 # - Single Object Methods -----------------------------------------------------
 
-#' Display a \code{`\link{testorItem-class}`} Object
+#' Display a \code{`\link{unitizerItem-class}`} Object
 #' 
-#' Highly summarized view of the testor object.
+#' Highly summarized view of the unitizer object.
 
-setMethod("show", "testorItem",
+setMethod("show", "unitizerItem",
   function(object) {
     cat("** ")
     if(object@reference) cat("Reference") else cat("New")
@@ -152,33 +153,33 @@ setMethod("show", "testorItem",
       ), fill=TRUE, sep=""
     )
 } )
-#' Methods to Track Whether a \code{`\link{testorItem-class}`} Object is New Or Reference
+#' Methods to Track Whether a \code{`\link{unitizerItem-class}`} Object is New Or Reference
 #' 
-#' Necessitated due to the awkward structure around \code{`\link{browse_testor_item}`},
-#' where the only return value is a \code{`\link{testorItems-class}`} object and there is
+#' Necessitated due to the awkward structure around \code{`\link{browse_unitizer_item}`},
+#' where the only return value is a \code{`\link{unitizerItems-class}`} object and there is
 #' no easy way to tell which objects have been kept from reference vs which ones are 
 #' new.
 #' 
 #' @keywords internal
-#' @aliases itemType,testorItem-method, itemType<-,testorItem-method, itemsitemType,testorItems-method,
-#'   itemsType<-,testorItems-method
+#' @aliases itemType,unitizerItem-method, itemType<-,unitizerItem-method, itemsitemType,unitizerItems-method,
+#'   itemsType<-,unitizerItems-method
 
 setGeneric("itemType", function(x, ...) standardGeneric("itemType"))
-setMethod("itemType", "testorItem", function(x) if(x@reference) "reference" else "new")
+setMethod("itemType", "unitizerItem", function(x) if(x@reference) "reference" else "new")
 setGeneric("itemType<-", function(x, value) standardGeneric("itemType<-"))
-setReplaceMethod("itemType", c("testorItem", "character"),
+setReplaceMethod("itemType", c("unitizerItem", "character"),
   function(x, value) {
     if(!(value %in% c("new", "reference"))) stop("Argument `value` must be in ", deparse(c("new", "reference")))
     x@reference <- identical(value, "reference")
     x
 } )
 setGeneric("itemsType", function(x, ...) standardGeneric("itemsType"))
-setMethod("itemsType", "testorItems", 
+setMethod("itemsType", "unitizerItems", 
   function(x) {
     vapply(as.list(x), function(y) if(y@reference) "reference" else "new", character(1L))
 } )
 setGeneric("itemsType<-", function(x, value) standardGeneric("itemsType<-"))
-setReplaceMethod("itemsType", c("testorItems", "character"),
+setReplaceMethod("itemsType", c("unitizerItems", "character"),
   function(x, value) {
     if(length(value) != 1L & !identical(length(x), length(value))) {
       stop("Argument `value` must be length 1L or have same length as argument `x`")
@@ -189,29 +190,29 @@ setReplaceMethod("itemsType", c("testorItems", "character"),
 } )
 setGeneric("ignored", function(x, ...) standardGeneric("ignored"))
 
-#' Determines Which Items In \code{`\link{testorItems-class}`} Are Not Full Tests
+#' Determines Which Items In \code{`\link{unitizerItems-class}`} Are Not Full Tests
 #' 
 #' In order to simplify user interaction, some statements are not considered
 #' to be tests, rather, they are set up steps for the actual test.  At the
 #' time of this writing, top level assignments are included in this group.
 
-setMethod("ignored", "testorItems", function(x, ...) vapply(as.list(x), function(y) y@ignore, logical(1L)))
-setMethod("ignored", "testorItem", function(x, ...) x@ignore)
+setMethod("ignored", "unitizerItems", function(x, ...) vapply(as.list(x), function(y) y@ignore, logical(1L)))
+setMethod("ignored", "unitizerItem", function(x, ...) x@ignore)
   
 # - Multi Object Methods -------------------------------------------------------
 
-#' Add a \code{`\link{testorItem-class}`} to a \code{`\link{testorItems-class}`}
+#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
 #' @keywords internal
 
-setMethod("+", c("testorItems", "testorItemOrNULL"), 
+setMethod("+", c("unitizerItems", "unitizerItemOrNULL"), 
   function(e1, e2) {
     if(is.null(e2)) return(e1)
     e1 <- append(e1, list(e2))
     e1
 } )
-#' Add a \code{`\link{testorItem-class}`} to a \code{`\link{testorItems-class}`}
+#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
 #' @keywords internal
 
-setMethod("+", c("testorItems", "testorItems"), function(e1, e2) append(e1, e2))
+setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, e2))
 
 

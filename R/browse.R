@@ -1,35 +1,35 @@
-#' @include testor.R
+#' @include unitizer.R
 #' @include misc.R
 #' @include browse.struct.R
 #' @include prompt.R
 
 setGeneric("browse", function(x, ...) standardGeneric("browse"))
 
-#' Browse testor
+#' Browse unitizer
 #' 
-#' Here we are reviewing all the tests in the testor under three different lenses
+#' Here we are reviewing all the tests in the unitizer under three different lenses
 #' \enumerate{
 #'   \item tests that don't match the stored reference tests
 #'   \item tests that don't exist in the reference tests
 #'   \item tests that exist in the reference tests but no the new file
 #' }
 #' Because a lot of the logic for browsing these three types of situations is
-#' shared, that logic has been split off into \code{`\link{browse_testor_items}`}.
+#' shared, that logic has been split off into \code{`\link{browse_unitizer_items}`}.
 #' The key is that that function will return the items that are supposed to be
-#' stored in the testor.  These items will either be new or reference ones
+#' stored in the unitizer.  These items will either be new or reference ones
 #' based on user decisions.
 #' 
 #' Unfortunately, in order to be able to use the same logic for tasks that are
 #' not quite the same, a bit of contortion was needed.  In particular, the
 #' user is always asked to input either Y, N, or Q, but the corresponding output
-#' from \code{`\link{browse_testor_items}`} is very different depending on what
+#' from \code{`\link{browse_unitizer_items}`} is very different depending on what
 #' situation we're dealing with.
 #' 
 #' @keywords internal
 #' @param x the object to browse
 #' @param env the environment to use as a parent to the environment to browse the tests
 
-setMethod("browse", c("testor"), valueClass="testor",
+setMethod("browse", c("unitizer"), valueClass="unitizer",
   function(x, ...) {
 
     # set up local history
@@ -37,7 +37,7 @@ setMethod("browse", c("testor"), valueClass="testor",
     savehistory()    
     hist.file <- tempfile()
     hist.con <- file(hist.file, "at")
-    cat("## <testor> (original history will be restored on exit)\n", file=hist.con)
+    cat("## <unitizer> (original history will be restored on exit)\n", file=hist.con)
     loadhistory(showConnections()[as.character(hist.con), "description"])
     
     # Revert history and trace on exit
@@ -53,23 +53,23 @@ setMethod("browse", c("testor"), valueClass="testor",
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
-    testor.browse <- browsePrep(x)      # Group tests by section and outcome for review
-    testor.browse@hist.con <- hist.con  # User expression to this file for use in history
+    unitizer.browse <- browsePrep(x)      # Group tests by section and outcome for review
+    unitizer.browse@hist.con <- hist.con  # User expression to this file for use in history
 
-    if(!length(testor.browse)) {
+    if(!length(unitizer.browse)) {
       message("All tests passed; nothing to store.")
       return(TRUE)
-    } else if(length(testor.browse)) {
+    } else if(length(unitizer.browse)) {
       repeat {
-        testor.browse <- reviewNext(testor.browse)
-        if(!done(testor.browse)) next # Interactively review all tests
+        unitizer.browse <- reviewNext(unitizer.browse)
+        if(!done(unitizer.browse)) next # Interactively review all tests
         
         # Get summary of changes
 
-        keep <- !testor.browse@mapping@ignored
+        keep <- !unitizer.browse@mapping@ignored
         changes <- split(
-          testor.browse@mapping@review.val[keep], 
-          testor.browse@mapping@review.type[keep]
+          unitizer.browse@mapping@review.val[keep], 
+          unitizer.browse@mapping@review.type[keep]
         )
         change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
@@ -86,17 +86,17 @@ setMethod("browse", c("testor"), valueClass="testor",
         }
         valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
         help <- paste0(
-          "Pressing Y will replace the previous testor with a new one updated ",
+          "Pressing Y will replace the previous unitizer with a new one updated ",
           "with all the changes you approved, pressing R will allow you to ",
           "re-review your choices."
         )
         user.input <- navigate_prompt(
-          testor.browse, curr.id=max(testor.browse@mapping@item.id), 
-          text="Update Testor", browse.env1=x@zero.env, 
+          unitizer.browse, curr.id=max(unitizer.browse@mapping@item.id), 
+          text="Update unitizer", browse.env1=x@zero.env, 
           valid.opts=valid.opts
         )
-        if(is(user.input, "testorBrowse")) {
-          testor.browse <- user.input
+        if(is(user.input, "unitizerBrowse")) {
+          unitizer.browse <- user.input
           next
         } else if (identical(user.input, "Q")) {
           invokeRestart("earlyExit")
@@ -105,15 +105,15 @@ setMethod("browse", c("testor"), valueClass="testor",
         }
         stop("Logic Error; unexpected user input, contact maintainer.")
     } }
-    # Create the new testor
+    # Create the new unitizer
 
-    items.user <- processInput(testor.browse)
+    items.user <- processInput(unitizer.browse)
     items.ref <- x@items.new[x@tests.status == "Pass"] + items.user
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
     zero.env <- new.env(parent=parent.env(x@zero.env))
-    testor <- new("testor", id=x@id, changes=x@changes, zero.env=zero.env)
-    testor + items.ref
+    unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
+    unitizer + items.ref
 } )
 
 #' Bring up Review of Next test
@@ -127,7 +127,7 @@ setMethod("browse", c("testor"), valueClass="testor",
 #' @keywords internal
 
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
-setMethod("reviewNext", c("testorBrowse"), 
+setMethod("reviewNext", c("unitizerBrowse"), 
   function(x, ...) {
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
@@ -201,7 +201,7 @@ setMethod("reviewNext", c("testorBrowse"),
     ) {
       screen_out(
         item.main@data@message, 
-        max.len=getOption("testor.test.msg.lines"), stderr()
+        max.len=getOption("unitizer.test.msg.lines"), stderr()
       )
       set_trace(item.main@trace)
     }
@@ -210,7 +210,7 @@ setMethod("reviewNext", c("testorBrowse"),
     # If test failed, show details of failure
 
     if(
-      is(curr.sub.sec.obj@show.fail, "testorItemsTestsErrors") && 
+      is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") && 
       !item.main@ignore
     ) {
       cat(
@@ -221,20 +221,18 @@ setMethod("reviewNext", c("testorBrowse"),
         sep="\n"
     ) } 
 
-    # No need to do anything else with ignored tests since default action for 
-    # them is "Y", so return those (actually, is N now?).  Not clear if we also
-    # need to set reviewed to TRUE
+    # Need to add ignored tests as default action is N. Not clear if we also
+    # need to set reviewed to TRUE, but we do for now
 
     if(x@mapping@ignored[[curr.id]]) {
-      # x@mapping@reviewed[[curr.id]] <- TRUE
-      # x@mapping@review.val[[curr.id]] <- x.mod
+      x@mapping@reviewed[[curr.id]] <- TRUE
+        x@mapping@review.val[[curr.id]] <- "Y"
       x@last.id <- curr.id      
       return(x)
     }
-
     # Create evaluation environment; these are really two nested environments,
-    # with the parent environment containing the testorItem values and the child 
-    # environment containing the actual testor items.  This is so that when
+    # with the parent environment containing the unitizerItem values and the child 
+    # environment containing the actual unitizer items.  This is so that when
     # user evaluates `.new` or `.ref` they see the value, but then we can 
     # easily retrieve the full object with the `get*` functions.
     
@@ -253,7 +251,7 @@ setMethod("reviewNext", c("testorBrowse"),
     browse.eval.env <- new.env(parent=browse.env)
 
     env.sec <- if(!is.null(item.new) && !is.null(item.ref)) item.ref@env else NULL
-    assign("ls", testor_ls, base.env.pri)
+    assign("ls", unitizer_ls, base.env.pri)
     if(!is.null(env.sec)) {
       assign("ref", function(x) eval(substitute(x), env.sec), base.env.pri)
     } else {      
@@ -289,7 +287,7 @@ setMethod("reviewNext", c("testorBrowse"),
         paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."
     ) )
     # navigate_prompt handles the B and R cases internally and modifies the
-    # testorBrowse to be at the appropriate location; this is done as a function
+    # unitizerBrowse to be at the appropriate location; this is done as a function
     # because same logic is re-used elsewhere
 
     if(
@@ -299,7 +297,7 @@ setMethod("reviewNext", c("testorBrowse"),
           browse.env1=browse.eval.env, browse.env2=parent.env(base.env.pri),
           valid.opts=valid.opts, help=c(help.prompt, as.character(UL(help.opts)))
         ),
-        "testorBrowse"
+        "unitizerBrowse"
       )
     ) {
       return(x.mod)  
@@ -316,7 +314,7 @@ setMethod("reviewNext", c("testorBrowse"),
         quit.prompt <- "Save Reviewed Changes"
         quit.opts <- c(Y="[Y]es", N="[N]o")
         cat(quit.prompt, " (", paste0(quit.opts, collapse=", "), ")?", sep="")
-        user.input <- testor_prompt(
+        user.input <- unitizer_prompt(
           quit.prompt, browse.env=parent.env(base.env.pri), 
           valid.opts=quit.opts, hist.con=x@hist.con,
           help=c(
@@ -334,7 +332,7 @@ setMethod("reviewNext", c("testorBrowse"),
         }         
       } else invokeRestart("earlyExit")
     } else {
-      stop("Logic Error: `testor_prompt` returned unexpected value; contact maintainer")
+      stop("Logic Error: `unitizer_prompt` returned unexpected value; contact maintainer")
     }
     x
   }
@@ -352,13 +350,13 @@ setMethod("reviewNext", c("testorBrowse"),
 
 getItemData <- function(x, name, what, env) {
   if(!(name %in% c(".new", ".ref"))) {
-    stop("testor::get* functions may only be called on the test objects (`.new`, or `.ref`).")
+    stop("unitizer::get* functions may only be called on the test objects (`.new`, or `.ref`).")
   }
   if(!(is.environment(env))) stop("Argument `env` must be an environment")
   if(inherits(obj <- try(get(name, inherits=FALSE, envir=env), silent=TRUE), "try-error")) {
     stop("Requested test object `", name, "` is not defined for this test.")
   }
-  if(!is(obj, "testorItem")) stop("Logic Error: retrieved object is not a `testorItem`; contact package maintainer.")
+  if(!is(obj, "unitizerItem")) stop("Logic Error: retrieved object is not a `unitizerItem`; contact package maintainer.")
   if(!identical(obj@data@value, x)) {
     stop(
       "Passed `", name, "` value cannot be matched to the test that puportedly produced it; ",
@@ -372,7 +370,7 @@ getItemData <- function(x, name, what, env) {
 
 #' Retrieve Additional Info About Tests
 #' 
-#' Intended for use exclusively within the \code{`testor`} interactive command 
+#' Intended for use exclusively within the \code{`unitizer`} interactive command 
 #' line.  For example \code{getMsg(.new)} will retrieve any \file{stderr} that occurred
 #' during test evaluation (for reference tests, use \code{getMsg(.ref)}.
 #' 
@@ -396,7 +394,7 @@ getItemData <- function(x, name, what, env) {
 #'   \item \code{`getAborted`}: returns whether the test call issues a restart
 #'     call to the `abort` restart, as `stop` does.
 #'   \item \code{`getVal`}: the value that results from evaluating the test, note
-#'     that typing \code{`obj`} and \code{getVal(`obj`)} at the \code{`testor`}
+#'     that typing \code{`obj`} and \code{getVal(`obj`)} at the \code{`unitizer`}
 #'     prompt are equivalent
 #'   \item \code{`reCall`}: will load the call used to generate the test
 #'     on the prompt (not implemented yet).

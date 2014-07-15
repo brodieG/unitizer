@@ -1,16 +1,16 @@
 #' @include item.R
 #' @include item.sub.R
-#' @include testor.R
+#' @include unitizer.R
 
 NULL
 
-#' Add a \code{`\link{testorSection-class}`} to a \code{`\link{testor-class}`}
+#' Add a \code{`\link{unitizerSection-class}`} to a \code{`\link{unitizer-class}`}
 #' 
 #' Registers the section, and the mapping of items to section.
 #' 
 #' @keywords internal
 
-setMethod("+", c("testor", "testorSection"), valueClass="testor",
+setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
   function(e1, e2) {
     # the map is index (item) to value (section), id auto-increments
     # with how many sections, and start tracks how many items exist in the
@@ -25,8 +25,8 @@ setMethod("+", c("testor", "testorSection"), valueClass="testor",
       # If not initial section add, then must be a nested section, so have to
       # remove value
 
-      e1@sections[[e1@section.map[start]]]@length <- e1@sections[[e1@section.map[start]]]@length - 1L # reduce length of section with nested testor section
-      e1@section.map <- e1@section.map[-start]  # remove mapping for the testor section element that we are expanding
+      e1@sections[[e1@section.map[start]]]@length <- e1@sections[[e1@section.map[start]]]@length - 1L # reduce length of section with nested unitizer section
+      e1@section.map <- e1@section.map[-start]  # remove mapping for the unitizer section element that we are expanding
       e1@section.map <- append(e1@section.map, rep(id, length(e2)), start - 1L) # add mapping for the now expanded section
   
     }
@@ -38,23 +38,23 @@ setMethod("+", c("testor", "testorSection"), valueClass="testor",
     e1
 } )
 
-#' Adds Expressions to Testor
+#' Adds Expressions to unitizer
 #'
-#' Expressions can be added as \code{`\link{testorTests-class}`} object
+#' Expressions can be added as \code{`\link{unitizerTests-class}`} object
 #' or a straight up expression, though in most cases it should be the
 #' latter.
 #' 
-#' @note you can only do this once for a `testor`.
+#' @note you can only do this once for a `unitizer`.
 
-setMethod("+", c("testor", "testorTestsOrExpression"), valueClass="testor", 
+setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer", 
   function(e1, e2) {    
     if(length(e1@sections)) 
       stop(
         "Logic Error: you are attempting to add more than one set ",
-        "of tests or expressions to this `testor`"
+        "of tests or expressions to this `unitizer`"
       )
-    if(is.expression(e2)) e2 <- new("testorTests") + e2
-    e1 <- e1 + new("testorSection", length=length(e2))
+    if(is.expression(e2)) e2 <- new("unitizerTests") + e2
+    e1 <- e1 + new("unitizerSection", length=length(e2))
     matched.calls <- rep(NA_integer_, length(e2))
     i <- 1L
     sect.par <- NA_integer_
@@ -72,7 +72,7 @@ setMethod("+", c("testor", "testorTestsOrExpression"), valueClass="testor",
       # the section, and re-loop (this is how we handle nested tests), if not, store the
       # evaluated test
 
-      if(is(item@data@value, "testorSectionExpression")) {
+      if(is(item@data@value, "unitizerSectionExpression")) {
         if(i <= sect.end) {
           sect.end <- i + length(item@data@value) - 1L
           sect.par <- e1@section.parent[e1@section.map[[i]]]
@@ -81,7 +81,7 @@ setMethod("+", c("testor", "testorTestsOrExpression"), valueClass="testor",
           sect.par <- NA_integer_
         }
         e1 <- e1 + new(
-          "testorSection", title=item@data@value@title, details=item@data@value@details, 
+          "unitizerSection", title=item@data@value@title, details=item@data@value@details, 
           length=length(item@data@value), parent=sect.par, compare=item@data@value@compare
         )
         e2 <- e2 + item@data@value
@@ -93,17 +93,17 @@ setMethod("+", c("testor", "testorTestsOrExpression"), valueClass="testor",
       cat("\r", rep(" ", chr.width), sep="")
       cat("\rRunning: ", substr(deparse(item@call)[[1L]], 1L, max(30L, chr.width - 5L)))
     }
-    cat("\r", rep(" ", chr.width), "\r\n", sep="")
+    cat("\r", rep(" ", chr.width), "\r", sep="")
     e1
 } )
 
-#' Adds \code{`\link{testorItems-class}`} objects to Testor
+#' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
 #' 
-#' Any added \code{`\link{testorItems-class}`} objects are treated as
+#' Any added \code{`\link{unitizerItems-class}`} objects are treated as
 #' reference items.  The only way to add new items is by adding each
-#' item individually with \code{`\link{+,testor,testorItem-method}`}.
+#' item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
 
-setMethod("+", c("testor", "testorItems"), valueClass="testor",
+setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
   function(e1, e2) {
     itemsType(e2) <- "reference"
     parent.env(e2@base.env) <- e1@base.env
@@ -115,25 +115,25 @@ setMethod("+", c("testor", "testorItems"), valueClass="testor",
     e1
   }
 )
-#' Adds \code{`\link{testorItem}`} to \code{`\link{testor}`}
+#' Adds \code{`\link{unitizerItem}`} to \code{`\link{unitizer}`}
 #' 
 #' All tests are run on addition, and mapping information between reference and
 #' new tests is also recored.
 #' 
-#' @seealso \code{`\link{registerItem,testor,testorItem-method}`}
+#' @seealso \code{`\link{registerItem,unitizer,unitizerItem-method}`}
 #' @keywords internal
 
-setMethod("+", c("testor", "testorItem"),
+setMethod("+", c("unitizer", "unitizerItem"),
   function(e1, e2) {
     e2 <- updateLs(e2, e1@items.new@base.env)
     e1 <- registerItem(e1, e2)
     e1 <- testItem(e1, e2)
     e1
 } )
-#' Add Test Errors to \code{`\link{testor-class}`}
+#' Add Test Errors to \code{`\link{unitizer-class}`}
 #' @keywords internal
 
-setMethod("+", c("testor", "testorItemTestsErrors"), 
+setMethod("+", c("unitizer", "unitizerItemTestsErrors"), 
   function(e1, e2) {
     e1@tests.errorDetails <- append(e1@tests.errorDetails, list(e2))
     e1

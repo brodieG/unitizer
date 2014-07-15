@@ -302,7 +302,7 @@ all.equal.condition_list <- function(target, current, ...) {
 
       err.msg <- all.equal(target[[x]], current[[x]])
       if(!isTRUE(err.msg) && (target.printed || current.printed)) {
-        err.msg <- c(err.msg,  )
+        err.msg <- c(err.msg, print.show.err)
       }
       err.msg
   } )
@@ -544,7 +544,7 @@ funs.ignore <- list(base::`<-`, base::library)
 #' 
 #' @keywords internal
 
-screen_out <- function(txt, max.len=getOption("testor.test.out.lines"), file=stdout()) {
+screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=stdout()) {
   if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
     stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
   if(out.len <- length(txt)) {

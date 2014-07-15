@@ -1,4 +1,4 @@
-library(testor)
+library(unitizer)
 
-runtests("tests/testor/nested.testor.R")
-runtests("tests/testor/misc.testor.R")
+unitize("tests/unitizer/nested.unitizer.R")
+unitize("tests/unitizer/misc.unitizer.R")

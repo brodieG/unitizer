@@ -16,39 +16,39 @@ NULL
 #' @slot .seek.fwd logical used to track what direction iterators are going
 
 setClass(
-  "testorList", 
+  "unitizerList", 
   representation(.items="listOrExpression", .pointer="integer", .seek.fwd="logical"), 
   prototype(.pointer=0L, .seek.fwd=TRUE)
 )
 # - Methods -------------------------------------------------------------------
 
-setMethod("length", "testorList", function(x) length(x@.items)) 
+setMethod("length", "unitizerList", function(x) length(x@.items)) 
 
-#' Indexing Methods for \code{`\link{testorList-class}`}
+#' Indexing Methods for \code{`\link{unitizerList-class}`}
 #' @keywords internal
-#' @aliases [[,testorList,subIndex-method
+#' @aliases [[,unitizerList,subIndex-method
 
-setMethod("[", signature(x="testorList", i="subIndex", j="missing", drop="missing"),
+setMethod("[", signature(x="unitizerList", i="subIndex", j="missing", drop="missing"),
   function(x, i) {
     x@.items <- x@.items[i]
     x
 } )
-setMethod("[[", signature(x="testorList", i="subIndex"),
+setMethod("[[", signature(x="unitizerList", i="subIndex"),
   function(x, i) {
     x@.items[[i]]
 } )
-setReplaceMethod("[", signature(x="testorList", i="subIndex"),
+setReplaceMethod("[", signature(x="unitizerList", i="subIndex"),
   function(x, i, value) {
     pointer.reset <- (
       is.logical(i) && (lt <- sum(which(i) <= x@.pointer)) || 
       is.numeric(i) && (lt <- sum(floor(i) <= x@.pointer)) ||
       is.character(i) && (lt <- sum(match(i, names(x)) <= x@pointer))
     ) && is.null(value)
-    x@.items[i] <- if(is(value, "testorList")) value@.items else value
+    x@.items[i] <- if(is(value, "unitizerList")) value@.items else value
     if(pointer.reset) x@.pointer <- x@.pointer - lt
     x
 } )
-setReplaceMethod("[[", signature(x="testorList", i="subIndex"),
+setReplaceMethod("[[", signature(x="unitizerList", i="subIndex"),
   function(x, i, value) {
     pointer.reset <- (
       is.numeric(i) && floor(i[[1L]]) <= x@.pointer ||
@@ -61,7 +61,7 @@ setReplaceMethod("[[", signature(x="testorList", i="subIndex"),
 #' Coerce to list by returning items
 #' @keywords internal
 
-setMethod("as.list", "testorList", function(x, ...) x@.items)
+setMethod("as.list", "unitizerList", function(x, ...) x@.items)
 
 #' Coerce to expression by returning items coerced to expressions
 #' 
@@ -71,9 +71,9 @@ setMethod("as.list", "testorList", function(x, ...) x@.items)
 #' 
 #' @keywords internal
 
-setMethod("as.expression", "testorList", function(x, ...) as.expression(x@.items, ...))
+setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.items, ...))
 
-#' Iterate through items of a \code{`\link{testorList-class}`} Object
+#' Iterate through items of a \code{`\link{unitizerList-class}`} Object
 #' 
 #' Extraction process is a combination of steps:
 #' \enumerate{
@@ -87,30 +87,30 @@ setMethod("as.expression", "testorList", function(x, ...) as.expression(x@.items
 #' \code{`reset`} with parameter \code{`reverse`} set to TRUE, or re-order
 #' the items.
 #' 
-#' @aliases nextItem,testorList-method, prevItem,testorList-method,
-#'   getItem,testorList-method, reset,testorList-method, done,testorList-method
+#' @aliases nextItem,unitizerList-method, prevItem,unitizerList-method,
+#'   getItem,unitizerList-method, reset,unitizerList-method, done,unitizerList-method
 #' @keywords internal
 #' 
-#' @param x a \code{`\link{testorList-class}`} object 
-#' @return \code{`\link{testorList-class}`} for \code{`getItem`}, 
+#' @param x a \code{`\link{unitizerList-class}`} object 
+#' @return \code{`\link{unitizerList-class}`} for \code{`getItem`}, 
 #'   an item from the list, which could be anything
 
 setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
-setMethod("nextItem", "testorList", valueClass="testorList",
+setMethod("nextItem", "unitizerList", valueClass="unitizerList",
   function(x) {
     x@.pointer <- x@.pointer + 1L
     x@.seek.fwd <- TRUE
     x
 } )
 setGeneric("prevItem", function(x, ...) standardGeneric("prevItem"))
-setMethod("prevItem", "testorList", valueClass="testorList",
+setMethod("prevItem", "unitizerList", valueClass="unitizerList",
   function(x) {
     x@.pointer <- x@.pointer - 1L
     x@.seek.fwd <- FALSE
     x
 } )
 setGeneric("reset", function(x, ...) standardGeneric("reset"))
-setMethod("reset", "testorList", valueClass="testorList",
+setMethod("reset", "unitizerList", valueClass="unitizerList",
   function(x, position=NULL) {
     if(
       !is.null(position) && (!is.character(position) ||
@@ -131,7 +131,7 @@ setMethod("reset", "testorList", valueClass="testorList",
     x
 } )
 setGeneric("getItem", function(x, ...) standardGeneric("getItem"))
-setMethod("getItem", "testorList", 
+setMethod("getItem", "unitizerList", 
   function(x) {
     if(!(x@.pointer %in% seq_along(x))) {
       if(x@.pointer %in% c(0L, length(x) + 1L)) {
@@ -150,13 +150,13 @@ setMethod("getItem", "testorList",
     x@.items[[x@.pointer]]
 } )
 setGeneric("done", function(x, ...) standardGeneric("done"))
-setMethod("done", "testorList", 
+setMethod("done", "unitizerList", 
   function(x) {
     if(x@.seek.fwd & x@.pointer > length(x)) return(TRUE)
     else if (!x@.seek.fwd & identical(x@.pointer, 0L)) return(TRUE)
     FALSE
 } )
-#' Append To a \code{`\link{testorList-class}`} Object
+#' Append To a \code{`\link{unitizerList-class}`} Object
 #' 
 #' \code{`values`} is coerced to list or expression depending on
 #' type of \code{`x`} \code{`.items`} slot.
@@ -168,7 +168,7 @@ setMethod("done", "testorList",
 #' @param after a subscript, after which the values are to be appended.
 
 setGeneric("append")
-setMethod("append", c("testorList", "ANY"), 
+setMethod("append", c("unitizerList", "ANY"), 
   function(x, values, after=length(x)) {
     attempt <- try(
       if(is.list(x@.items)) {
@@ -191,14 +191,14 @@ setMethod("append", c("testorList", "ANY"),
     y
 } )
 
-setMethod("c", c("testorList"), 
+setMethod("c", c("unitizerList"), 
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")
 } )
 
 #' Append Factors
 #' 
-#' Note this is not related to \code{`\link{append,testorList,ANY-method}`} 
+#' Note this is not related to \code{`\link{append,unitizerList,ANY-method}`} 
 #' except in as much as it is the same generic, so it just got thrown in here.
 #' 
 #' @keywords internal

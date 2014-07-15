@@ -1,5 +1,5 @@
-library(testor)
+library(unitizer)
 
-runtests("tests/interactive/testor/sections.tests.R")
-runtests("tests/interactive/testor/sections2.tests.R", "tests/interactive/testor/sections.tests.rds")
-runtests("tests/interactive/testor/sections3.tests.R", "tests/interactive/testor/sections.tests.rds")
+unitize("tests/interactive/unitizer/sections.tests.R")
+unitize("tests/interactive/unitizer/sections2.tests.R", "tests/interactive/unitizer/sections.tests.rds")
+unitize("tests/interactive/unitizer/sections3.tests.R", "tests/interactive/unitizer/sections.tests.rds")

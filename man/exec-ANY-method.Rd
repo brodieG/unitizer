@@ -12,7 +12,7 @@
 \item{test.env}{the environment to evaluate the \code{`test`} in}
 }
 \value{
-a \code{`\link{testorItem-class}`} object
+a \code{`\link{unitizerItem-class}`} object
 }
 \description{
 Runs test, captures value, stdout, stderr, conditions, etc.

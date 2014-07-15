@@ -217,7 +217,7 @@ unitize <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
         setwd(new.wd)
         if(!inherits(success, "try-error")) 
           message("unitizer upgraded; please re-run tests")
-        return(success)    
+        return(invisible(success))
       } else {
         stop("Cannot proceed with out of date `unitizer`. ", msg)
       } 
@@ -263,7 +263,7 @@ unitize <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
   }
   if(!length(tests.parsed)) {
     message("No tests in ", test.file, "; nothing to do here.")
-    return(TRUE)
+    return(invisible(TRUE))
   }  
   # Evaluate the parsed calls
 
@@ -294,11 +294,11 @@ unitize <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
   # unitizer, 1. if the restart is invoked, 2. if all tests passed in which case
   # there is nothing to do.
 
-  if(!is(unitizer, "unitizer")) return(TRUE)
+  if(!is(unitizer, "unitizer")) return(invisible(TRUE))
 
   if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
   success <- try(set_store(store.id, unitizer))
   setwd(new.wd)
   if(!inherits(success, "try-error")) message("unitizer updated")
-  return(success)    
+  return(invisible(success))
 }

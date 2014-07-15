@@ -1,6 +1,6 @@
 #' @include item.R
 #' @include item.sub.R
-#' @include testor.R
+#' @include unitizer.R
 
 NULL
 
@@ -16,7 +16,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' for each test, but at the same time, we don't want to store all the
 #' combinations of reference and new objects.
 #' 
-#' We only store new objects in `testor`, with the lone exception of
+#' We only store new objects in `unitizer`, with the lone exception of
 #' objects created during a test which is then kept as a reference test.
 #' This should be rare as most tests are explicitly defined as calls
 #' that don't create objects, so this will only occur if the user
@@ -57,18 +57,18 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   \item ': object exists in browsing environment, but not the same as
 #'      it was when test was evalaluated
 #'   \item *: object was present during test evaluation but is not 
-#'      available in testor anymore
+#'      available in unitizer anymore
 #'   \item **: object was not present during test evaluation, but exists
 #'      in current environment
 #' }
 #' 
-#' @seealso \code{`\link{updateLs,testorItem-method}`}
+#' @seealso \code{`\link{updateLs,unitizerItem-method}`}
 #' @keywords internal
-#' @param x \code{`\link{testorItems-class}`} object
-#' @param y \code{`\link{testor-class}`} object \code{`x`} was generated from
-#' @return \code{`testorItems-class`}
+#' @param x \code{`\link{unitizerItems-class}`} object
+#' @param y \code{`\link{unitizer-class}`} object \code{`x`} was generated from
+#' @return \code{`unitizerItems-class`}
 
-setMethod("healEnvs", c("testorItems", "testor"), valueClass="testorItems",
+setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems",
   function(x, y, ...) {
     # Now need to reconstruct all the parenthood relationships between items,
     # start by figuring out the indices of all the new and reference items
@@ -103,7 +103,7 @@ setMethod("healEnvs", c("testorItems", "testor"), valueClass="testorItems",
           lapply(interim.names, function(z) assign(z, get(z, interim.env), x[itemsType(x) == "new"][[i.org]]@env))
         }
       }
-      # no need to run updateLs() athat is done on addition to testor
+      # no need to run updateLs() athat is done on addition to unitizer
       if(gaps[[i]] < -1L) parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- item.env
     }
     # Now need to map reference item environment parents.  See function docs
@@ -171,17 +171,17 @@ setMethod("healEnvs", c("testorItems", "testor"), valueClass="testorItems",
 #'   \item ': object exists in browsing environment, but not the same as
 #'      it was when test was evalaluated
 #'   \item *: object was present during test evaluation but is not 
-#'      available in testor anymore
+#'      available in unitizer anymore
 #'   \item **: object was not present during test evaluation, but exists
 #'      in current environment
 #' }
-#' @param x the \code{`\link{testorItem-class}`}
+#' @param x the \code{`\link{unitizerItem-class}`}
 #' @param base.env the last environment to search through for objects
-#' @return \code{`\link{testorItem-class}`} object with updated
+#' @return \code{`\link{unitizerItem-class}`} object with updated
 #'   \code{`ls`} field and environment reference parent
 
 setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
-setMethod("updateLs", "testorItem", 
+setMethod("updateLs", "unitizerItem", 
   function(x, base.env, new.par.env=NULL,  ...) {
     if(!is.null(new.par.env) && !is.environment(new.par.env)) stop("Argument `new.par.env` should be an environment or NULL.")
     if(!is.environment(base.env)) stop("Argument `base.env` should be an environment.")

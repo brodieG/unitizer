@@ -30,14 +30,14 @@ depends on what you requested:
   \item \code{`getAborted`}: returns whether the test call issues a restart
     call to the `abort` restart, as `stop` does.
   \item \code{`getVal`}: the value that results from evaluating the test, note
-    that typing \code{`obj`} and \code{getVal(`obj`)} at the \code{`testor`}
+    that typing \code{`obj`} and \code{getVal(`obj`)} at the \code{`unitizer`}
     prompt are equivalent
   \item \code{`reCall`}: will load the call used to generate the test
     on the prompt (not implemented yet).
 }
 }
 \description{
-Intended for use exclusively within the \code{`testor`} interactive command
+Intended for use exclusively within the \code{`unitizer`} interactive command
 line.  For example \code{getMsg(.new)} will retrieve any \file{stderr} that occurred
 during test evaluation (for reference tests, use \code{getMsg(.ref)}.
 }

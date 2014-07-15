@@ -4,7 +4,7 @@
 #' recorded in the test items
 #' 
 #' @return list of object names, or a list with environments containing the objects
-#' @seealso \code{`\link{print.testor_ls}`}
+#' @seealso \code{`\link{print.unitizer_ls}`}
 #' @examples
 #' env1 <- new.env()
 #' assign("var1", "25", env1)
@@ -13,12 +13,12 @@
 #' env3 <- new.env(parent=env2)
 #' assign("var3", 3.1415, env3)
 #' 
-#' ls <- testor:::make_ls(globalenv())
+#' ls <- unitizer:::make_ls(globalenv())
 #' evalq(ls(), env3)
 #' evalq(base::ls(), env3)
 #' rm(ls)
 
-testor_ls <- function(name, pos = -1L, envir = as.environment(pos),
+unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
    all.names = FALSE, pattern
 ) {
   if(!missing(pos) || !missing(name) || !missing(envir)) 
@@ -34,7 +34,7 @@ testor_ls <- function(name, pos = -1L, envir = as.environment(pos),
   ls.test <- mods <- character()
 
   if(inherits(new.item, "try-error") && inherits(ref.item, "try-error")) {
-    stop("Logic error: could not find `testorItem` objects to list contents of; contact Maintainer")
+    stop("Logic error: could not find `unitizerItem` objects to list contents of; contact Maintainer")
   } 
   if (!inherits(new.item, "try-error")) {
     if(nrow(new.item@ls)) ls.lst[["new"]] <- paste0(new.item@ls$names, new.item@ls$status)
@@ -46,7 +46,7 @@ testor_ls <- function(name, pos = -1L, envir = as.environment(pos),
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], ".ref")
     mods <- c(mods, Filter(nchar, unique(ref.item@ls$status)))
   }
-  structure(ls.lst[order(names(ls.lst))], class="testor_ls", mods=mods)  
+  structure(ls.lst[order(names(ls.lst))], class="unitizer_ls", mods=mods)  
 }
 
 #' Worker function to actually execute the `ls` work
@@ -79,16 +79,16 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   if(is.null(store.env)) sort(unique(ls.res)) else store.env
 }
 
-#' @S3method print testor_ls
+#' @S3method print unitizer_ls
 
-print.testor_ls <- function(x, ...) {
+print.unitizer_ls <- function(x, ...) {
   x.copy <- x
   x <- unclass(x)
   attr(x, "mods") <- NULL
   if(length(x) == 1L) x <- unlist(x, use.names=FALSE)
   if(is.list(x)) {
     name.match <- c(
-      tests="testor objects:",
+      tests="unitizer objects:",
       new="objects in new test env:",
       ref="objects in ref test env:" 
     )

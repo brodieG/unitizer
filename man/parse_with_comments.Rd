@@ -42,7 +42,7 @@ behaviour of \code{`\link{getParseData}`}.  In particular:
     should not be apparent in common use.
   \item you cannot attach comments to \code{`NULL`}, if you must use
     \code{`(NULL)`}.  This is a feature, as it proivdes a way to put
-    comments in the file without them showing up during \code{`testor`}
+    comments in the file without them showing up during \code{`unitizer`}
     use.
 }
 Note that as a result of this trial and error interpretation of

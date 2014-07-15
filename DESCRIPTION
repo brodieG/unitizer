@@ -1,5 +1,5 @@
-Package: testor
-Title: Simplify Package Testing
+Package: unitizer
+Title: Turn Arbitrary Code into Unit Tests
 Description: Stores objects produced by test scripts so that they
     can be compared with each development iteration.  Test scripts need
     only execute the code that is supposed to work, `testor` takes care
@@ -7,7 +7,7 @@ Description: Stores objects produced by test scripts so that they
     The first time a test script is run, the user interactively
     verifies that the values produced by the script are as expected.
     Subsequent runs will compare the new values to the old ones, and
-    alert if anything is different.  `testore` will even store errors
+    alert if anything is different.  `unitizer` will even store errors
     so that you can verify the same code reproduces the same errors.
     The major advantage of this set-up relative to other testing
     frameworks is that it greatly simplifies assertions designed to
@@ -32,7 +32,7 @@ Collate:
     'section.R'
     'test.R'
     'change.R'
-    'testor.R'
+    'unitizer.R'
     'exec.R'
     'prompt.R'
     'browse.struct.R'
@@ -46,6 +46,7 @@ Collate:
     'onload.R'
     'parse.R'
     'runtests.R'
-    'testor-package.r'
-    'testor.add.R'
+    'unitize.R'
+    'unitizer-package.r'
+    'unitizer.add.R'
     'upgrade.R'

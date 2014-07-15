@@ -16,7 +16,7 @@ NULL
 #' item by item).  Maybe some day this will be cleaned up.
 #' 
 #' @keywords internal
-#' @slot id the identifier for the testor, typically a file name, but can be anything
+#' @slot id the identifier for the unitizer, typically a file name, but can be anything
 #' @slot items.new a list of all the tests in the new file
 #' @slot items.ref a list of all the previously saved tests
 #' @slot items.new.map a vector that maps the entries in \code{`items.new`} to those in \code{`items.ref`},
@@ -30,23 +30,23 @@ NULL
 #' @slot tests.result a logical matrix with a row for each item in \code{`items.new`} where each column
 #'   represents the result of each sub tests
 #' @slot tests.errorDetails an S4 object with a slot for each sub test, where the slot contains a 
-#'   \code{`\link{testorItemTestError-class}`} object
+#'   \code{`\link{unitizerItemTestError-class}`} object
 #'   either NULL or a character vector describing the test failure reason for every item in \code{`items.new`}
 #' @slot items.ref.calls.deparse like \code{`items.new.calls.deparse`}, but for the reference items
 #' @slot items.ref.map maps reference items to the new items; deleted items will show up as NA here
-#' @slot sections a list of \code{`\link{testorSections}`}
+#' @slot sections a list of \code{`\link{unitizerSections}`}
 #' @slot section.map a map of every item in \code{`items.new`} to a section
 #' @slot changes contains summary data on the test results
 
 setClass(
-  "testor",
+  "unitizer",
   representation(
     id="ANY",
     version="package_version",
     zero.env="environment",                          # keep functions and stuff here
     base.env="environment",
 
-    items.new="testorItems",                         # Should all be same length
+    items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
     items.new.calls.deparse="character",
     items.envs="list",
@@ -59,9 +59,9 @@ setClass(
     tests.new="logical",
     tests.status="factor",                 # pass/fail/error/new
     tests.result="matrix",
-    tests.errorDetails="testorItemsTestsErrors",
+    tests.errorDetails="unitizerItemsTestsErrors",
 
-    items.ref="testorItems",                         # Should all be same length
+    items.ref="unitizerItems",                         # Should all be same length
     items.ref.calls.deparse="character",
     items.ref.map="integer",
 
@@ -69,30 +69,30 @@ setClass(
     section.map="integer",
     section.parent="integer",    # same length as sections, for each section links to parent
 
-    changes="testorChanges"                  # Summary of user changes
+    changes="unitizerChanges"                  # Summary of user changes
   ),
   prototype(
-    version=packageVersion("testor"),
+    version=packageVersion("unitizer"),
     tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted"))
 ) )
 
 # - Methods -------------------------------------------------------------------
 
-setMethod("initialize", "testor",
+setMethod("initialize", "unitizer",
   function(.Object, ...) {
     if(!("id" %in% names(list(...)))) stop("Argument `id` is required")
     if(!("zero.env" %in% names(list(...)))) stop("Argument `zero.env` is required")
     allowable.args <- c("id", "changes", "zero.env")
     if(!all(names(list(...)) %in% allowable.args)) stop("Only arguments ", deparse(allowable.args), " are allowed.")
     .Object <- callNextMethod()
-    slot.names <- slotNames(getClass("testorItemData"))
+    slot.names <- slotNames(getClass("unitizerItemData"))
     .Object@tests.result <- matrix(logical(), ncol=length(slot.names), dimnames=list(NULL, slot.names))
     .Object@base.env <- new.env(parent=.Object@zero.env)
     parent.env(.Object@items.new@base.env) <- .Object@base.env
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
     .Object
 } )
-setMethod("length", "testor", 
+setMethod("length", "unitizer", 
   function(x) {
     len.vec <- unique(c(length(x@items.new), length(x@items.new.map), length(x@items.new.calls.deparse)))
     if(length(len.vec) != 1L) stop("Inconsistent sub-object length; should not happen; contact package maintainer.")
@@ -101,7 +101,7 @@ setMethod("length", "testor",
 #' Summarize Results
 #' @keywords internal
 
-setMethod("summary", "testor", 
+setMethod("summary", "unitizer", 
   function(object, ...) {
     ignore <- ignored(object@items.new)
     status <- object@tests.status[!ignore]
@@ -134,12 +134,12 @@ setMethod("summary", "testor",
 } )
 
 setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
-#' Helper Methods for Adding Items to \code{`\link{testor-class}`} Object
+#' Helper Methods for Adding Items to \code{`\link{unitizer-class}`} Object
 #' 
-#' @aliases testItem,testor,testorItem-method
-#' @seealso \code{`\link{+,testor,testorItem-method}`}
+#' @aliases testItem,unitizer,unitizerItem-method
+#' @seealso \code{`\link{+,unitizer,unitizerItem-method}`}
 
-setMethod("registerItem", c("testor", "testorItem"), 
+setMethod("registerItem", c("unitizer", "unitizerItem"), 
   function(e1, e2, ...) {
     item.new <- e2
     if(identical(length(e1@items.new), 0L)) e1@items.new@base.env <- parent.env(item.new@env)
@@ -158,7 +158,7 @@ setMethod("registerItem", c("testor", "testorItem"),
     e1
 } )
 setGeneric("testItem", function(e1, e2, ...) standardGeneric("testItem"))
-setMethod("testItem", c("testor", "testorItem"), 
+setMethod("testItem", c("unitizer", "unitizerItem"), 
   function(e1, e2, ...) {
     item.new <- e2
     slot.names <- slotNames(getClass(item.new@data))
@@ -197,7 +197,7 @@ setMethod("testItem", c("testor", "testorItem"),
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
           test.error.tpl[[i]] <- new(
-            "testorItemTestError", value=paste0(err.msg, " produced error: ", test.res), 
+            "unitizerItemTestError", value=paste0(err.msg, " produced error: ", test.res), 
             compare.err=TRUE
           )
         } else if(isTRUE(test.res)) {
@@ -205,16 +205,16 @@ setMethod("testItem", c("testor", "testorItem"),
           next
         } else if(is.character(test.res)) {
           if(identical(test.status, "Pass")) test.status <- "Fail"
-          test.error.tpl[[i]] <- new("testorItemTestError", value=test.res)
+          test.error.tpl[[i]] <- new("unitizerItemTestError", value=test.res)
         } else if(identical(test.res, FALSE)) {
           test.status <- "Fail"
           test.error.tpl[[i]] <- new(
-            "testorItemTestError", value=paste0(err.msg, " found a mismatch")
+            "unitizerItemTestError", value=paste0(err.msg, " found a mismatch")
           )
         } else {
           test.status <- "Error"
           msg <- paste0(err.msg, " returned something other than TRUE or character vector")
-          test.error.tpl[[i]] <- new("testorItemTestError", value=msg, compare.err=TRUE)
+          test.error.tpl[[i]] <- new("unitizerItemTestError", value=msg, compare.err=TRUE)
         }
       }
       e1@tests.result <- rbind(e1@tests.result, test.result)      
@@ -239,7 +239,7 @@ setMethod("testItem", c("testor", "testorItem"),
     } else {
       e1@tests.status <- factor(test.status, levels=levels(e1@tests.status))
     }
-    e1 <- e1 + do.call(new, c(list("testorItemTestsErrors"), test.error.tpl))
+    e1 <- e1 + do.call(new, c(list("unitizerItemTestsErrors"), test.error.tpl))
     e1
 } )
 
