@@ -1,0 +1,279 @@
+# unitizeR - Turn Arbitrary Code into Unit Tests
+
+## Introduction
+
+### Storing Expressions and Their Results as Tests
+
+One of the more important purposes of unit tests is to ensure that previously tested functionality does not break as a result of changes to the code base.  `unitizer` seeks to simplify this aspect of unit testing by taking advantage of the following:
+
+* code functionality is demonstrated by evaluating expressions and observing results
+* unit tests verify that specific expressions continue to produce the same results
+* in R, expressions are objects, results are objects, and both can be stored
+
+`unitizer` evaluates arbitrary expressions and stores them along with the result of their evaluation.  Re-running the same `unitizer` then compares the new results for each expression to the previously stored results.  If there are any differences `unitizer` breaks out into an interactive mode to allow comparison of the old evaluation to the new one, and if necessary, update the tests.
+
+### But Why?
+
+There are some noteworthy benefits to this approach, in particular:
+
+ 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z), DF)`) are trivial to write because the result of the expression becomes the unit test
+ 2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests (taken to the extreme, you could just use the history file from when you were informally testing functionality)
+ 3. (almost) all aspects of the evaluation can be captured and used as part of the tests; for example, any conditions signalled during evaluation will be captured for comparison to future evaluations
+
+I first embarked on this project to address point 1.  In the absence of `unitizer`, testing that complex objects are created as expected requires running the test expression, deparsing the result, and then copy/pasting the ungainly string into a file with an `all.equal` or equivalent such statement.  While this isn't back-breaking, it does start taking on sisyphean overtones when you set out to build comprehensive tests, or god forbid, realize you need to slightly modify the output of your functions.
+
+Points 2. and 3. are gravy.  For example, for 3., you can easily test that your code both fails, and that when it does, it produces the desired error message.
+
+One aspect of evaluation that isn't currently captured but hopefully will be in the future are side effects such as plots.
+
+### How Do I Use It?
+
+There are several ways to use `unitizer`, but the simplest one is to create a file with your test expressions.  For example, suppose we develop a `fastlm` function that does simple single variable regression to calculate slope, intercept, and coefficient.  Our test file might look like so:
+
+    ## file: tests/unitizer/fastlm.unitizer.R
+
+    library(fastlm)
+
+    x <- 1:100
+    y <- ((1:100) / 10) ^ 2
+
+    (res <- fastlm(x, y))   # parens to force treatment as test
+    get_slope(res)
+    get_intercept(res)
+    get_rsq(res)
+
+    # Cause errors
+
+    fastlm(x, head(y))
+    fastlm(x, NULL)
+
+    get_slope("hello")
+    get_rsq(FALSE)
+
+Then, we just run:
+
+    unitize("tests/unitizer/fastlm.unitizer.R")
+
+The expressions will be evaluated, and results, errors, warnings, screen ouput, etc. will be stored.  If this is the first time you've run `unitize`, you will be prompted to review each test in an interactive environment to verify the expressions actually produce the desired outcome.  Once that's done, everything is stored in an `RDS` and voila, unit tests! 
+
+Later on, you can just re-run:
+
+    unitize("tests/unitizer/fastlm.unitizer.R")
+
+If everything is working as before then all the tests will pass and you can keep coding merrily.  If you introduced regressions, then `unitizer` will highlight the failing tests and allow you to review them interactively.  If you added more tests to the file since the last time you ran `unitize`, those tests will be added to the RDS subject to your review.
+
+## A Detailed Run-through
+
+### First Run - Store Tests
+
+The first time we run our tests we are prompted to review them one by one to confirm they evaluated to what we expect.  This is what happens when we run `unitize("tests/unitizer/lm.R")`:
+
+    > unitize("tests/unitizer/fastlm.unitizer.R")
+    +--------------------------------------------------------------------+
+    | unitizer for: tests/unitizer/fastlm.unitizer.R                     |
+    +--------------------------------------------------------------------+
+
+        Pass     Fail      New  Deleted                                   
+           0        0        8        0 
+
+    - New ----------------------------------------------------------------
+
+    Test script contains tests not present in unitizer. Add new item to 
+    store ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+
+    > library(fastlm)
+    > x <- 1:100
+    > y <- ((1:100)/10)^2
+    # parens to force treatment as test
+    > (res <- fastlm(x, y))
+     intercept      slope        rsq 
+    -17.170000   1.010000   0.938679 
+    attr(,"class")
+    [1] "fastlm"
+    unitizer> 
+
+This is telling us that there are eight new tests in our file.  The "new" banner line is telling us we are about to review the new tests (the only type in this case), and the text that follows provides options to type at the `unitizer>` prompt.
+
+At this point, `unitizer` starts showing you the results of evaluating the tests.  Note that assignment expressions are not considered tests; they are stored, but you are not asked to review them, and their values will not be compared to future evaluations.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test, so skipping assignment review saves some unnecessary user interaction.
+
+You can force assignments to become tests by wrapping them in parentheses, which is why the `unitizer>` prompt appears after the `(res <- fastlm(x, y))`.  As we noted earlier, the prompt allows you to run R expressions, so we can use this opportunity to check that our function did what it is supposed to:
+
+    unitizer> lm(y ~ x, data.frame(x, y))$coefficients
+    (Intercept)           x 
+         -17.17        1.01 
+    unitizer>
+
+Looks good.  So let's accept the test by typing in `Y` and hitting ENTER:
+
+    unitizer> Y
+    > get_slope(res)
+    [1] 1.01
+    unitizer>
+
+So the first test, `(res <- fastlm(x, y))` is now queued for storing, and we're prompted about the second test.  We will also accept this one, as well as the next 3, which brings us to:
+
+    # Cause errors
+    > fastlm(x, head(y))
+    Error in data.frame(x = x, y = y) : 
+      arguments imply differing number of rows: 100, 6
+    unitizer> 
+
+This test caused an error.  It was supposed to as the inputs were purposefully wrong.  We want to store this particular error to ensure that in the future our function keeps erroring out in the same way with this type of erroneous input.  Conveniently all we have to do is hit `Y`.  The error becomes part of the store and any future re-runs will compare the result of the expression against the stored error and will notify if the expression fails to produce an error or produces a different error.  So will we accept this test, as well as the remaining tests, which brings us to the final prompt:
+
+    unitizer> Y
+    = Confirm Changes ====================================================
+
+    You are about to IRREVERSIBLY:
+    - Add 8 out of 8 new tests
+    unitizer>
+
+So far we have only queued the tests for storage.  By answering `Y` at this prompt we will be storing all the tests we accepted into the unitizer store:
+
+    unitizer> Y
+    unitizer updated
+
+That's it.  We're done for now.  On the actual R prompt:
+
+    > list.files("tests/unitizer")
+    # [1] "fastlm.unitizer.R"   "fastlm.unitizer.rds"
+
+The `.rds` file contains all the tests.
+
+### Second Run -- Check For Regressions
+
+Turns out our `fastlm` wasn't fast at all.  It was just a wrapper for the standard `lm`.  But that was just a starting point.  After our initial run we went ahead and figured out all the formulas needed to calculate the slope, intercept and R squared of a single variable linear regression, and plugged them into our function.  But did we do it right?  Let's check:
+
+    > unitize("tests/unitizer/fastlm.unitizer.R")
+    +--------------------------------------------------------------------+
+    | unitizer for: tests/unitizer/fastlm.unitizer.R                     |
+    +--------------------------------------------------------------------+
+
+        Pass     Fail      New  Deleted                                   
+           4        4        0        0 
+
+    - Failed -------------------------------------------------------------
+
+    Reference test does not match new test from test script. Overwrite item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+
+    # parens to force treatment as test
+    > (res <- fastlm(x, y))
+    Test Failed Because:
+    Value mismatch: Mean relative difference: 5.611111
+    unitizer> 
+
+Clearly something is wrong.  Half of our tests failed.  `unitizer` prompts us to review the failed tests and decide whether to replace the existing tests with the new ones.  The first failed test is the one that calculates the values related to the linear regression.  `unitizer` provides us with two special objects that we can use to examine the reason for our test failure: `.new` and `.ref`, each representing the value produced by the test we just ran as well as the value produced by the original test we stored.  We can use these to get more details on the nature of the failure:
+
+    unitizer> .new
+    intercept     slope       rsq 
+    84.840000  1.010000  0.938679 
+    attr(,"class")
+    [1] "fastlm"
+    unitizer> .ref
+     intercept      slope        rsq 
+    -17.170000   1.010000   0.938679 
+    attr(,"class")
+    [1] "fastlm"
+    unitizer> 
+
+By comparing the output of `.new` and `.ref` we can see that something went wrong with our `intercept` calculation. We could also have re-evaluated our test instead of typing `.new` at the prompt, but if the computation is slow using `.new` avoids recomputation.  Also, the only way to get the original value is with `.ref`.
+
+We now know what went wrong with our test, so we will reject this test as well as the subsequent related test (`getIntercept` will obviously fail too) which takes us to our error causing tests:
+
+    unitizer> N
+    > get_intercept(res)
+    Test Failed Because:
+    Value mismatch: Mean relative difference: 5.941176
+    unitizer> N
+    # Cause errors
+    > fastlm(x, head(y))
+    Error in fastlm(x, head(y)) : 
+      Arguments `x` and `y` must be the same length.
+    Test Failed Because:
+    Conditions mismatch: 
+      + There is 1 condition mismatch; showing first mismatch at condition #1
+      + Error condition messages do not match
+    unitizer>
+
+This is telling us that our tests failed because they did not produce the same error message.  We can check with `getConds` (note `getConds` returns a list of conditions):
+
+    getConds(.new)[[1]]
+    <simpleError in fastlm(x, head(y)): Arguments `x` and `y` must be the same
+    length.>
+    unitizer> getConds(.ref)[[1]]
+    <simpleError in data.frame(x = x, y = y): arguments imply differing number 
+    of rows: 100, 6>
+
+By using the `.new`/`.ref` objects as an argument we can tell `getConds` which of the condition we wish to view: the newly evaluated ones or the reference ones that were stored earlier.  In this case, while the condition messages changed, the general meaning did not and since we added our own error handler rather than rely on internal error handling this change is reasonable.
+
+The remaining two failed tests also failed for similar reasons, so we will accept them too, which again takes us to the final prompt:
+
+    unitizer> Y
+    > fastlm(x, NULL)
+    Error in fastlm(x, NULL) : Arguments `x` and `y` must be numeric.
+    Test Failed Because:
+    Conditions mismatch: 
+      + There is 1 condition mismatch; showing first mismatch at condition #1
+      + Error condition messages do not match
+    unitizer> Y
+    = Confirm Changes ====================================================
+
+    You are about to IRREVERSIBLY:
+    - Replace 2 out of 4 failed tests
+    unitizer> Y
+    unitizer updated
+
+Our `unitizer` `.rds` is now updated.  We replaced the two error tests with their new versions, but did not replace the intercept tests since we know those are wrong.
+
+### Third Run -- Fix Problems
+
+We figured out the problem in our new implementation of `fastlm` and fixed it.  Let's run unitizer one more time:
+
+    > unitize("tests/unitizer/fastlm.unitizer.R")
+    +--------------------------------------------------------------------+
+    | unitizer for: tests/unitizer/fastlm.unitizer.R                     |
+    +--------------------------------------------------------------------+
+
+        Pass     Fail      New  Deleted                                   
+           8        0        0        0 
+
+    All tests passed; nothing to store.
+
+Success! Our new test code now validates properly.  We have a functional `fastlm`!
+
+## The Interactive Environment
+
+### Everything Is Not As It Seems
+
+Let's go back to our test review when our new version of `fastlm` was returning incorrect values.
+
+
+
+
+## Extreme Programming with `unitizer`
+
+One way to approach unit testing is write the unit tests before you even develop the functionality.  This ensures that the tests are actually written, and it also serves as a documentation of sorts since presumably all aspects of functionality will have some explicit test assigned.  For example, an extreme programming file for the `times_two` function might look like so:
+
+    ### file: tests/extreme/timestwo.R
+
+    all.equal(c(2, 4, 6), times_two(1:3))
+    all.equal(c(10, 20), times_two(c(5, 10)))
+    tryCatch(
+      times_two("hello"), 
+      error=function(e) {
+        if(!identical(conditionMessage(e), "input must be numeric"))
+          stop("Failed Test")
+        return(TRUE)
+      }
+    )
+
+You then set-out to write `times_two` and keep running the file until every line evaluates to `TRUE`.  `unitizer` is not really designed for this programming philosophy, but you can still use it.  There are two options, either document and ensure that the tests are evaluating as expected on review (and reject if not):
+
+    ### file: tests/unitizer/timestwo.R
+
+    times_two(1:3)        # double vector values
+    times_two(c(5, 10))   # same
+    times_two("hello")    # error: input must be numeric
+
+Or use the same file as the extreme programmer would and ensure that all tests evaluate to TRUE on review (and reject if not).
+
+Neither of these are perfect substitutes as in both cases you have to review the tests which risks becoming tedious quickly.  In the future we will add an "extreme" mode to `unitizer` that would automatically reject tests that do not evaluate to TRUE.
