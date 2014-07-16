@@ -119,7 +119,7 @@ navigate_prompt <- function(
       return(x)
     }
     prev.tests <- x@mapping@item.id[!x@mapping@ignored] < curr.id
-    x@last.id <- if(length(prev.tests)) max(which(prev.tests)) - 1L else 0L
+    x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
     return(x)
   } else if (identical(prompt.val, "R")) {  
     
@@ -157,7 +157,7 @@ navigate_prompt <- function(
       valid.opts=nav.opts
     )
     prev.tests <- x@mapping@item.id[!x@mapping@ignored] < nav.id
-    x@last.id <- if(length(prev.tests)) max(which(prev.tests)) else 0L
+    x@last.id <- if(any(prev.tests)) max(which(prev.tests)) else 0L
     return(x)
   }
   return(prompt.val)

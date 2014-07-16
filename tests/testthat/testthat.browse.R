@@ -2,7 +2,7 @@ library(unitizer)
 library(testthat)
 
 local( {
-  obj.item <- new("unitizerItem", call=quote(1 + 1))
+  obj.item <- new("unitizerItem", call=quote(1 + 1), env=new.env())
   obj.item@data@value <- 2 
   obj.item@data@output <- c("two", "dos", "due")
   obj.item@data@conditions <- structure(
