@@ -29,12 +29,22 @@ NULL
 #' @param help a character vector with help suggestions
 #' @param hist.con connection to save history to
 #' @param exit.condition function used to evaluate whether user input should
-#'   cause the prompt loop to exit
+#'   cause the prompt loop to exit; this function should accept two parameters:
+#'   \itemize{
+#'     \item expression typed in by the user
+#'     \item environment the environment user expressions get evaluated in
+#'   }
+#'   The function can then decide to exit or not based on either the literal 
+#'   expression or evaluate the expression and decide based on the result.  This
+#'   is implemented this way because \code{`eval_user_exp`} will print to screen
+#'   which may not be desirable.  Function should return a value which will then
+#'   be returned by \code{`unitizer_prompt`}, unless this value is \code{`FALSE`}
+#'   in which case \code{`unitizer_prompt`} will continue with normal evaluation.
 #' @return mixed allowable user input
 
 unitizer_prompt <- function(
   text, browse.env=globalenv(), help=character(), 
-  valid.opts, hist.con=NULL, exit.condition=function(...) FALSE
+  valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE
 ) {  
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
@@ -64,6 +74,13 @@ unitizer_prompt <- function(
       }
       next
     }
+    # Check whether input should be captured specially
+
+    if(inherits(res <- try(exit.condition(val, browse.env)), "try-error")) {
+      stop("Logic Error: exit condition testing function failed; contact maintainer.")
+    } else {
+      if(!identical(res, FALSE)) return(res)
+    }
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     on.exit(options(warn=warn.opt))
     if(warn.opt != 1L) options(warn=1L)
@@ -81,7 +98,6 @@ unitizer_prompt <- function(
       loadhistory(showConnections()[as.character(hist.con), "description"])    
     }
     if(res$aborted || !length(val)) cat(text, opts.txt)  # error or no user input, re-prompt user
-    if(exit.condition(res$value)) return(res$value)      # user result allows break of prompt loop
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
 #' Wrapper Around User Interaction
@@ -140,9 +156,14 @@ navigate_prompt <- function(
     nav.prompt <- "What test do you wish to review"
     cat(nav.prompt, " (", paste0(nav.opts, collapse=", "), ")?\n\n", sep="")
     show(x)
-    exit.fun <- function(y) {               # keep re-prompting until user types in valid value
+    exit.fun <- function(y, env) {               # keep re-prompting until user types in valid value
+      if(!is.expression(y)) stop("Argument `y` should be an expression.")
+      if(
+        length(y) != 1L || !is.numeric(y[[1L]]) || length(y[[1L]]) != 1L || 
+        y[[1L]] != as.integer(y[[1L]])
+      ) return(FALSE)
       valid.vals <- x@mapping@item.id[x@mapping@reviewed]
-      if(!isTRUE(y %in% valid.vals)) {
+      if(!isTRUE(y[[1L]] %in% valid.vals)) {
         message(
           "Input must be integer-like and in ", 
           paste0(range(valid.vals), collapse="-")
