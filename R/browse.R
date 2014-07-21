@@ -222,7 +222,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     ) } 
 
     # Need to add ignored tests as default action is N. Not clear if we also
-    # need to set reviewed to TRUE
+    # need to set reviewed to TRUE (seems like we should not do so)
 
     if(x@mapping@ignored[[curr.id]]) {
       #x@mapping@reviewed[[curr.id]] <- TRUE
@@ -307,8 +307,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
       x@mapping@reviewed[[curr.id]] <- TRUE
       x@mapping@review.val[[curr.id]] <- x.mod
       x@last.id <- curr.id
-    } else if (identical(x.mod, "U")) {
-      x@last.id <- max(x@mapping@item.id[x@mapping@reviewed])
     } else if (identical(x.mod, "Q")) {
       if(length(which(x@mapping@reviewed))) {
         quit.prompt <- "Save Reviewed Changes"
