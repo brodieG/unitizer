@@ -233,7 +233,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       review.formatted
     ) 
     out[out.sec.idx] <- out.sec
-    out
+    if(length(out.sec) == 1L) out[-out.sec.idx] else out
 } )
 
 #' Indicate Whether to Exit Review Loop
