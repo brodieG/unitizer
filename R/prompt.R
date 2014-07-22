@@ -175,7 +175,7 @@ navigate_prompt <- function(
         )
         return(FALSE)
       }
-      return(TRUE)
+      return(y[[1L]])
     }
     nav.id <- unitizer_prompt(
       text=nav.prompt, help=nav.help,
@@ -183,7 +183,9 @@ navigate_prompt <- function(
       valid.opts=nav.opts
     )
     prev.tests <- x@mapping@item.id[!x@mapping@ignored] < nav.id
-    x@last.id <- if(any(prev.tests)) max(which(prev.tests)) else 0L
+    x@last.id <- if(any(prev.tests)) {
+      x@mapping@item.id[!x@mapping@ignored][[max(which(prev.tests))]]
+    } else 0L
     return(x)
   }
   return(prompt.val)
