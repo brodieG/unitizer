@@ -147,8 +147,13 @@ navigate_prompt <- function(
     }
     nav.help <- paste0(
       "You may re-review any of the tests that you have already reviewed by ",
-      "selecting that test's number.  The numbering is not continuous because ",
-      "some statements in the store are not considered tests (e.g. assignments)."
+      "selecting that test's number.  The last letter on each line represents ",
+      "your previous input.  The word before the colon before the last letter ",
+      "describes the type of test (e.g. Failed / Removed / Corrupted). The ",
+      "numbering is not continuous because some statements in the store are ",
+      "not considered tests (e.g. assignments). Additionally, the numbers may ",
+      "not line up to the expressions in the test file because passed tests ", 
+      "are excluded from the numbering sequence."
     )
     nav.opts <- c(
       "input an integer-like number corresponding to a test"
