@@ -84,7 +84,7 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
           message("You are about to IRREVERSIBLY:")
           show(x@changes)
         }
-        valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
+        valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
         help <- paste0(
           "Pressing Y will replace the previous unitizer with a new one updated ",
           "with all the changes you approved, pressing R will allow you to ",
@@ -98,7 +98,7 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         if(is(user.input, "unitizerBrowse")) {
           unitizer.browse <- user.input
           next
-        } else if (identical(user.input, "Q")) {
+        } else if (identical(user.input, "Q") || identical(user.input, "N")) {
           invokeRestart("earlyExit")
         } else if (identical(user.input, "Y")) {
           break
@@ -308,7 +308,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       x@mapping@review.val[[curr.id]] <- x.mod
       x@last.id <- curr.id
     } else if (identical(x.mod, "Q")) {
-      if(length(which(x@mapping@reviewed))) {
+      if(any(x@mapping@reviewed & x@mapping@review.val == "Y" & !x@mapping@ignored)) {
         quit.prompt <- "Save Reviewed Changes"
         quit.opts <- c(Y="[Y]es", N="[N]o")
         cat(quit.prompt, " (", paste0(quit.opts, collapse=", "), ")?", sep="")

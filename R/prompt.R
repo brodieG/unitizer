@@ -182,6 +182,7 @@ navigate_prompt <- function(
       browse.env=browse.env2, exit.condition=exit.fun, 
       valid.opts=nav.opts
     )
+    if(identical(nav.id, "Q")) return("Q")
     prev.tests <- x@mapping@item.id[!x@mapping@ignored] < nav.id
     x@last.id <- if(any(prev.tests)) {
       x@mapping@item.id[!x@mapping@ignored][[max(which(prev.tests))]]
