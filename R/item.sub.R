@@ -136,11 +136,12 @@ setMethod("as.character", "unitizerItemTestsErrors",
 #'   \item message: not compared (note this is presumably included in \code{`conditions`})
 #'   \item aborted: not compared (also implied in conditions, hopefully)   
 #' }
-#' @seealso \code{`\link{unitizerTest-class}`}
+#' @seealso \code{`\link{unitizer_sect}`}
+#' @export unitizerItemTestsFuns
 #' @examples
-#' new("unitizerItemTestsFuns", value=identical)  # use `identical` instead of `all.equal` to compare values
+#' unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
 
-setClass(
+unitizerItemTestsFuns <- setClass(
   "unitizerItemTestsFuns", contains="unitizerItemTests",
   representation(
     value="unitizerItemTestFun",
@@ -151,11 +152,12 @@ setClass(
   ),
   prototype(
     value=new("unitizerItemTestFun", fun=all.equal),
-    conditions=new("unitizerItemTestFun", fun=all.equal),
+    conditions=new("unitizerItemTestFun", fun=all.equal),  # note this will dispatch all.equal.condition_list
     output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)
 ) )
+
 #' Ensures Functions are In Correct Format
 #' 
 #' Also, allows the user to specify functions directly instead of having

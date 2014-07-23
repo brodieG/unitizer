@@ -90,7 +90,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' @param test expression(s), most commonly a call to \code{`{}`} with 
 #'   several calls inside (see examples)
 #' @param details character more detailed description of what the purpose
-#'   of the section is
+#'   of the section is; currently this doesn't do anything.
 #' @param compare a function or a \code{`\link{unitizerItemTestsFuns-class}`}
 #'   object
 #' @examples
