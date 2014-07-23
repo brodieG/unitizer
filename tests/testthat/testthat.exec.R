@@ -7,7 +7,7 @@ test_that("Invisible Expression", {
   expect_equal(1:30, unitizer:::eval_user_exp(exp, globalenv())$value)
 } )
 local( {
-  # `eval_user_exp` must be evaluated outside of test_that; also not that by 
+  # `eval_user_exp` must be evaluated outside of test_that; also note that by 
   # design this will output stuff to stderr and stdout
 
   test.obj.s3 <- structure("hello", class="test_obj")
