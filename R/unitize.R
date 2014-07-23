@@ -283,8 +283,8 @@ unitize <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
     
   unitizer <- withRestarts(
     browse(unitizer, env=new.env(par.frame)),
-    earlyExit=function() {
-      message("User quit without storing any tests")
+    noSaveExit=function() {
+      message("unitizer store was not modified")
       FALSE
     }
   )

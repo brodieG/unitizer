@@ -25,6 +25,12 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #' from \code{`\link{browse_unitizer_items}`} is very different depending on what
 #' situation we're dealing with.
 #' 
+#' One important point is that by default the user input is defined as N.  In
+#' all cases N means no change to the store, though again the interpretation is
+#' different depending on the situation.  For example, if we add a test to the
+#' test script, N means don't add it to the store.  If we remove a test, N means
+#' keep it in the store.
+#' 
 #' @keywords internal
 #' @param x the object to browse
 #' @param env the environment to use as a parent to the environment to browse the tests
@@ -61,8 +67,14 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
       return(TRUE)
     } else if(length(unitizer.browse)) {
       repeat {
-        unitizer.browse <- reviewNext(unitizer.browse)
-        if(!done(unitizer.browse)) next # Interactively review all tests
+        
+        withRestarts(
+          {
+            unitizer.browse <- reviewNext(unitizer.browse)
+            if(!done(unitizer.browse)) next # Interactively review all tests
+          },
+          earlyExit=function() FALSE
+        )
         
         # Get summary of changes
 
@@ -74,21 +86,29 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
 
-        print(H2("Confirm Changes"))
+        print(H2("Finalize Unitizer"))
+
         if(length(x@changes) == 0L) {
           message(
             "No items to store; there either were no changes or you didn't ",
-            "accept  any changes."
+            "accept any changes."
           )
+          valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
+          nav.msg <- "Exit unitizer"
         } else {
           message("You are about to IRREVERSIBLY:")
           show(x@changes)
+          valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
+          nav.msg <- "Update unitizer"
         }
-        valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
+        cat(nav.msg, " (", paste0(valid.opts, collapse=", "), ")?", sep="")
         help <- paste0(
           "Pressing Y will replace the previous unitizer with a new one updated ",
           "with all the changes you approved, pressing R will allow you to ",
-          "re-review your choices."
+          "re-review your choices.  If there were no changes Y and N produce ",
+          "similar results, where N does not modify the store at all, whereas ",
+          "Y overwrites the store with a new one that is for all intents and ",
+          "purposes the same, but might have some meta-data differences."
         )
         user.input <- navigate_prompt(
           unitizer.browse, curr.id=max(unitizer.browse@mapping@item.id), 
@@ -99,9 +119,11 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
           unitizer.browse <- user.input
           next
         } else if (identical(user.input, "Q") || identical(user.input, "N")) {
-          invokeRestart("earlyExit")
+          invokeRestart("noSaveExit")
         } else if (identical(user.input, "Y")) {
-          break
+          if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
+            invokeRestart("noSaveExit")
+          } else break
         }
         stop("Logic Error; unexpected user input, contact maintainer.")
     } }
@@ -115,7 +137,6 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
     unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
     unitizer + items.ref
 } )
-
 #' Bring up Review of Next test
 #' 
 #' Generally we will go from one test to the next, where the next test is 
@@ -301,34 +322,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
       )
     ) {
       return(x.mod)  
-    } else if (x.mod %in% c("Y", "N")) {
-      # Actual user input
-
+    } else if (x.mod %in% c("Y", "N")) { # Actual user input
       x@mapping@reviewed[[curr.id]] <- TRUE
       x@mapping@review.val[[curr.id]] <- x.mod
       x@last.id <- curr.id
     } else if (identical(x.mod, "Q")) {
-      if(any(x@mapping@reviewed & x@mapping@review.val == "Y" & !x@mapping@ignored)) {
-        quit.prompt <- "Save Reviewed Changes"
-        quit.opts <- c(Y="[Y]es", N="[N]o")
-        cat(quit.prompt, " (", paste0(quit.opts, collapse=", "), ")?", sep="")
-        user.input <- unitizer_prompt(
-          quit.prompt, browse.env=parent.env(base.env.pri), 
-          valid.opts=quit.opts, hist.con=x@hist.con,
-          help=c(
-            "Pressing \"Y\" will store the changes you have reviewed so far, and ",
-            "you will also get a chance to re-review the changes if you wish. ",
-            "Pressing \"N\" will discard all reviewed changes."
-        ) )
-        if(identical(user.input, "Y")) {
-          x@last.id <- max(x@mapping@item.id)
-          return(x)
-        } else if (user.input %in% c("N", "Q")) {
-          invokeRestart("earlyExit")
-        } else {
-          stop("Logic Error: Unexpected user input; contact maintainer.")
-        }         
-      } else invokeRestart("earlyExit")
+      invokeRestart("earlyExit")
     } else {
       stop("Logic Error: `unitizer_prompt` returned unexpected value; contact maintainer")
     }
