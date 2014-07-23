@@ -315,7 +315,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       is(
         x.mod <- navigate_prompt(
           x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt, 
-          browse.env1=browse.eval.env, browse.env2=parent.env(base.env.pri),
+          browse.env1=browse.eval.env, browse.env2=new.env(parent=parent.env(base.env.pri)),
           valid.opts=valid.opts, help=c(help.prompt, as.character(UL(help.opts)))
         ),
         "unitizerBrowse"
