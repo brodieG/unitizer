@@ -115,8 +115,10 @@ setMethod("summary", "unitizer",
       rep(1L, length(status)), 
       list(factor(sections, levels=sections.levels), status), sum
     )  # this should be a matrix with the summary data.
-    sum.mx.nondel <- sum.mx[, colnames(sum.mx) != "Deleted"]
-    sum.mx[, colnames(sum.mx) != "Deleted"] <- ifelse(is.na(sum.mx.nondel), 0L, sum.mx.nondel)
+    # Not sure why we originally tried to leave in NAs for deleted
+    # sum.mx.nondel <- sum.mx[, colnames(sum.mx) != "Deleted"]
+    # sum.mx[, colnames(sum.mx) != "Deleted"] <- ifelse(is.na(sum.mx.nondel), 0L, sum.mx.nondel)
+    sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
     sum.mx <- rbind(sum.mx, "**Total**"=apply(sum.mx, 2, sum))
     sum.mx["**Total**", "Deleted"] <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
     if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
@@ -130,6 +132,7 @@ setMethod("summary", "unitizer",
     )
     sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 15)
+
     if(nrow(sum.mx) == 2L) sum.mx[2L, ] else sum.mx
 } )
 
