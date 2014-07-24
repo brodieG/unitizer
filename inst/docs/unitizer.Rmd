@@ -1,6 +1,7 @@
 # unitizeR - Turn Arbitrary Code into Unit Tests
 
 ## Introduction
+----
 
 ### Storing Expressions and Their Results as Tests
 
@@ -14,7 +15,7 @@ One of the more important purposes of unit tests is to ensure that previously te
 
 ### But Why?
 
-There are some noteworthy benefits to this approach, in particular:
+There are some note-worthy benefits to this approach, in particular:
 
  1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z), DF)`) are trivial to write because the result of the expression becomes the unit test
  2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests (taken to the extreme, you could just use the history file from when you were informally testing functionality)
@@ -62,7 +63,12 @@ Later on, you can just re-run:
 
 If everything is working as before then all the tests will pass and you can keep coding merrily.  If you introduced regressions, then `unitizer` will highlight the failing tests and allow you to review them interactively.  If you added more tests to the file since the last time you ran `unitize`, those tests will be added to the RDS subject to your review.
 
+### Learning To Use `unitizer`
+
+You don't need to go through the entirity of this oxymoronically lengthy vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to recieve assitance.
+
 ## A Detailed Run-through
+----
 
 ### First Run - Store Tests
 
@@ -240,36 +246,289 @@ We figured out the problem in our new implementation of `fastlm` and fixed it.  
 
 Success! Our new test code now validates properly.  We have a functional `fastlm`!
 
+### A Segue on Test Types
+
+So far we have only seen three test types: New, Passed, and Failed.  For reference here is a list of all the test types:
+
+* Passed: the test passed successfully and you will not be prompted to review
+* Failed: the stored test differs from the value produced by the re-evaluation of the same expression, as was the case in our examples above
+* New: the test is not present in the `unitizer` store and needs to be reviewed prior to storage to ensure it actually does what you expect
+* Deleted/Removed: a test present in the `unitizer` store no longer exists in the test R file
+* Corrupted/Error: an error occurred while attempting to compare the new and reference tests; this should occur very rarely and is likely the result of using a custom comparison function to compare the tests (see `unitizer_sect` section for more details on custom comparison functions).  When this happens `unitizer` has no way of knowing whether the test passed or failed; you can think of it as an `NA` outcome.
+
+When reviewing tests, `unitizer` will group tests by test type, so you will review all new tests for each `unitizer_sect` in one go, then the failed tests, and so on.
+
+## Details On Tests
+----
+
+### Test Sections: `unitizer_sect`
+
+Often it is useful to group tests in sections for the sake of documentation and clarity.  Here we updated our original test file to add some sections:
+
+    ## file: tests/unitizer/fastlm.unitizer.R
+
+    library(fastlm)
+
+    unitizer_sect(
+      "Base Tests", 
+      {
+        x <- 1:100
+        y <- ((1:100) / 10) ^ 2
+
+        (res <- fastlm(x, y))   # parens to force treatment as test
+        get_slope(res)
+        get_intercept(res)
+        get_rsq(res)
+    } )
+    unitizer_sect(
+      "Test Error Handling", 
+      {
+        fastlm(x, head(y))
+        fastlm(x, NULL)
+
+        get_slope("hello")
+        get_rsq(FALSE)
+    } )
+
+Now re-running `unitizer` segments everything by section:
+
+    > unitize("tests/unitizer/fastlm.unitizer.R")
+    +-------------------------------------------------------------------+
+    | unitizer for: tests/unitizer/fastlm.unitizer.R                    |
+    +-------------------------------------------------------------------+
+
+                        Pass     Fail      New  Deleted                  
+    Base Tests             4        0        0        0
+    Test Error H...        4        0        0        0
+    **Total**              8        0        0        0
+
+    All tests passed; nothing to store.
+
+Similarly, if there are tests that require reviewing, each section will be reviewed in turn.
+
+### `unitizer` Test Components
+
+The following aspects of a unitizer tests are recorded for future comparison:
+
+* Value (whether invisible or not)
+* Conditions
+* Screen output
+* Message (stderr) output
+* Whether the expression issued an "abort" `invokeRestart`
+
+Currently only the first two elements are actually compared when determining whether a test passes or fails.  These two should capture almost all you would care about from a unit test perspective.  Screen output is omitted from comparison because it can be caused to vary substantially by factors unrelated to source code changes (e.g. console display width).  Message output is omitted because all obvious mechanisms for producing stdout output also produce conditions with messages embedded, so it is usually superfluous to compare them.  The "abort" `invokeRestart` is omitted because it generally is implied by the presence of an error condition and actively monitoring it clutters the diagnostic messaging produced by `unitizer`.
+
+While we omit the last three components from comparison, this is just default behavior.  You can change this by using the `compare` argument for `unitizer_sect` (see next section).
+
+### Controlling Test Comparison
+
+By default tested components (values and conditions) are compared with `all.equal`.  If you want to override the function used for value comparisons it is as simple as creating a new section for the tests you want to compare differently and use the `compare` argument:
+
+     unitizer_sect(
+      "Base Tests Strict", compare=identical,
+      {
+        get_slope(res)
+        get_intercept(res)
+        get_rsq(res)
+    } )
+
+The values produced by these three tests will be compared using `identical` instead of `all.equal`.  If you want to modify how other components of the test are compared, then you can pass a `unitizerItemTestsFuns` object as the value to the `compare` argument instead of a function:
+
+     unitizer_sect(
+      "Base Tests Strict", 
+      compare=unitizerItemTestsFuns(
+        value=identical, 
+        output=all.equal,
+        message=identical
+      ),
+      {
+        get_slope(res)
+        get_intercept(res)
+        get_rsq(res)
+    } )
+
+This will cause the value of tests to be compared with `identical`, the screen output with `all.equal`, and messages (stdout) with `identical`.  If you want to change the comparison function for conditions, keep in mind that what you are comparing are lists of conditions.  `unitizer` by default uses the `all.equal.condition_list` functions to compare conditions, and you should probably review that function if you intend to use a custom condition comparison function.
+
+### Matching Tests
+
+Whenever you re-run `unitizer` on a file that has already been "unitized", `unitizer` matches the expressions in that file to what the expressions were in the file when it was first run.  `unitizer` matches only on the deparsed expression, and does not care at all where in the file the expression occurs.  If multiple identical expressions exist in a file they will be matched in the order they show up.
+
+One particularly important point is that the `unitizer_sect` in which a test was when it was first "unitized" has no bearing whatsoever on matching.  In other words, the matching is done with no regard for what `unitizer_sect` the new or reference tests are/where in.
+
+### Commenting Tests
+
+`unitizer` parses the comments in the test files and attaches them to the test that they document.  Comments are attached to tests if they are on the same line as the test, or just above the test.  Comments are displayed with the test expression during the interactive review mode.
+
 ## The Interactive Environment
+----
+
+### Example Set-up
 
 To examine the interactive environment more thoroughly we will go back to the test review when our new version of `fastlm` was returning incorrect values.  This is the fourth failed test:
 
-    > fastlm(x, NULL)
-    Error in fastlm(x, NULL) : Arguments `x` and `y` must be numeric.
+    > get_rsq(res)
     Test Failed Because:
-    Conditions mismatch: 
-      + There is 1 condition mismatch; showing first mismatch at condition #1
-      + Error condition messages do not match
+    Value mismatch: Mean relative difference: 0.03214676
+    unitizer>
+
+We will use this test to illustrate features / subtleties of `unitizer` prompt.
+
+### `unitizer` Commands
+
+Much like the `browser()` prompt, the `unitizer` prompt accepts several special expressions that allow you to control `unitizer` behavior.  What the expressions are and what they do depends on context.  We will review them in the context of the failed test described above.  Let's go back and look at what the `unitizer` prompt stated before we started reviewing our failed tests:
+
+    - Failed ------------------------------------------------------------
+
+    Reference test does not match new test from test script. Overwrite 
+    item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, 
+    [H]elp)?
+
+This clearly lays out all the special commands available to us:
+
+* `Y` will accept the new value as the correct reference value to use for a test
+* `N` will keep the previous reference value as the reference value for future tests
+* `B` takes us back to the previously reviewed test (see "Navigation" sub-section)
+* `R` allows us to navigate to any previously reviewed test (see "Test Navigation" sub-section)
+* `Q` quits `unitizer` (see "Quitting `unitizer`")
+* `H` provides contextual help
+
+If you type any of those letters (without backticks) into the `unitizer` prompt you will cause `unitizer` to respond as described above instead of evaluating the expression as it would be at the normal R console prompt.  If you have a variable assigned to one of those letters and you wish to access it, you can do so with any of `get`, `(`, `print`, etc.  For example, suppose we stored something in `Y`, then to access it all these commands would work:
+
+* `(Y)`
+* `get("Y")`
+* `print(Y)`
+
+`unitizer` checks for an exact match of a user expression to the special command letters, so something like `(Y)` does not match `Y` which allows you to reach the value stored in `Y`.
+
+If at any time you forget what `unitizer` options are available to you you can just hit the "ENTER" key and `unitizer` will re-print the options to screen.
+
+### Test Navigation
+
+The `B` and `R` `unitizer` commands allow you to navigate through previously evaluted tests.  This is useful if you realize that you incorrectly accepted or rejected an earlier test, but don't wish to quit `unitizer` completely and lose all the other properly reviewed tests. `B` just steps you back to the previous test.  `R` gives you the option to go back to any previously reviewed test.  At this time it is not possible to skip ahead to unreviewed tests.
+
+`B` is trivially straightforward, so we will not discuss it further.  We will type `R` at the prompt of our fourth failed test to examine what it does:
+
+    unitizer> R
+    What test do you wish to review (input an integer-like number corresponding to a test)?
+
+      2. (res <- fastlm(x, y)) - Failed:N
+      3. get_slope(res) -------- Failed:N
+      4. get_intercept(res) ---- Failed:N
+    unitizer>
+
+`R` produces a list of all the test we have reviewed.  In this case these are all failed tests which we chose not to keep (hence the `Failed:N` appended at the end of each deparsed expression).  If we have second thoughts about our choice we can revisit the test by inputting the test number at the prompt (note that the test numbering is a bit odd; there are reasons for this but they aren't worth discussing).  Suppose we want to review test 3, the second on our list.  Then:
+
+    unitizer> 3
+    You are re-reviewing a test; previous selection was: "N"
+    > get_slope(res)
+    Test Failed Because:
+    Value mismatch: Mean relative difference: 6943055624
     unitizer> 
 
-We will review the options available to us 
+`unitizer` tells us we are re-reviewing this test and that previously we had chosen not to keep the new version.  At this point we could re-examine the test, and potentially change our previous selection.
 
-### Everything Is Not As It Seems
+### `.new` and `.ref`
 
+As we saw in our earlier example there are special objects available at the prompt: `.new`, and for all but new tests, `.ref`.  These objects contain the values produced by the newly evaluated test (`.new`) and by the test when it was previously run and accepted (`.ref`).  `.new` might seem a bit superfluous since the user can always re-evaluate the test expression at the `unitizer` prompt to review the value, but if that evaluation is slow you can save a little time by using `.new`.  `.ref` is the only option you have to see what the test used to produce back when it was first accepted into the `unitizer` store.
 
+`.new` and `.ref` contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation.  To do so you can use the `get*` accessor functions in conjunction with the `.new` or `.ref` objects:
 
-## Additional Features
+* `getTest(.new)` gets general information about the test
+* `getVal(.new)` returns the test value; equivalent to typing `.new` at the prompt
+* `getConds(.new)` returns the list of conditions produced by the test
+* `getMsg(.new)` returns the stderr captured during test evaluation
+* `getOut(.new)` returns the screen output captured during test evaluation
+* `getExpr(.new)` returns the test expression (don't confuse this with `getCall`, a built-in R function with no relation to `unitizer`)
+* `getAborted(.new)` returns whether the test expression invoked an "abort" restart
 
-### `unitizer_sect`
+You can substitute `.ref` for `.new` in any of the above, provided that `.ref` is defined (i.e. that won't work when you are reviewing new tests since there is no corresponding reference test for those by definition).
 
-#### Organization
+### Examining Objects
 
-#### Changing Comparison Functions
+The `unitizer` prompt is very much like the R prompt in as much as it allows you to evaluate arbitrary expresions, including examining objects.  One useful thing to do is to check what objects are available to examine, which you can do with `ls`:
 
+    unitizer> ls()
+    $`objects in new test env:`
+    [1] "res" "x"   "y"  
 
+    $`objects in ref test env:`
+    [1] "res" "x"   "y"  
 
+    $`unitizer objects:`
+    [1] ".new" ".ref"
+
+    Use `ref(obj_name)` to access reference objects.
+    `.new` / `.ref` for test value, `getTest(.new)` / `getTest(.ref)` for details.
+    unitizer> 
+
+When you use `ls` from the `unitizer` prompt you are not using `base::ls`, as is obvious from the output above.  We need this special version of `ls` because the `unitizer` environment is more complex than the typical console environment.  For example, the objects present during the evaluation of the new tests may not be the same as they were during the reference evaluation, so we must make both of them available to the user.  Buy default any objects you attempt to access at the `unitizer` prompt will be the new objects, but you can use the `ref` function to access the reference versions:
+
+    unitizer> res
+        intercept         slope           rsq 
+    -3.541306e+11  7.012486e+09  9.688545e-01 
+    attr(,"class")
+    [1] "fastlm"
+    unitizer> ref(res)
+     intercept      slope        rsq 
+    -17.170000   1.010000   0.938679 
+    attr(,"class")
+    [1] "fastlm"
+    unitizer> 
+
+In this case `res` and `ref(res)` match up exactly to `.new` and `.ref`, but that is just because we purposefully converted the assignment to `res` into a test by wrapping it in parentheses.  If you did have a divergence in an object that was created outside of a test, the only way to compare its new value to its reference value would be to use `ref`.
+
+### Quitting `unitizer`
+
+At any point you may quit `unitizer` by typing `Q` at the `unitizer` prompt.  If you have already reviewed tests, you will be given the opportunity to save what you have done so far:
+
+    unitizer> Q
+    = Finalize Unitizer =================================================
+
+    No items to store; there either were no changes or you didn't accept any changes.
+    Exit unitizer ([Y]es, [B]ack, [R]eview)?
+    unitizer> Y
+    unitizer store was not modified
+
+Before `unitizer` quits completely we are given the chance to review are changes by using the `B` or `R` navigation commands.  In this case we just quit without further ado; since we had not chosen any of the new test values to replace the old there was no need to modify the unitizer store.
+
+## Esoteric Topics
+----
+
+### Subtleties Of The Interactive Environment
+
+Clearly the `unitizer` prompt environment is not as straightforward as the standard R console environment, or even the `browser` environment.  In reality it is even more complex than we've shown so far.
+
+`unitizer` batch processes all the tests when it is first run before it breaks into interactive mode.  It does this for two reasons: 1. this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly, 2. it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.
+
+While there are good reasons for batch processing the tests, it means that the review process is complicated substantially.  If we used a single evaluation environment it would be cluttered by all the objects created throughout the whole test script, so when we started reviewing the first test we would be seeing all the objects, even objects that did not exist when the first test was run.  Much worse, it is entirely possible for a variable to be re-used several times in a file, adopting different values for different tests, with the implication that objects used by our first test may have values that are different to what they were when the test was originally run.
+
+To get around this problem each test is run in its own environment.  Each of these environments has for parent the environment of the previous test.  This means that a test has access to all the objects created/used by earlier tests, but not objects created/used by subsequent tests.  When a later test "modifies" an existing object, the existing object is not really modified; rather, the test creates a new object of the same name in the child environment which masks the object in the earlier test.  This is functionally equivalent to overwriting the object as far as the later test is concerned.
+
+For the most part this environment trickery should be transparent to the user.  The `ls` function is specially modified to, among other things, list objects in all the parent test environments.  But there are exceptions to this "transparency".  The simplest exception is that you can't actually remove an object created in an earlier test (well, it is possible, but the how isn't documented and you are advised not to attempt to do it).  Here is a more complex exception:
+
+    a <- function() b()
+    b <- function() TRUE
+    a()
+
+In this case, when we evaluate `a()` we must step back two environments to find `a`, but that's okay.  The problem is that once inside `a`, we must now evaluate `b()`, but `b` is defined in a child environment, not a parent
+environment so R's object lookup fails.
+
+Now, the above example actually works because as noted in "What Constitutes a Test", environments are only defined for tests, an neither the `a` or `b` assignments are tests, so both `a` and `b` are assigned to the environment
+of the `a()` call.  However, this really breaks:
+
+    a <- function() b()
+    NULL
+    b <- function() TRUE
+    a()
+
+Since NULL is a valid test, `a` is assigned to the NULL test environment, and `b` is assigned to the `a()` call test environment, and the illusion is shattered.
+
+If you are getting weird "object not found" errors when you run your tests, but the same code doesn't generate those errors when run directly in the command line, the illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
+
+### Patchwork Reference Environments
 
 ## Extreme Programming with `unitizer`
+----
 
 One way to approach unit testing is write the unit tests before you even develop the functionality.  This ensures that the tests are actually written, and it also serves as a documentation of sorts since presumably all aspects of functionality will have some explicit test assigned.  For example, an extreme programming file for the `times_two` function might look like so:
 
