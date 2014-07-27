@@ -27,14 +27,15 @@ unitizer_sect("Nesting.2", {
     20
     warning("yo")
     apply(arr, 1:2, sum)
+    stop("Random Error Message 1: ", sample(1:10000, 1))
     unitizer_sect("double.inner", 
       {
         20
         warning("yo")
         apply(arr, 1:2, sum)
-        stop("Random Error Message", sample(1:10^6, 1))      
+        stop("Random Error Message 2: ", sample(1:10000, 1))      
       },
-      compare=new("unitizerItemTestsFuns", output=all.equal, message=all.equal)
+      compare=unitizerItemTestsFuns(output=all.equal, message=all.equal)
     )
     5 + 3 * 1:10
   } )

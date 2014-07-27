@@ -1,9 +1,5 @@
 # Features
 
-## Vignette
-
-Self evident
-
 ## Capture
 
 * use `evaluate::replay`?
@@ -11,7 +7,7 @@ Self evident
 * Should we really allow execution in interactive mode with stderr() and 
   stdout() captured?  seems weird.
 * implement capture handling at condition handler level and integrate output 
-  and condition streams so taht we can do the replay? right now conditions come
+  and condition streams so that we can do the replay? right now conditions come
   out of order.
 * should we capture actual stdout() vs stdout caused by a visible
   value separately?  probably yes, makes way more sense for the
