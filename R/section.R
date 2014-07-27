@@ -117,7 +117,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #'     my_exact_fun(6L)
 #'     my_exact_fun("hello")
 #'   },
-#'   compare=new("unitizerItemTestsFuns", value=identical, output=identical)
+#'   compare=unitizerItemTestsFuns(value=identical, output=identical)
 #' )
 unitizer_sect <- function(title=NULL, expr=expression(), details=character(), compare=new("unitizerItemTestsFuns")) {
   if(!is(compare, "unitizerItemTestsFuns") & !is.function(compare)) stop("Argument `compare` must be \"unitizerItemTestsFuns\" or a function")
