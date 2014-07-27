@@ -5,6 +5,7 @@
 NULL
 
 setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
+
 #' Fixes The Ancestries of our New Reference Items Object
 #' 
 #' This is necessary because when we let the user pick and chose which
@@ -17,10 +18,9 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' combinations of reference and new objects.
 #' 
 #' We only store new objects in `unitizer`, with the lone exception of
-#' objects created during a test which is then kept as a reference test.
-#' This should be rare as most tests are explicitly defined as calls
-#' that don't create objects, so this will only occur if the user
-#' overrides the default behavior.
+#' objects associated to a test environment.  These will include any assignments
+#' that occur just prior to a test, as well as any objects created by the 
+#' actual test.
 #' 
 #' There are two ways in which we modify the environment ancestry. If
 #' the user decides to not store some new tests, then the objects created
@@ -62,8 +62,9 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'      in current environment
 #' }
 #' 
+#' @note This is not an exported method
+#' 
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
-#' @keywords internal
 #' @param x \code{`\link{unitizerItems-class}`} object
 #' @param y \code{`\link{unitizer-class}`} object \code{`x`} was generated from
 #' @return \code{`unitizerItems-class`}

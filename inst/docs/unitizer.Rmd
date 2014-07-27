@@ -1,5 +1,20 @@
 # unitizeR - Turn Arbitrary Code into Unit Tests
 
+## Prologue
+----
+
+This is a very long vignette.  `unitizer` bakes in a lot of contextual help so that you don't have to read beyond the "Introduction" section of this vignette in order to use it.  If you reach a `unitizer>` prompt and don't know what to do, try typing `H` and hitting the "ENTER" key.
+
+Your best bet to start unitizing quickly is to read the introduction to this vignette.  Here is a quick overview of what the vignette covers:
+
+* "Introduction": Overview of the rationale for `unitizer`, and quick start guide
+* "A Detailed Run Through": Walks step by step through a sample use of `unitizer`
+* "Details On Tests": What constitutes a test, how to change what aspects of a test are tested
+* "Test Capture": Details on how `unitizer` captures test values / conditions / etc.
+* "The Interactive Environment": Detailed review of user options available at the `unitizer>` prompt
+* "Esoteric Topics": The `unitizer` interactive environment is quite complex; this section gets into the nitty gritty details
+* "Extreme Programming with `unitizer`": A discussing of "extreme programming" in the context of `unitizer`
+
 ## Introduction
 ----
 
@@ -18,10 +33,10 @@ One of the more important purposes of unit tests is to ensure that previously te
 There are some note-worthy benefits to this approach, in particular:
 
  1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z), DF)`) are trivial to write because the result of the expression becomes the unit test
- 2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests (taken to the extreme, you could just use the history file from when you were informally testing functionality)
+ 2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests
  3. (almost) all aspects of the evaluation can be captured and used as part of the tests; for example, any conditions signalled during evaluation will be captured for comparison to future evaluations
 
-I first embarked on this project to address point 1.  In the absence of `unitizer`, testing that complex objects are created as expected requires running the test expression, deparsing the result, and then copy/pasting the ungainly string into a file with an `all.equal` or equivalent such statement.  While this isn't back-breaking, it does start taking on sisyphean overtones when you set out to build comprehensive tests, or god forbid, realize you need to slightly modify the output of your functions.
+We first embarked on this project to address point 1.  In the absence of `unitizer`, testing that complex objects are created as expected requires running the test expression, deparsing the result, and then copy/pasting the ungainly string into a file with an `all.equal` or equivalent such statement.  While this isn't back-breaking, it does start taking on sisyphean overtones when you set out to build comprehensive tests, or god forbid, realize you need to slightly modify the output of your functions.
 
 Points 2. and 3. are gravy.  For example, for 3., you can easily test that your code both fails, and that when it does, it produces the desired error message.
 
@@ -65,14 +80,18 @@ If everything is working as before then all the tests will pass and you can keep
 
 ### Learning To Use `unitizer`
 
-You don't need to go through the entirity of this oxymoronically lengthy vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to recieve assitance.
+You don't need to go through the entirity of this oxymoronically lengthy vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to receive assitance.
 
 ## A Detailed Run-through
 ----
 
+### Overview
+
+In this section we will go through the process of creating a new set of tests, verifying they work as expected, modifying our code base, and then re-running `unitizer` to ensure we did not introduce regressions.  We will use the same test file we used in the "Introduction" section (`tests/unitizer/fastlm.unitizer.R`).
+
 ### First Run - Store Tests
 
-The first time we run our tests we are prompted to review them one by one to confirm they evaluated to what we expect.  This is what happens when we run `unitize("tests/unitizer/lm.R")`:
+The first time we run our tests we are prompted to review them one by one to confirm they evaluated to what we expect.  This is what happens when we run `unitize("tests/unitizer/fastlm.unitizer.R")`:
 
     > unitize("tests/unitizer/fastlm.unitizer.R")
     +--------------------------------------------------------------------+
@@ -98,25 +117,25 @@ The first time we run our tests we are prompted to review them one by one to con
     [1] "fastlm"
     unitizer> 
 
-This is telling us that there are eight new tests in our file.  The "new" banner line is telling us we are about to review the new tests (the only type in this case), and the text that follows provides options to type at the `unitizer>` prompt.
+This is telling us that there are eight new tests in our file, and the "new" banner indicates we are about to review the new tests (the only type in this case).  The text that follows provides options to type at the `unitizer>` prompt.
 
-At this point, `unitizer` starts showing you the results of evaluating the tests.  Note that assignment expressions are not considered tests; they are stored, but you are not asked to review them, and their values will not be compared to values produced by future evaluations.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test that will be reviewed, so skipping assignment review saves some unnecessary user interaction.
+Following the banner, `unitizer` starts showing you the results of evaluating the test file and eventually stops after the first test with a `unitizer>` prompt.  Note that simple assignment expressions are not considered tests which is why the prompt only shows up after the `(res <- fastlm(x, y))` line (we forced this to be a test by wrapping it in parentheses).
 
-You can force assignments to become tests by wrapping them in parentheses, which is why the `unitizer>` prompt appears after the `(res <- fastlm(x, y))`.  As we noted earlier, the prompt allows you to run R expressions, so we can use this opportunity to check that our function did what it is supposed to:
+As we noted earlier, the prompt allows you to run R expressions, so we can use this opportunity to check that our function did what it is supposed to:
 
     unitizer> lm(y ~ x, data.frame(x, y))$coefficients
     (Intercept)           x 
          -17.17        1.01 
     unitizer>
 
-This matches our computation, so we will accept the test by typing in `Y` and hitting ENTER:
+We visually compare the output of `lm` to `fastlm` and conclude they match, so we accept the test by typing in `Y` and hitting the "ENTER" key:
 
     unitizer> Y
     > get_slope(res)
     [1] 1.01
     unitizer>
 
-The first test, `(res <- fastlm(x, y))` is now queued for storing, and we're prompted about the second test.  We will also accept this one, as well as the next 3, which brings us to:
+The first test, `(res <- fastlm(x, y))` is now queued for storing, and we're prompted about the second test (`get_slope(res)`).  We will also accept this one, as well as the next 3, which brings us to:
 
     # Cause errors
     > fastlm(x, head(y))
@@ -147,7 +166,7 @@ The `.rds` file was generated by unitizer and contains the data we will use in t
 
 ### Second Run -- Check For Regressions
 
-Turns out our `fastlm` wasn't fast at all.  It was just a wrapper for the standard `lm`.  But that was just a starting point.  After our initial run we went ahead and figured out all the formulas needed to calculate the slope, intercept and R squared of a single variable linear regression, and plugged them into our function.  But did we do it right?  Let's check:
+Turns out our `fastlm` wasn't fast at all.  It was just a wrapper for the standard `lm` function.  But that was just a starting point.  After our initial run we went ahead and figured out all the formulas needed to calculate the slope, intercept and R squared of a single variable linear regression, and plugged them into our function.  But did we do it right?  Let's check:
 
     > unitize("tests/unitizer/fastlm.unitizer.R")
     +-------------------------------------------------------------------+
@@ -167,7 +186,7 @@ Turns out our `fastlm` wasn't fast at all.  It was just a wrapper for the standa
     Value mismatch: Mean relative difference: 18889539312
     unitizer> 
 
-Clearly something is wrong.  Six of our eight tests failed.  `unitizer` prompts us to review the failed tests and decide whether to replace the existing tests with the new ones.  The first failed test is the one that calculates the values related to the linear regression.  `unitizer` provides us with two special objects that we can use to examine the reason for our test failure: `.new` and `.ref`, each representing the value produced by the test we just ran as well as the value produced by the original test we stored.  We can use these to get more details on the nature of the failure:
+Clearly something is wrong.  Six of our eight tests failed.  `unitizer` prompts us to review the failed tests and decide whether to replace the existing tests with the new ones.  The first failed test is the one that calculates the values related to the linear regression.  `unitizer` provides us with two special objects that we can use to examine our test failure: `.new` and `.ref`, each representing the value produced by the test we just ran as well as the value produced by the original test we stored.  Let's examine them:
 
     unitizer> .new
         intercept         slope           rsq 
@@ -183,7 +202,7 @@ Clearly something is wrong.  Six of our eight tests failed.  `unitizer` prompts 
 
 By comparing the output of `.new` and `.ref` we can see that all our computations are just wrong (note we could also have re-evaluated our test instead of typing `.new` at the prompt, but if the computation is slow using `.new` avoids recomputation, and the only way to get the original value is with `.ref`).
 
-We now know that our new calculations are wrong, so we will reject this test as well as the subsequent related tests (all the `get*` functions that retrieve computations will obviously fail too), which takes us to our error causing tests:
+We now know that our new calculations are wrong, so we will reject this test as well as the subsequent related tests (all the `get_*` functions that retrieve computations will obviously fail too), which takes us to our error causing tests:
 
     unitizer> N
     > get_intercept(res)
@@ -200,7 +219,7 @@ We now know that our new calculations are wrong, so we will reject this test as 
       + Error condition messages do not match
     unitizer>
 
-This is telling us that our tests failed because they did not produce the same error message.  We can check with `getConds` (note `getConds` returns a list of conditions, which is why we subset with `[[1]]` to see the first condition):
+This is telling us that our tests failed because they did not produce the same error message.  The problem is that neither `.new` nor `.ref` are helpful at this point since we are interested in the error messages produced by the expressions, not the values.  Fortunately, `unitizer` defines `getConds`, which in combination with `.new`/`.ref` allows us to extract the conditions produced during test evaluation:
 
     getConds(.new)[[1]]
     <simpleError in fastlm(x, head(y)): Arguments `x` and `y` must be the same
@@ -209,9 +228,9 @@ This is telling us that our tests failed because they did not produce the same e
     <simpleError in data.frame(x = x, y = y): arguments imply differing number 
     of rows: 100, 6>
 
-By using the `.new`/`.ref` objects as an argument we can tell `getConds` which of the condition we wish to view: the newly evaluated ones or the reference ones that were stored earlier.  In this case, while the condition messages changed, the general meaning did not and since we added our own error handler rather than rely on internal error handling this change is reasonable.
+Note `getConds` returns a list of conditions, which is why we subset with `[[1]]` to see the first condition. By using the `.new`/`.ref` objects as an argument we can tell `getConds` which of the conditions we wish to view: the newly evaluated ones or the reference ones that were stored earlier.
 
-The remaining two failed tests also failed for similar reasons, so we will accept them too, which again takes us to the final prompt:
+In this case, while the condition messages changed, the general meaning did not and since we added our own error handler to replace internal error handling this change is reasonable. The remaining two failed tests also failed for similar reasons, so we will accept them too, which again takes us to the final prompt:
 
     unitizer> Y
     > fastlm(x, NULL)
@@ -228,7 +247,7 @@ The remaining two failed tests also failed for similar reasons, so we will accep
     unitizer> Y
     unitizer updated
 
-Our `unitizer` `.rds` is now updated.  We replaced the two error tests with their new versions, but did not replace the tests related to the actual copmutations since the new computations are wrong.
+Our `unitizer` `.rds` is now updated.  We replaced the two error tests with their new versions, but did not replace the tests related to the actual computations since we know those new computations are wrong.
 
 ### Third Run -- Fix Problems
 
@@ -250,16 +269,24 @@ Success! Our new test code now validates properly.  We have a functional `fastlm
 
 So far we have only seen three test types: New, Passed, and Failed.  For reference here is a list of all the test types:
 
-* Passed: the test passed successfully and you will not be prompted to review
-* Failed: the stored test differs from the value produced by the re-evaluation of the same expression, as was the case in our examples above
 * New: the test is not present in the `unitizer` store and needs to be reviewed prior to storage to ensure it actually does what you expect
+* Passed: the test passed successfully and you will not be prompted to review
+* Failed: the stored test differs from the one produced by the re-evaluation of the same expression, as was the case in our examples above
 * Deleted/Removed: a test present in the `unitizer` store no longer exists in the test R file
 * Corrupted/Error: an error occurred while attempting to compare the new and reference tests; this should occur very rarely and is likely the result of using a custom comparison function to compare the tests (see `unitizer_sect` section for more details on custom comparison functions).  When this happens `unitizer` has no way of knowing whether the test passed or failed; you can think of it as an `NA` outcome.
 
-When reviewing tests, `unitizer` will group tests by test type, so you will review all new tests for each `unitizer_sect` in one go, then the failed tests, and so on.
+When reviewing tests, `unitizer` will group tests by test type, so you will review all new tests for each `unitizer_sect` in one go, then the failed tests, and so on.  The implication here is that the order that you review tests may not be the same as the order they appear in in the test file.
 
 ## Details On Tests
 ----
+
+### What Constitutes a Test?
+
+As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them, and their values are not be compared to values produced by future evaluations of the same assignment expression.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test that will be reviewed, so skipping assignment review saves some unnecessary user interaction.
+
+You can force assignments to become tests by wrapping them in parentheses, which is what we did in our test file with `(res <- fastlm(x, y))`.
+
+In addition to assignments, some expressions are not considered tests.  At this time, another expression that is ignored is `library(...)`, as the return value for that function varies depending on the currently loaded libraries.
 
 ### Test Sections: `unitizer_sect`
 
@@ -316,7 +343,7 @@ The following aspects of a unitizer tests are recorded for future comparison:
 * Message (stderr) output
 * Whether the expression issued an "abort" `invokeRestart`
 
-Currently only the first two elements are actually compared when determining whether a test passes or fails.  These two should capture almost all you would care about from a unit test perspective.  Screen output is omitted from comparison because it can be caused to vary substantially by factors unrelated to source code changes (e.g. console display width).  Message output is omitted because all obvious mechanisms for producing stdout output also produce conditions with messages embedded, so it is usually superfluous to compare them.  The "abort" `invokeRestart` is omitted because it generally is implied by the presence of an error condition and actively monitoring it clutters the diagnostic messaging produced by `unitizer`.
+Currently only the first two elements are actually compared when determining whether a test passes or fails.  These two should capture almost all you would care about from a unit test perspective.  Screen output is omitted from comparison because it can be caused to vary substantially by factors unrelated to source code changes (e.g. console display width).  Message output is omitted because all typical mechanisms for producing stderr output also produce conditions with messages embedded, so it is usually superfluous to compare them.  The "abort" `invokeRestart` is omitted because it generally is implied by the presence of an error condition and actively monitoring it clutters the diagnostic messaging produced by `unitizer`.
 
 While we omit the last three components from comparison, this is just default behavior.  You can change this by using the `compare` argument for `unitizer_sect` (see next section).
 
@@ -358,6 +385,27 @@ One particularly important point is that the `unitizer_sect` in which a test was
 ### Commenting Tests
 
 `unitizer` parses the comments in the test files and attaches them to the test that they document.  Comments are attached to tests if they are on the same line as the test, or just above the test.  Comments are displayed with the test expression during the interactive review mode.
+
+## Test Capture
+----
+
+### Options and Streams
+
+In order to properly capture output, this function must mess with streams and options.  In particular, it will do the following:
+
+* temporarily set `options(warn=1L)` during expression evaluation
+* temporarily set `options(error=null)` during expression evaluation
+* use `sink()` to capture any output to `stdout`
+* use `sink(type="message")` to capture output to `stderr`
+
+This should all be transparent to the user, unless the user is also attempting to modify these settings in the test expressions.  The problematic interaction are around the `options` function.  If the user sets `options(warn=1)` with the hopes that setting will persist beyond the execution of the test scripts, that will not happen.  If the user sets `options(error=recover)` or some such in a test expression, and that expression throws an error, you will be thrown into recovery mode with no visibility of `stderr` or `stdout`, which will make for pretty challenging debugging.
+
+If the function is run with message diversion already activated, then it will not capture any messages produced by the test expressions.  If one of the test expressions enables message capture, then this function will stop capturing messages from that point on.  If after this another test expression disables message capture, this function will start capturing messages starting with the subsequent test expression (i.e. any message output between the expression self disabling message output and the end of the expression will go to `stdout`).
+
+### Error Handling
+
+Because `unitize` evaluates test expressions within a call to `withCallingHandlers`, there are some limitations on successfully running `unitize` inside your own error handling calls.  In particular, `unitize` will not work properly if run inside a `tryCatch` or `try` statement. If test expressions throw conditions, the internal 
+`withCallingHandlers` will automatically hand over control to your `tryCatch`/`try` statement without an opportunity to complete `unitize` computations.  Unfortunately there does not seem to be a way around this since we have to use `withCallingHandlers` so that test statements after non-aborting conditions are run.
 
 ## The Interactive Environment
 ----
@@ -475,7 +523,7 @@ When you use `ls` from the `unitizer` prompt you are not using `base::ls`, as is
     [1] "fastlm"
     unitizer> 
 
-In this case `res` and `ref(res)` match up exactly to `.new` and `.ref`, but that is just because we purposefully converted the assignment to `res` into a test by wrapping it in parentheses.  If you did have a divergence in an object that was created outside of a test, the only way to compare its new value to its reference value would be to use `ref`.
+In this case `res` and `ref(res)` match up exactly to `.new` and `.ref` respectively, but that is just because we purposefully converted the assignment to `res` into a test by wrapping it in parentheses.  If you did have a divergence in an object that was created outside of a test, the only way to compare its new value to its reference value would be to use `ref`.
 
 ### Quitting `unitizer`
 
@@ -521,38 +569,49 @@ of the `a()` call.  However, this really breaks:
     b <- function() TRUE
     a()
 
-Since NULL is a valid test, `a` is assigned to the NULL test environment, and `b` is assigned to the `a()` call test environment, and the illusion is shattered.
+Since NULL is a valid test, `a` is assigned to the environment associated with the `NULL` line, and `b` is assigned to the `a()` call test environment, and the illusion is shattered.
 
 If you are getting weird "object not found" errors when you run your tests, but the same code doesn't generate those errors when run directly in the command line, the illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
 
 ### Patchwork Reference Environments
 
+When we review `unitizer` tests, it is possible to end up in a situation where we wish to update our store by keeping a mix of the new tests as well as some of the old ones.  This leads to some complications because in order to faithfully reproduce the environments associated with both the reference and the new tests we would potentially have to store the entire set of environments produced by the test script for both the new and reference tests.  Even worse, if we re-run unitizer again, we run the risk of having to store yet another set of environments (the old reference environments, what were new environments but became reference ones on this additional run, and the new environments created by this third run).  The problem continues to grow with as each incremental run of the `unitizer` script potentially creates the need to store yet another set of environments.
+
+As a work-around to this problem `unitizer` only keeps the environment associated with the actual reference test when you type `N` at the `unitizer` prompt.  `unitizer` attaches then grafts that test to the environment set associated with the new test runs.  This means that in future `unitizer` runs the reference objects we examine when reviewing this test may not be the same objects that existed when the test itself was evaluated.  The `ls` command will highlight which objects have this problem.
+
+Clearly this is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing `unitizer` stores.  For more details see the documentation for `unitizer:::healEnvs`.
+
 ## Extreme Programming with `unitizer`
 ----
 
-One way to approach unit testing is write the unit tests before you even develop the functionality.  This ensures that the tests are actually written, and it also serves as a documentation of sorts since presumably all aspects of functionality will have some explicit test assigned.  For example, an extreme programming file for the `times_two` function might look like so:
+One way to approach unit testing is write the unit tests before you even develop the functionality.  This ensures that the tests are actually written, and it also serves as a documentation of sorts since presumably all aspects of functionality will have some explicit test assigned.  For example, an extreme programming file the second through fourth tests in our `fastlm` test file might look like so:
 
-    ### file: tests/extreme/timestwo.R
+    ### file: tests/extreme/fastlm.extreme.R
 
-    all.equal(c(2, 4, 6), times_two(1:3))
-    all.equal(c(10, 20), times_two(c(5, 10)))
-    tryCatch(
-      times_two("hello"), 
-      error=function(e) {
-        if(!identical(conditionMessage(e), "input must be numeric"))
-          stop("Failed Test")
-        return(TRUE)
-      }
-    )
+    # ... content omitted ...
 
-You then set-out to write `times_two` and keep running the file until every line evaluates to `TRUE`.  `unitizer` is not really designed for this programming philosophy, but you can still use it.  There are two options, either document and ensure that the tests are evaluating as expected on review (and reject if not):
+    if(!all.equal(get_slope(res), 1.01)) stop("Test Failed") else TRUE
+    if(!all.equal(get_intercept(res), -17.17)) stop("Test Failed") else TRUE
+    if(!all.equal(get_rsq(res), 0.938679)) stop("Test Failed") else TRUE
 
-    ### file: tests/unitizer/timestwo.R
+    # ... content omitted ...
 
-    times_two(1:3)        # double vector values
-    times_two(c(5, 10))   # same
-    times_two("hello")    # error: input must be numeric
+You then set-out to write the `fastlm` functions until every line evaluates to `TRUE`.  `unitizer` is not really designed for this programming philosophy, but there are ways to use it this way.  You can either document and ensure that the tests are evaluating as expected on review (and reject if not):
+
+    ### file: tests/extreme/fastlm.extreme.unitizer.R
+
+    # ... content omitted ...
+
+    get_slope(res)        # should be 1.01
+    get_intercept(res)    # should be -17.17
+    get_rsq(res)          # should be 0.938679
+
+    # ... content omitted ...
 
 Or use the same file as the extreme programmer would and ensure that all tests evaluate to TRUE on review (and reject if not).
 
-Neither of these are perfect substitutes as in both cases you have to review the tests which risks becoming tedious quickly.  In the future we will add an "extreme" mode to `unitizer` that would automatically reject tests that do not evaluate to TRUE.
+Neither of these are perfect substitutes as in both cases you have to review the tests to ensure the correct outcome, which risks becoming tedious quickly when you are developing the code and re-running the tests over and over to check for success.  If you are an active partitioner of extreme programming you may be better served by unit testing packages such as `testthat` (side note: you can actually combine `testthat` and `unitizer`; for example, for `fastlm.extreme.R`, you could use `expect_equal(get_slope(res), 1.01)` instead of `if(!all.equal(get_slope(res), 1.01)) stop("Test Failed") else TRUE`).
+
+In our experience, trying to pre-define all functionality ahead of time in tests ends up being counter productive because much of what the functionality should be only becomes clear with testing, and more importantly, use.  We strongly believe that the the less a developer uses her programs, the worse those programs tend to be.  The implicit corollary is that it is very difficult to fully define good functionality and interfaces for programs before the program is actually used, which in turn implies that there will be a fair bit of test re-writing required along the way.  `unitizer` makes this type of iterative development very easy because the test themselves are informal, and re-writing these informal tests is easier than re-writing formal ones.
+
+This doesn't mean that effort shouldn't be applied to define functionality and interfaces ahead of time, or that situations where they can or should be strictly defined don't exist.  For those formal unit tests are likely best.  For everything else, you can use `unitizer`.
