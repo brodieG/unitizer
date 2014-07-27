@@ -69,9 +69,9 @@ get_store.character <- function(store.id) {
   if(!is.character(store.id) || length(store.id) != 1L ) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
-  if(file_test("-d", store.id)) stop("Argument `store.id` refers to a directory instead of a file.")
-  if(!file_test("-f", store.id)) return(FALSE)
-  if(inherits(try(unitizer <- readRDS(store.id)), "try-error")) {
+  if(!file.exists(store.id)) return(FALSE)
+  if(!file_test("-d", store.id)) stop("Argument `store.id` must refer to a directory")
+  if(inherits(try(unitizer <- readRDS(paste0(store.id, "/data.rds"))), "try-error")) {
     stop("Failed loading unitizer; see prior error messages for details")
   }
   if(!is(unitizer, "unitizer")) stop("Retrieved object is not a `unitizer`")
@@ -112,16 +112,15 @@ set_store.character <- function(store.id, unitizer) {
   if(!is.character(store.id) || length(store.id) != 1L) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
+  if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
   new.file <- FALSE
   if(!file.exists(store.id)) {
-    if(!isTRUE(file.create(store.id))) stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")
-    new.file <- TRUE
+    if(!isTRUE(dir.create(store.id))) 
+      stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")    
+  } else if (!file_test("-d", store.id)) {
+    stop("'", store.id, "' is not a directory.")
   }
-  if(!is(unitizer, "unitizer")) {
-    if(new.file) file.remove(store.id)
-    stop("Argument `unitizer` must be a unitizer")
-  } 
-  if(inherits(try(saveRDS(unitizer, store.id)), "try-error")) {
+  if(inherits(try(saveRDS(unitizer, paste0(store.id, "/data.rds"))), "try-error")) {
     stop("Failed setting unitizer; see prior error messages for details.")
   }
   TRUE

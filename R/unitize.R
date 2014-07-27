@@ -166,7 +166,7 @@
 #' @param store.id R object describing store location; typically a path to a 
 #'   .rds file; set to NULL to auto-generate a location on the file.system
 
-unitize <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
+unitize <- function(test.file, store.id=sub("\\.[Rr]$", ".unitizer", test.file)) {
 
   # Retrieve or create unitizer environment
 
@@ -259,10 +259,13 @@ unitize <- function(test.file, store.id=sub("\\.[Rr]$", ".rds", test.file)) {
   # Parse the test file
 
   if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
-    stop("Unable to parse `test.file`; see prior error for details.")
+    warning("Unable to parse `test.file`; see prior error for details.  Proceeding without comment parsing")
+    if(inherits(try(tests.parsed <- parse(test.file)), "try-error"))
+      stop("Could not parse `test.file`; see prior error for details.")
   }
   if(!length(tests.parsed)) {
     message("No tests in ", test.file, "; nothing to do here.")
+    on.exit(NULL)
     return(invisible(TRUE))
   }  
   # Evaluate the parsed calls
