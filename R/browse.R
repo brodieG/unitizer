@@ -180,9 +180,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
       print(H2(x[[curr.sec]]@section.title))  
     }
     if(        # Print sub-section title if appropriate
-      !identical(last.reviewed.sub.sec, curr.sub.sec) &&
-      !all(x@mapping@ignored[x@mapping@sub.sec.id == curr.sub.sec])
-      ) {
+      (
+        !identical(last.reviewed.sub.sec, curr.sub.sec) || 
+        !identical(last.reviewed.sec, curr.sec)
+      ) && !all(x@mapping@ignored[x@mapping@sub.sec.id == curr.sub.sec])
+    ) {
       print(H3(curr.sub.sec.obj@title))
       cat(
         curr.sub.sec.obj@detail, " ", curr.sub.sec.obj@prompt, " ", 
