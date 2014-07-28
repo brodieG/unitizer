@@ -2,8 +2,34 @@ library(testthat)
 library(unitizer)
 
 local( {
-  prs.file <- "tests/testthat/data/file1.R"
-  prs <- parse(prs.file)
+  txt <- "# This is an early comment
+
+    hello <- 25
+
+    # multi
+    # line
+    # comment
+
+    matrix(1:9, 3)  # and another!
+
+    unitizer_sect(\"here is a section\", {
+      # test that were not crazy
+
+      1 + 1 == 2   # TRUE hopefully
+      
+      # Still not crazy
+
+      2 * 2 == 2 ^ 2
+      # Tada
+    } )
+    sample(1:10)
+
+    # and this comment belongs to whom?
+
+    runif(20) 
+    print(\"woo\")  # and I?
+    "
+  prs <- parse(text=txt)
   dat <- getParseData(prs)
   dat$parent <- pmax(0L, dat$parent)
   dat.split <- dat.split.2 <- par.ids.3 <- NULL
@@ -69,7 +95,7 @@ local( {
   test_that("Full Parse Works Properly", {
     expect_equal(info="Full Comment Parse",
       list(NULL, list("# This is an early comment", list(NULL), list(NULL), list(NULL)), list(c("# multi", "# line", "# comment", "# and another!"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL, list(NULL), list(c("# test that were not crazy", "# TRUE hopefully"), list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL)), list("# Still not crazy", list(NULL), list(NULL, list(NULL), list(NULL), list(NULL)), list(NULL,      list(NULL), list(NULL), list(NULL))))), list(NULL, list(NULL), list(NULL, list(NULL), list(NULL), list(NULL))), list("# and this comment belongs to whom?", list(NULL), list(NULL)), list("# and I?", list(NULL), list(NULL))),
-      unitizer:::comm_extract(unitizer:::parse_with_comments(prs.file))
+      unitizer:::comm_extract(unitizer:::parse_with_comments(text=txt))
     )
     expect_equal(info="EQ_SUB and SYMBOL_SUB test",
       list(NULL, structure(list(NULL, list(NULL), list("# the data", list(NULL), list(NULL), list(NULL)), class = list(c("# the label", "#the equal sign", "# the class"))), .Names = c("", "", "", "class"))),
@@ -103,8 +129,27 @@ local( {
       list(NULL, list(NULL, list(NULL), list("# a comment", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL)))),
       unitizer:::comm_extract(unitizer:::parse_with_comments(text="while(x > 5 # a comment\n) { hello; goodbye } #yay"))
     )
-    test.comp <- unitizer:::comm_extract(unitizer:::parse_with_comments("tests/testthat/data/file2.R"))
+    
+    txt2 <- "library(functools)
+      fun <- function(a=1, bravo, card=25, ..., xar=list(\"aurochs\", 1), z) {}
 
+      # Need to add tests:
+      # - with complex objects? (did I mean in the definition? Or the call??)
+      (NULL)
+      # These should be identical to match.call()
+
+      body(fun) <- parse(text=\"{print(match_call()); print(match.call())}\")
+
+      calls <- c(
+        'fun(54, \"hello\", \"wowo\", \"blergh\", 8, 9)',
+        'fun(54, \"hello\", \"wowo\", \"blergh\", a=8, z=9)',
+        'fun(54, \"hello\", z=\"wowo\", \"blergh\", 8, 9)',
+        'fun(54, \"hello\", z=\"wowo\", x=\"blergh\", 8, 9)',
+        'fun(54, c=\"hello\", z=\"wowo\", xar=3, 8, 9)'
+      )
+      invisible(lapply(calls, function(x){cat(\"-- New Call --\", x, sep=\"\n\"); eval(parse(text=x))}))
+    "
+    test.comp <- unitizer:::comm_extract(unitizer:::parse_with_comments(text=txt2))
     expect_equal(info="A more complex test",
       list(c("# Need to add tests:", "# - with complex objects? (did I mean in the definition? Or the call??)"), "# These should be identical to match.call()"),
       lapply(test.comp[4:5], `[[`, 1)

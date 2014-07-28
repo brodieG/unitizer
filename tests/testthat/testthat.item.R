@@ -206,6 +206,6 @@ local( {
     # this should break because the NULL forces `b` to be stored in a different
     # environment to `a`. 
 
-    expect_equal(x@items.new[[4]]@data@message, "Error in a() : could not find function \"b\"")
+    expect_equal(x@items.new[[4]]@data@message[[1]], "Error in a() : could not find function \"b\"")
   } )
 } )

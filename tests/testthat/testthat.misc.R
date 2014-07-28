@@ -30,7 +30,7 @@ test_that("Sweet'n short descriptions work",{
     unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))), 
     "list lm \\[12,4;28\\] \\{coefficients:num\\(2\\);"
   )
-  expect_equal(unitizer:::desc(new("unitizerItem", call=quote(1+1))), "S4 unitizerItem")
+  expect_equal(unitizer:::desc(new("unitizerItem", call=quote(1+1), env=new.env())), "S4 unitizerItem")
   expect_equal(unitizer:::desc(array(1:27, dim=rep(3, 3))), "integer array [3,3,3]")
   expect_equal(unitizer:::desc(data.frame(a=letters[1:10], b=1:10)), "list data.frame [10,{a:fct;b:int}]")
 } )

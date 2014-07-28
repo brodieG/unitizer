@@ -10,10 +10,12 @@ local({
   expect_error(unitizer_sect(1:3), "must be a 1 length character vector")
   expect_error(unitizer_sect(letters), , "must be a 1 length character vector")
   expect_error(unitizer_sect("mytest", expr.1, 1:3), "`details` must be character")
-  expect_error(unitizer_sect("mytest", expr.1, letters, letters), "must be \"unitizerItemTestsFuns\" or a function")
-  # note the following produces a message, but it's not actually an error, it's just that there are multiple errors
+  # note the following two produce error messages, but it's not actually an error,
+  # it's just that there are multiple errors and `expect_error` only suppresses
+  # the last one, not the preceding ones.
+  expect_error(unitizer_sect("mytest", expr.1, letters, letters), "Argument `compare` must be \"unitizerItemTestsFuns\" or a function")
   expect_error(unitizer_sect("mytest", expr.1, letters, runif), "Problem with provided function")
-  expect_error(unitizer_sect("mytest", expr.2), "Argument `expr` must be an expression", "`expr.2` is already evaluated")
+  expect_error(unitizer_sect("mytest", expr.2), "Argument `expr` must be an expression")
   expect_error(unitizer_sect("mytest", matrix(1:9, nrow=3)), "Argument `expr` must be an expression")
 
   expect_is(sect.1 <- unitizer_sect("mytest", expr.1), "unitizerSectionExpression")
@@ -78,5 +80,4 @@ local({
         my.unitizer4@tests.result
       )
   } )
-  message("All tests completed successfully.")
 })
