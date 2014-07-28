@@ -62,7 +62,9 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'      in current environment
 #' }
 #' 
-#' @note This is not an exported method
+#' @note This is an internal method and should not be used by package users; the
+#'   documentation is exposed so that this aspect of \code{`unitizer`} is 
+#'   documented for package users
 #' 
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
 #' @param x \code{`\link{unitizerItems-class}`} object
@@ -176,6 +178,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 #'   \item **: object was not present during test evaluation, but exists
 #'      in current environment
 #' }
+#' @keywords internal
 #' @param x the \code{`\link{unitizerItem-class}`}
 #' @param base.env the last environment to search through for objects
 #' @return \code{`\link{unitizerItem-class}`} object with updated

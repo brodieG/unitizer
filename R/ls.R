@@ -3,6 +3,7 @@
 #' Much like `ls`, except that it will list all the objects 
 #' recorded in the test items
 #' 
+#' @keywords internal
 #' @return list of object names, or a list with environments containing the objects
 #' @seealso \code{`\link{print.unitizer_ls}`}
 #' @examples
@@ -79,7 +80,7 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   if(is.null(store.env)) sort(unique(ls.res)) else store.env
 }
 
-#' @S3method print unitizer_ls
+#' @export
 
 print.unitizer_ls <- function(x, ...) {
   x.copy <- x

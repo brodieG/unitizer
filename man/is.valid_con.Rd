@@ -18,4 +18,5 @@ TRUE if valid, 1 length character vector if not explaining why it's not
 Use \code{`is.open_con`} to verify that a connection is open in addition to being
 valid
 }
+\keyword{internal}
 

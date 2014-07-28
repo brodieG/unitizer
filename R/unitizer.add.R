@@ -45,6 +45,7 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
 #' latter.
 #' 
 #' @note you can only do this once for a `unitizer`.
+#' @keywords internal
 
 setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer", 
   function(e1, e2) {    
@@ -96,12 +97,13 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     cat("\r", rep(" ", chr.width), "\r", sep="")
     e1
 } )
-
 #' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
 #' 
 #' Any added \code{`\link{unitizerItems-class}`} objects are treated as
 #' reference items.  The only way to add new items is by adding each
 #' item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
+#' 
+#' @keywords internal
 
 setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
   function(e1, e2) {

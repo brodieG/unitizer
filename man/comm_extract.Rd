@@ -12,4 +12,5 @@ be NULL to allow for logic that works with nested structures
 \details{
 These are the comments attached by \code{`\link{parse_data_assign}`}
 }
+\keyword{internal}
 

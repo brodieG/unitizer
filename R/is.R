@@ -3,7 +3,7 @@
 #' Use \code{`is.open_con`} to verify that a connection is open in addition to being
 #' valid
 #' 
-#' @export
+#' @keywords internal
 #' @aliases is.open_con
 #' @param x object to test
 #' @param file.name 1 length character the name of the file that \code{`x`} must point to

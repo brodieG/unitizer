@@ -243,7 +243,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
         ), 
         sep="\n"
     ) } 
-
     # Need to add ignored tests as default action is N. Not clear if we also
     # need to set reviewed to TRUE (seems like we should not do so)
 
@@ -375,7 +374,7 @@ getItemData <- function(x, name, what, env) {
 #' 
 #' @name getTest
 #' @usage getTest(x)
-#' @aliases getVal, getConds, getMsg, getOut, getAborted
+#' @aliases getVal getConds getMsg getOut getAborted
 #' @param x object to get additional data for (should be one of \code{`obj`}, \code{`ref`})
 #' @return depends on what you requested:
 #' \itemize{

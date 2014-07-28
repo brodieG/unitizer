@@ -34,6 +34,7 @@ setClass(
 } )
 #' Full Representation Of an Evaluated \code{`unitizer`} Test
 #' 
+#' @keywords internal
 #' @slot call the call that is tested
 #' @slot reference whether this is a reference or new \code{`unitizerItem`}
 #' @slot ignore whether this test should be treated as a test or just a step
@@ -73,6 +74,7 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 #' 
 #' Makes the fact that most of the data needs to be part of a 
 #' \code{`\link{unitizerItemData-class}`} object transparent to the user.
+#' 
 #' @keywords internal
 
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
@@ -94,6 +96,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   .Object
 } )
 #' Collection of \code{`\link{unitizerItem-class}`} Object
+#' 
 #' @keywords internal
 
 setClass("unitizerItems", contains="unitizerList", 
@@ -112,6 +115,8 @@ setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 #' Display a \code{`\link{unitizerItem-class}`} Object
 #' 
 #' Highly summarized view of the unitizer object.
+#' 
+#' @keywords internal
 
 setMethod("show", "unitizerItem",
   function(object) {
@@ -195,6 +200,8 @@ setGeneric("ignored", function(x, ...) standardGeneric("ignored"))
 #' In order to simplify user interaction, some statements are not considered
 #' to be tests, rather, they are set up steps for the actual test.  At the
 #' time of this writing, top level assignments are included in this group.
+#' 
+#' @keywords internal
 
 setMethod("ignored", "unitizerItems", function(x, ...) vapply(as.list(x), function(y) y@ignore, logical(1L)))
 setMethod("ignored", "unitizerItem", function(x, ...) x@ignore)

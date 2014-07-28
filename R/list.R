@@ -11,6 +11,7 @@ NULL
 #' supposed to map to `.items`).  This last assumption allows us
 #' to implement the subsetting operators in a meaninful manner.
 #' 
+#' @keywords internal
 #' @slot .items a list or expression
 #' @slot .pointer integer, used for implementing iterators
 #' @slot .seek.fwd logical used to track what direction iterators are going
@@ -156,6 +157,10 @@ setMethod("done", "unitizerList",
     else if (!x@.seek.fwd & identical(x@.pointer, 0L)) return(TRUE)
     FALSE
 } )
+#' @export
+
+setGeneric("append")
+
 #' Append To a \code{`\link{unitizerList-class}`} Object
 #' 
 #' \code{`values`} is coerced to list or expression depending on
@@ -163,12 +168,11 @@ setMethod("done", "unitizerList",
 #' 
 #' The resulting object must pass the validity method for \code{`x`}.
 #' 
-#' @export
+#' @keywords internal
 #' @param x the object to append to
 #' @param values the object to append
 #' @param after a subscript, after which the values are to be appended.
 
-setGeneric("append")
 setMethod("append", c("unitizerList", "ANY"), 
   function(x, values, after=length(x)) {
     attempt <- try(
@@ -191,7 +195,6 @@ setMethod("append", c("unitizerList", "ANY"),
     validObject(y)
     y
 } )
-
 setMethod("c", c("unitizerList"), 
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")

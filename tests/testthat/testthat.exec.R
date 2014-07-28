@@ -1,12 +1,11 @@
 library(testthat)
 library(unitizer)
 
-
-test_that("Invisible Expression", {
-  exp <- quote(invisible(x <- 1:30))
-  expect_equal(1:30, unitizer:::eval_user_exp(exp, globalenv())$value)
-} )
 local( {
+  test_that("Invisible Expression", {
+    exp <- quote(invisible(x <- 1:30))
+    expect_equal(1:30, unitizer:::eval_user_exp(exp, globalenv())$value)
+  } )
   # `eval_user_exp` must be evaluated outside of test_that; also note that by 
   # design this will output stuff to stderr and stdout
 

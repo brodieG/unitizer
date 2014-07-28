@@ -137,10 +137,12 @@ setMethod("summary", "unitizer",
 } )
 
 setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
+
 #' Helper Methods for Adding Items to \code{`\link{unitizer-class}`} Object
 #' 
 #' @aliases testItem,unitizer,unitizerItem-method
 #' @seealso \code{`\link{+,unitizer,unitizerItem-method}`}
+#' @keywords internal
 
 setMethod("registerItem", c("unitizer", "unitizerItem"), 
   function(e1, e2, ...) {

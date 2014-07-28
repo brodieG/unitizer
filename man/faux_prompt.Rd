@@ -16,4 +16,5 @@ the expression typed in by the user
 \description{
 Emulate the R Console Prompt
 }
+\keyword{internal}
 

@@ -392,6 +392,8 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
 #' Assemble Title for Display
 #' 
 #' Uses \code{`title`} slot
+#' @keywords internal
+
 
 setGeneric("makeTitle", function(x, ...) standardGeneric("makeTitle"))
 setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",

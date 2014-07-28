@@ -62,8 +62,7 @@
 get_store <- function(store.id) {
   UseMethod("get_store")
 }
-#' @method get_store character
-#' @S3method get_store character
+#' @export
 
 get_store.character <- function(store.id) {
   if(!is.character(store.id) || length(store.id) != 1L ) {
@@ -96,26 +95,22 @@ get_store.character <- function(store.id) {
   ) } }  
   unitizer
 }
-#' @method get_store default
-#' @S3method get_store default
+#' @export
 
 get_store.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }
 #' @export
-#' @rdname get_store
 
 set_store <- function(store.id, unitizer) {
   UseMethod("set_store")
 }
-#' @method set_store default
-#' @S3method set_store default
+#' @export
 
 set_store.default <- function(store.id, unitizer) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }
-#' @method set_store character
-#' @S3method set_store character
+#' @export
 
 set_store.character <- function(store.id, unitizer) {
   if(!is.character(store.id) || length(store.id) != 1L) {

@@ -7,6 +7,7 @@ NULL
 #' Collections of Calls For Testing
 #' 
 #' Should probably add an \code{`as.unitizerTests`} function...
+#' @keywords internal
 
 setClass("unitizerTests", contains="unitizerList")
 setClassUnion("unitizerTestsOrExpression", c("unitizerTests", "expression"))

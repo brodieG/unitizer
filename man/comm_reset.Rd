@@ -10,4 +10,5 @@ Required due to bizarre behavior (bug?) where some expression attributes
 appear to have reference like behavior even when they are re-generated
 from scratch from a text expression (wtf, really).
 }
+\keyword{internal}
 

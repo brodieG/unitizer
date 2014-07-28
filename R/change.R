@@ -3,6 +3,8 @@
 #' Changes arise any time a user, through the interactive unitizer mode,
 #' requests the storing of a change (accept new version of failed test,
 #' add new test, remove old test).
+#' 
+#' @keywords internal
 
 setClass("unitizerChanges",
   representation(failed="integer", new="integer", removed="integer", corrupted="integer"),

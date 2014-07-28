@@ -5,8 +5,6 @@
 \title{Set and Retrieve Store Contents}
 \usage{
 get_store(store.id)
-
-set_store(store.id, unitizer)
 }
 \arguments{
 \item{store.id}{a filesystem path to the store (an .rds file)}

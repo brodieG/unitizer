@@ -12,6 +12,7 @@ NULL
 #' whereas the former is really just a temporary object until we can generate
 #' the latter.
 #' 
+#' @keywords internal
 #' @aliases unitizerSectionExpression-class
 #' @slot title 1 lenght character, the name of the section
 #' @slot details character vector containing additional info on the section

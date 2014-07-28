@@ -60,7 +60,7 @@ strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE)
 #' @param x a 1 length character vector
 #' @param margin one of "both", "top", "bottom", "none", weather to add newlines at top or bottom
 #' @return 1 length character vector
-#' @S3method print H1
+#' @export
 
 print.H1 <- function(x, ...) {
   if(!is.character(x) || length(x) != 1L) stop("Argument `x` must be a 1 length character vector")
@@ -79,19 +79,19 @@ print.H1 <- function(x, ...) {
   )
   NextMethod()
 }
-#' @S3method print H2
+#' @export
 
 print.H2 <- function(x, ...) {
   x <- header_help(x, pad.char="=")
   NextMethod()
 }
-#' @S3method print H3
+#' @export
 
 print.H3 <- function(x, ...) {
   x <- header_help(x, pad.char="-")
   NextMethod()
 }
-#' @S3method print header
+#' @export
 
 print.header <- function(x, margin="bottom", ...) {
   if(!is.character(x)) stop("Argument `x` must be a character vector")
@@ -103,7 +103,6 @@ print.header <- function(x, margin="bottom", ...) {
   cat(x)
   invisible(x)
 }
-
 #' Helper function for single line headers
 #' 
 #' @keywords internal
@@ -170,7 +169,7 @@ OL <- function(x) {
 #' Print Methods for \code{`\link{UL}`} and \code{`\link{OL}`} objects
 #' 
 #' @keywords internal
-#' @S3method print bullet
+#' @export
 #' @param x object to print
 #' @param width integer how many characters to wrap at, if set to 0 will auto
 #'   detect width with \code{getOptions("width")}
@@ -186,7 +185,7 @@ print.bullet <- function(x, width=0L, ...) {
 #' @param ... dots
 #' @return character vector containing rendered object, where each element
 #'   corresponds to a line
-#' @S3method as.character bullet
+#' @export
 
 as.character.bullet <- function(x, width=0L, pre, ...) {
   if(!is.numeric(width) || length(width) != 1L || width < 0) {
@@ -212,13 +211,13 @@ as.character.bullet <- function(x, width=0L, pre, ...) {
         ) },
         items, pre
 ) ) ) }
-#' @S3method as.character UL
+#' @export
 
 as.character.UL <- function(x, width=0L, ...) {
   bullets <- rep("- ", length(x))
   NextMethod(pre=bullets)
 }
-#' @S3method as.character OL
+#' @export
 
 as.character.OL <- function(x, width=0L, ...) {
   bullets <- paste0(format(1:length(x)), ". ")
@@ -260,7 +259,8 @@ text_wrap <- function(x, width) {
 #' attribute on each conditions which indicate that the condition occurred
 #' in the print/show methods as applied to the result of a call.
 #' 
-#' @S3method all.equal condition_list
+#' @keywords internal
+#' @export
 #' @param target the list of conditions that we are matching against
 #' @param current the list of conditions we are checking
 #' @return TRUE if the lists of conditions are equivalent, an character vector explaining
@@ -323,7 +323,8 @@ all.equal.condition_list <- function(target, current, ...) {
 }
 #' Compare Conditions
 #' 
-#' @S3method all.equal condition
+#' @keywords internal
+#' @export
 #' @param target a condition
 #' @param current another condition to compare
 #' @return TRUE if conditions match, character vector describing differences otherwise
@@ -351,7 +352,7 @@ all.equal.condition <- function(target, current, ...) {
 #' Prints A list of Conditions
 #' 
 #' @keywords internal
-#' @S3method print condition_list
+#' @export
 #' @param x a condition_list object (list of conditions)
 #' @param width how many total chars the conditions should be displayed to
 #' @return x, invisibly
@@ -456,6 +457,7 @@ desc <- function(val, limit=getOption("width")) {
 #' 
 #' If names are invalid, quotes them with backtics
 #' 
+#' @keywords internal
 #' @param x character vector
 #' @return character vector
 

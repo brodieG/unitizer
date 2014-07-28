@@ -49,6 +49,7 @@
 #' including the calls that were direct children of top level, as well as
 #' the children to those sections.
 #' 
+#' @keywords internal
 #' @param ids integer the ids to look through
 #' @param par.ids integer the parenthood relationships
 #' @param top.level the id of the top level
@@ -99,6 +100,7 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
 #' be submitted as part of `comment.dat` (i.e. they all have
 #' the same parent, they don't strictly have to be top.level).
 #' 
+#' @keywords internal
 #' @param expr and expression
 #' @param comment.dat a data frame derived from \code{`\link{getParseData}`}
 #' @return an expression with comments attached as attributes to each 
@@ -234,6 +236,7 @@ comments_assign <- function(expr, comment.dat) {
 #' expressions had to change this function to accept text/file rather
 #' than an expression as an input (but even that didn't fix it!!!)
 #' 
+#' @keywords internal
 #' @seealso comments_assign, getParseData, parse
 #' @param file containing code to parse with comments
 #' @param text optional, text to parse if \code{`file`} is not specified
@@ -486,6 +489,9 @@ prsdat_fix_exprlist <- function(parse.dat) {
 #' be NULL to allow for logic that works with nested structures
 #' 
 #' These are the comments attached by \code{`\link{parse_data_assign}`}
+#' 
+#' @keywords internal
+
 
 comm_extract <- function(x) {
   if(length(x) > 1L || is.expression(x)) {
@@ -499,6 +505,9 @@ comm_extract <- function(x) {
 #' Required due to bizarre behavior (bug?) where some expression attributes
 #' appear to have reference like behavior even when they are re-generated
 #' from scratch from a text expression (wtf, really).
+#' 
+#' @keywords internal
+
 
 comm_reset <- function(x) {
   attr(x, "comment") <- NULL
