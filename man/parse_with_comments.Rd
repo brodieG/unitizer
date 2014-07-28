@@ -6,7 +6,9 @@
 parse_with_comments(file, text = NULL)
 }
 \arguments{
-\item{expr.main}{an expression produced by \code{`\link{parse}`}}
+\item{file}{containing code to parse with comments}
+
+\item{text}{optional, text to parse if \code{`file`} is not specified}
 }
 \value{
 an expression with comments retrieved from the parse attached

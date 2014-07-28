@@ -163,6 +163,7 @@ setMethod("done", "unitizerList",
 #' 
 #' The resulting object must pass the validity method for \code{`x`}.
 #' 
+#' @export
 #' @param x the object to append to
 #' @param values the object to append
 #' @param after a subscript, after which the values are to be appended.
