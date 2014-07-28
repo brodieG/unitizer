@@ -62,7 +62,8 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     # Revert settings, get captured messages, if any and if user isn't capturing already
 
     capt <- get_capture(std.err.capt.con, std.err.capt, std.out.capt.con, std.out.capt)
-      if(aborted & is.call(x)) {   # check to see if `unitizer_sect` failed
+    file.remove(std.err.capt, std.out.capt)
+    if(aborted & is.call(x)) {   # check to see if `unitizer_sect` failed
       test.fun <- try(eval(x[[1L]], test.env), silent=TRUE)
       if(identical(test.fun, unitizer_sect)) {
         stop("Failed instantiating a unitizer section:\n", paste0(capt$message, "\n"))
