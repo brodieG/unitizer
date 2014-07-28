@@ -71,10 +71,19 @@ get_store.character <- function(store.id) {
   }
   if(!file.exists(store.id)) return(FALSE)
   if(!file_test("-d", store.id)) stop("Argument `store.id` must refer to a directory")
+  if(
+    !file.exists(paste0(store.id, "/data.rds")) || 
+    !file_test("-f", paste0(store.id, "/data.rds"))
+  ) {
+    stop(
+      "Argument `store.id` does not appear to refer to a directory containing",
+      "`unitizer` objects."
+    )
+  }
   if(inherits(try(unitizer <- readRDS(paste0(store.id, "/data.rds"))), "try-error")) {
     stop("Failed loading unitizer; see prior error messages for details")
   }
-  if(!is(unitizer, "unitizer")) stop("Retrieved object is not a `unitizer`")
+  if(!is(unitizer, "unitizer")) stop("Retrieved object is not a `unitizer` store")
   if(!identical(store.id, unitizer@id)) {
     if(is.character(unitizer@id) & length(unitizer@id) == 1L) {
       warning(
