@@ -508,7 +508,6 @@ comm_extract <- function(x) {
 #' 
 #' @keywords internal
 
-
 comm_reset <- function(x) {
   attr(x, "comment") <- NULL
   if(is.pairlist(x)) return(x)
