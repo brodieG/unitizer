@@ -235,7 +235,8 @@ comments_assign <- function(expr, comment.dat) {
 #' than an expression as an input (but even that didn't fix it!!!)
 #' 
 #' @seealso comments_assign, getParseData, parse
-#' @param expr.main an expression produced by \code{`\link{parse}`}
+#' @param file containing code to parse with comments
+#' @param text optional, text to parse if \code{`file`} is not specified
 #' @return an expression with comments retrieved from the parse attached
 #'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 

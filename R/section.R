@@ -71,11 +71,14 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' \code{`\link{unitizerItemTestsFuns-class}`} object intialized with the
 #' appropriate functions (see example).
 #' 
+#' It is possible to have nested sections, but titles, etc. are ignored.  The
+#' only effect of sub-sections is to allow you to change the comparison 
+#' functions for a sub-section of a `unitizer_sect`.
+#' 
 #' @note if you want to modify the functions used to compare conditions,
 #' keep in mind that the conditions are stored in lists, so your function
-#' must loop through the lists and compare conditions pairwise (i.e. you
-#' can't just use \code{`\link{all.equal}`} or \code{`\link{identical}`}
-#' as you can when comparing the values or other side effects).
+#' must loop through the lists and compare conditions pairwise.  By default
+#' `unitizer` uses `all.equal.condition_list`.
 #' 
 #' @note currently sections have no impact whatsoever on reference expressions.
 #' The only thing that matters is what section the new expressions are in.
