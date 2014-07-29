@@ -554,3 +554,16 @@ screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=s
     if(out.len > max.len[[1]]) {
       cat("... truncated", out.len - max.len[[2]], "lines, review object directly if you wish to see all output\n", file=stderr())
 } } }
+
+#' Overrides Default quit() Behavior
+#' 
+#' Necessary because quit short circuits the `on.exit` clean-up functions and 
+#' would leave stuff in a weird state (history not reset, etc.).
+#' 
+#' This is used in \code{`\link{unitize}`}.
+#'  
+#' @keywords internal
+
+unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
+  invokeRestart("quitExit", list(save=save, status=status, runLast=runLast))
+}
