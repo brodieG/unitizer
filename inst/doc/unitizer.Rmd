@@ -87,6 +87,21 @@ If everything is working as before then all the tests will pass and you can keep
 
 You don't need to go through the entirity of this oxymoronically lengthy vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to receive assitance.
 
+### Non-Interactive Use
+
+`unitizer` works fine in non-interactive environments, though in this case the only way for `unitizer` to succeed is if there are no changes to the test file or to the evaluation results.  If this is not the case, you will need to run `unitizer` in an interactive environment to identify the problems and either resolve them or update the `unitizer` store.
+
+### `unitizer` and Packages
+
+The simplest way to use `unitizer` as part of your package development process is to create a `tests/unitizer` folder for all your `unitizer` test scripts, and then, in `tests`, add an additional file with calls to `unitize`.  For example, in addition to our `tests/unitizer/fastlm.R` file, we would have:
+
+    ## file: tests/run.R
+
+    library(unitzer)
+    unitize("unitizer/fastlm.R")
+
+You can have multiple `unitize` statements.  Note that the path specification for test files should be relative to the `tests` directory as that is what `R CMD check` effectively sets the working directory to before running the files in `tests/`.  This means you can't just source your `run.R` file without also first setting the working directory to `tests/`.
+
 ## A Detailed Run-through
 
 ### Overview
@@ -540,6 +555,8 @@ At any point you may quit `unitizer` by typing `Q` at the `unitizer` prompt.  If
 
 Before `unitizer` quits completely we are given the chance to review are changes by using the `B` or `R` navigation commands.  In this case we just quit without further ado; since we had not chosen any of the new test values to replace the old there was no need to modify the unitizer store.
 
+You can also use `quit()` from the `unitizer` prompt, though this is not recommended as it will override standard `unitizer` behavior.
+
 ## Esoteric Topics
 
 ### Subtleties Of The Interactive Environment
@@ -584,6 +601,15 @@ Clearly this is not an ideal outcome, but the compromise was necessary to avoid 
 ### Alternate Store Locations
 
 While this is not tested, in theory `unitizer` allows you to keep the `unitizer` store outside of the file system.  For example, you could keep the store in an SQL database.  To do so you need to define `get_store` and `set_store` S3 methods.  See the documentation for those functions for details on how to implement this.
+
+### Overridden Functionality
+
+In order to perpetuate the R console prompt illusion, `unitizer` needs to override some buit-in functionality, including:
+
+* `ls` is replaced by a special version that can explore the `unitizerItem` environments
+* `quit` and `q` are wrappers around the base functions that allow `unitizer` to quit gracefully
+* `traceback` while not replaced, is supported by a fair bit of voodoo involving among other things assigning to `.Traceback`
+* History is replaced during `unitizer` prompt evaluations with a temporary version of the history file containing only commands evaluated at the `unitizer` prompt.  The normal history file is restored on exit. 
 
 ## Extreme Programming with `unitizer`
 
