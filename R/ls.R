@@ -1,7 +1,9 @@
 #' An `ls` Like Function
 #' 
-#' Much like `ls`, except that it will list all the objects 
-#' recorded in the test items
+#' Much like `ls`, except that it is designed to crawl up the \code{`.new`} and
+#' \code{`.ref`} environments and display all the objects.
+#' 
+#' This is used in \code{`\link{browse,unitizer-method}`}.
 #' 
 #' @keywords internal
 #' @return list of object names, or a list with environments containing the objects
@@ -14,7 +16,7 @@
 #' env3 <- new.env(parent=env2)
 #' assign("var3", 3.1415, env3)
 #' 
-#' ls <- unitizer:::make_ls(globalenv())
+#' ls <- unitizer_ls
 #' evalq(ls(), env3)
 #' evalq(base::ls(), env3)
 #' rm(ls)

@@ -272,6 +272,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     browse.env <- list2env(var.sub.list, parent=browse.par.env)
     browse.eval.env <- new.env(parent=browse.env)
 
+    # Functions to override
+    
     env.sec <- if(!is.null(item.new) && !is.null(item.ref)) item.ref@env else NULL
     assign("ls", unitizer_ls, base.env.pri)
     if(!is.null(env.sec)) {
