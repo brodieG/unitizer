@@ -1,7 +1,7 @@
 #' Set and Retrieve Store Contents
 #' 
 #' These functions are not used directly; rather, they are used by
-#' \code{`\link{runtests}`} to get and set the \code{`unitizer`} objects.
+#' \code{`\link{unitize}`} to get and set the \code{`unitizer`} objects.
 #' You should only need to understand these functions if you are
 #' looking to implement a special storage mechanism for the \code{`unitizer`}
 #' objects.
@@ -32,7 +32,7 @@
 #' get_store.sql_unitizer <- function(store.id) { # FUNCTION BODY }
 #' set_store.sql_unitizer <- function(store.id, unitizer) { # FUNCTION BODY }
 #' 
-#' runtests("unitizer/cornertestcases.R", my.sql.store.id)
+#' unitize("unitizer/cornertestcases.R", my.sql.store.id)
 #' } 
 #' For inspirations for the bodies of the _store functions look at the source
 #' code for \code{`unitizer:::get_store.character`} and \code{`unitizer:::set_store.character`}.
@@ -48,7 +48,7 @@
 #'   \item \code{`\link{stop}`} on error
 #' }
 #' 
-#' @aliases set_store
+#' @aliases get_store
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
 #' @param unitizer a \code{`\link{unitizer-class}`} object containing the store data
@@ -58,6 +58,35 @@
 #'     \item get_store a \code{`\link{unitizer-class}`} object, FALSE
 #'       if \code{`store.id`} doesn't exist yet , or error otherwise
 #'   }
+
+set_store <- function(store.id, unitizer) {
+  UseMethod("set_store")
+}
+#' @export
+
+set_store.default <- function(store.id, unitizer) {
+  stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
+}
+#' @export
+
+set_store.character <- function(store.id, unitizer) {
+  if(!is.character(store.id) || length(store.id) != 1L) {
+    stop("Argument `store.id` must be a 1 length character vector")
+  }
+  if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
+  new.file <- FALSE
+  if(!file.exists(store.id)) {
+    if(!isTRUE(dir.create(store.id))) 
+      stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")    
+  } else if (!file_test("-d", store.id)) {
+    stop("'", store.id, "' is not a directory.")
+  }
+  if(inherits(try(saveRDS(unitizer, paste0(store.id, "/data.rds"))), "try-error")) {
+    stop("Failed setting unitizer; see prior error messages for details.")
+  }
+  TRUE
+}
+#' @export
 
 get_store <- function(store.id) {
   UseMethod("get_store")
@@ -99,33 +128,4 @@ get_store.character <- function(store.id) {
 
 get_store.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
-}
-#' @export
-
-set_store <- function(store.id, unitizer) {
-  UseMethod("set_store")
-}
-#' @export
-
-set_store.default <- function(store.id, unitizer) {
-  stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
-}
-#' @export
-
-set_store.character <- function(store.id, unitizer) {
-  if(!is.character(store.id) || length(store.id) != 1L) {
-    stop("Argument `store.id` must be a 1 length character vector")
-  }
-  if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
-  new.file <- FALSE
-  if(!file.exists(store.id)) {
-    if(!isTRUE(dir.create(store.id))) 
-      stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")    
-  } else if (!file_test("-d", store.id)) {
-    stop("'", store.id, "' is not a directory.")
-  }
-  if(inherits(try(saveRDS(unitizer, paste0(store.id, "/data.rds"))), "try-error")) {
-    stop("Failed setting unitizer; see prior error messages for details.")
-  }
-  TRUE
 }

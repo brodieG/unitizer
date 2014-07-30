@@ -13,7 +13,7 @@ setClass("unitizerTests", contains="unitizerList")
 setClassUnion("unitizerTestsOrExpression", c("unitizerTests", "expression"))
 
 
-#' Add More Tests to \code{`\link{unitizerTests}`}
+#' Add More Tests to \code{`\link{unitizerTests-class}`}
 #' 
 #' Will overwrite the call at the current index with the contents of the
 #' expression passed as the \code{`e2`} argument, unless current index is 0L
@@ -22,7 +22,7 @@ setClassUnion("unitizerTestsOrExpression", c("unitizerTests", "expression"))
 #' \code{`\link{unitizerSectionExpression-class}`} that should then replace the
 #' call.
 #' 
-#' The index of the \code{`\link{unitizerTests}`} object will be set so that 
+#' The index of the \code{`\link{unitizerTests-class}`} object will be set so that 
 #' the next call to \code{`\link{nextItem,unitizerList-method}`} will return the first
 #' call that was added.
 #' 

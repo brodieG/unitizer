@@ -27,8 +27,5 @@ The expectation is that only "top level" expressions will
 be submitted as part of `comment.dat` (i.e. they all have
 the same parent, they don't strictly have to be top.level).
 }
-\seealso{
-parse_data_assign
-}
 \keyword{internal}
 

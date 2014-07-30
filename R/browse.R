@@ -14,7 +14,7 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #'   \item tests that exist in the reference tests but no the new file
 #' }
 #' Because a lot of the logic for browsing these three types of situations is
-#' shared, that logic has been split off into \code{`\link{browse_unitizer_items}`}.
+#' shared, that logic has been split off into \code{`\link{reviewNext,unitizerBrowse-method}`}.
 #' The key is that that function will return the items that are supposed to be
 #' stored in the unitizer.  These items will either be new or reference ones
 #' based on user decisions.
@@ -22,8 +22,8 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #' Unfortunately, in order to be able to use the same logic for tasks that are
 #' not quite the same, a bit of contortion was needed.  In particular, the
 #' user is always asked to input either Y, N, or Q, but the corresponding output
-#' from \code{`\link{browse_unitizer_items}`} is very different depending on what
-#' situation we're dealing with.
+#' from \code{`\link{reviewNext,unitizerBrowse-method}`} is very different 
+#' depending on what situation we're dealing with.
 #' 
 #' One important point is that by default the user input is defined as N.  In
 #' all cases N means no change to the store, though again the interpretation is
@@ -137,6 +137,8 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
     unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
     unitizer + items.ref
 } )
+setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
+
 #' Bring up Review of Next test
 #' 
 #' Generally we will go from one test to the next, where the next test is 
@@ -147,7 +149,6 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
 #' 
 #' @keywords internal
 
-setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("unitizerBrowse"), 
   function(x, ...) {
     curr.id <- x@last.id + 1L
@@ -288,7 +289,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         base.env.pri
     ) }
     get.msg <- character()
-    if(!is.null(item.new)) get.msg <- "`getTest(.new)`"
+    if(!is.null(item.new)) get.msg <- "`(.new)`"
     if(!is.null(item.ref)) get.msg <- c(get.msg, "`getTest(.ref)`")
     
     # Options to navigate; when navigating the name of the game is set `@last.id`
@@ -367,17 +368,18 @@ getItemData <- function(x, name, what, env) {
   if(!(what %in% slotNames(obj@data))) stop("Logic Error: unknown slot, contact maintainer.")
   slot(obj@data, what)
 }
-
 #' Retrieve Additional Info About Tests
 #' 
 #' Intended for use exclusively within the \code{`unitizer`} interactive command 
 #' line.  For example \code{getMsg(.new)} will retrieve any \file{stderr} that occurred
 #' during test evaluation (for reference tests, use \code{getMsg(.ref)}.
 #' 
+#' @note these functions are only available at the \code{`unitizer`} prompt
+#' 
 #' @name getTest
 #' @usage getTest(x)
 #' @aliases getVal getConds getMsg getOut getAborted
-#' @param x object to get additional data for (should be one of \code{`obj`}, \code{`ref`})
+#' @param x object to get additional data for (should be one of \code{`.new`}, \code{`.ref`})
 #' @return depends on what you requested:
 #' \itemize{
 #'   \item \code{`getConds`}: the conditions as a list of conditions or an
@@ -400,7 +402,7 @@ getItemData <- function(x, name, what, env) {
 #'     on the prompt (not implemented yet).
 #' }
 
-NULL
+getTest <- function(x) NULL # This will be overwritten 
 getItemSlots <- c(
   getTest="test", getConds="conditions", getVal="value", 
   getMsg="message", getOut="output", getAborted="aborted", getExpr="call"

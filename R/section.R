@@ -16,7 +16,7 @@ NULL
 #' @aliases unitizerSectionExpression-class
 #' @slot title 1 lenght character, the name of the section
 #' @slot details character vector containing additional info on the section
-#' @slot compare functions to compare the various aspects of a \code{`\link{testItem}`}
+#' @slot compare functions to compare the various aspects of a \code{`\link{unitizerItem-class}`}
 #' @slot length tracks size of the section
 
 setClass(
@@ -52,6 +52,8 @@ setClass("unitizerSectionExpression", contains="unitizerList",
   )
 )
 setClassUnion("unitizerSectionExpressionOrExpression", c("unitizerSectionExpression", "unitizerSection", "expression"))
+
+#' Compute Length of a \code{`\link{unitizerSection-class}`}
 
 setMethod("length", "unitizerSection", function(x) x@length)
 
@@ -91,7 +93,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' @param title character 1 length title for the section, can be omitted
 #'   though if you do omit it you will have to refer to the subsequent
 #'   arguments by name (i.e. \code{`unitizer_sect(expr=...)`})
-#' @param test expression(s), most commonly a call to \code{`{}`} with 
+#' @param expr test expression(s), most commonly a call to \code{`{}`} with 
 #'   several calls inside (see examples)
 #' @param details character more detailed description of what the purpose
 #'   of the section is; currently this doesn't do anything.

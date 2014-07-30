@@ -3,7 +3,7 @@
 #' Sequentially applies all applicable patches
 #' 
 #' @param object an unitizer object
-#' @param return an upgraded unitizer object
+#' @return an upgraded unitizer object
 
 setMethod("upgrade", "unitizer", valueClass="unitizer",
   function(object, ...) {

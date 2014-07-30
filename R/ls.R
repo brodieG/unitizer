@@ -3,23 +3,11 @@
 #' Much like `ls`, except that it is designed to crawl up the \code{`.new`} and
 #' \code{`.ref`} environments and display all the objects.
 #' 
-#' This is used in \code{`\link{browse,unitizer-method}`}.
+#' This is used in \code{`\link{browse,unitizer-method}`}, and is re-assigned to
+#' \code{`ls`} for use in the \code{`unitizer`} prompt environment.
 #' 
 #' @keywords internal
 #' @return list of object names, or a list with environments containing the objects
-#' @seealso \code{`\link{print.unitizer_ls}`}
-#' @examples
-#' env1 <- new.env()
-#' assign("var1", "25", env1)
-#' env2 <- new.env(parent=env1)
-#' assign("var2", "hello", env2)
-#' env3 <- new.env(parent=env2)
-#' assign("var3", 3.1415, env3)
-#' 
-#' ls <- unitizer_ls
-#' evalq(ls(), env3)
-#' evalq(base::ls(), env3)
-#' rm(ls)
 
 unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
    all.names = FALSE, pattern

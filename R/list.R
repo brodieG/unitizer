@@ -23,21 +23,34 @@ setClass(
 )
 # - Methods -------------------------------------------------------------------
 
+#' Compute Number of Items in \code{`\link{unitizerList-class}`}
+#' 
+#' @keywords internal
+
 setMethod("length", "unitizerList", function(x) length(x@.items)) 
 
-#' Indexing Methods for \code{`\link{unitizerList-class}`}
+#' Subsetting Method for \code{`\link{unitizerList-class}`}
+#' 
 #' @keywords internal
-#' @aliases [[,unitizerList,subIndex-method
 
 setMethod("[", signature(x="unitizerList", i="subIndex", j="missing", drop="missing"),
   function(x, i) {
     x@.items <- x@.items[i]
     x
 } )
+#' Subsetting Method for \code{`\link{unitizerList-class}`}
+#' 
+#' @keywords internal
+
 setMethod("[[", signature(x="unitizerList", i="subIndex"),
   function(x, i) {
     x@.items[[i]]
 } )
+#' Replace Method for \code{`\link{unitizerList-class}`}
+#' 
+#' @name [<-,unitizerList,subIndex-method
+#' @keywords internal
+
 setReplaceMethod("[", signature(x="unitizerList", i="subIndex"),
   function(x, i, value) {
     pointer.reset <- (
@@ -49,6 +62,11 @@ setReplaceMethod("[", signature(x="unitizerList", i="subIndex"),
     if(pointer.reset) x@.pointer <- x@.pointer - lt
     x
 } )
+#' Replace Method for \code{`\link{unitizerList-class}`}
+#' 
+#' @name [[<-,unitizerList,subIndex-method
+#' @keywords internal
+
 setReplaceMethod("[[", signature(x="unitizerList", i="subIndex"),
   function(x, i, value) {
     pointer.reset <- (
@@ -74,6 +92,8 @@ setMethod("as.list", "unitizerList", function(x, ...) x@.items)
 
 setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.items, ...))
 
+setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
+
 #' Iterate through items of a \code{`\link{unitizerList-class}`} Object
 #' 
 #' Extraction process is a combination of steps:
@@ -96,7 +116,6 @@ setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.ite
 #' @return \code{`\link{unitizerList-class}`} for \code{`getItem`}, 
 #'   an item from the list, which could be anything
 
-setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 setMethod("nextItem", "unitizerList", valueClass="unitizerList",
   function(x) {
     x@.pointer <- x@.pointer + 1L
@@ -195,6 +214,10 @@ setMethod("append", c("unitizerList", "ANY"),
     validObject(y)
     y
 } )
+#' Concatenate to a \code{`\link{unitizerList-class}`}
+#' 
+#' @keywords internal
+
 setMethod("c", c("unitizerList"), 
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")

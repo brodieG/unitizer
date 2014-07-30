@@ -117,7 +117,7 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
     e1
   }
 )
-#' Adds \code{`\link{unitizerItem}`} to \code{`\link{unitizer}`}
+#' Adds \code{`\link{unitizerItem-class}`} to \code{`\link{unitizer-class}`}
 #' 
 #' All tests are run on addition, and mapping information between reference and
 #' new tests is also recored.

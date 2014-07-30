@@ -1,3 +1,6 @@
+# Due to how these tests mess with output and message streams this is not within
+# a unit testing framework
+
 # Simple test
 
 unitizer:::release_sinks()
@@ -149,8 +152,6 @@ close(pre.sink.con)
 # Clean up
 
 unitizer:::release_sinks()
-fileremove(std.out)
-fileremove(std.err)
-fileremove(pre.sink)
-
-
+file.remove(std.out)
+file.remove(std.err)
+file.remove(pre.sink)

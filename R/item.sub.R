@@ -9,7 +9,6 @@ NULL
 
 #' Virtual Class To Enforce Slots on Subclasses
 #' 
-#' Used for \code{`\link{unitizerItemsTestFuns}`} and \code{`\link{unitizerItemTestsErrors}`}
 #' @keywords internal
 
 setClass("unitizerItemTests", contains="VIRTUAL",

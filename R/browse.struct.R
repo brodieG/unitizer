@@ -235,7 +235,6 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     out[out.sec.idx] <- out.sec
     if(length(out.sec) == 1L) out[-out.sec.idx] else out
 } )
-
 #' Indicate Whether to Exit Review Loop
 #' 
 #' @keywords internal
@@ -284,7 +283,7 @@ setClass("unitizerBrowseSection", contains="unitizerList",
 #' Add Sections to Our Main Browse Object
 #' 
 #' Primarily we're contructing the \code{`@@mapping`} slot which will then allow
-#' us to carry out requisite computations later.  See \code{`\link{unitizerBrowseMapping}`}
+#' us to carry out requisite computations later.  See \code{`\link{unitizerBrowseMapping-class}`}
 #' for details on what each of the slots in \code{`mapping`} does
 #' 
 #' @keywords internal
@@ -380,6 +379,10 @@ setClass("unitizerBrowseSubSection",
     TRUE
   }
 )
+#' Compute Length of a \code{`\link{unitizerBrowseSubSection-class}`}
+#' 
+#' @keywords internal
+
 setMethod("length", "unitizerBrowseSubSection", valueClass="logical",
   function(x) max(length(x@items.new), length(x@items.ref))
 )
@@ -436,6 +439,11 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
     actions=c(Y="C", N="B")
 ) )
 
+#' Add a browsing sub-section to a browse section
+#' 
+#' @param e1 a \code{`\link{unitizerBrowseSection-class}`}
+#' @param e2 a \code{`\link{unitizerBrowseSubSection-class}`}
+#' @return a \code{`\link{unitizerBrowseSection-class}`}
 #' @keywords internal
 
 setMethod("+", c("unitizerBrowseSection", "unitizerBrowseSubSection"), 

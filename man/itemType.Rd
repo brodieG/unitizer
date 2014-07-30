@@ -10,7 +10,7 @@
 itemType(x, ...)
 }
 \description{
-Necessitated due to the awkward structure around \code{`\link{browse_unitizer_item}`},
+Necessitated due to the awkward structure around \code{`\link{reviewNext,unitizerBrowse-method}`},
 where the only return value is a \code{`\link{unitizerItems-class}`} object and there is
 no easy way to tell which objects have been kept from reference vs which ones are
 new.

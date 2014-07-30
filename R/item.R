@@ -13,9 +13,9 @@ NULL
 #' Kept separate from the \code{`\link{unitizerItem-class}`} because these
 #' are the slots that get compared from the new item to the reference items
 #' which means there are a whole bunch of other classes that need to have the
-#' same structure as this (e.g. \code{`\link{unitizerItemTestsFun}`}) and by
-#' definining it we let those other classes confirm they have the correct
-#' structure.
+#' same structure as this and by definining it we let those other classes 
+#' confirm they have the correct structure.
+#' 
 #' @keywords internal
 
 setClass(
@@ -160,7 +160,7 @@ setMethod("show", "unitizerItem",
 } )
 #' Methods to Track Whether a \code{`\link{unitizerItem-class}`} Object is New Or Reference
 #' 
-#' Necessitated due to the awkward structure around \code{`\link{browse_unitizer_item}`},
+#' Necessitated due to the awkward structure around \code{`\link{reviewNext,unitizerBrowse-method}`},
 #' where the only return value is a \code{`\link{unitizerItems-class}`} object and there is
 #' no easy way to tell which objects have been kept from reference vs which ones are 
 #' new.

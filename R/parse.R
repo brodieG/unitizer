@@ -87,6 +87,11 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
   } else {
     matrix(integer(), ncol=2)
 } }
+# Need this to pass R CMD check; problems likely caused by `transform` and 
+# `subset`.
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("token", "col1", "line1"))
+
 #' Assign Comments From Parse Data to Expression Elements
 #' 
 #' Based on parse data from \code{`\link{getParseData}`}, figures
@@ -105,7 +110,6 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
 #' @param comment.dat a data frame derived from \code{`\link{getParseData}`}
 #' @return an expression with comments attached as attributes to each 
 #'   expression component
-#' @seealso parse_data_assign
 
 comments_assign <- function(expr, comment.dat) {
   if(!identical(length(unique(comment.dat$parent)), 1L))
@@ -194,6 +198,11 @@ comments_assign <- function(expr, comment.dat) {
   }
   expr
 }
+# Need this to pass R CMD check; problems likely caused by `transform` and 
+# `subset`.
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token", "line2"))
+
 #' Recursively Descends Through a Parsed Expression and Assigns Comments
 #' 
 #' In order to implement this we had to make several assumptions about the
@@ -347,6 +356,11 @@ parse_with_comments <- function(file, text=NULL) {
   }
   prsdat_recurse(expr, parse.dat, top.level=0L)
 }
+# Need this to pass R CMD check; problems likely caused by `transform` and 
+# `subset`.
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("token"))
+
 #' Reduce Parsed Data to Just the Things That should Exist In Expression
 #' 
 #' additionally, special handling due to function and formals not getting wrapped
@@ -388,6 +402,11 @@ prsdat_reduce <- function(parse.dat) {
   }
   parse.dat.red[order(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra)), ]
 }
+# Need this to pass R CMD check; problems likely caused by `transform` and 
+# `subset`.
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "token"))
+
 #' Functions to Adjust Parse Data To Match Expression
 #' 
 #' \itemize{
@@ -419,6 +438,11 @@ prsdat_fix_fun <- function(parse.dat) {
     1L:nrow(parse.dat) > which(id == prsdat_find_paren(parse.dat)[[2]]) | token == "COMMENT" | 1L:nrow(parse.dat) == 1L
   )
 }
+# Need this to pass R CMD check; problems likely caused by `transform` and 
+# `subset`.
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token"))
+
 prsdat_fix_for <- function(parse.dat) {
   if(!identical(parse.dat$token[[1L]], "FOR")) 
     stop("Argument `parse.dat` must start with a 'FOR' token.")
@@ -437,6 +461,11 @@ prsdat_fix_for <- function(parse.dat) {
   parse.dat.mod <- subset(parse.dat, !token %in% c("forcond", "IN") & ! id %in% par.range)
   `[<-`(parse.dat.mod, parse.dat.mod$parent == par.level, "parent", parse.dat[1L, "parent"])
 }
+# Need this to pass R CMD check; problems likely caused by `transform` and 
+# `subset`.
+
+if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token"))
+
 prsdat_fix_simple <- function(parse.dat, tok) {
   if(! tok %in% c("IF", "WHILE")) stop("Logic Error, this function only supports 'IF' and 'WHILE' tokens")
   if(!identical(parse.dat$token[[1L]], tok)) 
@@ -488,10 +517,7 @@ prsdat_fix_exprlist <- function(parse.dat) {
 #' Note that when dealing with expressions the very first item will typically
 #' be NULL to allow for logic that works with nested structures
 #' 
-#' These are the comments attached by \code{`\link{parse_data_assign}`}
-#' 
 #' @keywords internal
-
 
 comm_extract <- function(x) {
   if(length(x) > 1L || is.expression(x)) {

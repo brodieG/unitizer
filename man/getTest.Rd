@@ -11,7 +11,7 @@
 getTest(x)
 }
 \arguments{
-\item{x}{object to get additional data for (should be one of \code{`obj`}, \code{`ref`})}
+\item{x}{object to get additional data for (should be one of \code{`.new`}, \code{`.ref`})}
 }
 \value{
 depends on what you requested:
@@ -40,5 +40,8 @@ depends on what you requested:
 Intended for use exclusively within the \code{`unitizer`} interactive command
 line.  For example \code{getMsg(.new)} will retrieve any \file{stderr} that occurred
 during test evaluation (for reference tests, use \code{getMsg(.ref)}.
+}
+\note{
+these functions are only available at the \code{`unitizer`} prompt
 }
 

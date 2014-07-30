@@ -34,7 +34,7 @@ NULL
 #'   either NULL or a character vector describing the test failure reason for every item in \code{`items.new`}
 #' @slot items.ref.calls.deparse like \code{`items.new.calls.deparse`}, but for the reference items
 #' @slot items.ref.map maps reference items to the new items; deleted items will show up as NA here
-#' @slot sections a list of \code{`\link{unitizerSections}`}
+#' @slot sections a list of \code{`\link{unitizerSection-class}`}
 #' @slot section.map a map of every item in \code{`items.new`} to a section
 #' @slot changes contains summary data on the test results
 
@@ -92,6 +92,10 @@ setMethod("initialize", "unitizer",
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
     .Object
 } )
+#' Compute Length of a \code{`\link{unitizer-class}`} Object
+#' 
+#' @keywords internal
+
 setMethod("length", "unitizer", 
   function(x) {
     len.vec <- unique(c(length(x@items.new), length(x@items.new.map), length(x@items.new.calls.deparse)))

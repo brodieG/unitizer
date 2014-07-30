@@ -21,7 +21,7 @@ Depends:
 Imports:
     methods,
     stats
-License: GPL 2
+License: GPL-2
 LazyData: true
 Collate:
     'misc.R'

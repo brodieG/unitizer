@@ -69,6 +69,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
 #' @param x \code{`\link{unitizerItems-class}`} object
 #' @param y \code{`\link{unitizer-class}`} object \code{`x`} was generated from
+#' @param ... unused, here for inheriting methods
 #' @return \code{`unitizerItems-class`}
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems",
@@ -162,6 +163,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
       order(c(items.new.idx, slot.in))
     ]
 } )
+
+setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
+
 #' Compare The Objects In Environment for Ref vs. New Item
 #' 
 #' Makes sure that when we call \code{`ls`} when browsing its environment
@@ -184,7 +188,6 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 #' @return \code{`\link{unitizerItem-class}`} object with updated
 #'   \code{`ls`} field and environment reference parent
 
-setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 setMethod("updateLs", "unitizerItem", 
   function(x, base.env, new.par.env=NULL,  ...) {
     if(!is.null(new.par.env) && !is.environment(new.par.env)) stop("Argument `new.par.env` should be an environment or NULL.")

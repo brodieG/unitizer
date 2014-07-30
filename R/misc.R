@@ -182,6 +182,8 @@ print.bullet <- function(x, width=0L, ...) {
 #' Produce Character Vector Representation of Bullet Lists
 #' 
 #' @param x object to render
+#' @param width how many characters to wrap at
+#' @param pre what to pre-pend to each bullet
 #' @param ... dots
 #' @return character vector containing rendered object, where each element
 #'   corresponds to a line
