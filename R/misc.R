@@ -1,3 +1,7 @@
+#' @include list.R
+
+NULL
+
 #' Deparse, But Make It Look Like It Would On Prompt
 #'
 #' @param expr an expression or call
@@ -253,6 +257,16 @@ text_wrap <- function(x, width) {
         start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
 ) } ) }
 
+
+#' Contains A List of Conditions
+#' 
+#' Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
+#' compatibility issues.
+#' 
+#' @export
+
+setClass("conditionList", contains="unitizerList")
+
 #' Compare Lists of Conditions
 #' 
 #' This is the default function for comparing conditions across the new and
@@ -268,61 +282,65 @@ text_wrap <- function(x, width) {
 #' @return TRUE if the lists of conditions are equivalent, an character vector explaining
 #'   why they are not otherwise
 
-all.equal.condition_list <- function(target, current, ...) {
-  if(
-    !is.list(target) || !is.list(current) || 
-    !all(vapply(target, inherits, FALSE, "condition")) ||
-    !all(vapply(current, inherits, FALSE, "condition"))
-  ) return("`target` or `current` are not both lists of conditions")
+setMethod("all.equal", "conditionList",
+  function(target, current, ...) {
+    if(
+      !all(vapply(as.list(target), inherits, FALSE, "condition")) ||
+      !all(vapply(as.list(current), inherits, FALSE, "condition"))
+    ) return("`target` or `current` are not both lists of conditions")
 
-  print.show.err <- paste0(
-    "Condition mismatch may involve print/show methods; carefully review ",
-    "conditions with `getConds(.new)` and `getConds(.ref)` as just ",
-    "typing `.ref` or `.new` at the prompt will invoke print/show methods, ",
-    "which themselves may be the cause of the mismatch."
-  )
-  if(length(target) != length(current)) {
-    return(
-      c(
-        paste0(
-          "`target` and `current` do not have the same number of conditions (",
-          length(target), " vs ", length(current), ")"
-        ),
-        if(any(unlist(lapply(append(target, current), attr, "printed")))) {
-          print.show.err
+    print.show.err <- paste0(
+      "Condition mismatch may involve print/show methods; carefully review ",
+      "conditions with `getConds(.new)` and `getConds(.ref)` as just ",
+      "typing `.ref` or `.new` at the prompt will invoke print/show methods, ",
+      "which themselves may be the cause of the mismatch."
+    )
+    if(length(target) != length(current)) {
+      return(
+        c(
+          paste0(
+            "`target` and `current` do not have the same number of conditions (",
+            length(target), " vs ", length(current), ")"
+          ),
+          if(
+            any(
+              unlist(lapply(as.list(append(target, current)), attr, "printed")
+            ) ) 
+          ) {
+            print.show.err
+          }
+    ) ) }
+    cond.len <- min(length(target), length(current))
+    
+    res <- lapply(
+      seq(len=cond.len),
+      function(x) {
+        target.printed <- isTRUE(attr(target[[x]], "printed"))
+        current.printed <- isTRUE(attr(current[[x]], "printed"))
+        if(!is.null(attr(target[[x]], "printed"))) attr(target[[x]], "printed") <- NULL
+        if(!is.null(attr(current[[x]], "printed"))) attr(current[[x]], "printed") <- NULL
+
+        err.msg <- all.equal(target[[x]], current[[x]])
+        if(!isTRUE(err.msg) && (target.printed || current.printed)) {
+          err.msg <- c(err.msg, print.show.err)
         }
-  ) ) }
-  cond.len <- min(length(target), length(current))
-  
-  res <- lapply(
-    seq(len=cond.len),
-    function(x) {
-      target.printed <- isTRUE(attr(target[[x]], "printed"))
-      current.printed <- isTRUE(attr(current[[x]], "printed"))
-      if(!is.null(attr(target[[x]], "printed"))) attr(target[[x]], "printed") <- NULL
-      if(!is.null(attr(current[[x]], "printed"))) attr(current[[x]], "printed") <- NULL
-
-      err.msg <- all.equal(target[[x]], current[[x]])
-      if(!isTRUE(err.msg) && (target.printed || current.printed)) {
-        err.msg <- c(err.msg, print.show.err)
-      }
-      err.msg
-  } )
-  errs <- which(vapply(res, is.character, logical(1L)))
-  if((err.len <- length(errs)) == 1L) {
-    err.msg <- "There is 1 condition mismatch; "
-  } else  {
-    err.msg <- paste0("There are ", err.len, " condition mismatches; ")
-  }
-  if(err.len) {
-    return(
-      c(
-        paste0(err.msg, "showing first mismatch at condition #", errs[[1L]]),
-        res[[errs[[1L]]]]
-  ) ) }
-  if(all(unlist(res))) return(TRUE)
-  stop("Logic Error, unexpected return values from comparison function.")
-}
+        err.msg
+    } )
+    errs <- which(vapply(res, is.character, logical(1L)))
+    if((err.len <- length(errs)) == 1L) {
+      err.msg <- "There is 1 condition mismatch; "
+    } else  {
+      err.msg <- paste0("There are ", err.len, " condition mismatches; ")
+    }
+    if(err.len) {
+      return(
+        c(
+          paste0(err.msg, "showing first mismatch at condition #", errs[[1L]]),
+          res[[errs[[1L]]]]
+    ) ) }
+    if(all(unlist(res))) return(TRUE)
+    stop("Logic Error, unexpected return values from comparison function.")
+} )
 #' Compare Conditions
 #' 
 #' @keywords internal
@@ -355,39 +373,37 @@ all.equal.condition <- function(target, current, ...) {
 #' 
 #' @keywords internal
 #' @export
-#' @param x a condition_list object (list of conditions)
-#' @param width how many total chars the conditions should be displayed to
-#' @return x, invisibly
+#' @param object a \code{`conditionList`} object (list of conditions)
+#' @return object, invisibly
 
-print.condition_list <- function(x, width=getOption("width"), ...) {
-  if(!length(x)) {
-    cat("Empty condition list\n")
-    return(invisible(x))
-  }
-  if(!is.list(x) || !all(vapply(x, inherits, logical(1L), "condition"))) {
-    stop("Argument `x` must be a list of conditions")
-  }
-  out <- paste0(
-    format(seq_along(x)), ": ", 
-    ifelse(
-      print.show <- vapply(x, function(x) isTRUE(attr(x, "printed")), logical(1L)),
-      "[print] ", ""
-    ),
-    vapply(x, get_condition_type, character(1L)),
-    " in "
-  )
-  desc.chars <- max(width - nchar(out), 20L)
-  cond.detail <- vapply(x, FUN.VALUE=character(1L),
-    function(y) {
-      paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
-  } )
-  out <- paste0(out, substr(cond.detail, 1, desc.chars))
-  if(any(print.show)) {
-    out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
-  }
-  cat(out, sep="\n")
-  return(invisible(x))
-}
+setMethod("show", "conditionList",
+  function(object) {
+    width=getOption("width")
+    if(!length(object)) {
+      cat("Empty condition list\n")
+      return(invisible(object))
+    }
+    out <- paste0(
+      format(seq_along(object)), ": ", 
+      ifelse(
+        print.show <- vapply(object, function(y) isTRUE(attr(y, "printed")), logical(1L)),
+        "[print] ", ""
+      ),
+      vapply(, get_condition_type, character(1L)),
+      " in "
+    )
+    desc.chars <- max(width - nchar(out), 20L)
+    cond.detail <- vapply(object, FUN.VALUE=character(1L),
+      function(y) {
+        paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
+    } )
+    out <- paste0(out, substr(cond.detail, 1, desc.chars))
+    if(any(print.show)) {
+      out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
+    }
+    cat(out, sep="\n")
+    return(invisible(object))
+} )
 #' Extracts Condition Type From Condition Classes
 #' 
 #' Type (e.g. Error, Warning), is taken to be the second to last class.

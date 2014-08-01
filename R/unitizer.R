@@ -42,7 +42,7 @@ setClass(
   "unitizer",
   representation(
     id="ANY",
-    version="package_version",
+    version="ANY",               # should really be 'package_version', but want to avoid setOldClass
     zero.env="environment",                          # keep functions and stuff here
     base.env="environment",
 

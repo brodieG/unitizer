@@ -70,7 +70,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     } }
     new(
       "unitizerItem", call=x.to.eval, value=res$value, 
-      conditions=structure(res$conditions, class="condition_list"), 
+      conditions=new("conditionList", .items=res$conditions), 
       output=capt$output, message=capt$message, aborted=res$aborted, 
       env=test.env, comment=attr(x, "comment"), trace=res$trace
     )

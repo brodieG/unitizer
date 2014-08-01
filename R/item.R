@@ -22,16 +22,11 @@ setClass(
   "unitizerItemData", 
   representation(
     value="ANY", 
-    conditions="condition_list", 
+    conditions="conditionList", 
     output="character", 
     message="character",
     aborted="logical"      # more generally, should this be a withRestarts slot?
-  ),
-  validity=function(object) {
-    if(any(vapply(object@conditions, function(x) !inherits(x, "condition"), logical(1L)))) 
-      return("slot `conditions` may only contain \"condition\" objects")
-    TRUE
-} )
+) )
 #' Full Representation Of an Evaluated \code{`unitizer`} Test
 #' 
 #' @keywords internal

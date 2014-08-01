@@ -100,15 +100,13 @@ test_that("(Un)ordered Lists", {
 # } )
 
 test_that("Compare Conditions", {
-  lst1 <- structure(class="condition_list",
-    list(
+  lst1 <- new("conditionList", .items=list(
       simpleWarning("warning", quote(yo + yo)),
       simpleWarning("warning2", quote(yo2 + yo)),
       simpleWarning("warning3", quote(yo3 + yo)),
       simpleError("error1", quote(make_an_error()))
   ) )
-  lst2 <- structure(class="condition_list",
-    list(
+  lst2 <- new("conditionList", .items=list(
       simpleWarning("warning", quote(yo + yo)),
       simpleWarning("warning2", quote(yo2 + yo)),
       simpleError("error1", quote(make_an_error()))

@@ -1,5 +1,6 @@
 #' @include item.R
 #' @include unitizer.R
+#' @include class_unions.R
 
 NULL
 
@@ -120,7 +121,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     mapping="unitizerBrowseMapping", 
     last.id="integer",         # used so that `reviewNext` knows what to show next
     last.reviewed="integer",   # used so that `reviewNext` knows what headers to display
-    hist.con="fileOrNULL"
+    hist.con="ANY"             # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),

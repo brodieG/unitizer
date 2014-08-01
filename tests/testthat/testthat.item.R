@@ -190,8 +190,7 @@ local( {
       is(
         new(
           "unitizerItem", value=fun(), call=quote(fun()), 
-          env=sys.frame(sys.parent() + 1L), 
-          conditions=structure(list(), class="condition_list")
+          env=sys.frame(sys.parent() + 1L)
         ), 
         "unitizerItem"
       )

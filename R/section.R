@@ -76,12 +76,12 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' 
 #' It is possible to have nested sections, but titles, etc. are ignored.  The
 #' only effect of sub-sections is to allow you to change the comparison 
-#' functions for a sub-section of a `unitizer_sect`.
+#' functions for a sub-section of a \code{`unitizer_sect`}.
 #' 
 #' @note if you want to modify the functions used to compare conditions,
 #' keep in mind that the conditions are stored in lists, so your function
 #' must loop through the lists and compare conditions pairwise.  By default
-#' `unitizer` uses `all.equal.condition_list`.
+#' \code{`unitizer`} uses the \code{`all.equal`} method for S4 class \code{`conditionList`}.
 #' 
 #' @note currently sections have no impact whatsoever on reference expressions.
 #' The only thing that matters is what section the new expressions are in.

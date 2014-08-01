@@ -13,7 +13,7 @@ Description: Stores objects produced by test scripts so that they
     frameworks is that it greatly simplifies assertions designed to
     test complex output since the previously run correct output
     generates the assertions.
-Version: 0.4.0
+Version: 0.4.1
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodieDOTgaslam@MARISSAMAYERSCOMPANY.com>
 Depends:
@@ -24,9 +24,9 @@ Imports:
 License: GPL-2
 LazyData: true
 Collate:
-    'misc.R'
     'class_unions.R'
     'list.R'
+    'misc.R'
     'item.R'
     'item.sub.R'
     'section.R'

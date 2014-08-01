@@ -5,10 +5,12 @@ local( {
   obj.item <- new("unitizerItem", call=quote(1 + 1), env=new.env())
   obj.item@data@value <- 2 
   obj.item@data@output <- c("two", "dos", "due")
-  obj.item@data@conditions <- structure(
-    list(simpleError("hello"), simpleWarning("What a warning")),
-    class="condition_list")
-  obj.item@data@message <- vapply(obj.item@data@conditions, conditionMessage, character(1L))
+  obj.item@data@conditions <- new(
+    "conditionList", .items=list(simpleError("hello"), simpleWarning("What a warning"))
+  )
+  obj.item@data@message <- vapply(
+    unitizer:::as.list(obj.item@data@conditions), conditionMessage, character(1L)
+  )
   obj.item@data@aborted <- TRUE
   .new <- obj.item@data@value
 
