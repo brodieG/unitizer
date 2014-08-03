@@ -112,7 +112,7 @@ get_store.character <- function(store.id) {
     stop("Failed loading unitizer; see prior error messages for details")
   }
   if(!is(unitizer, "unitizer")) stop("Retrieved object is not a `unitizer` store")
-  if(!identical(store.id, unitizer@id)) {
+  if(!identical(path_clean(store.id), path_clean(unitizer@id))) {
     if(is.character(unitizer@id) & length(unitizer@id) == 1L) {
       warning(
         "ID in retrieved `unitizer` (", unitizer@id, ") doesn't match `store.id`; this may ",

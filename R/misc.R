@@ -585,3 +585,16 @@ screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=s
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
   invokeRestart("quitExit", list(save=save, status=status, runLast=runLast))
 }
+
+
+#' Cleans a Path to be In Standard Format
+#' 
+#' Uses \code{`\link{basedir}`} to convert paths on windows machines with back
+#' slasshes to forward slash based names, and then removed excess forward
+#' slashes.
+
+path_clean <- function(path) {
+  if(!is.character(path)) stop("Argument `path` must be character")
+  path.norm <- paste0(dirname(path), "/", basename(path))
+  sub("/+", "/", path.norm)
+}
