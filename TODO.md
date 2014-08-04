@@ -68,6 +68,9 @@ fixing, or hare-brained ideas for features.  Read at your own risk
   environment and not realizing the object they are looking at is not the same
   that was used in the evaluation of the reference test; need to think about
   now to handle this (throw warning whenever such objects are accessed?)
+* Sometimes we want to replace a test with a variation on it, with the expectation
+  that the result is unchanged; how do we provide a mechanism for the user to
+  do this?  Some system to browse all the tests and extract the objects there-in?
 
 ## Order of Tests
 
@@ -133,6 +136,9 @@ fixing, or hare-brained ideas for features.  Read at your own risk
 * provide option to only run new tests?  Makes incremental work on a large
   file easier so not everything has to be re-run
 * backup of the unitizer .rds file should be created
+* How do we handle .rds file in the context of version control systems?  Really
+  don't want to keep versioning the file file, though we do want to keep a
+  version of it at times (maybe for key builds, etc.)
 * provide facilities to upate unitizer id when unitizers are moved, though
   typically the unitizer should always be in the same relative location
   to the script that runs it.

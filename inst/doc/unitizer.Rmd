@@ -466,6 +466,11 @@ If you type any of those letters (without backticks) into the `unitizer` prompt 
 
 If at any time you forget what `unitizer` options are available to you you can just hit the "ENTER" key and `unitizer` will re-print the options to screen.
 
+One point worth highlighting: the `unitizer` prompt **is complex and behaves differently from the standard R prompt in some suble ways**.  Some examples:
+* Even though you can see objects produced by tests, you can't actually remove them
+* Any objects you create at the prompt are only available for the test you are currenlty reviewing, so don't expect them to still be there at subsequent prompts
+* Other subtle issues discussed at length in the "Esoteric Topics" section
+
 ### Test Navigation
 
 The `B` and `R` `unitizer` commands allow you to navigate through previously evaluted tests.  This is useful if you realize that you incorrectly accepted or rejected an earlier test, but don't wish to quit `unitizer` completely and lose all the other properly reviewed tests. `B` just steps you back to the previous test.  `R` gives you the option to go back to any previously reviewed test.  At this time it is not possible to skip ahead to unreviewed tests.
@@ -561,7 +566,7 @@ You can also use `quit()` from the `unitizer` prompt, though this is not recomme
 
 ### Subtleties Of The Interactive Environment
 
-Clearly the `unitizer` prompt environment is not as straightforward as the standard R console environment, or even the `browser` environment.  In reality it is even more complex than we've shown so far.
+Clearly the `unitizer` prompt environment is not as straightforward as the standard R console environment, or even the `browser` environment.  In reality it is even more complex than we have shown so far.
 
 `unitizer` batch processes all the tests when it is first run before it breaks into interactive mode.  It does this for two reasons: 1. this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly, 2. it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.
 
@@ -589,6 +594,8 @@ of the `a()` call.  However, this really breaks:
 Since NULL is a valid test, `a` is assigned to the environment associated with the `NULL` line, and `b` is assigned to the `a()` call test environment, and the illusion is shattered.
 
 If you are getting weird "object not found" errors when you run your tests, but the same code doesn't generate those errors when run directly in the command line, the illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
+
+One other point to keep in mind is that the `unitzer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
 
 ### Patchwork Reference Environments
 
