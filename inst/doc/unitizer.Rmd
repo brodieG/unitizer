@@ -351,6 +351,8 @@ Now re-running `unitizer` segments everything by section:
 
 Similarly, if there are tests that require reviewing, each section will be reviewed in turn.
 
+Note that `unitizer_sect` does not create separate evaluation environments for each section.  Any created object will be available to all lexically subsequent tests, regardless of whether they are in the same section or not.
+
 ### `unitizer` Test Components
 
 The following aspects of a unitizer tests are recorded for future comparison:
