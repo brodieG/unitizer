@@ -141,7 +141,7 @@ unitize <- function(
     return(TRUE)
   }
   # Interactively decide what to keep / override / etc.
-    
+  
   unitizer <- withRestarts(
     browse(unitizer, env=new.env(par.frame)),
     noSaveExit=function() {
