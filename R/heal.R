@@ -106,9 +106,24 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
           interim.names <- ls(envir=interim.env, all.names=T)
           lapply(interim.names, function(z) assign(z, get(z, interim.env), x[itemsType(x) == "new"][[i.org]]@env))
         }
+        # no need to run updateLs() athat is done on addition to unitizer
+        if(identical(x[itemsType(x) == "new"][[i.org]]@env, item.env)) {
+          # This should only happen when an ignored test just before an actual
+          # and just after another ignored test is removed from the item list; 
+          # since both the ignored tests where assigned to the environment of the
+          # subsequent test, the normal logic here would cause the test to have
+          # it's parent env assigned to itself.  Here we had a unit test that
+          # relied on this so we don't want to outright forbid it out of lazyness...
+
+          warning(
+            "Logic Problem: would have assigned circular environment reference ",
+            "but over-rode that; this message should only show up in `unitizer` ",
+            "development tests, if you see it please contact maintainer."
+          )
+        } else {
+          parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- item.env  
+        }
       }
-      # no need to run updateLs() athat is done on addition to unitizer
-      if(gaps[[i]] < -1L) parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- item.env
     }
     # Now need to map reference item environment parents.  See function docs
     # for details on the logic here
@@ -122,7 +137,12 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
       # First find the youngest new test that is verifiably older than
       # our current reference
 
-      if(!length(matching.new.younger <- Filter(Negate(is.na), tail(y@items.ref.map, -items.ref.idx[[i]])))) {  
+      if(
+        !length(
+          matching.new.younger <- 
+            Filter(Negate(is.na), tail(y@items.ref.map, -items.ref.idx[[i]]))
+        )
+      ) {  
         # Nothing younger, so put at end and set up so that next one goes behind this one
         # need to look for non-kept items as well as otherwise could slot something in 
         # too far down the ancestry.

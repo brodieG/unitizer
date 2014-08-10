@@ -130,6 +130,10 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
     # Create the new unitizer
 
     items.user <- processInput(unitizer.browse)
+
+    # By definition, "Pass" items were not reviewed so cannot be part of
+    # `items.user`
+
     items.ref <- x@items.new[x@tests.status == "Pass"] + items.user
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
@@ -206,16 +210,17 @@ setMethod("reviewNext", c("unitizerBrowse"),
       item.main <- item.new
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
     }
-    # Show test to screen
+    # Show test to screen, but only if the entire section is not ignored
 
     if(x@mapping@reviewed[[curr.id]]) {
       message(
         "You are re-reviewing a test; previous selection was: \"", 
         x@mapping@review.val[[curr.id]], "\""
     ) }
-    if(length(item.main@comment)) cat(item.main@comment, sep="\n")
-    cat(deparse_prompt(item.main@call), sep="\n")
-    
+    if(!all(x@mapping@ignored[x@mapping@sub.sec.id == curr.sub.sec])) {
+      if(length(item.main@comment)) cat(item.main@comment, sep="\n")
+      cat(deparse_prompt(item.main@call), sep="\n")
+    }
     # If there are conditions that showed up in main that are not in reference
     # show the message, and set the trace if relevant
 

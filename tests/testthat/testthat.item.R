@@ -12,13 +12,13 @@ library(testthat)
 local( {
   new.exps <- expression(
     1 + 1,
-    a <- 54,
-    b <- 38,
-    a + b,
-    e <- 5 * a,
-    a ^ 2,
+    a <- 54,     # keep
+    b <- 38,     # keep
+    a + b,       
+    e <- 5 * a,  # keep
+    a ^ 2,       # Keep
     f <- e * a,
-    matrix(rep(f, 20))
+    matrix(rep(f, 20))  # keep
   )
   ref.exps <- expression(
     1 + 1,
@@ -52,7 +52,10 @@ local( {
   } )
   test_that("Environment healing works", {
     items.mixed <- my.unitizer2@items.new[4:5] + my.unitizer2@items.ref[[1]] + my.unitizer2@items.new[c(2, 6, 8)]
-    items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2)
+    expect_warning(
+      items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2),
+      "Logic Problem: would have assigned circular environment reference"
+    )
     env.anc <- lapply(
       unitizer:::as.list(items.sorted), 
       function(x) rev(unitizer:::env_ancestry(x@env, my.unitizer2@base.env))
@@ -107,9 +110,9 @@ local( {
   my.unitizer4 <- my.unitizer4 + my.unitizer3@items.new    # now convert them to reference items
   my.unitizer4 <- my.unitizer4 + new.exps2   # now test against new.exps
   items.mixed2 <- my.unitizer4@items.ref[c(8, 10, 3, 5, 11)] + my.unitizer4@items.new[c(1, 4, 5, 9)]
-  items.sorted2 <- unitizer:::healEnvs(items.mixed2, my.unitizer4)
 
   test_that("Environment healing works 2", {
+    items.sorted2 <- unitizer:::healEnvs(items.mixed2, my.unitizer4)
     env.anc <- lapply(
       unitizer:::as.list(items.sorted2), 
       function(x) rev(unitizer:::env_ancestry(x@env, my.unitizer4@base.env))
@@ -170,6 +173,27 @@ local( {
       structure(list(new = c("a", "b", "e", "f", "howdy"), ref = c("a",  "b", "e", "f", "howdy"), tests = c(".new", ".ref")), .Names = c("new",  "ref", "tests"), class = "unitizer_ls", mods = character(0))
     )
   } )
+  # This is to test for issue #2, which resulted in a self referential environment
+  # in the stored items.  The following code used to fail:
+
+  new.exps3 <- expression(1 + 1,  a <- 54, b <- 5, 2 + 2, runif(1))
+  ref.exps3 <- expression(1 + 1,  a <- 54, 2 + 2, runif(1))
+  my.unitizer6 <- new("unitizer", id=1, zero.env=new.env())
+  my.unitizer6 <- my.unitizer6 + ref.exps3   # add ref.exps as new items
+  my.unitizer7 <- new("unitizer", id=2, zero.env=new.env())  
+  my.unitizer7 <- my.unitizer7 + my.unitizer1@items.new    # now convert them to reference items
+  my.unitizer7 <- my.unitizer7 + new.exps3   # now test against new.exps
+
+  # Note this doesn't test that there are no circular references, only that what
+  # used to fail no longer fails.
+
+  test_that("No circular environment references", {
+    expect_equal(
+      structure(c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE), .Dim = 5:6, .Dimnames = list(c("test.result", "test.result", "", "test.result", "test.result"), c("", "value", "conditions", "output", "message", "aborted"))),
+      cbind(my.unitizer7@tests.new, my.unitizer7@tests.result)
+    )
+  } )
+
   test_that("unitizerItemTestsFuns", {
     # these two should just work fine
     new("unitizerItemTestsFuns", output=all.equal, value=function(x, y) TRUE)
@@ -178,11 +202,11 @@ local( {
     expect_error(new("unitizerItemTestsFuns", output=all.equal, value=function(x, y=1, z=1) TRUE), "invalid class .* object")
     expect_error(new("unitizerItemTestsFuns", cabbage=all.equal), "Can't initialize invalid slots .*cabbage")
   } )
-  new.exps3 <- expression(a <- function() b(), b <- function() TRUE, a())
-  my.unitizer6 <- new("unitizer", id=3, zero.env=new.env())
-  new.exps4 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
-  my.unitizer7 <- new("unitizer", id=4, zero.env=new.env())
-  x <- my.unitizer7 + new.exps4
+  new.exps4 <- expression(a <- function() b(), b <- function() TRUE, a())
+  my.unitizer8 <- new("unitizer", id=3, zero.env=new.env())
+  new.exps5 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
+  my.unitizer9 <- new("unitizer", id=4, zero.env=new.env())
+  x <- my.unitizer9 + new.exps5
   
   test_that("Misc", {
     fun <- function() quote(stop("This error should not be thrown"))
@@ -200,7 +224,7 @@ local( {
     # the pieces necessary to run `a()` are defined:
     
     expect_true(info="This is where `unitizer` nested environments fail",
-      is(my.unitizer6 + new.exps3, "unitizer")
+      is(my.unitizer8 + new.exps4, "unitizer")
     )
     # this should break because the NULL forces `b` to be stored in a different
     # environment to `a`. 
