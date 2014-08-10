@@ -19,7 +19,9 @@ NULL
 #' @slot id the identifier for the unitizer, typically a file name, but can be anything
 #' @slot items.new a list of all the tests in the new file
 #' @slot items.ref a list of all the previously saved tests
-#' @slot items.new.map a vector that maps the entries in \code{`items.new`} to those in \code{`items.ref`},
+#' @slot items.new.map a vector that maps the entries in \code{`items.new`} to 
+#'   those in \code{`items.ref`}, where position in vector is id/position in 
+#'   slot \code{`items.new`}, and value is id/position in \code{`items.ref`}
 #'   new items will show up as NA here
 #' @slot items.new.calls.deparse a character vector of the deparsed calls in \code{`items.new`}
 #' @slot items.envs contains the environments for each call
@@ -33,7 +35,9 @@ NULL
 #'   \code{`\link{unitizerItemTestError-class}`} object
 #'   either NULL or a character vector describing the test failure reason for every item in \code{`items.new`}
 #' @slot items.ref.calls.deparse like \code{`items.new.calls.deparse`}, but for the reference items
-#' @slot items.ref.map maps reference items to the new items; deleted items will show up as NA here
+#' @slot items.ref.map maps reference items to the new items; deleted items will 
+#'   show up as NA here, where position in vector is id/position in slot 
+#'   \code{`items.ref`}, and value is id/position in \code{`items.new`}
 #' @slot sections a list of \code{`\link{unitizerSection-class}`}
 #' @slot section.map a map of every item in \code{`items.new`} to a section
 #' @slot changes contains summary data on the test results
