@@ -386,14 +386,14 @@ setMethod("show", "conditionList",
     out <- paste0(
       format(seq_along(object)), ": ", 
       ifelse(
-        print.show <- vapply(object, function(y) isTRUE(attr(y, "printed")), logical(1L)),
+        print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "printed")), logical(1L)),
         "[print] ", ""
       ),
-      vapply(, get_condition_type, character(1L)),
+      vapply(as.list(object), get_condition_type, character(1L)),
       " in "
     )
     desc.chars <- max(width - nchar(out), 20L)
-    cond.detail <- vapply(object, FUN.VALUE=character(1L),
+    cond.detail <- vapply(as.list(object), FUN.VALUE=character(1L),
       function(y) {
         paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
     } )
