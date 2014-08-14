@@ -1,0 +1,6 @@
+unitizer 0.4.2
+--------------------------------------------------------------------------------
+
+* Fixed setOldClass conflicts with RJSONIO (issue #1)
+* Fixed run_ls not finding base env under certain circumstances (issue #2)
+* Fixed conditionLists looping issue introduced when fixing issue #1

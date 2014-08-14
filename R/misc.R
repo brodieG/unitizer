@@ -589,9 +589,13 @@ unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
 
 #' Cleans a Path to be In Standard Format
 #' 
-#' Uses \code{`\link{basedir}`} to convert paths on windows machines with back
+#' Uses \code{`\link{dirname}`} to convert paths on windows machines with back
 #' slasshes to forward slash based names, and then removed excess forward
 #' slashes.
+#' 
+#' @keywords internal
+#' @param path character the path name to clean up
+#' @return the cleaned up path
 
 path_clean <- function(path) {
   if(!is.character(path)) stop("Argument `path` must be character")
