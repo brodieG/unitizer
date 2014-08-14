@@ -20,7 +20,9 @@ item by item).  Maybe some day this will be cleaned up.
 
 \item{\code{items.ref}}{a list of all the previously saved tests}
 
-\item{\code{items.new.map}}{a vector that maps the entries in \code{`items.new`} to those in \code{`items.ref`},
+\item{\code{items.new.map}}{a vector that maps the entries in \code{`items.new`} to
+those in \code{`items.ref`}, where position in vector is id/position in
+slot \code{`items.new`}, and value is id/position in \code{`items.ref`}
 new items will show up as NA here}
 
 \item{\code{items.new.calls.deparse}}{a character vector of the deparsed calls in \code{`items.new`}}
@@ -43,7 +45,9 @@ either NULL or a character vector describing the test failure reason for every i
 
 \item{\code{items.ref.calls.deparse}}{like \code{`items.new.calls.deparse`}, but for the reference items}
 
-\item{\code{items.ref.map}}{maps reference items to the new items; deleted items will show up as NA here}
+\item{\code{items.ref.map}}{maps reference items to the new items; deleted items will
+show up as NA here, where position in vector is id/position in slot
+\code{`items.ref`}, and value is id/position in \code{`items.new`}}
 
 \item{\code{sections}}{a list of \code{`\link{unitizerSection-class}`}}
 

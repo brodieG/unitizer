@@ -5,9 +5,16 @@
 \usage{
 path_clean(path)
 }
+\arguments{
+\item{path}{character the path name to clean up}
+}
+\value{
+the cleaned up path
+}
 \description{
-Uses \code{`\link{basedir}`} to convert paths on windows machines with back
+Uses \code{`\link{dirname}`} to convert paths on windows machines with back
 slasshes to forward slash based names, and then removed excess forward
 slashes.
 }
+\keyword{internal}
 
