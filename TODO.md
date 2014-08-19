@@ -128,6 +128,7 @@ fixing, or hare-brained ideas for features.  Read at your own risk
   Right now seems like we'll always get an error shown if both ref and new have
   errors, but that isn't the same as normal values.  Obviously when ref doesn't
   cause an error, need to show as otherwise confusing.
+* errors happening on compare don't set a traceback; should they?
 
 ## Misc
 
