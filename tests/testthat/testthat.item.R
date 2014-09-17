@@ -110,9 +110,9 @@ local( {
   my.unitizer4 <- my.unitizer4 + my.unitizer3@items.new    # now convert them to reference items
   my.unitizer4 <- my.unitizer4 + new.exps2   # now test against new.exps
   items.mixed2 <- my.unitizer4@items.ref[c(8, 10, 3, 5, 11)] + my.unitizer4@items.new[c(1, 4, 5, 9)]
+  items.sorted2 <- unitizer:::healEnvs(items.mixed2, my.unitizer4)
 
   test_that("Environment healing works 2", {
-    items.sorted2 <- unitizer:::healEnvs(items.mixed2, my.unitizer4)
     env.anc <- lapply(
       unitizer:::as.list(items.sorted2), 
       function(x) rev(unitizer:::env_ancestry(x@env, my.unitizer4@base.env))
@@ -181,7 +181,7 @@ local( {
   my.unitizer6 <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer6 <- my.unitizer6 + ref.exps3   # add ref.exps as new items
   my.unitizer7 <- new("unitizer", id=2, zero.env=new.env())  
-  my.unitizer7 <- my.unitizer7 + my.unitizer1@items.new    # now convert them to reference items
+  my.unitizer7 <- my.unitizer7 + my.unitizer6@items.new    # now convert them to reference items
   my.unitizer7 <- my.unitizer7 + new.exps3   # now test against new.exps
 
   # Note this doesn't test that there are no circular references, only that what
