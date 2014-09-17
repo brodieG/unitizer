@@ -56,13 +56,14 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Browse
 
-* performance problems from too many nested environments? decided 
-  to collapse non-tests into tests to limit  of environments, not clear
-  whether this is actually an issue, much of the issues seems to be from the
-  history file getting large, and appears to affect normal browsing() as well.
+* performance problems with large history?  Not necessary a `unitizer` problem
 * should we keep objects that user creates while browsing across tests?  
   probably, but we don't right now.
 * accept all (hidden?) option
+  * Right now comes up most when removing tests and wanting them all deleted
+    w/o having to review every single one
+* Deleted tests getting attributed to `Total` while showing a column of zeros is
+  confusing; maybe should be it's own line
 * Current behavior of automatically storing new non-tests and discarding 
   reference non tests can be potentially confusing to someone examining the
   environment and not realizing the object they are looking at is not the same
@@ -73,6 +74,7 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   do this?  Some system to browse all the tests and extract the objects there-in?
 * Sometimes we wish to re-review previously accepted tests, need a mechanism to
   allow for this.
+
 
 ## Order of Tests
 
