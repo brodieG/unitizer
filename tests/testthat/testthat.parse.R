@@ -162,6 +162,15 @@ local( {
       list(NULL, list(c("# a comment before", "#a comment after"))),
       unitizer:::comm_extract(unitizer:::parse_with_comments(text="# a comment before\nunitizer::browse()  #a comment after"))
     )
-    
+    # LBB used to break stuff
+
+    txt3 <- "# This is an early comment
+      hello <- 25
+      # multi
+      hello[[1]]  # and another!"
+    expect_equal(info="LBB test", 
+      list(NULL, list("# This is an early comment", list(NULL), list(NULL), list(NULL)), list(c("# multi", "# and another!"), list(NULL), list(NULL), list(NULL))),
+      unitizer:::comm_extract(unitizer:::parse_with_comments(text=txt3))
+    )    
   } )
 } )

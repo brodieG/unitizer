@@ -270,8 +270,14 @@ parse_with_comments <- function(file, text=NULL) {
     stop("Argument `expr` produced parse data with unexpected column names")
   if(!identical(unname(vapply(parse.dat, class, "")), c("integer", "integer", "integer", "integer", "integer", "integer",  "character", "logical", "character")))
     stop("Argument `expr` produced data with unexpected column data types")
-  if(!all(parse.dat$token %in% unlist(tk.lst)))
-    stop("Logic Error: unexpected tokens in parse data; contact maintainer.")
+  if(!all(parse.dat$token %in% unlist(tk.lst))) {
+    browser()
+    stop(
+      "Logic Error: unexpected tokens in parse data (", 
+        paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.list) ]) ,
+        "); contact maintainer."
+    );
+  }
 
   parse.dat <- transform(parse.dat, parent=ifelse(parent < 0, 0L, parent))
 
@@ -551,7 +557,7 @@ comm_reset <- function(x) {
 #'      [,1]           [,2]             [,3]                [,4]            
 #' [1,] "'\\n'"        "cr"             "ifcond"            "sub"           
 #' [2,] "'%'"          "END_OF_INPUT"   "INCOMPLETE_STRING" "sublist"       
-#' [3,] "$accept"      "equal_assign"   "LBB"               
+#' [3,] "$accept"      "equal_assign"                 
 #' [4,] "$end"         "error"          "LINE_DIRECTIVE"    "TILDE"         
 #' [5,] "$undefined"   "ERROR"          "LOW"               "UMINUS"        
 #' [6,] "COLON_ASSIGN" "expr_or_assign" "NOT"               "UNOT"          
@@ -567,7 +573,7 @@ comm_reset <- function(x) {
 tk.lst <- list(
   comment="COMMENT",
   brac.close=c("'}'", "']'", "')'"),
-  brac.open=c("'{'", "'['", "'('"),
+  brac.open=c("'{'", "'['", "'('", "LBB"),
   exps=c("expr", "exprlist"),
   seps=c("','", "';'"),                                          # no comments on these as they are just removed
   non.exps=c(                                                    # in addition to `expr`, these are the ones that can get comments attached 
