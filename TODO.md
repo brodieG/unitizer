@@ -8,20 +8,20 @@ This roadmap is highly tentative and likely to change
 
 * `unitizer_add`: A version of unitizer that just adds new tests without 
   re-evaluating all the other tests for faster turn-around during development
+* `unitize_dir`: (like `testthat::test_dir`)
 * Automatically resume unitizers that are partially reviewed
 
 ## Distant Future
 
 * capture plot output
+* unitizer objects:
+  * basically float around in user env so don't have to keep reloading from
+    file; might be good way to allow simple incremental testing
 
 # Known Bugs
 
-* quit() from within `unitizer` prompt causes problems
-* unclear why it was necessary to export fileOrNULL for it to work (and why
-  it stopped working, this is in relation to the hist.con object)
-* Line wrapping doesn't seem to be well implemented; headers end well, but
-  text output seems to overflow by a word or so; this seems related to how width
-  is calculated in the presence of a scroll bar and how `cat` handles that.
+See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
+
 * Unreproduced: when running `match_call` tests, after accepting 2 changes and 
   keeping one reference test, re-running caused unitizer to not recognized any of 
   the tests as having been run
@@ -29,7 +29,7 @@ This roadmap is highly tentative and likely to change
 # Internal Notes
 
 This section contains developer notes for things that are unresolved, need
-fixing, or hare-brained ideas for features.  Read at your own risk
+fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Capture
 
@@ -71,6 +71,8 @@ fixing, or hare-brained ideas for features.  Read at your own risk
 * Sometimes we want to replace a test with a variation on it, with the expectation
   that the result is unchanged; how do we provide a mechanism for the user to
   do this?  Some system to browse all the tests and extract the objects there-in?
+* Sometimes we wish to re-review previously accepted tests, need a mechanism to
+  allow for this.
 
 ## Order of Tests
 
