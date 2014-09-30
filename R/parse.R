@@ -255,17 +255,17 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 parse_with_comments <- function(file, text=NULL) {
   if(!is.null(text)) {
     if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
-    expr <- try(parse(text=text))
+    expr <- try(parse(text=text, keep.source=TRUE))
   } else {
-    expr <- try(parse(file))
+    expr <- try(parse(file, keep.source=TRUE))
   }
   if(inherits(expr, "try-error"))
     stop("Failed attempting to parse inputs; see previous errors for details")
   expr <- comm_reset(expr)
   parse.dat <- prsdat_fix_exprlist(getParseData(expr))
-  if(!nrow(parse.dat)) return(expr)
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
+  if(!nrow(parse.dat)) return(expr)
   if(!identical(names(parse.dat), c("line1", "col1", "line2", "col2", "id", "parent", "token",  "terminal", "text")))
     stop("Argument `expr` produced parse data with unexpected column names")
   if(!identical(unname(vapply(parse.dat, class, "")), c("integer", "integer", "integer", "integer", "integer", "integer",  "character", "logical", "character")))
