@@ -528,7 +528,7 @@ cap_first <- function(x) {
 
 env_ancestry <- function(env, stop.env=globalenv()) {
   if(!is.environment(env) || !is.environment(stop.env)) stop("Arguments `env` and `stop.env` must both be environments")
-  out <- character(0L)
+  out <- character()
   repeat {
     out <- c(out, env_name(env))
     if(identical(env, stop.env)) break
@@ -548,7 +548,7 @@ env_ancestry <- function(env, stop.env=globalenv()) {
 
 env_name <- function(env) {
   if(!is.environment(env)) stop("Argument `env` must be an environment")
-  sub("<environment: (.*)>", "\\1", capture.output(print.default(env)))
+  sub("<environment: (.*)>", "\\1", capture.output(print.default(env))[[1]])
 }
 
 #' Functions To Ignore
