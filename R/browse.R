@@ -95,24 +95,28 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
           )
           valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
           nav.msg <- "Exit unitizer"
+          nav.hlp <- paste0(
+            "Pressing Y or Q will exit without saving the unitizer since ",
+            "you didn't make any changes.  Pressing B or R will allow you to ",
+            "review any of the decisions you made previously, provided you ",
+            "actually had any to make."
+          )
         } else {
           message("You are about to IRREVERSIBLY:")
           show(x@changes)
           valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
           nav.msg <- "Update unitizer"
+          nav.hlp <- paste0(
+            "Pressing Y will replace the previous unitizer with a new one updated ",
+            "with all the changes you approved, pressing R or B will allow you to ",
+            "re-review your choices.  Pressing N or Q both quit without saving ",
+            "changes to the unitizer"
+          )
         }
         cat(nav.msg, " (", paste0(valid.opts, collapse=", "), ")?", sep="")
-        help <- paste0(
-          "Pressing Y will replace the previous unitizer with a new one updated ",
-          "with all the changes you approved, pressing R will allow you to ",
-          "re-review your choices.  If there were no changes Y and N produce ",
-          "similar results, where N does not modify the store at all, whereas ",
-          "Y overwrites the store with a new one that is for all intents and ",
-          "purposes the same, but might have some meta-data differences."
-        )
         user.input <- navigate_prompt(
           unitizer.browse, curr.id=max(unitizer.browse@mapping@item.id), 
-          text="Update unitizer", browse.env1=x@zero.env, 
+          text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
           valid.opts=valid.opts
         )
         if(is(user.input, "unitizerBrowse")) {
