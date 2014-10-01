@@ -142,7 +142,8 @@ navigate_prompt <- function(
     # Navigation Prompt
 
     if(!length(x@mapping@item.id[x@mapping@reviewed])) {
-      message("No reviewed tests yet")
+      message("You have not reviewed any tests yet; there is nothing to revisit.")
+      x@last.id <- 0L  # experimental, but seems the right thing to do to avoid exiting alltogether
       return(x)
     }
     nav.help <- paste0(
@@ -171,7 +172,7 @@ navigate_prompt <- function(
       if(!isTRUE(y[[1L]] %in% valid.vals)) {
         message(
           "Input must be integer-like and in ", 
-          paste0(range(valid.vals), collapse="-")
+          paste0(range(valid.vals), collapse=":")
         )
         return(FALSE)
       }
