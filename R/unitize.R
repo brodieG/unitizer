@@ -133,7 +133,7 @@ unitize <- function(
   print(unitizer.summary <- summary(unitizer))
   cat("\n")
 
-  if(!interactive.mode || getOption("unitizer.non.interactive")) {
+  if(!interactive.mode || getOption("unitizer.non.interactive", FALSE)) {
     delta.summ <- if(is.matrix(unitizer.summary)) {
       tail(unitizer.summary, 1L)[, -1L]
     } else {
@@ -157,7 +157,8 @@ unitize <- function(
       )
     }
     message("Passed Tests")
-    return(TRUE)
+    on.exit(NULL)
+    return(invisible(TRUE))
   }
   # Interactively decide what to keep / override / etc.
   
