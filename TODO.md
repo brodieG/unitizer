@@ -134,6 +134,10 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   errors, but that isn't the same as normal values.  Obviously when ref doesn't
   cause an error, need to show as otherwise confusing.
 * errors happening on compare don't set a traceback; should they?
+* internally call matching is done on deparsed result: could this actually cause
+  problems if deparsing rules change?  Need a better solution (`as.list` of
+  expression, or some such? Or just compare calls with `identical`? alternate
+  solutions seems potentially expensive)
 
 ## Misc
 
