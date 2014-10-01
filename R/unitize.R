@@ -140,10 +140,11 @@ unitize <- function(
       unitizer.summary[-1L]
     }
     if(any(delta.summ > 0L)) {  # Passed tests are first column
+      delta.show <- unitizer@tests.status != "Pass" & !ignored(unitizer@items.new)
       message(
         paste0(
-          format(paste0(unitizer@tests.status[unitizer@tests.status != "Pass"], ": ")),
-          unitizer@items.new.calls.deparse[unitizer@tests.status != "Pass"],
+          format(paste0(unitizer@tests.status[delta.show], ": ")),
+          unitizer@items.new.calls.deparse[delta.show],
           collapse="\n"
       ) )
       stop(
