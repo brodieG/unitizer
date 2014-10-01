@@ -133,8 +133,11 @@ unitize <- function(
   print(unitizer.summary <- summary(unitizer))
   cat("\n")
 
-  if(!interactive.mode) {
-    if(any(tail(unitizer.summary, 1L)[, -1L] > 0L)) {  # Passed tests are first column
+  if(!interactive.mode || getOption("unitizer.non.interactive")) {
+    if(
+      is.matrix(unitizer.summary) && any(tail(unitizer.summary, 1L)[, -1L] > 0L) ||
+      any(unitizer.summary[-1L]) > 0L 
+    ) {  # Passed tests are first column
       stop("Newly generated tests do not match unitizer; please run in interactive mode to see why")
     }
     message("Passed Tests")
