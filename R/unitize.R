@@ -134,11 +134,26 @@ unitize <- function(
   cat("\n")
 
   if(!interactive.mode || getOption("unitizer.non.interactive")) {
-    if(
-      is.matrix(unitizer.summary) && any(tail(unitizer.summary, 1L)[, -1L] > 0L) ||
-      any(unitizer.summary[-1L]) > 0L 
-    ) {  # Passed tests are first column
-      stop("Newly generated tests do not match unitizer; please run in interactive mode to see why")
+    delta.summ <- if(is.matrix(unitizer.summary)) {
+      tail(unitizer.summary, 1L)[, -1L]
+    } else {
+      unitizer.summary[-1L]
+    }
+    if(any(delta.summ > 0L)) {  # Passed tests are first column
+      message(
+        paste0(
+          format(paste0(unitizer@tests.status[unitizer@tests.status != "Pass"], ": ")),
+          unitizer@items.new.calls.deparse[unitizer@tests.status != "Pass"],
+          collapse="\n"
+      ) )
+      stop(
+        "Newly generated tests do not match unitizer (", 
+        paste(
+          sub("^\\s*", "", names(delta.summ)), 
+          delta.summ, sep=": ", collapse=", "
+        ),
+        "); see above for more info, or run in interactive mode"
+      )
     }
     message("Passed Tests")
     return(TRUE)
