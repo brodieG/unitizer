@@ -74,7 +74,8 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   do this?  Some system to browse all the tests and extract the objects there-in?
 * Sometimes we wish to re-review previously accepted tests, need a mechanism to
   allow for this.
-
+* Should ESC be treated the same way as `Q`?  Right now causes an unexpected exit
+  with loss of all work.
 
 ## Order of Tests
 
