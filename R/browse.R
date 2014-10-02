@@ -216,43 +216,42 @@ setMethod("reviewNext", c("unitizerBrowse"),
     }
     # Show test to screen, but only if the entire section is not ignored
 
-    if(x@mapping@reviewed[[curr.id]]) {
-      message(
-        "You are re-reviewing a test; previous selection was: \"", 
-        x@mapping@review.val[[curr.id]], "\""
-    ) }
     if(!all(x@mapping@ignored[x@mapping@sub.sec.id == curr.sub.sec])) {
+      if(x@mapping@reviewed[[curr.id]]) {
+        message(
+          "You are re-reviewing a test; previous selection was: \"", 
+          x@mapping@review.val[[curr.id]], "\""
+      ) }
       if(length(item.main@comment)) cat(item.main@comment, sep="\n")
       cat(deparse_prompt(item.main@call), sep="\n")
-    }
-    # If there are conditions that showed up in main that are not in reference
-    # show the message, and set the trace if relevant
+      # If there are conditions that showed up in main that are not in reference
+      # show the message, and set the trace if relevant
 
-    if(!is.null(item.new) && !is.null(item.ref) && 
-      !isTRUE(all.equal(item.new@data@conditions, item.ref@data@conditions)) ||
-      curr.sub.sec.obj@show.msg
-    ) {
-      screen_out(
-        item.main@data@message, 
-        max.len=getOption("unitizer.test.msg.lines"), stderr()
-      )
-      set_trace(item.main@trace)
-    }
-    if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)    
+      if(!is.null(item.new) && !is.null(item.ref) && 
+        !isTRUE(all.equal(item.new@data@conditions, item.ref@data@conditions)) ||
+        curr.sub.sec.obj@show.msg
+      ) {
+        screen_out(
+          item.main@data@message, 
+          max.len=getOption("unitizer.test.msg.lines"), stderr()
+        )
+        set_trace(item.main@trace)
+      }
+      if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)    
 
-    # If test failed, show details of failure
+      # If test failed, show details of failure
 
-    if(
-      is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") && 
-      !item.main@ignore
-    ) {
-      cat(
-        c(
-          "Test Failed Because:", 
-          as.character(curr.sub.sec.obj@show.fail[[id.rel]])
-        ), 
-        sep="\n"
-    ) } 
+      if(
+        is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") && 
+        !item.main@ignore
+      ) {
+        cat(
+          c(
+            "Test Failed Because:", 
+            as.character(curr.sub.sec.obj@show.fail[[id.rel]])
+          ), 
+          sep="\n"
+    ) } }
     # Need to add ignored tests as default action is N. Not clear if we also
     # need to set reviewed to TRUE (seems like we should not do so)
 
