@@ -558,9 +558,9 @@ At any point you may quit `unitizer` by typing `Q` at the `unitizer` prompt.  If
     No items to store; there either were no changes or you didn't accept any changes.
     Exit unitizer ([Y]es, [B]ack, [R]eview)?
     unitizer> Y
-    unitizer store was not modified
+    Unitizer store was not modified.
 
-Before `unitizer` quits completely we are given the chance to review are changes by using the `B` or `R` navigation commands.  In this case we just quit without further ado; since we had not chosen any of the new test values to replace the old there was no need to modify the unitizer store.
+Before `unitizer` quits completely we are given the chance to review are changes by using the `B` or `R` navigation commands, although this only happens if you have made changes to the `unitizer` through the interactive prompting, or if the test evaluate in fewer seconds than `getOption("unitizer.prompt.b4.quit.time")` (ten seconds as of the time of this writing).  In this case we just quit without further ado; since we had not chosen any of the new test values to replace the old there was no need to modify the unitizer store.  Note that in practice this sequence would not have prompted us before exiting `unitizer` because it actually ran in less than ten seconds, but we show it here for documentation purposes.
 
 You can also use `quit()` from the `unitizer` prompt, though this is not recommended as it will override standard `unitizer` behavior.
 

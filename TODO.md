@@ -76,6 +76,7 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   allow for this.
 * Should ESC be treated the same way as `Q`?  Right now causes an unexpected exit
   with loss of all work.
+* Not entirely satisfied with how review of 
 
 ## Order of Tests
 

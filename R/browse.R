@@ -33,10 +33,11 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #' 
 #' @keywords internal
 #' @param x the object to browse
+#' @param prompt.on.quit whether to prompt for review even if there are no changes
 #' @param env the environment to use as a parent to the environment to browse the tests
 
 setMethod("browse", c("unitizer"), valueClass="unitizer",
-  function(x, ...) {
+  function(x, prompt.on.quit, ...) {
 
     # set up local history
 
@@ -86,13 +87,17 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
 
-        print(H2("Finalize Unitizer"))
+        if(length(x@changes) > 0L || prompt.on.quit)
+          print(H2("Finalize Unitizer"))
 
         if(length(x@changes) == 0L) {
           message(
             "No items to store; there either were no changes or you didn't ",
             "accept any changes."
           )
+          if(!prompt.on.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
+            invokeRestart("noSaveExit")
+          }
           valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
           nav.msg <- "Exit unitizer"
           nav.hlp <- paste0(

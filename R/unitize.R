@@ -20,8 +20,15 @@ unitize <- function(
   interactive.mode=interactive()
 ) {
 
+  start.time <- proc.time()
+  quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
+  non.interactive <- getOption("unitizer.non.interactive", FALSE)
+  if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
+    stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
+  if(!is.logical(non.interactive) || length(non.interactive) != 1L)
+    stop("Logic Error: unitizer option `unitizer.non.interactive` is miss-specified")
+  
   # Retrieve or create unitizer environment
-
   par.frame <- parent.frame()
   if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file)) 
     stop("Argument `test.file` must be a valid path to a file")
@@ -133,7 +140,7 @@ unitize <- function(
   print(unitizer.summary <- summary(unitizer))
   cat("\n")
 
-  if(!interactive.mode || getOption("unitizer.non.interactive", FALSE)) {
+  if(!interactive.mode || non.interactive) {
     delta.summ <- if(is.matrix(unitizer.summary)) {
       tail(unitizer.summary, 1L)[, -1L]
     } else {
@@ -161,11 +168,14 @@ unitize <- function(
     return(invisible(TRUE))
   }
   # Interactively decide what to keep / override / etc.
-  
+ 
   unitizer <- withRestarts(
-    browse(unitizer, env=new.env(par.frame)),
+    browse(
+      unitizer, env=new.env(par.frame),  # need to remove env=, doesn't do anything, but don't want to do it right now
+      prompt.on.quit=(proc.time() - start.time)[["elapsed"]] >  quit.time
+    ),
     noSaveExit=function() {
-      message("unitizer store was not modified")
+      message("Unitizer store was not modified.")
       FALSE
     },
     quitExit=function(quitArgs) {
