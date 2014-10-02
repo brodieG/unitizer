@@ -1,4 +1,6 @@
-### unitizeR - Turn Arbitrary Code into Unit Tests
+## unitizeR - Turn Arbitrary Code into Unit Tests
+
+### Introduction
 
 One of the more important purposes of unit tests is to ensure that previously tested functionality does not break as a result of changes to the code base.  `unitizer` seeks to simplify this aspect of unit testing by taking advantage of the following:
 
@@ -51,3 +53,12 @@ Later on, you can just re-run:
     unitize("tests/unitizer/lm.R")
 
 If everything is working as before then all the tests will pass and you can keep coding merrily.  If you introduced regressions, then `unitizer` will highlight the failing tests and allow you to review them interactively.  If you added more tests to the file since the last time you ran `unitize`, those tests will be added to the RDS subject to your review.
+
+### Installation
+
+Curently this package is only available on github:
+
+    library(devtools)
+    install_github("brodieg/unitizer")
+
+We plan to submit to CRAN once this has been tested more thoroughly.  Hopefully this will happen before the end of 2014.
