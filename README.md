@@ -12,7 +12,7 @@ One of the more important purposes of unit tests is to ensure that previously te
 
 There are some noteworthy benefits to this approach, in particular:
 
- 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z), DF)`) are trivial to write because the result of the expression becomes the unit test
+ 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z, DF)`) are trivial to write because the result of the expression becomes the unit test
  2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests (taken to the extreme, you could just use the history file from when you were informally testing functionality)
  3. (almost) all aspects of the evaluation can be captured and used as part of the tests; for example, any conditions signalled during evaluation will be captured for comparison to future evaluations
 
@@ -51,3 +51,12 @@ Later on, you can just re-run:
     unitize("tests/unitizer/lm.R")
 
 If everything is working as before then all the tests will pass and you can keep coding merrily.  If you introduced regressions, then `unitizer` will highlight the failing tests and allow you to review them interactively.  If you added more tests to the file since the last time you ran `unitize`, those tests will be added to the RDS subject to your review.
+
+### Installation Instructions
+
+Currently `unitizer` is only available on github:
+
+```
+library(devtools)
+install_github("brodieg/unitizer")
+```
