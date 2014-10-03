@@ -1,4 +1,6 @@
-### unitizeR - Turn Arbitrary Code into Unit Tests
+## unitizeR - Turn Arbitrary Code into Unit Tests
+
+### Overview
 
 One of the more important purposes of unit tests is to ensure that previously tested functionality does not break as a result of changes to the code base.  `unitizer` seeks to simplify this aspect of unit testing by taking advantage of the following:
 
