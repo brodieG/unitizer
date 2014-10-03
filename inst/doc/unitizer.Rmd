@@ -37,7 +37,7 @@ One of the more important purposes of unit tests is to ensure that previously te
 
 There are some note-worthy benefits to this approach, in particular:
 
- 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z), DF)`) are trivial to write because the result of the expression becomes the unit test
+ 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z, DF)`) are trivial to write because the result of the expression becomes the unit test
  2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests
  3. (almost) all aspects of the evaluation can be captured and used as part of the tests; for example, any conditions signalled during evaluation will be captured for comparison to future evaluations
 
@@ -85,7 +85,7 @@ If everything is working as before then all the tests will pass and you can keep
 
 ### Learning To Use `unitizer`
 
-You don't need to go through the entirity of this oxymoronically lengthy vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to receive assitance.
+You don't need to go through the entirity of this vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to receive assitance.
 
 ### Non-Interactive Use
 
@@ -101,6 +101,15 @@ The simplest way to use `unitizer` as part of your package development process i
     unitize("unitizer/fastlm.R")
 
 You can have multiple `unitize` statements.  Note that the path specification for test files should be relative to the `tests` directory as that is what `R CMD check` effectively sets the working directory to before running the files in `tests/`.  This means you can't just source your `run.R` file without also first setting the working directory to `tests/`.
+
+### Installation Instructions
+
+Currently `unitizer` is only available on github:
+
+```
+library(devtools)
+install_github("brodieg/unitizer")
+```
 
 ## A Detailed Run-through
 
@@ -197,7 +206,9 @@ Turns out our `fastlm` wasn't fast at all.  It was just a wrapper for the standa
 
     - Failed ------------------------------------------------------------
 
-    Reference test does not match new test from test script. Overwrite item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+    Reference test does not match new test from test script. Overwrite 
+    item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, 
+    [H]elp)?
 
     # parens to force treatment as test
     > (res <- fastlm(x, y))
@@ -300,7 +311,7 @@ When reviewing tests, `unitizer` will group tests by test type, so you will revi
 
 ### What Constitutes a Test?
 
-As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them, and their values are not be compared to values produced by future evaluations of the same assignment expression.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test that will be reviewed, so skipping assignment review saves some unnecessary user interaction.
+As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test that will be reviewed, so skipping assignment review saves some unnecessary user interaction.
 
 You can force assignments to become tests by wrapping them in parentheses, which is what we did in our test file with `(res <- fastlm(x, y))`.
 
