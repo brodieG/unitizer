@@ -71,12 +71,25 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         
         withRestarts(
           {
-            unitizer.browse <- reviewNext(unitizer.browse)
-            if(!done(unitizer.browse)) next # Interactively review all tests
-          },
+           # Interactively review all tests
+
+            if(!done(unitizer.browse)) {
+              unitizer.browse <- reviewNext(unitizer.browse)
+              next
+          } },
           earlyExit=function() FALSE
         )
+        # Nothing happened at all, so quit without even option for prompting
         
+        if(
+          !(
+            something.happened <- length(unitizer.browse@mapping@item.id) && 
+              any(!unitizer.browse@mapping@ignored)
+          )
+        ) {
+          message("All tests passed.")
+          invokeRestart("noSaveExit")
+        }
         # Get summary of changes
 
         keep <- !unitizer.browse@mapping@ignored
@@ -87,13 +100,12 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
 
-        if(length(x@changes) > 0L || prompt.on.quit)
+        if((length(x@changes) > 0L || something.happened) && prompt.on.quit)
           print(H2("Finalize Unitizer"))
 
         if(length(x@changes) == 0L) {
           message(
-            "No items to store; there either were no changes or you didn't ",
-            "accept any changes."
+            "You didn't accept any changes so there are no items to store."
           )
           if(!prompt.on.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
             invokeRestart("noSaveExit")
@@ -183,9 +195,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # Display Section Headers as Necessary
 
     valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
-    if(furthest.reviewed > curr.id) {
-      valid.opts <- append(valid.opts, c(U="[U]nreviewed"), after=4L)
-    }
     if(        # Print Section title if appropriate
       !identical(last.reviewed.sec, curr.sec) && 
       !all(x@mapping@ignored[x@mapping@sec.id == curr.sec]) &&
@@ -316,7 +325,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
     help.opts <- c(
       "`B` to go Back to the previous test",
       "`R` to see a listing of all previously reviewed tests",
-      if(furthest.reviewed > curr.id) "`U` to go to first unreviewed test",
       "`ls()` to see what objects are available to inspect",
       paste0(collapse="",
         paste0(get.msg, collapse=" or "),
