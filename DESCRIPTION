@@ -21,6 +21,9 @@ Depends:
 Imports:
     methods,
     stats
+VignetteBuilder: knitr
+Suggests:
+    knitr
 License: GPL-2
 LazyData: true
 Collate:
