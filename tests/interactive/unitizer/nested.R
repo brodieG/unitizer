@@ -24,20 +24,20 @@ unitizer_sect("Nesting.2", {
   apply(arr, 1:2, rev)
   set.seed(NULL)
   unitizer_sect(compare=sample, expr={
-    20
+#    20
     warning("yo")
-    apply(arr, 1:2, sum)
-    stop("Random Error Message 1: ", sample(1:10000, 1))
-    unitizer_sect("double.inner", 
-      {
-        20
-        warning("yo")
-        apply(arr, 1:2, sum)
-        stop("Random Error Message 2: ", sample(1:10000, 1))      
-      },
-      compare=unitizerItemTestsFuns(output=all.equal, message=all.equal)
-    )
-    5 + 3 * 1:10
+#    apply(arr, 1:2, sum)
+#    stop("Random Error Message 1: ", sample(1:10000, 1))
+    # unitizer_sect("double.inner", 
+    #   {
+    #     20
+    #     warning("yo")
+    #     apply(arr, 1:2, sum)
+    #     stop("Random Error Message 2: ", sample(1:10000, 1))      
+    #   },
+    #   compare=unitizerItemTestsFuns(output=all.equal, message=all.equal)
+    # )
+#    5 + 3 * 1:10
   } )
   paste0(letters, 1:26)
   end.on.assign <- "yoyoyo"
