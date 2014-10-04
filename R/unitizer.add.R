@@ -69,7 +69,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       
       item <- withRestarts(
         exec(getItem(e2), test.env),
-        quitExit=unitizer_quit_handler    
+        unitizerQuitExit=unitizer_quit_handler    
       )
       # If item is a section, added to the store and update the tests with the contents of
       # the section, and re-loop (this is how we handle nested tests), if not, store the

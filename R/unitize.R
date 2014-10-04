@@ -85,6 +85,9 @@ unitize <- function(
     }
   }
   # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
+  # or other potential issues; of course this isn't foolproof if someone is using
+  # a variation on those functions, but also not the end of the world if it isn't
+  # caught.
 
   call.stack <- sys.calls()
   if(
@@ -100,9 +103,18 @@ unitize <- function(
     "It appears you are running unitizer inside an error handling function such ",
     "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
     "discouraged as it may cause unpredictable behavior from `unitizer` in the ",
-    "event tests produce conditions / errors.  We strongly recommend you re-run",
+    "event tests produce conditions / errors.  We strongly recommend you re-run ",
     "your tests outside of such handling functions."
   )
+  restarts <- computeRestarts()
+  restart.names <- vapply(restarts, `[[`, character(1L), 1L)
+  if("unitizerQuitExit" %in% restart.names)
+    stop(
+      "`unitizerQuitExit` restart is already defined; `unitizer` relies on this ",
+      "restart to restore state prior to exit, so `unitizer` will not run if it is ",
+      "defined outside of `unitize`.  If you did not define this restart contact ",
+      "maintainer."
+    )
   # Setup the new unitizer
 
   unitizer@id <- store.id
@@ -178,7 +190,7 @@ unitize <- function(
       message("Unitizer store was not modified.")
       FALSE
     },
-    quitExit=unitizer_quit_handler
+    unitizerQuitExit=unitizer_quit_handler
   )
   on.exit(NULL)  # main failure points are now over so don't need to alert on failure
   

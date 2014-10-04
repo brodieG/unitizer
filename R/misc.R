@@ -584,7 +584,7 @@ screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=s
 #' @keywords internal
 
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
-  invokeRestart("quitExit", list(save=save, status=status, runLast=runLast))
+  invokeRestart("unitizerQuitExit", list(save=save, status=status, runLast=runLast))
 }
 #' @keywords internal
 
