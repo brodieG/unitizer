@@ -579,13 +579,23 @@ screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=s
 #' would leave stuff in a weird state (history not reset, etc.).
 #' 
 #' This is used in \code{`\link{unitize}`}.
-#'  
+#' 
+#' @aliases unitizer_quit_handler 
 #' @keywords internal
 
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
   invokeRestart("quitExit", list(save=save, status=status, runLast=runLast))
 }
+#' @keywords internal
 
+unitizer_quit_handler <- function(quitArgs) {
+  message(
+    "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
+    "quitting type `Q` (without quotes) at the unitizer prompt, or avoid using ",
+    "test code that involves calls to `quit()`/`q()`."
+  )
+  do.call("quit", quitArgs)
+}
 
 #' Cleans a Path to be In Standard Format
 #' 

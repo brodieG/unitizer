@@ -34,11 +34,13 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       options(error=err.opt)
       capt <- get_capture(std.err.capt.con, std.err.capt, std.out.capt.con, std.out.capt)
       file.remove(std.err.capt, std.out.capt)
-      stop(
-        "Unexpectedly exited evaluation attempt when executing test expression\n> ", 
+      message(
+        "Unexpectedly exited evaluation attempt when executing test expression:\n> ", 
         paste0(deparse(x.to.eval), collapse=""), 
-        "\nmake sure you are not calling `runtests` inside a `tryCatch`/`try` block or ",
-        "invoking a restart defined outside `runtests`; if you are not, contact ",
+        "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
+        "invoking a restart defined outside `unitize`, evaluating an expression that ",
+        "calls `quit()`/`q()`, or quitting from a `browser()`/`debug()`/`trace()`. ",
+        "If none of these apply yet you are seeing this message please contact ",
         "package maintainer."
       )
     } )

@@ -115,7 +115,7 @@ unitize <- function(
   wd <- getwd()                              # in case user changes it through tests
   on.exit(                                   # In case interrupted or some such 
     message(
-      "Unexpectedly exited before storing results; ",
+      "Unexpectedly exited before storing `unitizer`; ",
       "tests were not saved or changed."
   ) )
   # Parse the test file
@@ -178,13 +178,7 @@ unitize <- function(
       message("Unitizer store was not modified.")
       FALSE
     },
-    quitExit=function(quitArgs) {
-      message(
-        "user quit using `quit()`; unitizer not updated.  For more graceful ",
-        "quitting type `Q` (without quotes) at the unitizer prompt."
-      )
-      do.call("quit", quitArgs)
-    }
+    quitExit=unitizer_quit_handler
   )
   on.exit(NULL)  # main failure points are now over so don't need to alert on failure
   
