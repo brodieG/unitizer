@@ -13,9 +13,9 @@ Description: Stores objects produced by test scripts so that they
     frameworks is that it greatly simplifies assertions designed to
     test complex output since the previously run correct output
     generates the assertions.
-Version: 0.4.2
+Version: 0.4.3
 Author: Brodie Gaslam
-Maintainer: Brodie Gaslam <brodieDOTgaslam@MARISSAMAYERSCOMPANY.com>
+Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
     R (>= 3.0.1)
 Imports:
