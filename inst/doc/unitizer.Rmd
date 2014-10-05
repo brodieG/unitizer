@@ -40,7 +40,7 @@ One of the more important purposes of unit tests is to ensure that previously te
 
 There are some note-worthy benefits to this approach, in particular:
 
- 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z), DF)`) are trivial to write because the result of the expression becomes the unit test
+ 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z, DF)`) are trivial to write because the result of the expression becomes the unit test
  2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests
  3. (almost) all aspects of the evaluation can be captured and used as part of the tests; for example, any conditions signalled during evaluation will be captured for comparison to future evaluations
 
@@ -88,7 +88,7 @@ If everything is working as before then all the tests will pass and you can keep
 
 ### Learning To Use `unitizer`
 
-You don't need to go through the entirity of this oxymoronically lengthy vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to receive assitance.
+You don't need to go through the entirity of this vignette to start using `unitizer`.  The `unitizer` interactive environment strives to be self explanatory, and provides contextual help.  You can always type `H` at the `unitizer` prompt to receive assitance.
 
 ### Non-Interactive Use
 
@@ -104,6 +104,15 @@ The simplest way to use `unitizer` as part of your package development process i
     unitize("unitizer/fastlm.R")
 
 You can have multiple `unitize` statements.  Note that the path specification for test files should be relative to the `tests` directory as that is what `R CMD check` effectively sets the working directory to before running the files in `tests/`.  This means you can't just source your `run.R` file without also first setting the working directory to `tests/`.
+
+### Installation Instructions
+
+Currently `unitizer` is only available on github:
+
+```
+library(devtools)
+install_github("brodieg/unitizer")
+```
 
 ## A Detailed Run-through
 
@@ -200,7 +209,9 @@ Turns out our `fastlm` wasn't fast at all.  It was just a wrapper for the standa
 
     - Failed ------------------------------------------------------------
 
-    Reference test does not match new test from test script. Overwrite item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+    Reference test does not match new test from test script. Overwrite 
+    item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, 
+    [H]elp)?
 
     # parens to force treatment as test
     > (res <- fastlm(x, y))
@@ -303,7 +314,7 @@ When reviewing tests, `unitizer` will group tests by test type, so you will revi
 
 ### What Constitutes a Test?
 
-As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them, and their values are not be compared to values produced by future evaluations of the same assignment expression.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test that will be reviewed, so skipping assignment review saves some unnecessary user interaction.
+As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test that will be reviewed, so skipping assignment review saves some unnecessary user interaction.
 
 You can force assignments to become tests by wrapping them in parentheses, which is what we did in our test file with `(res <- fastlm(x, y))`.
 
@@ -535,7 +546,7 @@ The `unitizer` prompt is very much like the R prompt in as much as it allows you
     `.new` / `.ref` for test value, `getTest(.new)` / `getTest(.ref)` for details.
     unitizer> 
 
-When you use `ls` from the `unitizer` prompt you are not using `base::ls`, as is obvious from the output above.  We need this special version of `ls` because the `unitizer` environment is more complex than the typical console environment.  For example, the objects present during the evaluation of the new tests may not be the same as they were during the reference evaluation, so we must make both of them available to the user.  Buy default any objects you attempt to access at the `unitizer` prompt will be the new objects, but you can use the `ref` function to access the reference versions:
+When you use `ls` from the `unitizer` prompt you are not using `base::ls`, as is obvious from the output above.  We need this special version of `ls` because the `unitizer` environment is more complex than the typical console environment.  For example, the objects present during the evaluation of the new tests may not be the same as they were during the reference evaluation, so we must make both of them available to the user.  By default any objects you attempt to access at the `unitizer` prompt will be the new objects, but you can use the `ref` function to access the reference versions:
 
     unitizer> res
         intercept         slope           rsq 
@@ -606,7 +617,7 @@ One other point to keep in mind is that the `unitzer` prompt environment is diff
 
 When we review `unitizer` tests, it is possible to end up in a situation where we wish to update our store by keeping a mix of the new tests as well as some of the old ones.  This leads to some complications because in order to faithfully reproduce the environments associated with both the reference and the new tests we would potentially have to store the entire set of environments produced by the test script for both the new and reference tests.  Even worse, if we re-run unitizer again, we run the risk of having to store yet another set of environments (the old reference environments, what were new environments but became reference ones on this additional run, and the new environments created by this third run).  The problem continues to grow with as each incremental run of the `unitizer` script potentially creates the need to store yet another set of environments.
 
-As a work-around to this problem `unitizer` only keeps the environment associated with the actual reference test when you type `N` at the `unitizer` prompt.  `unitizer` attaches then grafts that test to the environment set associated with the new test runs.  This means that in future `unitizer` runs the reference objects we examine when reviewing this test may not be the same objects that existed when the test itself was evaluated.  The `ls` command will highlight which objects have this problem.
+As a work-around to this problem `unitizer` only keeps the environment associated with the actual reference test when you type `N` at the `unitizer` prompt.  `unitizer` then grafts that test to the environment set associated with the new test runs.  This means that in future `unitizer` runs the reference objects we examine when reviewing this test may not be the same objects that existed when the test itself was evaluated.  The unitizer `ls` command will highlight which objects have this problem.
 
 Clearly this is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing `unitizer` stores.  For more details see the documentation for `unitizer:::healEnvs`.
 
@@ -651,7 +662,7 @@ You then set-out to write the `fastlm` functions until every line evaluates to `
 
 Or use the same file as the extreme programmer would and ensure that all tests evaluate to TRUE on review (and reject if not).
 
-Neither of these are perfect substitutes as in both cases you have to review the tests to ensure the correct outcome, which risks becoming tedious quickly when you are developing the code and re-running the tests over and over to check for success.  If you are an active partitioner of extreme programming you may be better served by unit testing packages such as `testthat` (side note: you can actually combine `testthat` and `unitizer`; for example, for `fastlm.extreme.R`, you could use `expect_equal(get_slope(res), 1.01)` instead of `if(!all.equal(get_slope(res), 1.01)) stop("Test Failed") else TRUE`).
+Neither of these are perfect substitutes as in both cases you have to review the tests to ensure the correct outcome, which risks becoming tedious quickly when you are developing the code and re-running the tests over and over to check for success.  If you are an active practitioner of extreme programming you may be better served by unit testing packages such as `testthat` (side note: you can actually combine `testthat` and `unitizer`; for example, for `fastlm.extreme.R`, you could use `expect_equal(get_slope(res), 1.01)` instead of `if(!all.equal(get_slope(res), 1.01)) stop("Test Failed") else TRUE`).
 
 In our experience, trying to pre-define all functionality ahead of time in tests ends up being counter productive because much of what the functionality should be only becomes clear with testing, and more importantly, use.  We strongly believe that the the less a developer uses her programs, the worse those programs tend to be.  The implicit corollary is that it is very difficult to fully define good functionality and interfaces for programs before the program is actually used, which in turn implies that there will be a fair bit of test re-writing required along the way.  `unitizer` makes this type of iterative development very easy because the test themselves are informal, and re-writing these informal tests is easier than re-writing formal ones.
 

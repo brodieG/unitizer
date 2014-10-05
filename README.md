@@ -1,6 +1,6 @@
 ## unitizeR - Turn Arbitrary Code into Unit Tests
 
-### Introduction
+### Overview
 
 One of the more important purposes of unit tests is to ensure that previously tested functionality does not break as a result of changes to the code base.  `unitizer` seeks to simplify this aspect of unit testing by taking advantage of the following:
 
@@ -14,7 +14,7 @@ One of the more important purposes of unit tests is to ensure that previously te
 
 There are some noteworthy benefits to this approach, in particular:
 
- 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z), DF)`) are trivial to write because the result of the expression becomes the unit test
+ 1. tests for expressions that produce complex objects (e.g. `lm(y ~ x + z, DF)`) are trivial to write because the result of the expression becomes the unit test
  2. there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests (taken to the extreme, you could just use the history file from when you were informally testing functionality)
  3. (almost) all aspects of the evaluation can be captured and used as part of the tests; for example, any conditions signalled during evaluation will be captured for comparison to future evaluations
 
