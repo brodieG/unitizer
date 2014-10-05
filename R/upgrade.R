@@ -2,7 +2,9 @@
 #' 
 #' Sequentially applies all applicable patches
 #' 
+#' @export
 #' @param object an unitizer object
+#' @param ... other arguments
 #' @return an upgraded unitizer object
 
 setMethod("upgrade", "unitizer", valueClass="unitizer",

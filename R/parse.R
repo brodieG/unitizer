@@ -271,10 +271,9 @@ parse_with_comments <- function(file, text=NULL) {
   if(!identical(unname(vapply(parse.dat, class, "")), c("integer", "integer", "integer", "integer", "integer", "integer",  "character", "logical", "character")))
     stop("Argument `expr` produced data with unexpected column data types")
   if(!all(parse.dat$token %in% unlist(tk.lst))) {
-    browser()
     stop(
       "Logic Error: unexpected tokens in parse data (", 
-        paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.list) ]) ,
+        paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
         "); contact maintainer."
     );
   }

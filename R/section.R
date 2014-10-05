@@ -54,6 +54,9 @@ setClass("unitizerSectionExpression", contains="unitizerList",
 setClassUnion("unitizerSectionExpressionOrExpression", c("unitizerSectionExpression", "unitizerSection", "expression"))
 
 #' Compute Length of a \code{`\link{unitizerSection-class}`}
+#' 
+#' @keywords internal
+#' @param x a \code{`unitizerSection`} object
 
 setMethod("length", "unitizerSection", function(x) x@length)
 

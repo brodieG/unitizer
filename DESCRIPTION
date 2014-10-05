@@ -23,7 +23,8 @@ Imports:
     stats
 VignetteBuilder: knitr
 Suggests:
-    knitr
+    knitr,
+    testthat
 License: GPL-2
 LazyData: true
 Collate:
