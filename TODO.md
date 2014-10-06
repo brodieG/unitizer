@@ -22,10 +22,6 @@ This roadmap is highly tentative and likely to change
 
 See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 
-* Unreproduced: when running `match_call` tests, after accepting 2 changes and 
-  keeping one reference test, re-running caused unitizer to not recognized any of 
-  the tests as having been run
-
 # Internal Notes
 
 This section contains developer notes for things that are unresolved, need
@@ -33,7 +29,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Capture
 
-* use `evaluate::replay`?
 * Should we really allow execution in interactive mode with stderr() and 
   stdout() captured?  seems weird.
 * implement capture handling at condition handler level and integrate output 
@@ -44,10 +39,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   show.unitizeritem method 
 * need a better mechanism for handling the options changes for error and 
   warning?  do we really want to change the error options? or allow warning=2? 
-* can we get away with textconnection captures for the files to avoid creating/
-  \ recreating files every time?  right now the simplicity of creating the files 
-  in the innermost part of the loop is great, but might be causing overhead (
-  weight against notorious slowness of text connections)
 * debugging partially implemented by disabling captures, but really,
   that's not real debugging.  unfortunately, because we capture std.err
   and we can't tee that, there is no good debugging to implement.
@@ -56,7 +47,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Browse
 
-* performance problems with large history?  Not necessary a `unitizer` problem
 * should we keep objects that user creates while browsing across tests?  
   probably, but we don't right now.
 * accept all (hidden?) option
@@ -72,11 +62,8 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * Sometimes we want to replace a test with a variation on it, with the expectation
   that the result is unchanged; how do we provide a mechanism for the user to
   do this?  Some system to browse all the tests and extract the objects there-in?
-* Sometimes we wish to re-review previously accepted tests, need a mechanism to
-  allow for this.
 * Should ESC be treated the same way as `Q`?  Right now causes an unexpected exit
   with loss of all work.
-* Not entirely satisfied with how review of 
 
 ## Order of Tests
 
@@ -86,12 +73,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   Document clearly?
 * removed tests coming last?  Trying to match them back to a section is too
   onerous, and besides, likely wouldn't have them in the same spot anyway.
-
-## Environments
-
-* Should run in an empty environment by default, with option to run with 
-  globalenv as parent?  Had some confusing issues crop up as a result of a 
-  variable getting picked up from globalenv
 
 ## Internal
 
@@ -142,14 +123,9 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Misc
 
-* Does it need to run faster?
-* Need to figure out how to get vignette properly listed as a vignette in docs
 * provide option to only run new tests?  Makes incremental work on a large
   file easier so not everything has to be re-run
 * backup of the unitizer .rds file should be created
-* How do we handle .rds file in the context of version control systems?  Really
-  don't want to keep versioning the file file, though we do want to keep a
-  version of it at times (maybe for key builds, etc.)
 * provide facilities to upate unitizer id when unitizers are moved, though
   typically the unitizer should always be in the same relative location
   to the script that runs it.

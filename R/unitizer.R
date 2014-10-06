@@ -232,7 +232,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           test.error.tpl[[i]] <- new("unitizerItemTestError", value=msg, compare.err=TRUE)
         }
         if(identical(i, "conditions")) {  #only failed/error tests get this far
-          if(length(item.ref@data@conditions) > length(item.new@data@conditions))
+          if(length(item.new@data@conditions))  # if a mismatch, and new conditions, we'll want to show these
             tests.conditions.new <- TRUE
         }
       }

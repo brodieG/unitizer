@@ -1,3 +1,15 @@
+unitizer 0.4.3
+--------------------------------------------------------------------------------
+
+Many interactive use bug fixes:
+
+* LBB now parsed properly (issue #5)
+* Non interactive parse (issue #11)
+* Review and Back behavior consistent now in interactive use (issue #3)
+* Other interactive use cleanup (issues #6, 12, 10, 9)
+* Vignette now done properly
+
+
 unitizer 0.4.2
 --------------------------------------------------------------------------------
 

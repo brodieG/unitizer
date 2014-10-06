@@ -73,7 +73,6 @@ unitize <- function(
           stop("Unable to upgrade. ", msg)
         }
         success <- try(set_store(store.id, unitizer))
-        setwd(new.wd)
         if(!inherits(success, "try-error")) 
           message("unitizer upgraded; please re-run tests")
         return(invisible(success))
