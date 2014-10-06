@@ -64,6 +64,7 @@ setClass(
     tests.status="factor",                 # pass/fail/error/new
     tests.result="matrix",
     tests.errorDetails="unitizerItemsTestsErrors",
+    tests.conditions.new="logical",          # Whether the test produced new conditions, used to check whether we need to display conditions on ignored tests
 
     items.ref="unitizerItems",                         # Should all be same length
     items.ref.calls.deparse="character",
@@ -200,6 +201,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 
       test.status <- "Pass"
       test.result <- test.result.tpl
+      tests.conditions.new <- FALSE
 
       for(i in slot.names) {
         test.res <- tryCatch(
@@ -229,9 +231,14 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           msg <- paste0(err.msg, " returned something other than TRUE or character vector")
           test.error.tpl[[i]] <- new("unitizerItemTestError", value=msg, compare.err=TRUE)
         }
+        if(identical(i, "conditions")) {  #only failed/error tests get this far
+          if(length(item.ref@data@conditions) > length(item.new@data@conditions))
+            tests.conditions.new <- TRUE
+        }
       }
       e1@tests.result <- rbind(e1@tests.result, test.result)      
       e1@tests.new <- c(e1@tests.new, FALSE)
+      e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)
       if(!all(test.result)) {
         if(identical(test.status, "Fail")) {
           e1@tests.fail <- append(e1@tests.fail, TRUE)
