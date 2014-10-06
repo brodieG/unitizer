@@ -9,5 +9,18 @@
 
 setMethod("upgrade", "unitizer", valueClass="unitizer",
   function(object, ...) {
-    stop("No upgrades defined")
+    if(object@version < "0.4.3") {
+      slots <- slotNames(object)
+      slots <- slots[slots != "tests.conditions.new"]
+      slot.objs <- lapply(slots, slot, object=object)
+      names(slot.objs) <- slots
+      slot.objs[["tests.conditions.new"]] <- logical(length(object@items.new))
+
+      obj.new <- new("unitizer", id="", zero.env=new.env())
+      for(i in names(slot.objs)) {
+        slot(obj.new, i) <- slot.objs[[i]]
+      }
+      object <- obj.new
+    }
+    object
 } )
