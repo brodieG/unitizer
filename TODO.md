@@ -64,6 +64,11 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   do this?  Some system to browse all the tests and extract the objects there-in?
 * Should ESC be treated the same way as `Q`?  Right now causes an unexpected exit
   with loss of all work.
+* Adding a browser inside `browse` source code, and then Q from browser() env
+  causes an exit with loss of history; this is likely purely internal and not
+  something a user would run into, but might be worth addressing to simplify
+  debugging.  This seems to happen if we hit more than one browser() while 
+  evaluating.
 
 ## Order of Tests
 
