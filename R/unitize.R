@@ -180,10 +180,11 @@ unitize <- function(
   }
   # Interactively decide what to keep / override / etc.
  
+  tot.time <- (proc.time() - start.time)[["elapsed"]]
   unitizer <- withRestarts(
     browse(
       unitizer, env=new.env(par.frame),  # need to remove env=, doesn't do anything, but don't want to do it right now
-      prompt.on.quit=(proc.time() - start.time)[["elapsed"]] >  quit.time
+      prompt.on.quit= tot.time >  quit.time
     ),
     noSaveExit=function() {
       message("Unitizer store was not modified.")
