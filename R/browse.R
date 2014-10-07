@@ -189,16 +189,25 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     curr.sec <- x@mapping@sec.id[[which(x@mapping@item.id == curr.id)]]
     curr.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == curr.id)]]
+    cur.sub.sec.items <- x@mapping@sub.sec.id == curr.sub.sec
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
     id.rel <- x@mapping@item.id.rel[[which(x@mapping@item.id == curr.id)]]
 
     # Display Section Headers as Necessary
 
     valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
-    if(        # Print Section title if appropriate
+    
+    # Print Section title if appropriate, basically if not all the items are 
+    # ignored, or alternatively if one of the ignored items produced new 
+    # conditions
+
+    if(
       !identical(last.reviewed.sec, curr.sec) && 
-      !all(x@mapping@ignored[x@mapping@sec.id == curr.sec]) &&
-      length(unique(x@mapping@sec.id[!x@mapping@ignored])) > 1L
+      !all(
+        x@mapping@ignored[x@mapping@sec.id == curr.sec] & 
+        !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
+      ) &&
+      length(unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])) > 1L
     ) {
       print(H2(x[[curr.sec]]@section.title))  
     }
@@ -206,7 +215,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
       (
         !identical(last.reviewed.sub.sec, curr.sub.sec) || 
         !identical(last.reviewed.sec, curr.sec)
-      ) && !all(x@mapping@ignored[x@mapping@sub.sec.id == curr.sub.sec])
+      ) && !all(
+        x@mapping@ignored[cur.sub.sec.items] & 
+        !x@mapping@new.conditions[cur.sub.sec.items]
+      )
     ) {
       print(H3(curr.sub.sec.obj@title))
       cat(
@@ -230,7 +242,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
     }
     # Show test to screen, but only if the entire section is not ignored
 
-    if(!all(x@mapping@ignored[x@mapping@sub.sec.id == curr.sub.sec])) {
+    if(
+      !all(
+        x@mapping@ignored[cur.sub.sec.items] & 
+        !x@mapping@new.conditions[cur.sub.sec.items]
+      )
+    ) {
       if(x@mapping@reviewed[[curr.id]]) {
         message(
           "You are re-reviewing a test; previous selection was: \"", 
@@ -241,9 +258,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant
 
-      if(!is.null(item.new) && !is.null(item.ref) && 
-        !isTRUE(all.equal(item.new@data@conditions, item.ref@data@conditions)) ||
-        curr.sub.sec.obj@show.msg
+      if(
+        !is.null(item.new) && !is.null(item.ref) && 
+        x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
       ) {
         screen_out(
           item.main@data@message, 

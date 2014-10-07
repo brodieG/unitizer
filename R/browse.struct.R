@@ -35,18 +35,21 @@ setMethod("browsePrep", "unitizer", valueClass="unitizerBrowse",
         "unitizerBrowseSubSectionFailed",
         items.new=x@items.new[x@tests.fail & sect.map],
         show.fail=x@tests.errorDetails[x@tests.fail & sect.map], 
-        items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]]
+        items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]],
+        new.conditions=x@tests.conditions.new[x@items.new.map[x@tests.fail & sect.map]]
       )
       browse.sect <- browse.sect + new(                            # New tests
         "unitizerBrowseSubSectionNew",
         show.msg=TRUE, show.out=TRUE, 
-        items.new=x@items.new[x@tests.new & sect.map]
+        items.new=x@items.new[x@tests.new & sect.map],
+        new.conditions=x@tests.conditions.new[x@tests.new & sect.map]
       )
       browse.sect <- browse.sect + new(                            # Corrupted tests
         "unitizerBrowseSubSectionCorrupted",
         items.new=x@items.new[x@tests.error & sect.map],
         show.fail=x@tests.errorDetails[x@tests.error & sect.map], 
-        items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]]
+        items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]],
+        new.conditions=x@tests.conditions.new[x@items.new.map[x@tests.error & sect.map]]
       )
       unitizer.browse <- unitizer.browse + browse.sect
     }
@@ -94,7 +97,8 @@ setClass("unitizerBrowseMapping",
     reviewed="logical",
     review.val="character",       
     review.type="factor",    
-    ignored="logical"
+    ignored="logical",
+    new.conditions="logical"
   ),
   prototype=list(
     review.type=factor(levels=c("New", "Failed", "Removed", "Corrupted"))
@@ -310,7 +314,8 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
         rep(test.types, item.count), 
         levels=levels(e1@mapping@review.type)
       ),
-      ignored=unlist(lapply(as.list(e2), ignored))
+      ignored=unlist(lapply(as.list(e2), ignored)),
+      new.conditions=unlist(lapply(as.list(e2), slot, "new.conditions"))  # get conditions from each sub-section 
     )
     for(i in slotNames(e1@mapping)) {      
       slot(e1@mapping, i) <- append(slot(e1@mapping, i), slot(mapping.new, i))
@@ -347,7 +352,8 @@ setClass("unitizerBrowseSubSection",
     actions="character",
     show.out="logical",
     show.msg="logical",
-    show.fail="unitizerItemsTestsErrorsOrLogical"
+    show.fail="unitizerItemsTestsErrorsOrLogical",
+    new.conditions="logical"
   ),
   prototype=list(show.msg=FALSE, show.fail=FALSE, show.out=FALSE),
   validity=function(object) {
