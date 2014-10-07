@@ -10,7 +10,7 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2014-10-03" />
+<meta name="date" content="2014-10-06" />
 
 <title>unitizeR - Turn Arbitrary Code into Unit Tests</title>
 
@@ -28,7 +28,7 @@
 <div id="header">
 <h1 class="title">unitizeR - Turn Arbitrary Code into Unit Tests</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2014-10-03</em></h4>
+<h4 class="date"><em>2014-10-06</em></h4>
 </div>
 
 
@@ -44,6 +44,7 @@
 <li>“The Interactive Environment”: Detailed review of user options available at the <code>unitizer&gt;</code> prompt</li>
 <li>“Esoteric Topics”: The <code>unitizer</code> interactive environment is quite complex; this section gets into the nitty gritty details</li>
 <li>“Extreme Programming with <code>unitizer</code>”: A discussing of “extreme programming” in the context of <code>unitizer</code></li>
+<li>“Unitizer and Version Control”: Some thoughts on how to handle binary files</li>
 </ul>
 </div>
 <div id="introduction" class="section level2">
@@ -62,7 +63,7 @@
 <h3>But Why?</h3>
 <p>There are some note-worthy benefits to this approach, in particular:</p>
 <ol style="list-style-type: decimal">
-<li>tests for expressions that produce complex objects (e.g. <code>lm(y ~ x + z), DF)</code>) are trivial to write because the result of the expression becomes the unit test</li>
+<li>tests for expressions that produce complex objects (e.g. <code>lm(y ~ x + z, DF)</code>) are trivial to write because the result of the expression becomes the unit test</li>
 <li>there is no coding overhead to writing the tests; what you typed in the console when you were developing functionality can be used as the unit tests</li>
 <li>(almost) all aspects of the evaluation can be captured and used as part of the tests; for example, any conditions signalled during evaluation will be captured for comparison to future evaluations</li>
 </ol>
@@ -101,7 +102,7 @@ get_rsq(FALSE)</code></pre>
 </div>
 <div id="learning-to-use-unitizer" class="section level3">
 <h3>Learning To Use <code>unitizer</code></h3>
-<p>You don’t need to go through the entirity of this oxymoronically lengthy vignette to start using <code>unitizer</code>. The <code>unitizer</code> interactive environment strives to be self explanatory, and provides contextual help. You can always type <code>H</code> at the <code>unitizer</code> prompt to receive assitance.</p>
+<p>You don’t need to go through the entirety of vignette to start using <code>unitizer</code>. The <code>unitizer</code> interactive environment strives to be self explanatory, and provides contextual help. You can always type <code>H</code> at the <code>unitizer</code> prompt to receive assitance.</p>
 </div>
 <div id="non-interactive-use" class="section level3">
 <h3>Non-Interactive Use</h3>
@@ -115,6 +116,12 @@ get_rsq(FALSE)</code></pre>
 library(unitzer)
 unitize(&quot;unitizer/fastlm.R&quot;)</code></pre>
 <p>You can have multiple <code>unitize</code> statements. Note that the path specification for test files should be relative to the <code>tests</code> directory as that is what <code>R CMD check</code> effectively sets the working directory to before running the files in <code>tests/</code>. This means you can’t just source your <code>run.R</code> file without also first setting the working directory to <code>tests/</code>.</p>
+</div>
+<div id="installation-instructions" class="section level3">
+<h3>Installation Instructions</h3>
+<p>Currently <code>unitizer</code> is only available on github:</p>
+<pre><code>library(devtools)
+install_github(&quot;brodieg/unitizer&quot;)</code></pre>
 </div>
 </div>
 <div id="a-detailed-run-through" class="section level2">
@@ -195,7 +202,9 @@ unitizer updated</code></pre>
 
 - Failed ------------------------------------------------------------
 
-Reference test does not match new test from test script. Overwrite item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+Reference test does not match new test from test script. Overwrite 
+item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, 
+[H]elp)?
 
 # parens to force treatment as test
 &gt; (res &lt;- fastlm(x, y))
@@ -585,6 +594,26 @@ get_rsq(res)          # should be 0.938679
 <p>Neither of these are perfect substitutes as in both cases you have to review the tests to ensure the correct outcome, which risks becoming tedious quickly when you are developing the code and re-running the tests over and over to check for success. If you are an active partitioner of extreme programming you may be better served by unit testing packages such as <code>testthat</code> (side note: you can actually combine <code>testthat</code> and <code>unitizer</code>; for example, for <code>fastlm.extreme.R</code>, you could use <code>expect_equal(get_slope(res), 1.01)</code> instead of <code>if(!all.equal(get_slope(res), 1.01)) stop(&quot;Test Failed&quot;) else TRUE</code>).</p>
 <p>In our experience, trying to pre-define all functionality ahead of time in tests ends up being counter productive because much of what the functionality should be only becomes clear with testing, and more importantly, use. We strongly believe that the the less a developer uses her programs, the worse those programs tend to be. The implicit corollary is that it is very difficult to fully define good functionality and interfaces for programs before the program is actually used, which in turn implies that there will be a fair bit of test re-writing required along the way. <code>unitizer</code> makes this type of iterative development very easy because the test themselves are informal, and re-writing these informal tests is easier than re-writing formal ones.</p>
 <p>This doesn’t mean that effort shouldn’t be applied to define functionality and interfaces ahead of time, or that situations where they can or should be strictly defined don’t exist. For those formal unit tests are likely best. For everything else, you can use <code>unitizer</code>.</p>
+</div>
+<div id="version-control-and-unitizer" class="section level2">
+<h2>Version Control and Unitizer</h2>
+<div id="handling-binary-files" class="section level3">
+<h3>Handling Binary Files</h3>
+<p>The main issue with using <code>unitizer</code> with a version controlled package is that you have to decide whether you want to include the binary <code>rds</code> files in the version control history. Some options:</p>
+<ul>
+<li>Don’t track the binary files at all (but they are valuable and now not backed up)</li>
+<li>Don’t track the binary files at all, but implement a secondary back-up system (this sounds really annoying)</li>
+<li>Use a backed-up, non-file system store (see “Alternate Store Locations” above)</li>
+<li>Track the binary files, but only commit them for major releases</li>
+</ul>
+</div>
+<div id="suggested-workflow-with-git" class="section level3">
+<h3>Suggested Workflow with Git</h3>
+<p>The approach we suggest is the last one above: just commit your <code>rds</code> files for major releases. Also, note that to the extent you have a lot of test files that aren’t changing, this should minimize how much binary data you commit. One possible way to handle this with Git is to use the following command (adapted from twalberg’s <a href="http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory">SO answer</a>):</p>
+<pre><code>git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged</code></pre>
+<p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Once you reach the major release point, you can:</p>
+<pre><code>git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged</code></pre>
+</div>
 </div>
 
 
