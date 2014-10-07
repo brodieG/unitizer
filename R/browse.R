@@ -69,6 +69,7 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
     } else if(length(unitizer.browse)) {
       repeat {
         
+        user.quit <- FALSE
         withRestarts(
           {
            # Interactively review all tests
@@ -77,7 +78,7 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
               unitizer.browse <- reviewNext(unitizer.browse)
               next
           } },
-          earlyExit=function() FALSE
+          earlyExit=function() user.quit <<- TRUE
         )
         # Nothing happened at all, so quit without even option for prompting
         
@@ -100,14 +101,17 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
 
-        if((length(x@changes) > 0L || something.happened) && prompt.on.quit)
+        if(
+          (length(x@changes) > 0L || something.happened) && 
+          (prompt.on.quit || !user.quit)
+        )
           print(H2("Finalize Unitizer"))
 
         if(length(x@changes) == 0L) {
           message(
             "You didn't accept any changes so there are no items to store."
           )
-          if(!prompt.on.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
+          if(!prompt.on.quit && user.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
             invokeRestart("noSaveExit")
           }
           valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
