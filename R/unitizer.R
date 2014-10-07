@@ -15,6 +15,22 @@ NULL
 #' new item lists (and the latter should never really be added as that should happen
 #' item by item).  Maybe some day this will be cleaned up.
 #' 
+#' One of the challenges when maintaining this is the tension between wanting to
+#' keep all the item/test data in sub-objects, and the difficulty in extracting
+#' summary data across all items/tests in that structure.  As a result of this,
+#' a compromise solution has been to extract some of the relevant meta data
+#' into vectors/matrices available at the top level (e.g. the @@tests.* objects).
+#' 
+#' Ultimately, we need far more specialized accessor functions that don't require
+#' understanding what those meta data mean exactly, and how they need to be used.
+#' An example is the \code{`ignored`} function.
+#' 
+#' Things get particularly complicated with the \code{`browse`} objects, which
+#' basically rehash a lot of this data, but split into groups and sub-groups,
+#' and at this point with meta-data stored in a \code{`unitizerBrowseMapping`}
+#' object that replicates the role of the aforementioned @@tests.* objects in
+#' \code{`unitizer`}.
+#' 
 #' @keywords internal
 #' @slot id the identifier for the unitizer, typically a file name, but can be anything
 #' @slot items.new a list of all the tests in the new file
@@ -181,6 +197,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     test.error.tpl <- vector("list", length(slot.names))
     names(test.error.tpl) <- slot.names
     item.map <- tail(e1@items.new.map, 1L)
+    tests.conditions.new <- FALSE
 
     if(is.na(item.map)) {
       test.status <- "New"
@@ -201,7 +218,6 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 
       test.status <- "Pass"
       test.result <- test.result.tpl
-      tests.conditions.new <- FALSE
 
       for(i in slot.names) {
         test.res <- tryCatch(
@@ -238,7 +254,6 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       }
       e1@tests.result <- rbind(e1@tests.result, test.result)      
       e1@tests.new <- c(e1@tests.new, FALSE)
-      e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)
       if(!all(test.result)) {
         if(identical(test.status, "Fail")) {
           e1@tests.fail <- append(e1@tests.fail, TRUE)
@@ -254,6 +269,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         e1@tests.error <- append(e1@tests.error, FALSE)        
       }
     }
+    e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)  # so added irrespective of pass/fail
+    
     if(length(e1@tests.status)) {
       e1@tests.status <- unlist(list(e1@tests.status, factor(test.status, levels=levels(e1@tests.status))))
     } else {
@@ -262,5 +279,3 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     e1 <- e1 + do.call(new, c(list("unitizerItemTestsErrors"), test.error.tpl))
     e1
 } )
-
-

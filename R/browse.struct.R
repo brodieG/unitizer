@@ -31,12 +31,15 @@ setMethod("browsePrep", "unitizer", valueClass="unitizerBrowse",
         "unitizerBrowseSection", section.id=i, 
         section.title=x@sections[[i]]@title
       )
+      # Note: anything querying reference items has to go through items.new.map
+      # since order isn't same.
+
       browse.sect <- browse.sect + new(                            # Failed tests
         "unitizerBrowseSubSectionFailed",
         items.new=x@items.new[x@tests.fail & sect.map],
         show.fail=x@tests.errorDetails[x@tests.fail & sect.map], 
         items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]],
-        new.conditions=x@tests.conditions.new[x@items.new.map[x@tests.fail & sect.map]]
+        new.conditions=x@tests.conditions.new[x@tests.fail & sect.map]
       )
       browse.sect <- browse.sect + new(                            # New tests
         "unitizerBrowseSubSectionNew",
@@ -49,9 +52,10 @@ setMethod("browsePrep", "unitizer", valueClass="unitizerBrowse",
         items.new=x@items.new[x@tests.error & sect.map],
         show.fail=x@tests.errorDetails[x@tests.error & sect.map], 
         items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]],
-        new.conditions=x@tests.conditions.new[x@items.new.map[x@tests.error & sect.map]]
+        new.conditions=x@tests.conditions.new[x@tests.error & sect.map]
       )
       unitizer.browse <- unitizer.browse + browse.sect
+      NULL # SO above isn't last step in loop used for debugging
     }
     if(length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {  # Removed tests
       browse.sect <- new(
@@ -60,7 +64,8 @@ setMethod("browsePrep", "unitizer", valueClass="unitizerBrowse",
       )
       browse.sect <- browse.sect + new(
         "unitizerBrowseSubSectionRemoved", 
-        items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)]
+        items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)],
+        new.conditions=rep(FALSE, length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))) # by definition can't have new conditions on removed tests
       )
       unitizer.browse <- unitizer.browse + browse.sect
     }
@@ -290,7 +295,9 @@ setClass("unitizerBrowseSection", contains="unitizerList",
 #' 
 #' Primarily we're contructing the \code{`@@mapping`} slot which will then allow
 #' us to carry out requisite computations later.  See \code{`\link{unitizerBrowseMapping-class}`}
-#' for details on what each of the slots in \code{`mapping`} does
+#' for details on what each of the slots in \code{`mapping`} does.
+#' 
+#' Also, some more discussion of this issue in the docs for \code{`\link{unitizer}`}.
 #' 
 #' @keywords internal
 
@@ -341,6 +348,7 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
 #'   evaluation
 #' @slot show.fail FALSE, or a unitizerItemsTestsErrors-class object if you want
 #'   to show the details of failure
+#' @slot new.conditions whether the items produced new conditions
 
 setClass("unitizerBrowseSubSection",
   slots=c(
@@ -383,6 +391,13 @@ setClass("unitizerBrowseSubSection",
       return("Argument `prompt` must be a 1 length character")
     } else if (!is.character(object@detail) || length(object@detail) != 1L) {
       return("Argument `prompt` must be a 1 length character")
+    } else if (
+      length(object@new.conditions) != 
+      max(length(object@items.ref), length(object@items.new))
+    ) {
+      return("Argument `new.condtions` must be supplied and be the same length as the items.")
+    } else if (any(is.na(object@new.conditions))) {
+      return("Argument `new.conditions` may not contain any NA values.")
     }
     TRUE
   }
