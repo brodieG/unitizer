@@ -96,8 +96,34 @@ setClass(
     version=packageVersion("unitizer"),
     tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted"))
 ) )
-
+setClass(
+  "unitizerSummary", list(data="matrix", dels="integer"),
+  validity=function(object) {
+    if(
+      !is.integer(object@data) || 
+      !all(colnames(object@data) %in% c("New", "Pass", "Fail", "Error"))
+    )
+      return("Slot `data` must be an integer matrix with colnames %in% c(\"New\", \"Pass\", \"Fail\", \"Error\")")
+    if(length(object@dels) != 1L)
+      return("Slot `dels` must be integer length one")
+} )
 # - Methods -------------------------------------------------------------------
+
+setMethod("show", "unitizerSummary", 
+  function(object) {
+    sum.mx <- object@data
+    colnames(sum.mx) <- paste0(
+      vapply(
+        max(vapply(colnames(sum.mx), nchar, integer(1L))) - vapply(colnames(sum.mx), nchar, integer(1L)), 
+        function(x) paste0(rep(" ", x + 1L), collapse=""), 
+        character(1L)
+      ),
+      colnames(sum.mx)
+    )
+    print(sum.mx)
+    if(object@dels)
+      cat("\nAdditionally, ", object@dels, " test ", if(object@dels > 1) "were" else "was", " deleted\n", sep="")
+} )
 
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
@@ -124,6 +150,9 @@ setMethod("length", "unitizer",
     len.vec
 } )
 #' Summarize Results
+#' 
+#' @return a list with the data that can be assigned to sections in vector/matrix
+#'   form, and the section less stuff (Deletes) as a scalar
 #' @keywords internal
 
 setMethod("summary", "unitizer", 
@@ -140,25 +169,22 @@ setMethod("summary", "unitizer",
       rep(1L, length(status)), 
       list(factor(sections, levels=sections.levels), status), sum
     )  # this should be a matrix with the summary data.
-    # Not sure why we originally tried to leave in NAs for deleted
-    # sum.mx.nondel <- sum.mx[, colnames(sum.mx) != "Deleted"]
-    # sum.mx[, colnames(sum.mx) != "Deleted"] <- ifelse(is.na(sum.mx.nondel), 0L, sum.mx.nondel)
     sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
+    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted"]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
     sum.mx <- rbind(sum.mx, "**Total**"=apply(sum.mx, 2, sum))
-    sum.mx["**Total**", "Deleted"] <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
+    
     if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
-    colnames(sum.mx) <- paste0(
-      vapply(
-        max(vapply(colnames(sum.mx), nchar, integer(1L))) - vapply(colnames(sum.mx), nchar, integer(1L)), 
-        function(x) paste0(rep(" ", x + 1L), collapse=""), 
-        character(1L)
-      ),
-      colnames(sum.mx)
-    )
+    
     sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 15)
+    deletes <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
+    main.dat <- if(nrow(sum.mx) == 2L) {
+      `rownames<-`(sum.mx[2L, , drop=F], "")
+    } else sum.mx
 
-    if(nrow(sum.mx) == 2L) sum.mx[2L, ] else sum.mx
+    obj <- new("unitizerSummary", data=main.dat, dels=deletes)
+    show(obj)
+    obj
 } )
 
 setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))

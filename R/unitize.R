@@ -148,7 +148,7 @@ unitize <- function(
 
   # Summary view of deltas and changes
 
-  print(unitizer.summary <- summary(unitizer))
+  summary(unitizer)
   cat("\n")
 
   if(!interactive.mode || non.interactive) {
