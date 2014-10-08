@@ -170,7 +170,7 @@ setMethod("summary", "unitizer",
       list(factor(sections, levels=sections.levels), status), sum
     )  # this should be a matrix with the summary data.
     sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
-    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted"]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
+    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
     sum.mx <- rbind(sum.mx, "**Total**"=apply(sum.mx, 2, sum))
     
     if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
