@@ -9,9 +9,11 @@
 #' @aliases zero.env.par objects.attached
 #' @keywords internal
 
-objects.detached <- list()
-objects.attached <- list()
-zero.env.par <- .GlobalEnv
+pack.env <- new.env()
+pack.env$objects.detached <- list()
+pack.env$objects.attached <- list()
+pack.env$x <- 0
+pack.env$zero.env.par <- .GlobalEnv
 
 #' Functions To Manage Search Path
 #' 
@@ -36,7 +38,7 @@ search_path_trim <- function() {
   search.path <- search()
   base.path <- c(
     "package:stats", "package:graphics", "package:grDevices", "package:utils",  
-    "package:datasets", "package:methods", "Autoloads", "package:base")
+    "package:datasets", "package:methods", "Autoloads", "package:base"
   )
   if(!identical(base.path, tail(search.path, 8L))) {
     warning(
@@ -47,7 +49,7 @@ search_path_trim <- function() {
     return(zero.env.par)
   }
   packs.to.detach <- tail(head(base.path, -8L), -1L)
-  if(length(objects.detached))
+  if(length(pack.env$objects.detached))
     stop("Logic Error: there should not be any detached packages yet; contact maintainer")
 
   on.exit({stop("need to add search_path_reset here");})
@@ -67,10 +69,10 @@ search_path_trim <- function() {
     }
     if(!identical(pack, "package:unitizer")) {
       if(inherits(try(detach(obj)), "try-error")) {
-        stop("Logic Error: unable to detach `", obj, "`; contact package maintainer".)
+        stop("Logic Error: unable to detach `", obj, "`; contact package maintainer.")
       }      
     }
-    objects.detached[[i]] <<- list(name=pack, obj=obj)
+    pack.env$objects.detached[[i]] <- list(name=pack, obj=obj)
   }
   # Find and return parent environment for tests
 
@@ -80,11 +82,11 @@ search_path_trim <- function() {
   zero.env.par.tmp <- try(as.environment(search.path[[2L]]))
   if(inherits(zero.env.par.tmp, "try-error"))
     stop("Logic Error: targeted zero env parent cannot be converted to environment; contact maintainer.")
-  zero.env.par <<- zero.env.par.tmp
-  zero.env.par
+  pack.env$zero.env.par <<- zero.env.par.tmp
+  pack.env$zero.env.par
 }
 search_path_reset <- function() {
-  for(i in rev(objects.attached)) {
+  for(i in rev(pack.env$objects.attached)) {
     stop("NEED TO ADD CODE HERE")
   }
 
@@ -111,13 +113,11 @@ make_req_lib <- function(definition) {
      
     # Reconstitute call into a character version of the call
 
+    as.char <- FALSE
     if("character.only" %in% names(m.c)) {
       if(!inherits(try(as.logical(m.c$character.only), silent=TRUE), "try-error")) {
         as.char <- as.logical(m.c$character.only)[[1]]
-      } else {
-        as.char <- FALSE
-      }      
-    }
+    } }
     # Extract character version of package name
 
     if("package" %in% names(m.c)) {
@@ -125,7 +125,7 @@ make_req_lib <- function(definition) {
         pck.name <- try(eval(m.c$package, parent.frame()))
         if(inherits(pck.name, "try-error")) {
           stop(
-            "Logic Error: failed attempting to get character name for use with "
+            "Logic Error: failed attempting to get character name for use with ",
             "library/require; please contact `unitizer` package maintainer"
         ) }
       } else {
@@ -146,15 +146,15 @@ make_req_lib <- function(definition) {
       if(isTRUE(lib.res) || is.character(lib.res)) {  
         pck.name.full <- paste("package", pck.name, sep=":")
         if(
-          pck.name.full %in% names(objects.attached) && 
-          !identical(objects.attached[[pck.name.full]], "package")
+          pck.name.full %in% names(pack.env$objects.attached) && 
+          !identical(pack.env$objects.attached[[pck.name.full]], "package")
         )
           stop(
             "Non-package with same name as package \"", pck.name.full, 
-            "\" detected.  If there are no non-package objects on the search "
+            "\" detected.  If there are no non-package objects on the search ",
             "path with this name, contact `unitizer` maintainer."
           )
-        objects.attached[[pck.name.full]] <<- "package"
+        pack.env$objects.attached[[pck.name.full]] <- "package"
     } }
     lib.res
   }
