@@ -11,7 +11,7 @@
 
 pack.env <- new.env()
 pack.env$objects.detached <- list()
-pack.env$objects.attached <- list()
+pack.env$objects.attached <- character()
 pack.env$x <- 0
 pack.env$zero.env.par <- .GlobalEnv
 
@@ -133,12 +133,16 @@ make_req_lib <- function(definition) {
       }
       m.c$package <- pck.name
       m.c$character.only <- TRUE
-      has.pack <- TRUE
     }
     m.c[[1]] <- quote(base::library)
+    search.pre <- search()
     lib.res <- eval(m.c, parent.frame())
 
-    if(has.pack) {
+
+    if(length(new.pack <- setdiff(search(), search.pre))) {
+      if(length(new.pack) > 1L)
+        stop("Logic Error: seem to have loaded more than one package; contact maintainer.")
+
       # Package loaded, register; if package loaded more than once in unitizer
       # code, this will just over-write existing entry; note order is important
       # as we will unload them in reverse order to try to avoid issues
