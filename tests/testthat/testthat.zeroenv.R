@@ -25,3 +25,18 @@ library(unitizerdummypkg2)
 search.path <- search()
 unitizer:::unitizer_library(unitizerdummypkg2)
 expect_equal(new.pack <- setdiff(search(), search.path), character())
+
+# Check that require also works
+
+try(detach("package:unitizerdummypkg2", unload=TRUE))
+
+unitizer:::unitizer_require(unitizerdummypkg2)
+search.path <- search()
+expect_equal(new.pack <- setdiff(search(), search.path), "package:unitizerdummypkg2")
+expect_equal(new.pack, names(unitizer:::pack.env$objects.attached))
+expect_equal(
+  c("package:unitizerdummypkg1", "package:unitizerdummypkg2"), 
+  names(unitizer:::pack.env$objects.attached)
+)
+
+
