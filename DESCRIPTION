@@ -24,7 +24,9 @@ Imports:
 VignetteBuilder: knitr
 Suggests:
     knitr,
-    testthat
+    testthat,
+    unitizerdummypkg1,
+    unitizerdummypkg2
 License: GPL-2
 LazyData: true
 Collate:
@@ -53,3 +55,4 @@ Collate:
     'unitizer-package.r'
     'unitizer.add.R'
     'upgrade.R'
+    'zeroenv.R'
