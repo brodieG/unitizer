@@ -50,7 +50,7 @@ search_path_trim <- function() {
       "argument.  We are using `.GlobalEnv` as the parent environment for our ",
       "tests instead."
     )
-    return(NULL)
+    invisible(NULL)
   }
   packs.to.detach <- tail(head(search.path.pre, -8L), -1L)
   if(length(pack.env$objects.detached))
@@ -116,7 +116,7 @@ search_path_trim <- function() {
     )
   pack.env$zero.env.par <- zero.env.par.tmp
   on.exit(NULL)  # clear clean-up b/c we succeeded
-  return(NULL)
+  invisible(NULL)
 }
 #' Restore Search Path to State Before \code{`search_path_trim`}
 #' 
@@ -161,7 +161,7 @@ search_path_restore <- function() {
       "package maintainer.",
     )
   }
-  NULL
+  invisible(NULL)
 }
 #' Special Unitizer Overloaded \code{`library`} and \code{`require`} Funs
 #' 
