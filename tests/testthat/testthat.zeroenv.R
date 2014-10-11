@@ -51,13 +51,17 @@ library(unitizerdummypkg1)  # at least one pack to explicitly remove
 search.pre <- search()
 
 testthat::expect_identical(unitizer:::search_path_trim(), NULL)  # note this actually removes testthat from search path...
-testthat::expect_equal(
-  search(), 
-  c(
-    ".GlobalEnv", "package:unitizer", "package:stats", "package:graphics",  
-    "package:grDevices", "package:utils", "package:datasets", "package:methods",  
-    "Autoloads", "package:base"
-) )
+
+search.post <- search()
+search.base <- c(
+  ".GlobalEnv", "package:unitizer", "package:stats", "package:graphics",  
+  "package:grDevices", "package:utils", "package:datasets", "package:methods",  
+  "Autoloads", "package:base"
+)
+testthat::expect_true(
+  identical(search.post, search.base) || 
+  identical(search.post, append(search.base, "tools:rstudio", 2L))
+)
 testthat::expect_true(
   "package:unitizerdummypkg1" %in% 
   vapply(unitizer:::pack.env$objects.detached, `[[`, "", "name")

@@ -43,7 +43,7 @@ search_path_trim <- function() {
   )
   if(!identical(base.path, tail(search.path.pre, 8L))) {
     warning(
-      "Cannot use a clean environment as the parent environment for tests because ",
+      "Cannot use a clean search path  as the parent environment for tests because ",
       "the last eight elements in the search path are not: ", 
       paste0(base.path, collapse=", "), ".  This may be happening because you ",
       "attached a package at a position before `package:stats` using the `pos` ",
@@ -52,7 +52,22 @@ search_path_trim <- function() {
     )
     invisible(NULL)
   }
-  packs.to.detach <- tail(head(search.path.pre, -8L), -1L)
+  detach.count <- 8L
+  if(
+    length(search.path.pre > 9L) && 
+    identical(tail(search.path.pre, 9L)[[1L]], "tools:rstudio")
+  ) {
+    detach.count <- 9L
+  } else if (
+    "tools:rstudio" %in% search.path.pre
+  ) {
+    warning(
+      "Cannot use a clean search path for tests because `tools:rstudio` is not ",
+      "at the expected position in the search list;"
+    )
+    invisible(NULL)
+  }
+  packs.to.detach <- tail(head(search.path.pre, -detach.count), -1L)
   if(length(pack.env$objects.detached))
     stop("Logic Error: there should not be any detached packages yet; contact maintainer")
 
@@ -128,6 +143,15 @@ search_path_trim <- function() {
 #'   calls \code{`stop`} on failure
 
 search_path_restore <- function() {
+  # remove added objects
+
+  for(i in rev(pack.env$objects.attached)) {
+
+
+  }
+
+
+
   # re-attach objects
 
   fail <- character()
