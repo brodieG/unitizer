@@ -22,7 +22,9 @@ unitize <- function(
 
   start.time <- proc.time()
   quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
-  non.interactive <- getOption("unitizer.non.interactive", FALSE)
+  non.interactive <- getOption("unitizer.non.interactive", FALSE)  # need to rationalize this with `interactive.mode` param
+  pack.env$base.packs <- pack.env$search <- search()  # record currently loaded packages
+
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
   if(!is.logical(non.interactive) || length(non.interactive) != 1L)

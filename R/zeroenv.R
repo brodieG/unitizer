@@ -14,6 +14,8 @@ pack.env$objects.detached <- list()
 pack.env$objects.attached <- character()
 pack.env$zero.env.par <- .GlobalEnv
 pack.env$unitizer.pos <- 0L
+pack.env$base.packs <- character()
+pack.env$search <- character()
 
 #' Restore Search Path to Bare Bones R Default
 #' 
@@ -21,9 +23,10 @@ pack.env$unitizer.pos <- 0L
 #' unloading all packages and objects that are not loaded by default in the 
 #' default R  configuration. Will fail if a user loaded packages with a 
 #' \code{`pos`} argument such that they package ends up later in the search list 
-#' than \code{`package:stats`} (basically we're assuming that default load
-#' includes everything up to \code{`package:stats`}).  Note this only detaches
-#' packages and objects and does not unload namespaces.
+#' than \code{`package:stats`} (or \code{`tools:rstudio`} if present), basically 
+#' we're assuming that default load includes everything up to 
+#' \code{`package:stats`}).  Note this only detaches packages and objects and 
+#' does not unload namespaces.
 #' 
 #' Note this does not unload namespaces, but rather just detaches them from
 #' the namespace
@@ -68,6 +71,7 @@ search_path_trim <- function() {
     invisible(NULL)
   }
   packs.to.detach <- tail(head(search.path.pre, -detach.count), -1L)
+  pack.env$base.packs <- head(search.path.pre, detach.count)
   if(length(pack.env$objects.detached))
     stop("Logic Error: there should not be any detached packages yet; contact maintainer")
 
@@ -150,12 +154,34 @@ search_path_trim <- function() {
 #'   calls \code{`stop`} on failure
 
 search_path_restore <- function() {
-  # remove added objects
+  # remove added objects, but only unload namespace if they 
 
-  # for(i in rev(pack.env$objects.attached)) {
+  if(!identical(pack.env$search, search())) {
+    # We can manage this so long as there are no conflicts, i.e. someone doesn't
+    # attach the same object five times, leaving us unable to know which one is
+    # the one that matters
+
+    stop(
+      "Logic Error: unexpected search path, this likely occurred because you ",
+      "used `base::library/require/attach/detach`, or your package functions are ",
+      "using those functions.  `unitizer` overloads `library/require/attach/detach`, ",
+      "but the overload is ineffective if you use these functions from the `base` ",
+      "namespace directly.  We are unable to restore the search path to its original ",
+      "form."
+    )
+  }
+
+  for(i in rev(seq_along(pack.env$objects.attached))) {
+    # Only detach if not in first 8/9 elements
+    # Only unload namespace if not in removed
+
+    curr.obj <- rev(names(pack.env$objects.attached))[[i]]
+    
+
+    pack.env$objects.attached
 
 
-  # }
+  }
   # re-attach objects; note different strategy depending on whether it is a
   # package or not; also, just a reminder that namespaces should still be
   # loaded
@@ -217,8 +243,8 @@ search_path_restore <- function() {
 
 make_req_lib <- function(definition) {
   if(
-    !identical(definition, base::library) &&
-    !identical(definition, base::require)
+    !identical(definition, quote(base::library)) &&
+    !identical(definition, quote(base::require))
   )
     stop(
       "Logic Error: you may only use this function with library/require as ",
@@ -252,10 +278,9 @@ make_req_lib <- function(definition) {
       m.c$package <- pck.name
       m.c$character.only <- TRUE
     }
-    m.c[[1]] <- quote(base::library)
+    m.c[[1]] <- definition
     search.pre <- search()
     lib.res <- eval(m.c, parent.frame())
-
 
     if(length(new.pack <- setdiff(search(), search.pre))) {
       if(length(new.pack) > 1L)
@@ -281,8 +306,8 @@ make_req_lib <- function(definition) {
     lib.res
   }
 }
-unitizer_library <- make_req_lib(library)
-unitizer_require <- make_req_lib(require)
+unitizer_library <- make_req_lib(quote(base::library))
+unitizer_require <- make_req_lib(quote(base::require))
 
 #' Check Whether a Package Is Loaded
 #' 
