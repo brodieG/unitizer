@@ -104,6 +104,11 @@ search_path_trim <- function() {
         " contact maintainer"
       )
     }
+    # Is it a package or an object?  Considered package if name starts with
+    # "package:" and the package shows up as a namespace env
+
+    is.pack <- is.loaded_package(pack)  # run before detaching
+
     # For `unitizer`, only record the position since we're not actually detaching
     # it, but do need to be able to put it back in the same position in the 
     # search path
@@ -112,8 +117,10 @@ search_path_trim <- function() {
       if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
         stop("Logic Error: unable to detach `", pack, "`; contact package maintainer.")
       }
-      pack.env$objects.detached <- 
-        append(pack.env$objects.detached, list(list(name=pack, obj=obj)))
+      pack.env$objects.detached <- append(
+        pack.env$objects.detached, 
+        list(list(name=pack, obj=obj, is.pack=is.pack, path=attr(obj, "path")))
+      )
     } else {
       pack.env$unitizer.pos <- i + 1L
     } 
@@ -145,44 +152,56 @@ search_path_trim <- function() {
 search_path_restore <- function() {
   # remove added objects
 
-  for(i in rev(pack.env$objects.attached)) {
+  # for(i in rev(pack.env$objects.attached)) {
 
 
-  }
-
-
-
-  # re-attach objects
+  # }
+  # re-attach objects; note different strategy depending on whether it is a
+  # package or not; also, just a reminder that namespaces should still be
+  # loaded
 
   fail <- character()
   for(i in rev(pack.env$objects.detached)) {
-    res <- try(attach(i$obj, name=i$name, warn.conflicts=FALSE))
+    if(i$is.pack) {
+      pck.name.clean <- sub("package:(.*)", "\\1", i$name)
+      res <- try(
+        library(
+          pck.name.clean, warn.conflicts=FALSE, 
+          lib.loc=dirname(i$path), character.only=TRUE
+      ) )
+    } else {
+      res <- try(attach(i$obj, name=i$name, warn.conflicts=FALSE))
+    }
     if(inherits(res, "try-error")) fail <- append(fail, i$name)
   }
-  # re-attach unitizer in correct position
-
-  res <- try({
-    unitizer.obj <- as.environment("package:unitizer")
-    detach("package:unitizer")
-    attach(
-      unitizer.obj, pos=pack.env$unitizer.pos, 
-      warn.conflicts=FALSE, name="package:unitizer")
-  })
   pack.env$objects.detached <- list()
 
+  # re-attach unitizer in correct position
+
+  if(pack.env$unitizer.pos && is.loaded_package("package:unitizer")) {
+    res <- try({
+      unitizer.obj <- as.environment("package:unitizer")
+      lib.loc <- dirname(attr(unitizer.obj, "path"))
+      detach("package:unitizer")
+      library(
+        "unitizer", pos=pack.env$unitizer.pos, 
+        warn.conflicts=FALSE, lib.loc=lib.loc, character.only=TRUE
+      )
+    })    
+    if(inherits(res, "try-error")) fail <- append(fail, "package:unitizer")
+  }
   # Handle errors
 
-  if(inherits(res, "try-error")) fail <- append(fail, i$name)
   if(length(fail)) {
     stop(
       "Logic Error: unable to re-attach the following object", if(length(fail) > 1L) "s", 
       " to search path: ", paste0(fail, collapse=", "), ". ", 
       if(length(fail) > 1L) "These" else "This", " object", 
-      if(length(fail) > 1L) "s"," was removed from search path in an attempt to ",
-      "create a clean environment to run `unitizer` tests.  Please review prior ",
-      "error messages carefully, and consider restarting your R session to restore ",
-      "your search path fully.  Also, please forward this error to the  `unitizer` ",
-      "package maintainer.",
+      if(length(fail) > 1L) "s were" else " was", " removed from search path in ",
+      "an attempt to create a clean environment to run `unitizer` tests.  Please ",
+      "review prior error messages carefully, and consider restarting your R ",
+      "session to restore your search path fully.  Also, please forward this ",
+      "error to the  `unitizer` package maintainer."
     )
   }
   invisible(NULL)
@@ -264,6 +283,25 @@ make_req_lib <- function(definition) {
 }
 unitizer_library <- make_req_lib(library)
 unitizer_require <- make_req_lib(require)
+
+#' Check Whether a Package Is Loaded
+#' 
+#' A package is considered loaded if it is in the search path and there is a 
+#' namespace loaded with the same name as the package
+#' 
+#' @keywords internal
+#' @param pkg.name character(1L) must be in format "package:pkgname"
+#' @return TRUE if it is a loaded package
+
+is.loaded_package <- function(pkg.name) {
+  if(!is.character(pkg.name) || length(pkg.name) != 1L)
+    stop("Argument `pkg.name` must be character 1L")
+  if(!isTRUE(grepl("^package:", pkg.name)))
+    stop("Argument `pkg.name` must be in format \"package:<package name>\"")
+  just.name <- sub("^package:(.*)", "\\1", pkg.name)
+  pkg.name %in% search() && just.name %in% loadedNamespaces()
+}
+
 
 #' Functions To Overload For Package Management
 #' 
