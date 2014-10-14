@@ -1,3 +1,6 @@
+#' @include class_unions.R
+
+NULL
 
 #' Objects used to Track What Environment to Use as Parent to Zero Env
 #' 
@@ -10,12 +13,169 @@
 #' @keywords internal
 
 pack.env <- new.env()
-pack.env$objects.detached <- list()
-pack.env$objects.attached <- character()
 pack.env$zero.env.par <- .GlobalEnv
 pack.env$unitizer.pos <- 0L
 pack.env$base.packs <- character()
 pack.env$search <- character()
+pack.env$lib.copy <- base::library
+pack.env$history <- list()
+pack.env$search.init <- character()        # Initial search path b4 any modifications
+pack.env$search.base <- character()        # "Clean" search path
+
+#' Class To Track History Changes
+
+setClass(
+  "searchHist",
+  list(
+    name="character",
+    type="character",
+    mode="character",
+    pos="integer",
+    extra="environmentOrNULL"
+  ),
+  prototype=list(extra=NULL),
+  validity=function(object) {
+    if(!length(object@name) != 1L) return("Slot `name` must be one length")
+    if(!length(object@pos) != 1L) return("Slot `pos` must be one length")
+    if(!length(object@type) != 1L || ! object@type %in% c("package", "object")) 
+      return("Slot `type` must be character(1L) and in c(\"package\", \"object\")")
+    if(!length(object@mode) != 1L || ! object@type %in% c("add", "remove")) 
+      return("Slot `mode` must be character(1L) and in c(\"add\", \"remove\")")
+  }
+)
+#' Shim Functions
+#' 
+#' @keywords internal 
+
+shim_funs <- function() {
+  
+  # Shim library
+
+  library.shim <- quote({
+    search.pre <- search()
+    unitizer.env <- asNamespace("unitizer")$pack.env
+    if (!character.only) {
+      package <- as.character(substitute(package))
+      character.only <- TRUE
+    }
+    library <- unitizer.env$lib.copy
+    res <- library(
+      package=package, help=help, pos = pos, lib.loc = lib.loc,
+      character.only = character.only, logical.return = logical.return,
+      warn.conflicts = warn.conflicts, quietly = quietly,
+      verbose = verbose
+    )
+    # Succeeded in attaching package, so record in history
+
+    if(
+      isTRUE(res) || is.character(res) && 
+      identical(length(search.pre), length(search()) + 1L)
+    ) {
+      unitizer.env$history <- append(
+        unitizer.env$history, 
+        list(name=package, type="package", mode="add", pos=pos, extra=NULL)
+      )
+    }
+    return(res)
+  })
+  trace(base::library, library.shim, at=1L)
+
+  # Shim require
+
+  trace(
+    base::require, quote(.unitizer.search.path.init=search()), 
+    exit=quote({
+      if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
+        if(is.character(package) && length(package) == 1L) {
+          unitizer.env <- asNamespace("unitizer")$pack.env        
+          unitizer.env$history <- append(
+            unitizer.env$history, 
+            list(name=package, type="package", mode="add", pos=pos, extra=NULL)
+      ) } }
+    })
+  )
+  # Shim attach
+  
+  trace(
+    base::attach, at=1L, tracer=quote(.unitizer.search.path.init=search()), 
+    exit=quote({
+      if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
+        if(is.character(name) && length(name) == 1L) {
+          unitizer.env <- asNamespace("unitizer")$pack.env        
+          unitizer.env$history <- append(
+            unitizer.env$history, 
+            list(name=name, type="object", mode="add", extra=NULL)
+      ) } }
+    })
+  )
+  # Shim detach
+  
+  if(!identical(as.list(body(base:detach)[[3]]), quote(packageName <- search()[[pos]]))
+    stop("Logic Error: Unable to shim `base:detach`, contact package maintainer.")
+
+  trace(
+    base::detach, at=3L, tracer=quote({
+      .unitizer.search.path.init=search()
+      .unitizer.obj <- as.environment(packageName)
+    }), 
+    exit=quote({
+      if(identical(length(search()), length(.unitizer.search.path.init) - 1L)) {
+        if(
+          is.numeric(pos) && length(pos) == 1L && 
+          pos >= min(seq_along(.unitizer.search.path.init)) && 
+          pos <= max(seq_along(.unitizer.search.path.init))
+        ) {
+          unitizer.env <- asNamespace("unitizer")$pack.env        
+          unitizer.env$history <- append(
+            unitizer.env$history, 
+            list(
+              name=packageName, type="object", mode="remove",
+              pos=pos, extra=.unitizer.obj
+        ) ) } }
+    })
+  )
+}
+#' Reconstruct Search Path From History
+#' 
+#' This is an internal check to make sure the shims on \code{`library/require/attach/detach`}
+#' worked correctly.  Should probably use an object to do this, but a bit annoying 
+#' to implement.
+#' 
+#' @keywords internal 
+
+search_path_check <- function() {
+  hist <- rev(pack.env$history)
+  names <- vapply(hist, `[[`, "", "name")
+  types <- vapply(hist, `[[`, "", "type")
+  modes <- vapply(hist, `[[`, "", "mode")
+  poss <- vapply(hist, `[[`, "", "pos")
+
+  names <-
+
+  search.init <- pack.env$search.init
+
+  for(i in seq_along(hist)) {
+    if(modes[[i]] == "add") {
+      if(
+        (types[[i]] == "package" && !names[[i]] %in% search.init) || 
+        types[[i]] == "object"
+      ) {
+        search.init <- append(
+          search.init, 
+          if(types[[i]] == "package") paste0("package:", names[[i]]) else names[[i]]
+          after=pos - 1L
+        )
+      } 
+    } else if (modes[[i]] == "remove") {
+      if(search.init[[poss[[i]]]] != names[[i]])
+
+    } else stop("Logic Error: incorrect search tracking object structure; contact maintainer.")
+    
+  }
+
+
+} 
+
 
 #' Restore Search Path to Bare Bones R Default
 #' 
@@ -118,13 +278,8 @@ search_path_trim <- function() {
     # search path
 
     if(!identical(pack, "package:unitizer")) {
-      if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
+      if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) 
         stop("Logic Error: unable to detach `", pack, "`; contact package maintainer.")
-      }
-      pack.env$objects.detached <- append(
-        pack.env$objects.detached, 
-        list(list(name=pack, obj=obj, is.pack=is.pack, path=attr(obj, "path")))
-      )
     } else {
       pack.env$unitizer.pos <- i + 1L
     } 
@@ -206,7 +361,6 @@ search_path_restore <- function() {
 
   if(pack.env$unitizer.pos && is.loaded_package("package:unitizer")) {
     res <- try({
-      unitizer.obj <- as.environment("package:unitizer")
       lib.loc <- dirname(attr(unitizer.obj, "path"))
       detach("package:unitizer")
       library(
