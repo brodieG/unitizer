@@ -14,12 +14,19 @@
 #'   generate to a folder at the same location as the test file with the same
 #'   name as the testfile, except ending in \code{`.unitizer`} instead of \code{`.R`}
 #' @param interactive.mode logical(1L) whether to run in interactive mode
+#' @param clean.env TRUE or environment, if TRUE tests are run in a clean 
+#'   environment, if an environment they are run with that environment as the
+#'   parent.
+#' @param clean.search.path logical(1L) if TRUE all items on the search path that
+#'   are not part of a clean R session are unloaded.  The search path will be 
+#'   restored upon test completion.  WARNING, this feature is somewhat experimental
+#'   and could result in your search path getting messed up (though that should
+#'   be fixed by restarting R).
 
 unitize <- function(
   test.file, store.id=sub("\\.[Rr]$", ".unitizer", test.file), 
-  interactive.mode=interactive()
+  interactive.mode=interactive(), clean.env=TRUE, clean.search.path=FALSE
 ) {
-
   start.time <- proc.time()
   quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
   non.interactive <- getOption("unitizer.non.interactive", FALSE)  # need to rationalize this with `interactive.mode` param
@@ -29,9 +36,8 @@ unitize <- function(
     stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
   if(!is.logical(non.interactive) || length(non.interactive) != 1L)
     stop("Logic Error: unitizer option `unitizer.non.interactive` is miss-specified")
-  
-  # Retrieve or create unitizer environment
-  par.frame <- parent.frame()
+  if(!isTRUE(clean.env) || !is.environment(clean.env))
+    stop("Argument `clean.env` must be TRUE or an environment.")  
   if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file)) 
     stop("Argument `test.file` must be a valid path to a file")
 
@@ -39,7 +45,10 @@ unitize <- function(
 
   if(inherits(try(unitizer <- get_store(store.id)), "try-error")) {
     stop("Unable to retrieve/create `unitizer` at location ", store.id, "; see prior errors for details.")
-  }
+  }  
+  # Retrieve or create unitizer environment
+  par.frame <- if(isTRUE(clean.env)) pack.env$zero.env.par else clean.env
+
   if(identical(unitizer, FALSE)) {
     unitizer <- new("unitizer", id=store.id, zero.env=new.env(parent=par.frame))
   } else if(!is(unitizer, "unitizer")){
