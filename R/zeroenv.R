@@ -3,7 +3,7 @@
 NULL
 
 #' Class To Track History Changes
-#' 
+#'
 #' @keywords internal
 
 setClass(
@@ -19,45 +19,52 @@ setClass(
   validity=function(object) {
     if(!length(object@name) != 1L) return("Slot `name` must be one length")
     if(!length(object@pos) != 1L) return("Slot `pos` must be one length")
-    if(!length(object@type) != 1L || ! object@type %in% c("package", "object")) 
+    if(!length(object@type) != 1L || ! object@type %in% c("package", "object"))
       return("Slot `type` must be character(1L) and in c(\"package\", \"object\")")
-    if(!length(object@mode) != 1L || ! object@type %in% c("add", "remove")) 
+    if(!length(object@mode) != 1L || ! object@type %in% c("add", "remove"))
       return("Slot `mode` must be character(1L) and in c(\"add\", \"remove\")")
   }
 )
 #' Class To Track History Changes
-#' 
+#'
 #' @keywords internal
 
-setClass("searchHistList", contains="unitizerList", 
+setClass("searchHistList", contains="unitizerList",
   validity=function(object) {
-    if(!all(vapply(object@.items, is, logical(1L), "searchHist"))) 
+    if(!all(vapply(object@.items, is, logical(1L), "searchHist")))
       return("slot `.items` may only contain \"searchHist\" objects")
     TRUE
 } )
 
 #' Objects used to Track What Environment to Use as Parent to Zero Env
-#' 
+#'
 #' Note \code{`"package:unitizer"`} is not actually detached but is included in
 #' the list so that it is replaced in the same position on the search path
-#' 
+#'
 #' Packages are stored as character values, other objects are stored directly.
-#' 
+#'
 #' @aliases zero.env.par objects.attached
 #' @keywords internal
 
 pack.env <- new.env()
-pack.env$zero.env.par <- new.env(parent=.GlobalEnv)
-pack.env$unitizer.pos <- 0L
-pack.env$base.packs <- character()
-pack.env$search <- character()
-pack.env$lib.copy <- base::library
-pack.env$history <- new("searchHistList")
-pack.env$search.init <- character()        # Initial search path b4 any modifications
-pack.env$search.base <- character()        # "Clean" search path
 
+#' Clears out Global State
+#'
+#' Should be called by `unitize` each time
+#' @keywords internal
+
+reset_packenv <- function() {
+  pack.env$zero.env.par <- new.env(parent=.GlobalEnv)
+  pack.env$unitizer.pos <- 0L
+  pack.env$base.packs <- character()
+  pack.env$search <- character()
+  pack.env$lib.copy <- base::library
+  pack.env$history <- new("searchHistList")
+  pack.env$search.init <- character()        # Initial search path b4 any modifications
+  pack.env$search.base <- character()        # "Clean" search path
+}
 #' Error message shared across functions
-#' 
+#'
 #' @keywords internal
 
 unitizer.search.fail.msg <- paste0("We recommend you restart R to restore the search path ",
@@ -67,148 +74,168 @@ unitizer.search.fail.msg <- paste0("We recommend you restart R to restore the se
 )
 
 #' Set-up Shims and Other Stuff for Search Path Manip
-#' 
+#'
 #' Here we shim by \code{`trace`}ing the \code{`libary/require/attach/detach`}
-#' functions and recording each run of those functions that modifies the 
+#' functions and recording each run of those functions that modifies the
 #' search path with enough information to restore the search path later.
-#' 
-#' @keywords internal 
+#'
+#' @return logical(1L) TRUE indicates success
+#' @keywords internal
 
 search_path_setup <- function() {
-  
+
+  # Make sure no one is already tracing
+
+  fail.shim <- character()
+  if(is(base::library, "functionWithTrace")) fail.shim <- c(fail.shim, "library")
+  if(is(base::require, "functionWithTrace")) fail.shim <- c(fail.shim, "require")
+  if(is(base::attach, "functionWithTrace")) fail.shim <- c(fail.shim, "attach")
+  if(is(base::detach, "functionWithTrace")) fail.shim <- c(fail.shim, "detach")
+
+  if(length(fail.shim)) {
+    warning("Cannot shim ", paste0(fail.shim, collapse=", "), "because already traced")
+    return(FALSE)
+  }
+  shimmed <- try({
+    # Shim library, note we cannot use the `exit` param since `library` uses
+    # on.exit
+
+    library.shim <- quote({
+      search.pre <- search()
+      unitizer.env <- asNamespace("unitizer")$pack.env
+      if (!character.only) {
+        package <- as.character(substitute(package))
+        character.only <- TRUE
+      }
+      library <- unitizer.env$lib.copy
+      res <- library(
+        package=package, help=help, pos = pos, lib.loc = lib.loc,
+        character.only = character.only, logical.return = logical.return,
+        warn.conflicts = warn.conflicts, quietly = quietly,
+        verbose = verbose
+      )
+      # Succeeded in attaching package, so record in history
+
+      if(
+        isTRUE(res) || is.character(res) &&
+        identical(length(search.pre), length(search()) + 1L)
+      ) {
+        unitizer.env$history <- append(
+          unitizer.env$history,
+          new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
+        )
+      }
+      parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
+      return(res)
+    })
+    trace(library, library.shim, at=1L, where=.BaseNamespaceEnv, print=FALSE)
+
+    # Shim require
+
+    trace(
+      base::require, quote(.unitizer.search.path.init <- search()),
+      exit=quote({
+        if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
+          if(is.character(package) && length(package) == 1L) {
+            unitizer.env <- asNamespace("unitizer")$pack.env
+            unitizer.env$history <- append(
+              unitizer.env$history,
+              new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
+            )
+            parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
+        } }
+      }),
+      where=.BaseNamespaceEnv, print=FALSE
+    )
+    # Shim attach
+
+    trace(
+      base::attach, at=1L, tracer=quote(.unitizer.search.path.init <- search()),
+      exit=quote({
+        if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
+          if(is.character(name) && length(name) == 1L) {
+            unitizer.env <- asNamespace("unitizer")$pack.env
+            unitizer.env$history <- append(
+              unitizer.env$history,
+              new("searchHist", name=name, type="object", mode="add", extra=NULL)
+            )
+            parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
+        } }
+      }),
+      where=.BaseNamespaceEnv, print=FALSE
+    )
+    # Shim detach
+
+    if(!identical(as.list(body(base::detach))[[3]], quote(packageName <- search()[[pos]])))
+      stop("Logic Error: Unable to shim `base:detach`, contact package maintainer.")
+
+    trace(
+      base::detach, at=3L, tracer=quote({
+        .unitizer.search.path.init <- search()
+        .unitizer.obj <- as.environment(packageName)
+        .unitizer.type <- is.loaded_package(packageName)
+      }),
+      exit=quote({
+        if(identical(length(search()), length(.unitizer.search.path.init) - 1L)) {
+          if(
+            is.numeric(pos) && length(pos) == 1L &&
+            pos >= min(seq_along(.unitizer.search.path.init)) &&
+            pos <= max(seq_along(.unitizer.search.path.init))
+          ) {
+            unitizer.env <- asNamespace("unitizer")$pack.env
+            unitizer.env$history <- append(
+              unitizer.env$history,
+              new("searchHist", name=packageName,
+                type=.unitizer.type, mode="remove",
+                pos=pos, extra=.unitizer.obj
+            ) )
+            parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
+        } }
+      }),
+      where=.BaseNamespaceEnv, print=FALSE
+    )
+  })
+  if(inherits(shimmed, try-error)) {
+    warning("Unable to shim all of library/require/attach/detach.")
+    search_path_unsetup()
+    return(FALSE)
+  }
   # Track initial values
 
   pack.env$search.init <- search()
 
-  # Shim library, not we cannot use the `exit` param since `library` uses
-  # on.exit
-
-  library.shim <- quote({
-    search.pre <- search()
-    unitizer.env <- asNamespace("unitizer")$pack.env
-    if (!character.only) {
-      package <- as.character(substitute(package))
-      character.only <- TRUE
-    }
-    library <- unitizer.env$lib.copy
-    res <- library(
-      package=package, help=help, pos = pos, lib.loc = lib.loc,
-      character.only = character.only, logical.return = logical.return,
-      warn.conflicts = warn.conflicts, quietly = quietly,
-      verbose = verbose
-    )
-    # Succeeded in attaching package, so record in history
-
-    if(
-      isTRUE(res) || is.character(res) && 
-      identical(length(search.pre), length(search()) + 1L)
-    ) {
-      unitizer.env$history <- append(
-        unitizer.env$history, 
-        new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
-      )
-    }
-    parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
-    return(res)
-  })
-  trace(library, library.shim, at=1L, where=.BaseNamespaceEnv)
-
-  # Shim require
-
-  trace(
-    base::require, quote(.unitizer.search.path.init=search()), 
-    exit=quote({
-      if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
-        if(is.character(package) && length(package) == 1L) {
-          unitizer.env <- asNamespace("unitizer")$pack.env        
-          unitizer.env$history <- append(
-            unitizer.env$history, 
-            new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
-          ) 
-          parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
-      } }
-
-    }),
-    where=.BaseNamespaceEnv
-  )
-  # Shim attach
-  
-  trace(
-    base::attach, at=1L, tracer=quote(.unitizer.search.path.init=search()), 
-    exit=quote({
-      if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
-        if(is.character(name) && length(name) == 1L) {
-          unitizer.env <- asNamespace("unitizer")$pack.env        
-          unitizer.env$history <- append(
-            unitizer.env$history, 
-            new("searchHist", name=name, type="object", mode="add", extra=NULL)
-          )
-          parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
-      } }
-    }),
-    where=.BaseNamespaceEnv
-  )
-  # Shim detach
-  
-  if(!identical(as.list(body(base:detach)[[3]]), quote(packageName <- search()[[pos]])))
-    stop("Logic Error: Unable to shim `base:detach`, contact package maintainer.")
-
-  trace(
-    base::detach, at=3L, tracer=quote({
-      .unitizer.search.path.init=search()
-      .unitizer.obj <- as.environment(packageName)
-      .unitizer.type <- is.loaded_package(packageName)
-    }), 
-    exit=quote({
-      if(identical(length(search()), length(.unitizer.search.path.init) - 1L)) {
-        if(
-          is.numeric(pos) && length(pos) == 1L && 
-          pos >= min(seq_along(.unitizer.search.path.init)) && 
-          pos <= max(seq_along(.unitizer.search.path.init))
-        ) {
-          unitizer.env <- asNamespace("unitizer")$pack.env        
-          unitizer.env$history <- append(
-            unitizer.env$history, 
-            new("searchHist", name=packageName, 
-              type=.unitizer.type, mode="remove",
-              pos=pos, extra=.unitizer.obj
-          ) ) 
-          parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
-      } }
-    }),
-    where=.BaseNamespaceEnv
-  )
+  return(TRUE)
 }
 #' Search Path Unsetup
-#' 
+#'
 #' Undoes all the shimming we applied
-#' 
+#'
 #' @keywords internal
 
 search_path_unsetup <- function() {
-  unshim <- try({  # this needs to go 
+  unshim <- try({  # this needs to go
     untrace(library, where=.BaseNamespaceEnv)
     untrace(require, where=.BaseNamespaceEnv)
     untrace(attach, where=.BaseNamespaceEnv)
     untrace(detach, where=.BaseNamespaceEnv)
   })
   if(inherits(unshim, "try-error")) {
-    stop(
-      "Logic Error: failed trying to unshim library/require/attach/detach, ",
+    warning(
+      "failed trying to unshim library/require/attach/detach, ",
       "which means some of those functions are still modified for search path ",
       "manipulation by `unitizer`.  Restarting R should restore the original ",
-      "functions."
+      "functions.  Please forward this warning to `unitizer` maintainer."
     )
   }
-  invisible()  
+  invisible()
 }
 #' Reconstruct Search Path From History
-#' 
+#'
 #' This is an internal check to make sure the shims on \code{`library/require/attach/detach`}
 #' worked correctly.
-#' 
+#'
 #' @param verbose whether to output details of failures, purely for internal debugging
-#' @keywords internal 
+#' @keywords internal
 
 search_path_check <- function(verbose=FALSE) {
   hist <- rev(pack.env$history)
@@ -224,11 +251,11 @@ search_path_check <- function(verbose=FALSE) {
   for(i in seq_along(hist)) {
     if(modes[[i]] == "add") {
       if(
-        (types[[i]] == "package" && !names[[i]] %in% search.init) || 
+        (types[[i]] == "package" && !names[[i]] %in% search.init) ||
         types[[i]] == "object"
       ) {
         search.init <- append(search.init, names[[i]], after=pos - 1L)
-      } 
+      }
     } else if (modes[[i]] == "remove") {
       if(!identical(search.init[[poss[[i]]]], names[[i]])) {
         if(vebose) message("Object to detach `", names[[i]], "` not at expected position (", poss[[i]], ").")
@@ -240,7 +267,7 @@ search_path_check <- function(verbose=FALSE) {
   if(!identical(search(), search.init)) {
     if(verbose) {
       message(
-        "Mismatches between expected search path and actual:\n - expected: ", 
+        "Mismatches between expected search path and actual:\n - expected: ",
         deparse(search.init), "\n - actual: ", deparse(search())
       )
     }
@@ -249,19 +276,19 @@ search_path_check <- function(verbose=FALSE) {
   return(TRUE)
 }
 #' Restore Search Path to Bare Bones R Default
-#' 
-#' \code{`search_path_trimp`} attempts to recreate a clean environment by 
-#' unloading all packages and objects that are not loaded by default in the 
-#' default R  configuration. Will fail if a user loaded packages with a 
-#' \code{`pos`} argument such that they package ends up later in the search list 
-#' than \code{`package:stats`} (or \code{`tools:rstudio`} if present), basically 
-#' we're assuming that default load includes everything up to 
-#' \code{`package:stats`}).  Note this only detaches packages and objects and 
+#'
+#' \code{`search_path_trimp`} attempts to recreate a clean environment by
+#' unloading all packages and objects that are not loaded by default in the
+#' default R  configuration. Will fail if a user loaded packages with a
+#' \code{`pos`} argument such that they package ends up later in the search list
+#' than \code{`package:stats`} (or \code{`tools:rstudio`} if present), basically
+#' we're assuming that default load includes everything up to
+#' \code{`package:stats`}).  Note this only detaches packages and objects and
 #' does not unload namespaces.
-#' 
+#'
 #' Note this does not unload namespaces, but rather just detaches them from
 #' the namespace
-#' 
+#'
 #' @seealso \code{`\link{search_path_restore}`}  \code{`\link{search}`}
 #' @keywords internal
 #' @return NULL, this function is run purely for side effects and generates and
@@ -272,13 +299,13 @@ search_path_trim <- function() {
 
   search.path.pre <- search()
   base.path <- c(
-    "package:stats", "package:graphics", "package:grDevices", "package:utils",  
+    "package:stats", "package:graphics", "package:grDevices", "package:utils",
     "package:datasets", "package:methods", "Autoloads", "package:base"
   )
   if(!identical(base.path, tail(search.path.pre, 8L))) {
     warning(
       "Cannot use a clean search path  as the parent environment for tests because ",
-      "the last eight elements in the search path are not: ", 
+      "the last eight elements in the search path are not: ",
       paste0(base.path, collapse=", "), ".  This may be happening because you ",
       "attached a package at a position before `package:stats` using the `pos` ",
       "argument.  We are using `.GlobalEnv` as the parent environment for our ",
@@ -288,7 +315,7 @@ search_path_trim <- function() {
   }
   detach.count <- 8L
   if(
-    length(search.path.pre > 9L) && 
+    length(search.path.pre > 9L) &&
     identical(tail(search.path.pre, 9L)[[1L]], "tools:rstudio")
   ) {
     detach.count <- 9L
@@ -330,9 +357,9 @@ search_path_trim <- function() {
     # Detach all but `unitizer`
 
     if(!identical(pack, "package:unitizer")) {
-      if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) 
+      if(inherits(try(detach(pack, character.only=TRUE)), "try-error"))
         stop("Logic Error: unable to detach `", pack, "`; contact package maintainer.")
-    } 
+    }
   }
   # Make sure trimming worked
 
@@ -343,26 +370,26 @@ search_path_trim <- function() {
   invisible(NULL)
 }
 #' Restore Search Path to State Before \code{`search_path_trim`}
-#' 
+#'
 #' Undoes \code{`search_path_trim`}
-#' 
+#'
 #' @seealso \code{`\link{search_path_trim}`}  \code{`\link{search}`}
 #' @keywords internal
-#' @return NULL, this function is run purely for side effects and generates and
-#'   calls \code{`stop`} on failure
+#' @return NULL, this function is run purely for side effects
 
 search_path_restore <- function() {
-  
+
   # Make sure everything is as we expect before we actually do anything
 
   if(!search_path_check()) {
-    stop(
-      "Logic Error: unexpected search path, this likely occurred because you ",
+    warning(
+      "Unexpected search path, this likely occurred because you ",
       "somehow bypassed in your test code  the shimmed versions of ",
       "`base::library/require/attach/detach` that `unitizer` overloads or ",
       "otherwise modified the search path in an unexpected manner.  We are ",
       "unable to restore the search path to its original form.  ", unitizer.search.fail.msg
     )
+    return(invisible())
   }
   # Step back through history, undoing each step
 
@@ -370,8 +397,8 @@ search_path_restore <- function() {
     hist <- pack.env$history[[i]]
     res <- try({
       if(hist@mode == "add") {  # Need to remove
-        if(                     # Keep namespace  
-          hist@type == "object" || 
+        if(                     # Keep namespace
+          hist@type == "object" ||
           (hist@type == "package" && hist@name %in% pack.env$search.init)
         ) {
           detach(pos=hist@pos)
@@ -379,7 +406,7 @@ search_path_restore <- function() {
       } else if(hist@mode == "remove") { # Need to add back
         if(hist@type == "package") {
           library(
-            sub("^package:", "", hist@name), pos=hist@pos, quietly=TRUE, 
+            sub("^package:", "", hist@name), pos=hist@pos, quietly=TRUE,
             lib.loc=dirname(attr(hist@extra, "path"))
           )
         } else if (hist@type == "object") {
@@ -388,9 +415,9 @@ search_path_restore <- function() {
       }
     })
     if(inherits(res, "try-error")) {
-      stop(
-        "Logic Error: failed attempting to restore search path at step ", 
-        hist@mode, "`", hist@name, "`.  ", length(pack.env$history) - i + 1L, 
+      warning(
+        "Failed attempting to restore search path at step ",
+        hist@mode, "`", hist@name, "`.  ", length(pack.env$history) - i + 1L,
         " items in search path where not restored.  ", unitizer.search.fail.msg
       )
     }
@@ -398,10 +425,10 @@ search_path_restore <- function() {
   invisible(NULL)
 }
 #' Check Whether a Package Is Loaded
-#' 
-#' A package is considered loaded if it is in the search path and there is a 
+#'
+#' A package is considered loaded if it is in the search path and there is a
 #' namespace loaded with the same name as the package
-#' 
+#'
 #' @keywords internal
 #' @param pkg.name character(1L) must be in format "package:pkgname"
 #' @return TRUE if it is a loaded package
