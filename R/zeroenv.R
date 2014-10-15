@@ -51,17 +51,17 @@ pack.env <- new.env()
 #' Clears out Global State
 #'
 #' Should be called by `unitize` each time
+#'
+#' @return the package environment we use as a global variable
 #' @keywords internal
 
 reset_packenv <- function() {
   pack.env$zero.env.par <- new.env(parent=.GlobalEnv)
-  pack.env$unitizer.pos <- 0L
-  pack.env$base.packs <- character()
-  pack.env$search <- character()
   pack.env$lib.copy <- base::library
   pack.env$history <- new("searchHistList")
   pack.env$search.init <- character()        # Initial search path b4 any modifications
-  pack.env$search.base <- character()        # "Clean" search path
+
+  pack.env
 }
 #' Error message shared across functions
 #'
@@ -195,7 +195,7 @@ search_path_setup <- function() {
       where=.BaseNamespaceEnv, print=FALSE
     )
   })
-  if(inherits(shimmed, try-error)) {
+  if(inherits(shimmed, "try-error")) {
     warning("Unable to shim all of library/require/attach/detach.")
     search_path_unsetup()
     return(FALSE)
@@ -329,7 +329,6 @@ search_path_trim <- function() {
     invisible(NULL)
   }
   packs.to.detach <- tail(head(search.path.pre, -detach.count), -1L)
-  pack.env$base.packs <- head(search.path.pre, detach.count)
 
   # Set-up on exit function to attempt to restore search path in case something
   # went wrong
