@@ -56,6 +56,16 @@ pack.env$history <- new("searchHistList")
 pack.env$search.init <- character()        # Initial search path b4 any modifications
 pack.env$search.base <- character()        # "Clean" search path
 
+#' Error message shared across functions
+#' 
+#' @keywords internal
+
+unitizer.search.fail.msg <- paste0("We recommend you restart R to restore the search path ",
+  "to a clean state.  Please contact maintainer to share this error.  In ",
+  "the mean time, you can run `unitizer(clean.search.path=FALSE)` to disable ",
+  "search path manipulation."
+)
+
 #' Set-up Shims and Other Stuff for Search Path Manip
 #' 
 #' Here we shim by \code{`trace`}ing the \code{`libary/require/attach/detach`}
@@ -70,7 +80,8 @@ search_path_setup <- function() {
 
   pack.env$search.init <- search()
 
-  # Shim library
+  # Shim library, not we cannot use the `exit` param since `library` uses
+  # on.exit
 
   library.shim <- quote({
     search.pre <- search()
@@ -97,9 +108,10 @@ search_path_setup <- function() {
         new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
       )
     }
+    parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
     return(res)
   })
-  trace(base::library, library.shim, at=1L)
+  trace(library, library.shim, at=1L, where=.BaseNamespaceEnv)
 
   # Shim require
 
@@ -112,8 +124,12 @@ search_path_setup <- function() {
           unitizer.env$history <- append(
             unitizer.env$history, 
             new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
-      ) } }
-    })
+          ) 
+          parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
+      } }
+
+    }),
+    where=.BaseNamespaceEnv
   )
   # Shim attach
   
@@ -126,12 +142,15 @@ search_path_setup <- function() {
           unitizer.env$history <- append(
             unitizer.env$history, 
             new("searchHist", name=name, type="object", mode="add", extra=NULL)
-      ) } }
-    })
+          )
+          parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
+      } }
+    }),
+    where=.BaseNamespaceEnv
   )
   # Shim detach
   
-  if(!identical(as.list(body(base:detach)[[3]]), quote(packageName <- search()[[pos]]))
+  if(!identical(as.list(body(base:detach)[[3]]), quote(packageName <- search()[[pos]])))
     stop("Logic Error: Unable to shim `base:detach`, contact package maintainer.")
 
   trace(
@@ -153,9 +172,35 @@ search_path_setup <- function() {
             new("searchHist", name=packageName, 
               type=.unitizer.type, mode="remove",
               pos=pos, extra=.unitizer.obj
-        ) ) } }
-    })
+          ) ) 
+          parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
+      } }
+    }),
+    where=.BaseNamespaceEnv
   )
+}
+#' Search Path Unsetup
+#' 
+#' Undoes all the shimming we applied
+#' 
+#' @keywords internal
+
+search_path_unsetup <- function() {
+  unshim <- try({  # this needs to go 
+    untrace(library, where=.BaseNamespaceEnv)
+    untrace(require, where=.BaseNamespaceEnv)
+    untrace(attach, where=.BaseNamespaceEnv)
+    untrace(detach, where=.BaseNamespaceEnv)
+  })
+  if(inherits(unshim, "try-error")) {
+    stop(
+      "Logic Error: failed trying to unshim library/require/attach/detach, ",
+      "which means some of those functions are still modified for search path ",
+      "manipulation by `unitizer`.  Restarting R should restore the original ",
+      "functions."
+    )
+  }
+  invisible()  
 }
 #' Reconstruct Search Path From History
 #' 
@@ -172,7 +217,7 @@ search_path_check <- function(verbose=FALSE) {
   modes <- vapply(as.list(hist), slot, "", "mode")
   poss <- vapply(as.list(hist), slot, "", "pos")
 
-  names <- ifelse(types == "package", paste0("package:", names), names
+  names <- ifelse(types == "package", paste0("package:", names), names)
 
   search.init <- pack.env$search.init
 
@@ -258,8 +303,6 @@ search_path_trim <- function() {
   }
   packs.to.detach <- tail(head(search.path.pre, -detach.count), -1L)
   pack.env$base.packs <- head(search.path.pre, detach.count)
-  if(length(pack.env$objects.detached))
-    stop("Logic Error: there should not be any detached packages yet; contact maintainer")
 
   # Set-up on exit function to attempt to restore search path in case something
   # went wrong
@@ -284,33 +327,21 @@ search_path_trim <- function() {
 
     is.pack <- is.loaded_package(pack)  # run before detaching
 
-    # For `unitizer`, only record the position since we're not actually detaching
-    # it, but do need to be able to put it back in the same position in the 
-    # search path
+    # Detach all but `unitizer`
 
     if(!identical(pack, "package:unitizer")) {
       if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) 
         stop("Logic Error: unable to detach `", pack, "`; contact package maintainer.")
-    } else {
-      pack.env$unitizer.pos <- i + 1L
     } 
   }
-  # Find and return parent environment for tests
+  # Make sure trimming worked
 
-  search.path.post <- search()
-  if(length(search.path.post) < 9L)
-    stop("Logic Error: post-trim search path is less than 9 items long; contact maintainer.")
-  zero.env.par.tmp <- try(as.environment(search.path.post[[2L]]))
-  if(inherits(zero.env.par.tmp, "try-error"))
-    stop(
-      "Logic Error: targeted zero env parent cannot be converted to environment; ",
-      "contact maintainer."
-    )
-  pack.env$zero.env.par <- zero.env.par.tmp
+  if(!search_path_check())
+    stop("Logic Error: Failed attempting to clean search path.  ", unitizer.search.)
+
   on.exit(NULL)  # clear clean-up b/c we succeeded
   invisible(NULL)
 }
-
 #' Restore Search Path to State Before \code{`search_path_trim`}
 #' 
 #' Undoes \code{`search_path_trim`}
@@ -324,32 +355,13 @@ search_path_restore <- function() {
   
   # Make sure everything is as we expect before we actually do anything
 
-  fail.msg <- paste0("We recommend you restart R to restore the search path ",
-    "to a clean state.  Please contact maintainer to share this error.  In ",
-    "the mean time, you can run `unitizer(clean.search.path=FALSE)` to disable ",
-    "search path manipulation."
-  )
-  unshim <- try({  # this needs to go 
-    untrace(library, where=.BaseNamespaceEnv)
-    untrace(require, where=.BaseNamespaceEnv)
-    untrace(attach, where=.BaseNamespaceEnv)
-    untrace(detach, where=.BaseNamespaceEnv)
-  })
-  if(inherits(unshim, "try-error")) {
-    stop(
-      "Logic Error: failed trying to unshim library/require/attach/detach, ",
-      "which means some of those functions are still modified for search path ",
-      "manipulation by `unitizer`.  Additionally, `unitizer` will not be able ",
-      "to restore the search path.  ", fail.msg
-    )
-  }
   if(!search_path_check()) {
     stop(
       "Logic Error: unexpected search path, this likely occurred because you ",
       "somehow bypassed in your test code  the shimmed versions of ",
       "`base::library/require/attach/detach` that `unitizer` overloads or ",
       "otherwise modified the search path in an unexpected manner.  We are ",
-      "unable to restore the search path to its original form.  ", fail.msg
+      "unable to restore the search path to its original form.  ", unitizer.search.fail.msg
     )
   }
   # Step back through history, undoing each step
@@ -379,7 +391,7 @@ search_path_restore <- function() {
       stop(
         "Logic Error: failed attempting to restore search path at step ", 
         hist@mode, "`", hist@name, "`.  ", length(pack.env$history) - i + 1L, 
-        " items in search path where not restored.  ", fail.msg
+        " items in search path where not restored.  ", unitizer.search.fail.msg
       )
     }
   }
