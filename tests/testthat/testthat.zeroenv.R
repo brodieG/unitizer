@@ -134,9 +134,11 @@ test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
 
   # Make sure namespaces are working as expected
 
-  testthat::expect_error(dummy_fun1())
+  testthat::expect_error(evalq(dummy_fun1(), pack.env$zero.env.par))
+  testthat::expect_error(evalq(dummy_fun2(), pack.env$zero.env.par))
   library(unitizerdummypkg1)
-  testthat::expect_identical(dummy_fun1(), NULL)
+  testthat::expect_identical(evalq(dummy_fun1(), pack.env$zero.env.par), NULL)
+  testthat::expect_identical(evalq(dummy_fun1(), .GlobalEnv), NULL)
 
   # Confirm we can't see global env
 
@@ -147,6 +149,8 @@ test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
   # Add another package in weird position
 
   library(unitizerdummypkg2, pos=6L)
+  testthat::expect_identical(evalq(dummy_fun2(), pack.env$zero.env.par), NULL)
+  testthat::expect_identical(evalq(dummy_fun2(), .GlobalEnv), NULL)
 
   # restore
 
@@ -156,3 +160,4 @@ test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
   pack.env <- unitizer:::reset_packenv()
   unitizer:::search_path_unsetup()
 } )
+message("COMPLETED zeroenv tests")
