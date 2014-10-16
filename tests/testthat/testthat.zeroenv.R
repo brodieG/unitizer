@@ -15,7 +15,6 @@ test_that("Detecting packages", {
   expect_error(unitizer:::is.loaded_package("Autoloads"))
 } )
 test_that("Package shimming working", {
-
   search.path.init <- search()
 
   pack.env <- unitizer:::reset_packenv()
@@ -91,6 +90,68 @@ test_that("Package shimming working", {
   expect_true(unitizer:::search_path_check())
 
   # Turn off search path manip
+
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_unsetup()
+} )
+test_that("Search Path Trim / Restore", {
+  try(detach("package:unitizerdummypkg1", unload=TRUE))
+  try(detach("package:unitizerdummypkg2", unload=TRUE))
+  library(unitizerdummypkg1)
+  library(unitizerdummypkg2)
+  search.path.init <- search()
+
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_setup()
+  expect_true(unitizer:::search_path_trim())
+  testthat::expect_identical(  # note testthat no longer on search path
+    length(search.path.init),
+    length(search()) + length(pack.env$history)
+  )
+  testthat::expect_true(unitizer:::search_path_restore())
+  expect_identical(search(), search.path.init)
+
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_unsetup()
+} )
+
+test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
+  try(detach("package:unitizerdummypkg1", unload=TRUE))
+  try(detach("package:unitizerdummypkg2", unload=TRUE))
+  if(!inherits(try(get(".unitizer.tests.x", envir=.GlobalEnv), silent=TRUE), "try-error"))
+    stop("Logic error, `.unitizer.tests.x` should not be defined.")
+  assign(".unitizer.tests.x", 42, envir=.GlobalEnv)
+
+  library(unitizerdummypkg1)
+  library(unitizerdummypkg2)
+  search.path.init <- search()
+
+  # Clean path
+
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_setup()
+  expect_true(unitizer:::search_path_trim())
+
+  # Make sure namespaces are working as expected
+
+  testthat::expect_error(dummy_fun1())
+  library(unitizerdummypkg1)
+  testthat::expect_identical(dummy_fun1(), NULL)
+
+  # Confirm we can't see global env
+
+  testthat::expect_error(evalq(.unitizer.tests.x, pack.env$zero.env.par))
+  testthat::expect_identical(evalq(.unitizer.tests.x, .GlobalEnv), 42)
+  rm(.unitizer.tests.x, envir=.GlobalEnv)
+
+  # Add another package in weird position
+
+  library(unitizerdummypkg2, pos=6L)
+
+  # restore
+
+  testthat::expect_true(unitizer:::search_path_restore())
+  expect_identical(search(), search.path.init)
 
   pack.env <- unitizer:::reset_packenv()
   unitizer:::search_path_unsetup()
