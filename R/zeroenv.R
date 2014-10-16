@@ -465,7 +465,7 @@ is.loaded_package <- function(pkg.name) {
   if(!is.character(pkg.name) || length(pkg.name) != 1L)
     stop("Argument `pkg.name` must be character 1L")
   if(!isTRUE(grepl("^package:", pkg.name)))
-    stop("Argument `pkg.name` must be in format \"package:<package name>\"")
+    return(FALSE)
   just.name <- sub("^package:(.*)", "\\1", pkg.name)
   pkg.name %in% search() && just.name %in% loadedNamespaces()
 }

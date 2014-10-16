@@ -8,11 +8,11 @@ library(unitizer)
 
 test_that("Detecting packages", {
   expect_true(unitizer:::is.loaded_package("package:unitizer"))
-  expect_error(unitizer:::is.loaded_package("unitizer"))
+  expect_false(unitizer:::is.loaded_package("unitizer"))
   expect_true(unitizer:::is.loaded_package("package:stats"))
-  expect_error(unitizer:::is.loaded_package(1))
-  expect_error(unitizer:::is.loaded_package(letters))
-  expect_error(unitizer:::is.loaded_package("Autoloads"))
+  expect_false(unitizer:::is.loaded_package(1))
+  expect_false(unitizer:::is.loaded_package(letters))
+  expect_false(unitizer:::is.loaded_package("Autoloads"))
 } )
 test_that("Package shimming working", {
   search.path.init <- search()
