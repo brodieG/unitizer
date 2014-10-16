@@ -179,7 +179,7 @@ search_path_setup <- function() {
       base::detach, at=3L, tracer=quote({
         .unitizer.search.path.init <- search()
         if (!missing(name)) {  # snippet lifted directly from `detach`, necessary so we can get object b4 detach
-          if (!character.only) name.quote <- substitute(name)
+          name.quote <- if (!character.only) substitute(name) else name
           pos <- if (is.numeric(name.quote))
             name.quote
           else {
@@ -312,8 +312,7 @@ search_path_check <- function(verbose=FALSE) {
 #'
 #' @seealso \code{`\link{search_path_restore}`}  \code{`\link{search}`}
 #' @keywords internal
-#' @return NULL, this function is run purely for side effects and generates and
-#'   calls \code{`stop`} on failure
+#' @return invisibly TRUE on success, FALSE on failure
 
 search_path_trim <- function() {
   # Make sure search path is compatible with what we're doing
@@ -332,7 +331,7 @@ search_path_trim <- function() {
       "argument.  We are using `.GlobalEnv` as the parent environment for our ",
       "tests instead."
     )
-    invisible(NULL)
+    return(invisible(FALSE))
   }
   detach.count <- 8L
   if(
@@ -347,7 +346,7 @@ search_path_trim <- function() {
       "Cannot use a clean search path for tests because `tools:rstudio` is not ",
       "at the expected position in the search list;"
     )
-    invisible(NULL)
+    return(invisible(FALSE))
   }
   packs.to.detach <- tail(head(search.path.pre, -detach.count), -1L)
 
@@ -377,17 +376,24 @@ search_path_trim <- function() {
     # Detach all but `unitizer`
 
     if(!identical(pack, "package:unitizer")) {
-      if(inherits(try(detach(pack, character.only=TRUE)), "try-error"))
-        stop("Logic Error: unable to detach `", pack, "`; contact package maintainer.")
-    }
-  }
+      if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
+        warning(
+          "Unable to detach `", pack, "` while attempting to create a clean ",
+          "search path.  ", unitizer.search.fail.msg
+        )
+        return(invisible(FALSE))
+  } } }
   # Make sure trimming worked
 
-  if(!search_path_check())
-    stop("Logic Error: Failed attempting to clean search path.  ", unitizer.search.)
-
-  on.exit(NULL)  # clear clean-up b/c we succeeded
-  invisible(NULL)
+  if(!search_path_check()) {
+    warning(
+      "Search path is inconsistent with expectations after we attempted to ",
+      "a clean search path.  ", unitizer.search.fail.msg
+    )
+    return(invisible(FALSE))
+  }
+  on.exit(NULL)   # clear clean-up b/c we succeeded
+  invisible(TRUE)
 }
 #' Restore Search Path to State Before \code{`search_path_trim`}
 #'
@@ -395,7 +401,7 @@ search_path_trim <- function() {
 #'
 #' @seealso \code{`\link{search_path_trim}`}  \code{`\link{search}`}
 #' @keywords internal
-#' @return NULL, this function is run purely for side effects
+#' @return TRUE on success, FALSE on failure, invisibly
 
 search_path_restore <- function() {
 
@@ -407,9 +413,10 @@ search_path_restore <- function() {
       "somehow bypassed in your test code  the shimmed versions of ",
       "`base::library/require/attach/detach` that `unitizer` overloads or ",
       "otherwise modified the search path in an unexpected manner.  We are ",
-      "unable to restore the search path to its original form.  ", unitizer.search.fail.msg
+      "unable to restore the search path to its original form.  ",
+      unitizer.search.fail.msg
     )
-    return(invisible())
+    return(invisible(FALSE))
   }
   # Step back through history, undoing each step
 
@@ -421,12 +428,12 @@ search_path_restore <- function() {
           hist@type == "object" ||
           (hist@type == "package" && hist@name %in% pack.env$search.init)
         ) {
-          detach(pos=hist@pos)
-        } else detach(pos=hist@pos, unload=TRUE)
+          detach(pos=hist@pos, character.only=TRUE)
+        } else detach(pos=hist@pos, unload=TRUE, character.only=TRUE)
       } else if(hist@mode == "remove") { # Need to add back
         if(hist@type == "package") {
           library(
-            sub("^package:", "", hist@name), pos=hist@pos, quietly=TRUE,
+            hist@name, pos=hist@pos, quietly=TRUE, character.only=TRUE,
             lib.loc=dirname(attr(hist@extra, "path"))
           )
         } else if (hist@type == "object") {
@@ -437,12 +444,13 @@ search_path_restore <- function() {
     if(inherits(res, "try-error")) {
       warning(
         "Failed attempting to restore search path at step ",
-        hist@mode, "`", hist@name, "`.  ", length(pack.env$history) - i + 1L,
-        " items in search path where not restored.  ", unitizer.search.fail.msg
+        hist@mode, " `", hist@name, "`.  Unable to fully restore search path.  ",
+        unitizer.search.fail.msg
       )
+      return(invisible(FALSE))
     }
   }
-  invisible(NULL)
+  invisible(TRUE)
 }
 #' Check Whether a Package Is Loaded
 #'
