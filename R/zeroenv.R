@@ -353,7 +353,10 @@ search_path_trim <- function() {
   # Set-up on exit function to attempt to restore search path in case something
   # went wrong
 
-  on.exit(search_path_restore())
+  on.exit({
+    message("Unable to trim search path, so attempting to restore it.")
+    search_path_restore()
+  })
 
   # detach each object, and record them for purposes of restoring them later
 
