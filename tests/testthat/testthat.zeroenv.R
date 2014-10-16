@@ -160,4 +160,109 @@ test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
   pack.env <- unitizer:::reset_packenv()
   unitizer:::search_path_unsetup()
 } )
+test_that("require / attach / detach", {
+  try(detach("package:unitizerdummypkg1", unload=TRUE))
+  try(detach("package:unitizerdummypkg2", unload=TRUE))
+  if(!inherits(try(get(".unitizer.tests.x1", envir=.GlobalEnv), silent=TRUE), "try-error"))
+    stop("Logic error, `.unitizer.tests.x1` should not be defined.")
+  if(!inherits(try(get(".unitizer.tests.x2", envir=.GlobalEnv), silent=TRUE), "try-error"))
+    stop("Logic error, `.unitizer.tests.x2` should not be defined.")
+  assign(".unitizer.tests.x1", 42, envir=.GlobalEnv)
+  assign(".unitizer.tests.x2", c("the", "answer"), envir=.GlobalEnv)
+
+  # Add some objects to path
+
+  library(unitizerdummypkg1)
+  library(unitizerdummypkg2)
+
+  a <- data.frame(.unitizer.tests.x1=1:10)
+  b <- list(.unitizer.tests.x2=new.env())
+
+  attach(a)
+  attach(b)
+
+  search.path.init <- search()
+
+  # Clean path
+
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_setup()
+  expect_true(unitizer:::search_path_trim())
+  testthat::expect_false(
+    any(
+      c("a", "b", "package:unitizerdummypkg1", "package:unitizerdummypkg2") %in%
+      search()
+  ) )
+  # Test Require
+
+  require(unitizerdummypkg1)
+  pkg.char <- "unitizerdummypkg2"
+  require(pkg.char, character.only=TRUE)
+  testthat::expect_true(
+    all(c("package:unitizerdummypkg1", "package:unitizerdummypkg2") %in% search())
+  )
+  # Test attach / detach
+
+  testthat::expect_identical(evalq(.unitizer.tests.x1, .GlobalEnv), 42)
+  testthat::expect_identical(evalq(.unitizer.tests.x2, .GlobalEnv), c("the", "answer"))
+
+  testthat::expect_error(evalq(.unitizer.tests.x1, pack.env$zero.env.par))  # original a/b should be removed by trim
+  testthat::expect_error(evalq(.unitizer.tests.x2, pack.env$zero.env.par))
+
+  a1 <- data.frame(.unitizer.tests.x1=2:3)
+  attach(a1, name="a")
+
+  testthat::expect_identical(evalq(.unitizer.tests.x1, .GlobalEnv), 42)
+  testthat::expect_identical(evalq(.unitizer.tests.x1, pack.env$zero.env.par), 2:3)
+
+  b2 <- data.frame(.unitizer.tests.x1=999L, .unitizer.tests.x2="boo", stringsAsFactors=FALSE)
+  attach(b2, name="a", pos=3L)  # Note purposefully writing to "a"
+
+  testthat::expect_identical(evalq(.unitizer.tests.x1, pack.env$zero.env.par), 2:3)
+  testthat::expect_identical(evalq(.unitizer.tests.x2, .GlobalEnv), c("the", "answer"))
+  testthat::expect_identical(evalq(.unitizer.tests.x2, pack.env$zero.env.par), "boo")
+
+  detach("a")  # should detach first "a"
+
+  testthat::expect_identical(evalq(.unitizer.tests.x1, pack.env$zero.env.par), 999L)
+  testthat::expect_identical(evalq(.unitizer.tests.x2, pack.env$zero.env.par), "boo")
+
+  detach("a")  # should detach second "a"
+
+  testthat::expect_error(evalq(.unitizer.tests.x1, pack.env$zero.env.par))  # original a/b should be removed by trim
+  testthat::expect_error(evalq(.unitizer.tests.x2, pack.env$zero.env.par))
+
+  # More package detach testing
+
+  detach("package:unitizerdummypkg1")
+  testthat::expect_false("package:unitizerdummypkg1" %in% search())
+  testthat::expect_true("unitizerdummypkg1" %in% loadedNamespaces())
+
+  detach("package:unitizerdummypkg2", unload=TRUE)
+  testthat::expect_false("package:unitizerdummypkg2" %in% search())
+  testthat::expect_false("unitizerdummypkg2" %in% loadedNamespaces())
+
+  # cross fingers and restore...
+
+  testthat::expect_true(unitizer:::search_path_restore())
+  expect_identical(search(), search.path.init)
+
+  rm(.unitizer.tests.x1, .unitizer.tests.x2, envir=.GlobalEnv)
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_unsetup()
+
+  # Now early objects should be restored
+
+  expect_identical(search(), search.path.init)
+  expect_identical(.unitizer.tests.x1, 1:10)
+  expect_identical(.unitizer.tests.x2, b$.unitizer.tests.x2)
+
+  # Restore search path (this was done outside of serach path manip)
+
+  detach("a")
+  detach("b")
+  detach("package:unitizerdummypkg1", unload=TRUE)
+  detach("package:unitizerdummypkg2", unload=TRUE)
+} )
+
 message("COMPLETED zeroenv tests")
