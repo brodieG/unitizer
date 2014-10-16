@@ -14,67 +14,84 @@ test_that("Detecting packages", {
   expect_error(unitizer:::is.loaded_package(letters))
   expect_error(unitizer:::is.loaded_package("Autoloads"))
 } )
-test_that("Package added properly", {
-  search.path <- search()
-  unitizer:::unitizer_library(unitizerdummypkg1)
-  expect_equal(new.pack <- setdiff(search(), search.path), "package:unitizerdummypkg1")
-  expect_equal(new.pack, names(unitizer:::pack.env$objects.attached))  
+test_that("Package shimming working", {
 
-  # And only once
+  search.path.init <- search()
 
-  unitizer:::unitizer_library(unitizerdummypkg1)
-  expect_equal(new.pack <- setdiff(search(), search.path), "package:unitizerdummypkg1")
-  expect_equal(new.pack, names(unitizer:::pack.env$objects.attached))
-} )
-test_that("Don't add if already in search path", {
-  library(unitizerdummypkg2)
-  search.path <- search()
-  unitizer:::unitizer_library(unitizerdummypkg2)
-  expect_equal(new.pack <- setdiff(search(), search.path), character())
+  pack.env <- unitizer:::reset_packenv()
+  expect_true(unitizer:::search_path_setup())
+  expect_warning(sps <- unitizer:::search_path_setup())    # Can't re-shim
+  expect_false(sps)
+  expect_identical(unitizer:::search_path_unsetup(), NULL) # undo shimming
+  expect_true(unitizer:::search_path_setup())              # now re-shim should work
 
-  # Require too
+  expect_identical(search.path.init, pack.env$search.init)
+  expect_identical(length(pack.env$history), 0L)
 
-  try(detach("package:unitizerdummypkg2", unload=TRUE))
-  search.path <- search()
-  unitizer:::unitizer_require(unitizerdummypkg2)
-  expect_equal(new.pack <- setdiff(search(), search.path), "package:unitizerdummypkg2")
-  expect_equal(
-    c("package:unitizerdummypkg1", "package:unitizerdummypkg2"), 
-    names(unitizer:::pack.env$objects.attached)
+  # Add one package
+
+  library(unitizerdummypkg1)
+
+  expect_identical(length(pack.env$history), 1L)
+  expect_identical(
+    pack.env$history[[1L]],
+    new("searchHist", name="unitizerdummypkg1", type="package", mode="add", pos=2L, extra=NULL)
   )
-} )
-test_that("Trim and Reset Search Path", {
-  try(detach("package:unitizer", unload=TRUE))
-  try(detach("package:unitizerdummypkg1", unload=TRUE))
-  try(detach("package:unitizerdummypkg2", unload=TRUE))
+  expect_identical(setdiff(search(), search.path.init), "package:unitizerdummypkg1")
 
-  library(unitizer)
-  library(unitizerdummypkg1)  # at least one pack to explicitly remove
+  # But only once
 
-  search.pre <- search()
-  search.pre.objs <- lapply(search.pre, as.environment)
+  library(unitizerdummypkg1)
+  expect_identical(length(pack.env$history), 1L)
 
-  testthat::expect_identical(unitizer:::search_path_trim(), NULL)  # note this actually removes testthat from search path...
+  # Another pack, but different location
 
-  search.post <- search()
-  search.base <- c(
-    ".GlobalEnv", "package:unitizer", "package:stats", "package:graphics",  
-    "package:grDevices", "package:utils", "package:datasets", "package:methods",  
-    "Autoloads", "package:base"
+  library(unitizerdummypkg2, pos=3L)
+
+  expect_identical(length(pack.env$history), 2L)
+  expect_identical(
+    pack.env$history[[2L]],
+    new("searchHist", name="unitizerdummypkg2", type="package", mode="add", pos=3L, extra=NULL)
   )
-  testthat::expect_true(
-    identical(search.post, search.base) || 
-    identical(search.post, append(search.base, "tools:rstudio", 2L))
+  expect_identical(
+    setdiff(search(), search.path.init),
+    c("package:unitizerdummypkg1", "package:unitizerdummypkg2")
   )
-  testthat::expect_true(
-    "package:unitizerdummypkg1" %in% 
-    vapply(unitizer:::pack.env$objects.detached, `[[`, "", "name")
-  )
-  unitizer:::search_path_restore()
-  expect_identical(search.pre, search())
+  # Confirm stuff is working as expected
 
-  # Can't do identical b/c environments are reloaded and as such are different
-  # but this should at least compare attributes and all that
+  expect_true(unitizer:::search_path_check())
 
-  expect_equal(search.pre.objs, lapply(search(), as.environment))
+  # Detach by position
+
+  rem.obj <- as.environment(3L)  # Capture object we're about to detach
+  detach(3L)
+  expect_identical(setdiff(search(), search.path.init), "package:unitizerdummypkg1")  # detached pkg2
+  expect_identical(length(pack.env$history), 3L)  # but history should grow
+  expect_identical(
+    pack.env$history[[3L]],
+    new(
+      "searchHist", name="unitizerdummypkg2", type="package", mode="remove",
+      pos=3L, extra=rem.obj
+  ) )
+  # Detach by name, and also remove namespace
+
+  rem.obj <- as.environment("package:unitizerdummypkg1")  # Capture object we're about to detach
+  detach("package:unitizerdummypkg1", unload=TRUE)
+
+  expect_identical(search(), search.path.init)
+  expect_identical(length(pack.env$history), 4L)
+  expect_identical(
+    pack.env$history[[4L]],
+    new(
+      "searchHist", name="unitizerdummypkg1", type="package", mode="remove",
+      pos=2L, extra=rem.obj
+  ) )
+  # Confirm stuff is working as expected
+
+  expect_true(unitizer:::search_path_check())
+
+  # Turn off search path manip
+
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_unsetup()
 } )

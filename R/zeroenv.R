@@ -17,11 +17,11 @@ setClass(
   ),
   prototype=list(extra=NULL),
   validity=function(object) {
-    if(!length(object@name) != 1L) return("Slot `name` must be one length")
-    if(!length(object@pos) != 1L) return("Slot `pos` must be one length")
-    if(!length(object@type) != 1L || ! object@type %in% c("package", "object"))
+    if(length(object@name) != 1L) return("Slot `name` must be one length")
+    if(length(object@pos) != 1L) return("Slot `pos` must be one length")
+    if(length(object@type) != 1L || ! object@type %in% c("package", "object"))
       return("Slot `type` must be character(1L) and in c(\"package\", \"object\")")
-    if(!length(object@mode) != 1L || ! object@type %in% c("add", "remove"))
+    if(length(object@mode) != 1L || ! object@mode %in% c("add", "remove"))
       return("Slot `mode` must be character(1L) and in c(\"add\", \"remove\")")
   }
 )
@@ -117,12 +117,12 @@ search_path_setup <- function() {
       # Succeeded in attaching package, so record in history
 
       if(
-        isTRUE(res) || is.character(res) &&
-        identical(length(search.pre), length(search()) + 1L)
+        (isTRUE(res) || is.character(res)) &&
+        identical(length(search.pre) + 1L, length(search()))
       ) {
-        unitizer.env$history <- append(
+        unitizer.env$history <- unitizer::append(
           unitizer.env$history,
-          new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
+          list(new("searchHist", name=package, type="package", mode="add", pos=as.integer(pos), extra=NULL))
         )
       }
       parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
@@ -138,10 +138,13 @@ search_path_setup <- function() {
         if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
           if(is.character(package) && length(package) == 1L) {
             unitizer.env <- asNamespace("unitizer")$pack.env
-            unitizer.env$history <- append(
+            unitizer.env$history <- unitizer::append(
               unitizer.env$history,
-              new("searchHist", name=package, type="package", mode="add", pos=pos, extra=NULL)
-            )
+              list(
+                new(
+                  "searchHist", name=package, type="package", mode="add",
+                  pos=as.integer(pos), extra=NULL
+            ) ) )
             parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
         } }
       }),
@@ -155,10 +158,13 @@ search_path_setup <- function() {
         if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
           if(is.character(name) && length(name) == 1L) {
             unitizer.env <- asNamespace("unitizer")$pack.env
-            unitizer.env$history <- append(
+            unitizer.env$history <- unitizer::append(
               unitizer.env$history,
-              new("searchHist", name=name, type="object", mode="add", extra=NULL)
-            )
+              list(
+                new(
+                  "searchHist", name=name, type="object", mode="add",
+                  pos=as.integer(pos), extra=NULL
+            ) ) )
             parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
         } }
       }),
@@ -172,8 +178,19 @@ search_path_setup <- function() {
     trace(
       base::detach, at=3L, tracer=quote({
         .unitizer.search.path.init <- search()
-        .unitizer.obj <- as.environment(packageName)
-        .unitizer.type <- is.loaded_package(packageName)
+        if (!missing(name)) {  # snippet lifted directly from `detach`, necessary so we can get object b4 detach
+          if (!character.only) name.quote <- substitute(name)
+          pos <- if (is.numeric(name.quote))
+            name.quote
+          else {
+            if (!is.character(name)) name.quote <- deparse(name)
+            match(name.quote, search())
+          }
+          if (is.na(pos)) stop("invalid 'name' argument")
+        }
+        .unitizer.package.name <- search()[[pos]]
+        .unitizer.obj <- as.environment(.unitizer.package.name)
+        .unitizer.type <- if(unitizer:::is.loaded_package(.unitizer.package.name)) "package" else "object"
       }),
       exit=quote({
         if(identical(length(search()), length(.unitizer.search.path.init) - 1L)) {
@@ -183,12 +200,16 @@ search_path_setup <- function() {
             pos <= max(seq_along(.unitizer.search.path.init))
           ) {
             unitizer.env <- asNamespace("unitizer")$pack.env
-            unitizer.env$history <- append(
+            unitizer.env$history <- unitizer::append(
               unitizer.env$history,
-              new("searchHist", name=packageName,
-                type=.unitizer.type, mode="remove",
-                pos=pos, extra=.unitizer.obj
-            ) )
+              list(
+                new(
+                  "searchHist",
+                  name=if(identical(.unitizer.type, "package"))
+                    sub("^package:", "", packageName) else packageName,
+                  type=.unitizer.type, mode="remove",
+                  pos=as.integer(pos), extra=.unitizer.obj
+            ) ) )
             parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
         } }
       }),
@@ -238,11 +259,11 @@ search_path_unsetup <- function() {
 #' @keywords internal
 
 search_path_check <- function(verbose=FALSE) {
-  hist <- rev(pack.env$history)
+  hist <- pack.env$history
   names <- vapply(as.list(hist), slot, "", "name")
   types <- vapply(as.list(hist), slot, "", "type")
   modes <- vapply(as.list(hist), slot, "", "mode")
-  poss <- vapply(as.list(hist), slot, "", "pos")
+  poss <- vapply(as.list(hist), slot, 1L, "pos")
 
   names <- ifelse(types == "package", paste0("package:", names), names)
 
@@ -254,11 +275,11 @@ search_path_check <- function(verbose=FALSE) {
         (types[[i]] == "package" && !names[[i]] %in% search.init) ||
         types[[i]] == "object"
       ) {
-        search.init <- append(search.init, names[[i]], after=pos - 1L)
+        search.init <- append(search.init, names[[i]], after=poss[[i]] - 1L)
       }
     } else if (modes[[i]] == "remove") {
       if(!identical(search.init[[poss[[i]]]], names[[i]])) {
-        if(vebose) message("Object to detach `", names[[i]], "` not at expected position (", poss[[i]], ").")
+        if(verbose) message("Object to detach `", names[[i]], "` not at expected position (", poss[[i]], ").")
         return(FALSE)
       }
       search.init <- search.init[-poss[[i]]]
