@@ -88,7 +88,6 @@ search_path_setup <- function() {
 
   fail.shim <- character()
   if(is(base::library, "functionWithTrace")) fail.shim <- c(fail.shim, "library")
-  if(is(base::require, "functionWithTrace")) fail.shim <- c(fail.shim, "require")
   if(is(base::attach, "functionWithTrace")) fail.shim <- c(fail.shim, "attach")
   if(is(base::detach, "functionWithTrace")) fail.shim <- c(fail.shim, "detach")
 
@@ -130,26 +129,10 @@ search_path_setup <- function() {
     })
     trace(library, library.shim, at=1L, where=.BaseNamespaceEnv, print=FALSE)
 
-    # Shim require
+    # Shim require (actually, this is done indirectly by the library shim)
 
-    trace(
-      base::require, quote(.unitizer.search.path.init <- search()),
-      exit=quote({
-        if(identical(length(search()), length(.unitizer.search.path.init) + 1L)) {
-          if(is.character(package) && length(package) == 1L) {
-            unitizer.env <- asNamespace("unitizer")$pack.env
-            unitizer.env$history <- unitizer::append(
-              unitizer.env$history,
-              list(
-                new(
-                  "searchHist", name=package, type="package", mode="add",
-                  pos=as.integer(pos), extra=NULL
-            ) ) )
-            parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
-        } }
-      }),
-      where=.BaseNamespaceEnv, print=FALSE
-    )
+    NULL
+
     # Shim attach
 
     trace(
@@ -236,7 +219,6 @@ search_path_setup <- function() {
 search_path_unsetup <- function() {
   unshim <- try({  # this needs to go
     untrace(library, where=.BaseNamespaceEnv)
-    untrace(require, where=.BaseNamespaceEnv)
     untrace(attach, where=.BaseNamespaceEnv)
     untrace(detach, where=.BaseNamespaceEnv)
   })
