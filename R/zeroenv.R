@@ -63,16 +63,28 @@ reset_packenv <- function() {
 
   pack.env
 }
+#' Search Path Back-up
+#'
+#' Holds the state of the search path before `unitizer` to serve as a back-up
+#' in case the search path manipulation functions are unable to restore the
+#' search path to it's original value.
+#'
+#' @export
+
+.unitizer.search.path.backup <- character()
+
 #' Error message shared across functions
 #'
 #' @keywords internal
 
-unitizer.search.fail.msg <- paste0("We recommend you restart R to restore the search path ",
-  "to a clean state.  Please contact maintainer to share this error.  In ",
-  "the mean time, you can run `unitizer(clean.search.path=FALSE)` to disable ",
-  "search path manipulation."
+.unitizer.search.fail.msg <- paste0(
+  "  We recommend you restart R to restore the search path to a clean state.  ",
+  "You can run also `unitizer(clean.search.path=FALSE)` to disable search path ",
+  "manipulation if these warnings persist."
 )
-
+.unitizer.search.fail.msg.extra <- paste0(
+  "  Please contact maintainer to alert them of this warning."
+)
 #' Set-up Shims and Other Stuff for Search Path Manip
 #'
 #' Here we shim by \code{`trace`}ing the \code{`libary/require/attach/detach`}
@@ -92,7 +104,10 @@ search_path_setup <- function() {
   if(is(base::detach, "functionWithTrace")) fail.shim <- c(fail.shim, "detach")
 
   if(length(fail.shim)) {
-    warning("Cannot shim ", paste0(fail.shim, collapse=", "), "because already traced")
+    warning(
+      "Cannot shim ", paste0(fail.shim, collapse=", "), "because already traced.",
+      immediate.=TRUE
+    )
     return(FALSE)
   }
   shimmed <- try({
@@ -121,8 +136,11 @@ search_path_setup <- function() {
       ) {
         unitizer.env$history <- unitizer::append(
           unitizer.env$history,
-          list(new("searchHist", name=package, type="package", mode="add", pos=as.integer(pos), extra=NULL))
-        )
+          list(
+            new(
+              "searchHist", name=package, type="package", mode="add",
+              pos=as.integer(pos), extra=NULL
+        ) ) )
       }
       parent.env(unitizer.env$zero.env.par) <- as.environment(2L) # Keep unitizer rooted just below globalenv
       return(res)
@@ -156,7 +174,10 @@ search_path_setup <- function() {
     # Shim detach
 
     if(!identical(as.list(body(base::detach))[[3]], quote(packageName <- search()[[pos]])))
-      stop("Logic Error: Unable to shim `base:detach`, contact package maintainer.")
+      stop(
+        "Logic Error: Unable to shim `base:detach` because the code is not the "
+        "same as it was when this package was developed; contact package maintainer."
+      )
 
     trace(
       base::detach, at=3L, tracer=quote({
@@ -200,13 +221,18 @@ search_path_setup <- function() {
     )
   })
   if(inherits(shimmed, "try-error")) {
-    warning("Unable to shim all of library/require/attach/detach.")
+    warning(
+      "Unable to shim all of library/require/attach/detach.  ",
+      .unitizer.search.fail.msg.extra
+      immediate.=TRUE
+    )
     search_path_unsetup()
     return(FALSE)
   }
   # Track initial values
 
   pack.env$search.init <- search()
+  assign(".unitizer.search.path.backup", search(), envir=.GlobalEnv)
 
   return(TRUE)
 }
@@ -224,13 +250,14 @@ search_path_unsetup <- function() {
   })
   if(inherits(unshim, "try-error")) {
     warning(
-      "failed trying to unshim library/require/attach/detach, ",
+      "Failed trying to unshim library/require/attach/detach, ",
       "which means some of those functions are still modified for search path ",
       "manipulation by `unitizer`.  Restarting R should restore the original ",
-      "functions.  Please forward this warning to `unitizer` maintainer."
+      "functions.", .unitizer.search.fail.msg.extra
     )
+    return(invisible(FALSE))
   }
-  invisible()
+  invisible(TRUE)
 }
 #' Reconstruct Search Path From History
 #'
@@ -261,7 +288,11 @@ search_path_check <- function(verbose=FALSE) {
       }
     } else if (modes[[i]] == "remove") {
       if(!identical(search.init[[poss[[i]]]], names[[i]])) {
-        if(verbose) message("Object to detach `", names[[i]], "` not at expected position (", poss[[i]], ").")
+        if(verbose)
+          warning(
+            "Object to detach `", names[[i]], "` not at expected position (",
+            poss[[i]], ").", immediate.=TRUE
+          )
         return(FALSE)
       }
       search.init <- search.init[-poss[[i]]]
@@ -269,9 +300,9 @@ search_path_check <- function(verbose=FALSE) {
   }
   if(!identical(search(), search.init)) {
     if(verbose) {
-      message(
+      warning(
         "Mismatches between expected search path and actual:\n - expected: ",
-        deparse(search.init), "\n - actual: ", deparse(search())
+        deparse(search.init), "\n - actual: ", deparse(search()), immediate.=TRUE
       )
     }
     return(FALSE)
@@ -336,7 +367,7 @@ search_path_trim <- function() {
   # went wrong
 
   on.exit({
-    message("Unable to trim search path, so attempting to restore it.")
+    warning("Unable to trim search path, so attempting to restore it.", immediate.=TRUE)
     search_path_restore()
   })
 
@@ -349,8 +380,8 @@ search_path_trim <- function() {
     }
     if(inherits(try(obj <- as.environment(pack)), "try-error")) {
       stop(
-        "Logic Error: unable to convert search path element to environment;",
-        " contact maintainer"
+        "Logic Error: unable to convert search path element `", pack,
+        "` to environment; contact maintainer."
       )
     }
     # Is it a package or an object?  Considered package if name starts with
@@ -360,20 +391,19 @@ search_path_trim <- function() {
 
     # Detach all but `unitizer`
 
-    if(!identical(pack, "package:unitizer")) {
-      if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
-        warning(
-          "Unable to detach `", pack, "` while attempting to create a clean ",
-          "search path.  ", unitizer.search.fail.msg
-        )
-        return(invisible(FALSE))
-  } } }
+  if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
+    warning(
+      "Unable to detach `", pack, "` while attempting to create a clean ",
+      "search path.  ", .unitizer.search.fail.msg
+    )
+    return(invisible(FALSE))
+  }
   # Make sure trimming worked
 
   if(!search_path_check()) {
     warning(
       "Search path is inconsistent with expectations after we attempted to ",
-      "a clean search path.  ", unitizer.search.fail.msg
+      "a clean search path.  ", .unitizer.search.fail.msg, immediate.=TRUE
     )
     return(invisible(FALSE))
   }
@@ -394,12 +424,18 @@ search_path_restore <- function() {
 
   if(!search_path_check()) {
     warning(
-      "Unexpected search path, this likely occurred because you ",
-      "somehow bypassed in your test code  the shimmed versions of ",
-      "`base::library/require/attach/detach` that `unitizer` overloads or ",
-      "otherwise modified the search path in an unexpected manner.  We are ",
-      "unable to restore the search path to its original form.  ",
-      unitizer.search.fail.msg
+      "Unexpected search path encountered, this likely occurred because you ",
+      "somehow bypassed in your test code the traced versions of ",
+      "`base::library/attach/detach` that `unitizer` provides. ",
+      "This will happen if you either `trace` or `untrace` any of `library`, ",
+      "`attach`, or `detach` from package `base`, or if you turn off tracing ",
+      "with `tracingState`. `unitizer` relies on the traced versions of those ",
+      "functions to track modifications to the search path.  If you did not do ",
+      "any of the above, but are still seeing this message, please contact ",
+      "maintainer. \n\nWe are unable to restore the search path to its original ",
+      "value (you can retrieve orginal value from variable ",
+      "`.unitizer.search.path.backup` in global env).",
+      .unitizer.search.fail.msg, immediate.=TRUE
     )
     return(invisible(FALSE))
   }
@@ -430,7 +466,7 @@ search_path_restore <- function() {
       warning(
         "Failed attempting to restore search path at step ",
         hist@mode, " `", hist@name, "`.  Unable to fully restore search path.  ",
-        unitizer.search.fail.msg
+        .unitizer.search.fail.msg, immediate.=TRUE
       )
       return(invisible(FALSE))
     }
