@@ -422,6 +422,7 @@ search_path_restore <- function() {
   }
   # Step back through history, undoing each step
 
+  search_path_unsetup()
   for(i in rev(seq_along(pack.env$history))) {
     hist <- pack.env$history[[i]]
     res <- try({

@@ -112,7 +112,7 @@ test_that("Search Path Trim / Restore", {
   expect_identical(search(), search.path.init)
 
   pack.env <- unitizer:::reset_packenv()
-  unitizer:::search_path_unsetup()
+  unitizer:::search_path_unsetup()   # not strictly necessary after restore()
 } )
 
 test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
@@ -158,7 +158,7 @@ test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
   expect_identical(search(), search.path.init)
 
   pack.env <- unitizer:::reset_packenv()
-  unitizer:::search_path_unsetup()
+  unitizer:::search_path_unsetup()    # not strictly necessary after restore()
 } )
 test_that("require / attach / detach", {
   try(detach("package:unitizerdummypkg1", unload=TRUE))
@@ -249,7 +249,7 @@ test_that("require / attach / detach", {
 
   rm(.unitizer.tests.x1, .unitizer.tests.x2, envir=.GlobalEnv)
   pack.env <- unitizer:::reset_packenv()
-  unitizer:::search_path_unsetup()
+  unitizer:::search_path_unsetup()  # not strictly necessary after restore()
 
   # Now early objects should be restored
 
