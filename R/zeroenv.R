@@ -73,6 +73,14 @@ reset_packenv <- function() {
 
 .unitizer.search.path.backup <- character()
 
+#' Default List of Packages To Keep on Search Path
+#'
+#' @export
+
+.unitizer.base.packages <- c(
+  "package:stats", "package:graphics", "package:grDevices", "package:utils",
+  "package:datasets", "package:methods", "Autoloads", "package:base", ".GlobalEnv"
+)
 #' Error message shared across functions
 #'
 #' @keywords internal
@@ -175,7 +183,7 @@ search_path_setup <- function() {
 
     if(!identical(as.list(body(base::detach))[[3]], quote(packageName <- search()[[pos]])))
       stop(
-        "Logic Error: Unable to shim `base:detach` because the code is not the "
+        "Logic Error: Unable to shim `base:detach` because the code is not the ",
         "same as it was when this package was developed; contact package maintainer."
       )
 
@@ -223,8 +231,7 @@ search_path_setup <- function() {
   if(inherits(shimmed, "try-error")) {
     warning(
       "Unable to shim all of library/require/attach/detach.  ",
-      .unitizer.search.fail.msg.extra
-      immediate.=TRUE
+      .unitizer.search.fail.msg.extra, immediate.=TRUE
     )
     search_path_unsetup()
     return(FALSE)
@@ -313,56 +320,28 @@ search_path_check <- function(verbose=FALSE) {
 #'
 #' \code{`search_path_trimp`} attempts to recreate a clean environment by
 #' unloading all packages and objects that are not loaded by default in the
-#' default R  configuration. Will fail if a user loaded packages with a
-#' \code{`pos`} argument such that they package ends up later in the search list
-#' than \code{`package:stats`} (or \code{`tools:rstudio`} if present), basically
-#' we're assuming that default load includes everything up to
-#' \code{`package:stats`}).  Note this only detaches packages and objects and
-#' does not unload namespaces.
+#' default R  configuration.
 #'
 #' Note this does not unload namespaces, but rather just detaches them from
 #' the namespace
 #'
+#' \code{`tools:rstudio`} is kept in search path as the default argument because
+#' it isn't possible to cleanly unload and reload it because \code{`attach`}
+#' actually attaches a copy of it's argument, not the actual object, and that
+#' causes problems for that search path item.
+#'
 #' @seealso \code{`\link{search_path_restore}`}  \code{`\link{search}`}
 #' @keywords internal
+#' @param keep character names of packages/objects to keep in search path;
+#'   note that base packages (see .unitizer.base.packages) that come typically
+#'   pre attached are always kept.  The \code{`keep`} packages are an addition
+#'   to those.
 #' @return invisibly TRUE on success, FALSE on failure
 
-search_path_trim <- function() {
+search_path_trim <- function(keep=c("package:unitizer", "tools:rstudio")) {
   # Make sure search path is compatible with what we're doing
 
   search.path.pre <- search()
-  base.path <- c(
-    "package:stats", "package:graphics", "package:grDevices", "package:utils",
-    "package:datasets", "package:methods", "Autoloads", "package:base"
-  )
-  if(!identical(base.path, tail(search.path.pre, 8L))) {
-    warning(
-      "Cannot use a clean search path  as the parent environment for tests because ",
-      "the last eight elements in the search path are not: ",
-      paste0(base.path, collapse=", "), ".  This may be happening because you ",
-      "attached a package at a position before `package:stats` using the `pos` ",
-      "argument.  We are using `.GlobalEnv` as the parent environment for our ",
-      "tests instead."
-    )
-    return(invisible(FALSE))
-  }
-  detach.count <- 8L
-  if(
-    length(search.path.pre > 9L) &&
-    identical(tail(search.path.pre, 9L)[[1L]], "tools:rstudio")
-  ) {
-    detach.count <- 9L
-  } else if (
-    "tools:rstudio" %in% search.path.pre
-  ) {
-    warning(
-      "Cannot use a clean search path for tests because `tools:rstudio` is not ",
-      "at the expected position in the search list;"
-    )
-    return(invisible(FALSE))
-  }
-  packs.to.detach <- tail(head(search.path.pre, -detach.count), -1L)
-
   # Set-up on exit function to attempt to restore search path in case something
   # went wrong
 
@@ -372,6 +351,8 @@ search_path_trim <- function() {
   })
 
   # detach each object, and record them for purposes of restoring them later
+
+  packs.to.detach <- setdiff(search.path.pre, c(keep, .unitizer.base.packages))
 
   for(i in seq_along(packs.to.detach)) {
     pack <- packs.to.detach[[i]]
@@ -391,13 +372,13 @@ search_path_trim <- function() {
 
     # Detach all but `unitizer`
 
-  if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
-    warning(
-      "Unable to detach `", pack, "` while attempting to create a clean ",
-      "search path.  ", .unitizer.search.fail.msg
-    )
-    return(invisible(FALSE))
-  }
+    if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
+      warning(
+        "Unable to detach `", pack, "` while attempting to create a clean ",
+        "search path.  ", .unitizer.search.fail.msg
+      )
+      return(invisible(FALSE))
+  } }
   # Make sure trimming worked
 
   if(!search_path_check()) {
