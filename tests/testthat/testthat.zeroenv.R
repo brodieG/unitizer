@@ -21,7 +21,7 @@ test_that("Package shimming working", {
   expect_true(unitizer:::search_path_setup())
   expect_warning(sps <- unitizer:::search_path_setup())    # Can't re-shim
   expect_false(sps)
-  expect_identical(unitizer:::search_path_unsetup(), NULL) # undo shimming
+  expect_identical(unitizer:::search_path_unsetup(), TRUE) # undo shimming
   expect_true(unitizer:::search_path_setup())              # now re-shim should work
 
   expect_identical(search.path.init, pack.env$search.init)
