@@ -242,17 +242,20 @@ unitize <- function(
     },
     unitizerQuitExit=unitizer_quit_handler
   )
-  on.exit(NULL)  # main failure points are now over so don't need to alert on failure
-
   # There are two conditions where return value the previous statement isn't a
   # unitizer, 1. if the restart is invoked, 2. if all tests passed in which case
   # there is nothing to do.
 
-  if(!is(unitizer, "unitizer")) return(invisible(TRUE))
-
+  if(!is(unitizer, "unitizer")) {
+    on.exit(NULL)
+    return(invisible(TRUE))
+  }
   if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
   success <- try(set_store(store.id, unitizer))
   setwd(new.wd)
-  if(!inherits(success, "try-error")) message("unitizer updated")
+  if(!inherits(success, "try-error")) {
+    message("unitizer updated")
+    on.exit(NULL)
+  }
   return(invisible(success))
 }
