@@ -5,7 +5,7 @@
 #' checks that the values remain unchanged.  See vignette for more details.
 #'
 #' You can run \code{`unitize`} from the command line, or you can place one or
-#' more \code{`unitize`} calls in an R file.
+#' more \code{`unitize`} calls in an R file and source that.
 #'
 #' @export
 #' @seealso \code{`\link{get_store}`}
@@ -14,40 +14,54 @@
 #'   generate to a folder at the same location as the test file with the same
 #'   name as the testfile, except ending in \code{`.unitizer`} instead of \code{`.R`}
 #' @param interactive.mode logical(1L) whether to run in interactive mode
-#' @param clean.env TRUE or environment, if TRUE tests are run in a clean
+#' @param env.clean TRUE or environment, if TRUE tests are run in a clean
 #'   environment, if an environment they are run with that environment as the
 #'   parent.
-#' @param clean.search.path logical(1L) if TRUE all items on the search path that
-#'   are not part of a clean R session are unloaded.  The search path will be
-#'   restored upon test completion.  WARNING, this feature is somewhat experimental
-#'   and could result in your search path getting messed up (though that should
-#'   be fixed by restarting R).
+#' @param search.path.clean logical(1L) if TRUE all items on the search path that
+#'   are not part of a clean R session are detached prior to running tests.  Note
+#'   namespaces for detached packages remain loaded.  Additionally, the search
+#'   path is restored to its initial state upon exiting \code{`unitizer`} so any
+#'   packages added/removed, or objects attached/detached from search path are
+#'   restored to original state.  This feature is somewhat experimental and is
+#'   disabled by default.  See (currently unwritten) vignette for details.
+#' @param search.path.keep character any additional items on the search path
+#'   to keep attached; has no effect unless \code{`search.path.clean`} is TRUE
 
 unitize <- function(
   test.file, store.id=sub("\\.[Rr]$", ".unitizer", test.file),
-  interactive.mode=interactive(), clean.env=TRUE, clean.search.path=FALSE
+  interactive.mode=interactive(), env.clean=TRUE,
+  search.path.clean=FALSE, search.path.keep=c("tools:rstudio", "package:unitizer")
 ) {
   start.time <- proc.time()
   quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
   non.interactive <- getOption("unitizer.non.interactive", FALSE)  # need to rationalize this with `interactive.mode` param
-  packenv_reset()                                                  # reset global vars used for search path manip
+  reset_packenv()                                                  # reset global vars used for search path manip
 
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
   if(!is.logical(non.interactive) || length(non.interactive) != 1L)
     stop("Logic Error: unitizer option `unitizer.non.interactive` is miss-specified")
-  if(!isTRUE(clean.env) || !is.environment(clean.env))
-    stop("Argument `clean.env` must be TRUE or an environment.")
+  if(!isTRUE(env.clean) && !is.environment(env.clean))
+    stop("Argument `env.clean` must be TRUE or an environment.")
+  if(!is.logical(search.path.clean) || length(search.path.clean) != 1L)
+    stop("Argument `search.path.clean` must be logical(1L)")
+  if(!is.character(search.path.keep))
+    stop("Argument `search.path.keep` must be character()")
   if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file))
     stop("Argument `test.file` must be a valid path to a file")
 
   print(H1(paste0("unitizer for: ", test.file, collapse="")))
 
   if(inherits(try(unitizer <- get_store(store.id)), "try-error")) {
-    stop("Unable to retrieve/create `unitizer` at location ", store.id, "; see prior errors for details.")
-  }
-  # Retrieve or create unitizer environment
-  par.frame <- if(isTRUE(clean.env)) pack.env$zero.env.par else clean.env
+    stop(
+      "Unable to retrieve/create `unitizer` at location ", store.id,
+      "; see prior errors for details."
+  ) }
+  # Retrieve or create unitizer environment (note that the search path trimming)
+  # happens later.  Also note that pack.env$zero.env can still be tracking the
+  # top package under .GlobalEnv
+
+  par.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
 
   if(identical(unitizer, FALSE)) {
     unitizer <- new("unitizer", id=store.id, zero.env=new.env(parent=par.frame))
@@ -139,7 +153,9 @@ unitize <- function(
     message(
       "Unexpectedly exited before storing `unitizer`; ",
       "tests were not saved or changed."
-  ) )
+    ),
+    add=TRUE
+  )
   # Parse the test file
 
   if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
@@ -150,23 +166,25 @@ unitize <- function(
   if(!length(tests.parsed)) {
     message("No tests in ", test.file, "; nothing to do here.")
     on.exit(NULL)
+    search_path_unsetup()
     return(invisible(TRUE))
   }
   # Clean up search path
 
-  search.path.setup <- TRUE
-  if(clean.search.path || clean_env) {
-    if(!search.path.setup <- search_path_setup()) {
-      warning(
-        "Unable to set up clean search path or clean env; tests will be run ",
-        "with current search path and with `.GlobalEnv` as parent."
-      )
+  if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
+    if(!isTRUE(search.path.setup <- search_path_setup())) {
+      if(isTRUE(env.clean))
+        warning("Unable to run in clean environment, running in .GlobalEnv")
+      if(isTRUE(search.path.clean))
+        warning("Unable to run with clean search path; using existing.")
     } else {
       on.exit(search_path_unsetup(), add=TRUE)
-      if(clean.search.path) {
-        search_path_trim()
-        on.exit(search_path_restore(), add=TRUE)
-      }
+    }
+  }
+  if(isTRUE(search.path.clean)) {
+    if(isTRUE(search.path.trim <- search_path_trim(keep=search.path.keep))) {
+      on.exit(search_path_restore(), add=TRUE) # note this also runs search_path_unsetup()
+      on.exit(search_path_unsetup(), add=TRUE)
     }
   }
   # Evaluate the parsed calls
@@ -204,6 +222,11 @@ unitize <- function(
     }
     message("Passed Tests")
     on.exit(NULL)
+    if(search.path.trim) {
+      search_path_restore()  # note this runs unsetup
+    } else if (search.path.setup) {
+      search_path_unsetup()
+    }
     return(invisible(TRUE))
   }
   # Interactively decide what to keep / override / etc.
@@ -222,7 +245,7 @@ unitize <- function(
   )
   on.exit(NULL)  # main failure points are now over so don't need to alert on failure
 
-  if(search.path.setup && (clean.search.path || clean.env)) {
+  if(search.path.setup && (clean.search.path || env.clean)) {
     if(clean.search.path) search_path_restore()
     search_path_unsetup()
     packenv_reset()
