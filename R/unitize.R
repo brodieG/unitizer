@@ -147,7 +147,6 @@ unitize <- function(
   assign("quit", unitizer_quit, unitizer@zero.env)
   assign("q", unitizer_quit, unitizer@zero.env)
 
-  test.env <- new.env(parent=unitizer@items.new@base.env)
   wd <- getwd()                              # in case user changes it through tests
   on.exit(                                   # In case interrupted or some such
     message(
@@ -245,11 +244,6 @@ unitize <- function(
   )
   on.exit(NULL)  # main failure points are now over so don't need to alert on failure
 
-  if(search.path.setup && (clean.search.path || env.clean)) {
-    if(clean.search.path) search_path_restore()
-    search_path_unsetup()
-    packenv_reset()
-  }
   # There are two conditions where return value the previous statement isn't a
   # unitizer, 1. if the restart is invoked, 2. if all tests passed in which case
   # there is nothing to do.
