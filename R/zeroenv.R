@@ -118,6 +118,13 @@ search_path_setup <- function() {
     )
     return(FALSE)
   }
+  # Suppress std.err because of "Tracing Function..." messages produced by trace
+
+  std.err <- tempfile()
+  std.err.con <- set_text_capture(std.err, "message")
+
+  # Attempt to apply shims
+
   shimmed <- try({
     # Shim library, note we cannot use the `exit` param since `library` uses
     # on.exit
@@ -228,6 +235,22 @@ search_path_setup <- function() {
       where=.BaseNamespaceEnv, print=FALSE
     )
   })
+  # Process std.err to make sure nothing untoward happened
+
+  shim.out <- unitizer:::get_text_capture(std.err.con, std.err, "message")
+  unlink(std.err)
+  if(
+    !identical(
+      shim.out,
+      c(
+        "Tracing function \"library\" in package \"namespace:base\"",
+        "Tracing function \"attach\" in package \"base\"",
+        "Tracing function \"detach\" in package \"base\""
+      )
+    ) || inherits(shimmed, "try-error")
+  ) {
+    message(shim.out)
+  }
   if(inherits(shimmed, "try-error")) {
     warning(
       "Unable to shim all of library/require/attach/detach.  ",
@@ -254,11 +277,30 @@ search_path_setup <- function() {
 #' @keywords internal
 
 search_path_unsetup <- function() {
+  # Suppress std.err because of "Untracing function..." messages produced by trace
+
+  std.err <- tempfile()
+  std.err.con <- set_text_capture(std.err, "message")
+
   unshim <- try({  # this needs to go
     untrace(library, where=.BaseNamespaceEnv)
     untrace(attach, where=.BaseNamespaceEnv)
     untrace(detach, where=.BaseNamespaceEnv)
   })
+  unshim.out <- unitizer:::get_text_capture(std.err.con, std.err, "message")
+  unlink(std.err)
+  if(
+    !identical(
+      unshim.out,
+      c(
+        "Untracing function \"library\" in package \"namespace:base\"",
+        "Untracing function \"attach\" in package \"namespace:base\"",
+        "Untracing function \"detach\" in package \"namespace:base\""
+      )
+    ) || inherits(unshim, "try-error")
+  ) {
+    message(unshim.out)
+  }
   if(inherits(unshim, "try-error")) {
     warning(
       "Failed trying to unshim library/require/attach/detach, ",
