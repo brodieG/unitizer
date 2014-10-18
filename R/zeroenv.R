@@ -249,7 +249,7 @@ search_path_setup <- function() {
       )
     ) || inherits(shimmed, "try-error")
   ) {
-    message(shim.out)
+    cat(shim.out, file=stderr(), sep="\n")
   }
   if(inherits(shimmed, "try-error")) {
     warning(
@@ -299,7 +299,7 @@ search_path_unsetup <- function() {
       )
     ) || inherits(unshim, "try-error")
   ) {
-    message(unshim.out)
+    cat(unshim.out, file=stderr(), sep="\n")
   }
   if(inherits(unshim, "try-error")) {
     warning(
