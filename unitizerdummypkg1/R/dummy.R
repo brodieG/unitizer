@@ -1,4 +1,6 @@
 #' Dummy Function
-#' @keywords internal
+#'
+#' @export
+#' @return NULL
 
 dummy_fun1 <- function() NULL
