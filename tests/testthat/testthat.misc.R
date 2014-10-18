@@ -27,7 +27,7 @@ test_that("Headers", {
 } )
 test_that("Sweet'n short descriptions work",{
   expect_match(
-    unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))), 
+    unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))),
     "list lm \\[12,4;28\\] \\{coefficients:num\\(2\\);"
   )
   expect_equal(unitizer:::desc(new("unitizerItem", call=quote(1+1), env=new.env())), "S4 unitizerItem")
@@ -41,8 +41,8 @@ test_that("Valid Names convert names to valid", {
   expect_equal(unitizer:::valid_names("hello kitty"), "`hello kitty`")
   expect_equal(unitizer:::valid_names("h3llo"), "`h3llo`")
   expect_equal(unitizer:::valid_names("h_llo"), "h_llo")
-  expect_equal(unitizer:::valid_names("$hot"), "`$hot`") 
-  expect_equal(unitizer:::valid_names("HELLO"), "HELLO") 
+  expect_equal(unitizer:::valid_names("$hot"), "`$hot`")
+  expect_equal(unitizer:::valid_names("HELLO"), "HELLO")
 } )
 test_that("strtrunc", {
   expect_equal(unitizer:::strtrunc("hollywood is for starlets", 5), "ho...")
@@ -56,8 +56,8 @@ test_that("environment name tools", {
 
   expect_true(is.character(ename <- unitizer:::env_name(env3)) && identical(length(ename), 1L))
   expect_true(
-    is.character(envanc <- unitizer:::env_ancestry(env4)) && 
-    identical(length(envanc), 5L) && 
+    is.character(envanc <- unitizer:::env_ancestry(env4)) &&
+    identical(length(envanc), 5L) &&
     identical(envanc[[5L]], "R_GlobalEnv")
   )
 } )
@@ -78,8 +78,8 @@ test_that("deparse peek", {
 } )
 test_that("(Un)ordered Lists", {
   vec <- c(
-    "hello htere how are you blah blah blah blah blah", 
-    "this is helpful you know", 
+    "hello htere how are you blah blah blah blah blah",
+    "this is helpful you know",
     "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
     letters[1:10]
   )

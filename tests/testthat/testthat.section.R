@@ -45,7 +45,7 @@ local({
   } ) )
   expr.4 <- expression(
     unitizer_sect(
-      "change comp funs", 
+      "change comp funs",
       compare=unitizerItemTestsFuns(value=identical, output=all.equal, message=all.equal, conditions=function(x, y) TRUE),
       {
         50 + runif(1) / 10 ^ 10
@@ -53,7 +53,7 @@ local({
         cat("Hello there", runif(1))
         stop("Yo", runif(1))
   } ) )
-  my.unitizer <- new("unitizer", id=1, zero.env=new.env())  
+  my.unitizer <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer <- my.unitizer + expr.1
   my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer2 <- my.unitizer2 + my.unitizer@items.new          # make previous items into reference items
@@ -65,7 +65,7 @@ local({
   my.unitizer4 <- my.unitizer4 + my.unitizer@items.new          # make previous items into reference items
   my.unitizer4 <- my.unitizer4 + expr.4                         # now add back items to compare
 
-  test_that("Custom Comparison Functions", 
+  test_that("Custom Comparison Functions",
     {
       expect_equal(
         structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = 4:5, .Dimnames = list(c("test.result", "test.result", "test.result", "test.result"), c("value", "conditions", "output", "message", "aborted"))),

@@ -1,23 +1,23 @@
 #' Set and Retrieve Store Contents
-#' 
+#'
 #' These functions are not used directly; rather, they are used by
 #' \code{`\link{unitize}`} to get and set the \code{`unitizer`} objects.
 #' You should only need to understand these functions if you are
 #' looking to implement a special storage mechanism for the \code{`unitizer`}
 #' objects.
-#' 
+#'
 #' By default, only a character method is defined, which will interpret
 #' its inputs as a filesystem path.
-#' 
+#'
 #' You may write your own methods for special storage situations (
 #' e.g SQL database, ftp server, etc) with the understanding that the
 #' getting method may only accept one argument, the \code{`store.id`}, and
 #' the setting method only two arguments, the \code{`store.id`} and the
 #' \code{`unitizer`}.
-#' 
+#'
 #' S3 dispatch will be on \code{`store.id`}, and \code{`store.id`} may
 #' be any R object that identifies the unitizer.  For example, a potential
-#' SQL implementation where the unitizers get stored in blobs may look 
+#' SQL implementation where the unitizers get stored in blobs may look
 #' like so:
 #' \preformatted{
 #' my.sql.store.id <- structure(
@@ -27,13 +27,13 @@
 #'     table="project1",
 #'     id="cornercasetests"
 #'   ),
-#'   class="sql_unitizer" 
+#'   class="sql_unitizer"
 #' )
 #' get_store.sql_unitizer <- function(store.id) { # FUNCTION BODY }
 #' set_store.sql_unitizer <- function(store.id, unitizer) { # FUNCTION BODY }
-#' 
+#'
 #' unitize("unitizer/cornertestcases.R", my.sql.store.id)
-#' } 
+#' }
 #' For inspirations for the bodies of the _store functions look at the source
 #' code for \code{`unitizer:::get_store.character`} and \code{`unitizer:::set_store.character`}.
 #' Expectations for the functions are as follows.  \code{`get_store`} must return:
@@ -47,7 +47,7 @@
 #'   \item TRUE on success
 #'   \item \code{`\link{stop}`} on error
 #' }
-#' 
+#'
 #' @aliases get_store
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
@@ -76,8 +76,8 @@ set_store.character <- function(store.id, unitizer) {
   if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
   new.file <- FALSE
   if(!file.exists(store.id)) {
-    if(!isTRUE(dir.create(store.id))) 
-      stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")    
+    if(!isTRUE(dir.create(store.id)))
+      stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")
   } else if (!file_test("-d", store.id)) {
     stop("'", store.id, "' is not a directory.")
   }
@@ -100,7 +100,7 @@ get_store.character <- function(store.id) {
   if(!file.exists(store.id)) return(FALSE)
   if(!file_test("-d", store.id)) stop("Argument `store.id` must refer to a directory")
   if(
-    !file.exists(paste0(store.id, "/data.rds")) || 
+    !file.exists(paste0(store.id, "/data.rds")) ||
     !file_test("-f", paste0(store.id, "/data.rds"))
   ) {
     stop(
@@ -121,7 +121,7 @@ get_store.character <- function(store.id) {
       stop(
         "Logic Error: ID in retrieved `unitizer` is not a 1 length character vector as expected ",
         "(typeof: ", typeof(unitizer@id), ", length: ", length(unitizer@id),"); contact maintainer."
-  ) } }  
+  ) } }
   unitizer
 }
 #' @export

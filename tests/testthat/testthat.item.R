@@ -7,14 +7,14 @@ library(testthat)
 # - test_eval.R     # indirectly
 # - heal.R
 # - unitizer.R
-# Basically everything that can be tested non-interactively 
+# Basically everything that can be tested non-interactively
 
 local( {
   new.exps <- expression(
     1 + 1,
     a <- 54,     # keep
     b <- 38,     # keep
-    a + b,       
+    a + b,
     e <- 5 * a,  # keep
     a ^ 2,       # Keep
     f <- e * a,
@@ -30,7 +30,7 @@ local( {
   )
   my.unitizer <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer <- my.unitizer + ref.exps   # add ref.exps as new items
-  my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())  
+  my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer2 <- my.unitizer2 + my.unitizer@items.new    # now convert them to reference items
   my.unitizer2 <- my.unitizer2 + new.exps   # now test against new.exps
 
@@ -45,7 +45,7 @@ local( {
     expect_equal(my.unitizer2@items.new.map, c(1L, 2L, 3L, 4L, 5L, NA, NA, NA))
     expect_equal(my.unitizer2@items.ref.map, c(1L, 2L, 3L, 4L, 5L, NA))
     expect_equal(my.unitizer2@tests.fail, c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))
-    expect_equal(my.unitizer2@tests.status, structure(c(1L, 1L, 1L, 1L, 1L, 4L, 4L, 4L), .Label = c("Pass", "Fail", "Error", "New", "Deleted"), class = "factor"))  
+    expect_equal(my.unitizer2@tests.status, structure(c(1L, 1L, 1L, 1L, 1L, 4L, 4L, 4L), .Label = c("Pass", "Fail", "Error", "New", "Deleted"), class = "factor"))
     expect_equal(my.unitizer2@section.map, c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L))
     expect_equal(unitizer:::ignored(my.unitizer2@items.new), c(F, T, T, F, T, F, T, F))
     expect_equal(unitizer:::ignored(my.unitizer2@items.ref), c(F, T, T, F, T, F))
@@ -57,13 +57,13 @@ local( {
       "Logic Problem: would have assigned circular environment reference"
     )
     env.anc <- lapply(
-      unitizer:::as.list(items.sorted), 
+      unitizer:::as.list(items.sorted),
       function(x) rev(unitizer:::env_ancestry(x@env, my.unitizer2@base.env))
     )
     max.len <- max(vapply(env.anc, length, 1L))
     env.anc.2 <- lapply(env.anc, function(x) {length(x) <- max.len; x})
     env.anc.df <- as.data.frame(env.anc.2, stringsAsFactors=FALSE)
-    # Here only the first item is reference, all others 
+    # Here only the first item is reference, all others
 
     expect_equal(length(unique(unlist(env.anc.df[2, ]))), 1L)
     expect_true(all(apply(env.anc.df[-(1:2), -1], 1, function(x) length(unique(Filter(Negate(is.na), x)))) == 1L))
@@ -71,7 +71,7 @@ local( {
       unitizer:::itemsType(items.sorted), c("reference", rep("new", 5))
     )
     expect_equal(  # Expected order of ids
-      vapply(unitizer:::as.list(items.sorted), function(x) x@id, integer(1L)), 
+      vapply(unitizer:::as.list(items.sorted), function(x) x@id, integer(1L)),
       c(1, 2, 4, 5, 6, 8)
     )
     expect_equal(
@@ -85,7 +85,7 @@ local( {
     a <- 54,              #  2
     b <- runif(5),        #  3
     howdy <- "yowser",    #  4 *
-    a + b,                #  5 * 
+    a + b,                #  5 *
     e <- 5 * a,           #  6
     a ^ 2,                #  7
     f <- e * a,           #  8
@@ -106,7 +106,7 @@ local( {
   )
   my.unitizer3 <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer3 <- my.unitizer3 + ref.exps2   # add ref.exps as new items
-  my.unitizer4 <- new("unitizer", id=2, zero.env=new.env())  
+  my.unitizer4 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer4 <- my.unitizer4 + my.unitizer3@items.new    # now convert them to reference items
   my.unitizer4 <- my.unitizer4 + new.exps2   # now test against new.exps
   items.mixed2 <- my.unitizer4@items.ref[c(8, 10, 3, 5, 11)] + my.unitizer4@items.new[c(1, 4, 5, 9)]
@@ -114,7 +114,7 @@ local( {
 
   test_that("Environment healing works 2", {
     env.anc <- lapply(
-      unitizer:::as.list(items.sorted2), 
+      unitizer:::as.list(items.sorted2),
       function(x) rev(unitizer:::env_ancestry(x@env, my.unitizer4@base.env))
     )
     max.len <- max(vapply(env.anc, length, 1L))
@@ -128,7 +128,7 @@ local( {
     expect_identical(env.anc.df[2, 1], unitizer:::env_name(my.unitizer4@items.ref@base.env), info="and it should be the items.ref here")
     expect_equal(info="Checking that new/reference items are in correct order", which.ref, c(F, T, T, F, F, T, F, T, T))
     expect_equal(info="Checking that items are in order",
-      vapply(unitizer:::as.list(items.sorted2), function(x) x@id, integer(1L)), 
+      vapply(unitizer:::as.list(items.sorted2), function(x) x@id, integer(1L)),
       c(1, 3, 5, 4, 5, 8, 9, 10 ,11)
     )
     i.calls <- lapply(unitizer:::as.list(items.sorted2), function(x) x@call)  # FOR DEBUGGING
@@ -145,7 +145,7 @@ local( {
     )
     expect_equal(unique(do.call(rbind, i.ls[!which.ref])$status), "", info="new items should all have normal status")
   } )
-  my.unitizer5 <- new("unitizer", id=2, zero.env=new.env())  
+  my.unitizer5 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer5 <- my.unitizer5 + items.sorted2   # now add back our composite elements as references
   my.unitizer5 <- my.unitizer5 + new.exps2       # and new items
 
@@ -180,7 +180,7 @@ local( {
   ref.exps3 <- expression(1 + 1,  a <- 54, 2 + 2, runif(1))
   my.unitizer6 <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer6 <- my.unitizer6 + ref.exps3   # add ref.exps as new items
-  my.unitizer7 <- new("unitizer", id=2, zero.env=new.env())  
+  my.unitizer7 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer7 <- my.unitizer7 + my.unitizer6@items.new    # now convert them to reference items
   my.unitizer7 <- my.unitizer7 + new.exps3   # now test against new.exps
 
@@ -207,27 +207,27 @@ local( {
   new.exps5 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
   my.unitizer9 <- new("unitizer", id=4, zero.env=new.env())
   x <- my.unitizer9 + new.exps5
-  
+
   test_that("Misc", {
     fun <- function() quote(stop("This error should not be thrown"))
     expect_true(info="Make sure tests that return calls work",
       is(
         new(
-          "unitizerItem", value=fun(), call=quote(fun()), 
+          "unitizerItem", value=fun(), call=quote(fun()),
           env=sys.frame(sys.parent() + 1L)
-        ), 
+        ),
         "unitizerItem"
       )
     )
     # Nested environment hand waving can break down under certain circumstances
     # this first one should work because there are no tests until after all
     # the pieces necessary to run `a()` are defined:
-    
+
     expect_true(info="This is where `unitizer` nested environments fail",
       is(my.unitizer8 + new.exps4, "unitizer")
     )
     # this should break because the NULL forces `b` to be stored in a different
-    # environment to `a`. 
+    # environment to `a`.
 
     expect_equal(x@items.new[[4]]@data@message[[1]], "Error in a() : could not find function \"b\"")
   } )

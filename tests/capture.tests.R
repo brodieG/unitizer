@@ -14,7 +14,7 @@ con <- unitizer:::set_text_capture(std.out, "output")
 message(class(con))    # File Connection
 
 print(readLines(test.file))
-sink()                  
+sink()
 
 print(readLines(std.out))      # should see contents of test.file
 close(con)
@@ -30,7 +30,7 @@ message(typeof(con))    # should be logical
 print("oogabooga")
 sink()
 
-print(readLines(std.out))      # should still see the same unchanged contents    
+print(readLines(std.out))      # should still see the same unchanged contents
 readLines(pre.sink)     # oogabooga
 
 # Cause errors
@@ -79,10 +79,10 @@ sink()  # this is handled by logic in `test_eval`
 close(con)
 
 pre.sink.con <- file(pre.sink, "wt")
-con <- unitizer:::set_text_capture(std.out, "output")     
+con <- unitizer:::set_text_capture(std.out, "output")
 cat("The cat barfed hats")
 sink(pre.sink.con, "output")                            # Add connection to sink buffer
-try(unitizer:::get_text_capture(con, std.out, "output"))    
+try(unitizer:::get_text_capture(con, std.out, "output"))
 invisible(replicate(sink.number(), sink()))
 close(con)
 close(pre.sink.con)
@@ -90,18 +90,18 @@ close(pre.sink.con)
 pre.sink.con <- file(pre.sink, "wt")
 con <- unitizer:::set_text_capture(std.out, "output")
 sink()
-sink(pre.sink.con, "output")                            # Subvert the sink  
+sink(pre.sink.con, "output")                            # Subvert the sink
 cat("Dragon barfed hats")
-try(unitizer:::get_text_capture(con, std.out, "output")) 
+try(unitizer:::get_text_capture(con, std.out, "output"))
 invisible(replicate(sink.number(), sink()))
 try(close(con))  # should have been closed already
 close(pre.sink.con)
 
 con <- unitizer:::set_text_capture(std.out, "output")
 cat("Test Errors")
-try(unitizer:::get_text_capture("causeerror", std.out, "output")) 
-try(unitizer:::get_text_capture(con, 333, "output")) 
-try(unitizer:::get_text_capture(con, std.out, list())) 
+try(unitizer:::get_text_capture("causeerror", std.out, "output"))
+try(unitizer:::get_text_capture(con, 333, "output"))
+try(unitizer:::get_text_capture(con, std.out, list()))
 invisible(replicate(sink.number(), sink()))
 close(con)
 
@@ -119,7 +119,7 @@ print(readLines(std.err))
 close(con)
 
 pre.sink.con <- file(pre.sink, "wt")
-con <- unitizer:::set_text_capture(std.err, "message")     
+con <- unitizer:::set_text_capture(std.err, "message")
 sink(pre.sink.con, type="message")                            # Change connection
 message("The cat barfed hats", sample(1:100, 1))
 print(unitizer:::get_text_capture(con, std.err, "message"))    # Empty
@@ -140,7 +140,7 @@ close(pre.sink.con)
 # Pre-existing sink, full cycle
 
 pre.sink.con <- file(pre.sink, "wt")
-sink(pre.sink.con)                           
+sink(pre.sink.con)
 con <- unitizer:::set_text_capture(std.out, "output")
 cat("Cat the Cat says hi")
 message(class(con))  # should be logical (FALSE)

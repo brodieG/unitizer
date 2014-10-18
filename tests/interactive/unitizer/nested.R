@@ -3,7 +3,7 @@ library(microbenchmark)
 unitizer_sect("Simple Section", {
   mx <- matrix(1:20, nrow=4)
   t(mx)
-  mx %*% t(mx) 
+  mx %*% t(mx)
 } )
 print("off section")
 unitizer_sect("Nesting", {
@@ -28,12 +28,12 @@ unitizer_sect("Nesting.2", {
     warning("yo")
 #    apply(arr, 1:2, sum)
 #    stop("Random Error Message 1: ", sample(1:10000, 1))
-    # unitizer_sect("double.inner", 
+    # unitizer_sect("double.inner",
     #   {
     #     20
     #     warning("yo")
     #     apply(arr, 1:2, sum)
-    #     stop("Random Error Message 2: ", sample(1:10000, 1))      
+    #     stop("Random Error Message 2: ", sample(1:10000, 1))
     #   },
     #   compare=unitizerItemTestsFuns(output=all.equal, message=all.equal)
     # )

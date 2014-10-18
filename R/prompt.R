@@ -3,20 +3,20 @@
 NULL
 
 #' Handles The Actual User Interaction
-#' 
+#'
 #' Will keep accepting user input until either:
 #' \itemize{
-#'   \item User types one of the names of \code{`valid.opts`}, typically "Y" or 
+#'   \item User types one of the names of \code{`valid.opts`}, typically "Y" or
 #'     "N", but will vary
 #'   \item User types "Q"
-#'   \item User inputs an expression that when evaluated and fed to 
+#'   \item User inputs an expression that when evaluated and fed to
 #'     \code{`exit.condition`} returns TRUE
 #' }
 #' The set-up is intended to replicate something similar to what happens when
 #' code hits a \code{`browse()`} statement.  User expressions are evaluated
 #' and output to screen, and special expressions as described above cause the
 #' evaluation loop to terminate.
-#' 
+#'
 #' @keywords internal
 #' @seealso browse_unitizer_items
 #' @param text the prompt text to display
@@ -34,7 +34,7 @@ NULL
 #'     \item expression typed in by the user
 #'     \item environment the environment user expressions get evaluated in
 #'   }
-#'   The function can then decide to exit or not based on either the literal 
+#'   The function can then decide to exit or not based on either the literal
 #'   expression or evaluate the expression and decide based on the result.  This
 #'   is implemented this way because \code{`eval_user_exp`} will print to screen
 #'   which may not be desirable.  Function should return a value which will then
@@ -43,9 +43,9 @@ NULL
 #' @return mixed allowable user input
 
 unitizer_prompt <- function(
-  text, browse.env=globalenv(), help=character(), 
+  text, browse.env=globalenv(), help=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE
-) {  
+) {
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
   if(!is.environment(browse.env))
@@ -56,11 +56,11 @@ unitizer_prompt <- function(
   # should validate other parameters as well
   opts.txt <- paste0("(", paste0(valid.opts, collapse=", "), ")?")
   repeat {
-    while(inherits(try(val <- faux_prompt("unitizer> ")), "try-error")) NULL 
+    while(inherits(try(val <- faux_prompt("unitizer> ")), "try-error")) NULL
 
     if(  # Input matches one of the options
-      length(val) == 1L && is.symbol(val[[1L]]) && 
-      as.character(val[[1L]]) %in% names(valid.opts) && 
+      length(val) == 1L && is.symbol(val[[1L]]) &&
+      as.character(val[[1L]]) %in% names(valid.opts) &&
       !(as.character(val[[1L]]) %in% c("Q", "H")) && nchar(val[[1L]])
     ) {
       return(as.character(val[[1L]]))
@@ -92,19 +92,19 @@ unitizer_prompt <- function(
     res <- eval_user_exp(val, browse.env)
 
     # store / record history
-      
+
     if(!is.null(hist.con) && length(val) == 1L) {
       cat(deparse(val[[1L]]), file=hist.con, sep="\n")
-      loadhistory(showConnections()[as.character(hist.con), "description"])    
+      loadhistory(showConnections()[as.character(hist.con), "description"])
     }
     if(res$aborted || !length(val)) cat(text, opts.txt)  # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
 #' Wrapper Around User Interaction
-#' 
+#'
 #' Specifically for cases were user has the choice to input something or to try
 #' to navigate to another test.
-#' 
+#'
 #' @seealso unitizer_prompt
 #' @inheritParams unitizer_prompt
 #' @param x a unitizer.browse object
@@ -113,8 +113,8 @@ unitizer_prompt <- function(
 #' @param curr.id which id we are currently browsing
 #' @keywords internal
 
-navigate_prompt <- function(  
-  x, curr.id, text, browse.env1=globalenv(), browse.env2=globalenv(), 
+navigate_prompt <- function(
+  x, curr.id, text, browse.env1=globalenv(), browse.env2=globalenv(),
   help=character(), valid.opts
 ) {
   if(!is(x, "unitizerBrowse")) {
@@ -123,11 +123,11 @@ navigate_prompt <- function(
   # User input
 
   prompt.val <- unitizer_prompt(
-    text, browse.env=browse.env1, help=help, valid.opts=valid.opts, 
+    text, browse.env=browse.env1, help=help, valid.opts=valid.opts,
     hist.con=x@hist.con
   )
-  if(identical(prompt.val, "B")) {          
-    
+  if(identical(prompt.val, "B")) {
+
     # Go back to previous
 
     if(curr.id == 1L) {
@@ -137,8 +137,8 @@ navigate_prompt <- function(
     prev.tests <- x@mapping@item.id[!x@mapping@ignored] < curr.id
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
     return(x)
-  } else if (identical(prompt.val, "R")) {  
-    
+  } else if (identical(prompt.val, "R")) {
+
     # Navigation Prompt
 
     if(!length(x@mapping@item.id[x@mapping@reviewed])) {
@@ -152,7 +152,7 @@ navigate_prompt <- function(
       "describes the type of test (e.g. Failed / Removed / Corrupted). The ",
       "numbering is not continuous because some statements in the store are ",
       "not considered tests (e.g. assignments). Additionally, the numbers may ",
-      "not line up to the expressions in the test file because passed tests ", 
+      "not line up to the expressions in the test file because passed tests ",
       "are excluded from the numbering sequence. Alternatively, typing U will ",
       "take you to the first unreviewed test."
     )
@@ -166,13 +166,13 @@ navigate_prompt <- function(
     exit.fun <- function(y, env) {               # keep re-prompting until user types in valid value
       if(!is.expression(y)) stop("Argument `y` should be an expression.")
       if(
-        length(y) != 1L || !is.numeric(y[[1L]]) || length(y[[1L]]) != 1L || 
+        length(y) != 1L || !is.numeric(y[[1L]]) || length(y[[1L]]) != 1L ||
         y[[1L]] != as.integer(y[[1L]])
       ) return(FALSE)
       valid.vals <- x@mapping@item.id[x@mapping@reviewed]
       if(!isTRUE(y[[1L]] %in% valid.vals)) {
         message(
-          "Input must be integer-like and in ", 
+          "Input must be integer-like and in ",
           paste0(range(valid.vals), collapse=":")
         )
         return(FALSE)
@@ -181,21 +181,21 @@ navigate_prompt <- function(
     }
     nav.id <- unitizer_prompt(
       text=nav.prompt, help=nav.help,
-      browse.env=browse.env2, exit.condition=exit.fun, 
+      browse.env=browse.env2, exit.condition=exit.fun,
       valid.opts=nav.opts
     )
     if(identical(nav.id, "Q")) {
       return("Q")
     } else if (identical(nav.id, "U")) {
       # Go to unreviewed test
-      
-      reviewed <- as.logical(rev(cumsum(rev(x@mapping@reviewed))))  # because ignored tests are not explicitly marked as reviewed, so 
+
+      reviewed <- as.logical(rev(cumsum(rev(x@mapping@reviewed))))  # because ignored tests are not explicitly marked as reviewed, so
       item.len <- length(x@mapping@review.val)
       if(all(reviewed)) {
         message("No unreviewed tests.")
         x@last.id <- item.len
         return(x)
-      } 
+      }
       message("Jumping to first unreviewed test.")
 
       if ((reviewed.num <- max(which(reviewed))) == 1L) {

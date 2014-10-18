@@ -8,7 +8,7 @@
 NULL
 
 #' Virtual Class To Enforce Slots on Subclasses
-#' 
+#'
 #' @keywords internal
 
 setClass("unitizerItemTests", contains="VIRTUAL",
@@ -28,14 +28,14 @@ setClass(
   validity=function(object) {
     frms <- formals(object@fun)
     frms <- frms[!(names(frms) %in% "...")]
-    if(  
-      length(frms) < 2L |                                      
+    if(
+      length(frms) < 2L |
       any(vapply(head(frms, 2L), function(frm) !(is.symbol(frm) && nchar(as.character(frm)) == 0L), logical(1L))) |
       any(vapply(tail(frms, -2L), function(frm) (is.symbol(frm) && nchar(as.character(frm)) == 0L), logical(1L)))
     ) {
       return("slot `@fun` must be a function with the first two paramaters non-optional and all others optional.")
     }
-    TRUE 
+    TRUE
   }
 )
 setMethod("initialize", "unitizerItemTestFun", function(.Object, ...) {
@@ -49,15 +49,15 @@ setMethod("initialize", "unitizerItemTestFun", function(.Object, ...) {
 } )
 
 #' Stores Errors from Evaluating New vs. Ref Comparisons
-#' 
+#'
 #' There various nested objects involved:
 #' \itemize{
 #'   \item \code{`unitizerItemTestError`} contains the error produced from a comparison
 #'   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot of an item
-#'   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the 
+#'   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the
 #'      \code{`\link{unitizer-class}`} object
 #' }
-#' 
+#'
 #' @aliases unitizerItemsTestsErrors-class, unitizerItemTestsErrors-class
 #' @keywords internal
 
@@ -97,7 +97,7 @@ setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors",
 #' Convert An Error Into Character
 #' @keywords internal
 
-setMethod("as.character", "unitizerItemTestsErrors", 
+setMethod("as.character", "unitizerItemTestsErrors",
   function(x, ...) {
     err.lst <- list()
     for(i in slotNames(x)) {
@@ -120,12 +120,12 @@ setMethod("as.character", "unitizerItemTestsErrors",
     chr
 } )
 #' Store Functions for New vs. Reference Test Comparisons
-#' 
+#'
 #' \code{`unitizerItemTestsFuns`} contains the functions used to compare the results
 #' and side effects of running test expresssions.
-#' 
+#'
 #' By default, the comparison for each of the \code{`unitizerItem-class`} elements
-#' are carried out as follows (i.e. this is what the default 
+#' are carried out as follows (i.e. this is what the default
 #' \code{`unitizerItemTestsFuns-class`} is populated with)
 #' \itemize{
 #'   \item value: compared using \code{`\link{all.equal}`}
@@ -133,7 +133,7 @@ setMethod("as.character", "unitizerItemTestsErrors",
 #'     in the reference list with \code{`\link{all.equal}`}
 #'   \item output: not compared (too variable, e.g. screen widths, etc.)
 #'   \item message: not compared (note this is presumably included in \code{`conditions`})
-#'   \item aborted: not compared (also implied in conditions, hopefully)   
+#'   \item aborted: not compared (also implied in conditions, hopefully)
 #' }
 #' @seealso \code{`\link{unitizer_sect}`}
 #' @export unitizerItemTestsFuns
@@ -158,7 +158,7 @@ unitizerItemTestsFuns <- setClass(
 ) )
 
 #' Ensures Functions are In Correct Format
-#' 
+#'
 #' Also, allows the user to specify functions directly instead of having
 #' to instantiate \code{`\link{unitizerItemTestFun-class}`} for each function.
 #' Finally, recovers the deparsed passed function name.
@@ -166,7 +166,7 @@ unitizerItemTestsFuns <- setClass(
 
 setMethod("initialize", "unitizerItemTestsFuns", function(.Object, ...) {
   dots <- list(...)
-  if(!all(err.slots <- names(dots) %in% slotNames(getClass(.Object)))) 
+  if(!all(err.slots <- names(dots) %in% slotNames(getClass(.Object))))
     stop("Can't initialize invalid slots ", deparse(names(dots)[!err.slots]))
   fun.names <- vapply(substitute(list(...))[-1L], deparse_fun, character(1L))
   if(!all(names(fun.names) %in% names(dots))) stop("Logic Error: contact package maintainer.")
