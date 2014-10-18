@@ -113,7 +113,7 @@ search_path_setup <- function() {
 
   if(length(fail.shim)) {
     warning(
-      "Cannot shim ", paste0(fail.shim, collapse=", "), "because already traced.",
+      "Cannot shim ", paste0(fail.shim, collapse=", "), " because already traced.",
       immediate.=TRUE
     )
     return(FALSE)
