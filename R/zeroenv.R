@@ -287,7 +287,7 @@ search_path_unsetup <- function() {
     untrace(attach, where=.BaseNamespaceEnv)
     untrace(detach, where=.BaseNamespaceEnv)
   })
-  unshim.out <- unitizer:::get_text_capture(std.err.con, std.err, "message")
+  unshim.out <- get_text_capture(std.err.con, std.err, "message")
   unlink(std.err)
   if(
     !identical(
