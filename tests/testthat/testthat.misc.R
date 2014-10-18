@@ -137,3 +137,15 @@ test_that("Compare Conditions", {
     all.equal(lst2, lst1[c(1L:2L, 4L)])
   )
 } )
+
+test_that("Compare Functions With Traces", {
+  fun.a <- base::library
+  expect_true(identical(fun.a, base::library))
+  trace(library, where=.BaseNamespaceEnv)
+  expect_false(identical(fun.a, base::library))
+  expect_true(unitizer:::identical_fun(fun.a, base::library))
+  expect_false(unitizer:::identical_fun(base::library, fun.a))
+  untrace(library, where=.BaseNamespaceEnv)
+  expect_error(unitizer:::identical_fun(1, base::library))
+  expect_error(unitizer:::identical_fun(base::library, 1))
+} )

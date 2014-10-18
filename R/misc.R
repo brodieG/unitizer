@@ -552,16 +552,31 @@ env_name <- function(env) {
 }
 
 #' Functions To Ignore
-#' 
+#'
 #' Ignored functions are not considered tests if they are called from
 #' the top level.
-#' 
+#'
+#' Also, provide a function to compare functions even when traced.
+#'
 #' @keywords internal
+#' @param x the reference function, if is traced then y must be identical
+#' @param y the current function, if \code{`x`} is not traced and \code{`y`}
+#'   is traced, will compare using \code{`y@original`} instead of \code{`y`}
 
 funs.ignore <- list(base::`<-`, base::library)
+identical_fun <- function(x, y) {
+  if(!is.function(x) || !is.function(y))
+    stop("Arguments `x` and `y` must both be functions.")
+  if(is(x, "functionWithTrace")) {
+    return(identical(x, y))
+  } else if(is(y, "functionWithTrace")) {
+    return(identical(x, y@original))
+  }
+  identical(x, y)
+}
 
 #' Display helper function
-#' 
+#'
 #' @keywords internal
 
 screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=stdout()) {
