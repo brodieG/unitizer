@@ -405,6 +405,8 @@ search_path_trim <- function(keep=c("package:unitizer", "tools:rstudio")) {
 
 search_path_restore <- function() {
 
+  search_path_unsetup()  # no matter what, untrace the functions
+
   # Make sure everything is as we expect before we actually do anything
 
   if(!search_path_check()) {
@@ -426,7 +428,6 @@ search_path_restore <- function() {
   }
   # Step back through history, undoing each step
 
-  search_path_unsetup()
   for(i in rev(seq_along(pack.env$history))) {
     hist <- pack.env$history[[i]]
     res <- try({
