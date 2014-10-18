@@ -170,6 +170,7 @@ unitize <- function(
   }
   # Clean up search path
 
+  search.path.setup <- search.path.trim <- FALSE
   if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
     if(!isTRUE(search.path.setup <- search_path_setup())) {
       if(isTRUE(env.clean))
@@ -221,11 +222,7 @@ unitize <- function(
     }
     message("Passed Tests")
     on.exit(NULL)
-    if(search.path.trim) {
-      search_path_restore()  # note this runs unsetup
-    } else if (search.path.setup) {
-      search_path_unsetup()
-    }
+    if(search.path.trim) search_path_restore() else if (search.path.setup) search_path_unsetup()
     return(invisible(TRUE))
   }
   # Interactively decide what to keep / override / etc.
@@ -246,6 +243,7 @@ unitize <- function(
   # unitizer, 1. if the restart is invoked, 2. if all tests passed in which case
   # there is nothing to do.
 
+  if(search.path.trim) search_path_restore() else if (search.path.setup) search_path_unsetup()
   if(!is(unitizer, "unitizer")) {
     on.exit(NULL)
     return(invisible(TRUE))

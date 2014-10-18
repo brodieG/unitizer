@@ -241,6 +241,10 @@ search_path_setup <- function() {
   pack.env$search.init <- search()
   assign(".unitizer.search.path.backup", search(), envir=.GlobalEnv)
 
+  # Setup zero env parent
+
+  parent.env(pack.env$zero.env.par) <- as.environment(2L)
+
   return(TRUE)
 }
 #' Search Path Unsetup
