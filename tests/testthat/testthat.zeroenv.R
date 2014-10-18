@@ -264,5 +264,19 @@ test_that("require / attach / detach", {
   detach("package:unitizerdummypkg1", unload=TRUE)
   detach("package:unitizerdummypkg2", unload=TRUE)
 } )
+test_that("Messing with path is detected", {
+  try(detach("package:unitizerdummypkg1", unload=TRUE))
+  try(detach("package:unitizerdummypkg2", unload=TRUE))
+
+  pack.env <- unitizer:::reset_packenv()
+  unitizer:::search_path_setup()
+  expect_true(unitizer:::search_path_trim())
+  library(unitizerdummypkg1)
+  tracingState(FALSE)
+  library(unitizerdummypkg2)
+  tracingState(TRUE)
+  testthat::expect_warning(sp_rest <- unitizer:::search_path_restore())
+  testthat::expect_false(sp_rest)
+})
 
 message("COMPLETED zeroenv tests")
