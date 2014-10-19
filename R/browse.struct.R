@@ -297,7 +297,7 @@ setClass("unitizerBrowseSection", contains="unitizerList",
 #' us to carry out requisite computations later.  See \code{`\link{unitizerBrowseMapping-class}`}
 #' for details on what each of the slots in \code{`mapping`} does.
 #'
-#' Also, some more discussion of this issue in the docs for \code{`\link{unitizer}`}.
+#' Also, some more discussion of this issue in the docs for \code{`\link{unitizer-class}`}.
 #'
 #' @keywords internal
 

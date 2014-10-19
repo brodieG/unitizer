@@ -561,7 +561,7 @@ env_name <- function(env) {
 #' @keywords internal
 #' @param x the reference function, if is traced then y must be identical
 #' @param y the current function, if \code{`x`} is not traced and \code{`y`}
-#'   is traced, will compare using \code{`y@original`} instead of \code{`y`}
+#'   is traced, will compare using \code{`y@@original`} instead of \code{`y`}
 
 funs.ignore <- list(base::`<-`, base::library)
 identical_fun <- function(x, y) {
