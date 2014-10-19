@@ -268,6 +268,7 @@ test_that("Messing with path is detected", {
   try(detach("package:unitizerdummypkg1", unload=TRUE))
   try(detach("package:unitizerdummypkg2", unload=TRUE))
 
+  search.path.init <- search()
   pack.env <- unitizer:::reset_packenv()
   unitizer:::search_path_setup()
   expect_true(unitizer:::search_path_trim())
@@ -277,6 +278,13 @@ test_that("Messing with path is detected", {
   tracingState(TRUE)
   testthat::expect_warning(sp_rest <- unitizer:::search_path_restore())
   testthat::expect_false(sp_rest)
+  testthat::expect_identical(unitizer_search_path_backup(), search.path.init)
+  tracingState(FALSE)
+  detach("package:unitizerdummypkg2", unload=TRUE)  # re-synchronize so we can restore path
+  tracingState(TRUE)
+  testthat::expect_true(unitizer:::search_path_restore())
 })
+try(detach("package:unitizerdummypkg1", unload=TRUE))
+try(detach("package:unitizerdummypkg2", unload=TRUE))
 
 message("COMPLETED zeroenv tests")

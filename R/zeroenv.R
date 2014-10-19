@@ -70,8 +70,11 @@ reset_packenv <- function() {
 #' search path to it's original value.
 #'
 #' @export
+#' @return character the search path
 
-.unitizer.search.path.backup <- character()
+unitizer_search_path_backup <- function() {
+  pack.env$search.init
+}
 
 #' Default List of Packages To Keep on Search Path
 #'
@@ -209,7 +212,9 @@ search_path_setup <- function() {
         }
         .unitizer.package.name <- search()[[pos]]
         .unitizer.obj <- as.environment(.unitizer.package.name)
-        .unitizer.type <- if(unitizer:::is.loaded_package(.unitizer.package.name)) "package" else "object"
+        .unitizer.type <- if(
+          asNamespace("unitizer")$is.loaded_package(.unitizer.package.name)
+        ) "package" else "object"
       }),
       exit=quote({
         if(identical(length(search()), length(.unitizer.search.path.init) - 1L)) {
@@ -237,7 +242,7 @@ search_path_setup <- function() {
   })
   # Process std.err to make sure nothing untoward happened
 
-  shim.out <- unitizer:::get_text_capture(std.err.con, std.err, "message")
+  shim.out <- get_text_capture(std.err.con, std.err, "message")
   unlink(std.err)
   if(
     !identical(
