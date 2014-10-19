@@ -210,28 +210,26 @@ unitize <- function(
 
   # Summary view of deltas and changes
 
-  summary(unitizer)
+  unitizer.summary <- summary(unitizer)
   cat("\n")
 
   if(!interactive.mode || non.interactive) {
-    delta.summ <- if(is.matrix(unitizer.summary)) {
-      tail(unitizer.summary, 1L)[, -1L]
-    } else {
-      unitizer.summary[-1L]
-    }
-    if(any(delta.summ > 0L)) {  # Passed tests are first column
+    if(!passed(unitizer.summary)) {  # Passed tests are first column
       delta.show <- unitizer@tests.status != "Pass" & !ignored(unitizer@items.new)
       message(
         paste0(
           format(paste0(unitizer@tests.status[delta.show], ": ")),
           unitizer@items.new.calls.deparse[delta.show],
           collapse="\n"
-      ) )
+        ),
+        "\n"
+      )
       stop(
         "Newly generated tests do not match unitizer (",
         paste(
-          sub("^\\s*", "", names(delta.summ)),
-          delta.summ, sep=": ", collapse=", "
+          c(colnames(unitizer.summary@data), "Deleted"),
+          c(tail(unitizer.summary@data, 1L), unitizer.summary@dels),
+          sep=": ", collapse=", "
         ),
         "); see above for more info, or run in interactive mode"
       )
@@ -267,6 +265,13 @@ unitize <- function(
     on.exit(NULL)
     return(invisible(TRUE))
   }
+  # Reset the parent env of zero env so we don't get all sorts of warnings related
+  # to trying to store a package environment
+
+  parent.env(unitizer@zero.env) <- baseenv()
+
+  # Finalize
+
   if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
   success <- try(set_store(store.id, unitizer))
   setwd(new.wd)

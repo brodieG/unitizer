@@ -109,6 +109,11 @@ setClass(
 } )
 # - Methods -------------------------------------------------------------------
 
+#' Display Unitizer Summary
+#'
+#' @param object the object to show
+#' @return NULL
+
 setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
@@ -123,8 +128,20 @@ setMethod("show", "unitizerSummary",
     print(sum.mx)
     if(object@dels)
       cat("\nAdditionally, ", object@dels, " test ", if(object@dels > 1) "were" else "was", " deleted\n", sep="")
+    NULL
 } )
 
+#' Determine if a \code{`unitizer`} Passed Based On Summary
+#'
+#' @keywords internal
+#' @param object object to test for passing
+#' @return logical(1L)
+
+setGeneric("passed", function(object, ...) standardGeneric("passed"))
+setMethod("passed", "unitizerSummary",
+  function(object, ...) {
+    !as.logical(sum(tail(object@data, 1L)[, -1L]) + object@dels)
+} )
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
     if(!("id" %in% names(list(...)))) stop("Argument `id` is required")
