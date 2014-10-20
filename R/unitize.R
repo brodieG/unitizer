@@ -2,7 +2,8 @@
 #'
 #' Turns a standard R script into unit tests by evaluating the expressions and
 #' storing them along with their resuls.  Re-running \code{`unitize`} then
-#' checks that the values remain unchanged.  See vignette for more details.
+#' checks that the values remain unchanged.  See "unitizer" vignette for more
+#' details.
 #'
 #' You can run \code{`unitize`} from the command line, or you can place one or
 #' more \code{`unitize`} calls in an R file and source that.
@@ -23,7 +24,7 @@
 #'   path is restored to its initial state upon exiting \code{`unitizer`} so any
 #'   packages added/removed, or objects attached/detached from search path are
 #'   restored to original state.  This feature is somewhat experimental and is
-#'   disabled by default.  See (currently unwritten) vignette for details.
+#'   disabled by default.  See "Reproducible Tests" vignette for details.
 #' @param search.path.keep character any additional items on the search path
 #'   to keep attached; has no effect unless \code{`search.path.clean`} is TRUE
 
@@ -181,7 +182,17 @@ unitize <- function(
   # Clean up search path
 
   search.path.setup <- search.path.trim <- FALSE
-  if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
+  if((isTRUE(env.clean) || isTRUE(search.path.clean)) && !tracingState()) {
+    warning(
+      "Tracing is disabled, but must be enabled to run in a clean environment ",
+      "or with a clean search path.  If you want these features re-enable tracing ",
+      "with `tracingState(TRUE)`.  See \"Reproducible Tests\" vignette for details.  ",
+      "Running on existing search path with `.GlobalEnv` as parent.",
+      immediate.=TRUE
+    )
+    env.clean <- .GlobalEnv
+    search.path.clean <- FALSE
+  } else if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
     if(!isTRUE(search.path.setup <- search_path_setup())) {
       if(isTRUE(env.clean))
         warning(
@@ -200,13 +211,21 @@ unitize <- function(
   if(isTRUE(search.path.clean)) {
     if(isTRUE(search.path.trim <- search_path_trim(keep=search.path.keep))) {
       on.exit(search_path_restore(), add=TRUE) # note this also runs search_path_unsetup()
-      on.exit(search_path_unsetup(), add=TRUE)
     }
+    on.exit(search_path_unsetup(), add=TRUE)
   }
   # Evaluate the parsed calls
 
   tests <- new("unitizerTests") + tests.parsed
   unitizer <- unitizer + tests
+
+  # Make sure our tracing didn't get messed up in some way
+
+  search.path.restored <- FALSE
+  if((isTRUE(search.path.clean) || isTRUE(env.clean)) && !search_path_check()) {
+    search_path_restore()
+    search.path.restored <- TRUE
+  }
 
   # Summary view of deltas and changes
 
@@ -236,8 +255,10 @@ unitize <- function(
     }
     message("Passed Tests")
     on.exit(NULL)
-    if(search.path.trim) search_path_restore()        # runs _unsetup() as well
-    else if (search.path.setup) search_path_unsetup()
+    if(!search.path.restored) {
+      if(search.path.trim) search_path_restore()        # runs _unsetup() as well
+      else if (search.path.setup) search_path_unsetup()
+    }
     return(invisible(TRUE))
   }
   # Interactively decide what to keep / override / etc.
@@ -258,9 +279,10 @@ unitize <- function(
   # unitizer, 1. if the restart is invoked, 2. if all tests passed in which case
   # there is nothing to do.
 
-  if(search.path.trim) search_path_restore()          # runs _unsetup() as well
-  else if (search.path.setup) search_path_unsetup()
-
+  if(!search.path.restored) {
+    if(search.path.trim) search_path_restore()          # runs _unsetup() as well
+    else if (search.path.setup) search_path_unsetup()
+  }
   if(!is(unitizer, "unitizer")) {
     on.exit(NULL)
     return(invisible(TRUE))
