@@ -1,3 +1,25 @@
+unitizer 0.5.0
+--------------------------------------------------------------------------------
+
+New Features:
+
+* Can now run tests in clean environment (i.e. objects from .GlobalEnv will not
+  be visible) (issue #13)
+* Can now run tests with clean search path (i.e. only the basic R libraries are
+  loaded) (also issue #13), use `unitize(..., search.path.clean=TRUE)`
+* New vignette "Reproducible Tests" discusses the above features
+
+Bugfixes:
+
+* Expressions printed as tests evaluated now truncated corretly (issue #4)
+* Incorrect displaying/hiding of ignored tests in some circumstances fixed
+
+Other Improvements:
+
+* Summary no longer includes "removed" tests in matrix, since those are section-
+  less
+* Other minor clean-up of the interactive environment prompting
+
 unitizer 0.4.3
 --------------------------------------------------------------------------------
 
