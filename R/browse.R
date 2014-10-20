@@ -332,7 +332,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         base.env.pri
     ) }
     get.msg <- character()
-    if(!is.null(item.new)) get.msg <- "`(.new)`"
+    if(!is.null(item.new)) get.msg <- "`getTest(.new)`"
     if(!is.null(item.ref)) get.msg <- c(get.msg, "`getTest(.ref)`")
 
     # Options to navigate; when navigating the name of the game is set `@last.id`
