@@ -1,12 +1,12 @@
 
 # Strategy for parsing comments:
-# 
+#
 # Look up all entries with parent == 0; these are the top level entries
 # All the comments that are -id are top level comments. The id refers to the
 # next statement. Comments don't have parents when they are the last thing in
 # the file.  So logic, using getParseData():
 #
-# 
+#
 # - Get all top level ids
 # - Get all comments that have -ids or 0 ids
 # - For each comment with -id, check whether comment line is same as the previous
@@ -14,26 +14,26 @@
 #   + if yes, associate with that statement
 #   + if not, associate with the -id statement
 #  - For zero ids, just check if on same line as last top level statement
-# 
-# After this, need to break up the data frame into pieces based on what the 
+#
+# After this, need to break up the data frame into pieces based on what the
 # top level parent is.  This is fine and well, though we need to reset the
 # top level parents so we can do this recursively for unitizer_sect
-# 
+#
 # Unfortunately, this gets seriously complicated by the fact that comments
 # inside calls have for parent the call, irrespective of where they are.
 # So we need to figure out (ONLY FOR TOP LEVEL COMMENTS):
 # - is a comment on it's own line?
 # - if yes, find the next "top level" item
 # - if no, find previous "top level" item
-# 
+#
 # Basically, the process is as follows:
-# 1. define top level (starts of at zero, and for zero, make sure 
+# 1. define top level (starts of at zero, and for zero, make sure
 #    any negative parents are zero)
 # 2. Split data frame by top level, and:
 #    - assign comments to each top level object
 #    - assign data frame chunks to each top level object
 # 3. Recurse through all the objects until we get to terminals
-# 
+#
 # Net result should be an expression that, for each non terminal
 # object will have a piece of the original parse data frame attached,
 # as well as comments (do we need the original parse data frame, maybe
@@ -48,7 +48,7 @@
 #' level parents as this allows us to split the parse data into sections,
 #' including the calls that were direct children of top level, as well as
 #' the children to those sections.
-#' 
+#'
 #' @keywords internal
 #' @param ids integer the ids to look through
 #' @param par.ids integer the parenthood relationships
@@ -79,43 +79,43 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
 ancestry_descend <- function(ids, par.ids, id, level=0L) {
   children <- ids[par.ids == id]
   if(length(children)) {
-    do.call(rbind, 
+    do.call(rbind,
       c(
-        list(cbind(children, level)), 
+        list(cbind(children, level)),
         lapply(children, ancestry_descend, ids=ids, par.ids=par.ids, level=level + 1L)
     ) )
   } else {
     matrix(integer(), ncol=2)
 } }
-# Need this to pass R CMD check; problems likely caused by `transform` and 
+# Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("token", "col1", "line1"))
 
 #' Assign Comments From Parse Data to Expression Elements
-#' 
+#'
 #' Based on parse data from \code{`\link{getParseData}`}, figures
 #' out what comments belong to what expression.  If a comment is
 #' on the same line as an expression, the comment is assigned to that
 #' expression (or whatever the nearest expression is on that line if
 #' there is more than one).  If a comment is on it's own line,
 #' then the match is done to the next expression.
-#' 
+#'
 #' The expectation is that only "top level" expressions will
 #' be submitted as part of `comment.dat` (i.e. they all have
 #' the same parent, they don't strictly have to be top.level).
-#' 
+#'
 #' @keywords internal
 #' @param expr and expression
 #' @param comment.dat a data frame derived from \code{`\link{getParseData}`}
-#' @return an expression with comments attached as attributes to each 
+#' @return an expression with comments attached as attributes to each
 #'   expression component
 
 comments_assign <- function(expr, comment.dat) {
   if(!identical(length(unique(comment.dat$parent)), 1L))
     stop("Logic Error: there were multiple parent ids in argument `comment.dat`; this should not happen")
   if(!length(expr) || !length(which(comment.dat$token == "COMMENT"))) return(expr)
-  
+
   # Make sure `comment.dat` is in format we understand
   # Theory: everything not "COMMENT" should be included, except:
   # - opening parens on second row (these denote a function call)
@@ -130,11 +130,11 @@ comments_assign <- function(expr, comment.dat) {
     stop("Logic Error: more than one bracket at top level; contact maintainer.")
   if(length(brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
     if(
-      !identical(comment.dat$token[brac.pos], "')'") || 
-      !identical(brac.pos, nrow(comment.dat) - 1L) || 
+      !identical(comment.dat$token[brac.pos], "')'") ||
+      !identical(brac.pos, nrow(comment.dat) - 1L) ||
       !identical(comment.dat$token[[1L]], "FUNCTION")
     ) stop("Logic Error: closing brackets may only be on last row, unless a paren and part of a functions formal definition; contact maintainer.")
-  }    
+  }
   if(
     !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) && brac.pos > 1L ||
     !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[3L])) && brac.pos > 2L
@@ -151,7 +151,7 @@ comments_assign <- function(expr, comment.dat) {
   # for the purposes of this process, constants and symbols are basically expressions
 
   comm.notcomm <- transform(
-    comm.notcomm, 
+    comm.notcomm,
     token=ifelse(
       token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$ops), "expr", token)
   )
@@ -161,50 +161,50 @@ comments_assign <- function(expr, comment.dat) {
   comm.expr <- subset(comm.notcomm, token=="expr")
 
   comm.expr <- transform(  # identify whether a token is the first or last on it's line
-    comm.expr, 
+    comm.expr,
     first.last.on.line=ave(
-      col1, line1, 
+      col1, line1,
       FUN=function(x) if(identical(length(x), 1L)) 3L else ifelse(x == max(x), 2L, ifelse(x == min(x), 1L, 0L))
   ) )
-  # For each comment on a line that also has an expression, find the expression 
+  # For each comment on a line that also has an expression, find the expression
   # that is also on that line
 
   comm.comm <- transform(comm.comm, assign.to.prev=comm.expr$line2[match(line1, comm.expr$line2)])
   comm.comm$match <- with(comm.expr,  {
     last.or.only <- first.last.on.line %in% 2L:3L
     id[last.or.only][match(comm.comm$assign.to.prev, line1[last.or.only])]
-  } )  
+  } )
   # For each comment on its own line, find the expression that follows it
-  
+
   first.or.only <- comm.expr$first.last.on.line %in% c(1L, 3L)
   comm.comm$assign.to.next <- vapply(
-    comm.comm$line1, 
-    function(x) if(any(idx <- (comm.expr$line1 > x))) min(comm.expr$line1[idx]) else NA_integer_, 
+    comm.comm$line1,
+    function(x) if(any(idx <- (comm.expr$line1 > x))) min(comm.expr$line1[idx]) else NA_integer_,
     integer(1L)
   )
   comm.comm$match <- ifelse(
-    is.na(comm.comm$match), 
+    is.na(comm.comm$match),
     comm.expr$id[first.or.only][match(comm.comm$assign.to.next, comm.expr$line1[first.or.only])],
     comm.comm$match
   )
   # Assign comments to matching expression in attributes
-  
+
   for(i in seq_along(comm.comm$match)) {
     if(is.na(comm.comm$match[[i]])) next
     expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
     if(!identical(length(expr.pos), 1L)) stop("Logic Error; contact maintainer.")
-    if(!is.null(expr[[expr.pos]])) 
+    if(!is.null(expr[[expr.pos]]))
       attr(expr[[expr.pos]], "comment") <- c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
   }
   expr
 }
-# Need this to pass R CMD check; problems likely caused by `transform` and 
+# Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token", "line2"))
 
 #' Recursively Descends Through a Parsed Expression and Assigns Comments
-#' 
+#'
 #' In order to implement this we had to make several assumptions about the
 #' behaviour of \code{`\link{getParseData}`}.  In particular:
 #' \itemize{
@@ -219,7 +219,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #'   \item The only tokens that count as elements in an expression are
 #'     opening brackets and \code{`expr`}; this assumption is necessary
 #'     to allow mapping the parsed data back to the expression.  What
-#'     confuses the issue a bit is that operators show up at the top level, 
+#'     confuses the issue a bit is that operators show up at the top level,
 #'     but you can actually
 #'     ignore them.  Also, parantheses should only be kept if they are the
 #'     topmost item, as otherwise they are part of a function call and
@@ -232,19 +232,19 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #'   \item known issue: comments in formals after a line break are assigned
 #'     to the body of the function as opposed to \code{`function`}, but this
 #'     should not be apparent in common use.
-#'   \item you cannot attach comments to \code{`NULL`}, if you must use 
+#'   \item you cannot attach comments to \code{`NULL`}, if you must use
 #'     \code{`(NULL)`}.  This is a feature, as it proivdes a way to put
 #'     comments in the file without them showing up during \code{`unitizer`}
 #'     use.
 #' }
-#' Note that as a result of this trial and error interpretation of 
+#' Note that as a result of this trial and error interpretation of
 #' \code{`\link{getParseData}`} it is likely that comment parsing is
 #' not 100 percent robust.
-#' 
+#'
 #' Due to some reference weirdness going on when dealing directly with
 #' expressions had to change this function to accept text/file rather
 #' than an expression as an input (but even that didn't fix it!!!)
-#' 
+#'
 #' @keywords internal
 #' @seealso comments_assign, getParseData, parse
 #' @param file containing code to parse with comments
@@ -272,7 +272,7 @@ parse_with_comments <- function(file, text=NULL) {
     stop("Argument `expr` produced data with unexpected column data types")
   if(!all(parse.dat$token %in% unlist(tk.lst))) {
     stop(
-      "Logic Error: unexpected tokens in parse data (", 
+      "Logic Error: unexpected tokens in parse data (",
         paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
         "); contact maintainer."
     );
@@ -297,9 +297,9 @@ parse_with_comments <- function(file, text=NULL) {
 
     line.dat <- vapply(prsdat.children, function(x) c(max=max(x$line2), min=min(x$line1)), c(max=0L, min=0L))
     col.dat <- vapply(
-      seq_along(prsdat.children), 
+      seq_along(prsdat.children),
       function(i) c(
-        max=max(subset(prsdat.children[[i]], line2==line.dat["max", i])$col2), 
+        max=max(subset(prsdat.children[[i]], line2==line.dat["max", i])$col2),
         min=min(subset(prsdat.children[[i]], line1==line.dat["min", i])$col1)
       ),
       c(max=0L, min=0L)
@@ -320,16 +320,16 @@ parse_with_comments <- function(file, text=NULL) {
     # be shown anyway).
 
     assignable.elems <- vapply(
-      expr, 
-      function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x), 
+      expr,
+      function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x),
       logical(1L)
-    )      
+    )
     if(!is.call(expr) && !is.expression(expr)) {
       if(!length(assignable.elems) %in% c(1L))
         stop("Logic Error: expression is terminal token yet multiple assignable elems; contact maintainer.")
       if(isTRUE(assignable.elems)) expr <- comments_assign(expr, prsdat.par)
     } else if (!is.null(expr)) {
-      expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)      
+      expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)
     }
     # Now do the same for the child expression by recursively calling this function
     # until there are no children left, but need to be careful here because we only
@@ -337,40 +337,40 @@ parse_with_comments <- function(file, text=NULL) {
     # non terminal leaves from call should leave everything in correct order because
     # the only time there are order mismatches are with infix operators and those
     # are terminal leaves anyway.
-    
+
     if(!any(vapply(prsdat.children, function(child) any(child$token == "COMMENT"), logical(1L)))) return(expr)
-    
+
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
     if(!identical(nrow(prsdat.par.red), length(which(assignable.elems))))
-      stop("Logic Error: mismatch between expression and parse data; contact maintainer.")   
+      stop("Logic Error: mismatch between expression and parse data; contact maintainer.")
     j <- 1
     if(!is.expression(expr) && !is.call(expr)) {
       if(term.len <- length(which(!prsdat.par.red$terminal)) > 1L) {
-        stop("Logic Error: terminal expression has more than one token, contact maintainer.")        
+        stop("Logic Error: terminal expression has more than one token, contact maintainer.")
       } else if (term.len) {
         expr <- Recall(expr, prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
       }
     } else {
       for(i in 1:nrow(prsdat.par.red)) {
         if(prsdat.par.red$terminal[[i]]) next
-        expr[assignable.elems][[i]] <- 
+        expr[assignable.elems][[i]] <-
           Recall(expr[assignable.elems][[i]], prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
-        j <- j + 1  
+        j <- j + 1
     } }
     expr
   }
   prsdat_recurse(expr, parse.dat, top.level=0L)
 }
-# Need this to pass R CMD check; problems likely caused by `transform` and 
+# Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("token"))
 
 #' Reduce Parsed Data to Just the Things That should Exist In Expression
-#' 
+#'
 #' additionally, special handling due to function and formals not getting wrapped
 #' in their own `expr` (why the FUCK!!!!)
-#' 
+#'
 #' @keywords internal
 #' @aliases prsdat_remove_fun
 #' @param parse.dat top level parse data
@@ -379,9 +379,9 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("token"))
 
 prsdat_reduce <- function(parse.dat) {
   parse.dat.red <- subset(
-    parse.dat, 
-    !token %in% c(tk.lst$brac.close, tk.lst$unassign, tk.lst$seps, "COMMENT") & 
-    !(token == "'('" & 1L:length(token) == 2L) 
+    parse.dat,
+    !token %in% c(tk.lst$brac.close, tk.lst$unassign, tk.lst$seps, "COMMENT") &
+    !(token == "'('" & 1L:length(token) == 2L)
   )
   # at this point, must be all expressions, an opening bracket, or an operator of some
   # sort, and iff the operator is @ or $, or if there is only one item in the data frame
@@ -397,23 +397,23 @@ prsdat_reduce <- function(parse.dat) {
       stop("Logic Error: right argument to `$` must be SYMBOL")
   } else if (nrow(parse.dat.red) == 1L) {
     if(!parse.dat.red$token[[1L]] %in% c("expr", tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$brac.open)) {
-      stop("Logic Error: single element parent levels must be symbol or constant or expr")      
+      stop("Logic Error: single element parent levels must be symbol or constant or expr")
     }
   } else if (
-    length(which(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra))) < 
+    length(which(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra))) <
       nrow(parse.dat.red) - 1L
   ) {
     stop("Logic Error: in most cases all but at most one token must be of type `expr` or `exprlist`; contact maintainer.")
   }
   parse.dat.red[order(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra)), ]
 }
-# Need this to pass R CMD check; problems likely caused by `transform` and 
+# Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "token"))
 
 #' Functions to Adjust Parse Data To Match Expression
-#' 
+#'
 #' \itemize{
 #'   \item \code{`prsdat_fix_fun`} extract all comments from formals and brings them
 #'     up a level, and then removes formals
@@ -426,7 +426,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "token"))
 #'   \item \code{`prsdat_find_paren`} returns locations of first set
 #'     of open and close parens
 #' }
-#' 
+#'
 #' @keywords internal
 #' @aliases prsdat_fix_for, prsdat_find_paren, prsdat_fix_exprlist
 #' @param parse.dat a data frame of the type produced by \code{`\link{getParseData}`}
@@ -439,22 +439,22 @@ prsdat_fix_fun <- function(parse.dat) {
   if(!identical(parse.dat$token[[1L]], "FUNCTION"))
     stop("Argument `parse.dat` must start with a 'FUNCTION' token.")
   subset(
-    parse.dat, 
+    parse.dat,
     1L:nrow(parse.dat) > which(id == prsdat_find_paren(parse.dat)[[2]]) | token == "COMMENT" | 1L:nrow(parse.dat) == 1L
   )
 }
-# Need this to pass R CMD check; problems likely caused by `transform` and 
+# Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token"))
 
 prsdat_fix_for <- function(parse.dat) {
-  if(!identical(parse.dat$token[[1L]], "FOR")) 
+  if(!identical(parse.dat$token[[1L]], "FOR"))
     stop("Argument `parse.dat` must start with a 'FOR' token.")
-  if(!identical(parse.dat$token[parse.dat$token != "COMMENT"][[2]], "forcond")) 
-    stop("Argument `parse.dat` does not have token `forcond` in expected location")  
+  if(!identical(parse.dat$token[parse.dat$token != "COMMENT"][[2]], "forcond"))
+    stop("Argument `parse.dat` does not have token `forcond` in expected location")
   if(!identical(length(which(parse.dat$token == "forcond")), 1L))
-    stop("Argument `parse.dat` should have exactly one `forcond` token")  
+    stop("Argument `parse.dat` should have exactly one `forcond` token")
   par.range <- prsdat_find_paren(parse.dat)
   par.level <- subset(parse.dat, id == par.range[[1]])$parent
   tokens <- tail(head(subset(parse.dat, parent==par.level)$token, -1L), -1L)
@@ -466,14 +466,14 @@ prsdat_fix_for <- function(parse.dat) {
   parse.dat.mod <- subset(parse.dat, !token %in% c("forcond", "IN") & ! id %in% par.range)
   `[<-`(parse.dat.mod, parse.dat.mod$parent == par.level, "parent", parse.dat[1L, "parent"])
 }
-# Need this to pass R CMD check; problems likely caused by `transform` and 
+# Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token"))
 
 prsdat_fix_simple <- function(parse.dat, tok) {
   if(! tok %in% c("IF", "WHILE")) stop("Logic Error, this function only supports 'IF' and 'WHILE' tokens")
-  if(!identical(parse.dat$token[[1L]], tok)) 
+  if(!identical(parse.dat$token[[1L]], tok))
     stop("Argument `parse.dat` must start with an '", tok, "' token.")
   par.id <- parse.dat$parent[[1L]]
   par.range <- prsdat_find_paren(parse.dat)
@@ -494,7 +494,7 @@ prsdat_find_paren <- function(parse.dat) {
   par.clos.pos <- match("')'", parse.dat$token)
   if(is.na(par.clos.pos)) stop("Logic Error; failed attempting to parse function block; contact maintainer")
   par.op.pos <- match("'('", parse.dat$token[1:par.clos.pos])
-  if(is.na(par.op.pos)) 
+  if(is.na(par.op.pos))
   if(!identical(par.op.pos, 2L) && !identical(unique(parse.dat$token[2L:(par.op.pos - 1L)]), "COMMENT"))
     stop("Logic Error; failed attempting to `for` function block; contact maintainer")
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
@@ -518,10 +518,10 @@ prsdat_fix_exprlist <- function(parse.dat) {
 }
 
 #' Utility Function to Extract Comments From Expression
-#' 
+#'
 #' Note that when dealing with expressions the very first item will typically
 #' be NULL to allow for logic that works with nested structures
-#' 
+#'
 #' @keywords internal
 
 comm_extract <- function(x) {
@@ -529,14 +529,14 @@ comm_extract <- function(x) {
     return(c(list(attr(x, "comment")), lapply(x, comm_extract)))
   } else {
     return(list(attr(x, "comment")))
-} } 
+} }
 
 #' Utility Function to Reset Comments
-#' 
+#'
 #' Required due to bizarre behavior (bug?) where some expression attributes
 #' appear to have reference like behavior even when they are re-generated
 #' from scratch from a text expression (wtf, really).
-#' 
+#'
 #' @keywords internal
 
 comm_reset <- function(x) {
@@ -544,29 +544,29 @@ comm_reset <- function(x) {
   if(is.pairlist(x)) return(x)
   if(length(x) > 1L || is.expression(x)) {
     for(i in seq_along(x)) {
-      if(is.null(x[[i]])) next else x[[i]] <- Recall(x[[i]])      
+      if(is.null(x[[i]])) next else x[[i]] <- Recall(x[[i]])
   } }
   x
 }
 #' Listing on known tokens
-#' 
+#'
 #' As of this writing, the following tokens from \file{src/main/gram.c} are
 #' not handled:
-#' 
-#'      [,1]           [,2]             [,3]                [,4]            
-#' [1,] "'\\n'"        "cr"             "ifcond"            "sub"           
-#' [2,] "'%'"          "END_OF_INPUT"   "INCOMPLETE_STRING" "sublist"       
-#' [3,] "$accept"      "equal_assign"                 
-#' [4,] "$end"         "error"          "LINE_DIRECTIVE"    "TILDE"         
-#' [5,] "$undefined"   "ERROR"          "LOW"               "UMINUS"        
-#' [6,] "COLON_ASSIGN" "expr_or_assign" "NOT"               "UNOT"          
-#' [7,] "cond"         "formlist"       "prog"              "UPLUS"     
-#' 
+#'
+#'      [,1]           [,2]             [,3]                [,4]
+#' [1,] "'\\n'"        "cr"             "ifcond"            "sub"
+#' [2,] "'%'"          "END_OF_INPUT"   "INCOMPLETE_STRING" "sublist"
+#' [3,] "$accept"      "equal_assign"
+#' [4,] "$end"         "error"          "LINE_DIRECTIVE"    "TILDE"
+#' [5,] "$undefined"   "ERROR"          "LOW"               "UMINUS"
+#' [6,] "COLON_ASSIGN" "expr_or_assign" "NOT"               "UNOT"
+#' [7,] "cond"         "formlist"       "prog"              "UPLUS"
+#'
 #' So far, we have not been able to produce \code{`getParseData`} data frames
 #' that contain them.  It may not be possible to do so for all of them.  For
 #' example, \code{`INCOMPLETE_STRING`} shows up during a parse error, so could
 #' never be part of a fully parsed expression.
-#' 
+#'
 #' @keywords internal
 
 tk.lst <- list(
@@ -575,26 +575,26 @@ tk.lst <- list(
   brac.open=c("'{'", "'['", "'('", "LBB"),
   exps=c("expr", "exprlist"),
   seps=c("','", "';'"),                                          # no comments on these as they are just removed
-  non.exps=c(                                                    # in addition to `expr`, these are the ones that can get comments attached 
+  non.exps=c(                                                    # in addition to `expr`, these are the ones that can get comments attached
     "SYMBOL", "STR_CONST", "NUM_CONST", "NULL_CONST",
     "SLOT", "NEXT", "BREAK", "SYMBOL_FUNCTION_CALL"
-  ),  
+  ),
   non.exps.extra=c(                                              # these can also get comments attached, but shouldn't be at the end of a parse data block
-    "FUNCTION", "FOR", 
+    "FUNCTION", "FOR",
     "IF", "REPEAT", "WHILE", "SYMBOL_PACKAGE"                    # not 100% sure SYMBOL_PACKAGE belongs here; it can't possibly have comments right after it on the same line
-  ),  
-  ops=c(                                                                             
+  ),
+  ops=c(
     paste0(
-      "'", 
-      c("-", "+", "!", "~", "?", ":", "*", "/", "^", "$", "@"), 
+      "'",
+      c("-", "+", "!", "~", "?", ":", "*", "/", "^", "$", "@"),
       "'"
     ),
     "SPECIAL", "GT", "GE", "LT", "LE", "EQ", "NE", "AND", "AND2",
-    "OR", "OR2", "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN" 
+    "OR", "OR2", "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN"
   ),
   ops.other=c("NS_GET", "NS_GET_INT"),                           # note these should never show up at top level
-  unassign=c(                                                    # these cannot have comments attached to them 
-    "EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS", 
+  unassign=c(                                                    # these cannot have comments attached to them
+    "EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS",
     "IN", "forcond", "ELSE"
   )
 )

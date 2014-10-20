@@ -20,11 +20,11 @@ deparse_prompt <- function(expr) {
   paste0(prompt.vec, expr.deparsed)
 }
 #' Deparse, but only provide first X characters
-#' 
+#'
 #' @keywords internal
 #' @param expr a language object
-#' @param len int a one length integer noting how many characters we want 
-#' @param width passed on to 
+#' @param len int a one length integer noting how many characters we want
+#' @param width passed on to
 
 deparse_peek <- function(expr, len, width=500L) {
   if(!is.integer(len) || length(len) != 1L || len < 4L)
@@ -39,7 +39,7 @@ deparse_peek <- function(expr, len, width=500L) {
   }
 }
 #' Print Only First X characters
-#' 
+#'
 #' @keywords internal
 #' @param x string to reduce length
 #' @param nchar.max how many characters to reduce each string to
@@ -58,7 +58,7 @@ strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE)
   ifelse(nchar(x) <= nchar.max, x, paste0(substr(x, 1, len.target), ctd))
 }
 #' Print a header
-#' 
+#'
 #' @keywords internal
 #' @aliases print.H2, print.H3, print.header
 #' @param x a 1 length character vector
@@ -70,11 +70,11 @@ print.H1 <- function(x, ...) {
   if(!is.character(x) || length(x) != 1L) stop("Argument `x` must be a 1 length character vector")
   if((width <- getOption("width")) < 5L) return(x)
   x <- c(
-    paste0(c("+", rep("-", width - 2L), "+"), collapse=""), 
+    paste0(c("+", rep("-", width - 2L), "+"), collapse=""),
     paste0(
-      "| ", 
+      "| ",
       paste0(
-        text.wrapped <- unlist(text_wrap(x, width - 4L), use.names=FALSE), 
+        text.wrapped <- unlist(text_wrap(x, width - 4L), use.names=FALSE),
         vapply((width - 4L) - nchar(text.wrapped), function(x) paste0(rep(" ", x), collapse=""), character(1L))
       ),
       " |"
@@ -108,7 +108,7 @@ print.header <- function(x, margin="bottom", ...) {
   invisible(x)
 }
 #' Helper function for single line headers
-#' 
+#'
 #' @keywords internal
 #' @param x the contents of the header
 #' @param ... unused, for compatibility with print generic
@@ -128,15 +128,15 @@ header_help <- function(x, ..., pad.char="-") {
   paste0(pad.char, " ", x, " ", paste0(rep_len(pad.char, width - 3L - nchar(x)), collapse=""), collapse="")
 }
 #' Create Header Objects
-#' 
-#' Header objects are 1 length character vectors that are printed with text 
-#' formatting that highlight their "headerness". 
-#' 
+#'
+#' Header objects are 1 length character vectors that are printed with text
+#' formatting that highlight their "headerness".
+#'
 #' @keywords internal
 #' @seealso \code{`\link{print.header}`}
 #' @aliases H1, H2, H3
 #' @param x 1 length character vector to turn into a header
-#' @param level 1 length integer, what level to make a header 
+#' @param level 1 length integer, what level to make a header
 #' @return header object
 
 header <- function(x, level) {
@@ -152,11 +152,11 @@ H2 <- function(x) header(x, 2L)
 H3 <- function(x) header(x, 3L)
 
 #' Create List Objects
-#' 
+#'
 #' Turns a character vector into list items.
-#' 
+#'
 #' Currently doesn't support nested lists, but this might be added in the future.
-#' 
+#'
 #' @keywords internal
 #' @aliases OL
 #' @param x character vector of items to make a list out of
@@ -171,7 +171,7 @@ OL <- function(x) {
   structure(x, class=c("OL", "bullet"))
 }
 #' Print Methods for \code{`\link{UL}`} and \code{`\link{OL}`} objects
-#' 
+#'
 #' @keywords internal
 #' @export
 #' @param x object to print
@@ -184,7 +184,7 @@ print.bullet <- function(x, width=0L, ...) {
   invisible(rendered)
 }
 #' Produce Character Vector Representation of Bullet Lists
-#' 
+#'
 #' @param x object to render
 #' @param width how many characters to wrap at
 #' @param pre what to pre-pend to each bullet
@@ -201,16 +201,16 @@ as.character.bullet <- function(x, width=0L, pre, ...) {
   if(width == 0) width <- getOption("width")
   screen.width <- width - max(nchar(pre))
   if(screen.width < 8L) width <- 8L
-  items <- text_wrap(unclass(x), screen.width) 
+  items <- text_wrap(unclass(x), screen.width)
   unname(
     unlist(
       mapply(SIMPLIFY=FALSE,
         function(content, bullet) {
           paste0(
             c(
-              bullet, 
+              bullet,
               rep(
-                paste0(rep(" ", nchar(bullet)), collapse=""), 
+                paste0(rep(" ", nchar(bullet)), collapse=""),
                 length(content) - 1L
             ) ),
             content
@@ -231,10 +231,10 @@ as.character.OL <- function(x, width=0L, ...) {
 }
 
 #' Wrap Text At Fixed Column Width
-#' 
-#' Some day this should be upgraded to break at whitespaces or use hyphens 
+#'
+#' Some day this should be upgraded to break at whitespaces or use hyphens
 #' instead of wrapping arbitrarily at spec'ed width
-#' 
+#'
 #' @keywords internal
 #' @param x character vector
 #' @param width integer vector with
@@ -253,28 +253,28 @@ text_wrap <- function(x, width) {
     FUN=function(x.sub, width.sub) {
       breaks <- ceiling(nchar(x.sub) / width.sub)
       substr(
-        rep(x.sub, breaks), 
+        rep(x.sub, breaks),
         start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
 ) } ) }
 
 
 #' Contains A List of Conditions
-#' 
+#'
 #' Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
 #' compatibility issues.
-#' 
+#'
 #' @export
 
 setClass("conditionList", contains="unitizerList")
 
 #' Compare Lists of Conditions
-#' 
+#'
 #' This is the default function for comparing conditions across the new and
 #' reference runs of a test.  Comparison will fail if any of the conditions
 #' are not all.equal.  Additionally, we check for the special "printed"
 #' attribute on each conditions which indicate that the condition occurred
 #' in the print/show methods as applied to the result of a call.
-#' 
+#'
 #' @keywords internal
 #' @export
 #' @param target the list of conditions that we are matching against
@@ -305,13 +305,13 @@ setMethod("all.equal", "conditionList",
           if(
             any(
               unlist(lapply(as.list(append(target, current)), attr, "printed")
-            ) ) 
+            ) )
           ) {
             print.show.err
           }
     ) ) }
     cond.len <- min(length(target), length(current))
-    
+
     res <- lapply(
       seq(len=cond.len),
       function(x) {
@@ -342,7 +342,7 @@ setMethod("all.equal", "conditionList",
     stop("Logic Error, unexpected return values from comparison function.")
 } )
 #' Compare Conditions
-#' 
+#'
 #' @keywords internal
 #' @export
 #' @param target a condition
@@ -350,17 +350,17 @@ setMethod("all.equal", "conditionList",
 #' @return TRUE if conditions match, character vector describing differences otherwise
 
 all.equal.condition <- function(target, current, ...) {
-  if(!inherits(target, "condition") || !inherits(current, "condition")) 
+  if(!inherits(target, "condition") || !inherits(current, "condition"))
     return("One of `target` or `current` is not a condition")
   if(
     !identical(
-      type.targ <- get_condition_type(target), 
+      type.targ <- get_condition_type(target),
       type.curr <- get_condition_type(current)
     )
   ) {
     return(
       paste0(
-        "Condition type mismatch, target is '", type.targ, 
+        "Condition type mismatch, target is '", type.targ,
         "', but current is '", type.curr, "'"
   ) ) }
   if(!isTRUE(all.equal(conditionMessage(target), conditionMessage(current))))
@@ -370,7 +370,7 @@ all.equal.condition <- function(target, current, ...) {
   TRUE
 }
 #' Prints A list of Conditions
-#' 
+#'
 #' @keywords internal
 #' @export
 #' @param object a \code{`conditionList`} object (list of conditions)
@@ -384,7 +384,7 @@ setMethod("show", "conditionList",
       return(invisible(object))
     }
     out <- paste0(
-      format(seq_along(object)), ": ", 
+      format(seq_along(object)), ": ",
       ifelse(
         print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "printed")), logical(1L)),
         "[print] ", ""
@@ -405,9 +405,9 @@ setMethod("show", "conditionList",
     return(invisible(object))
 } )
 #' Extracts Condition Type From Condition Classes
-#' 
+#'
 #' Type (e.g. Error, Warning), is taken to be the second to last class.
-#' 
+#'
 #' @keywords internal
 #' @param x a condition
 #' @return character 1 length the type of condition
@@ -439,14 +439,14 @@ desc <- function(val, limit=getOption("width")) {
     classes <- vapply(x, function(y) class(y)[[1L]], character(1L))
     lens <- if(inc.len) {
       vapply(
-        x, 
+        x,
         function(y) if(length(y) > 1L) paste0("(", length(y), ")") else "",
         character(1L)
-      ) 
+      )
     } else character(length(x))
     paste0(
-      ifelse(nchar(nms <- names(x)), valid_names(nms), seq_along(x)), ":", 
-      ifelse(is.na(new.class <- class.map[classes]), classes, new.class), 
+      ifelse(nchar(nms <- names(x)), valid_names(nms), seq_along(x)), ":",
+      ifelse(is.na(new.class <- class.map[classes]), classes, new.class),
       lens, collapse=";"
     )
   }
@@ -472,9 +472,9 @@ desc <- function(val, limit=getOption("width")) {
   if(nchar(val.desc) > limit - 3L) paste0(substr(val.desc, 1L, limit - 3L), "...") else val.desc
 }
 #' Make Valid Names
-#' 
+#'
 #' If names are invalid, quotes them with backtics
-#' 
+#'
 #' @keywords internal
 #' @param x character vector
 #' @return character vector
@@ -488,10 +488,10 @@ valid_names <- function(x) {
 }
 
 #' Returns a Character Function Name From A Language Object
-#' 
-#' Note this doesn't really try to check too hard whether the \code{`x`} is 
+#'
+#' Note this doesn't really try to check too hard whether the \code{`x`} is
 #' indeed a function.
-#' 
+#'
 #' @keywords internal
 #' @param x a call or a symbol
 #' @return character 1 length, NA if \code{`x`} can't possibly be a function
@@ -507,7 +507,7 @@ deparse_fun <- function(x) {
 }
 
 #' Captalizes First Letter
-#' 
+#'
 #' @keywords internal
 #' @param x character
 #' @return character
@@ -515,7 +515,7 @@ deparse_fun <- function(x) {
 cap_first <- function(x) {
   if(!is.character(x)) stop("Argument `x` must be a character vector.")
   ifelse(
-    nchar(x) > 2L, 
+    nchar(x) > 2L,
     paste0(substr(toupper(x), 1L, 1L), substr(x, 2L, nchar(x))),
     ifelse(identical(nchar(x), 1L), substr(toupper(x), 1L, 1L), x)
   )
@@ -538,10 +538,10 @@ env_ancestry <- function(env, stop.env=globalenv()) {
   out
 }
 #' Gets Environment Name / Memory Code
-#' 
+#'
 #' Captures the name that \code{`\link{print.default}`} displays when one
 #' prints and environment
-#' 
+#'
 #' @keywords internal
 #' @param env an environemnt
 #' @return character 1 length
@@ -552,16 +552,31 @@ env_name <- function(env) {
 }
 
 #' Functions To Ignore
-#' 
+#'
 #' Ignored functions are not considered tests if they are called from
 #' the top level.
-#' 
+#'
+#' Also, provide a function to compare functions even when traced.
+#'
 #' @keywords internal
+#' @param x the reference function, if is traced then y must be identical
+#' @param y the current function, if \code{`x`} is not traced and \code{`y`}
+#'   is traced, will compare using \code{`y@@original`} instead of \code{`y`}
 
 funs.ignore <- list(base::`<-`, base::library)
+identical_fun <- function(x, y) {
+  if(!is.function(x) || !is.function(y))
+    stop("Arguments `x` and `y` must both be functions.")
+  if(is(x, "functionWithTrace")) {
+    return(identical(x, y))
+  } else if(is(y, "functionWithTrace")) {
+    return(identical(x, y@original))
+  }
+  identical(x, y)
+}
 
 #' Display helper function
-#' 
+#'
 #' @keywords internal
 
 screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=stdout()) {
@@ -574,13 +589,13 @@ screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=s
 } } }
 
 #' Overrides Default quit() Behavior
-#' 
-#' Necessary because quit short circuits the `on.exit` clean-up functions and 
+#'
+#' Necessary because quit short circuits the `on.exit` clean-up functions and
 #' would leave stuff in a weird state (history not reset, etc.).
-#' 
+#'
 #' This is used in \code{`\link{unitize}`}.
-#' 
-#' @aliases unitizer_quit_handler 
+#'
+#' @aliases unitizer_quit_handler
 #' @keywords internal
 
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
@@ -598,11 +613,11 @@ unitizer_quit_handler <- function(quitArgs) {
 }
 
 #' Cleans a Path to be In Standard Format
-#' 
+#'
 #' Uses \code{`\link{dirname}`} to convert paths on windows machines with back
 #' slasshes to forward slash based names, and then removed excess forward
 #' slashes.
-#' 
+#'
 #' @keywords internal
 #' @param path character the path name to clean up
 #' @return the cleaned up path

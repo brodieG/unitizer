@@ -1,18 +1,18 @@
 #' An `ls` Like Function
-#' 
+#'
 #' Much like `ls`, except that it is designed to crawl up the \code{`.new`} and
 #' \code{`.ref`} environments and display all the objects.
-#' 
+#'
 #' This is used in \code{`\link{browse,unitizer-method}`}, and is re-assigned to
 #' \code{`ls`} for use in the \code{`unitizer`} prompt environment.
-#' 
+#'
 #' @keywords internal
 #' @return list of object names, or a list with environments containing the objects
 
 unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
    all.names = FALSE, pattern
 ) {
-  if(!missing(pos) || !missing(name) || !missing(envir)) 
+  if(!missing(pos) || !missing(name) || !missing(envir))
     stop(
       "You are using an overloaded version of `ls` that does not allow ",
       "using the `name`, `pos`, or `envir` arguments to `ls`; you can use standard ",
@@ -26,22 +26,22 @@ unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
 
   if(inherits(new.item, "try-error") && inherits(ref.item, "try-error")) {
     stop("Logic error: could not find `unitizerItem` objects to list contents of; contact Maintainer")
-  } 
+  }
   if (!inherits(new.item, "try-error")) {
     if(nrow(new.item@ls)) ls.lst[["new"]] <- paste0(new.item@ls$names, new.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], ".new")
     mods <- c(mods, Filter(nchar, unique(new.item@ls$status)))
-  } 
+  }
   if (!inherits(ref.item, "try-error")) {
     if(nrow(ref.item@ls)) ls.lst[["ref"]] <- paste0(ref.item@ls$names, ref.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], ".ref")
     mods <- c(mods, Filter(nchar, unique(ref.item@ls$status)))
   }
-  structure(ls.lst[order(names(ls.lst))], class="unitizer_ls", mods=mods)  
+  structure(ls.lst[order(names(ls.lst))], class="unitizer_ls", mods=mods)
 }
 
 #' Worker function to actually execute the `ls` work
-#' 
+#'
 #' @param env the environment to start \code{`ls`}ing in
 #' @param stop.env the environment to stop at
 #' @param all.names, same as \code{`ls`}
@@ -57,13 +57,13 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   i <- 0L
   while(!identical(env, stop.env)) {     # Get list of environments that are relevant
     env.list <- append(env.list, env)
-    if(inherits(try(env <- parent.env(env)), "try-error")) stop("Specified `stop.env` does not appear to be in parent environments.")          
+    if(inherits(try(env <- parent.env(env)), "try-error")) stop("Specified `stop.env` does not appear to be in parent environments.")
     if((i <- i + 1L) > 1000) stop("Logic error: not finding `stop.env` after 1000 iterations; contact package maintainer if this is an error.")
   }
   for(i in rev(seq_along(env.list))) {   # Reverse, so when we copy objects the "youngest" overwrite the "eldest"
     ls.res <- c(ls.res, ls(envir=env.list[[i]], all.names=all.names, pattern=pattern))
     if(!is.null(store.env)) {
-      for(j in seq_along(ls.res)) 
+      for(j in seq_along(ls.res))
         assign(ls.res[[j]], get(ls.res[[j]], envir=env.list[[i]]), store.env)
       ls.res <- character()
   } }
@@ -81,7 +81,7 @@ print.unitizer_ls <- function(x, ...) {
     name.match <- c(
       tests="unitizer objects:",
       new="objects in new test env:",
-      ref="objects in ref test env:" 
+      ref="objects in ref test env:"
     )
     names(x) <- name.match[names(x)]
   }

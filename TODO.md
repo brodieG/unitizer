@@ -6,7 +6,7 @@ This roadmap is highly tentative and likely to change
 
 ## Next Version
 
-* `unitizer_add`: A version of unitizer that just adds new tests without 
+* `unitizer_add`: A version of unitizer that just adds new tests without
   re-evaluating all the other tests for faster turn-around during development
 * `unitize_dir`: (like `testthat::test_dir`)
 * Automatically resume unitizers that are partially reviewed
@@ -29,16 +29,16 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Capture
 
-* Should we really allow execution in interactive mode with stderr() and 
+* Should we really allow execution in interactive mode with stderr() and
   stdout() captured?  seems weird.
-* implement capture handling at condition handler level and integrate output 
+* implement capture handling at condition handler level and integrate output
   and condition streams so that we can do the replay? right now conditions come
   out of order when displaying test results
 * should we capture actual stdout() vs stdout caused by a visible
   value separately?  probably yes, makes way more sense for the
-  show.unitizeritem method 
-* need a better mechanism for handling the options changes for error and 
-  warning?  do we really want to change the error options? or allow warning=2? 
+  show.unitizeritem method
+* need a better mechanism for handling the options changes for error and
+  warning?  do we really want to change the error options? or allow warning=2?
 * debugging partially implemented by disabling captures, but really,
   that's not real debugging.  unfortunately, because we capture std.err
   and we can't tee that, there is no good debugging to implement.
@@ -47,14 +47,14 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Browse
 
-* should we keep objects that user creates while browsing across tests?  
+* should we keep objects that user creates while browsing across tests?
   probably, but we don't right now.
 * accept all (hidden?) option
   * Right now comes up most when removing tests and wanting them all deleted
     w/o having to review every single one
 * Deleted tests getting attributed to `Total` while showing a column of zeros is
   confusing; maybe should be it's own line
-* Current behavior of automatically storing new non-tests and discarding 
+* Current behavior of automatically storing new non-tests and discarding
   reference non tests can be potentially confusing to someone examining the
   environment and not realizing the object they are looking at is not the same
   that was used in the evaluation of the reference test; need to think about
@@ -67,7 +67,7 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * Adding a browser inside `browse` source code, and then Q from browser() env
   causes an exit with loss of history; this is likely purely internal and not
   something a user would run into, but might be worth addressing to simplify
-  debugging.  This seems to happen if we hit more than one browser() while 
+  debugging.  This seems to happen if we hit more than one browser() while
   evaluating.
 
 ## Order of Tests
@@ -84,7 +84,7 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * There is heavy usage of `parent.env<-`, what do we do about the note in R docs
   stating this might be removed in the future?
 * need to think through intialize methods so hopefully we can avoid instantiating
-  with .items argument for unitizerlist inheritors since that's a bit weird 
+  with .items argument for unitizerlist inheritors since that's a bit weird
 * generally, need to add more methods so we're not messing with slots
   directly
 * why are unitizer classes available even though they are not exported????
@@ -98,10 +98,13 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   need to go through the entire parse tree every time.
 * short comments on short expressions should be appended to end of
   expression rather than to start?
+* should `library` be ignored?  How do we reconcile that with the addition of the
+  new clean path functions?  In theory `library` should be returning the same
+  thing when using the clean paths.
 
 ## Conditions
 
-* Implement getCond() to supplement getConds()?  Or maybe add note to 
+* Implement getCond() to supplement getConds()?  Or maybe add note to
   print.getConds() that makes it clear how to get the full message for a given
   condition?
 * not sure that condition comparison function should automatically loop
@@ -111,7 +114,7 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   to provide a list version vs. normal version? and if there is a mismatch
   in condition lengths, then actively tell the user they can use the
   list version?
-* Can we reproduce the standard warning buffering behavior in R?  Right now 
+* Can we reproduce the standard warning buffering behavior in R?  Right now
   need to run in `options(warn=1)` due to weird stuff that happens when trying
   to run in mode 0 while capturing output.
 * Loosely related, how do we distinguish between a condition that looks like a

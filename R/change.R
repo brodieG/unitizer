@@ -1,9 +1,9 @@
 #' Summary of Changes
-#' 
+#'
 #' Changes arise any time a user, through the interactive unitizer mode,
 #' requests the storing of a change (accept new version of failed test,
 #' add new test, remove old test).
-#' 
+#'
 #' @keywords internal
 
 setClass("unitizerChanges",
@@ -14,7 +14,7 @@ setClass("unitizerChanges",
       if((len <- length(slot(object, i))) > 0L && len != 2L) {
         return(paste0("slot `@`", i, " must be of length 2"))
       } else if (slot(object, i)[[1L]] > slot(object, i)[[2L]]) {
-        return(paste0("slot `@`", i, " must be length 2 with the first value less than the second"))        
+        return(paste0("slot `@`", i, " must be length 2 with the first value less than the second"))
       }
     }
     TRUE

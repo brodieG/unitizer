@@ -3,34 +3,34 @@
 NULL
 
 #' S4 Object To Implement Base List Methods
-#' 
-#' The underlying assumption is that the `.items` slot is a list 
+#'
+#' The underlying assumption is that the `.items` slot is a list
 #' (or an expression), and that that slot is the only slot for which
 #' it's order and length are meaningful (i.e. there is no other list
 #' or vector of same length as `.items` in a different slot that is
 #' supposed to map to `.items`).  This last assumption allows us
 #' to implement the subsetting operators in a meaninful manner.
-#' 
+#'
 #' @keywords internal
 #' @slot .items a list or expression
 #' @slot .pointer integer, used for implementing iterators
 #' @slot .seek.fwd logical used to track what direction iterators are going
 
 setClass(
-  "unitizerList", 
-  representation(.items="listOrExpression", .pointer="integer", .seek.fwd="logical"), 
+  "unitizerList",
+  representation(.items="listOrExpression", .pointer="integer", .seek.fwd="logical"),
   prototype(.pointer=0L, .seek.fwd=TRUE)
 )
 # - Methods -------------------------------------------------------------------
 
 #' Compute Number of Items in \code{`\link{unitizerList-class}`}
-#' 
+#'
 #' @keywords internal
 
-setMethod("length", "unitizerList", function(x) length(x@.items)) 
+setMethod("length", "unitizerList", function(x) length(x@.items))
 
 #' Subsetting Method for \code{`\link{unitizerList-class}`}
-#' 
+#'
 #' @keywords internal
 
 setMethod("[", signature(x="unitizerList", i="subIndex", j="missing", drop="missing"),
@@ -39,7 +39,7 @@ setMethod("[", signature(x="unitizerList", i="subIndex", j="missing", drop="miss
     x
 } )
 #' Subsetting Method for \code{`\link{unitizerList-class}`}
-#' 
+#'
 #' @keywords internal
 
 setMethod("[[", signature(x="unitizerList", i="subIndex"),
@@ -47,14 +47,14 @@ setMethod("[[", signature(x="unitizerList", i="subIndex"),
     x@.items[[i]]
 } )
 #' Replace Method for \code{`\link{unitizerList-class}`}
-#' 
+#'
 #' @name [<-,unitizerList,subIndex-method
 #' @keywords internal
 
 setReplaceMethod("[", signature(x="unitizerList", i="subIndex"),
   function(x, i, value) {
     pointer.reset <- (
-      is.logical(i) && (lt <- sum(which(i) <= x@.pointer)) || 
+      is.logical(i) && (lt <- sum(which(i) <= x@.pointer)) ||
       is.numeric(i) && (lt <- sum(floor(i) <= x@.pointer)) ||
       is.character(i) && (lt <- sum(match(i, names(x)) <= x@pointer))
     ) && is.null(value)
@@ -63,7 +63,7 @@ setReplaceMethod("[", signature(x="unitizerList", i="subIndex"),
     x
 } )
 #' Replace Method for \code{`\link{unitizerList-class}`}
-#' 
+#'
 #' @name [[<-,unitizerList,subIndex-method
 #' @keywords internal
 
@@ -83,11 +83,11 @@ setReplaceMethod("[[", signature(x="unitizerList", i="subIndex"),
 setMethod("as.list", "unitizerList", function(x, ...) x@.items)
 
 #' Coerce to expression by returning items coerced to expressions
-#' 
+#'
 #' Really only meaningful for classes that implement the \code{`.items`}
 #' slot as an expression, but works for others to the extent
 #' \code{`.items`} contents are coercible to expressions
-#' 
+#'
 #' @keywords internal
 
 setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.items, ...))
@@ -95,7 +95,7 @@ setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.ite
 setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 
 #' Iterate through items of a \code{`\link{unitizerList-class}`} Object
-#' 
+#'
 #' Extraction process is a combination of steps:
 #' \enumerate{
 #'   \item Move Internal pointer with \code{`nextItem`} or \code{`prevItem`}
@@ -107,13 +107,13 @@ setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 #' If you wish to iterate from the last item forward, you should either
 #' \code{`reset`} with parameter \code{`reverse`} set to TRUE, or re-order
 #' the items.
-#' 
+#'
 #' @aliases nextItem,unitizerList-method, prevItem,unitizerList-method,
 #'   getItem,unitizerList-method, reset,unitizerList-method, done,unitizerList-method
 #' @keywords internal
-#' 
-#' @param x a \code{`\link{unitizerList-class}`} object 
-#' @return \code{`\link{unitizerList-class}`} for \code{`getItem`}, 
+#'
+#' @param x a \code{`\link{unitizerList-class}`} object
+#' @return \code{`\link{unitizerList-class}`} for \code{`getItem`},
 #'   an item from the list, which could be anything
 
 setMethod("nextItem", "unitizerList", valueClass="unitizerList",
@@ -151,7 +151,7 @@ setMethod("reset", "unitizerList", valueClass="unitizerList",
     x
 } )
 setGeneric("getItem", function(x, ...) standardGeneric("getItem"))
-setMethod("getItem", "unitizerList", 
+setMethod("getItem", "unitizerList",
   function(x) {
     if(!(x@.pointer %in% seq_along(x))) {
       if(x@.pointer %in% c(0L, length(x) + 1L)) {
@@ -163,14 +163,14 @@ setMethod("getItem", "unitizerList",
         stop(
           "Internal pointer for `x` outside of range for `x`; test for ",
           "this condition with `done`, or reset with `reset`"
-        )        
+        )
       } else {
         stop("Internal pointer for `x` is corrupted")
     } }
     x@.items[[x@.pointer]]
 } )
 setGeneric("done", function(x, ...) standardGeneric("done"))
-setMethod("done", "unitizerList", 
+setMethod("done", "unitizerList",
   function(x) {
     if(x@.seek.fwd & x@.pointer > length(x)) return(TRUE)
     else if (!x@.seek.fwd & identical(x@.pointer, 0L)) return(TRUE)
@@ -181,18 +181,18 @@ setMethod("done", "unitizerList",
 setGeneric("append")
 
 #' Append To a \code{`\link{unitizerList-class}`} Object
-#' 
+#'
 #' \code{`values`} is coerced to list or expression depending on
 #' type of \code{`x`} \code{`.items`} slot.
-#' 
+#'
 #' The resulting object must pass the validity method for \code{`x`}.
-#' 
+#'
 #' @keywords internal
 #' @param x the object to append to
 #' @param values the object to append
 #' @param after a subscript, after which the values are to be appended.
 
-setMethod("append", c("unitizerList", "ANY"), 
+setMethod("append", c("unitizerList", "ANY"),
   function(x, values, after=length(x)) {
     attempt <- try(
       if(is.list(x@.items)) {
@@ -215,22 +215,22 @@ setMethod("append", c("unitizerList", "ANY"),
     y
 } )
 #' Concatenate to a \code{`\link{unitizerList-class}`}
-#' 
+#'
 #' @keywords internal
 
-setMethod("c", c("unitizerList"), 
+setMethod("c", c("unitizerList"),
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")
 } )
 
 #' Append Factors
-#' 
-#' Note this is not related to \code{`\link{append,unitizerList,ANY-method}`} 
+#'
+#' Note this is not related to \code{`\link{append,unitizerList,ANY-method}`}
 #' except in as much as it is the same generic, so it just got thrown in here.
-#' 
+#'
 #' @keywords internal
 
-setMethod("append", c("factor", "factor"), 
+setMethod("append", c("factor", "factor"),
   function(x, values, after=length(x)) {
     if(!identical(attributes(x), attributes(values))) NextMethod()
     if(
@@ -241,7 +241,7 @@ setMethod("append", c("factor", "factor"),
     len.x <- length(x)
     length(x) <- length(x) + length(values)
     if(after < len.x) {
-      x[(after + 1L + length(values)):length(x)] <- x[(after + 1L):(len.x)]  
+      x[(after + 1L + length(values)):length(x)] <- x[(after + 1L):(len.x)]
     }
     x[(after + 1L):(after + length(values))] <- values
     x

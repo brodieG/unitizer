@@ -5,13 +5,13 @@
 NULL
 
 #' Contains Representation For a Section of Tests
-#' 
+#'
 #' \code{`unitizerSectionExpression-class`} contains the actual expressions that
 #' belong to the section, whereas \code{`unitizerSection-class`} only contains
 #' the meta data.  The latter objects are used within \code{`\link{unitizer-class}`},
 #' whereas the former is really just a temporary object until we can generate
 #' the latter.
-#' 
+#'
 #' @keywords internal
 #' @aliases unitizerSectionExpression-class
 #' @slot title 1 lenght character, the name of the section
@@ -46,7 +46,7 @@ setMethod("initialize", "unitizerSection",
 } )
 setClass("unitizerSectionExpression", contains="unitizerList",
   representation(
-    title="characterOrNULL", 
+    title="characterOrNULL",
     details="character",
     compare="unitizerItemTestsFuns"
   )
@@ -54,49 +54,49 @@ setClass("unitizerSectionExpression", contains="unitizerList",
 setClassUnion("unitizerSectionExpressionOrExpression", c("unitizerSectionExpression", "unitizerSection", "expression"))
 
 #' Compute Length of a \code{`\link{unitizerSection-class}`}
-#' 
+#'
 #' @keywords internal
 #' @param x a \code{`unitizerSection`} object
 
 setMethod("length", "unitizerSection", function(x) x@length)
 
 #' Define a \code{`unitizer`} Section
-#' 
+#'
 #' The purpose of \code{`unitizer`} sections is to allow the user to tag a
 #' group of test expressions with meta information as well as to modify the
-#' comparison functions used when determining whether the newly evaluated 
+#' comparison functions used when determining whether the newly evaluated
 #' values match the reference values.
-#' 
+#'
 #' \code{`unitizer`} will compare values as well as some side effects from
 #' the test expression evaluation.  If you wish to modify the comparison function
-#' for the value of the test expressions then all you need to do is pass your 
+#' for the value of the test expressions then all you need to do is pass your
 #' comparison function as the \code{`compare`} argument.
-#' 
+#'
 #' If you wish to modify the comparison functions for the side effects (e.g.
-#' screen output or conditions), then you need to pass a 
+#' screen output or conditions), then you need to pass a
 #' \code{`\link{unitizerItemTestsFuns-class}`} object intialized with the
 #' appropriate functions (see example).
-#' 
+#'
 #' It is possible to have nested sections, but titles, etc. are ignored.  The
-#' only effect of sub-sections is to allow you to change the comparison 
+#' only effect of sub-sections is to allow you to change the comparison
 #' functions for a sub-section of a \code{`unitizer_sect`}.
-#' 
+#'
 #' @note if you want to modify the functions used to compare conditions,
 #' keep in mind that the conditions are stored in lists, so your function
 #' must loop through the lists and compare conditions pairwise.  By default
 #' \code{`unitizer`} uses the \code{`all.equal`} method for S4 class \code{`conditionList`}.
-#' 
+#'
 #' @note currently sections have no impact whatsoever on reference expressions.
 #' The only thing that matters is what section the new expressions are in.
 #' New expressions are matched to reference expressions based purely on the
 #' deparsed calls irrespective of what section the reference expressions were
 #' in.
-#' 
+#'
 #' @export
 #' @param title character 1 length title for the section, can be omitted
 #'   though if you do omit it you will have to refer to the subsequent
 #'   arguments by name (i.e. \code{`unitizer_sect(expr=...)`})
-#' @param expr test expression(s), most commonly a call to \code{`{}`} with 
+#' @param expr test expression(s), most commonly a call to \code{`{}`} with
 #'   several calls inside (see examples)
 #' @param details character more detailed description of what the purpose
 #'   of the section is; currently this doesn't do anything.
@@ -107,21 +107,21 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #'   my_fun("a", FALSE)
 #'   my_fun(845, TRUE)
 #' })
-#' unitizer_sect("Compare With Identical", 
+#' unitizer_sect("Compare With Identical",
 #'   {
 #'     my_exact_fun(6L)
 #'     my_exact_fun("hello")
 #'   },
 #'   compare=identical
 #' )
-#' unitizer_sect("Compare With Identical", 
+#' unitizer_sect("Compare With Identical",
 #'   {
 #'     my_exact_fun(6L)
 #'     my_exact_fun("hello")
 #'   },
 #'   compare=identical
 #' )
-#' unitizer_sect("Compare With Identical For Screen Output", 
+#' unitizer_sect("Compare With Identical For Screen Output",
 #'   {
 #'     my_exact_fun(6L)
 #'     my_exact_fun("hello")
@@ -148,7 +148,7 @@ unitizer_sect <- function(title=NULL, expr=expression(), details=character(), co
     if(is.function(compare)) {
       compare <- try(
         new(
-          "unitizerItemTestsFuns", 
+          "unitizerItemTestsFuns",
           value=new("unitizerItemTestFun", fun=compare, fun.name=deparse_fun(substitute(compare)))
       ) )
       if(inherits(compare, "try-error")) {
@@ -163,4 +163,4 @@ unitizer_sect <- function(title=NULL, expr=expression(), details=character(), co
   attempt <- try(new("unitizerSectionExpression", title=title, .items=expr, details=details, compare=compare))
   if(inherits(attempt, "try-error")) stop("Failed instantiating `unitizerSection`; see previous error for details.")
   attempt
-} 
+}

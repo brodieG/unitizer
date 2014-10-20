@@ -7,36 +7,36 @@
 NULL
 
 #' Contains All The Data for Our Tests!
-#' 
-#' Generally is populated through the \code{`+`} methods, with the exception of 
+#'
+#' Generally is populated through the \code{`+`} methods, with the exception of
 #' \code{`items.ref`}, which is added on creation.  I guess ideally all would be done
 #' through different \code{`+`} methods, but that would complicate the process a bit
 #' as that would require being able to distinguish between reference item lists and
 #' new item lists (and the latter should never really be added as that should happen
 #' item by item).  Maybe some day this will be cleaned up.
-#' 
+#'
 #' One of the challenges when maintaining this is the tension between wanting to
 #' keep all the item/test data in sub-objects, and the difficulty in extracting
 #' summary data across all items/tests in that structure.  As a result of this,
 #' a compromise solution has been to extract some of the relevant meta data
 #' into vectors/matrices available at the top level (e.g. the @@tests.* objects).
-#' 
+#'
 #' Ultimately, we need far more specialized accessor functions that don't require
 #' understanding what those meta data mean exactly, and how they need to be used.
 #' An example is the \code{`ignored`} function.
-#' 
+#'
 #' Things get particularly complicated with the \code{`browse`} objects, which
 #' basically rehash a lot of this data, but split into groups and sub-groups,
 #' and at this point with meta-data stored in a \code{`unitizerBrowseMapping`}
 #' object that replicates the role of the aforementioned @@tests.* objects in
 #' \code{`unitizer`}.
-#' 
+#'
 #' @keywords internal
 #' @slot id the identifier for the unitizer, typically a file name, but can be anything
 #' @slot items.new a list of all the tests in the new file
 #' @slot items.ref a list of all the previously saved tests
-#' @slot items.new.map a vector that maps the entries in \code{`items.new`} to 
-#'   those in \code{`items.ref`}, where position in vector is id/position in 
+#' @slot items.new.map a vector that maps the entries in \code{`items.new`} to
+#'   those in \code{`items.ref`}, where position in vector is id/position in
 #'   slot \code{`items.new`}, and value is id/position in \code{`items.ref`}
 #'   new items will show up as NA here
 #' @slot items.new.calls.deparse a character vector of the deparsed calls in \code{`items.new`}
@@ -47,12 +47,12 @@ NULL
 #'   for every item in \code{`items.new`}
 #' @slot tests.result a logical matrix with a row for each item in \code{`items.new`} where each column
 #'   represents the result of each sub tests
-#' @slot tests.errorDetails an S4 object with a slot for each sub test, where the slot contains a 
+#' @slot tests.errorDetails an S4 object with a slot for each sub test, where the slot contains a
 #'   \code{`\link{unitizerItemTestError-class}`} object
 #'   either NULL or a character vector describing the test failure reason for every item in \code{`items.new`}
 #' @slot items.ref.calls.deparse like \code{`items.new.calls.deparse`}, but for the reference items
-#' @slot items.ref.map maps reference items to the new items; deleted items will 
-#'   show up as NA here, where position in vector is id/position in slot 
+#' @slot items.ref.map maps reference items to the new items; deleted items will
+#'   show up as NA here, where position in vector is id/position in slot
 #'   \code{`items.ref`}, and value is id/position in \code{`items.new`}
 #' @slot sections a list of \code{`\link{unitizerSection-class}`}
 #' @slot section.map a map of every item in \code{`items.new`} to a section
@@ -70,7 +70,7 @@ setClass(
     items.new.map="integer",
     items.new.calls.deparse="character",
     items.envs="list",
-    
+
     # NEED TO CLEAN THIS UP; SHOULD IT BE HANDLED BY METHODS? REALLY ANNOYING
     # TO GET FAILED TESTS VS NEW TESTS VS. WHATEVER
 
@@ -100,7 +100,7 @@ setClass(
   "unitizerSummary", list(data="matrix", dels="integer"),
   validity=function(object) {
     if(
-      !is.integer(object@data) || 
+      !is.integer(object@data) ||
       !all(colnames(object@data) %in% c("New", "Pass", "Fail", "Error"))
     )
       return("Slot `data` must be an integer matrix with colnames %in% c(\"New\", \"Pass\", \"Fail\", \"Error\")")
@@ -109,13 +109,18 @@ setClass(
 } )
 # - Methods -------------------------------------------------------------------
 
-setMethod("show", "unitizerSummary", 
+#' Display Unitizer Summary
+#'
+#' @param object the object to show
+#' @return NULL
+
+setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
     colnames(sum.mx) <- paste0(
       vapply(
-        max(vapply(colnames(sum.mx), nchar, integer(1L))) - vapply(colnames(sum.mx), nchar, integer(1L)), 
-        function(x) paste0(rep(" ", x + 1L), collapse=""), 
+        max(vapply(colnames(sum.mx), nchar, integer(1L))) - vapply(colnames(sum.mx), nchar, integer(1L)),
+        function(x) paste0(rep(" ", x + 1L), collapse=""),
         character(1L)
       ),
       colnames(sum.mx)
@@ -123,8 +128,20 @@ setMethod("show", "unitizerSummary",
     print(sum.mx)
     if(object@dels)
       cat("\nAdditionally, ", object@dels, " test ", if(object@dels > 1) "were" else "was", " deleted\n", sep="")
+    NULL
 } )
 
+#' Determine if a \code{`unitizer`} Passed Based On Summary
+#'
+#' @keywords internal
+#' @param object object to test for passing
+#' @return logical(1L)
+
+setGeneric("passed", function(object, ...) standardGeneric("passed"))
+setMethod("passed", "unitizerSummary",
+  function(object, ...) {
+    !as.logical(sum(tail(object@data, 1L)[, -1L]) + object@dels)
+} )
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
     if(!("id" %in% names(list(...)))) stop("Argument `id` is required")
@@ -140,41 +157,41 @@ setMethod("initialize", "unitizer",
     .Object
 } )
 #' Compute Length of a \code{`\link{unitizer-class}`} Object
-#' 
+#'
 #' @keywords internal
 
-setMethod("length", "unitizer", 
+setMethod("length", "unitizer",
   function(x) {
     len.vec <- unique(c(length(x@items.new), length(x@items.new.map), length(x@items.new.calls.deparse)))
     if(length(len.vec) != 1L) stop("Inconsistent sub-object length; should not happen; contact package maintainer.")
     len.vec
 } )
 #' Summarize Results
-#' 
+#'
 #' @return a list with the data that can be assigned to sections in vector/matrix
 #'   form, and the section less stuff (Deletes) as a scalar
 #' @keywords internal
 
-setMethod("summary", "unitizer", 
+setMethod("summary", "unitizer",
   function(object, ...) {
     ignore <- ignored(object@items.new)
     status <- object@tests.status[!ignore]
     sections <- vapply(
-      object@section.parent[object@section.map[!ignore]], 
+      object@section.parent[object@section.map[!ignore]],
       function(idx) object@sections[[idx]]@title,
       character(1L)
     )
     sections.levels <- unique(sections[order(object@section.parent[object@section.map[!ignore]])])
     sum.mx <- tapply(
-      rep(1L, length(status)), 
+      rep(1L, length(status)),
       list(factor(sections, levels=sections.levels), status), sum
     )  # this should be a matrix with the summary data.
     sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
     sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
     sum.mx <- rbind(sum.mx, "**Total**"=apply(sum.mx, 2, sum))
-    
+
     if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
-    
+
     sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 15)
     deletes <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
@@ -190,12 +207,12 @@ setMethod("summary", "unitizer",
 setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
 
 #' Helper Methods for Adding Items to \code{`\link{unitizer-class}`} Object
-#' 
+#'
 #' @aliases testItem,unitizer,unitizerItem-method
 #' @seealso \code{`\link{+,unitizer,unitizerItem-method}`}
 #' @keywords internal
 
-setMethod("registerItem", c("unitizer", "unitizerItem"), 
+setMethod("registerItem", c("unitizer", "unitizerItem"),
   function(e1, e2, ...) {
     item.new <- e2
     if(identical(length(e1@items.new), 0L)) e1@items.new@base.env <- parent.env(item.new@env)
@@ -206,15 +223,15 @@ setMethod("registerItem", c("unitizer", "unitizerItem"),
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
       items.already.matched <- Filter(Negate(is.na), e1@items.new.map)
       items.already.matched.vec <- if(!length(items.already.matched)) TRUE else -items.already.matched
-      item.map <- match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec]) 
-      e1@items.new.map <- c(e1@items.new.map, item.map <- idx.vec[items.already.matched.vec][item.map])      
+      item.map <- match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec])
+      e1@items.new.map <- c(e1@items.new.map, item.map <- idx.vec[items.already.matched.vec][item.map])
     } else {
       e1@items.new.map <- c(e1@items.new.map, item.map <- match(call.dep, e1@items.ref.calls.deparse))
     }
     e1
 } )
 setGeneric("testItem", function(e1, e2, ...) standardGeneric("testItem"))
-setMethod("testItem", c("unitizer", "unitizerItem"), 
+setMethod("testItem", c("unitizer", "unitizerItem"),
   function(e1, e2, ...) {
     item.new <- e2
     slot.names <- slotNames(getClass(item.new@data))
@@ -227,15 +244,15 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 
     if(is.na(item.map)) {
       test.status <- "New"
-      e1@tests.fail <- c(e1@tests.fail, FALSE)      
-      e1@tests.error <- c(e1@tests.error, FALSE)      
-      e1@tests.new <- c(e1@tests.new, TRUE)      
+      e1@tests.fail <- c(e1@tests.fail, FALSE)
+      e1@tests.error <- c(e1@tests.error, FALSE)
+      e1@tests.new <- c(e1@tests.new, TRUE)
       e1@tests.result <- rbind(e1@tests.result, test.result.tpl, deparse.level=0)
     } else {
       e1@items.ref.map[[item.map]] <- length(e1@items.new)
       item.ref <- e1@items.ref[[item.map]]
       section <- e1@sections[[e1@section.map[[length(e1@items.new)]]]]  # this should be initialized properly, and con probably be corrupted pretty easily
-      
+
       # Test functions and the data to test is organized in objects with
       # the exact same structure as item.new@data, so cycle through the slots.
       # Status is always "Error" if something indeterminable happens,
@@ -254,7 +271,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
           test.error.tpl[[i]] <- new(
-            "unitizerItemTestError", value=paste0(err.msg, " produced error: ", test.res), 
+            "unitizerItemTestError", value=paste0(err.msg, " produced error: ", test.res),
             compare.err=TRUE
           )
         } else if(isTRUE(test.res)) {
@@ -278,7 +295,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
             tests.conditions.new <- TRUE
         }
       }
-      e1@tests.result <- rbind(e1@tests.result, test.result)      
+      e1@tests.result <- rbind(e1@tests.result, test.result)
       e1@tests.new <- c(e1@tests.new, FALSE)
       if(!all(test.result)) {
         if(identical(test.status, "Fail")) {
@@ -292,11 +309,11 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         }
       } else {
         e1@tests.fail <- append(e1@tests.fail, FALSE)
-        e1@tests.error <- append(e1@tests.error, FALSE)        
+        e1@tests.error <- append(e1@tests.error, FALSE)
       }
     }
     e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)  # so added irrespective of pass/fail
-    
+
     if(length(e1@tests.status)) {
       e1@tests.status <- unlist(list(e1@tests.status, factor(test.status, levels=levels(e1@tests.status))))
     } else {
