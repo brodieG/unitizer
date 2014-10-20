@@ -10,7 +10,7 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2014-10-19" />
+<meta name="date" content="2014-10-20" />
 
 <title>unitizeR - Turn Arbitrary Code into Unit Tests</title>
 
@@ -28,7 +28,7 @@
 <div id="header">
 <h1 class="title">unitizeR - Turn Arbitrary Code into Unit Tests</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2014-10-19</em></h4>
+<h4 class="date"><em>2014-10-20</em></h4>
 </div>
 
 
@@ -122,6 +122,12 @@ unitize(&quot;unitizer/fastlm.R&quot;)</code></pre>
 <p>Currently <code>unitizer</code> is only available on github:</p>
 <pre><code>library(devtools)
 install_github(&quot;brodieg/unitizer&quot;)</code></pre>
+<p>Anscillary packages used for examples and tests are in <code>inst/example.pkgs</code> in source, so in order to install on your system you can use (after installing <code>unitizer</code>):</p>
+<pre><code>unitizer.path &lt;- system.file(package=&quot;unitizer&quot;)
+library(devtools)
+install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))
+install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg2&quot;))
+install(paste0(unitizer.path, &quot;/example.pkgs/fastlm&quot;))</code></pre>
 </div>
 </div>
 <div id="a-detailed-run-through" class="section level2">
@@ -138,12 +144,12 @@ install_github(&quot;brodieg/unitizer&quot;)</code></pre>
 | unitizer for: tests/unitizer/fastlm.R                              |
 +--------------------------------------------------------------------+
 
-    Pass     Fail      New  Deleted                                   
-       0        0        8        0 
+    Pass     Fail      New  Deleted
+       0        0        8        0
 
 - New ----------------------------------------------------------------
 
-Test script contains tests not present in unitizer. Add new item to 
+Test script contains tests not present in unitizer. Add new item to
 store ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
 
 &gt; library(fastlm)
@@ -151,17 +157,17 @@ store ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
 &gt; y &lt;- ((1:100)/10)^2
 # parens to force treatment as test
 &gt; (res &lt;- fastlm(x, y))
- intercept      slope        rsq 
--17.170000   1.010000   0.938679 
+ intercept      slope        rsq
+-17.170000   1.010000   0.938679
 attr(,&quot;class&quot;)
 [1] &quot;fastlm&quot;
-unitizer&gt; </code></pre>
+unitizer&gt;</code></pre>
 <p>This is telling us that there are eight new tests in our file, and the “new” banner indicates we are about to review the new tests (the only type in this case). The text that follows provides options to type at the <code>unitizer&gt;</code> prompt.</p>
 <p>Following the banner, <code>unitizer</code> starts showing you the results of evaluating the test file and eventually stops after the first test with a <code>unitizer&gt;</code> prompt. Note that simple assignment expressions are not considered tests which is why the prompt only shows up after the <code>(res &lt;- fastlm(x, y))</code> line (we forced this to be a test by wrapping it in parentheses).</p>
 <p>As we noted earlier, the prompt allows you to run R expressions, so we can use this opportunity to check that our function did what it is supposed to:</p>
 <pre><code>unitizer&gt; lm(y ~ x, data.frame(x, y))$coefficients
-(Intercept)           x 
-     -17.17        1.01 
+(Intercept)           x
+     -17.17        1.01
 unitizer&gt;</code></pre>
 <p>We visually compare the output of <code>lm</code> to <code>fastlm</code> and conclude they match, so we accept the test by typing in <code>Y</code> and hitting the “ENTER” key:</p>
 <pre><code>unitizer&gt; Y
@@ -171,9 +177,9 @@ unitizer&gt;</code></pre>
 <p>The first test, <code>(res &lt;- fastlm(x, y))</code> is now queued for storing, and we’re prompted about the second test (<code>get_slope(res)</code>). We will also accept this one, as well as the next 3, which brings us to:</p>
 <pre><code># Cause errors
 &gt; fastlm(x, head(y))
-Error in data.frame(x = x, y = y) : 
+Error in data.frame(x = x, y = y) :
   arguments imply differing number of rows: 100, 6
-unitizer&gt; </code></pre>
+unitizer&gt;</code></pre>
 <p>This test caused an error. It was supposed to as the inputs were purposefully wrong. We want to store this particular error to ensure that in the future our function keeps erroring out in the same way with this type of erroneous input. Conveniently all we have to do is hit <code>Y</code>. The error becomes part of the store and any future re-runs will compare the result of the expression against the stored error and will notify if the expression fails to produce an error or produces a different error. So will we accept this test, as well as the remaining tests, which brings us to the final prompt:</p>
 <pre><code>unitizer&gt; Y
 = Confirm Changes ====================================================
@@ -197,32 +203,32 @@ unitizer updated</code></pre>
 | unitizer for: tests/unitizer/fastlm.R                             |
 +-------------------------------------------------------------------+
 
-    Pass     Fail      New  Deleted                                  
-       2        6        0        0 
+    Pass     Fail      New  Deleted
+       2        6        0        0
 
 - Failed ------------------------------------------------------------
 
-Reference test does not match new test from test script. Overwrite 
-item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, 
+Reference test does not match new test from test script. Overwrite
+item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit,
 [H]elp)?
 
 # parens to force treatment as test
 &gt; (res &lt;- fastlm(x, y))
 Test Failed Because:
 Value mismatch: Mean relative difference: 18889539312
-unitizer&gt; </code></pre>
+unitizer&gt;</code></pre>
 <p>Clearly something is wrong. Six of our eight tests failed. <code>unitizer</code> prompts us to review the failed tests and decide whether to replace the existing tests with the new ones. The first failed test is the one that calculates the values related to the linear regression. <code>unitizer</code> provides us with two special objects that we can use to examine our test failure: <code>.new</code> and <code>.ref</code>, each representing the value produced by the test we just ran as well as the value produced by the original test we stored. Let’s examine them:</p>
 <pre><code>unitizer&gt; .new
-    intercept         slope           rsq 
--3.541306e+11  7.012486e+09  9.688545e-01 
+    intercept         slope           rsq
+-3.541306e+11  7.012486e+09  9.688545e-01
 attr(,&quot;class&quot;)
 [1] &quot;fastlm&quot;
 unitizer&gt; .ref
- intercept      slope        rsq 
--17.170000   1.010000   0.938679 
+ intercept      slope        rsq
+-17.170000   1.010000   0.938679
 attr(,&quot;class&quot;)
 [1] &quot;fastlm&quot;
-unitizer&gt;  </code></pre>
+unitizer&gt;</code></pre>
 <p>By comparing the output of <code>.new</code> and <code>.ref</code> we can see that all our computations are just wrong (note we could also have re-evaluated our test instead of typing <code>.new</code> at the prompt, but if the computation is slow using <code>.new</code> avoids recomputation, and the only way to get the original value is with <code>.ref</code>).</p>
 <p>We now know that our new calculations are wrong, so we will reject this test as well as the subsequent related tests (all the <code>get_*</code> functions that retrieve computations will obviously fail too), which takes us to our error causing tests:</p>
 <pre><code>unitizer&gt; N
@@ -232,10 +238,10 @@ Value mismatch: Mean relative difference: 5.941176
 unitizer&gt; N
 # Cause errors
 &gt; fastlm(x, head(y))
-Error in fastlm(x, head(y)) : 
+Error in fastlm(x, head(y)) :
   Arguments `x` and `y` must be the same length.
 Test Failed Because:
-Conditions mismatch: 
+Conditions mismatch:
   + There is 1 condition mismatch; showing first mismatch at condition #1
   + Error condition messages do not match
 unitizer&gt;</code></pre>
@@ -244,7 +250,7 @@ unitizer&gt;</code></pre>
 &lt;simpleError in fastlm(x, head(y)): Arguments `x` and `y` must be the same
 length.&gt;
 unitizer&gt; getConds(.ref)[[1]]
-&lt;simpleError in data.frame(x = x, y = y): arguments imply differing number 
+&lt;simpleError in data.frame(x = x, y = y): arguments imply differing number
 of rows: 100, 6&gt;</code></pre>
 <p>Note <code>getConds</code> returns a list of conditions, which is why we subset with <code>[[1]]</code> to see the first condition. By using the <code>.new</code>/<code>.ref</code> objects as an argument we can tell <code>getConds</code> which of the conditions we wish to view: the newly evaluated ones or the reference ones that were stored earlier.</p>
 <p>In this case, while the condition messages changed, the general meaning did not and since we added our own error handler to replace internal error handling this change is reasonable. The remaining two failed tests also failed for similar reasons, so we will accept them too, which again takes us to the final prompt:</p>
@@ -252,7 +258,7 @@ of rows: 100, 6&gt;</code></pre>
 &gt; fastlm(x, NULL)
 Error in fastlm(x, NULL) : Arguments `x` and `y` must be numeric.
 Test Failed Because:
-Conditions mismatch: 
+Conditions mismatch:
   + There is 1 condition mismatch; showing first mismatch at condition #1
   + Error condition messages do not match
 unitizer&gt; Y
@@ -272,8 +278,8 @@ unitizer updated</code></pre>
 | unitizer for: tests/unitizer/fastlm.R                              |
 +--------------------------------------------------------------------+
 
-    Pass     Fail      New  Deleted                                   
-       8        0        0        0 
+    Pass     Fail      New  Deleted
+       8        0        0        0
 
 All tests passed; nothing to store.</code></pre>
 <p>Success! Our new test code now validates properly. We have a functional <code>fastlm</code>!</p>
@@ -307,7 +313,7 @@ All tests passed; nothing to store.</code></pre>
 library(fastlm)
 
 unitizer_sect(
-  &quot;Base Tests&quot;, 
+  &quot;Base Tests&quot;,
   {
     x &lt;- 1:100
     y &lt;- ((1:100) / 10) ^ 2
@@ -318,7 +324,7 @@ unitizer_sect(
     get_rsq(res)
 } )
 unitizer_sect(
-  &quot;Test Error Handling&quot;, 
+  &quot;Test Error Handling&quot;,
   {
     fastlm(x, head(y))
     fastlm(x, NULL)
@@ -332,7 +338,7 @@ unitizer_sect(
 | unitizer for: tests/unitizer/fastlm.R                             |
 +-------------------------------------------------------------------+
 
-                    Pass     Fail      New  Deleted                  
+                    Pass     Fail      New  Deleted
 Base Tests             4        0        0        0
 Test Error H...        4        0        0        0
 **Total**              8        0        0        0
@@ -366,9 +372,9 @@ All tests passed; nothing to store.</code></pre>
 } )</code></pre>
 <p>The values produced by these three tests will be compared using <code>identical</code> instead of <code>all.equal</code>. If you want to modify how other components of the test are compared, then you can pass a <code>unitizerItemTestsFuns</code> object as the value to the <code>compare</code> argument instead of a function:</p>
 <pre><code> unitizer_sect(
-  &quot;Base Tests Strict&quot;, 
+  &quot;Base Tests Strict&quot;,
   compare=unitizerItemTestsFuns(
-    value=identical, 
+    value=identical,
     output=all.equal,
     message=identical
   ),
@@ -424,8 +430,8 @@ unitizer&gt;</code></pre>
 <p>Much like the <code>browser()</code> prompt, the <code>unitizer</code> prompt accepts several special expressions that allow you to control <code>unitizer</code> behavior. What the expressions are and what they do depends on context. We will review them in the context of the failed test described above. Let’s go back and look at what the <code>unitizer</code> prompt stated before we started reviewing our failed tests:</p>
 <pre><code>- Failed ------------------------------------------------------------
 
-Reference test does not match new test from test script. Overwrite 
-item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, 
+Reference test does not match new test from test script. Overwrite
+item in store with new value ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit,
 [H]elp)?</code></pre>
 <p>This clearly lays out all the special commands available to us:</p>
 <ul>
@@ -463,7 +469,7 @@ You are re-reviewing a test; previous selection was: &quot;N&quot;
 &gt; get_slope(res)
 Test Failed Because:
 Value mismatch: Mean relative difference: 6943055624
-unitizer&gt; </code></pre>
+unitizer&gt;</code></pre>
 <p><code>unitizer</code> tells us we are re-reviewing this test and that previously we had chosen not to keep the new version. At this point we could re-examine the test, and potentially change our previous selection.</p>
 </div>
 <div id="new-and-.ref" class="section level3">
@@ -486,29 +492,29 @@ unitizer&gt; </code></pre>
 <p>The <code>unitizer</code> prompt is very much like the R prompt in as much as it allows you to evaluate arbitrary expresions, including examining objects. One useful thing to do is to check what objects are available to examine, which you can do with <code>ls</code>:</p>
 <pre><code>unitizer&gt; ls()
 $`objects in new test env:`
-[1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;  
+[1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;
 
 $`objects in ref test env:`
-[1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;  
+[1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;
 
 $`unitizer objects:`
 [1] &quot;.new&quot; &quot;.ref&quot;
 
 Use `ref(obj_name)` to access reference objects.
 `.new` / `.ref` for test value, `getTest(.new)` / `getTest(.ref)` for details.
-unitizer&gt; </code></pre>
+unitizer&gt;</code></pre>
 <p>When you use <code>ls</code> from the <code>unitizer</code> prompt you are not using <code>base::ls</code>, as is obvious from the output above. We need this special version of <code>ls</code> because the <code>unitizer</code> environment is more complex than the typical console environment. For example, the objects present during the evaluation of the new tests may not be the same as they were during the reference evaluation, so we must make both of them available to the user. Buy default any objects you attempt to access at the <code>unitizer</code> prompt will be the new objects, but you can use the <code>ref</code> function to access the reference versions:</p>
 <pre><code>unitizer&gt; res
-    intercept         slope           rsq 
--3.541306e+11  7.012486e+09  9.688545e-01 
+    intercept         slope           rsq
+-3.541306e+11  7.012486e+09  9.688545e-01
 attr(,&quot;class&quot;)
 [1] &quot;fastlm&quot;
 unitizer&gt; ref(res)
- intercept      slope        rsq 
--17.170000   1.010000   0.938679 
+ intercept      slope        rsq
+-17.170000   1.010000   0.938679
 attr(,&quot;class&quot;)
 [1] &quot;fastlm&quot;
-unitizer&gt; </code></pre>
+unitizer&gt;</code></pre>
 <p>In this case <code>res</code> and <code>ref(res)</code> match up exactly to <code>.new</code> and <code>.ref</code> respectively, but that is just because we purposefully converted the assignment to <code>res</code> into a test by wrapping it in parentheses. If you did have a divergence in an object that was created outside of a test, the only way to compare its new value to its reference value would be to use <code>ref</code>.</p>
 </div>
 <div id="quitting-unitizer" class="section level3">
