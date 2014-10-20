@@ -43,6 +43,8 @@ setClass("searchHistList", contains="unitizerList",
 #'
 #' Packages are stored as character values, other objects are stored directly.
 #'
+#' Probably should be an RC object instead of an environment.
+#'
 #' @aliases zero.env.par objects.attached
 #' @keywords internal
 
@@ -59,7 +61,7 @@ reset_packenv <- function() {
   pack.env$zero.env.par <- new.env(parent=.GlobalEnv)
   pack.env$lib.copy <- base::library
   pack.env$history <- new("searchHistList")
-  pack.env$search.init <- character()        # Initial search path b4 any modifications
+  pack.env$search.init <- character()   # Initial search path b4 any modifications
 
   pack.env
 }
@@ -116,7 +118,7 @@ search_path_setup <- function() {
 
   if(length(fail.shim)) {
     warning(
-      "Cannot shim ", paste0(fail.shim, collapse=", "), " because already traced.",
+      "Cannot trace ", paste0(fail.shim, collapse=", "), " because already traced.",
       immediate.=TRUE
     )
     return(FALSE)
@@ -267,7 +269,6 @@ search_path_setup <- function() {
   # Track initial values
 
   pack.env$search.init <- search()
-  assign(".unitizer.search.path.backup", search(), envir=.GlobalEnv)
 
   # Setup zero env parent
 
@@ -467,8 +468,7 @@ search_path_restore <- function() {
       "functions to track modifications to the search path.  If you did not do ",
       "any of the above, but are still seeing this message, please contact ",
       "maintainer. \n\nWe are unable to restore the search path to its original ",
-      "value (you can retrieve orginal value from variable ",
-      "`.unitizer.search.path.backup` in global env).",
+      "value (you can retrieve orginal value with `unitizer_search_path_backup()`).",
       .unitizer.search.fail.msg, immediate.=TRUE
     )
     return(invisible(FALSE))
