@@ -8,5 +8,4 @@ dummy_fun2()
 \description{
 Dummy Function
 }
-\keyword{internal}
 
