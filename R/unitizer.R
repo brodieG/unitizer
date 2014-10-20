@@ -248,6 +248,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       e1@tests.error <- c(e1@tests.error, FALSE)
       e1@tests.new <- c(e1@tests.new, TRUE)
       e1@tests.result <- rbind(e1@tests.result, test.result.tpl, deparse.level=0)
+      if(length(item.new@data@conditions)) tests.conditions.new <- TRUE  # A new test with conditions by definition has new conditions
     } else {
       e1@items.ref.map[[item.map]] <- length(e1@items.new)
       item.ref <- e1@items.ref[[item.map]]

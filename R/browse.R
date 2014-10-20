@@ -226,9 +226,14 @@ setMethod("reviewNext", c("unitizerBrowse"),
     ) {
       print(H3(curr.sub.sec.obj@title))
       cat(
-        curr.sub.sec.obj@detail, " ", curr.sub.sec.obj@prompt, " ",
-        "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
-        ")?\n\n", sep=""
+        curr.sub.sec.obj@detail,
+        if(!all(x@mapping@ignored[cur.sub.sec.items])) {
+          paste0(
+            " ", curr.sub.sec.obj@prompt, " ",
+            "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
+            ")?"
+        ) },
+        "\n\n", sep=""
       )
     }
     # Retrieve actual tests objects
