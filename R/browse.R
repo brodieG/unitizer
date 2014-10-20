@@ -193,7 +193,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     curr.sec <- x@mapping@sec.id[[which(x@mapping@item.id == curr.id)]]
     curr.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == curr.id)]]
-    cur.sub.sec.items <- x@mapping@sub.sec.id == curr.sub.sec
+    cur.sub.sec.items <- x@mapping@sub.sec.id == curr.sub.sec & x@mapping@sec.id == curr.sec
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
     id.rel <- x@mapping@item.id.rel[[which(x@mapping@item.id == curr.id)]]
 
