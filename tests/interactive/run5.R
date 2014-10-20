@@ -7,3 +7,5 @@ library(unitizerdummypkg1)
 unitize("tests/interactive/unitizer/zeroenv.R", search.path.clean=TRUE)
 
 detach("package:unitizerdummypkg1", unload=TRUE)
+
+unitize("tests/interactive/unitizer/zeroenv.fail.R", search.path.clean=TRUE)
