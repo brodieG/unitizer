@@ -3,7 +3,7 @@ library(testthat)
 
 local( {
   obj.item <- new("unitizerItem", call=quote(1 + 1), env=new.env())
-  obj.item@data@value <- 2 
+  obj.item@data@value <- 2
   obj.item@data@output <- c("two", "dos", "due")
   obj.item@data@conditions <- new(
     "conditionList", .items=list(simpleError("hello"), simpleWarning("What a warning"))
@@ -44,7 +44,7 @@ local( {
     assign("item", .new, eval.env)
     expect_error(evalq(unitizer:::getItemFuns[["getConds"]](item), eval.env))
   } )
-  # Create a bunch of expressions for testing, has to be done outside of 
+  # Create a bunch of expressions for testing, has to be done outside of
   # `test_that`
 
   exps1 <- expression(
@@ -77,7 +77,7 @@ local( {
       lm(x ~ y, data.frame(x=1:10, y=c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))
     } )
   )
-  my.unitizer <- new("unitizer", id=1, zero.env=new.env())  
+  my.unitizer <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer <- my.unitizer + exps1
   my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer2 <- my.unitizer2 + my.unitizer@items.new          # make previous items into reference items
@@ -100,9 +100,9 @@ local( {
     )
   } )
   test_that("processInput generates Correct Item Structure", {
-    # Here we just test that the calls of each item are what we expect, making 
+    # Here we just test that the calls of each item are what we expect, making
     # sure that different behavior for Y or N depending on sub-section type is
-    # observed correctly (e.g. a Y for new test means keep it, where as for 
+    # observed correctly (e.g. a Y for new test means keep it, where as for
     # removed test means don't keep it)
 
     unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))

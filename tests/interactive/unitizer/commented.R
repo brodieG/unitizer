@@ -13,7 +13,7 @@ unitizer_sect("first section", {
 
 unitizer_sect("second section", {
   # sampling for fun
-  sample(1:10) 
+  sample(1:10)
   # Some screen output
   print("how do you do cowboy")
 } )

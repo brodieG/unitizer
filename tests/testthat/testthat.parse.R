@@ -16,7 +16,7 @@ local( {
       # test that were not crazy
 
       1 + 1 == 2   # TRUE hopefully
-      
+
       # Still not crazy
 
       2 * 2 == 2 ^ 2
@@ -26,7 +26,7 @@ local( {
 
     # and this comment belongs to whom?
 
-    runif(20) 
+    runif(20)
     print(\"woo\")  # and I?
     "
   prs <- parse(text=txt)
@@ -42,7 +42,7 @@ local( {
     )
     dat.split <<- split(dat, par.ids)
     expect_equal(info="Identified sub-level top level parents correctly",
-      par.ids.2 <- with(dat.split$`112`, unitizer:::top_level_parse_parents(id, parent, 112L)), 
+      par.ids.2 <- with(dat.split$`112`, unitizer:::top_level_parse_parents(id, parent, 112L)),
       c(54L, 112L, 112L, 57L, 112L, 112L, 112L, 108L, 108L, 108L, 108L,  108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L,  108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L,  108L, 108L, 108L, 108L, 112L)
     )
     dat.split.2 <<- split(dat.split$`112`, par.ids.2)
@@ -84,7 +84,7 @@ local( {
       unname(as.list(unitizer:::prsdat_fix_exprlist(getParseData(parse(text="{NULL; yowza; #comment\nhello\n}")))[c("parent", "token")]))
     )
     expect_equal(info="`for` cleanup",
-      structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),  
+      structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),
       as.list(unitizer:::prsdat_fix_for(getParseData(parse(text="for(i in x) {if(x) break else next}"))[-1L, ]))[c("id", "parent", "token")]
     )
     expect_equal(info="`if` cleanup",
@@ -129,7 +129,7 @@ local( {
       list(NULL, list(NULL, list(NULL), list("# a comment", list(NULL), list(NULL), list(NULL)), list(NULL, list(NULL), list(NULL), list(NULL)))),
       unitizer:::comm_extract(unitizer:::parse_with_comments(text="while(x > 5 # a comment\n) { hello; goodbye } #yay"))
     )
-    
+
     txt2 <- "library(functools)
       fun <- function(a=1, bravo, card=25, ..., xar=list(\"aurochs\", 1), z) {}
 
@@ -168,9 +168,9 @@ local( {
       hello <- 25
       # multi
       hello[[1]]  # and another!"
-    expect_equal(info="LBB test", 
+    expect_equal(info="LBB test",
       list(NULL, list("# This is an early comment", list(NULL), list(NULL), list(NULL)), list(c("# multi", "# and another!"), list(NULL), list(NULL), list(NULL))),
       unitizer:::comm_extract(unitizer:::parse_with_comments(text=txt3))
-    )    
+    )
   } )
 } )

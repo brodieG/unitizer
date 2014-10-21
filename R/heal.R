@@ -7,48 +7,48 @@ NULL
 setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 
 #' Fixes The Ancestries of our New Reference Items Object
-#' 
+#'
 #' This is necessary because when we let the user pick and chose which
 #' tests to store and which ones to reject, there may no longer be a clear
 #' ancestry chain within the remaining tests.
-#' 
+#'
 #' The healing process is somewhat complex and full of compromises.  We
 #' are attempting to create a self consistent set of nested parent environments
 #' for each test, but at the same time, we don't want to store all the
 #' combinations of reference and new objects.
-#' 
+#'
 #' We only store new objects in `unitizer`, with the lone exception of
 #' objects associated to a test environment.  These will include any assignments
-#' that occur just prior to a test, as well as any objects created by the 
+#' that occur just prior to a test, as well as any objects created by the
 #' actual test.
-#' 
+#'
 #' There are two ways in which we modify the environment ancestry. If
 #' the user decides to not store some new tests, then the objects created
 #' in between the previous new stored test and the next new stored test are
 #' all moved to the next new stored test, and the previous new stored test
 #' becomes the parent of the next new stored test.
-#' 
+#'
 #' The second way relates to when the user decides to keep a reference
 #' test over a matching new test.  This is a lot more complicated because
 #' we do not preserve the reference test environment ancestry.  Effectively,
 #' we need to graft the reference test to the new environment ancestry.
-#' 
+#'
 #' If a reference test that is being kept matches directly to a new test,
 #' then the parent of that new test becomes the parent of the reference
 #' test.
-#' 
+#'
 #' If there is no direct match, but there are child reference tests that
 #' match to a new item, then the parent is the youngest new test that
-#' is older than the new test that was matched and is kept.  If no new 
+#' is older than the new test that was matched and is kept.  If no new
 #' tests meet this criterion, then base.env is the parent.
-#' 
+#'
 #' If there is no direct match, and there are no child reference tests
 #' that are being kept that do match to a kept new item, then the parent
 #' will be the last new test that is kept.
 #'
 #' The main takeaway from all this is that reference tests don't really
 #' keep their evaluation environment.  Often this environment is similar
-#' to the new environment.  When there are difference between the two, 
+#' to the new environment.  When there are difference between the two,
 #' the output of \code{`ls`} is customized to highlight
 #' which objects were actually available/unmodifed at the time of the
 #' reference test evaluation.  Object namees will have the following
@@ -56,16 +56,17 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' \itemize{
 #'   \item ': object exists in browsing environment, but not the same as
 #'      it was when test was evalaluated
-#'   \item *: object was present during test evaluation but is not 
+#'   \item *: object was present during test evaluation but is not
 #'      available in unitizer anymore
 #'   \item **: object was not present during test evaluation, but exists
 #'      in current environment
 #' }
-#' 
+#'
 #' @note This is an internal method and should not be used by package users; the
-#'   documentation is exposed so that this aspect of \code{`unitizer`} is 
+#'   documentation is exposed so that this aspect of \code{`unitizer`} is
 #'   documented for package users
-#' 
+#'
+#' @keywords internal
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
 #' @param x \code{`\link{unitizerItems-class}`} object
 #' @param y \code{`\link{unitizer-class}`} object \code{`x`} was generated from
@@ -86,17 +87,17 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 
     gap.order <- order(items.new.idx, decreasing=TRUE)
     gaps <- diff(c(items.new.idx[gap.order], 0L)) # note gaps are -ve and there is a gap if gap < -1
-    
+
     for(i in seq_along(gaps)) {
       i.org <- gap.order[[i]]
       if(gaps[[i]] < -1L) {
         if(items.new.idx[[i.org]] + gaps[[i]] == 0L) {
-          item.env <- y@items.new@base.env 
+          item.env <- y@items.new@base.env
         } else if (items.new.idx[[i.org]] + gaps[[i]] < 0) {
           stop("Logic Error, gap too low, contact maintainer.")
         } else {
           item.env <- y@items.new[[items.new.idx[[i.org]] + gaps[[i]]]]@env
-        }        
+        }
         # Any objects defined in gaps should be assigned to the new parent env, though
         # in theory there should be none unless user specifically assigned objects
         # during a test, which is not default behavior
@@ -109,7 +110,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         # no need to run updateLs() athat is done on addition to unitizer
         if(identical(x[itemsType(x) == "new"][[i.org]]@env, item.env)) {
           # This should only happen when an ignored test just before an actual
-          # and just after another ignored test is removed from the item list; 
+          # and just after another ignored test is removed from the item list;
           # since both the ignored tests where assigned to the environment of the
           # subsequent test, the normal logic here would cause the test to have
           # it's parent env assigned to itself.  Here we had a unit test that
@@ -121,7 +122,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
             "development tests, if you see it please contact maintainer."
           )
         } else {
-          parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- item.env  
+          parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- item.env
         }
       }
     }
@@ -131,7 +132,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     ref.order <- order(items.ref.idx)
     tail.env <- if(length(items.new.idx)) y@items.new[[max(items.new.idx)]]@env else x@base.env
     env.list <- list()
-    slot.in <- integer(length(items.ref.idx))  # Note that `slot.in` values can be repeated    
+    slot.in <- integer(length(items.ref.idx))  # Note that `slot.in` values can be repeated
 
     for(i in ref.order) {
       # First find the youngest new test that is verifiably older than
@@ -139,12 +140,12 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 
       if(
         !length(
-          matching.new.younger <- 
+          matching.new.younger <-
             Filter(Negate(is.na), tail(y@items.ref.map, -items.ref.idx[[i]]))
         )
-      ) {  
+      ) {
         # Nothing younger, so put at end and set up so that next one goes behind this one
-        # need to look for non-kept items as well as otherwise could slot something in 
+        # need to look for non-kept items as well as otherwise could slot something in
         # too far down the ancestry.
         item.env <- tail.env
         slot.in[[i]] <- max(slot.in, items.new.idx) + 1L
@@ -160,8 +161,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         item.env <- x@base.env
         slot.in[[i]] <- min(slot.in)
       } else {     # Something younger, and older
-        # in this case, we must find the closest older kept new env, and use that as a 
-        # parent.  Old approach used to use the a kept ref env that is between this 
+        # in this case, we must find the closest older kept new env, and use that as a
+        # parent.  Old approach used to use the a kept ref env that is between this
         # new env and the ref env we are working with, but this became unmanageable in
         # term of computing the ls diffs.
         item.env <- y@items.new[[tail(matching.new.older, 1L)]]@env
@@ -178,7 +179,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 
     # Re-order items (basically, by the new items, and slot in the reference
     # ones as per the healing logic above)
-    
+
     append(x[itemsType(x) == "new"], x[itemsType(x) == "reference"])[
       order(c(items.new.idx, slot.in))
     ]
@@ -187,17 +188,17 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 
 #' Compare The Objects In Environment for Ref vs. New Item
-#' 
+#'
 #' Makes sure that when we call \code{`ls`} when browsing its environment
-#' the information reflecting any limitations on what objects are actually 
+#' the information reflecting any limitations on what objects are actually
 #' available to browse is properly reflected.
-#' 
-#' The status of environment objects is tracked in \code{`x@@ls$status`}, 
+#'
+#' The status of environment objects is tracked in \code{`x@@ls$status`},
 #' where objects of different status are marked like so:
 #' \itemize{
 #'   \item ': object exists in browsing environment, but not the same as
 #'      it was when test was evalaluated
-#'   \item *: object was present during test evaluation but is not 
+#'   \item *: object was present during test evaluation but is not
 #'      available in unitizer anymore
 #'   \item **: object was not present during test evaluation, but exists
 #'      in current environment
@@ -208,16 +209,16 @@ setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 #' @return \code{`\link{unitizerItem-class}`} object with updated
 #'   \code{`ls`} field and environment reference parent
 
-setMethod("updateLs", "unitizerItem", 
+setMethod("updateLs", "unitizerItem",
   function(x, base.env, new.par.env=NULL,  ...) {
     if(!is.null(new.par.env) && !is.environment(new.par.env)) stop("Argument `new.par.env` should be an environment or NULL.")
     if(!is.environment(base.env)) stop("Argument `base.env` should be an environment.")
     if(!x@reference) {    # should only happen with new items
       new.ls <- sort(run_ls(env=x@env, stop.env=base.env, all.names=TRUE))
       fin.ls <- if(length(new.ls))
-      cbind(names=new.ls, status="") else 
+      cbind(names=new.ls, status="") else
       matrix(character(), ncol=2, dimnames=list(NULL, c("names", "status")))
-    } else {      
+    } else {
       if(!is.environment(new.par.env)) stop("Argument `new.par.env` should be an environment when in reference mode.")
 
       #browser()
@@ -227,15 +228,15 @@ setMethod("updateLs", "unitizerItem",
       run_ls(env=x@env, stop.env=base.env, all.names=TRUE, store.env=ref.env.store)
       run_ls(env=new.par.env, stop.env=base.env, all.names=TRUE, store.env=new.env.store)
       # Since reference test keeps any objects defined in it's own environment, we can cheat
-      # for comparison purposes by putting those objects in the "new" environment so they 
+      # for comparison purposes by putting those objects in the "new" environment so they
       # look like they exist there
       lapply(ls(envir=x@env, all.names=TRUE), function(y) assign(y, get(y, x@env), new.env.store))
       ref.ls <- ls(envir=ref.env.store, all.names=TRUE)
-      
+
       if(nrow(x@ls)) {
         org.ls <- x@ls$names
         org.ref <- x@ls$status == ""
-      } else {        
+      } else {
         org.ls <- ref.ls
         org.ref <- rep(TRUE, length(ref.ls))
       }
@@ -248,7 +249,7 @@ setMethod("updateLs", "unitizerItem",
       fin.ls <- matrix(character(), ncol=2)
       if(
         length(
-          ls.match <- 
+          ls.match <-
             names(org.ref)[
               !is.na(org.ref & (ref.new.match <- ref.new[match(names(org.ref), names(ref.new))])) & ref.new.match
       ] ) ) fin.ls <- cbind(ls.match, "")

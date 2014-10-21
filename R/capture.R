@@ -1,12 +1,12 @@
 #' Helper Functions to Capture and Process stdout/err Output
-#' 
+#'
 #' \code{`set_text_capture`} sets the sinks, while \code{`get_text_capture`}
 #' retrieves the captured tests and releases the sinks with \code{`release_sinks`}.
 #' \code{`get_capture`} is just a wrapper around \code{`get_text_capture`}.
-#' 
+#'
 #' A lot of the logic here is devoted to detecting whether users set their
 #' own sinks in the course of execution.
-#' 
+#'
 #' @keywords internal
 #' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
 
@@ -38,13 +38,13 @@ set_text_capture <- function(file.name, type) {
 }
 get_text_capture <- function(con, file.name, type) {
   if(
-    !isTRUE(type %in% c("message", "output")) || !is.character(file.name) || length(file.name) != 1L || 
+    !isTRUE(type %in% c("message", "output")) || !is.character(file.name) || length(file.name) != 1L ||
     !(inherits(con, "file") && isOpen(con) || identical(con, FALSE))
   ) {
     stop("Logic Error: invalid arguments; contact maintainer.")
   }
   if(inherits(con, "file") && isOpen(con)) {
-    if(!as.character(con) %in% rownames(showConnections()) ||          
+    if(!as.character(con) %in% rownames(showConnections()) ||
       !identical(showConnections()[as.character(con), 1], file.name)
     ) {
       stop(
@@ -80,10 +80,10 @@ release_sinks <- function(silent=FALSE) {
 }
 release_stdout_sink <- function(silent=FALSE) {
   if(!isTRUE(silent)) message("All stdout sinks released, even those established by test expressions.")
-  replicate(sink.number(), sink())  
+  replicate(sink.number(), sink())
 }
 release_stderr_sink <- function(silent=FALSE) {
-  if(!isTRUE(silent)) message("Stderr sink released.")  
+  if(!isTRUE(silent)) message("Stderr sink released.")
   if(!identical(sink.number(type="message"), 2L)) sink(type="message")
 }
 get_capture <- function(std.err.capt.con, std.err.capt, std.out.capt.con, std.out.capt) {
@@ -101,6 +101,6 @@ get_capture <- function(std.err.capt.con, std.err.capt, std.out.capt.con, std.ou
       if(isTRUE(is.open_con(std.err.capt.con))) close(std.err.capt.con)
       if(isTRUE(is.open_con(std.out.capt.con))) close(std.out.capt.con)
       stop(e)
-  } )  
+  } )
   list(output=output, message=message)
 }

@@ -1,8 +1,8 @@
 #' Check Whether File Connection Are Valid
-#' 
+#'
 #' Use \code{`is.open_con`} to verify that a connection is open in addition to being
 #' valid
-#' 
+#'
 #' @keywords internal
 #' @aliases is.open_con
 #' @param x object to test

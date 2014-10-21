@@ -1,9 +1,0 @@
-div.main-container div.section pre {
-  line-height: 15px;
-}
-h2 code, h3 code, h2 pre, h3 pre {
-  font-size: inherit;
-}
-h2 {
-  border-bottom: 1px solid black;
-}
