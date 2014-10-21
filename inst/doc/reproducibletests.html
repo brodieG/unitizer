@@ -10,7 +10,7 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2014-10-20" />
+<meta name="date" content="2014-10-21" />
 
 <title>Reproducible Tests With unitizeR - DRAFT</title>
 
@@ -28,7 +28,7 @@
 <div id="header">
 <h1 class="title">Reproducible Tests With unitizeR - DRAFT</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2014-10-20</em></h4>
+<h4 class="date"><em>2014-10-21</em></h4>
 </div>
 
 
@@ -47,7 +47,7 @@
 <p><code>unitizer</code> has the option to run on a “trimmed” search path that contains only the packages loaded by default in R (i.e. the packages between <code>package:base</code> and <code>package:stats</code>). In this mode, you will have to explicitly include in your tests scripts any packages your tests depend on. Additionally, if you have any databases attached to your search path these will be ignored and won’t conflict with tests. To run in this mode use:</p>
 <pre><code>unitize(..., search.path.clean=TRUE)</code></pre>
 <p>In this mode <code>unitizer</code> will unload all packages/databases that are not part of the default R set prior to running any tests. Once the tests (and test review if required) are completed, the packages/databases will be restored.</p>
-<p>Please keep in mind this feature is somewhat experimental, which is why it is disabled by default.</p>
+<p>Please keep in mind this feature is somewhat experimental, which is why it is disabled by default. Note however that the plan is to change this default behavior to TRUE in the future. If you want to ensure your tests are always evaluated with the search path in the state it happens to be when you run <code>unitize</code>, set the parameter explicitly to FALSE.</p>
 </div>
 <div id="implementation" class="section level2">
 <h2>Implementation</h2>
