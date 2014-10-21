@@ -93,11 +93,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       e1 <- e1 + item  # store evaluated test and compare it to reference one
       if(!ignored(item)) test.env <- new.env(parent=test.env)  # ignored items share environment with subsequent items
       i <- i + 1L
-      cat("\rRunning: ", sep="",
-        substr(deparse(item@call)[[1L]], 1L, max(30L, chr.width - 9L))
-      )
-      cat("\r", rep(" ", max(30L, chr.width)), sep="")
+      over_print(paste0("Running: ", deparse(item@call)[[1L]]))
     }
+    over_print("")
     cat("\r")
     e1
 } )

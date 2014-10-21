@@ -256,7 +256,26 @@ text_wrap <- function(x, width) {
         rep(x.sub, breaks),
         start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
 ) } ) }
+#' Over-write a Line
+#'
+#' @keywords internal
+#' @param x character(1L)
+#' @param min.width integer(1L) minimum character width to print to
+#' @param max.width integer(1L) max width to print to
+#' @return NULL used only for side effect of cating ot screen
 
+over_print <- function(x, min.width=30L, max.width=getOption("width")) {
+  if(!is.character(x) || length(x) != 1L)
+    stop("Argument `x` must be character(1L)")
+  if(!is.integer(min.width) || length(min.width) != 1L)
+    stop("Argument `min.width` must be integer(1L)")
+  if(!is.integer(max.width) || length(max.width) != 1L)
+    stop("Argument `max.width` must be integer(1L)")
+
+  cat("\r", rep(" ", max(min.width, max.width)), sep="")
+  cat(paste0("\r", substr(x, 1, max(min.width, max.width))))
+  NULL
+}
 
 #' Contains A List of Conditions
 #'

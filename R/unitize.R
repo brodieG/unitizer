@@ -53,6 +53,7 @@ unitize <- function(
 
   print(H1(paste0("unitizer for: ", test.file, collapse="")))
 
+  over_print("Loading unitizer data.")
   if(inherits(try(unitizer <- get_store(store.id)), "try-error")) {
     stop(
       "Unable to retrieve/create `unitizer` at location ", store.id,
@@ -137,7 +138,7 @@ unitize <- function(
     "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
     "discouraged as it may cause unpredictable behavior from `unitizer` in the ",
     "event tests produce conditions / errors.  We strongly recommend you re-run ",
-    "your tests outside of such handling functions."
+    "your tests outside of such handling functions.", immediate.=TRUE
   )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
@@ -166,6 +167,7 @@ unitize <- function(
   )
   # Parse the test file
 
+  over_print("Parsing tests...")
   if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
     warning(
       "Unable to parse `test.file`; see prior error for details.  ",
@@ -193,6 +195,7 @@ unitize <- function(
     env.clean <- .GlobalEnv
     search.path.clean <- FALSE
   } else if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
+    over_print("Search Path Setup.")
     if(!isTRUE(search.path.setup <- search_path_setup())) {
       if(isTRUE(env.clean))
         warning(
