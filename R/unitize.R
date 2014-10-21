@@ -24,14 +24,16 @@
 #'   path is restored to its initial state upon exiting \code{`unitizer`} so any
 #'   packages added/removed, or objects attached/detached from search path are
 #'   restored to original state.  This feature is somewhat experimental and is
-#'   disabled by default.  See "Reproducible Tests" vignette for details.
+#'   disabled by default, though this will likely change in the future.  See
+#'   "Reproducible Tests" vignette for details.
 #' @param search.path.keep character any additional items on the search path
 #'   to keep attached; has no effect unless \code{`search.path.clean`} is TRUE
 
 unitize <- function(
   test.file, store.id=sub("\\.[Rr]$", ".unitizer", test.file),
   interactive.mode=interactive(), env.clean=TRUE,
-  search.path.clean=FALSE, search.path.keep=c("tools:rstudio", "package:unitizer")
+  search.path.clean=getOption("unitizer.search.path.clean"),
+  search.path.keep=c("tools:rstudio", "package:unitizer")
 ) {
   start.time <- proc.time()
   quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)

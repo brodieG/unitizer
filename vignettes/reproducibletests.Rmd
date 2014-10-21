@@ -34,7 +34,7 @@ One other way tests can change behavior unexpectedly is if the packages / object
 
 In this mode `unitizer` will unload all packages/databases that are not part of the default R set prior to running any tests.  Once the tests (and test review if required) are completed, the packages/databases will be restored.
 
-Please keep in mind this feature is somewhat experimental, which is why it is disabled by default.
+Please keep in mind this feature is somewhat experimental, which is why it is disabled by default.  Note however that the plan is to change this default behavior to TRUE in the future.  If you want to ensure your tests are always evaluated with the search path in the state it happens to be when you run `unitize`, set the parameter explicitly to FALSE.
 
 ## Implementation
 

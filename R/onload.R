@@ -5,6 +5,7 @@
   options(unitizer.test.msg.lines=c(10, 3))   # How many lines to display when showing test errors, or truncate to if exceeds
   options(unitizer.non.interactive=FALSE)     # Pretend we're running in non-interactive mode
   options(unitizer.prompt.b4.quit.time=10)    # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
+  options(unitizer.search.path.clean=FALSE)   # Whether to run in clean search path by default (this will likely change in the future to TRUE)
 }
 .onUnload <- function(libpath) {
   options(unitizer.show.output=NULL)
@@ -13,5 +14,6 @@
   options(unitizer.test.msg.lines=NULL)
   options(unitizer.non.interactive=NULL)
   options(unitizer.prompt.b4.quit.time=NULL)
+  options(unitizer.search.path.clean=NULL)
 }
 
