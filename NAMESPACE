@@ -3,7 +3,6 @@
 S3method(all,equal.condition)
 S3method(as.character,OL)
 S3method(as.character,UL)
-S3method(as.character,bullet)
 S3method(get_store,character)
 S3method(get_store,default)
 S3method(print,H1)

@@ -66,6 +66,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   documentation is exposed so that this aspect of \code{`unitizer`} is
 #'   documented for package users
 #'
+#' @keywords internal
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
 #' @param x \code{`\link{unitizerItems-class}`} object
 #' @param y \code{`\link{unitizer-class}`} object \code{`x`} was generated from

@@ -191,7 +191,7 @@ print.bullet <- function(x, width=0L, ...) {
 #' @param ... dots
 #' @return character vector containing rendered object, where each element
 #'   corresponds to a line
-#' @export
+#' @keywords internal
 
 as.character.bullet <- function(x, width=0L, pre, ...) {
   if(!is.numeric(width) || length(width) != 1L || width < 0) {

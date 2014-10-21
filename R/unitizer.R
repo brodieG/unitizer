@@ -111,6 +111,7 @@ setClass(
 
 #' Display Unitizer Summary
 #'
+#' @keywords internal
 #' @param object the object to show
 #' @return NULL
 

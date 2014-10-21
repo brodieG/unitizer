@@ -80,4 +80,5 @@ This is an internal method and should not be used by package users; the
 \seealso{
 \code{`\link{updateLs,unitizerItem-method}`}
 }
+\keyword{internal}
 
