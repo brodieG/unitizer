@@ -1,23 +1,3 @@
-# Road Map
-
-## Disclaimers
-
-This roadmap is highly tentative and likely to change
-
-## Next Version
-
-* `unitizer_add`: A version of unitizer that just adds new tests without
-  re-evaluating all the other tests for faster turn-around during development
-* `unitize_dir`: (like `testthat::test_dir`)
-* Automatically resume unitizers that are partially reviewed
-
-## Distant Future
-
-* capture plot output
-* unitizer objects:
-  * basically float around in user env so don't have to keep reloading from
-    file; might be good way to allow simple incremental testing
-
 # Known Bugs
 
 See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.

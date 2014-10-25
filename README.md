@@ -46,7 +46,7 @@ Then, we just run:
 
     unitize("tests/unitizer/lm.R")
 
-The expressions will be evaluated, and results, errors, warnings, screen ouput, etc. will be stored.  If this is the first time you've run `unitize`, you will be prompted to review each test in an interactive environment to verify the expressions actually produce the desired outcome.  Once that's done, everything is stored in an `RDS` and voila, unit tests! 
+The expressions will be evaluated, and results, errors, warnings, screen ouput, etc. will be stored.  If this is the first time you've run `unitize`, you will be prompted to review each test in an interactive environment to verify the expressions actually produce the desired outcome.  Once that's done, everything is stored in an `RDS` and voila, unit tests!
 
 Later on, you can just re-run:
 
@@ -62,3 +62,29 @@ Curently this package is only available on github:
     install_github("brodieg/unitizer")
 
 We plan to submit to CRAN once this has been tested more thoroughly.  Hopefully this will happen before the end of 2014.
+
+### Roadmap
+
+#### Disclaimers
+
+This roadmap is highly tentative and likely to change
+
+#### "Near" Term Features
+
+I'm a hobbyist programmer with young children.  In a good week I get to code for about 8 hours, and not all those hours are of the peak productivity type.  I'm committed to maintain and further develop this package, but it may take a while for me to get around to implementing new features, so don't count on any of the below to be implemented in the next three months.
+
+* `unitizer_add`: A version of unitizer that just adds new tests without
+  re-evaluating all the other tests for faster turn-around during development
+* `unitize_dir`: (like `testthat::test_dir`)
+* `unitizer_review`:
+  - Allow a user to easily review an existing unitizer
+  - Potentially produce reports that summarize contents of unitizer?
+* Automatically resume unitizers that are partially reviewed
+
+#### Distant Future
+
+* capture plot output
+* unitizer objects:
+  * basically float around in user env so don't have to keep reloading from
+    file; might be good way to allow simple incremental testing
+
