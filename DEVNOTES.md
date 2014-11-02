@@ -118,6 +118,33 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
   typically the unitizer should always be in the same relative location
   to the script that runs it.
 
+## Handling Passed Tests
+
+Need to do this in order to implement a review capability for unitizers that
+have been stored.
+
+* Modify as.character.unitizerBrowse so we have the option of reviewing all
+  tests, not just those that have been reviewed
+* create a unitizerBrowseSubSectionPass
+* Need to preserve reference sections, this is the single most important part
+* Main issue seems to be whether we can re-use browserPrep, which seems
+  challenging since we would have completely different logic depending on
+  whether it is being called from `unitize` or from `review`.
+* Actually browserPrep is not the main issue.  The main issue is whether we can
+  use `browse`, as that's where the PITA stuff happens.  This means we have to
+  pull out the `browsePrep` stuff from `browse` and move it to `unitize` so we
+  can have a different `browsePrep`for tests that we're reviewing.
+* Do we need a new `unitizer` class? `unitizer`, which is for the live review
+  of new and old tests, and `unitizerStore` which is the version that gets
+  stored?  This resolves the problem with browserPrep.
+* Or alternatively, do we spoof a version of a normal unitizer?  Move all the
+  tests back to `items.new`, and then add a flag to `browserPrep`, this seems
+  most promising, we just need to preserve all the data.  Maybe we don't actually
+  move stuff to items.ref until we reload the unitizer, insted of doing so just
+  before we save it.  But this may require too much re-org of existing structure
+  (healenvs, etc.).
+
+
 # Scenarios to test
 
 * Very large objects produced by tests
