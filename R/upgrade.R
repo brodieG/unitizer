@@ -22,5 +22,12 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
       }
       object <- obj.new
     }
+    if(object@version < "0.5.2") {
+      # This adds the reference test section data
+
+      stop("Need to implement conversion to new object")
+
+    }
+
     object
 } )

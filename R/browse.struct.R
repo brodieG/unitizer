@@ -273,12 +273,14 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
       id.rel <- x@mapping@item.id.rel[[i]]
       input <- x@mapping@review.val[[i]]
       input.translate <- x[[sec]][[sub.sec]]@actions[[input]]
-      items <- items + switch(
+      item <- switch(
         input.translate,
         A=x[[sec]][[sub.sec]]@items.new[[id.rel]],
         B=x[[sec]][[sub.sec]]@items.ref[[id.rel]],
         C=NULL
       )
+      item@section.id <- sec
+      items <- items + item
     }
     items
 } )

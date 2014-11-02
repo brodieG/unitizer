@@ -37,6 +37,9 @@ setClass(
 #' @slot environment the environment the test was evaluated in, should contain
 #'   all relevant objects
 #' @slot data the container for the results of the evaluation of \code{`call`}
+#' @slot the \code{`unitizer_sect`} from the newly added items this test item
+#'   corresponds to; can be NA if section not known; this is used primarily to
+#'   keep track of original sections when storing reference tests.
 
 setClass(
   "unitizerItem",
@@ -49,7 +52,8 @@ setClass(
     ls="data.frame",
     comment="characterOrNULL",
     trace="list",
-    data="unitizerItemData"
+    data="unitizerItemData",
+    section.id="integer"
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L,
@@ -61,6 +65,8 @@ setClass(
     if(!identical(names(object@ls), c("names", "status")) ||
       !identical(vapply(objecs@ls, class, ""), rep("character", 2L)))
       return("Slot `@ls` has incorrect data structure")
+    if(length(object@section.id) != 1L || object@section.id < 1)
+      return("Slot `@section.id` must be integer(1L) >= 0L")
     TRUE
   }
 )

@@ -88,7 +88,10 @@ setClass(
 
     sections="list",
     section.map="integer",
-    section.parent="integer",    # same length as sections, for each section links to parent
+    section.parent="integer",    # same length as sections, for each section links to parent, where parent is the outermost section a section is nested within
+
+    sections.ref="list",
+    section.ref.map="integer",   # Note, all section references for ref objecs are parent sections since when we browse we don't track nested sections
 
     changes="unitizerChanges"                  # Summary of user changes
   ),

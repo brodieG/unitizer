@@ -126,7 +126,9 @@ have been stored.
 * Modify as.character.unitizerBrowse so we have the option of reviewing all
   tests, not just those that have been reviewed
 * create a unitizerBrowseSubSectionPass
-* Need to preserve reference sections, this is the single most important part
+* Need to preserve reference sections, this is the single most important part.
+  Looks like we need to, in the browse process, keep track of the section that
+  each item was in.
 * Main issue seems to be whether we can re-use browserPrep, which seems
   challenging since we would have completely different logic depending on
   whether it is being called from `unitize` or from `review`.
@@ -144,6 +146,28 @@ have been stored.
   before we save it.  But this may require too much re-org of existing structure
   (healenvs, etc.).
 
+Strategy for recovering sections
+
+* parent sections are tracked in the unitizerBrowse objects
+* these are available in processInput
+    * can attach section to each item
+* then +,unitizer,unitizerItems will need to:
+    * pull out section ids
+    * copy sections from the new test section to reference
+    * handle situations where sections were not recorded, gracefully
+
+Potential issue: tracking sections from older reference tests
+
+* Not really an issue so long as we re-assign the section always in processInput
+* Main problem is for tests that are deleted from new source file but kept by
+  user; these should just be assigned an NA section, which can be re-labeled as
+  removed/missing tests when browsing, though might need some explanation
+
+We want to re-use browse infrastructure as much as possible
+
+* A version of browsePrep that handles items.ref instead of the just run tests
+* Add all the passed tests to the existing version of browsePrep
+* reviewNext needs a mode to suppress the passed tests, vs one that doesn't
 
 # Scenarios to test
 

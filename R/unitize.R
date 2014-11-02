@@ -180,6 +180,8 @@ unitize <- function(
 
   # Summary view of deltas and changes
 
+  browser()
+
   unitizer.summary <- summary(unitizer)
   cat("\n")
 
