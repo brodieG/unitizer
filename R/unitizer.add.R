@@ -25,12 +25,15 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
       # If not initial section add, then must be a nested section, so have to
       # remove value
 
-      e1@sections[[e1@section.map[start]]]@length <- e1@sections[[e1@section.map[start]]]@length - 1L # reduce length of section with nested unitizer section
+      e1@sections[[e1@section.map[start]]]@length <-      # reduce length of section with nested unitizer section
+        e1@sections[[e1@section.map[start]]]@length - 1L
       e1@section.map <- e1@section.map[-start]  # remove mapping for the unitizer section element that we are expanding
       e1@section.map <- append(e1@section.map, rep(id, length(e2)), start - 1L) # add mapping for the now expanded section
 
     }
-    e1@section.parent <- c(e1@section.parent, if(isTRUE(is.na(e2@parent))) id else e2@parent)
+    e1@section.parent <- c(
+      e1@section.parent, if(isTRUE(is.na(e2@parent))) id else e2@parent
+    )
     if(e2@title %in% (titles <- vapply(e1@sections, function(x) x@title, character(1L)))) {
       e2@title <- tail(make.unique(c(titles, e2@title)), 1L)
     }
