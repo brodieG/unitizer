@@ -75,7 +75,7 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
            # Interactively review all tests
 
             if(!done(unitizer.browse)) {
-              unitizer.browse <- reviewNext(unitizer.browse)
+              unitizer.browse <- reviewNext(unitizer.browse, show.passed=FALSE)
               next
           } },
           earlyExit=function() user.quit <<- TRUE
@@ -179,7 +179,7 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 #' @keywords internal
 
 setMethod("reviewNext", c("unitizerBrowse"),
-  function(x, ...) {
+  function(x, show.passed, ...) {
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
       last.reviewed.sec <- x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
@@ -201,28 +201,38 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
 
+    # Pre compute whether sections are effectively ignored or not; these will
+    # control whether stuff gets shown to screen or not
+
+    ignore.passed <- !show.passed &&
+      is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed")
+    ignore.sec <- all(
+      x@mapping@ignored[x@mapping@sec.id == curr.sec] &
+      !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
+    ) || (
+      ignore.passed &&
+      length(unique(x@mapping@sub.sec.id[x@mapping@sec.id == curr.sec])) == 1L  # all tests in section passed
+    )
+    ignore.sub.sec <- all(
+      x@mapping@ignored[cur.sub.sec.items] &
+      !x@mapping@new.conditions[cur.sub.sec.items]
+    ) || ignore.passed
+    multi.sect <- length(
+      unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])
+    ) > 1L
+
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
     # conditions
 
-    if(
-      !identical(last.reviewed.sec, curr.sec) &&
-      !all(
-        x@mapping@ignored[x@mapping@sec.id == curr.sec] &
-        !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
-      ) &&
-      length(unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])) > 1L
-    ) {
+    if(!identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect) {
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate
       (
         !identical(last.reviewed.sub.sec, curr.sub.sec) ||
         !identical(last.reviewed.sec, curr.sec)
-      ) && !all(
-        x@mapping@ignored[cur.sub.sec.items] &
-        !x@mapping@new.conditions[cur.sub.sec.items]
-      )
+      ) && !ignore.sub.sec
     ) {
       print(H3(curr.sub.sec.obj@title))
       cat(
@@ -249,14 +259,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
       item.main <- item.new
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
     }
-    # Show test to screen, but only if the entire section is not ignored
+    # Show test to screen, but only if the entire section is not ignored, and
+    # not passed tests and requesting that those not be shown
 
-    if(
-      !all(
-        x@mapping@ignored[cur.sub.sec.items] &
-        !x@mapping@new.conditions[cur.sub.sec.items]
-      )
-    ) {
+    if(ignore.sub.sec) {
       if(x@mapping@reviewed[[curr.id]]) {
         message(
           "You are re-reviewing a test; previous selection was: \"",

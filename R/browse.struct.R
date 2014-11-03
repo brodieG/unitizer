@@ -54,6 +54,11 @@ setMethod("browsePrep", "unitizer", valueClass="unitizerBrowse",
         items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]],
         new.conditions=x@tests.conditions.new[x@tests.error & sect.map]
       )
+      browse.sect <- browse.sect + new(                            # Passed tests
+        "unitizerBrowseSubSectionPassed",
+        items.new=x@items.new[x@tests.status == "Pass" & sect.map],
+        show.fail=FALSE
+      )
       unitizer.browse <- unitizer.browse + browse.sect
       NULL # SO above isn't last step in loop used for debugging
     }
@@ -463,7 +468,13 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
     detail="The following test exists in unitizer but not in the new test script.",
     actions=c(Y="C", N="B")
 ) )
-
+setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
+  prototype=list(
+    title="Passed",
+    prompt="Keep item in store",
+    detail="The following test exists in unitizer but not in the new test script.",
+    actions=c(Y="B", N="C")
+) )
 #' Add a browsing sub-section to a browse section
 #'
 #' @param e1 a \code{`\link{unitizerBrowseSection-class}`}

@@ -151,7 +151,7 @@ Strategy for recovering sections
 * parent sections are tracked in the unitizerBrowse objects
 * these are available in processInput
     * can attach section to each item
-* then +,unitizer,unitizerItems will need to:
+* then +,unitizer,unitizerItems-method will need to:
     * pull out section ids
     * copy sections from the new test section to reference
     * handle situations where sections were not recorded, gracefully
@@ -168,6 +168,12 @@ We want to re-use browse infrastructure as much as possible
 * A version of browsePrep that handles items.ref instead of the just run tests
 * Add all the passed tests to the existing version of browsePrep
 * reviewNext needs a mode to suppress the passed tests, vs one that doesn't
+* One problem here is that when re-loading a store, we're dealing with stuff in
+  ref, whereas with passed tests we're dealing with stuff in new.  Does that mean
+  that we need to move the reference stuff to new?  Probably, but not really
+  desirable given all the dependencies involved with building up `items.new`
+* Actually, re ^^, looks like we can just do this by passing hte ref items as
+  new to the browser sub-section.
 
 # Scenarios to test
 
