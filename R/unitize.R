@@ -67,7 +67,7 @@ review <- function(
   }
   print(H1(paste0("unitizer for: ", u.name, collapse="")))
   unitizer_core(
-    test.file=NULL store.id=x, interactive.mode=TRUE, env.clean=env.clean,
+    test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
     search.path.clean=search.path.clean, search.path.keep=search.path.keep
   )
 }
