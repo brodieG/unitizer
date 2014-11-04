@@ -60,6 +60,49 @@ setClassUnion("unitizerSectionExpressionOrExpression", c("unitizerSectionExpress
 
 setMethod("length", "unitizerSection", function(x) x@length)
 
+
+#' Extract Reference Section Data
+#'
+#' Using one unitizer with existing new items, and another unitizer that we
+#' just created from it by pulling out the tests we intend to keep, recreate
+#' the sections for the tests we intend to keep.
+#'
+#' This isn't super robust as we're not ensuring that the two unitizers used
+#' here are related in any way.  Would be better to have something that does
+#' this properly...
+#'
+#' @param x the new unitizer that will be stored with the reference tests
+#' @param y the unitizer that will be used to generate the sections
+
+setGeneric("refSections", function(x, y) standardGeneric("refSections"))
+setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer"
+  function(x, y) {
+    if(!length(x@items.ref)) return(x)
+
+    sections.ref.ids <- vapply(as.list(x@items.ref), slot, 1L, "section.id")
+    sections.unique <- Filter(Negate(is.na), sort(unique(sections.ref.ids)))
+    if(!all(sections.unique %in% seq_along(y@sections)))
+      stop("Logic Error: reference tests referencing non-existing sections in original; contact maintainer")
+
+    sects <- y@sections[sections.unique]
+    sects.map <- ifelse(
+      is.na(sections.ref.ids),
+      max(sections.unique) + 1L,
+      rank(sections.ref.ids)
+    )
+    if(na.sects <- sum(is.na(sections.ref.ids))) {
+      na.sect <- new(
+        "unitizerSection", length=na.sects,
+        details="Dummy section for section-less tests."
+      )
+      sects <- c(sects, list(na.sect))
+    }
+    x@sections.ref <- sects
+    x@section.ref.map <- sects.map
+
+    x
+  }
+)
 #' Define a \code{`unitizer`} Section
 #'
 #' The purpose of \code{`unitizer`} sections is to allow the user to tag a

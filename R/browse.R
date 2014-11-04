@@ -189,23 +189,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
     # Extract and re-map sections of tests we're saving as reference
 
-    sections.ref.ids <- vapply(as.list(items.ref), slot, 1L, "section.id")
-    sections.unique <- Filter(Negate(is.na), sort(unique(sections.ref.ids)))
-    sects <- x@sections[sections.unique]
-    sects.map <- ifelse(
-      is.na(sections.ref.ids),
-      max(sections.unique) + 1L,
-      rank(sections.ref.ids)
-    )
-    if(na.sects <- sum(is.na(sections.ref.ids))) {
-      na.sect <- new(
-        "unitizerSection", length=na.sects,
-        details="Dummy section for section-less tests."
-      )
-      sects <- c(sects, list(na.sect))
-    }
-    unitizer@sections.ref <- sects
-    unitizer@section.ref.map <- sects.map
+    unitizer <- refSections(unitizer, x)
 
     unitizer
 } )
