@@ -89,13 +89,13 @@ local( {
     unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
     unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
     expect_equal(
-      c("Section 1", "   1. runif(20) -----------------------------------  Failed:Y", "   2. 1 + 1 ---------------------------------------     New:Y", "   4. matrix(1:9, 3) ------------------------------     New:Y", "Section 2", "   5. sample(20) ----------------------------------  Failed:Y", "   6. 1 + 20 --------------------------------------     New:Y", "   8. matrix(1:9, ncol = 3) -----------------------     New:Y", "   9. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  10. \"I'll be removed\" --------------------------- Removed:Y",  "  11. \"I too will be removed\" --------------------- Removed:Y", "  12. \"I three will be removed\" ------------------- Removed:Y"),
+      c("Section 1", "   1. runif(20) -----------------------------------  Failed:Y", "   2. 1 + 1 ---------------------------------------     New:Y", "   4. matrix(1:9, 3) ------------------------------     New:Y", "Section 2", "   6. sample(20) ----------------------------------  Failed:Y", "   7. 1 + 20 --------------------------------------     New:Y", "   9. matrix(1:9, ncol = 3) -----------------------     New:Y", "  10. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  11. \"I'll be removed\" --------------------------- Removed:Y",  "  12. \"I too will be removed\" --------------------- Removed:Y", "  13. \"I three will be removed\" ------------------- Removed:Y"),
       as.character(unitizer.prepped, 60)
     )
     # Alternating tests
     unitizer.prepped@mapping@reviewed <- as.logical(seq(length(unitizer.prepped@mapping@reviewed)) %% 2)
     expect_equal(
-      c("Section 1", "   1. runif(20) -----------------------------------  Failed:Y", "Section 2", "   5. sample(20) ----------------------------------  Failed:Y", "   9. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  11. \"I too will be removed\" --------------------- Removed:Y"),
+      c("Section 1", "   1. runif(20) -----------------  Failed:Y", "Section 2", "   7. 1 + 20 --------------------     New:Y", "   9. matrix(1:9, ncol = 3) -----     New:Y", "Removed Items", "  11. \"I'll be removed\" --------- Removed:Y", "  13. \"I three will be removed\" - Removed:Y"),
       as.character(unitizer.prepped, 60)
     )
   } )

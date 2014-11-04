@@ -18,7 +18,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
 
-    unitizer.browse <- new("unitizerBrowse")
+    unitizer.browse <- new("unitizerBrowse", mode=mode)
 
     # - Unitize ----------------------------------------------------------------
 
@@ -171,14 +171,23 @@ setClass("unitizerBrowse", contains="unitizerList",
     mapping="unitizerBrowseMapping",
     last.id="integer",         # used so that `reviewNext` knows what to show next
     last.reviewed="integer",   # used so that `reviewNext` knows what headers to display
-    hist.con="ANY"             # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
+    hist.con="ANY",            # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
+    mode="character"
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
     last.id=0L,
     last.reviewed=0L,
-    hist.con=NULL
-) )
+    hist.con=NULL,
+    mode="unitize"
+  ),
+  validity=function(object) {
+    if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
+      return("Slot `@mode` must be character(1L) in c(\"unitize\", \"review\")")
+    }
+    TRUE
+  }
+)
 
 #' Display Summary of Tests and User Decisions
 #'
@@ -215,7 +224,9 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
-    tests.to.show <- !x@mapping@ignored & x@mapping@reviewed
+    tests.to.show <- !x@mapping@ignored & x@mapping@reviewed & (
+      if(identical(x@mode, "unitize")) x@mapping@review.type != "Passed" else TRUE
+    )
     out.calls <- character(sum(tests.to.show))
     out.calls.idx <- integer(sum(tests.to.show))
     out.sec <- character(length(unique(x@mapping@sec.id[tests.to.show])))
