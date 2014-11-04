@@ -82,7 +82,7 @@ local( {
   my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer2 <- my.unitizer2 + my.unitizer@items.new          # make previous items into reference items
   my.unitizer2 <- my.unitizer2 + exps2                          # now add back items to compare
-  unitizer.prepped <- unitizer:::browsePrep(my.unitizer2)
+  unitizer.prepped <- unitizer:::browsePrep(my.unitizer2, mode="unitize")
 
   test_that("unitizerBrowse correctly processes unitizer for display", {
     # force all tests to be reviewed so they will be shown

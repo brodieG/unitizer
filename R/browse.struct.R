@@ -13,7 +13,7 @@ NULL
 #' @keywords internal
 
 setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
-setMethod("browsePrep", "unitizer", "character", valueClass="unitizerBrowse",
+setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
   function(x, mode, ...) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
@@ -22,7 +22,7 @@ setMethod("browsePrep", "unitizer", "character", valueClass="unitizerBrowse",
 
     # - Unitize ----------------------------------------------------------------
 
-    if(mode == "unitize") {
+    if(identical(mode, "unitize")) {
       for(i in unique(x@section.parent)) {                           # Loop through parent sections
         sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
         if(
@@ -63,7 +63,8 @@ setMethod("browsePrep", "unitizer", "character", valueClass="unitizerBrowse",
         browse.sect <- browse.sect + new(                            # Passed tests
           "unitizerBrowseSubSectionPassed",
           items.new=x@items.new[x@tests.status == "Pass" & sect.map],
-          show.fail=FALSE
+          show.fail=FALSE,
+          new.conditions=rep(F, sum(x@tests.status == "Pass" & sect.map))
         )
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
@@ -80,7 +81,7 @@ setMethod("browsePrep", "unitizer", "character", valueClass="unitizerBrowse",
         )
         unitizer.browse <- unitizer.browse + browse.sect
       }
-    } else {
+    } else if(identical(mode, "review")) {
     # - Review -----------------------------------------------------------------
 
       for(i in seq_along(x@sections.ref)) {                   # Loop through parent sections
@@ -96,8 +97,8 @@ setMethod("browsePrep", "unitizer", "character", valueClass="unitizerBrowse",
 
         browse.sect <- browse.sect + new(                            # Passed tests
           "unitizerBrowseSubSectionPassed",
-          items.new=x@items.ref[stop("need to get mapping here")],
-          show.fail=FALSE
+          items.new=x@items.ref[sect.map],
+          show.fail=FALSE, new.conditions=rep(FALSE, sum(sect.map))
         )
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
@@ -145,13 +146,13 @@ setClass("unitizerBrowseMapping",
     new.conditions="logical"
   ),
   prototype=list(
-    review.type=factor(levels=c("New", "Failed", "Removed", "Corrupted"))
+    review.type=factor(levels=c("New", "Passed", "Failed", "Removed", "Corrupted"))
   ),
   validity=function(object) {
     if(
       !identical(
         levels(object@review.type),
-        c("New", "Failed", "Removed", "Corrupted")
+        c("New", "Passed", "Failed", "Removed", "Corrupted")
       ) || any(is.na(object@review.type))
     ) {
       return("Invalid slot `@review.type`")
