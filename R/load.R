@@ -76,3 +76,18 @@ load_unitizer <- function(store.id, par.frame) {
   }
   unitizer
 }
+#' Handles Storage
+
+store_unitizer <- function(unitizer, store.id, wd) {
+  if(!is(unitizer, "unitizer") || is.null(store.id)) return(invisible(TRUE))
+
+  if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
+  success <- try(set_store(store.id, unitizer))
+  setwd(new.wd)
+  if(!inherits(success, "try-error")) {
+    message("unitizer updated")
+  } else {
+    stop("Error attempting to save `unitizer`, see previous messages.")
+  }
+  return(invisible(TRUE))
+}

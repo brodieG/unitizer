@@ -12,68 +12,102 @@ NULL
 #'
 #' @keywords internal
 
-setGeneric("browsePrep", function(x, ...) standardGeneric("browsePrep"))
-setMethod("browsePrep", "unitizer", valueClass="unitizerBrowse",
-  function(x, ...) {
+setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
+setMethod("browsePrep", "unitizer", "character", valueClass="unitizerBrowse",
+  function(x, mode, ...) {
+    if(length(mode) != 1L || !mode %in% c("review", "unitize"))
+      stop("Argument `mode` must be one of \"review\" or \"unitize\"")
+
     unitizer.browse <- new("unitizerBrowse")
 
-    for(i in unique(x@section.parent)) {                           # Loop through parent sections
-      sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
-      if(
-        sum(vapply(x@sections[which(x@section.parent == i)], length, integer(1L))) == 0L ||
-        (
-          length(which(x@tests.fail & sect.map)) == 0L &&
-          length(which(x@tests.new & sect.map)) == 0L &&
-          length(which(x@tests.error & sect.map)) == 0L
-        )
-      ) next
-      browse.sect <- new(
-        "unitizerBrowseSection", section.id=i,
-        section.title=x@sections[[i]]@title
-      )
-      # Note: anything querying reference items has to go through items.new.map
-      # since order isn't same.
+    # - Unitize ----------------------------------------------------------------
 
-      browse.sect <- browse.sect + new(                            # Failed tests
-        "unitizerBrowseSubSectionFailed",
-        items.new=x@items.new[x@tests.fail & sect.map],
-        show.fail=x@tests.errorDetails[x@tests.fail & sect.map],
-        items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]],
-        new.conditions=x@tests.conditions.new[x@tests.fail & sect.map]
-      )
-      browse.sect <- browse.sect + new(                            # New tests
-        "unitizerBrowseSubSectionNew",
-        show.msg=TRUE, show.out=TRUE,
-        items.new=x@items.new[x@tests.new & sect.map],
-        new.conditions=x@tests.conditions.new[x@tests.new & sect.map]
-      )
-      browse.sect <- browse.sect + new(                            # Corrupted tests
-        "unitizerBrowseSubSectionCorrupted",
-        items.new=x@items.new[x@tests.error & sect.map],
-        show.fail=x@tests.errorDetails[x@tests.error & sect.map],
-        items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]],
-        new.conditions=x@tests.conditions.new[x@tests.error & sect.map]
-      )
-      browse.sect <- browse.sect + new(                            # Passed tests
-        "unitizerBrowseSubSectionPassed",
-        items.new=x@items.new[x@tests.status == "Pass" & sect.map],
-        show.fail=FALSE
-      )
-      unitizer.browse <- unitizer.browse + browse.sect
-      NULL # SO above isn't last step in loop used for debugging
-    }
-    if(length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {  # Removed tests
-      browse.sect <- new(
-        "unitizerBrowseSection", section.id=0L,
-        section.title="Removed Items"
-      )
-      browse.sect <- browse.sect + new(
-        "unitizerBrowseSubSectionRemoved",
-        items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)],
-        new.conditions=rep(FALSE, length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))) # by definition can't have new conditions on removed tests
-      )
-      unitizer.browse <- unitizer.browse + browse.sect
-    }
+    if(mode == "unitize") {
+      for(i in unique(x@section.parent)) {                           # Loop through parent sections
+        sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
+        if(
+          sum(vapply(x@sections[which(x@section.parent == i)], length, integer(1L))) == 0L ||
+          (
+            length(which(x@tests.fail & sect.map)) == 0L &&
+            length(which(x@tests.new & sect.map)) == 0L &&
+            length(which(x@tests.error & sect.map)) == 0L
+          )
+        ) next
+        browse.sect <- new(
+          "unitizerBrowseSection", section.id=i,
+          section.title=x@sections[[i]]@title
+        )
+        # Note: anything querying reference items has to go through items.new.map
+        # since order isn't same.
+
+        browse.sect <- browse.sect + new(                            # Failed tests
+          "unitizerBrowseSubSectionFailed",
+          items.new=x@items.new[x@tests.fail & sect.map],
+          show.fail=x@tests.errorDetails[x@tests.fail & sect.map],
+          items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]],
+          new.conditions=x@tests.conditions.new[x@tests.fail & sect.map]
+        )
+        browse.sect <- browse.sect + new(                            # New tests
+          "unitizerBrowseSubSectionNew",
+          show.msg=TRUE, show.out=TRUE,
+          items.new=x@items.new[x@tests.new & sect.map],
+          new.conditions=x@tests.conditions.new[x@tests.new & sect.map]
+        )
+        browse.sect <- browse.sect + new(                            # Corrupted tests
+          "unitizerBrowseSubSectionCorrupted",
+          items.new=x@items.new[x@tests.error & sect.map],
+          show.fail=x@tests.errorDetails[x@tests.error & sect.map],
+          items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]],
+          new.conditions=x@tests.conditions.new[x@tests.error & sect.map]
+        )
+        browse.sect <- browse.sect + new(                            # Passed tests
+          "unitizerBrowseSubSectionPassed",
+          items.new=x@items.new[x@tests.status == "Pass" & sect.map],
+          show.fail=FALSE
+        )
+        unitizer.browse <- unitizer.browse + browse.sect
+        NULL # SO above isn't last step in loop used for debugging
+      }
+      if(length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {  # Removed tests
+        browse.sect <- new(
+          "unitizerBrowseSection", section.id=0L,
+          section.title="Removed Items"
+        )
+        browse.sect <- browse.sect + new(
+          "unitizerBrowseSubSectionRemoved",
+          items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)],
+          new.conditions=rep(FALSE, length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))) # by definition can't have new conditions on removed tests
+        )
+        unitizer.browse <- unitizer.browse + browse.sect
+      }
+    } else {
+    # - Review -----------------------------------------------------------------
+
+      for(i in seq_along(x@sections.ref)) {                   # Loop through parent sections
+        sect.map <- x@section.ref.map == i   # will have to check what the section numbers are, this might not be right
+        if(!length(which(sect.map))) next
+
+        browse.sect <- new(
+          "unitizerBrowseSection", section.id=i,
+          section.title=x@sections.ref[[i]]@title
+        )
+        # Note: anything querying reference items has to go through items.new.map
+        # since order isn't same.
+
+        browse.sect <- browse.sect + new(                            # Passed tests
+          "unitizerBrowseSubSectionPassed",
+          items.new=x@items.ref[stop("need to get mapping here")],
+          show.fail=FALSE
+        )
+        unitizer.browse <- unitizer.browse + browse.sect
+        NULL # SO above isn't last step in loop used for debugging
+      }
+      message("did we handle tests without a section?")
+    } else
+      stop("Logic Error: unexpected `mode`")
+
+    # - Finalize ---------------------------------------------------------------
+
     unitizer.browse
   }
 )

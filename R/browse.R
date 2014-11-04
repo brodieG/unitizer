@@ -3,7 +3,7 @@
 #' @include browse.struct.R
 #' @include prompt.R
 
-setGeneric("browse", function(x, ...) standardGeneric("browse"))
+setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer"))
 
 #' Browse unitizer
 #'
@@ -12,6 +12,7 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #'   \item tests that don't match the stored reference tests
 #'   \item tests that don't exist in the reference tests
 #'   \item tests that exist in the reference tests but no the new file
+#'   \item tests that passed (these are omitted )
 #' }
 #' Because a lot of the logic for browsing these three types of situations is
 #' shared, that logic has been split off into \code{`\link{reviewNext,unitizerBrowse-method}`}.
@@ -33,11 +34,37 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #'
 #' @keywords internal
 #' @param x the object to browse
+#' @param y the derivative unitizerBrowse object of x; this needs to be passed in
+#'   as an argument because the logic for generating it is different depending on
+#'   whether we are using `unitize` or `review`.
 #' @param prompt.on.quit whether to prompt for review even if there are no changes
-#' @param env the environment to use as a parent to the environment to browse the tests
+#' @param show.passed whether to show passed tests or not, this allows us to use
+#'   broadly the same logic for `unitize` and `review`
+#' @param a unitizer if the unitizer was modified, FALSE otherwise
 
-setMethod("browse", c("unitizer"), valueClass="unitizer",
-  function(x, prompt.on.quit, ...) {
+setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
+  function(x, y, prompt.on.quit, show.passed, ...) {
+    unitizer <- withRestarts(
+      browseUnitizerInternal(
+        unitizer, unitizer.browse, show.passed=FALSE,
+        prompt.on.quit=prompt.on.quit
+      ),
+      noSaveExit=function() {
+        message("Unitizer store was not modified.")
+        FALSE
+      },
+      unitizerQuitExit=unitizer_quit_handler
+    )
+    # Reset the parent env of zero env so we don't get all sorts of warnings related
+    # to trying to store a package environment when we save this unitizer
+
+    parent.env(unitizer@zero.env) <- baseenv()
+    unitizer
+  }
+)
+setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
+setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
+  function(x, y, prompt.on.quit, show.passed, ...) {
 
     # set up local history
 
@@ -60,13 +87,12 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
-    unitizer.browse <- browsePrep(x)      # Group tests by section and outcome for review
-    unitizer.browse@hist.con <- hist.con  # User expression to this file for use in history
+    y@hist.con <- hist.con  # User expression to this file for use in history
 
-    if(!length(unitizer.browse)) {
+    if(!length(y)) {
       message("All tests passed; nothing to store.")
       return(TRUE)
-    } else if(length(unitizer.browse)) {
+    } else if(length(y)) {
       repeat {
 
         user.quit <- FALSE
@@ -74,8 +100,8 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
           {
            # Interactively review all tests
 
-            if(!done(unitizer.browse)) {
-              unitizer.browse <- reviewNext(unitizer.browse, show.passed=FALSE)
+            if(!done(y)) {
+              y <- reviewNext(y, show.passed=FALSE)
               next
           } },
           earlyExit=function() user.quit <<- TRUE
@@ -84,8 +110,8 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
 
         if(
           !(
-            something.happened <- length(unitizer.browse@mapping@item.id) &&
-              any(!unitizer.browse@mapping@ignored)
+            something.happened <- length(y@mapping@item.id) &&
+              any(!y@mapping@ignored)
           )
         ) {
           message("All tests passed.")
@@ -93,10 +119,10 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         }
         # Get summary of changes
 
-        keep <- !unitizer.browse@mapping@ignored
+        keep <- !y@mapping@ignored
         changes <- split(
-          unitizer.browse@mapping@review.val[keep],
-          unitizer.browse@mapping@review.type[keep]
+          y@mapping@review.val[keep],
+          y@mapping@review.type[keep]
         )
         change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
@@ -136,12 +162,12 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
         }
         cat(nav.msg, " (", paste0(valid.opts, collapse=", "), ")?", sep="")
         user.input <- navigate_prompt(
-          unitizer.browse, curr.id=max(unitizer.browse@mapping@item.id),
+          y, curr.id=max(y@mapping@item.id),
           text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
           valid.opts=valid.opts
         )
         if(is(user.input, "unitizerBrowse")) {
-          unitizer.browse <- user.input
+          y <- user.input
           next
         } else if (identical(user.input, "Q") || identical(user.input, "N")) {
           invokeRestart("noSaveExit")
@@ -154,18 +180,38 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
     } }
     # Create the new unitizer
 
-    items.user <- processInput(unitizer.browse)
-
-    # By definition, "Pass" items were not reviewed so cannot be part of
-    # `items.user`
-
-    items.ref <- x@items.new[x@tests.status == "Pass"] + items.user
+    items.ref <- processInput(y)
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
     zero.env <- new.env(parent=parent.env(x@zero.env))
     unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
-    unitizer + items.ref
+    unitizer <- unitizer + items.ref
+
+    # Extract and re-map sections of tests we're saving as reference
+
+    sections.ref.ids <- vapply(as.list(items.ref), slot, 1L, "section.id")
+    sections.unique <- Filter(Negate(is.na), sort(unique(sections.ref.ids)))
+    sects <- x@sections[sections.unique]
+    sects.map <- ifelse(
+      is.na(sections.ref.ids),
+      max(sections.unique) + 1L,
+      rank(sections.ref.ids)
+    )
+    if(na.sects <- sum(is.na(sections.ref.ids))) {
+      na.sect <- new(
+        "unitizerSection", length=na.sects,
+        details="Dummy section for section-less tests."
+      )
+      sects <- c(sects, list(na.sect))
+    }
+    unitizer@sections.ref <- sects
+    unitizer@section.ref.map <- sects.map
+
+    unitizer
 } )
+
+
+
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 
 #' Bring up Review of Next test
