@@ -26,8 +26,26 @@ local({
     dir.create(tmp.sub.dir)
     expect_true(set_store(tmp.sub.dir, toy.stor))
     expect_equal(readRDS(paste0(tmp.sub.dir, "/data.rds")), toy.stor)
-    file.remove(paste0(tmp.sub.dir, "/data.rds"))
-    file.remove(tmp.sub.dir)
   } )
+  test_that("load/store_unitizer", {
+    par.frame <- new.env()
+    tmp.sub.dir2 <- paste0(tmp.dir, "/get.test.dir2")
+
+    expect_true(is(load_unitizer(tmp.sub.dir, par.frame), "unitizer"))
+    expect_true(is(untz <- load_unitizer(tmp.sub.dir2, par.frame), "unitizer"))  # empty folder, but this should still create unitizer
+    expect_identical(untz@zero.env, par.frame)
+    untz@id <- "bananas"
+
+    wd <- getwd()
+    expect_true(store_unitizer(untz, tmp.sub.dir2, wd))
+    expect_identical(getwd(), wd)
+    expect_equal(load_unitizer(tmp.sub.dir2, par.frame)@id, "bananas")
+  } )
+
+  file.remove(paste0(tmp.sub.dir, "/data.rds"))
+  file.remove(tmp.sub.dir)
+  file.remove(paste0(tmp.sub.dir2, "/data.rds"))
+  file.remove(tmp.sub.dir2)
+  file.remove(tmp.dir)
   print("random print to flush warnings")
 } )
