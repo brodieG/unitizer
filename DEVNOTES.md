@@ -62,7 +62,9 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 ## Internal
 
 * There is heavy usage of `parent.env<-`, what do we do about the note in R docs
-  stating this might be removed in the future?
+  stating this might be removed in the future? EDIT: most likely we should not be
+  affected as devs seem mostly concerned about changing the search path at
+  run time, which we do not do.
 * need to think through intialize methods so hopefully we can avoid instantiating
   with .items argument for unitizerlist inheritors since that's a bit weird
 * generally, need to add more methods so we're not messing with slots
@@ -117,6 +119,15 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * provide facilities to upate unitizer id when unitizers are moved, though
   typically the unitizer should always be in the same relative location
   to the script that runs it.
+
+## S4
+
+There is fairly extensive use of S4 internally.  In some cases it definitely
+make sense, in other potentially less so.  In particular, we've leaned towards
+making functionst that use S4 objects methods, even if there is only one
+possible dispatch to contend with.  We also haven't been super consistent, as
+in some cases we do not use S4 methods.  Need to rationalize all of this at
+some point.
 
 ## Handling Passed Tests
 
