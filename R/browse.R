@@ -46,7 +46,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, prompt.on.quit, show.passed, ...) {
     unitizer <- withRestarts(
       browseUnitizerInternal(
-        unitizer, unitizer.browse, show.passed=FALSE,
+        x, y, show.passed=FALSE,
         prompt.on.quit=prompt.on.quit
       ),
       noSaveExit=function() {
@@ -58,7 +58,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     # Reset the parent env of zero env so we don't get all sorts of warnings related
     # to trying to store a package environment when we save this unitizer
 
-    parent.env(unitizer@zero.env) <- baseenv()
+    if(is(unitizer, "unitizer")) parent.env(unitizer@zero.env) <- baseenv()
     unitizer
   }
 )

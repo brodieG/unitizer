@@ -313,5 +313,5 @@ unitizer_core <- function(
 
   res <- store_unitizer(unitizer, store.id, wd)
   on.exit(NULL)
-  return(res)
+  invisible(res)
 }
