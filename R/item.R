@@ -57,7 +57,8 @@ setClass(
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L,
-    ls=data.frame(names=character(), status=character())
+    ls=data.frame(names=character(), status=character()),
+    section.id=NA_integer_
   ),
   validity=function(object) {
     if(!identical(length(object@reference), 1L)) return("Slot `@reference` must be length 1")
@@ -65,8 +66,8 @@ setClass(
     if(!identical(names(object@ls), c("names", "status")) ||
       !identical(vapply(objecs@ls, class, ""), rep("character", 2L)))
       return("Slot `@ls` has incorrect data structure")
-    if(length(object@section.id) != 1L || object@section.id < 1)
-      return("Slot `@section.id` must be integer(1L) >= 0L")
+    if(length(object@section.id) != 1L || object@section.id < 1L)
+      return("Slot `@section.id` must be integer(1L) >= 1L")
     TRUE
   }
 )

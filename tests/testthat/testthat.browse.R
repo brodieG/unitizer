@@ -50,6 +50,7 @@ local( {
   exps1 <- expression(
     library(stats),
     unitizer_sect("Section 1", {
+      1 + 1
       runif(20)
       stop("woohoo")
       "I'll be removed"
@@ -89,13 +90,13 @@ local( {
     unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
     unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
     expect_equal(
-      c("Section 1", "   1. runif(20) -----------------------------------  Failed:Y", "   2. 1 + 1 ---------------------------------------     New:Y", "   4. matrix(1:9, 3) ------------------------------     New:Y", "Section 2", "   6. sample(20) ----------------------------------  Failed:Y", "   7. 1 + 20 --------------------------------------     New:Y", "   9. matrix(1:9, ncol = 3) -----------------------     New:Y", "  10. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  11. \"I'll be removed\" --------------------------- Removed:Y",  "  12. \"I too will be removed\" --------------------- Removed:Y", "  13. \"I three will be removed\" ------------------- Removed:Y"),
+      c("Section 1", "   1. runif(20) -----------------------------------  Failed:Y", "   3. matrix(1:9, 3) ------------------------------     New:Y", "Section 2", "   6. sample(20) ----------------------------------  Failed:Y", "   7. 1 + 20 --------------------------------------     New:Y", "   9. matrix(1:9, ncol = 3) -----------------------     New:Y", "  10. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  11. \"I'll be removed\" --------------------------- Removed:Y",  "  12. \"I too will be removed\" --------------------- Removed:Y", "  13. \"I three will be removed\" ------------------- Removed:Y"),
       as.character(unitizer.prepped, 60)
     )
     # Alternating tests
     unitizer.prepped@mapping@reviewed <- as.logical(seq(length(unitizer.prepped@mapping@reviewed)) %% 2)
     expect_equal(
-      c("Section 1", "   1. runif(20) -----------------  Failed:Y", "Section 2", "   7. 1 + 20 --------------------     New:Y", "   9. matrix(1:9, ncol = 3) -----     New:Y", "Removed Items", "  11. \"I'll be removed\" --------- Removed:Y", "  13. \"I three will be removed\" - Removed:Y"),
+      c("Section 1", "   1. runif(20) -----------------  Failed:Y", "   3. matrix(1:9, 3) ------------     New:Y", "Section 2", "   7. 1 + 20 --------------------     New:Y", "   9. matrix(1:9, ncol = 3) -----     New:Y", "Removed Items", "  11. \"I'll be removed\" --------- Removed:Y", "  13. \"I three will be removed\" - Removed:Y"),
       as.character(unitizer.prepped, 60)
     )
   } )
@@ -109,15 +110,49 @@ local( {
     unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
     # Assume user accepted all tests
     expect_equal(
-      list(quote(runif(20)), quote(1 + 1), quote(var <- 200), quote(matrix(1:9, 3)), quote(sample(20)), quote(1 + 20), quote(var1 <- list(1, 2, 3)), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5))))),
+      list(quote(runif(20)), quote(var <- 200), quote(matrix(1:9, 3)), quote(sample(20)), quote(1 + 20), quote(var1 <- list(1, 2, 3)), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5))))),
       lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call")
     )
-    # Assume user accepted all but 1, 4, 6 and 10
-    unitizer.prepped@mapping@review.val[c(1, 4, 6, 10)] <- "N"
+    # Assume user accepted all but 1, 4, 6 and 11, note it isn't completely obvious
+    # what should be kept since an N for anything but a new test will result in
+    # some object remaining in the list (typically the reference copy thereof)
+    unitizer.prepped@mapping@review.val[c(1, 4, 6, 11)] <- "N"
     expect_equal(
-      list(quote(runif(20)), quote(1 + 1), quote(var <- 200), quote(sample(20)), quote(var1 <- list(1, 2, 3)), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))), "I'll be removed"),
+      list(quote(runif(20)), quote(var <- 200), quote(matrix(1:9, 3)), quote(sample(20)), quote(1 + 20), quote(var1 <- list(1, 2, 3)), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))), quote("I'll be removed")),
       lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call")
     )
   } )
+  test_that("Reference section mapping works", {
 
+    # Copy over just two sections
+
+    my.unitizer3 <-
+      new("unitizer", id=3, zero.env=new.env()) +
+      my.unitizer2@items.new[-(2:6)]  # Exclude section two tests
+    my.unitizer3 <- unitizer:::refSections(my.unitizer3, my.unitizer2)  # sections should copy over
+
+    expect_identical(my.unitizer3@sections.ref, my.unitizer2@sections[-2])  # just copy over 1st and 3rd sections
+    expect_identical(my.unitizer3@section.ref.map, c(1L, rep(2L, 5L)))
+
+    # Make sure "removed" sections are NA when kept
+
+    unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
+    unitizer.prepped@mapping@review.val <- c(rep("Y", 10L), rep("N", 3L))  # don't delete removed
+    items.processed <- unitizer:::processInput(unitizer.prepped)
+
+    expect_identical(
+      c(1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, NA, NA, NA),
+      vapply(unitizer:::as.list(items.processed), slot, 1L, "section.id")
+    )
+    # Now try to re-establish sections with removed tests
+
+    my.unitizer4 <- new("unitizer", id=4, zero.env=new.env()) + items.processed
+    my.unitizer4 <- unitizer:::refSections(my.unitizer4, my.unitizer2)  # sections should copy over
+
+    expect_true(is(my.unitizer4@sections.ref[[3L]], "unitizerSectionNA"))
+    expect_identical(
+      c(1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L),
+      my.unitizer4@section.ref.map
+    )
+  } )
 } )

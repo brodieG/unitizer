@@ -330,7 +330,20 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
         B=x[[sec]][[sub.sec]]@items.ref[[id.rel]],
         C=NULL
       )
-      item@section.id <- sec
+      # Note here we over-write existing section.id because if we pick a reference
+      # item, we still want to associate it with the section of the new item it
+      # was matched to, unless we're dealing with a deleted item, in which case
+      # there is no section
+
+      if(!is.null(item)) {
+        if(
+          identical(input.translate, "B") &&
+          identical(as.character(x@mapping@review.type[[i]]), "Removed")
+        ) {
+          sec <- NA_integer_
+        }
+        item@section.id <- sec
+      }
       items <- items + item
     }
     items
