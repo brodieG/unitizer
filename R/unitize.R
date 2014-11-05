@@ -50,7 +50,7 @@ unitize <- function(
   print(H1(paste0("unitizer for: ", test.file, collapse="")))
   unitizer_core(
     test.file, store.id, interactive.mode, env.clean, search.path.clean,
-    search.path.keep, save=TRUE
+    search.path.keep
   )
 }
 review <- function(

@@ -81,8 +81,7 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
-  if(!("call" %in% names(dots.all))) stop("Argument `call` is required")
-  .Object@call <- dots.all$call
+  if(!("call" %in% names(dots.all))) .Object@call <- NULL else .Object@call <- dots.all$call
   if("env" %in% names(dots.all)) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&

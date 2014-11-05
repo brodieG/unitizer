@@ -14,17 +14,7 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
     # Need to add tests.conditions.new slot
 
     if(object@version < "0.4.3") {
-      slots <- slotNames(object)
-      slots <- slots[slots != "tests.conditions.new"]
-      slot.objs <- lapply(slots, slot, object=object)
-      names(slot.objs) <- slots
-      slot.objs[["tests.conditions.new"]] <- logical(length(object@items.new))
-
-      obj.new <- new("unitizer", id="", zero.env=new.env())
-      for(i in names(slot.objs)) {
-        slot(obj.new, i) <- slot.objs[[i]]
-      }
-      object <- obj.new
+      object <- addSlot(object, "tests.conditions.new", logical(length(object@items.new)))
     }
     # - 0.5.2 ------------------------------------------------------------------
 
@@ -36,35 +26,15 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
 
       # Add the requisite reference section fields
 
-      slots <- slotNames(object)
-      slots <- slots[!slots %in% c("sections.ref", "section.ref.map")]
-      slot.objs <- lapply(slots, slot, object=object)
-      names(slot.objs) <- slots
-
       ref.len <- length(object@items.ref)
-      slot.objs[["sections.ref"]] <- list(new("unitizerSectionNA", length=ref.len))
-      slot.objs[["section.ref.map"]] <- rep(1L, ref.len)
-
-      obj.new <- new("unitizer", id="", zero.env=new.env())
-      for(i in names(slot.objs)) {
-        slot(obj.new, i) <- slot.objs[[i]]
-      }
-      object <- obj.new
+      object <- addSlot(object, "sections.ref", new("unitizerSectionNA", length=ref.len))
+      object <- addSlot(object, "section.ref.map", rep(1L, ref.len))
 
       # Now add the new section.id field to every item
 
       object@items.ref@.items <- lapply(
         as.list(object@items.ref),
-        function(x) {
-          slots <- slotNames(x)
-          slots <- slots[slots != "section.id"]
-          slot.vals <- c(
-            Class="unitizerItem",
-            setNames(lapply(slots, function(y) slot(x, y)), slots),
-            section.id=NA_integer_
-          )
-          do.call(new, slot.vals, quote=TRUE)
-        }
+        function(x) addSlot(x, "section.id", NA_integer_)
       )
     }
     # - Make Sure Conversion Succeeded -----------------------------------------
@@ -74,3 +44,26 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
     }
     object
 } )
+#' Helper Function To Add A Slot to An Out-of-date S4 Object
+#'
+#' @keywords internal
+
+addSlot <- function(object, slot.name, slot.value) {
+  if(!isS4(object))
+    stop("Argument `object` must be an S4 object")
+  slots <- slotNames(object)
+  slot.vals <- list()
+  for(i in slots) {
+    tmp <- try(slot(object, i), silent=TRUE)
+    if(!inherits(tmp, "try-error")) {
+      slot.vals <- c(slot.vals, setNames(list(tmp), i))  # growing list, but shouldn't be massive
+    }
+  }
+  slot.vals <- c(slot.vals, setNames(list(slot.value), slot.name))
+  new.object <- new(class(object))
+  for(slot.name in names(slot.vals)) {
+    slot(new.object, slot.name) <- slot.vals[[slot.name]]
+  }
+  new.object
+}
+
