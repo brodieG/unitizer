@@ -7,8 +7,8 @@
 #' @keywords internal
 
 setClass("unitizerChanges",
-  representation(failed="integer", new="integer", removed="integer", corrupted="integer"),
-  prototype(failed=integer(2L), new=integer(2L), removed=integer(2L), corrupted=integer(2L)),
+  representation(failed="integer", new="integer", removed="integer", corrupted="integer", passed="integer"),
+  prototype(failed=integer(2L), new=integer(2L), removed=integer(2L), corrupted=integer(2L), passed=integer(2L)),
   validity=function(object) {
     for(i in slotNames(object)) {
       if((len <- length(slot(object, i))) > 0L && len != 2L) {

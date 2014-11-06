@@ -27,13 +27,18 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
       # Add the requisite reference section fields
 
       ref.len <- length(object@items.ref)
-      object <- addSlot(object, "sections.ref", new("unitizerSectionNA", length=ref.len))
+      object <- addSlot(object, "sections.ref", list(new("unitizerSectionNA", length=ref.len)))
       object <- addSlot(object, "section.ref.map", rep(1L, ref.len))
+
+      # Updated changes sub-object
+
+      object@changes <- addSlot(object@changes, "passed", integer(2L))
+
 
       # Now add the new section.id field to every item
 
       object@items.ref@.items <- lapply(
-        as.list(object@items.ref),
+        object@items.ref@.items,
         function(x) addSlot(x, "section.id", NA_integer_)
       )
     }
