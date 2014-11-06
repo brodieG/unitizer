@@ -81,16 +81,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     if(!is.environment(x@base.env)) stop("Slot `@base.env` must be defined for Argument `x`")
     items.new.idx <- vapply(as.list(x)[itemsType(x) == "new"], function(x) x@id, integer(1L))
     items.ref.idx <- vapply(as.list(x)[itemsType(x) == "reference"], function(x) x@id, integer(1L))
-    stop("ENV ANCESTRY HEAL BROKEN BECAUSE PASSED TESTS NOW NOT IN SAME ORDER")
-    # Not entirely sure how this ever worked since the order stuff is reviewed isn't
-    # exactly the same as the order in which it is evaluated.  Should be a
-    # straighforward fix, just order the items by id, though need to think carefully
-    # about the new vs. reference interleaving and whether it is meaningful
-    # (probably is) so the re-ordering may not be that straightforward
-    browser()
 
-    # Now find gaps and assign to items prior to gap.  If missing first value,
-    # then go to first env
+    # Reconstitute environment chain for new tests.  Find gaps and assign to
+    # items prior to gap.  If missing first value, then go to first env
 
     gap.order <- order(items.new.idx, decreasing=TRUE)
     gaps <- diff(c(items.new.idx[gap.order], 0L)) # note gaps are -ve and there is a gap if gap < -1
@@ -165,7 +158,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
       ) ) {
         # also, in this case must look at kept envs only since parent has to be a kept
         # env
-        item.env <- x@base.env
+        item.env <- y@items.new@base.env
         slot.in[[i]] <- min(slot.in)
       } else {     # Something younger, and older
         # in this case, we must find the closest older kept new env, and use that as a
@@ -187,9 +180,11 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # Re-order items (basically, by the new items, and slot in the reference
     # ones as per the healing logic above)
 
-    append(x[itemsType(x) == "new"], x[itemsType(x) == "reference"])[
+    items.final <- append(x[itemsType(x) == "new"], x[itemsType(x) == "reference"])[
       order(c(items.new.idx, slot.in))
     ]
+    items.final@base.env <- y@items.new@base.env
+    items.final
 } )
 
 setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
