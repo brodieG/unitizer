@@ -532,7 +532,7 @@ setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
     title="Passed",
     prompt="Keep item in store",
     detail="The following test exists in unitizer but not in the new test script.",
-    actions=c(Y="B", N="C")
+    actions=c(Y="A", N="C")
 ) )
 #' Add a browsing sub-section to a browse section
 #'
