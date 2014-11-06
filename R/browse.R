@@ -331,7 +331,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # Need to add ignored tests as default action is N. Not clear if we also
     # need to set reviewed to TRUE (seems like we should not do so)
 
-    if(x@mapping@ignored[[curr.id]]) {
+    if(x@mapping@ignored[[curr.id]] || ignore.passed) {
       #x@mapping@reviewed[[curr.id]] <- TRUE
       x@mapping@review.val[[curr.id]] <- "Y"
       x@last.id <- curr.id
