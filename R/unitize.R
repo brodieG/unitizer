@@ -48,10 +48,11 @@ unitize <- function(
     stop("Argument `interactive.mode` must be TRUE or FALSE")
 
   print(H1(paste0("unitizer for: ", test.file, collapse="")))
-  unitizer_core(
-    test.file, store.id, interactive.mode, env.clean, search.path.clean,
-    search.path.keep
-  )
+  invisible(
+    unitizer_core(
+      test.file, store.id, interactive.mode, env.clean, search.path.clean,
+      search.path.keep
+  ) )
 }
 review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),

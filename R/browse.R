@@ -292,7 +292,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # Show test to screen, but only if the entire section is not ignored, and
     # not passed tests and requesting that those not be shown
 
-    if(ignore.sub.sec) {
+    if(!ignore.sub.sec) {
       if(x@mapping@reviewed[[curr.id]]) {
         message(
           "You are re-reviewing a test; previous selection was: \"",
