@@ -81,6 +81,13 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     if(!is.environment(x@base.env)) stop("Slot `@base.env` must be defined for Argument `x`")
     items.new.idx <- vapply(as.list(x)[itemsType(x) == "new"], function(x) x@id, integer(1L))
     items.ref.idx <- vapply(as.list(x)[itemsType(x) == "reference"], function(x) x@id, integer(1L))
+    stop("ENV ANCESTRY HEAL BROKEN BECAUSE PASSED TESTS NOW NOT IN SAME ORDER")
+    # Not entirely sure how this ever worked since the order stuff is reviewed isn't
+    # exactly the same as the order in which it is evaluated.  Should be a
+    # straighforward fix, just order the items by id, though need to think carefully
+    # about the new vs. reference interleaving and whether it is meaningful
+    # (probably is) so the re-ordering may not be that straightforward
+    browser()
 
     # Now find gaps and assign to items prior to gap.  If missing first value,
     # then go to first env
