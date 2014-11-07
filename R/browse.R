@@ -110,9 +110,9 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
         if(
           !(
-            something.happened <- length(y@mapping@item.id) &&
-              any(!y@mapping@ignored)
-          )
+            something.happened <- any(
+              y@mapping@review.type != "Passed" & !y@mapping@ignored
+          ) )
         ) {
           message("All tests passed.")
           invokeRestart("noSaveExit")
@@ -121,10 +121,12 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
         keep <- !y@mapping@ignored
         changes <- split(
-          y@mapping@review.val[keep],
-          y@mapping@review.type[keep]
+          y@mapping@review.val[keep] == "Y", y@mapping@review.type[keep]
         )
-        change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
+        change.sum <- lapply(
+          changes,
+          function(x) c(sum(x), length(x))
+        )
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
 
         if(
@@ -194,10 +196,6 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
     unitizer
 } )
 
-
-
-setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
-
 #' Bring up Review of Next test
 #'
 #' Generally we will go from one test to the next, where the next test is
@@ -208,6 +206,7 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 #'
 #' @keywords internal
 
+setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, show.passed, ...) {
     curr.id <- x@last.id + 1L
@@ -329,14 +328,17 @@ setMethod("reviewNext", c("unitizerBrowse"),
           sep="\n"
     ) } }
     # Need to add ignored tests as default action is N. Not clear if we also
-    # need to set reviewed to TRUE (seems like we should not do so)
+    # need to set reviewed to TRUE
 
-    if(x@mapping@ignored[[curr.id]] || ignore.passed) {
-      #x@mapping@reviewed[[curr.id]] <- TRUE
+    if(x@mapping@ignored[[curr.id]]) {
       x@mapping@review.val[[curr.id]] <- "Y"
       x@last.id <- curr.id
       return(x)
+    } else if (ignore.passed) {
+      x@last.id <- curr.id
+      return(x)
     }
+
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the unitizerItem values and the child
     # environment containing the actual unitizer items.  This is so that when

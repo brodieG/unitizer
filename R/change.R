@@ -34,4 +34,9 @@ setMethod("show", "unitizerChanges",
 #' Return Sum of Total Changes
 #' @keywords internal
 
-setMethod("length", "unitizerChanges", function(x) sum(vapply(slotNames(x), function(y) slot(x, y)[[1L]], 1L)))
+setMethod(
+  "length", "unitizerChanges",
+  function(x) {
+    sum(vapply(slotNames(x), function(y) slot(x, y)[[1L]], 1L))
+  }
+)

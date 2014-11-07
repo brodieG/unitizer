@@ -26,12 +26,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
       for(i in unique(x@section.parent)) {                           # Loop through parent sections
         sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
         if(
-          sum(vapply(x@sections[which(x@section.parent == i)], length, integer(1L))) == 0L ||
-          (
-            length(which(x@tests.fail & sect.map)) == 0L &&
-            length(which(x@tests.new & sect.map)) == 0L &&
-            length(which(x@tests.error & sect.map)) == 0L
-          )
+          sum(
+            vapply(x@sections[which(x@section.parent == i)], length, integer(1L))
+          ) == 0L
         ) next
         browse.sect <- new(
           "unitizerBrowseSection", section.id=i,
@@ -557,9 +554,9 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Keep item in store",
-    detail="The following test exists in unitizer but not in the new test script.",
-    actions=c(Y="A", N="C")
+    prompt="Drop item in store",
+    detail="The following test passed.",
+    actions=c(Y="C", N="A")
 ) )
 #' Add a browsing sub-section to a browse section
 #'
