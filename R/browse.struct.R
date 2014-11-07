@@ -396,36 +396,6 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
     e1
   }
 )
-
-#' Pull Out Deparsed Calls From Objects
-#'
-#' Used primarily as a debugging tool
-#'
-#' @value character the deparsed calls
-
-setGeneric("deparseCalls", function(x, ...) standardGeneric("deparseCalls"))
-setMethod("deparseCalls", "unitizerBrowse",
-  function(x, ...) {
-    unlist(lapply(as.list(x), deparseCalls))
-} )
-setMethod("deparseCalls", "unitizerBrowseSection",
-  function(x, ...) {
-    unlist(lapply(as.list(x), deparseCalls))
-} )
-setMethod("deparseCalls", "unitizerBrowseSubSection",
-  function(x, ...) {
-    if(is.null(x@items.new) && is.null(x@items.ref)) return(character())
-    items <- if(!is.null(x@items.new)) x@items.new else x@items.ref
-    deparseCalls(items)
-  }
-)
-setMethod("deparseCalls", "unitizerItems",
-  function(x, ...) {
-    vapply(
-      as.list(x),
-      function(x) paste0(deparse(x@call, width=500L), collapse=""), character(1L)
-) } )
-
 #' Represents A Section/Action Type when Browsing
 #'
 #' @keywords internal
@@ -510,12 +480,39 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
     sub.sect <- if(is.null(x@items.new)) x@items.ref else x@items.new
     vapply(as.list(sub.sect), ignored, logical(1L))
 } )
+#' Pull Out Deparsed Calls From Objects
+#'
+#' Used primarily as a debugging tool
+#'
+#' @value character the deparsed calls
+
+setGeneric("deparseCalls", function(x, ...) standardGeneric("deparseCalls"))
+setMethod("deparseCalls", "unitizerBrowse",
+  function(x, ...) {
+    unlist(lapply(as.list(x), deparseCalls))
+} )
+setMethod("deparseCalls", "unitizerBrowseSection",
+  function(x, ...) {
+    unlist(lapply(as.list(x), deparseCalls))
+} )
+setMethod("deparseCalls", "unitizerBrowseSubSection",
+  function(x, ...) {
+    if(is.null(x@items.new) && is.null(x@items.ref)) return(character())
+    items <- if(!is.null(x@items.new)) x@items.new else x@items.ref
+    deparseCalls(items)
+  }
+)
+setMethod("deparseCalls", "unitizerItems",
+  function(x, ...) {
+    vapply(
+      as.list(x),
+      function(x) paste0(deparse(x@call, width=500L), collapse=""), character(1L)
+) } )
 
 #' Assemble Title for Display
 #'
 #' Uses \code{`title`} slot
 #' @keywords internal
-
 
 setGeneric("makeTitle", function(x, ...) standardGeneric("makeTitle"))
 setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",
