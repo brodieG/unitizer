@@ -129,7 +129,6 @@ unitizer_core <- function(
   } else {
     unitizer <- try(load_unitizer(store.id, par.frame))
   }
-
   if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
   if(!is(unitizer, "unitizer")) return(unitizer)  # most likely because we upgraded and need to re-run
 
@@ -237,6 +236,9 @@ unitizer_core <- function(
     if(!length(tests.parsed)) {
       message("No tests in ", test.file, "; nothing to do here.")
       on.exit(NULL)
+      if(search.path.trim) search_path_restore()        # runs _unsetup() as well
+      else if (search.path.setup) search_path_unsetup()
+
       return(invisible(TRUE))
     }
     # Evaluate the parsed calls
