@@ -25,12 +25,15 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
       # If not initial section add, then must be a nested section, so have to
       # remove value
 
-      e1@sections[[e1@section.map[start]]]@length <- e1@sections[[e1@section.map[start]]]@length - 1L # reduce length of section with nested unitizer section
+      e1@sections[[e1@section.map[start]]]@length <-      # reduce length of section with nested unitizer section
+        e1@sections[[e1@section.map[start]]]@length - 1L
       e1@section.map <- e1@section.map[-start]  # remove mapping for the unitizer section element that we are expanding
       e1@section.map <- append(e1@section.map, rep(id, length(e2)), start - 1L) # add mapping for the now expanded section
 
     }
-    e1@section.parent <- c(e1@section.parent, if(isTRUE(is.na(e2@parent))) id else e2@parent)
+    e1@section.parent <- c(
+      e1@section.parent, if(isTRUE(is.na(e2@parent))) id else e2@parent
+    )
     if(e2@title %in% (titles <- vapply(e1@sections, function(x) x@title, character(1L)))) {
       e2@title <- tail(make.unique(c(titles, e2@title)), 1L)
     }
@@ -90,6 +93,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         e2 <- e2 + item@data@value
         next
       }
+      item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
       e1 <- e1 + item  # store evaluated test and compare it to reference one
       if(!ignored(item)) test.env <- new.env(parent=test.env)  # ignored items share environment with subsequent items
       i <- i + 1L
@@ -105,6 +109,12 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 #' reference items.  The only way to add new items is by adding each
 #' item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
 #'
+#' One aspect of copying reference items which isn't handled here is moving
+#' over the section data because this is kept at the \code{`\link{unitizer-class}`}
+#' level, not at the \code{`\link{unitizer-items}`} level.  The section copying
+#' is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.  This
+#' is something that we should clean-up eventually.
+#'
 #' @keywords internal
 
 setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
@@ -117,6 +127,51 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
       e1@items.ref.map <- rep(NA_integer_, length(e1@items.ref))
     }
     e1
+  }
+)
+#' Extract Reference Section Data
+#'
+#' Using one unitizer with existing new items, and another unitizer that we
+#' just created from it by pulling out the tests we intend to keep, recreate
+#' the sections for the tests we intend to keep.
+#'
+#' This isn't super robust as we're not ensuring that the two unitizers used
+#' here are related in any way.  Would be better to have something that does
+#' this properly...
+#'
+#' @keywords internal
+#' @param x the new unitizer that will be stored with the reference tests
+#' @param y the unitizer that will be used to generate the sections
+
+setGeneric("refSections", function(x, y) standardGeneric("refSections"))
+setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
+  function(x, y) {
+    if(!length(x@items.ref)) return(x)
+
+    sections.ref.ids <- vapply(as.list(x@items.ref), slot, 1L, "section.id")
+    sections.unique <- Filter(Negate(is.na), sort(unique(sections.ref.ids)))
+    if(!all(sections.unique %in% seq_along(y@sections))) {
+      stop(
+        "Logic Error: reference tests referencing non-existing sections in ", "
+        original; contact maintainer"
+    ) }
+    sects <- y@sections[sections.unique]
+    sects.ranks <- rank(sections.unique, ties.method="first")
+    sections.ref.mapped <- sects.ranks[match(sections.ref.ids, sections.unique)]
+
+    sects.map <- ifelse(
+      is.na(sections.ref.mapped),
+      max(sections.unique) + 1L,
+      sections.ref.mapped
+    )
+    if(na.sects <- sum(is.na(sections.ref.ids))) {
+      na.sect <- new("unitizerSectionNA", length=na.sects)
+      sects <- c(sects, list(na.sect))
+    }
+    x@sections.ref <- sects
+    x@section.ref.map <- sects.map
+
+    x
   }
 )
 #' Adds \code{`\link{unitizerItem-class}`} to \code{`\link{unitizer-class}`}

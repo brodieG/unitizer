@@ -4,7 +4,7 @@ Description: Simplifies regression tests by comparing objects produced by test
     code with earlier versions of those same objects.  If objects are unchanged
     the tests pass.  `unitizer` provides an interactive interface to review
     failing tests or new tests.  See vignette for details.
-Version: 0.5.1
+Version: 0.5.2
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
@@ -40,6 +40,7 @@ Collate:
     'get.R'
     'heal.R'
     'is.R'
+    'load.R'
     'ls.R'
     'onload.R'
     'parse.R'

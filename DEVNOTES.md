@@ -62,7 +62,9 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 ## Internal
 
 * There is heavy usage of `parent.env<-`, what do we do about the note in R docs
-  stating this might be removed in the future?
+  stating this might be removed in the future? EDIT: most likely we should not be
+  affected as devs seem mostly concerned about changing the search path at
+  run time, which we do not do.
 * need to think through intialize methods so hopefully we can avoid instantiating
   with .items argument for unitizerlist inheritors since that's a bit weird
 * generally, need to add more methods so we're not messing with slots
@@ -117,6 +119,72 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * provide facilities to upate unitizer id when unitizers are moved, though
   typically the unitizer should always be in the same relative location
   to the script that runs it.
+
+## S4
+
+There is fairly extensive use of S4 internally.  In some cases it definitely
+make sense, in other potentially less so.  In particular, we've leaned towards
+making functionst that use S4 objects methods, even if there is only one
+possible dispatch to contend with.  We also haven't been super consistent, as
+in some cases we do not use S4 methods.  Need to rationalize all of this at
+some point.
+
+## Handling Passed Tests
+
+Need to do this in order to implement a review capability for unitizers that
+have been stored.
+
+* Modify as.character.unitizerBrowse so we have the option of reviewing all
+  tests, not just those that have been reviewed
+* create a unitizerBrowseSubSectionPass
+* Need to preserve reference sections, this is the single most important part.
+  Looks like we need to, in the browse process, keep track of the section that
+  each item was in.
+* Main issue seems to be whether we can re-use browserPrep, which seems
+  challenging since we would have completely different logic depending on
+  whether it is being called from `unitize` or from `review`.
+* Actually browserPrep is not the main issue.  The main issue is whether we can
+  use `browse`, as that's where the PITA stuff happens.  This means we have to
+  pull out the `browsePrep` stuff from `browse` and move it to `unitize` so we
+  can have a different `browsePrep`for tests that we're reviewing.
+* Do we need a new `unitizer` class? `unitizer`, which is for the live review
+  of new and old tests, and `unitizerStore` which is the version that gets
+  stored?  This resolves the problem with browserPrep.
+* Or alternatively, do we spoof a version of a normal unitizer?  Move all the
+  tests back to `items.new`, and then add a flag to `browserPrep`, this seems
+  most promising, we just need to preserve all the data.  Maybe we don't actually
+  move stuff to items.ref until we reload the unitizer, insted of doing so just
+  before we save it.  But this may require too much re-org of existing structure
+  (healenvs, etc.).
+
+Strategy for recovering sections
+
+* parent sections are tracked in the unitizerBrowse objects
+* these are available in processInput
+    * can attach section to each item
+* then +,unitizer,unitizerItems-method will need to:
+    * pull out section ids
+    * copy sections from the new test section to reference
+    * handle situations where sections were not recorded, gracefully
+
+Potential issue: tracking sections from older reference tests
+
+* Not really an issue so long as we re-assign the section always in processInput
+* Main problem is for tests that are deleted from new source file but kept by
+  user; these should just be assigned an NA section, which can be re-labeled as
+  removed/missing tests when browsing, though might need some explanation
+
+We want to re-use browse infrastructure as much as possible
+
+* A version of browsePrep that handles items.ref instead of the just run tests
+* Add all the passed tests to the existing version of browsePrep
+* reviewNext needs a mode to suppress the passed tests, vs one that doesn't
+* One problem here is that when re-loading a store, we're dealing with stuff in
+  ref, whereas with passed tests we're dealing with stuff in new.  Does that mean
+  that we need to move the reference stuff to new?  Probably, but not really
+  desirable given all the dependencies involved with building up `items.new`
+* Actually, re ^^, looks like we can just do this by passing hte ref items as
+  new to the browser sub-section.
 
 # Scenarios to test
 

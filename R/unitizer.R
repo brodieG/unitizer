@@ -88,13 +88,17 @@ setClass(
 
     sections="list",
     section.map="integer",
-    section.parent="integer",    # same length as sections, for each section links to parent
+    section.parent="integer",    # same length as sections, for each section links to parent, where parent is the outermost section a section is nested within
+
+    sections.ref="list",
+    section.ref.map="integer",   # Note, all section references for ref objecs are parent sections since when we browse we don't track nested sections
 
     changes="unitizerChanges"                  # Summary of user changes
   ),
   prototype(
     version=packageVersion("unitizer"),
-    tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted"))
+    tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
+    zero.env=baseenv()
 ) )
 setClass(
   "unitizerSummary", list(data="matrix", dels="integer"),
@@ -145,10 +149,6 @@ setMethod("passed", "unitizerSummary",
 } )
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
-    if(!("id" %in% names(list(...)))) stop("Argument `id` is required")
-    if(!("zero.env" %in% names(list(...)))) stop("Argument `zero.env` is required")
-    allowable.args <- c("id", "changes", "zero.env")
-    if(!all(names(list(...)) %in% allowable.args)) stop("Only arguments ", deparse(allowable.args), " are allowed.")
     .Object <- callNextMethod()
     slot.names <- slotNames(getClass("unitizerItemData"))
     .Object@tests.result <- matrix(logical(), ncol=length(slot.names), dimnames=list(NULL, slot.names))

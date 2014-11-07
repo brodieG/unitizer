@@ -378,6 +378,8 @@ Similarly, if there are tests that require reviewing, each section will be revie
 
 Note that `unitizer_sect` does not create separate evaluation environments for each section.  Any created object will be available to all lexically subsequent tests, regardless of whether they are in the same section or not.
 
+It is possible to have nested sections, though at this point in time `unitizer` only reports information at the outermost sectin level.
+
 ### `unitizer` Test Components
 
 The following aspects of a unitizer tests are recorded for future comparison:
@@ -420,6 +422,8 @@ The values produced by these three tests will be compared using `identical` inst
     } )
 
 This will cause the value of tests to be compared with `identical`, the screen output with `all.equal`, and messages (stdout) with `identical`.  If you want to change the comparison function for conditions, keep in mind that what you are comparing are lists of conditions.  `unitizer` by default uses the `all.equal.condition_list` functions to compare conditions, and you should probably review that function if you intend to use a custom condition comparison function.
+
+If you need to have different comparison functions within a section, use nested sections.  While `unitizer` will only report the outermost section metrics in top-level summaries, the specified comparison functions will be used for each nested section.
 
 ### Matching Tests
 

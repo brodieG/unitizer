@@ -37,6 +37,9 @@ setClass(
 #' @slot environment the environment the test was evaluated in, should contain
 #'   all relevant objects
 #' @slot data the container for the results of the evaluation of \code{`call`}
+#' @slot the \code{`unitizer_sect`} from the newly added items this test item
+#'   corresponds to; can be NA if section not known; this is used primarily to
+#'   keep track of original sections when storing reference tests.
 
 setClass(
   "unitizerItem",
@@ -49,11 +52,13 @@ setClass(
     ls="data.frame",
     comment="characterOrNULL",
     trace="list",
-    data="unitizerItemData"
+    data="unitizerItemData",
+    section.id="integer"
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L,
-    ls=data.frame(names=character(), status=character())
+    ls=data.frame(names=character(), status=character()),
+    section.id=NA_integer_
   ),
   validity=function(object) {
     if(!identical(length(object@reference), 1L)) return("Slot `@reference` must be length 1")
@@ -61,6 +66,8 @@ setClass(
     if(!identical(names(object@ls), c("names", "status")) ||
       !identical(vapply(objecs@ls, class, ""), rep("character", 2L)))
       return("Slot `@ls` has incorrect data structure")
+    if(length(object@section.id) != 1L || object@section.id < 1L)
+      return("Slot `@section.id` must be integer(1L) >= 1L")
     TRUE
   }
 )
@@ -74,8 +81,7 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
-  if(!("call" %in% names(dots.all))) stop("Argument `call` is required")
-  .Object@call <- dots.all$call
+  if(!("call" %in% names(dots.all))) .Object@call <- NULL else .Object@call <- dots.all$call
   if("env" %in% names(dots.all)) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&

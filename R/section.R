@@ -12,8 +12,12 @@ NULL
 #' whereas the former is really just a temporary object until we can generate
 #' the latter.
 #'
+#' \code{`unitizerSectionNA-class`} is a specialiazed section for tests that actually
+#' don't have a section (removed tests that are nonetheless chosen to be kept
+#' by user in interactive environment)
+#'
 #' @keywords internal
-#' @aliases unitizerSectionExpression-class
+#' @aliases unitizerSectionExpression-class unitizerSectionNA-class
 #' @slot title 1 lenght character, the name of the section
 #' @slot details character vector containing additional info on the section
 #' @slot compare functions to compare the various aspects of a \code{`\link{unitizerItem-class}`}
@@ -28,10 +32,12 @@ setClass(
     length="integer",
     parent="integer"
   ),
-  prototype(parent=NA_integer_),
+  prototype(parent=NA_integer_, length=0L),
   validity=function(object) {
     if(length(object@title) != 1L) return("slot `@title` must be length 1")
-    if(length(object@length) != 1L | object@length < 1L) return("slot `@length` must be length 1 and greater than 0")
+    if(length(object@length) != 1L | object@length < 0L) {
+      return("slot `@length` must be length 1 and >= 0")
+    }
     if(length(object@parent) != 1L) return("slot `@parent` must be a 1 length integer")
   }
 )
@@ -44,6 +50,12 @@ setMethod("initialize", "unitizerSection",
     }
     callNextMethod()
 } )
+setClass(
+  "unitizerSectionNA", contains="unitizerSection",
+  prototype=list(
+    title="<untitled>", details="Dummy section for section-less tests."
+  )
+)
 setClass("unitizerSectionExpression", contains="unitizerList",
   representation(
     title="characterOrNULL",
