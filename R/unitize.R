@@ -54,6 +54,8 @@ unitize <- function(
       search.path.keep
   ) )
 }
+#' @export
+
 review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer")
@@ -67,9 +69,11 @@ review <- function(
 
   }
   print(H1(paste0("unitizer for: ", u.name, collapse="")))
-  unitizer_core(
-    test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
-    search.path.clean=search.path.clean, search.path.keep=search.path.keep
+  invisible(
+    unitizer_core(
+      test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
+      search.path.clean=search.path.clean, search.path.keep=search.path.keep
+    )
   )
 }
 #' Runs The Basic Stuff
@@ -120,7 +124,7 @@ unitizer_core <- function(
   # happens later.  Also note that pack.env$zero.env can still be tracking the
   # top package under .GlobalEnv
 
-  over_print("Loading unitizer data.")
+  over_print("Loading unitizer data...")
   par.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
 
   if(is(store.id, "unitizer")) {
@@ -194,7 +198,7 @@ unitizer_core <- function(
     env.clean <- .GlobalEnv
     search.path.clean <- FALSE
   } else if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
-    over_print("Search Path Setup.")
+    over_print("Search Path Setup...")
     if(!isTRUE(search.path.setup <- search_path_setup())) {
       if(isTRUE(env.clean))
         warning(
@@ -223,6 +227,7 @@ unitizer_core <- function(
   # Parse and evaluate test file, but only if we're in `unitize` mode, as implied
   # by the `test.file`
 
+  search.path.restored <- FALSE
   if(!is.null(test.file)) {
     over_print("Parsing tests...")
     if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
@@ -248,7 +253,6 @@ unitizer_core <- function(
 
     # Make sure our tracing didn't get messed up in some way
 
-    search.path.restored <- FALSE
     if((isTRUE(search.path.clean) || isTRUE(env.clean)) && !search_path_check()) {
       search_path_restore()
       search.path.restored <- TRUE
@@ -294,6 +298,7 @@ unitizer_core <- function(
 
   if(is.null(test.file)) {
     unitizer.browse <- browsePrep(unitizer, mode="review")
+    cat("\r")  # this needs to be rationalized with when we parse files
   } else {
     unitizer.browse <- browsePrep(unitizer, mode="unitize")
   }

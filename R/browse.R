@@ -46,7 +46,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, prompt.on.quit, show.passed, ...) {
     unitizer <- withRestarts(
       browseUnitizerInternal(
-        x, y, show.passed=FALSE,
+        x, y, show.passed=show.passed,
         prompt.on.quit=prompt.on.quit
       ),
       noSaveExit=function() {
@@ -101,7 +101,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
            # Interactively review all tests
 
             if(!done(y)) {
-              y <- reviewNext(y, show.passed=FALSE)
+              y <- reviewNext(y, show.passed=show.passed)
               next
           } },
           earlyExit=function() user.quit <<- TRUE
