@@ -129,7 +129,7 @@ unitizer_core <- function(
 
   if(is(store.id, "unitizer")) {
     unitizer <- store.id   # note zero.env is set-up further down
-    store.id <- unitizer@store.id
+    store.id <- unitizer@id
   } else {
     unitizer <- try(load_unitizer(store.id, par.frame))
   }

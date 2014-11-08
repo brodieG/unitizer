@@ -170,6 +170,10 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
     x@sections.ref <- sects
     x@section.ref.map <- sects.map
 
+    # Re-sequence ids so they map to our reference mapping
+
+    for(i in 1:length(x@items.ref)) x@items.ref[[i]]@id <- i
+
     x
   }
 )

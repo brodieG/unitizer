@@ -90,28 +90,48 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
     y@hist.con <- hist.con  # User expression to this file for use in history
 
     if(!length(y)) {
-      message("All tests passed; nothing to store.")
+      message("No tests to review.")
       return(TRUE)
     } else if(length(y)) {
+
+      # `repeat` loop allows us to keep going if at the last minute we decide
+      # we are not ready to exit the unitizer
+
+      first.time <- TRUE
       repeat {
 
         user.quit <- FALSE
-        withRestarts(
-          {
-           # Interactively review all tests
+        if(show.passed && first.time) {  # for passed tests, start by showing the list of tests
+          first.time <- FALSE
+          y.tmp <- review_prompt(y, new.env(parent=x@base.env))
+          if(identical(y.tmp, "Q")) user.quit <- TRUE
+          else if(!is(y.tmp, "unitizerBrowse"))
+            stop(
+              "Logic Error: review should return `unitizerBrowse`; contact ",
+              "maintainer."
+            )
+          else y <- y.tmp
+        }
+        if(!user.quit) {
+          withRestarts(  # Now review each test
+            {
+             # Interactively review all tests
 
-            if(!done(y)) {
-              y <- reviewNext(y, show.passed=show.passed)
-              next
-          } },
-          earlyExit=function() user.quit <<- TRUE
-        )
+              if(!done(y)) {
+                y <- reviewNext(y, show.passed=show.passed)
+                next
+            } },
+            earlyExit=function() user.quit <<- TRUE
+          )
+        }
         # Nothing happened at all, so quit without even option for prompting
 
         if(
           !(
             something.happened <- any(
               y@mapping@review.type != "Passed" & !y@mapping@ignored
+            ) || (
+              any(!y@mapping@ignored) && show.passed
           ) )
         ) {
           message("All tests passed.")
@@ -191,6 +211,15 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
     # Extract and re-map sections of tests we're saving as reference
 
+    if(show.passed) {
+      # Need to re-use our reference sections so `refSections` works since we
+      # will not have created any sections by parsing/evaluating tests.  This
+      # is super hacky as we're partly using the stuff related to `items.new`,
+      # and could cause problems further down the road if we're not careful
+
+      x@sections <- x@sections.ref
+      x@section.map <- x@section.ref.map
+    }
     unitizer <- refSections(unitizer, x)
 
     unitizer

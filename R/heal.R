@@ -82,6 +82,10 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     items.new.idx <- vapply(as.list(x)[itemsType(x) == "new"], function(x) x@id, integer(1L))
     items.ref.idx <- vapply(as.list(x)[itemsType(x) == "reference"], function(x) x@id, integer(1L))
 
+    # Make sure that our items have a reasonable base environment
+
+    parent.env(x@base.env) <- y@base.env
+
     # Reconstitute environment chain for new tests.  Find gaps and assign to
     # items prior to gap.  If missing first value, then go to first env
 
@@ -168,7 +172,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         item.env <- y@items.new[[tail(matching.new.older, 1L)]]@env
         slot.in[[i]] <- tail(matching.new.older, 1L)
       }
-      x[itemsType(x) == "reference"][[i]] <- updateLs(x[itemsType(x) == "reference"][[i]], y@base.env, item.env)
+      x[itemsType(x) == "reference"][[i]] <- updateLs(
+        x[itemsType(x) == "reference"][[i]], y@base.env, item.env
+      )
       env.list[[i]] <- item.env
     }
     # Now re-assign the environments; this has to be done after we run all the
