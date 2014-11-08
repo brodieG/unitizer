@@ -34,7 +34,6 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
 
       object@changes <- addSlot(object@changes, "passed", integer(2L))
 
-
       # Now add the new section.id field to every item
 
       object@items.ref@.items <- lapply(
@@ -59,6 +58,7 @@ addSlot <- function(object, slot.name, slot.value) {
   slots <- slotNames(object)
   slot.vals <- list()
   for(i in slots) {
+    if(identical(i, slot.name)) next
     tmp <- try(slot(object, i), silent=TRUE)
     if(!inherits(tmp, "try-error")) {
       slot.vals <- c(slot.vals, setNames(list(tmp), i))  # growing list, but shouldn't be massive
