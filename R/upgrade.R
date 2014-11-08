@@ -41,6 +41,13 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
         function(x) addSlot(x, "section.id", NA_integer_)
       )
     }
+    # - 0.5.3 ------------------------------------------------------------------
+
+    # Make sure ref item ids are reasonable
+
+    if(object@version < "0.5.3") {
+      for(i in seq(len=length(object@items.ref))) object@items.ref[[i]]@id <- i
+    }
     # - Make Sure Conversion Succeeded -----------------------------------------
 
     if(inherits(try(validObject(object, complete=TRUE)), "try-error")) {
