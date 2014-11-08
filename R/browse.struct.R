@@ -553,7 +553,7 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Drop item in store",
+    prompt="Drop test from store",
     detail="The following tests passed.",
     actions=c(Y="C", N="A")
 ) )
