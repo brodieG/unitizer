@@ -292,7 +292,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # not passed tests and requesting that those not be shown
 
     if(!ignore.sub.sec) {
-      if(x@mapping@reviewed[[curr.id]]) {
+      if(x@mapping@reviewed[[curr.id]] && !show.passed) {
         message(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""

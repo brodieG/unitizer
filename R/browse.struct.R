@@ -100,6 +100,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
       }
+      unitizer.browse@mapping@reviewed[] <- TRUE   # mark all tests as reviewed so they will show up when we hit 'R'
     } else stop("Logic Error: unexpected `mode`")
 
     # - Finalize ---------------------------------------------------------------
