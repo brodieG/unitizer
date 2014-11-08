@@ -292,13 +292,14 @@ unitizer_core <- function(
       return(invisible(TRUE))
     }
   }
+  cat("\r")
+
   # -  Browse ------------------------------------------------------------------
 
   # Group tests by section and outcome for review
 
   if(is.null(test.file)) {
     unitizer.browse <- browsePrep(unitizer, mode="review")
-    cat("\r")  # this needs to be rationalized with when we parse files
   } else {
     unitizer.browse <- browsePrep(unitizer, mode="unitize")
   }

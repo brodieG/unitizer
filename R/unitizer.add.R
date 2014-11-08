@@ -100,7 +100,6 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       over_print(paste0("Running: ", deparse(item@call)[[1L]]))
     }
     over_print("")
-    cat("\r")
     e1
 } )
 #' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
