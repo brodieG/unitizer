@@ -172,9 +172,36 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         item.env <- y@items.new[[tail(matching.new.older, 1L)]]@env
         slot.in[[i]] <- tail(matching.new.older, 1L)
       }
-      x[itemsType(x) == "reference"][[i]] <- updateLs(
-        x[itemsType(x) == "reference"][[i]], y@base.env, item.env
-      )
+      item.ref.updated <- try(
+        updateLs(
+          x[itemsType(x) == "reference"][[i]], x@base.env, item.env
+      ) )
+      if(inherits(item.ref.updated, "try-error")) {
+        stop(
+          "Logic Error: item environment history corrupted in unknown way; ",
+          "contact maintainer.  You can attempt to recover your `unitizer` by ",
+          "using `repair_envs`."
+        )
+      } else if (identical(item.ref.updated, FALSE)) {  # Corrupted env history, try to fix
+        x <- try(repairEnvs(x))
+        if(inherits(x, "try-error")) {
+          stop(
+            "Logic Error: unable to repair reference test environments; contact ",
+            "maintainer."
+          )
+        }
+        item.ref.updated <- try(
+          updateLs(
+            x[itemsType(x) == "reference"][[i]], x@base.env, item.env
+        ) )
+        if(inherits(item.ref.updated, "try-error")) {
+          stop(
+            "Logic Error: unable to repair reference test environments; contact ",
+            "maintainer."
+          )
+        }
+      }
+      x[itemsType(x) == "reference"][[i]] <- item.ref.updated
       env.list[[i]] <- item.env
     }
     # Now re-assign the environments; this has to be done after we run all the
@@ -215,7 +242,8 @@ setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 #' @param x the \code{`\link{unitizerItem-class}`}
 #' @param base.env the last environment to search through for objects
 #' @return \code{`\link{unitizerItem-class}`} object with updated
-#'   \code{`ls`} field and environment reference parent
+#'   \code{`ls`} field and environment reference parent, or FALSE if the item
+#'   has a corrupted environment history
 
 setMethod("updateLs", "unitizerItem",
   function(x, base.env, new.par.env=NULL,  ...) {
@@ -229,12 +257,14 @@ setMethod("updateLs", "unitizerItem",
     } else {
       if(!is.environment(new.par.env)) stop("Argument `new.par.env` should be an environment when in reference mode.")
 
-      #browser()
       ref.env.store <- new.env(parent=emptyenv())
       new.env.store <- new.env(parent=emptyenv())
 
-      run_ls(env=x@env, stop.env=base.env, all.names=TRUE, store.env=ref.env.store)
+      item.ls <- try(run_ls(env=x@env, stop.env=base.env, all.names=TRUE, store.env=ref.env.store))
+      if(inherits(item.ls, "try-error")) return(FALSE)
+
       run_ls(env=new.par.env, stop.env=base.env, all.names=TRUE, store.env=new.env.store)
+
       # Since reference test keeps any objects defined in it's own environment, we can cheat
       # for comparison purposes by putting those objects in the "new" environment so they
       # look like they exist there

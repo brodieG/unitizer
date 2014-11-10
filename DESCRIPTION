@@ -44,6 +44,7 @@ Collate:
     'ls.R'
     'onload.R'
     'parse.R'
+    'repairenvs.R'
     'unitize.R'
     'unitizer-package.r'
     'unitizer.add.R'

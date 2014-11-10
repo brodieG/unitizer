@@ -187,7 +187,9 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
 
 setMethod("+", c("unitizer", "unitizerItem"),
   function(e1, e2) {
-    e2 <- updateLs(e2, e1@items.new@base.env)
+    e2 <- try(updateLs(e2, e1@items.new@base.env))
+    if(inherits(e2, "try-error"))
+      stop("Logic Error: unable to update LS for new item; contact maintainer.")
     e1 <- registerItem(e1, e2)
     e1 <- testItem(e1, e2)
     e1
