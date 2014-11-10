@@ -2,14 +2,15 @@
 #'
 #' Turns a standard R script into unit tests by evaluating the expressions and
 #' storing them along with their resuls.  Re-running \code{`unitize`} then
-#' checks that the values remain unchanged.  See "unitizer" vignette for more
-#' details.
+#' checks that the values remain unchanged.
 #'
 #' You can run \code{`unitize`} from the command line, or you can place one or
 #' more \code{`unitize`} calls in an R file and source that.
 #'
 #' \code{`review`} allows you to review the contents of an existing
-#' \code{`unitizer`} throught the
+#' \code{`unitizer`} throught the interactive \code{`unitizer`} interaface.
+#'
+#' See "unitizer" vignette and demos for details and examples.
 #'
 #' @export
 #' @aliases review
@@ -17,14 +18,16 @@
 #' @param test.file path to the file containing tests
 #' @param store.id a folder to store the \code{`unitizer`} objects in; will auto-
 #'   generate to a folder at the same location as the test file with the same
-#'   name as the testfile, except ending in \code{`.unitizer`} instead of \code{`.R`}
+#'   name as the testfile, except ending in \code{`.unitizer`} instead of
+#'   \code{`.R`}.  This is the default option, you can create custom
+#'   \code{`unitizer`} stores as well (see vignette and \code{`\link{get_store}`}).
 #' @param x for \code{`review`} only, either a \code{`unitizer`} or something that,
 #'   when passed to \code{`\link{get_store}`}, will retrieve a unitizer (i.e.
 #'   equivalent to what would get passed in \code{`store.id`}).
 #' @param interactive.mode logical(1L) whether to run in interactive mode
 #' @param env.clean TRUE or environment, if TRUE tests are run in a clean
 #'   environment, if an environment they are run with that environment as the
-#'   parent.
+#'   parent environment.
 #' @param search.path.clean logical(1L) if TRUE all items on the search path that
 #'   are not part of a clean R session are detached prior to running tests.  Note
 #'   namespaces for detached packages remain loaded.  Additionally, the search
@@ -35,6 +38,9 @@
 #'   "Reproducible Tests" vignette for details.
 #' @param search.path.keep character any additional items on the search path
 #'   to keep attached; has no effect unless \code{`search.path.clean`} is TRUE
+#' @return the \code{`unitizer`} object, invisibly.  If running in interactive
+#'   mode, then the returned \code{`unitizer`} will be modified as per user
+#'   input in the interactive session.
 
 unitize <- function(
   test.file, store.id=sub("\\.[Rr]$", ".unitizer", test.file),
@@ -128,13 +134,13 @@ unitizer_core <- function(
   par.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
 
   if(is(store.id, "unitizer")) {
-    unitizer <- store.id   # note zero.env is set-up further down
+    unitizer <- upgrade(store.id, par.frame)   # note zero.env is set-up further down
     store.id <- unitizer@id
   } else {
     unitizer <- try(load_unitizer(store.id, par.frame))
+    if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
   }
-  if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
-  if(!is(unitizer, "unitizer")) return(unitizer)  # most likely because we upgraded and need to re-run
+  if(!is(unitizer, "unitizer")) stop("Logic Error: expected a `unitizer` object; contact maintainer.")
 
   # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
   # or other potential issues; of course this isn't foolproof if someone is using
@@ -244,7 +250,7 @@ unitizer_core <- function(
       if(search.path.trim) search_path_restore()        # runs _unsetup() as well
       else if (search.path.setup) search_path_unsetup()
 
-      return(invisible(TRUE))
+      return(invisible(unitizer))
     }
     # Evaluate the parsed calls
 
@@ -289,7 +295,7 @@ unitizer_core <- function(
         if(search.path.trim) search_path_restore()        # runs _unsetup() as well
         else if (search.path.setup) search_path_unsetup()
       }
-      return(invisible(TRUE))
+      return(invisible(unitizer))
     }
   }
   cat("\r")
@@ -320,7 +326,7 @@ unitizer_core <- function(
   }
   # Finalize
 
-  res <- store_unitizer(unitizer, store.id, wd)
+  store_unitizer(unitizer, store.id, wd)
   on.exit(NULL)
-  invisible(res)
+  invisible(unitizer)
 }
