@@ -58,7 +58,7 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   while(!identical(env, stop.env)) {     # Get list of environments that are relevant
     env.list <- append(env.list, env)
     if(inherits(try(env <- parent.env(env)), "try-error")) stop("Specified `stop.env` does not appear to be in parent environments.")
-    if((i <- i + 1L) > 1000) stop("Logic error: not finding `stop.env` after 1000 iterations; contact package maintainer if this is an error.")
+    if((i <- i + 1L) > 10000) stop("Logic error: not finding `stop.env` after 10000 iterations; contact package maintainer if this is an error.")
   }
   for(i in rev(seq_along(env.list))) {   # Reverse, so when we copy objects the "youngest" overwrite the "eldest"
     ls.res <- c(ls.res, ls(envir=env.list[[i]], all.names=all.names, pattern=pattern))

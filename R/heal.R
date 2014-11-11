@@ -137,6 +137,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     tail.env <- if(length(items.new.idx)) y@items.new[[max(items.new.idx)]]@env else x@base.env
     env.list <- list()
     slot.in <- integer(length(items.ref.idx))  # Note that `slot.in` values can be repeated
+    repair <- FALSE
 
     for(i in ref.order) {
       # First find the youngest new test that is verifiably older than
@@ -174,7 +175,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
       }
       item.ref.updated <- try(
         updateLs(
-          x[itemsType(x) == "reference"][[i]], x@base.env, item.env
+          x[itemsType(x) == "reference"][[i]], y@base.env, item.env
       ) )
       if(inherits(item.ref.updated, "try-error")) {
         stop(
@@ -182,24 +183,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
           "contact maintainer.  You can attempt to recover your `unitizer` by ",
           "using `repair_envs`."
         )
-      } else if (identical(item.ref.updated, FALSE)) {  # Corrupted env history, try to fix
-        x <- try(repairEnvs(x))
-        if(inherits(x, "try-error")) {
-          stop(
-            "Logic Error: unable to repair reference test environments; contact ",
-            "maintainer."
-          )
-        }
-        item.ref.updated <- try(
-          updateLs(
-            x[itemsType(x) == "reference"][[i]], x@base.env, item.env
-        ) )
-        if(inherits(item.ref.updated, "try-error")) {
-          stop(
-            "Logic Error: unable to repair reference test environments; contact ",
-            "maintainer."
-          )
-        }
+      } else if (identical(item.ref.updated, FALSE)) {  # Corrupted env history, will have to repair
+        repair <- TRUE
+        item.ref.updated <- x[itemsType(x) == "reference"][[i]]
       }
       x[itemsType(x) == "reference"][[i]] <- item.ref.updated
       env.list[[i]] <- item.env
@@ -208,7 +194,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # lses as otherwise the ls diffs won't work since the whole point is they
     # compare the environment from before the re-assignment to the one after
 
-    for(i in ref.order) parent.env(x[itemsType(x) == "reference"][[i]]@env) <- env.list[[i]]
+    for(i in ref.order)
+      parent.env(x[itemsType(x) == "reference"][[i]]@env) <- env.list[[i]]
 
     # Re-order items (basically, by the new items, and slot in the reference
     # ones as per the healing logic above)
@@ -216,10 +203,18 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     items.final <- append(x[itemsType(x) == "new"], x[itemsType(x) == "reference"])[
       order(c(items.new.idx, slot.in))
     ]
-    items.final@base.env <- y@items.new@base.env
+    # If environments need repairing, do so now
+
+    if(repair) {
+      x <- try(repairEnvs(x))
+      if(inherits(x, "try-error")) {
+        stop(
+          "Logic Error: unable to repair reference test environments; contact ",
+          "maintainer."
+      ) }
+    }
     items.final
 } )
-
 setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 
 #' Compare The Objects In Environment for Ref vs. New Item

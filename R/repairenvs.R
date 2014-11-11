@@ -31,6 +31,8 @@ setGeneric("repairEnvs", function(x, ...) standardGeneric("repairEnvs"))
 
 setMethod("repairEnvs", "unitizer",
   function(x, ...) {
+    parent.env(x@zero.env) <- baseenv()
+    parent.env(x@base.env) <- x@zero.env
     parent.env(x@items.ref@base.env) <- x@base.env
     x@items.ref <- repairEnvs(x@items.ref)
     x
@@ -43,16 +45,19 @@ setMethod("repairEnvs", "unitizerItems",
       "but keep in mind that even when repaired the test environments may ",
       "be missleading.  For example, the objects other than `.new` or `.ref` ",
       "when reviewing tests at the `unitzer` prompt may not be those you ",
-      "expect or those reported by `ls`.  If errors persist after an attempt ",
-      "to repair, please contact maintainer.",
+      "expect or those reported by `ls`.  To fully restore environments ",
+      "re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist ",
+      "after an attempt to repair, please contact maintainer.",
       immediate. = TRUE
     )
     if(!length(x)) x
     prev.par <- x@base.env
 
     for(i in 1:length(x)) {
-      if(!identical(x[[i]]@env, prev.par))  # can happen with ignored tests
+      if(!identical(x[[i]]@env, prev.par))   # can happen with ignored tests
         parent.env(x[[i]]@env) <- prev.par
+      x[[i]]@ls <- x[[i]]@ls[0,]             # ls potentially missleading
+      attr(x[[i]]@ls, "repaired") <- TRUE
       prev.par <- x[[i]]@env
     }
     x
