@@ -38,6 +38,8 @@
 #'   "Reproducible Tests" vignette for details.
 #' @param search.path.keep character any additional items on the search path
 #'   to keep attached; has no effect unless \code{`search.path.clean`} is TRUE
+#' @param force.update logical(1L) if TRUE will give the option to re-store a
+#'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @return the \code{`unitizer`} object, invisibly.  If running in interactive
 #'   mode, then the returned \code{`unitizer`} will be modified as per user
 #'   input in the interactive session.
@@ -46,18 +48,20 @@ unitize <- function(
   test.file, store.id=sub("\\.[Rr]$", ".unitizer", test.file),
   interactive.mode=interactive(), env.clean=TRUE,
   search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=c("tools:rstudio", "package:unitizer")
+  search.path.keep=c("tools:rstudio", "package:unitizer"),
+  force.update=FALSE
 ) {
   if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file))
     stop("Argument `test.file` must be a valid path to a file")
   if(!is.logical(interactive.mode) || length(interactive.mode) != 1L || is.na(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
-
+  if(!is.logical(force.update) || length(force.update) != 1L || is.na(force.update))
+    stop("Argument `force.update` must be TRUE or FALSE")
   print(H1(paste0("unitizer for: ", test.file, collapse="")))
   invisible(
     unitizer_core(
       test.file, store.id, interactive.mode, env.clean, search.path.clean,
-      search.path.keep
+      search.path.keep, force.update=force.update
   ) )
 }
 #' @export
@@ -78,7 +82,8 @@ review <- function(
   invisible(
     unitizer_core(
       test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
-      search.path.clean=search.path.clean, search.path.keep=search.path.keep
+      search.path.clean=search.path.clean, search.path.keep=search.path.keep,
+      force.update=FALSE
     )
   )
 }
@@ -103,7 +108,7 @@ review <- function(
 
 unitizer_core <- function(
   test.file, store.id, interactive.mode, env.clean,
-  search.path.clean, search.path.keep
+  search.path.clean, search.path.keep, force.update
 ) {
   # -  Setup / Load ------------------------------------------------------------
 
@@ -314,7 +319,7 @@ unitizer_core <- function(
   tot.time <- (proc.time() - start.time)[["elapsed"]]
   unitizer <- browseUnitizer(
     unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time,
-    show.passed=is.null(test.file)  # this means we're in review mode
+    force.update=force.update, show.passed=is.null(test.file)  # this means we're in review mode
   )
   # -  Finalize ------------------------------------------------------------------
 

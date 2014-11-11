@@ -43,16 +43,12 @@ setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer
 #' @param a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
-  function(x, y, prompt.on.quit, show.passed, ...) {
+  function(x, y, prompt.on.quit, show.passed, force.update, ...) {
     unitizer <- withRestarts(
       browseUnitizerInternal(
         x, y, show.passed=show.passed,
-        prompt.on.quit=prompt.on.quit
+        prompt.on.quit=prompt.on.quit, force.update=force.update
       ),
-      noSaveExit=function() {
-        message("Unitizer store was not modified.")
-        FALSE
-      },
       unitizerQuitExit=unitizer_quit_handler
     )
     # Reset the parent env of zero env so we don't get all sorts of warnings related
@@ -64,7 +60,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
 )
 setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
 setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
-  function(x, y, prompt.on.quit, show.passed, ...) {
+  function(x, y, prompt.on.quit, show.passed, force.update, ...) {
 
     # set up local history
 
@@ -135,7 +131,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           ) )
         ) {
           message("All tests passed.")
-          invokeRestart("noSaveExit")
+          if(!force.update) return(FALSE)
         }
         # Get summary of changes
 
@@ -155,12 +151,12 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
         )
           print(H2("Finalize Unitizer"))
 
-        if(length(x@changes) == 0L) {
+        if(length(x@changes) == 0L && !force.update) {
           message(
             "You didn't accept any changes so there are no items to store."
           )
           if(!prompt.on.quit && user.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
-            invokeRestart("noSaveExit")
+            return(FALSE)
           }
           valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
           nav.msg <- "Exit unitizer"
@@ -172,12 +168,28 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           )
         } else {
           message("You are about to IRREVERSIBLY:")
-          show(x@changes)
+          if(length(x@changes) > 0) {
+            update.w.changes <- " updated with all the changes you approved, "
+            show(x@changes)
+          } else {
+            if(!force.update) stop("Logic Error: should be in forced update mode; contact maintainer.")
+            update.w.changes <- character()
+            cat(
+              "replace the existing unitizer with a reloaded version that ",
+              "contains the same tests.  If you are seeing this message it is ",
+              "because you chose to run in `force.update` mode.  Note that the ",
+              "reloaded version of the `unitizer` will not be completely ",
+              "identical to the currently stored one.  In particular sections ",
+              "and comments will reflect the latest source file, and test ",
+              "environments will be re-generated.\n",
+              sep=""
+            )
+          }
           valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
           nav.msg <- "Update unitizer"
           nav.hlp <- paste0(
-            "Pressing Y will replace the previous unitizer with a new one updated ",
-            "with all the changes you approved, pressing R or B will allow you to ",
+            "Pressing Y will replace the previous unitizer with a new one, ",
+            update.w.changes, "pressing R or B will allow you to ",
             "re-review your choices.  Pressing N or Q both quit without saving ",
             "changes to the unitizer"
           )
@@ -192,10 +204,10 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           y <- user.input
           next
         } else if (identical(user.input, "Q") || identical(user.input, "N")) {
-          invokeRestart("noSaveExit")
+          return(FALSE)
         } else if (identical(user.input, "Y")) {
           if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
-            invokeRestart("noSaveExit")
+            return(FALSE)
           } else break
         }
         stop("Logic Error; unexpected user input, contact maintainer.")
