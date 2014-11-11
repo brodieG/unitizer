@@ -1,0 +1,56 @@
+# Easy Unit Tests
+
+## Introduction
+
+> it’s not that we don’t test our code, it’s that we don’t store our tests so they can be re-run automatically
+
+- As Hadley Wickham (The R Journal Vol. 3/1, June 2011, P5, ISSN 2073-4859).
+
+`unitizer` sets out to make storing these tests as easy as possible by blurring the line between informal in-development testing and formal unit testing.  For example to create unit tests with `unitizer`, you would:
+
+1. Save the "informal" tests to an R file instead of typing them at the prompt
+2. Run `unitize("mydir/myfile.R")`
+
+`unitizer` will then step through each test in your file and allow you to review the test result as you would on the command line.  `unitizer` will then store the tests you confirm produced the expected results.  If you modify the code you are building tests for, re-running `unitize` will compare the new results to the stored ones and alert you to any regressions.
+
+The `unitizer` work flow is very similar to informal testing on the command line, with the enormous advantage that you get unit tests out of it with almost no additional work.
+
+## How is `unitizer` Different to `testthat`?
+
+`unitizer` trades off some formality for ease of use, and as with any trade-off, there are pros and cons.  We will illustrate some of these trade-offs with a contrived example.  Here are some unit tests for the base `log10` function as implemented in `testthat`:
+
+```
+
+## testthat.log10.R
+
+x <- c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)
+
+expect_equal(log10(x), c(2, NaN, -Inf, -1, Inf, NaN, NA, 2.69897000433602))
+expect_warning(log10(x), "In deparse(log10(x)) : NaNs produced")
+expect_error(log10(letters), "Error in log10(letters) : non-numeric argument to mathematical function")
+```
+And as implemented in `unitizer`:
+
+```
+## unitizer.log10.R
+
+x <- c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)
+
+log10(x)        # succeed with warnings
+log10(letters)  # input error
+```
+This examples highlights benefits of both approaches.  In favor of `unitizer`:
+
+* It just took a few seconds to write our tests
+* Conditions are captured automatically
+    * we do not need separate tests to check for warnings and values
+    * error conditions are also captured without any special handling
+
+In favor of `testthat`:
+
+* The tests are self documenting: it is obvious from looking at them what the results should be, whereas it isn't so for `unitizer` (we can comment `unitizer` tests as we have done here, but there is no guarantee that the test will actually reflect anything in the comment)
+* Once you write the test you're done, whereas with `unitizer` you still need to `unitize` them (i.e. confirm the results are as expected) before they are saved
+
+The main selling point for `unitizer` is that the tests are very easy to write.  This is particularly helpful when the return values from the tests are complex (e.g., conditions with messages, as shown above, or simply complex objects, as returned by `lm`, for example).  You review the object, confirm it is what it should be, and tell `unitizer` to store it.  There is no need to copy and paste awkward deparsed expressions into tests.  The review process is handled by an interactive command line-like environment (see the demo for an illustration).
+
+The flipside is that `unitizer` is not as ammenable to [extreme programming](http://www.extremeprogramming.org/rules/testfirst.html).
