@@ -54,7 +54,9 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     # Reset the parent env of zero env so we don't get all sorts of warnings related
     # to trying to store a package environment when we save this unitizer
 
-    if(is(unitizer, "unitizer")) parent.env(unitizer@zero.env) <- baseenv()
+    if(is(unitizer, "unitizer")) {
+      parent.env(unitizer@zero.env) <- baseenv()
+    }
     unitizer
   }
 )
