@@ -87,7 +87,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     parent.env(x@base.env) <- y@base.env
 
     # Reconstitute environment chain for new tests.  Find gaps and assign to
-    # items prior to gap.  If missing first value, then go to first env
+    # items prior to gap.  If missing first value, then go to first env.  Note
+    # we're cycling in the opposite order the environments are going in
 
     gap.order <- order(items.new.idx, decreasing=TRUE)
     gaps <- diff(c(items.new.idx[gap.order], 0L)) # note gaps are -ve and there is a gap if gap < -1
@@ -96,7 +97,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
       i.org <- gap.order[[i]]
       if(gaps[[i]] < -1L) {
         if(items.new.idx[[i.org]] + gaps[[i]] == 0L) {
-          item.env <- y@items.new@base.env
+          item.env <- x@base.env
         } else if (items.new.idx[[i.org]] + gaps[[i]] < 0) {
           stop("Logic Error, gap too low, contact maintainer.")
         } else {
@@ -104,14 +105,16 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         }
         # Any objects defined in gaps should be assigned to the new parent env, though
         # in theory there should be none unless user specifically assigned objects
-        # during a test, which is not default behavior
+        # during a test, which is not default behavior (do we need to reconcile
+        # this with the change to make all ignored tests just belong to the next
+        # test environment?)
 
         for(j in (gaps[[i]] + 1L):-1L) {
           interim.env <- y@items.new[[items.new.idx[[i.org]] + j]]@env  # assumes continuous ids in items.new
           interim.names <- ls(envir=interim.env, all.names=T)
           lapply(interim.names, function(z) assign(z, get(z, interim.env), x[itemsType(x) == "new"][[i.org]]@env))
         }
-        # no need to run updateLs() athat is done on addition to unitizer
+        # no need to run updateLs() as that is done on addition to unitizer
         if(identical(x[itemsType(x) == "new"][[i.org]]@env, item.env)) {
           # This should only happen when an ignored test just before an actual
           # and just after another ignored test is removed from the item list;
@@ -128,6 +131,16 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         } else {
           parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- item.env
         }
+      }
+      # Any items that have for parent env the base env of the new items needs
+      # to be re-assigned to the base env of the the item list we're processing
+
+      if(
+        identical(
+          parent.env(x[itemsType(x) == "new"][[i.org]]@env),
+          y@items.new@base.env
+      ) ) {
+        parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- x@base.env
       }
     }
     # Now need to map reference item environment parents.  See function docs
@@ -173,10 +186,12 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         item.env <- y@items.new[[tail(matching.new.older, 1L)]]@env
         slot.in[[i]] <- tail(matching.new.older, 1L)
       }
-      item.ref.updated <- try(
-        updateLs(
-          x[itemsType(x) == "reference"][[i]], y@base.env, item.env
-      ) )
+      if(!repair) {  # once we need to repair, stop doing this otherwise get spammed with errors
+        item.ref.updated <- try(
+          updateLs(
+            x[itemsType(x) == "reference"][[i]], y@base.env, item.env
+        ) )
+      }
       if(inherits(item.ref.updated, "try-error")) {
         stop(
           "Logic Error: item environment history corrupted in unknown way; ",
@@ -206,7 +221,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # If environments need repairing, do so now
 
     if(repair) {
-      x <- try(repairEnvs(x))
+      items.final <- try(repairEnvs(items.final))
       if(inherits(x, "try-error")) {
         stop(
           "Logic Error: unable to repair reference test environments; contact ",

@@ -28,4 +28,10 @@ local({
     is(unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
     "unitizerItems")
   )
+  ref.anc <- unitizer:::env_ancestry(x@base.env)
+  itm.anc <- unitizer:::env_ancestry(x[[1L]]@env)
+
+  # Items should belong to base env for reference
+
+  expect_identical(rev(ref.anc), head(rev(itm.anc), length(ref.anc)))
 })
