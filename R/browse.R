@@ -133,7 +133,10 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           ) )
         ) {
           message("All tests passed.")
-          if(!force.update) return(FALSE)
+          if(!force.update) {
+            message("unitizer store unchanged")
+            return(FALSE)
+          }
         }
         # Get summary of changes
 
@@ -158,6 +161,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             "You didn't accept any changes so there are no items to store."
           )
           if(!prompt.on.quit && user.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
+            message("unitizer store unchanged")
             return(FALSE)
           }
           valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
@@ -206,9 +210,11 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           y <- user.input
           next
         } else if (identical(user.input, "Q") || identical(user.input, "N")) {
+          message("unitizer store unchanged")
           return(FALSE)
         } else if (identical(user.input, "Y")) {
           if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
+            message("unitizer store unchanged")
             return(FALSE)
           } else break
         }
@@ -279,12 +285,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
     ignore.passed <- !show.passed &&
       is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed")
     ignore.sec <- all(
-      x@mapping@ignored[x@mapping@sec.id == curr.sec] &
-      !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
-    ) || (
-      ignore.passed &&
-      length(unique(x@mapping@sub.sec.id[x@mapping@sec.id == curr.sec])) == 1L  # all tests in section passed
-    )
+      (
+        x@mapping@ignored[x@mapping@sec.id == curr.sec] &
+        !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
+      ) | (
+        x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
+        !show.passed
+    ) )
     ignore.sub.sec <- all(
       x@mapping@ignored[cur.sub.sec.items] &
       !x@mapping@new.conditions[cur.sub.sec.items]
