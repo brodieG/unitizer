@@ -28,7 +28,7 @@ load_unitizer <- function(store.id, par.frame) {
       stop("Logic Error: `get_store.", class(store.id)[[1]], "` did not return a unitizer")
     stop("Logic Error: `get_store` did not return a unitizer; contact maintainer.")
   } else  {
-    unitizer <- upgrade(unitizer)
+    unitizer <- upgrade(unitizer, par.frame=par.frame)
     success <- try(set_store(store.id, unitizer))
     if(inherits(success, "try-error"))  {
       stop(
