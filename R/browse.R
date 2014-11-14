@@ -377,8 +377,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
           ),
           sep="\n"
     ) } }
-    # Need to add ignored tests as default action is N. Not clear if we also
-    # need to set reviewed to TRUE
+    # Need to add ignored tests as default action is N, though note that ignored
+    # tests are treated specially in `healEnvs` and are either included or removed
+    # based on what happens to the subsequent non-ignored test.  This part here
+    # is legacy from when new ignored tests were systematically kept
 
     if(x@mapping@ignored[[curr.id]]) {
       x@mapping@review.val[[curr.id]] <- "Y"

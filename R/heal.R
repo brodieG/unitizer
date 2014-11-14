@@ -66,6 +66,9 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   documentation is exposed so that this aspect of \code{`unitizer`} is
 #'   documented for package users
 #'
+#' @note Could be more robust by ensuring that items in \code{`x`} actually do
+#'   come from \code{`y`}
+#'
 #' @keywords internal
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
 #' @param x \code{`\link{unitizerItems-class}`} object
@@ -75,12 +78,17 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems",
   function(x, y, ...) {
+
     # Now need to reconstruct all the parenthood relationships between items,
     # start by figuring out the indices of all the new and reference items
 
     if(!is.environment(x@base.env)) stop("Slot `@base.env` must be defined for Argument `x`")
-    items.new.idx <- vapply(as.list(x)[itemsType(x) == "new"], function(x) x@id, integer(1L))
-    items.ref.idx <- vapply(as.list(x)[itemsType(x) == "reference"], function(x) x@id, integer(1L))
+
+    items.new.select <- itemsType(x) == "new" & !ignored(x)
+    items.ref.select <- itemsType(x) == "reference" & !ignored(x)
+    items.idx <- vapply(as.list(x), function(x) x@id, integer(1L))
+    items.new.idx <- items.idx[items.new.select]
+    items.ref.idx <- items.idx[items.ref.select]
 
     # Make sure that our items have a reasonable base environment
 
@@ -88,7 +96,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 
     # Reconstitute environment chain for new tests.  Find gaps and assign to
     # items prior to gap.  If missing first value, then go to first env.  Note
-    # we're cycling in the opposite order the environments are going in
+    # we're cycling in the opposite order the environments are going in.  Also,
+    # ignored tests are considered gaps as they don't have their own environment
 
     gap.order <- order(items.new.idx, decreasing=TRUE)
     gaps <- diff(c(items.new.idx[gap.order], 0L)) # note gaps are -ve and there is a gap if gap < -1
@@ -105,17 +114,15 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         }
         # Any objects defined in gaps should be assigned to the new parent env, though
         # in theory there should be none unless user specifically assigned objects
-        # during a test, which is not default behavior (do we need to reconcile
-        # this with the change to make all ignored tests just belong to the next
-        # test environment?)
+        # during a test, which is not default behavior
 
         for(j in (gaps[[i]] + 1L):-1L) {
           interim.env <- y@items.new[[items.new.idx[[i.org]] + j]]@env  # assumes continuous ids in items.new
           interim.names <- ls(envir=interim.env, all.names=T)
-          lapply(interim.names, function(z) assign(z, get(z, interim.env), x[itemsType(x) == "new"][[i.org]]@env))
+          lapply(interim.names, function(z) assign(z, get(z, interim.env), x[items.new.select][[i.org]]@env))
         }
         # no need to run updateLs() as that is done on addition to unitizer
-        if(identical(x[itemsType(x) == "new"][[i.org]]@env, item.env)) {
+        if(identical(x[items.new.select][[i.org]]@env, item.env)) {
           # This should only happen when an ignored test just before an actual
           # and just after another ignored test is removed from the item list;
           # since both the ignored tests where assigned to the environment of the
@@ -129,7 +136,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
             "development tests, if you see it please contact maintainer."
           )
         } else {
-          parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- item.env
+          parent.env(x[items.new.select][[i.org]]@env) <- item.env
         }
       }
       # Any items that have for parent env the base env of the new items needs
@@ -137,10 +144,10 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
 
       if(
         identical(
-          parent.env(x[itemsType(x) == "new"][[i.org]]@env),
+          parent.env(x[items.new.select][[i.org]]@env),
           y@items.new@base.env
       ) ) {
-        parent.env(x[itemsType(x) == "new"][[i.org]]@env) <- x@base.env
+        parent.env(x[items.new.select][[i.org]]@env) <- x@base.env
       }
     }
     # Now need to map reference item environment parents.  See function docs
@@ -189,7 +196,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
       if(!repair) {  # once we need to repair, stop doing this otherwise get spammed with errors
         item.ref.updated <- try(
           updateLs(
-            x[itemsType(x) == "reference"][[i]], y@base.env, item.env
+            x[items.ref.select][[i]], y@base.env, item.env
         ) )
       }
       if(inherits(item.ref.updated, "try-error")) {
@@ -200,9 +207,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         )
       } else if (identical(item.ref.updated, FALSE)) {  # Corrupted env history, will have to repair
         repair <- TRUE
-        item.ref.updated <- x[itemsType(x) == "reference"][[i]]
+        item.ref.updated <- x[items.ref.select][[i]]
       }
-      x[itemsType(x) == "reference"][[i]] <- item.ref.updated
+      x[items.ref.select][[i]] <- item.ref.updated
       env.list[[i]] <- item.env
     }
     # Now re-assign the environments; this has to be done after we run all the
@@ -210,15 +217,50 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # compare the environment from before the re-assignment to the one after
 
     for(i in ref.order)
-      parent.env(x[itemsType(x) == "reference"][[i]]@env) <- env.list[[i]]
+      parent.env(x[items.ref.select][[i]]@env) <- env.list[[i]]
 
-    # Re-order items (basically, by the new items, and slot in the reference
-    # ones as per the healing logic above)
+    # Now re-introduce ignored tests; first figure out what actual test the
+    # ignored tests map to.  Note that the logic below means that any ignored
+    # tests that don't have any subsequent real tests just get dropped
 
-    items.final <- append(x[itemsType(x) == "new"], x[itemsType(x) == "reference"])[
-      order(c(items.new.idx, slot.in))
+    new.ig.assign <- ave(       # for each ignored, get id of first non-ignored
+      1:length(y@items.new),
+      c(0L, head(cumsum(!ignored(y@items.new)), -1L)),
+      FUN=max
+    )
+    ref.ig.assign <- ave(1:length(y@items.ref),
+      c(0L, head(cumsum(!ignored(y@items.ref)), -1L)),
+      FUN=max
+    )
+    if(
+      any(!items.new.idx %in% new.ig.assign) ||
+      any(!items.ref.idx %in% ref.ig.assign)
+    )
+      stop("Logic Error: error re-assigning ignored items to actual tests; contact maintainer")
+
+    # For each selected test, add back the ignored ones; for new ones this is
+    # easy because we know they are all in the right order already in y@items.new
+
+    items.new.final <- y@items.new[new.ig.assign %in% items.new.idx]
+
+    # Refs a bit more complicated since we need to find the correct slot-in spot;
+    # slot.in has the correct slot for each item in items.ref.idx, in the order
+    # of items.ref.idx
+
+    items.ref.final <- y@items.ref[
+      Filter(Negate(is.na), match(ref.ig.assign, items.ref.idx))
     ]
-    # If environments need repairing, do so now
+    # Now need everything order as in y@items.new, and then for the `ref` values
+    # as per `slot.in`
+
+    items.final <- append(items.new.final, items.ref.final)[
+      order(
+        c(
+          new.ig.assign[new.ig.assign %in% items.new.idx],
+          slot.in[Filter(Negate(is.na), match(ref.ig.assign, items.ref.idx))]
+    ) ) ]
+    # If environments need repairing, do so now (note this means ignored items
+    # will get their own env?? Need to check / fix)
 
     if(repair) {
       items.final <- try(repairEnvs(items.final))

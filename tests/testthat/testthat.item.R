@@ -52,10 +52,7 @@ local( {
   } )
   test_that("Environment healing works", {
     items.mixed <- my.unitizer2@items.new[4:5] + my.unitizer2@items.ref[[1]] + my.unitizer2@items.new[c(2, 6, 8)]
-    expect_warning(
-      items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2),
-      "Logic Problem: would have assigned circular environment reference"
-    )
+    items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2)
     env.anc <- lapply(
       unitizer:::as.list(items.sorted),
       function(x) rev(unitizer:::env_ancestry(x@env, my.unitizer2@base.env))
@@ -68,15 +65,15 @@ local( {
     expect_equal(length(unique(unlist(env.anc.df[2, ]))), 1L)
     expect_true(all(apply(env.anc.df[-(1:2), -1], 1, function(x) length(unique(Filter(Negate(is.na), x)))) == 1L))
     expect_equal(  # First item is reference, all others are new
-      unitizer:::itemsType(items.sorted), c("reference", rep("new", 5))
+      unitizer:::itemsType(items.sorted), c("reference", rep("new", 7L))
     )
     expect_equal(  # Expected order of ids
       vapply(unitizer:::as.list(items.sorted), function(x) x@id, integer(1L)),
-      c(1, 2, 4, 5, 6, 8)
+      1:8
     )
     expect_equal(
       lapply(unitizer:::as.list(items.sorted), function(x) x@ls$names),
-      list(character(0), "a", c("a", "b"), c("a", "b", "e"), c("a",  "b", "e"), c("a", "b", "e", "f"))
+      list(character(0), "a", c("a", "b"), c("a", "b"), c("a", "b", "e"), c("a", "b", "e"), c("a", "b", "e", "f"), c("a", "b", "e", "f"))
     )
     expect_equal(unique(unlist(lapply(unitizer:::as.list(items.sorted), function(x) x@ls$status))), "")
   } )
