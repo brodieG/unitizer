@@ -67,7 +67,11 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   documented for package users
 #'
 #' @note Could be more robust by ensuring that items in \code{`x`} actually do
-#'   come from \code{`y`}
+#'   come from \code{`y`}. This is particularly important since when
+#'   we re-assemble the final list, we don't actually use `x` at all.  Signature
+#'   for this should probably ultimately change to be something like `unitizer`, `x`,
+#'   where x is just a data frame with column 1 the item index, and column 2
+#'   whether it originated from "new" or "ref"
 #'
 #' @keywords internal
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
@@ -90,7 +94,13 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     items.new.idx <- items.idx[items.new.select]
     items.ref.idx <- items.idx[items.ref.select]
 
-    # Make sure that our items have a reasonable base environment
+    # Make sure that our items have a reasonable base environment, though keep
+    # in mind we ultimately use the items pulled from `y`, and are relying on
+    # the fact that environments are reference objects so that changing their
+    # parents from `x` also affects the parents in `y`.  See note in fun docs.
+    # IMPORTANT COROLLARY: the only thing that should be changed in `x` is the
+    # environment parents; any other changes will be lost since we don't
+    # use `x` for anything other than that.
 
     parent.env(x@base.env) <- y@base.env
 
@@ -317,12 +327,12 @@ setMethod("updateLs", "unitizerItem",
 
       run_ls(env=new.par.env, stop.env=base.env, all.names=TRUE, store.env=new.env.store)
 
-      # Since reference test keeps any objects defined in it's own environment, we can cheat
-      # for comparison purposes by putting those objects in the "new" environment so they
-      # look like they exist there
+      # Since reference test keeps any objects defined in its own environment,
+      # we can cheat for comparison purposes by putting those objects in the
+      # "new" environment so they look like they exist there
+
       lapply(ls(envir=x@env, all.names=TRUE), function(y) assign(y, get(y, x@env), new.env.store))
       ref.ls <- ls(envir=ref.env.store, all.names=TRUE)
-
       if(nrow(x@ls)) {
         org.ls <- x@ls$names
         org.ref <- x@ls$status == ""
