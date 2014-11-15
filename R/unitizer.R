@@ -125,6 +125,10 @@ setClass(
 
 #' Display Unitizer Summary
 #'
+#' Unfortunately no choice but to use \code{`getOptions("width")`} from within
+#' here.  Maybe could pre-compute in one of earlier stages and stuff into
+#' \code{`object`}?  Not a big deal
+#'
 #' @keywords internal
 #' @param object the object to show
 #' @return NULL
@@ -132,14 +136,26 @@ setClass(
 setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
-    colnames(sum.mx) <- paste0(
+    cols.padded <- paste0(
       vapply(
-        max(vapply(colnames(sum.mx), nchar, integer(1L))) - vapply(colnames(sum.mx), nchar, integer(1L)),
+        max(vapply(colnames(sum.mx), nchar, integer(1L))) -
+          vapply(colnames(sum.mx), nchar, integer(1L)),
         function(x) paste0(rep(" ", x + 1L), collapse=""),
         character(1L)
       ),
       colnames(sum.mx)
     )
+    colnames(sum.mx) <- cols.padded
+    mat.print <- capture.output(print(`rownames<-`(sum.mx, NULL)))
+    if(length(mat.print) < 2L) {
+      warning("Summary matrix has no data so it cannot be displayed", immediate.=TRUE)
+    }
+    dat.width <- nchar(sub("^\\[.*\\] ", " ", mat.print[[2]]))
+    max.row.name.width <- max(
+      getOption("width") - dat.width - 15L,
+      15L
+    )
+    rownames(sum.mx) <- strtrunc(rownames(sum.mx), max.row.name.width)
     print(sum.mx)
     if(object@dels)
       cat("\nAdditionally, ", object@dels, " test ", if(object@dels > 1) "were" else "was", " deleted\n", sep="")
@@ -204,7 +220,6 @@ setMethod("summary", "unitizer",
     if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
 
     sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
-    rownames(sum.mx) <- strtrunc(rownames(sum.mx), 15)
     deletes <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
     main.dat <- if(nrow(sum.mx) == 2L) {
       `rownames<-`(sum.mx[2L, , drop=F], "")
