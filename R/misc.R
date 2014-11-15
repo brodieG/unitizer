@@ -514,18 +514,18 @@ valid_names <- function(x) {
 #'
 #' @keywords internal
 #' @param x a call or a symbol
-#' @return character 1 length, NA if \code{`x`} can't possibly be a function
+#' @return character 1 length if a function name, NA if an anonymous function, or
+#'   character(0L) if neither
 
 deparse_fun <- function(x) {
   if(is.symbol(x)) {
     as.character(x)
   } else if (is.call(x)) {
-    "<anon.FUN>"
-  } else {
     NA_character_
+  } else {
+    character(0L)
   }
 }
-
 #' Captalizes First Letter
 #'
 #' @keywords internal

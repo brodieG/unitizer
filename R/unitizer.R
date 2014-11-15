@@ -290,15 +290,44 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       test.result <- test.result.tpl
 
       for(i in slot.names) {
+        # if(identical(i, "conditions")) browser()
+        comp.fun.name <- slot(section@compare, i)@fun.name
+        comp.fun.anon <- isTRUE(is.na(comp.fun.name))
+        if(comp.fun.anon) comp.fun.name <- "<anon.FUN>"
+
+        if(comp.fun.anon) {
+          test.call <- list(  # pull out and use compare function
+            slot(section@compare, i)@fun, slot(item.ref@data, i),
+            slot(item.new@data, i)
+          )
+          mode(test.call) <- "call"
+        } else {
+          test.call <- call(  # pull out and use compare function
+            comp.fun.name, slot(item.ref@data, i),
+            slot(item.new@data, i)
+          )
+        }
         test.res <- tryCatch(
-          (slot(section@compare, i)@fun)(slot(item.ref@data, i), slot(item.new@data, i)),  # pull out and use compare function
-          error=function(e) structure(conditionMessage(e), class=c("testItemTestFail"))
-        )
-        err.msg <- paste0("comparison function `", slot(section@compare, i)@fun.name, "`")
+          eval(test.call, e2@env),
+          condition=function(e) structure(
+            list(
+              msg=conditionMessage(e), call=conditionCall(e),
+              cond.class=class(e)
+            ),
+            class=c("testItemTestFail")
+        ) )
+        err.msg <- paste0("comparison function `", comp.fun.name, "`")
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
+          test.cond <- head(tail(test.res$cond.class, 2L), 1L)
+          if(!length(test.cond)) test.cond <- "<unknown>"
           test.error.tpl[[i]] <- new(
-            "unitizerItemTestError", value=paste0(err.msg, " produced error: ", test.res),
+            "unitizerItemTestError",
+            value=paste0(
+              err.msg, " signaled a condition of type \"", test.cond
+              , "\", with message \"", test.res$msg, "\" and call `",
+              paste0(deparse(test.res$call), collapse=""), "`."
+            ),
             compare.err=TRUE
           )
         } else if(isTRUE(test.res)) {

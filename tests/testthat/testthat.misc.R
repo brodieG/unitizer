@@ -76,6 +76,11 @@ test_that("deparse peek", {
     unitizer:::deparse_peek(expr2, 40L)
   )
 } )
+test_that("deparse fun", {
+  expect_identical(unitizer:::deparse_fun(quote(fun)), "fun")
+  expect_identical(unitizer:::deparse_fun(quote(function(x) NULL)), NA_character_)
+  expect_identical(unitizer:::deparse_fun("hello"), character(0L))
+} )
 test_that("(Un)ordered Lists", {
   vec <- c(
     "hello htere how are you blah blah blah blah blah",
