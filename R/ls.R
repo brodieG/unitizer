@@ -1,3 +1,7 @@
+#' @include item.R
+
+NULL
+
 #' An `ls` Like Function
 #'
 #' Much like `ls`, except that it is designed to crawl up the \code{`.new`} and
@@ -23,6 +27,7 @@ unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
 
   ls.lst <- list()
   ls.test <- mods <- character()
+  new.inv <- ref.inv <- FALSE
 
   if(inherits(new.item, "try-error") && inherits(ref.item, "try-error")) {
     stop("Logic error: could not find `unitizerItem` objects to list contents of; contact Maintainer")
@@ -31,11 +36,23 @@ unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
     if(nrow(new.item@ls)) ls.lst[["new"]] <- paste0(new.item@ls$names, new.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], ".new")
     mods <- c(mods, Filter(nchar, unique(new.item@ls$status)))
+    new.inv <- isTRUE(attr(new.item@ls, "invalid"))
   }
   if (!inherits(ref.item, "try-error")) {
     if(nrow(ref.item@ls)) ls.lst[["ref"]] <- paste0(ref.item@ls$names, ref.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], ".ref")
     mods <- c(mods, Filter(nchar, unique(ref.item@ls$status)))
+    ref.inv <- isTRUE(attr(ref.item@ls, "invalid"))
+  }
+  if(new.inv || ref.inv) {
+    warning(
+      "The ls output for ",
+      paste(c("`.new`", "`.ref`")[c(new.inv, ref.inv)], sep=", "),
+      " is invalid.  This may be because you had corrupted environment chains ",
+      "that had to be repaired. Re-generating the `unitizer` with `unitize(..., ",
+      "force.update=TRUE)` should fix the problem.  If it persists, please ",
+      "contact maintainer."
+    )
   }
   structure(ls.lst[order(names(ls.lst))], class="unitizer_ls", mods=mods)
 }
@@ -58,7 +75,7 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   while(!identical(env, stop.env)) {     # Get list of environments that are relevant
     env.list <- append(env.list, env)
     if(inherits(try(env <- parent.env(env)), "try-error")) stop("Specified `stop.env` does not appear to be in parent environments.")
-    if((i <- i + 1L) > 1000) stop("Logic error: not finding `stop.env` after 1000 iterations; contact package maintainer if this is an error.")
+    if((i <- i + 1L) > 10000) stop("Logic error: not finding `stop.env` after 10000 iterations; contact package maintainer if this is an error.")
   }
   for(i in rev(seq_along(env.list))) {   # Reverse, so when we copy objects the "youngest" overwrite the "eldest"
     ls.res <- c(ls.res, ls(envir=env.list[[i]], all.names=all.names, pattern=pattern))
@@ -100,3 +117,23 @@ print.unitizer_ls <- function(x, ...) {
   if(length(extra)) cat(extra, sep="\n")
   invisible(val)
 }
+
+#' Clears ls Info and Marks as Invalid
+#'
+#' Useful when tests envs are repaired, or if we're looking at an ignored
+#' test
+
+setGeneric("invalidateLs", function(x, ...) standardGeneric("invalidateLs"))
+
+setMethod("invalidateLs", "unitizerItems", valueClass="unitizerItems",
+  function(x, ...) {
+    x@.items <- lapply(as.list(x), invalidateLs)
+    x
+} )
+setMethod("invalidateLs", "unitizerItem", valueClass="unitizerItem",
+  function(x, ...) {
+    x@ls <- x@ls[0,]             # ls potentially missleading
+    attr(x@ls, "invalid") <- TRUE
+    x
+} )
+

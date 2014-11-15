@@ -99,7 +99,17 @@ setClass(
     version=packageVersion("unitizer"),
     tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
     zero.env=baseenv()
-) )
+  ),
+  validity=function(object) {
+    if(length(object@items.ref)) {
+      ids <- vapply(as.list(object@items.ref), slot, integer(1L), "id")
+      if(!identical(ids, seq_along(ids)))
+        return("Non sequential ids in reference items.")
+      if(length(ids) != length(object@section.ref.map))
+        return("Reference section mapping error")
+    }
+  }
+)
 setClass(
   "unitizerSummary", list(data="matrix", dels="integer"),
   validity=function(object) {

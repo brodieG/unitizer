@@ -2,14 +2,15 @@
 #'
 #' Turns a standard R script into unit tests by evaluating the expressions and
 #' storing them along with their resuls.  Re-running \code{`unitize`} then
-#' checks that the values remain unchanged.  See "unitizer" vignette for more
-#' details.
+#' checks that the values remain unchanged.
 #'
 #' You can run \code{`unitize`} from the command line, or you can place one or
 #' more \code{`unitize`} calls in an R file and source that.
 #'
 #' \code{`review`} allows you to review the contents of an existing
-#' \code{`unitizer`} throught the
+#' \code{`unitizer`} throught the interactive \code{`unitizer`} interaface.
+#'
+#' See "unitizer" vignette and demos for details and examples.
 #'
 #' @export
 #' @aliases review
@@ -17,14 +18,16 @@
 #' @param test.file path to the file containing tests
 #' @param store.id a folder to store the \code{`unitizer`} objects in; will auto-
 #'   generate to a folder at the same location as the test file with the same
-#'   name as the testfile, except ending in \code{`.unitizer`} instead of \code{`.R`}
+#'   name as the testfile, except ending in \code{`.unitizer`} instead of
+#'   \code{`.R`}.  This is the default option, you can create custom
+#'   \code{`unitizer`} stores as well (see vignette and \code{`\link{get_store}`}).
 #' @param x for \code{`review`} only, either a \code{`unitizer`} or something that,
 #'   when passed to \code{`\link{get_store}`}, will retrieve a unitizer (i.e.
 #'   equivalent to what would get passed in \code{`store.id`}).
 #' @param interactive.mode logical(1L) whether to run in interactive mode
 #' @param env.clean TRUE or environment, if TRUE tests are run in a clean
 #'   environment, if an environment they are run with that environment as the
-#'   parent.
+#'   parent environment.
 #' @param search.path.clean logical(1L) if TRUE all items on the search path that
 #'   are not part of a clean R session are detached prior to running tests.  Note
 #'   namespaces for detached packages remain loaded.  Additionally, the search
@@ -35,25 +38,34 @@
 #'   "Reproducible Tests" vignette for details.
 #' @param search.path.keep character any additional items on the search path
 #'   to keep attached; has no effect unless \code{`search.path.clean`} is TRUE
+#' @param force.update logical(1L) if TRUE will give the option to re-store a
+#'   unitizer after re-evaluating all the tests even if all tests passed.
+#' @return the \code{`unitizer`} object, invisibly.  If running in interactive
+#'   mode, then the returned \code{`unitizer`} will be modified as per user
+#'   input in the interactive session.
 
 unitize <- function(
   test.file, store.id=sub("\\.[Rr]$", ".unitizer", test.file),
   interactive.mode=interactive(), env.clean=TRUE,
   search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=c("tools:rstudio", "package:unitizer")
+  search.path.keep=c("tools:rstudio", "package:unitizer"),
+  force.update=FALSE
 ) {
   if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file))
     stop("Argument `test.file` must be a valid path to a file")
   if(!is.logical(interactive.mode) || length(interactive.mode) != 1L || is.na(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
-
+  if(!is.logical(force.update) || length(force.update) != 1L || is.na(force.update))
+    stop("Argument `force.update` must be TRUE or FALSE")
   print(H1(paste0("unitizer for: ", test.file, collapse="")))
   invisible(
     unitizer_core(
       test.file, store.id, interactive.mode, env.clean, search.path.clean,
-      search.path.keep
+      search.path.keep, force.update=force.update
   ) )
 }
+#' @export
+
 review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer")
@@ -67,9 +79,12 @@ review <- function(
 
   }
   print(H1(paste0("unitizer for: ", u.name, collapse="")))
-  unitizer_core(
-    test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
-    search.path.clean=search.path.clean, search.path.keep=search.path.keep
+  invisible(
+    unitizer_core(
+      test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
+      search.path.clean=search.path.clean, search.path.keep=search.path.keep,
+      force.update=FALSE
+    )
   )
 }
 #' Runs The Basic Stuff
@@ -93,7 +108,7 @@ review <- function(
 
 unitizer_core <- function(
   test.file, store.id, interactive.mode, env.clean,
-  search.path.clean, search.path.keep
+  search.path.clean, search.path.keep, force.update
 ) {
   # -  Setup / Load ------------------------------------------------------------
 
@@ -120,17 +135,17 @@ unitizer_core <- function(
   # happens later.  Also note that pack.env$zero.env can still be tracking the
   # top package under .GlobalEnv
 
-  over_print("Loading unitizer data.")
+  over_print("Loading unitizer data...")
   par.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
 
   if(is(store.id, "unitizer")) {
-    unitizer <- store.id   # note zero.env is set-up further down
-    store.id <- unitizer@store.id
+    unitizer <- upgrade(store.id, par.frame)   # note zero.env is set-up further down
+    store.id <- unitizer@id
   } else {
     unitizer <- try(load_unitizer(store.id, par.frame))
+    if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
   }
-  if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
-  if(!is(unitizer, "unitizer")) return(unitizer)  # most likely because we upgraded and need to re-run
+  if(!is(unitizer, "unitizer")) stop("Logic Error: expected a `unitizer` object; contact maintainer.")
 
   # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
   # or other potential issues; of course this isn't foolproof if someone is using
@@ -194,7 +209,7 @@ unitizer_core <- function(
     env.clean <- .GlobalEnv
     search.path.clean <- FALSE
   } else if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
-    over_print("Search Path Setup.")
+    over_print("Search Path Setup...")
     if(!isTRUE(search.path.setup <- search_path_setup())) {
       if(isTRUE(env.clean))
         warning(
@@ -223,6 +238,7 @@ unitizer_core <- function(
   # Parse and evaluate test file, but only if we're in `unitize` mode, as implied
   # by the `test.file`
 
+  search.path.restored <- FALSE
   if(!is.null(test.file)) {
     over_print("Parsing tests...")
     if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
@@ -239,7 +255,7 @@ unitizer_core <- function(
       if(search.path.trim) search_path_restore()        # runs _unsetup() as well
       else if (search.path.setup) search_path_unsetup()
 
-      return(invisible(TRUE))
+      return(invisible(unitizer))
     }
     # Evaluate the parsed calls
 
@@ -248,7 +264,6 @@ unitizer_core <- function(
 
     # Make sure our tracing didn't get messed up in some way
 
-    search.path.restored <- FALSE
     if((isTRUE(search.path.clean) || isTRUE(env.clean)) && !search_path_check()) {
       search_path_restore()
       search.path.restored <- TRUE
@@ -285,9 +300,11 @@ unitizer_core <- function(
         if(search.path.trim) search_path_restore()        # runs _unsetup() as well
         else if (search.path.setup) search_path_unsetup()
       }
-      return(invisible(TRUE))
+      return(invisible(unitizer))
     }
   }
+  cat("\r")
+
   # -  Browse ------------------------------------------------------------------
 
   # Group tests by section and outcome for review
@@ -302,7 +319,7 @@ unitizer_core <- function(
   tot.time <- (proc.time() - start.time)[["elapsed"]]
   unitizer <- browseUnitizer(
     unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time,
-    show.passed=is.null(test.file)  # this means we're in review mode
+    force.update=force.update, show.passed=is.null(test.file)  # this means we're in review mode
   )
   # -  Finalize ------------------------------------------------------------------
 
@@ -314,7 +331,7 @@ unitizer_core <- function(
   }
   # Finalize
 
-  res <- store_unitizer(unitizer, store.id, wd)
+  store_unitizer(unitizer, store.id, wd)
   on.exit(NULL)
-  invisible(res)
+  invisible(unitizer)
 }
