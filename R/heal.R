@@ -269,6 +269,10 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
           new.ig.assign[new.ig.assign %in% items.new.idx],
           slot.in[Filter(Negate(is.na), match(ref.ig.assign, items.ref.idx))]
     ) ) ]
+    # The LSes for reference items are not meaningful so should be invalidated
+
+    items.final[ignored(items.final)] <- invalidateLs(items.final[ignored(items.final)])
+
     # If environments need repairing, do so now (note this means ignored items
     # will get their own env?? Need to check / fix)
 
@@ -342,8 +346,11 @@ setMethod("updateLs", "unitizerItem",
       }
       names(org.ref) <- org.ls
       new.ls <- ls(envir=new.env.store, all.names=TRUE)
-      ref.new <- vapply(ref.ls[ref.ls %in% new.ls], function(x) identical(ref.env.store[[x]], new.env.store[[x]]), logical(1L))
-
+      ref.new <- vapply(
+        ref.ls[ref.ls %in% new.ls],
+        function(x) identical(ref.env.store[[x]], new.env.store[[x]]),
+        logical(1L)
+      )
       # Equal b/w original, reference, and new
 
       fin.ls <- matrix(character(), ncol=2)
@@ -351,14 +358,17 @@ setMethod("updateLs", "unitizerItem",
         length(
           ls.match <-
             names(org.ref)[
-              !is.na(org.ref & (ref.new.match <- ref.new[match(names(org.ref), names(ref.new))])) & ref.new.match
+              !is.na(org.ref &
+              (ref.new.match <- ref.new[match(names(org.ref), names(ref.new))])) &
+              ref.new.match
       ] ) ) fin.ls <- cbind(ls.match, "")
 
       # Exist but modified
 
       org.new.ls <- intersect(org.ls, new.ls)
-      if(length(ls.match <- org.new.ls[!(org.new.ls %in% fin.ls[, 1])])) fin.ls <- rbind(fin.ls, cbind(ls.match, "'"))
-
+      if(length(ls.match <- org.new.ls[!(org.new.ls %in% fin.ls[, 1])])) {
+        fin.ls <- rbind(fin.ls, cbind(ls.match, "'"))
+      }
       # Disappeared objects, and new objects
 
       if(length(setdiff(org.ls, new.ls))) fin.ls <- rbind(fin.ls, cbind(setdiff(org.ls, new.ls), "*"))

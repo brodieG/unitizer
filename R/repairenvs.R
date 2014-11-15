@@ -54,11 +54,8 @@ setMethod("repairEnvs", "unitizerItems",
     prev.par <- x@base.env
 
     for(i in 1:length(x)) {
-      if(!identical(x[[i]]@env, prev.par))   # can happen with ignored tests
-        parent.env(x[[i]]@env) <- prev.par
-      x[[i]]@ls <- x[[i]]@ls[0,]             # ls potentially missleading
-      attr(x[[i]]@ls, "repaired") <- TRUE
+      if(!identical(x[[i]]@env, prev.par)) parent.env(x[[i]]@env) <- prev.par  # can happen with ignored tests
       prev.par <- x[[i]]@env
     }
-    x
+    invalidateLs(x)
 } )
