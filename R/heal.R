@@ -219,7 +219,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         repair <- TRUE
         item.ref.updated <- x[items.ref.select][[i]]
       }
-      x[items.ref.select][[i]] <- item.ref.updated
+      # Update object and record environment
+
+      y@items.ref[[items.ref.idx[[i]]]] <- item.ref.updated
       env.list[[i]] <- item.env
     }
     # Now re-assign the environments; this has to be done after we run all the
@@ -227,7 +229,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # compare the environment from before the re-assignment to the one after
 
     for(i in ref.order)
-      parent.env(x[items.ref.select][[i]]@env) <- env.list[[i]]
+      parent.env(x[items.ref.select][[i]]@env) <- env.list[[i]]  # Remember, this modifies parent envs for y@items.ref as well!
 
     # Now re-introduce ignored tests; first figure out what actual test the
     # ignored tests map to.  Note that the logic below means that any ignored
@@ -257,9 +259,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # slot.in has the correct slot for each item in items.ref.idx, in the order
     # of items.ref.idx
 
-    items.ref.final <- y@items.ref[
-      Filter(Negate(is.na), match(ref.ig.assign, items.ref.idx))
-    ]
+    items.ref.final <- y@items.ref[ref.ig.assign %in% items.ref.idx]
+
     # Now need everything order as in y@items.new, and then for the `ref` values
     # as per `slot.in`
 
