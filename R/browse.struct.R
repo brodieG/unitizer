@@ -100,9 +100,8 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
       }
-      message("did we handle tests without a section?")
-    } else
-      stop("Logic Error: unexpected `mode`")
+      unitizer.browse@mapping@reviewed[] <- TRUE   # mark all tests as reviewed so they will show up when we hit 'R'
+    } else stop("Logic Error: unexpected `mode`")
 
     # - Finalize ---------------------------------------------------------------
 
@@ -481,7 +480,7 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
 #'
 #' Used primarily as a debugging tool
 #'
-#' @value character the deparsed calls
+#' @return character the deparsed calls
 
 setGeneric("deparseCalls", function(x, ...) standardGeneric("deparseCalls"))
 setMethod("deparseCalls", "unitizerBrowse",
@@ -554,8 +553,8 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Drop item in store",
-    detail="The following test passed.",
+    prompt="Drop test from store",
+    detail="The following tests passed.",
     actions=c(Y="C", N="A")
 ) )
 #' Add a browsing sub-section to a browse section

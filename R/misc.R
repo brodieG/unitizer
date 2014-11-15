@@ -318,8 +318,9 @@ setMethod("all.equal", "conditionList",
       return(
         c(
           paste0(
-            "`target` and `current` do not have the same number of conditions (",
-            length(target), " vs ", length(current), ")"
+            "`target` (a.k.a `.ref`) and `current` (a.k.a `.new`) do not have ",
+            "the same number of conditions (",length(target), " vs ",
+            length(current), ")"
           ),
           if(
             any(
@@ -379,8 +380,8 @@ all.equal.condition <- function(target, current, ...) {
   ) {
     return(
       paste0(
-        "Condition type mismatch, target is '", type.targ,
-        "', but current is '", type.curr, "'"
+        "Condition type mismatch, `target` (a.k.a. `.ref`) is '", type.targ,
+        "', but `current` (a.k.a. `.new`) is '", type.curr, "'"
   ) ) }
   if(!isTRUE(all.equal(conditionMessage(target), conditionMessage(current))))
     return(paste0(type.targ, " condition messages do not match"))

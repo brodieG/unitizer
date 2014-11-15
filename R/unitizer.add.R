@@ -95,12 +95,15 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       }
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
       e1 <- e1 + item  # store evaluated test and compare it to reference one
-      if(!ignored(item)) test.env <- new.env(parent=test.env)  # ignored items share environment with subsequent items
+
+      # ignored items share environment with subsequent items
+
+      if(!ignored(item)) test.env <- new.env(parent=test.env)
+
       i <- i + 1L
       over_print(paste0("Running: ", deparse(item@call)[[1L]]))
     }
     over_print("")
-    cat("\r")
     e1
 } )
 #' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
@@ -171,6 +174,10 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
     x@sections.ref <- sects
     x@section.ref.map <- sects.map
 
+    # Re-sequence ids so they map to our reference mapping
+
+    for(i in 1:length(x@items.ref)) x@items.ref[[i]]@id <- i
+
     x
   }
 )
@@ -184,7 +191,9 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
 
 setMethod("+", c("unitizer", "unitizerItem"),
   function(e1, e2) {
-    e2 <- updateLs(e2, e1@items.new@base.env)
+    e2 <- try(updateLs(e2, e1@items.new@base.env))
+    if(inherits(e2, "try-error"))
+      stop("Logic Error: unable to update LS for new item; contact maintainer.")
     e1 <- registerItem(e1, e2)
     e1 <- testItem(e1, e2)
     e1
