@@ -555,7 +555,7 @@ setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
     title="Passed",
     prompt="Drop test from store",
     detail="The following tests passed.",
-    actions=c(Y="C", N="A")
+    actions=c(Y="C", N="A"), show.out=TRUE
 ) )
 #' Add a browsing sub-section to a browse section
 #'
