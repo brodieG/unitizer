@@ -100,7 +100,6 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
       }
-      unitizer.browse@mapping@reviewed[] <- TRUE   # mark all tests as reviewed so they will show up when we hit 'R'
     } else stop("Logic Error: unexpected `mode`")
 
     # - Finalize ---------------------------------------------------------------
@@ -220,9 +219,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
-    tests.to.show <- !x@mapping@ignored & x@mapping@reviewed & (
-      if(identical(x@mode, "unitize")) x@mapping@review.type != "Passed" else TRUE
-    )
+    tests.to.show <- rep(TRUE, length(x@mapping@review.type))  # this used to limit what test were shown
     out.calls <- character(sum(tests.to.show))
     out.calls.idx <- integer(sum(tests.to.show))
     out.sec <- character(length(unique(x@mapping@sec.id[tests.to.show])))
@@ -238,9 +235,15 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       disp.len <- min.deparse.len
     }
     sec.id.prev <- 0L
-    item.id.formatted <- format(x@mapping@item.id)
+    item.id.formatted <- paste0(
+      if(any(x@mapping@ignored)) ifelse(x@mapping@ignored, "*", " "),
+      format(x@mapping@item.id)
+    )
     review.formatted <- format(
-      paste(x@mapping@review.type, x@mapping@review.val, sep=":"),
+      paste(
+        x@mapping@review.type, sep=":",
+        ifelse(x@mapping@reviewed, x@mapping@review.val, "-")
+      ),
       justify="right"
     )[tests.to.show]
     j <- k <- l <- 0L
@@ -268,7 +271,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       }
       call.dep <- deparse_peek(item@call, disp.len)
       out.calls[[j]] <- paste0(
-        "  ", item.id.formatted[[i]], ". ",
+        "    ", item.id.formatted[[i]], ". ",
         call.dep, " "
       )
       out.calls.idx[[j]] <- l

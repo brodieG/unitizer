@@ -157,10 +157,6 @@ review_prompt <- function(x, nav.env) {
 
   # Navigation Prompt
 
-  if(!length(x@mapping@item.id[x@mapping@reviewed])) {
-    message("You have not reviewed any tests yet; there is nothing to revisit.")
-    return(x)
-  }
   nav.help <- paste0(
     "You may re-review any of the tests that you have already reviewed by ",
     "selecting that test's number.  The last letter on each line represents ",
@@ -185,7 +181,7 @@ review_prompt <- function(x, nav.env) {
       length(y) != 1L || !is.numeric(y[[1L]]) || length(y[[1L]]) != 1L ||
       y[[1L]] != as.integer(y[[1L]])
     ) return(FALSE)
-    valid.vals <- x@mapping@item.id[x@mapping@reviewed]
+    valid.vals <- x@mapping@item.id
     if(!isTRUE(y[[1L]] %in% valid.vals)) {
       message(
         "Input must be integer-like and in ",
@@ -204,41 +200,31 @@ review_prompt <- function(x, nav.env) {
   } else if (identical(nav.id, "U")) {
     # Go to unreviewed test
 
-    reviewed <- as.logical(rev(cumsum(rev(x@mapping@reviewed))))  # because ignored tests are not explicitly marked as reviewed, so
     item.len <- length(x@mapping@review.val)
-    if(all(reviewed)) {
+    if(all(x@mapping@reviewed)) {
       message("No unreviewed tests.")
       x@last.id <- item.len
       return(x)
     }
-    message("Jumping to first unreviewed test.")
+    message("Jumping to first unreviewed test.") # But note that we also show all ignored tests before that one for context
 
-    if ((reviewed.num <- max(which(reviewed))) == 1L) {
-      x@last.id <- 1L
-      return(x)
-    }
-    # Find out if there were any ignored tests adjacent to first unreviewed,
-    # note, this is overcomplicated..., should just found first non-ignored
-    # before this one
-
-    adj.ignored <- which(
-      cumsum(rev(x@mapping@ignored[1:reviewed.num])) == 1:reviewed.num
-    )
-    if(length(adj.ignored)) {
-      x@last.id <- min(item.len, reviewed.num - min(adj.ignored))
-    } else {
-      x@last.id <- min(item.len, reviewed.num)
-    }
-    return(x)
+    nav.id <- min(which(!x@mapping@reviewed & !x@mapping@ignored))
   } else if (
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
   ) {
     stop("Logic Error: Unexpected user input allowed through in Review mode; contact maintainer")
   }
-  prev.tests <- x@mapping@item.id[!x@mapping@ignored] < nav.id
-  x@last.id <- if(any(prev.tests)) {
-    x@mapping@item.id[!x@mapping@ignored][[max(which(prev.tests))]]
-  } else 0L
+  # Find the test just before the one we selected that is not ignored, and start
+  # showing right after that one
+
+  prev.reviewed <- max(
+    c(0L, which(head(!x@mapping@ignored, nav.id - 1L)))  # c(0, ...) to avoid warning
+  )
+  # Set last.id to zero if there is are no previously reviewed tests to start
+  # from, otherwise to the test subsequent to the previously reivewed one
+  # note the item that will be reviewed is the one right after this
+
+  x@last.id <- prev.reviewed
   return(x)
 }
 
