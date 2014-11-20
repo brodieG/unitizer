@@ -158,15 +158,11 @@ review_prompt <- function(x, nav.env) {
   # Navigation Prompt
 
   nav.help <- paste0(
-    "You may re-review any of the tests that you have already reviewed by ",
-    "selecting that test's number.  The last letter on each line represents ",
-    "your previous input.  The word before the colon before the last letter ",
-    "describes the type of test (e.g. Failed / Removed / Corrupted). The ",
-    "numbering is not continuous because some statements in the store are ",
-    "not considered tests (e.g. assignments). Additionally, the numbers may ",
-    "not line up to the expressions in the test file because passed tests ",
-    "are excluded from the numbering sequence. Alternatively, typing U will ",
-    "take you to the first unreviewed test."
+    "Select a test to review by typing that test's number at the prompt. ",
+    "Tests that start with a `*` are not reviewable.  The letter after the ",
+    "test status represents prior user input to test review (a `-` indicates ",
+    "the test has not been reviewed). Type U to jump to the first unreviewed ",
+    "test."
   )
   nav.opts <- c(
     "input an integer-like number corresponding to a reviewed test",
