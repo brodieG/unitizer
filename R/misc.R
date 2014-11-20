@@ -33,7 +33,7 @@ deparse_peek <- function(expr, len, width=500L) {
     stop("Argument `width` must be an integer greater than zero")
   chr <- paste0(sub("\n", " ", deparse(expr, width)), collapse="")
   if(nchar(chr) > len) {
-    paste0(substr(chr, 1L, len), "...")
+    paste0(substr(chr, 1L, len -3L), "...")
   } else {
     chr
   }

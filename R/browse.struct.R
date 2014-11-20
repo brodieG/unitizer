@@ -195,7 +195,7 @@ setClass("unitizerBrowse", contains="unitizerList",
 
 setMethod("show", "unitizerBrowse", function(object) {
   obj.rendered <- as.character(object)
-  cat(obj.rendered, sep="\n")
+  cat(obj.rendered, sep="")
   invisible(obj.rendered)
 } )
 setGeneric("render", function(object, ...) standardGeneric("render"))
@@ -229,25 +229,28 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     # Work on figuring out all the various display lengths
 
     min.deparse.len <- 20L
-    disp.len <- width.max - 12L - 6L - max(nchar(x@mapping@item.id))
+    sec.id.prev <- 0L
+    item.id.formatted <- format(justify="right",
+      paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id)
+    )
+    review.formatted <- format(
+      paste(sep=":",
+        ifelse(!x@mapping@ignored, as.character(x@mapping@review.type), "-"),
+        ifelse(x@mapping@reviewed, as.character(x@mapping@review.val), "-")
+      ),
+      justify="right"
+    )[tests.to.show]
+    disp.len <- width.max - 7L - max(nchar(item.id.formatted)) -
+      max(nchar(review.formatted))
     if(disp.len < min.deparse.len) {
       warning("Selected display width too small, will be ignored")
       disp.len <- min.deparse.len
     }
-    sec.id.prev <- 0L
-    item.id.formatted <- paste0(
-      if(any(x@mapping@ignored)) ifelse(x@mapping@ignored, "*", " "),
-      format(x@mapping@item.id)
-    )
-    review.formatted <- format(
-      paste(
-        x@mapping@review.type, sep=":",
-        ifelse(x@mapping@reviewed, x@mapping@review.val, "-")
-      ),
-      justify="right"
-    )[tests.to.show]
     j <- k <- l <- 0L
 
+    dot.pad <- substr(  # this will be the padding template
+      paste0(rep(".  ", ceiling(disp.len / 3)), collapse=""), 1L, disp.len
+    )
     for(i in x@mapping@item.id) {
       if(!tests.to.show[[i]]) next
       j <- j + 1L
@@ -264,36 +267,27 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       }
       if(!identical(sec.id.prev, sec.id)) {
         k <- k + 1L
-        out.sec[[k]] <- x[[sec.id]]@section.title
+        out.sec[[k]] <- as.character(H2(x[[sec.id]]@section.title), margin="none")
         out.sec.idx[[k]] <- l
         sec.id.prev <- sec.id
         l <- l + 1L
       }
-      call.dep <- deparse_peek(item@call, disp.len)
+      # Now paste the call together, substituting into the padding template
+      call.dep <- paste0(deparse_peek(item@call, disp.len), " ")
+      call.str <- dot.pad
+      substr(call.str, 1L, nchar(call.dep)) <- call.dep
+
       out.calls[[j]] <- paste0(
-        "    ", item.id.formatted[[i]], ". ",
-        call.dep, " "
+        "    ", item.id.formatted[[i]], ". ", call.str, " ",
+        review.formatted[[i]], "\n"
       )
       out.calls.idx[[j]] <- l
     }
-    # We now want to rpad the calls with hyphens.  We also don't want any calls
-    # plus hyphens to end up narrower than `min.deparse.len`, so this gets a
-    # bit messy
+    # Now interleave contents and headers
 
-    out[out.calls.idx] <- paste0(
-      out.calls,
-      vapply(
-        max(
-          max(
-            nchar(out.calls),
-            min.deparse.len + 2L + max(nchar(item.id.formatted))
-        ) )  - nchar(out.calls) + 1L,
-        function(times) paste0(rep("-", times), collapse=""),
-        character(1L)
-      ), " ",
-      review.formatted
-    )
+    out[out.calls.idx] <- out.calls
     out[out.sec.idx] <- out.sec
+
     if(length(out.sec) == 1L) out[-out.sec.idx] else out
 } )
 #' Indicate Whether to Exit Review Loop
