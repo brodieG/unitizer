@@ -307,7 +307,9 @@ unitizer_core <- function(
 
   # -  Browse ------------------------------------------------------------------
 
-  # Group tests by section and outcome for review
+  # Group tests by section and outcome for review; note that the `unitizer.browse`
+  # object carries info about what mode it is in and that is used by subsequent
+  # functions
 
   if(is.null(test.file)) {
     unitizer.browse <- browsePrep(unitizer, mode="review")
@@ -319,7 +321,7 @@ unitizer_core <- function(
   tot.time <- (proc.time() - start.time)[["elapsed"]]
   unitizer <- browseUnitizer(
     unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time,
-    force.update=force.update, show.passed=is.null(test.file)  # this means we're in review mode
+    force.update=force.update
   )
   # -  Finalize ------------------------------------------------------------------
 

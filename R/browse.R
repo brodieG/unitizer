@@ -38,16 +38,13 @@ setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer
 #'   as an argument because the logic for generating it is different depending on
 #'   whether we are using `unitize` or `review`.
 #' @param prompt.on.quit whether to prompt for review even if there are no changes
-#' @param show.passed whether to show passed tests or not, this allows us to use
-#'   broadly the same logic for `unitize` and `review`
 #' @param a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
-  function(x, y, prompt.on.quit, show.passed, force.update, ...) {
+  function(x, y, prompt.on.quit, force.update, ...) {
     unitizer <- withRestarts(
       browseUnitizerInternal(
-        x, y, show.passed=show.passed,
-        prompt.on.quit=prompt.on.quit, force.update=force.update
+        x, y, prompt.on.quit=prompt.on.quit, force.update=force.update
       ),
       unitizerQuitExit=unitizer_quit_handler
     )
@@ -62,7 +59,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
 )
 setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
 setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
-  function(x, y, prompt.on.quit, show.passed, force.update, ...) {
+  function(x, y, prompt.on.quit, force.update, ...) {
 
     # set up local history
 
@@ -129,7 +126,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             something.happened <- any(
               y@mapping@review.type != "Passed" & !y@mapping@ignored
             ) || (
-              any(!y@mapping@ignored) && show.passed
+              any(!y@mapping@ignored) && identical(y@mode, "review")
           ) )
         ) {
           message("All tests passed.")
@@ -231,7 +228,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
     # Extract and re-map sections of tests we're saving as reference
 
-    if(show.passed) {
+    if(identical(y@mode, "review")) {
       # Need to re-use our reference sections so `refSections` works since we
       # will not have created any sections by parsing/evaluating tests.  This
       # is super hacky as we're partly using the stuff related to `items.new`,
@@ -257,7 +254,8 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("unitizerBrowse"),
-  function(x, show.passed, ...) {
+  function(x, ...) {
+    x@review <- FALSE
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
       last.reviewed.sec <- x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
@@ -282,7 +280,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
 
-    ignore.passed <- !show.passed &&
+    ignore.passed <- !identical(x@mode, "review") &&
       is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed")
     ignore.sec <- all(
       (
@@ -290,7 +288,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
       ) | (
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
-        !show.passed
+        !identical(x@mode, "review")
     ) )
     ignore.sub.sec <- all(
       x@mapping@ignored[cur.sub.sec.items] &
@@ -342,7 +340,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # not passed tests and requesting that those not be shown
 
     if(!ignore.sub.sec) {
-      if(x@mapping@reviewed[[curr.id]] && !show.passed) {
+      if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
         message(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
