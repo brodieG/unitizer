@@ -167,19 +167,27 @@ setClass("unitizerBrowse", contains="unitizerList",
     last.id="integer",         # used so that `reviewNext` knows what to show next
     last.reviewed="integer",   # used so that `reviewNext` knows what headers to display
     hist.con="ANY",            # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
-    mode="character"
+    mode="character",
+    review="logical",          # whether to force-show review menu or not
+    inspect.all="logical"      # whether to force inspection of all elements, whether ignored/passed or not
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
     last.id=0L,
     last.reviewed=0L,
     hist.con=NULL,
-    mode="unitize"
+    mode="unitize",
+    review=FALSE,
+    inspect.all=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
       return("Slot `@mode` must be character(1L) in c(\"unitize\", \"review\")")
     }
+    if(length(object@review) != 1L || is.na(object@review))
+      return("Slot `@review` must be logical(1L) and not NA.")
+    if(length(object@inspect.all) != 1L || is.na(object@inspect.all))
+      return("Slot `@inspect.all` must be logical(1L) and not NA.")
     TRUE
   }
 )
@@ -251,6 +259,12 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     dot.pad <- substr(  # this will be the padding template
       paste0(rep(".  ", ceiling(disp.len / 3)), collapse=""), 1L, disp.len
     )
+    # this is the order they were added in as sections, not the original file
+    # order; which should it be?  Both will preserve section order, but sub
+    # sections will be in different orders.  Prolly should be in order of
+    # original file, as that will make more sense to the user, but then we
+    # need to warn about how display order is not same as review order.
+
     for(i in x@mapping@item.id) {
       if(!tests.to.show[[i]]) next
       j <- j + 1L

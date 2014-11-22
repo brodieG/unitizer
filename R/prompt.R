@@ -159,13 +159,15 @@ review_prompt <- function(x, nav.env) {
 
   nav.help <- paste0(
     "Select a test to review by typing that test's number at the prompt. ",
-    "Tests that start with a `*` are not reviewable.  The letter after the ",
-    "test status represents prior user input to test review (a `-` indicates ",
-    "the test has not been reviewed). Type U to jump to the first unreviewed ",
+    "Tests that start with a `*`",
+    if(identical(x@mode, "unitize")) ", or with status \"Passed\",", "are not ",
+    "typically reviewed in this mode.  The letter after the test status ",
+    "represents prior user input to test review (a `-` indicates ",
+    "the test has not been reviewed). Type \"U\" to jump to the first unreviewed ",
     "test."
   )
   nav.opts <- c(
-    "input an integer-like number corresponding to a reviewed test",
+    "input a test number",
     U="[U]nreviewed"
   )
   nav.prompt <- "What test do you wish to review"
@@ -204,23 +206,35 @@ review_prompt <- function(x, nav.env) {
     }
     message("Jumping to first unreviewed test.") # But note that we also show all ignored tests before that one for context
 
-    nav.id <- min(which(!x@mapping@reviewed & !x@mapping@ignored))
+    nav.id <- min(
+      which(
+        !x@mapping@reviewed & !x@mapping@ignored &
+        (if(!identical(x@mode, "review")) !x@mapping@review.type == "Passed" else TRUE)
+    ) )
   } else if (
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
   ) {
     stop("Logic Error: Unexpected user input allowed through in Review mode; contact maintainer")
   }
-  # Find the test just before the one we selected that is not ignored, and start
-  # showing right after that one
+  # Determine whether test we selected is a test we would normally not review
 
-  prev.reviewed <- max(
-    c(0L, which(head(!x@mapping@ignored, nav.id - 1L)))  # c(0, ...) to avoid warning
-  )
-  # Set last.id to zero if there is are no previously reviewed tests to start
-  # from, otherwise to the test subsequent to the previously reivewed one
-  # note the item that will be reviewed is the one right after this
+  x@inspect.all <- x@mapping@ignored[[nav.id]] || (
+      identical(x@mode, "unitize") &&
+      identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
+    )
+  x@review <- x@inspect.all
 
-  x@last.id <- prev.reviewed
+  if(x@inspect.all) {
+    message(
+      "You chose to select a test that is not normally reviewed in this mode; ",
+      "as such, upon test completion, you will be brought back to this menu ",
+      "instead of being taken to the next reviewable test."
+    )
+  }
+  # Set last.id to test just before the one we want to review as process will
+  # then cause desired test to be reviewed
+
+  x@last.id <- as.integer(nav.id) - 1L
   return(x)
 }
 

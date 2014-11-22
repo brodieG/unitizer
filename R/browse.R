@@ -93,27 +93,37 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
       # we are not ready to exit the unitizer
 
       first.time <- TRUE
+
       repeat {
-
         user.quit <- FALSE
-        if(show.passed && first.time) {  # for passed tests, start by showing the list of tests
-          first.time <- FALSE
-          y.tmp <- review_prompt(y, new.env(parent=x@base.env))
-          if(identical(y.tmp, "Q")) user.quit <- TRUE
-          else if(!is(y.tmp, "unitizerBrowse"))
-            stop(
-              "Logic Error: review should return `unitizerBrowse`; contact ",
-              "maintainer."
-            )
-          else y <- y.tmp
-        }
         if(!user.quit) {
-          withRestarts(  # Now review each test
-            {
-             # Interactively review all tests
 
+          # Now review each test, special handling required to ensure that the
+          # test selection menu shows up as appropriate (i.e. starting off in
+          # review mode, or we just reviewed a typically non-reviewed test)
+
+          withRestarts(
+            {
               if(!done(y)) {
-                y <- reviewNext(y, show.passed=show.passed)
+                if(first.time && identical(y@mode, "review")) { # for passed tests, start by showing the list of tests
+                  first.time <- FALSE
+                  y@review <- TRUE
+                } else {
+                  review.prev <- y@review
+                  y <- reviewNext(y)
+                  if(!review.prev && y@review) next
+                }
+                if(y@review) {
+                  y.tmp <- review_prompt(y, new.env(parent=x@base.env))
+                  if(identical(y.tmp, "Q")) {
+                    invokeRestart("earlyExit")
+                  } else if(!is(y.tmp, "unitizerBrowse")) {
+                    stop(
+                      "Logic Error: review should return `unitizerBrowse`; contact ",
+                      "maintainer."
+                    )
+                  } else y <- y.tmp
+                }
                 next
             } },
             earlyExit=function() user.quit <<- TRUE
@@ -133,8 +143,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           if(!force.update) {
             message("unitizer store unchanged")
             return(FALSE)
-          }
-        }
+        } }
         # Get summary of changes
 
         keep <- !y@mapping@ignored
@@ -150,8 +159,18 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
         if(
           (length(x@changes) > 0L || something.happened) &&
           (prompt.on.quit || !user.quit)
-        )
+        ) {
           print(H2("Finalize Unitizer"))
+          # Make sure we did not skip anything we were supposed to review
+
+          if(identical(y@mode, "unitize")) {
+            unreviewed <- sum(!y@mapping@reviewed[!y@mapping@ignored])
+            if(unreviewed) {
+              message(
+                "You have ", unreviewed, " unreviewed tests; press \"R\" to see ",
+                "which tests you have skipped."
+        ) } } }
+        # Prompt for user input if necessary to finalize
 
         if(length(x@changes) == 0L && !force.update) {
           message(
@@ -255,7 +274,6 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, ...) {
-    x@review <- FALSE
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
       last.reviewed.sec <- x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
@@ -281,7 +299,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # control whether stuff gets shown to screen or not
 
     ignore.passed <- !identical(x@mode, "review") &&
-      is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed")
+      is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
+      !x@inspect.all
     ignore.sec <- all(
       (
         x@mapping@ignored[x@mapping@sec.id == curr.sec] &
@@ -289,11 +308,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) | (
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
         !identical(x@mode, "review")
-    ) )
-    ignore.sub.sec <- all(
-      x@mapping@ignored[cur.sub.sec.items] &
-      !x@mapping@new.conditions[cur.sub.sec.items]
-    ) || ignore.passed
+    ) ) && !x@inspect.all
+    ignore.sub.sec <- (
+      all(
+        x@mapping@ignored[cur.sub.sec.items] &
+        !x@mapping@new.conditions[cur.sub.sec.items]
+      ) || ignore.passed
+    ) && !x@inspect.all
     multi.sect <- length(
       unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])
     ) > 1L
@@ -314,7 +335,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       print(H3(curr.sub.sec.obj@title))
       cat(
         curr.sub.sec.obj@detail,
-        if(!all(x@mapping@ignored[cur.sub.sec.items])) {
+        if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
           paste0(
             " ", curr.sub.sec.obj@prompt, " ",
             "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
@@ -377,18 +398,14 @@ setMethod("reviewNext", c("unitizerBrowse"),
     ) } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
-    # based on what happens to the subsequent non-ignored test.  This part here
-    # is legacy from when new ignored tests were systematically kept
+    # based on what happens to the subsequent non-ignored test.
 
-    if(x@mapping@ignored[[curr.id]]) {
-      x@mapping@review.val[[curr.id]] <- "Y"
-      x@last.id <- curr.id
-      return(x)
-    } else if (ignore.passed) {
-      x@last.id <- curr.id
-      return(x)
+    if(!x@inspect.all) {
+      if(x@mapping@ignored[[curr.id]] || ignore.passed) {
+        x@last.id <- curr.id
+        return(x)
+      }
     }
-
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the unitizerItem values and the child
     # environment containing the actual unitizer items.  This is so that when
