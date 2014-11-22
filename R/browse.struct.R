@@ -124,6 +124,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
 #'
 #' @slot item.id unique, 1 incrementing up to total number of reviewable items
 #' @slot item.id.rel non-unique, unique within each sec/sub.sec
+#' @slot item.id.orig the original id of the item used to re-order tests in the
+#'   order they show up in the original files
+#' @slot item.ref whether a test is a reference test or not
 #' @slot reviewed whether a test has been reviewed
 #' @slot review.val what action the user decided ("N") is default
 #' @keywords internal
@@ -132,6 +135,8 @@ setClass("unitizerBrowseMapping",
   slots=c(
     item.id="integer",
     item.id.rel="integer",
+    item.id.orig="integer",
+    item.ref="logical",
     sec.id="integer",
     sub.sec.id="integer",
     reviewed="logical",
@@ -151,6 +156,9 @@ setClass("unitizerBrowseMapping",
       ) || any(is.na(object@review.type))
     ) {
       return("Invalid slot `@review.type`")
+    }
+    if(any(is.na(object@item.ref))) {
+      return("Invalid slot `@item.ref` must be logical and not NA")
     }
     TRUE
 } )
@@ -203,7 +211,15 @@ setClass("unitizerBrowse", contains="unitizerList",
 
 setMethod("show", "unitizerBrowse", function(object) {
   obj.rendered <- as.character(object)
-  cat(obj.rendered, sep="")
+  cat(obj.rendered, "\n", sep="")
+  if(!identical(object@mode, "review")) {
+    cat(
+      "Note that tests are displayed in the order they appear in the test ",
+      "file, not in the order they would be reviewed in, which is why the test ",
+      "numbers are not necessarily sequential (see vignette for details).\n\n",
+      sep=""
+    )
+  }
   invisible(obj.rendered)
 } )
 setGeneric("render", function(object, ...) standardGeneric("render"))
@@ -234,6 +250,15 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     out.sec.idx <- integer(length(out.sec))
     out <- character(length(out.calls) + length(out.sec))
 
+    # Figure out order as stuff showed up in original file; reference ids are
+    # put at the end.  Note the implicit assumption here is that the stuff in
+    # sections is in the same order in file and here, which is almost certainly
+    # true except for stuff outside of sections
+
+    ids <- x@mapping@item.id.orig
+    max.id.orig <- max(c(0, ids[!x@mapping@item.ref]))
+    ids[x@mapping@item.ref] <- rank(ids[x@mapping@item.ref]) + max.id.orig
+
     # Work on figuring out all the various display lengths
 
     min.deparse.len <- 20L
@@ -259,13 +284,10 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     dot.pad <- substr(  # this will be the padding template
       paste0(rep(".  ", ceiling(disp.len / 3)), collapse=""), 1L, disp.len
     )
-    # this is the order they were added in as sections, not the original file
-    # order; which should it be?  Both will preserve section order, but sub
-    # sections will be in different orders.  Prolly should be in order of
-    # original file, as that will make more sense to the user, but then we
-    # need to warn about how display order is not same as review order.
+    # Display in order tests appear in file; note this is not in same order
+    # as they show up in review
 
-    for(i in x@mapping@item.id) {
+    for(i in x@mapping@item.id[order(x@mapping@sec.id, ids)]) {
       if(!tests.to.show[[i]]) next
       j <- j + 1L
       l <- l + 1L
@@ -381,9 +403,13 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
     test.types <- unlist(lapply(as.list(e2), slot, "title"))
     max.item <- length(e1@mapping@item.id)
     max.sub.sec <- if(max.item) max(e1@mapping@sub.sec.id) else 0L
+    sec.item.list <- as.list(extractItems(e2))
+
     mapping.new <- new("unitizerBrowseMapping",
       item.id=(max.item + 1L):(max.item + sum(item.count)),
       item.id.rel=unlist(lapply(item.count, function(x) seq(len=x))),
+      item.id.orig=vapply(sec.item.list, slot, 1L, "id"),
+      item.ref=vapply(sec.item.list, slot, FALSE, "reference"),
       sec.id=rep(length(e1), sum(item.count)),
       sub.sec.id=rep(
         seq_along(item.count), item.count
@@ -489,8 +515,10 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
 } )
 #' Pull Out Deparsed Calls From Objects
 #'
-#' Used primarily as a debugging tool
+#' Used primarily as a debugging tool, should probably be migrated to use
+#' \code{`\link{extractItems}`}
 #'
+#' @keywords internal
 #' @return character the deparsed calls
 
 setGeneric("deparseCalls", function(x, ...) standardGeneric("deparseCalls"))
@@ -515,7 +543,28 @@ setMethod("deparseCalls", "unitizerItems",
       as.list(x),
       function(x) paste0(deparse(x@call, width=500L), collapse=""), character(1L)
 ) } )
+#' Pull out items from unitizerBrowse objects
+#'
+#' @keywords internal
 
+setGeneric("extractItems", function(x, ...) standardGeneric("extractItems"))
+setMethod("extractItems", "unitizerBrowse", valueClass="unitizerItems",
+  function(x, ...) {
+    Reduce(append, lapply(as.list(x), extractItems))
+  }
+)
+setMethod("extractItems", "unitizerBrowseSection", valueClass="unitizerItems",
+  function(x, ...) {
+    item.list <- lapply(
+      as.list(x),
+      function(y) {
+        if(is.null(y@items.new) && is.null(y@items.ref)) return(new("unitizerItems"))
+        if(!is.null(y@items.new)) y@items.new else y@items.ref
+      }
+    )
+    Reduce(append, item.list)
+  }
+)
 #' Assemble Title for Display
 #'
 #' Uses \code{`title`} slot

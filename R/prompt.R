@@ -171,8 +171,8 @@ review_prompt <- function(x, nav.env) {
     U="[U]nreviewed"
   )
   nav.prompt <- "What test do you wish to review"
-  cat(nav.prompt, " (", paste0(nav.opts, collapse=", "), ")?\n\n", sep="")
   show(x)
+  cat(nav.prompt, " (", paste0(nav.opts, collapse=", "), ")?\n", sep="")
   exit.fun <- function(y, env) {               # keep re-prompting until user types in valid value
     if(!is.expression(y)) stop("Argument `y` should be an expression.")
     if(

@@ -164,4 +164,15 @@ local( {
       my.unitizer4@section.ref.map
     )
   } )
+  test_that("Item Extraction", {
+    items <- unitizer:::extractItems(unitizer.prepped)
+    item.calls <- vapply(unitizer:::as.list(items), function(x) paste0(deparse(x@call, width=500), collapse=""), character(1L))
+    item.types <- vapply(unitizer:::as.list(items), slot, FALSE, "reference")
+    item.ids <- vapply(unitizer:::as.list(items), slot, 1L, "id")
+    item.df <- data.frame(item.calls, item.types, item.ids, stringsAsFactors=FALSE)
+    expect_identical(
+      structure(list(item.calls = c("library(stats)", "1 + 1", "runif(20)", "stop(\"woohoo\")", "var <- 200", "matrix(1:9, 3)", "1 + 20", "var1 <- list(1, 2, 3)", "sample(20)", "matrix(1:9, ncol = 3)", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))", "\"I'll be removed\"", "\"I too will be removed\"", "\"I three will be removed\""), item.types = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), item.ids = c(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 5L, 6L, 7L)), .Names = c("item.calls", "item.types", "item.ids"), row.names = c(1L, 5L, 2L, 6L, 3L, 4L, 8L, 9L, 7L, 10L, 11L, 12L, 13L, 14L), class = "data.frame"),
+      item.df[order(item.types, item.ids),]
+    )
+  } )
 } )
