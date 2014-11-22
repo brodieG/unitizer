@@ -226,7 +226,7 @@ review_prompt <- function(x, nav.env) {
 
   if(x@inspect.all) {
     message(
-      "You chose to select a test that is not normally reviewed in this mode; ",
+      "You selected a test that is not normally reviewed in this mode; ",
       "as such, upon test completion, you will be brought back to this menu ",
       "instead of being taken to the next reviewable test."
     )
