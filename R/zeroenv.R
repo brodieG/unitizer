@@ -499,7 +499,8 @@ search_path_restore <- function() {
     if(inherits(res, "try-error")) {
       warning(
         "Failed attempting to restore search path at step ",
-        hist@mode, " `", hist@name, "`.  Unable to fully restore search path.  ",
+        switch(hist@mode, add="remove", remove="add", "<unknown>"),
+        " `", hist@name, "`.  Unable to fully restore search path.  ",
         .unitizer.search.fail.msg, immediate.=TRUE
       )
       return(invisible(FALSE))
