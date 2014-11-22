@@ -33,4 +33,5 @@ unitizer_sect("Compare error", compare=sample, {
   6 + 2 + 1/10^16
   matrix(1:9, nrow=3)
   message("random wow")
+  cause.trouble <- 42
 } )
