@@ -216,7 +216,8 @@ setMethod("show", "unitizerBrowse", function(object) {
     cat(
       "Note that tests are displayed in the order they appear in the test ",
       "file, not in the order they would be reviewed in, which is why the test ",
-      "numbers are not necessarily sequential (see vignette for details).\n\n",
+      "numbers are not necessarily sequential (see vignette for details and ",
+      "exception).\n\n",
       sep=""
     )
   }
