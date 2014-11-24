@@ -70,9 +70,9 @@ test_that("deparse peek", {
   } )
   expect_equal("1 + 1 + 3", unitizer:::deparse_peek(expr1, 20L))
   expect_error(unitizer:::deparse_peek(expr1, 3L))
-  expect_equal("1 + 1...", unitizer:::deparse_peek(expr1, 5L))
+  expect_equal("1 ...", unitizer:::deparse_peek(expr1, 5L))
   expect_equal(
-    "for (i in 1:100) {    loop.val <- sample...",
+    "for (i in 1:100) {    loop.val <- sam...",
     unitizer:::deparse_peek(expr2, 40L)
   )
 } )
