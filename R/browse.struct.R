@@ -583,7 +583,10 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
     prompt="Overwrite item in store with new value",
-    detail="Reference test does not match new test from test script.",
+    detail=paste0(
+      "Reference test does not match new test from test script (compare `.new` ",
+      "and `.ref` to see differences)."
+    ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",

@@ -457,8 +457,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
       "`B` to go Back to the previous test",
       "`R` to see a listing of all previously reviewed tests",
       "`ls()` to see what objects are available to inspect",
+      if(!is.null(item.new))
+        "`.new` to see newly evaluated test result",
+      if(!is.null(item.ref))
+        "`.ref` to see result from reference test from `unitizer` store",
       paste0(collapse="",
-        paste0(get.msg, collapse=" or "),
+        paste0(get.msg, collapse=" or "), " ",
         "to see more details about the test (see documentation for `getTest` ",
         "for details on other accessor functions such as (",
         paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."
