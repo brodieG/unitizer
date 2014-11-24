@@ -164,11 +164,15 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           # Make sure we did not skip anything we were supposed to review
 
           if(identical(y@mode, "unitize")) {
-            unreviewed <- sum(!y@mapping@reviewed[!y@mapping@ignored])
+            unreviewed <- sum(
+              !y@mapping@reviewed & y@mapping@review.type != "Passed" &
+              !y@mapping@ignored
+            )
             if(unreviewed) {
               message(
-                "You have ", unreviewed, " unreviewed tests; press \"R\" to see ",
-                "which tests you have skipped."
+                "You have ", unreviewed, " unreviewed tests; press `R` to see ",
+                "which tests you have skipped, and then `U` to go to first ",
+                "unreviewed."
         ) } } }
         # Prompt for user input if necessary to finalize
 
