@@ -38,16 +38,13 @@ setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer
 #'   as an argument because the logic for generating it is different depending on
 #'   whether we are using `unitize` or `review`.
 #' @param prompt.on.quit whether to prompt for review even if there are no changes
-#' @param show.passed whether to show passed tests or not, this allows us to use
-#'   broadly the same logic for `unitize` and `review`
 #' @param a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
-  function(x, y, prompt.on.quit, show.passed, force.update, ...) {
+  function(x, y, prompt.on.quit, force.update, ...) {
     unitizer <- withRestarts(
       browseUnitizerInternal(
-        x, y, show.passed=show.passed,
-        prompt.on.quit=prompt.on.quit, force.update=force.update
+        x, y, prompt.on.quit=prompt.on.quit, force.update=force.update
       ),
       unitizerQuitExit=unitizer_quit_handler
     )
@@ -62,7 +59,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
 )
 setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
 setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
-  function(x, y, prompt.on.quit, show.passed, force.update, ...) {
+  function(x, y, prompt.on.quit, force.update, ...) {
 
     # set up local history
 
@@ -96,27 +93,37 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
       # we are not ready to exit the unitizer
 
       first.time <- TRUE
+
       repeat {
-
         user.quit <- FALSE
-        if(show.passed && first.time) {  # for passed tests, start by showing the list of tests
-          first.time <- FALSE
-          y.tmp <- review_prompt(y, new.env(parent=x@base.env))
-          if(identical(y.tmp, "Q")) user.quit <- TRUE
-          else if(!is(y.tmp, "unitizerBrowse"))
-            stop(
-              "Logic Error: review should return `unitizerBrowse`; contact ",
-              "maintainer."
-            )
-          else y <- y.tmp
-        }
         if(!user.quit) {
-          withRestarts(  # Now review each test
-            {
-             # Interactively review all tests
 
+          # Now review each test, special handling required to ensure that the
+          # test selection menu shows up as appropriate (i.e. starting off in
+          # review mode, or we just reviewed a typically non-reviewed test)
+
+          withRestarts(
+            {
               if(!done(y)) {
-                y <- reviewNext(y, show.passed=show.passed)
+                if(first.time && identical(y@mode, "review")) { # for passed tests, start by showing the list of tests
+                  first.time <- FALSE
+                  y@review <- TRUE
+                } else {
+                  review.prev <- y@review
+                  y <- reviewNext(y)
+                  if(!review.prev && y@review) next
+                }
+                if(y@review) {
+                  y.tmp <- review_prompt(y, new.env(parent=x@base.env))
+                  if(identical(y.tmp, "Q")) {
+                    invokeRestart("earlyExit")
+                  } else if(!is(y.tmp, "unitizerBrowse")) {
+                    stop(
+                      "Logic Error: review should return `unitizerBrowse`; contact ",
+                      "maintainer."
+                    )
+                  } else y <- y.tmp
+                }
                 next
             } },
             earlyExit=function() user.quit <<- TRUE
@@ -129,15 +136,14 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             something.happened <- any(
               y@mapping@review.type != "Passed" & !y@mapping@ignored
             ) || (
-              any(!y@mapping@ignored) && show.passed
+              any(!y@mapping@ignored) && identical(y@mode, "review")
           ) )
         ) {
           message("All tests passed.")
           if(!force.update) {
             message("unitizer store unchanged")
             return(FALSE)
-          }
-        }
+        } }
         # Get summary of changes
 
         keep <- !y@mapping@ignored
@@ -153,8 +159,22 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
         if(
           (length(x@changes) > 0L || something.happened) &&
           (prompt.on.quit || !user.quit)
-        )
+        ) {
           print(H2("Finalize Unitizer"))
+          # Make sure we did not skip anything we were supposed to review
+
+          if(identical(y@mode, "unitize")) {
+            unreviewed <- sum(
+              !y@mapping@reviewed & y@mapping@review.type != "Passed" &
+              !y@mapping@ignored
+            )
+            if(unreviewed) {
+              message(
+                "You have ", unreviewed, " unreviewed tests; press `R` to see ",
+                "which tests you have skipped, and then `U` to go to first ",
+                "unreviewed."
+        ) } } }
+        # Prompt for user input if necessary to finalize
 
         if(length(x@changes) == 0L && !force.update) {
           message(
@@ -231,7 +251,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
     # Extract and re-map sections of tests we're saving as reference
 
-    if(show.passed) {
+    if(identical(y@mode, "review")) {
       # Need to re-use our reference sections so `refSections` works since we
       # will not have created any sections by parsing/evaluating tests.  This
       # is super hacky as we're partly using the stuff related to `items.new`,
@@ -257,7 +277,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("unitizerBrowse"),
-  function(x, show.passed, ...) {
+  function(x, ...) {
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
       last.reviewed.sec <- x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
@@ -282,20 +302,23 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
 
-    ignore.passed <- !show.passed &&
-      is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed")
+    ignore.passed <- !identical(x@mode, "review") &&
+      is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
+      !x@inspect.all
     ignore.sec <- all(
       (
         x@mapping@ignored[x@mapping@sec.id == curr.sec] &
         !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
       ) | (
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
-        !show.passed
-    ) )
-    ignore.sub.sec <- all(
-      x@mapping@ignored[cur.sub.sec.items] &
-      !x@mapping@new.conditions[cur.sub.sec.items]
-    ) || ignore.passed
+        !identical(x@mode, "review")
+    ) ) && !x@inspect.all
+    ignore.sub.sec <- (
+      all(
+        x@mapping@ignored[cur.sub.sec.items] &
+        !x@mapping@new.conditions[cur.sub.sec.items]
+      ) || ignore.passed
+    ) && !x@inspect.all
     multi.sect <- length(
       unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])
     ) > 1L
@@ -316,7 +339,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       print(H3(curr.sub.sec.obj@title))
       cat(
         curr.sub.sec.obj@detail,
-        if(!all(x@mapping@ignored[cur.sub.sec.items])) {
+        if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
           paste0(
             " ", curr.sub.sec.obj@prompt, " ",
             "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
@@ -342,7 +365,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # not passed tests and requesting that those not be shown
 
     if(!ignore.sub.sec) {
-      if(x@mapping@reviewed[[curr.id]] && !show.passed) {
+      if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
         message(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
@@ -379,18 +402,14 @@ setMethod("reviewNext", c("unitizerBrowse"),
     ) } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
-    # based on what happens to the subsequent non-ignored test.  This part here
-    # is legacy from when new ignored tests were systematically kept
+    # based on what happens to the subsequent non-ignored test.
 
-    if(x@mapping@ignored[[curr.id]]) {
-      x@mapping@review.val[[curr.id]] <- "Y"
-      x@last.id <- curr.id
-      return(x)
-    } else if (ignore.passed) {
-      x@last.id <- curr.id
-      return(x)
+    if(!x@inspect.all) {
+      if(x@mapping@ignored[[curr.id]] || ignore.passed) {
+        x@last.id <- curr.id
+        return(x)
+      }
     }
-
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the unitizerItem values and the child
     # environment containing the actual unitizer items.  This is so that when
@@ -442,8 +461,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
       "`B` to go Back to the previous test",
       "`R` to see a listing of all previously reviewed tests",
       "`ls()` to see what objects are available to inspect",
+      if(!is.null(item.new))
+        "`.new` to see newly evaluated test result",
+      if(!is.null(item.ref))
+        "`.ref` to see result from reference test from `unitizer` store",
       paste0(collapse="",
-        paste0(get.msg, collapse=" or "),
+        paste0(get.msg, collapse=" or "), " ",
         "to see more details about the test (see documentation for `getTest` ",
         "for details on other accessor functions such as (",
         paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."

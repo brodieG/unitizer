@@ -90,13 +90,13 @@ local( {
     unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
     unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
     expect_equal(
-      c("Section 1", "   2. runif(20) -----------------------------------  Failed:Y", "   4. matrix(1:9, 3) ------------------------------     New:Y", "Section 2", "   7. sample(20) ----------------------------------  Failed:Y", "   8. 1 + 20 --------------------------------------     New:Y", "  10. matrix(1:9, ncol = 3) -----------------------     New:Y", "  11. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  12. \"I'll be removed\" --------------------------- Removed:Y",  "  13. \"I too will be removed\" --------------------- Removed:Y", "  14. \"I three will be removed\" ------------------- Removed:Y"),
+      c("= <untitled> ===================================================================================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ====================================================================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:Y\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:Y\n", "= Section 2 ====================================================================================================\n", "     8. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:Y\n", "    *9. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "     7. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "    10. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:Y\n", "    11. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "= Removed Items ================================================================================================\n", "    12. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:Y\n", "    13. \"I too will be removed\" .  .  .  .  .  .   Removed:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:Y\n"),
       as.character(unitizer.prepped, 60)
     )
     # Alternating tests
     unitizer.prepped@mapping@reviewed <- as.logical(seq(length(unitizer.prepped@mapping@reviewed)) %% 2)
     expect_equal(
-      c("Section 2", "   7. sample(20) ----------------------------------  Failed:Y", "  11. lm(x ~ y, data.frame(x = 1:10, y = c(5, ... -     New:Y", "Removed Items", "  13. \"I too will be removed\" --------------------- Removed:Y"),
+      c("= <untitled> ===================================================================================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ====================================================================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:-\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:-\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:-\n", "= Section 2 ====================================================================================================\n", "     8. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:-\n", "    *9. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "     7. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "    10. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:-\n", "    11. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "= Removed Items ================================================================================================\n", "    12. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:-\n", "    13. \"I too will be removed\" .  .  .  .  .  .   Removed:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:-\n"),
       as.character(unitizer.prepped, 60)
     )
   } )
@@ -162,6 +162,17 @@ local( {
     expect_identical(
       c(1L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 4L, 4L, 4L),
       my.unitizer4@section.ref.map
+    )
+  } )
+  test_that("Item Extraction", {
+    items <- unitizer:::extractItems(unitizer.prepped)
+    item.calls <- vapply(unitizer:::as.list(items), function(x) paste0(deparse(x@call, width=500), collapse=""), character(1L))
+    item.types <- vapply(unitizer:::as.list(items), slot, FALSE, "reference")
+    item.ids <- vapply(unitizer:::as.list(items), slot, 1L, "id")
+    item.df <- data.frame(item.calls, item.types, item.ids, stringsAsFactors=FALSE)
+    expect_identical(
+      structure(list(item.calls = c("library(stats)", "1 + 1", "runif(20)", "stop(\"woohoo\")", "var <- 200", "matrix(1:9, 3)", "1 + 20", "var1 <- list(1, 2, 3)", "sample(20)", "matrix(1:9, ncol = 3)", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))", "\"I'll be removed\"", "\"I too will be removed\"", "\"I three will be removed\""), item.types = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), item.ids = c(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 5L, 6L, 7L)), .Names = c("item.calls", "item.types", "item.ids"), row.names = c(1L, 5L, 2L, 6L, 3L, 4L, 8L, 9L, 7L, 10L, 11L, 12L, 13L, 14L), class = "data.frame"),
+      item.df[order(item.types, item.ids),]
     )
   } )
 } )

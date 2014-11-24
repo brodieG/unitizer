@@ -312,4 +312,27 @@ local( {
 
     expect_equal(x@items.new[[4]]@data@message[[1]], "Error in a() : could not find function \"b\"")
   } )
+
+  test_that("Comparison Function Errors", {
+
+    exps <- expression(
+      fun <- function(x, y) warning("not gonna work"),
+      unitizer_sect(compare=fun, expr={
+        1 + 1
+      })
+    )
+    my.unitizer <- new("unitizer", id=25, zero.env=new.env())
+    my.unitizer <- my.unitizer + exps   # add ref.exps as new items
+
+    my.unitizer2 <- new("unitizer", id=26, zero.env=new.env()) + my.unitizer@items.new
+    my.unitizer2 <- my.unitizer2 + exps
+
+    expect_identical(as.character(my.unitizer2@tests.status), c("Pass", "Error"))
+    expect_identical(
+      my.unitizer2@tests.errorDetails[[2]]@value@value,
+      "comparison function `fun` signaled a condition of type \"warning\", with message \"not gonna work\" and call `fun(2, 2)`."
+    )
+  } )
 } )
+
+
