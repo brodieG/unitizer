@@ -7,22 +7,28 @@
 #' You can run \code{`unitize`} from the command line, or you can place one or
 #' more \code{`unitize`} calls in an R file and source that.
 #'
-#' \code{`review`} allows you to review the contents of an existing
-#' \code{`unitizer`} throught the interactive \code{`unitizer`} interaface.
+#' \code{`unitizer`} stores are identified by \code{`unitizer`} ids, which by
+#' default are character strings containing the location of the folder the
+#' \code{`unitizer`} RDS files are kept in.  By default \code{`unitize`} and
+#' friends will create a \code{`unitizer`} id for you based on the test file
+#' name, but you can specify your own location as an id, or even use a
+#' completely different mechanism to store the \code{`unitizer`} data by
+#' implementing S3 methods for \code{`\link{get_unitizer}`} and
+#' \code{`\link{set_unitizer}`}.
 #'
 #' See "unitizer" vignette and demos for details and examples.
 #'
 #' @export
-#' @aliases review
-#' @seealso \code{`\link{get_store}`}
+#' @aliases review, unitize_dir, unitize_files
+#' @seealso \code{`\link{get_unitizer}`}
 #' @param test.file path to the file containing tests
 #' @param store.id a folder to store the \code{`unitizer`} objects in; will auto-
 #'   generate to a folder at the same location as the test file with the same
 #'   name as the testfile, except ending in \code{`.unitizer`} instead of
 #'   \code{`.R`}.  This is the default option, you can create custom
-#'   \code{`unitizer`} stores as well (see vignette and \code{`\link{get_store}`}).
+#'   \code{`unitizer`} stores as well (see vignette and \code{`\link{get_unitizer}`}).
 #' @param x for \code{`review`} only, either a \code{`unitizer`} or something that,
-#'   when passed to \code{`\link{get_store}`}, will retrieve a unitizer (i.e.
+#'   when passed to \code{`\link{get_unitizer}`}, will retrieve a unitizer (i.e.
 #'   equivalent to what would get passed in \code{`store.id`}).
 #' @param interactive.mode logical(1L) whether to run in interactive mode
 #' @param env.clean TRUE or environment, if TRUE tests are run in a clean
