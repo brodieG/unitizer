@@ -99,7 +99,17 @@ setClass(
     version=packageVersion("unitizer"),
     tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
     zero.env=baseenv()
-) )
+  ),
+  validity=function(object) {
+    if(length(object@items.ref)) {
+      ids <- vapply(as.list(object@items.ref), slot, integer(1L), "id")
+      if(!identical(ids, seq_along(ids)))
+        return("Non sequential ids in reference items.")
+      if(length(ids) != length(object@section.ref.map))
+        return("Reference section mapping error")
+    }
+  }
+)
 setClass(
   "unitizerSummary", list(data="matrix", dels="integer"),
   validity=function(object) {
@@ -115,6 +125,10 @@ setClass(
 
 #' Display Unitizer Summary
 #'
+#' Unfortunately no choice but to use \code{`getOptions("width")`} from within
+#' here.  Maybe could pre-compute in one of earlier stages and stuff into
+#' \code{`object`}?  Not a big deal
+#'
 #' @keywords internal
 #' @param object the object to show
 #' @return NULL
@@ -122,14 +136,26 @@ setClass(
 setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
-    colnames(sum.mx) <- paste0(
+    cols.padded <- paste0(
       vapply(
-        max(vapply(colnames(sum.mx), nchar, integer(1L))) - vapply(colnames(sum.mx), nchar, integer(1L)),
+        max(vapply(colnames(sum.mx), nchar, integer(1L))) -
+          vapply(colnames(sum.mx), nchar, integer(1L)),
         function(x) paste0(rep(" ", x + 1L), collapse=""),
         character(1L)
       ),
       colnames(sum.mx)
     )
+    colnames(sum.mx) <- cols.padded
+    mat.print <- capture.output(print(`rownames<-`(sum.mx, NULL)))
+    if(length(mat.print) < 2L) {
+      warning("Summary matrix has no data so it cannot be displayed", immediate.=TRUE)
+    }
+    dat.width <- nchar(sub("^\\[.*\\] ", " ", mat.print[[2]]))
+    max.row.name.width <- max(
+      getOption("width") - dat.width - 15L,
+      15L
+    )
+    rownames(sum.mx) <- strtrunc(rownames(sum.mx), max.row.name.width)
     print(sum.mx)
     if(object@dels)
       cat("\nAdditionally, ", object@dels, " test ", if(object@dels > 1) "were" else "was", " deleted\n", sep="")
@@ -194,7 +220,6 @@ setMethod("summary", "unitizer",
     if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
 
     sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
-    rownames(sum.mx) <- strtrunc(rownames(sum.mx), 15)
     deletes <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
     main.dat <- if(nrow(sum.mx) == 2L) {
       `rownames<-`(sum.mx[2L, , drop=F], "")
@@ -265,15 +290,44 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       test.result <- test.result.tpl
 
       for(i in slot.names) {
+        # if(identical(i, "conditions")) browser()
+        comp.fun.name <- slot(section@compare, i)@fun.name
+        comp.fun.anon <- isTRUE(is.na(comp.fun.name))
+        if(comp.fun.anon) comp.fun.name <- "<anon.FUN>"
+
+        if(comp.fun.anon) {
+          test.call <- list(  # pull out and use compare function
+            slot(section@compare, i)@fun, slot(item.ref@data, i),
+            slot(item.new@data, i)
+          )
+          mode(test.call) <- "call"
+        } else {
+          test.call <- call(  # pull out and use compare function
+            comp.fun.name, slot(item.ref@data, i),
+            slot(item.new@data, i)
+          )
+        }
         test.res <- tryCatch(
-          (slot(section@compare, i)@fun)(slot(item.ref@data, i), slot(item.new@data, i)),  # pull out and use compare function
-          error=function(e) structure(conditionMessage(e), class=c("testItemTestFail"))
-        )
-        err.msg <- paste0("comparison function `", slot(section@compare, i)@fun.name, "`")
+          eval(test.call, e2@env),
+          condition=function(e) structure(
+            list(
+              msg=conditionMessage(e), call=conditionCall(e),
+              cond.class=class(e)
+            ),
+            class=c("testItemTestFail")
+        ) )
+        err.msg <- paste0("comparison function `", comp.fun.name, "`")
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
+          test.cond <- head(tail(test.res$cond.class, 2L), 1L)
+          if(!length(test.cond)) test.cond <- "<unknown>"
           test.error.tpl[[i]] <- new(
-            "unitizerItemTestError", value=paste0(err.msg, " produced error: ", test.res),
+            "unitizerItemTestError",
+            value=paste0(
+              err.msg, " signaled a condition of type \"", test.cond
+              , "\", with message \"", test.res$msg, "\" and call `",
+              paste0(deparse(test.res$call), collapse=""), "`."
+            ),
             compare.err=TRUE
           )
         } else if(isTRUE(test.res)) {

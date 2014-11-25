@@ -1,4 +1,4 @@
-library(testthat)
+  library(testthat)
 library(unitizer)
 
 test_that("Text wrapping", {
@@ -70,11 +70,16 @@ test_that("deparse peek", {
   } )
   expect_equal("1 + 1 + 3", unitizer:::deparse_peek(expr1, 20L))
   expect_error(unitizer:::deparse_peek(expr1, 3L))
-  expect_equal("1 + 1...", unitizer:::deparse_peek(expr1, 5L))
+  expect_equal("1 ...", unitizer:::deparse_peek(expr1, 5L))
   expect_equal(
-    "for (i in 1:100) {    loop.val <- sample...",
+    "for (i in 1:100) {    loop.val <- sam...",
     unitizer:::deparse_peek(expr2, 40L)
   )
+} )
+test_that("deparse fun", {
+  expect_identical(unitizer:::deparse_fun(quote(fun)), "fun")
+  expect_identical(unitizer:::deparse_fun(quote(function(x) NULL)), NA_character_)
+  expect_identical(unitizer:::deparse_fun("hello"), character(0L))
 } )
 test_that("(Un)ordered Lists", {
   vec <- c(
@@ -113,11 +118,11 @@ test_that("Compare Conditions", {
   ) )
   expect_true(all.equal(lst1, lst1))
   expect_equal(
-    "`target` and `current` do not have the same number of conditions (4 vs 3)",
+    "`target` (a.k.a `.ref`) and `current` (a.k.a `.new`) do not have the same number of conditions (4 vs 3)",
     all.equal(lst1, lst2)
   )
   expect_equal(
-    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, target is 'Error', but current is 'Warning'"),
+    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, `target` (a.k.a. `.ref`) is 'Error', but `current` (a.k.a. `.new`) is 'Warning'"),
     all.equal(lst2, lst1[1L:3L])
   )
   expect_equal(
@@ -127,7 +132,7 @@ test_that("Compare Conditions", {
   attr(lst1[[3L]], "printed") <- TRUE
 
   expect_equal(
-    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, target is 'Error', but current is 'Warning'", "Condition mismatch may involve print/show methods; carefully review conditions with `getConds(.new)` and `getConds(.ref)` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch."),
+    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, `target` (a.k.a. `.ref`) is 'Error', but `current` (a.k.a. `.new`) is 'Warning'", "Condition mismatch may involve print/show methods; carefully review conditions with `getConds(.new)` and `getConds(.ref)` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch."),
     all.equal(lst2, lst1[1L:3L])
   )
   attr(lst1[[3L]], "printed") <- NULL

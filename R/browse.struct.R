@@ -100,9 +100,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
       }
-      message("did we handle tests without a section?")
-    } else
-      stop("Logic Error: unexpected `mode`")
+    } else stop("Logic Error: unexpected `mode`")
 
     # - Finalize ---------------------------------------------------------------
 
@@ -126,6 +124,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
 #'
 #' @slot item.id unique, 1 incrementing up to total number of reviewable items
 #' @slot item.id.rel non-unique, unique within each sec/sub.sec
+#' @slot item.id.orig the original id of the item used to re-order tests in the
+#'   order they show up in the original files
+#' @slot item.ref whether a test is a reference test or not
 #' @slot reviewed whether a test has been reviewed
 #' @slot review.val what action the user decided ("N") is default
 #' @keywords internal
@@ -134,6 +135,8 @@ setClass("unitizerBrowseMapping",
   slots=c(
     item.id="integer",
     item.id.rel="integer",
+    item.id.orig="integer",
+    item.ref="logical",
     sec.id="integer",
     sub.sec.id="integer",
     reviewed="logical",
@@ -154,6 +157,9 @@ setClass("unitizerBrowseMapping",
     ) {
       return("Invalid slot `@review.type`")
     }
+    if(any(is.na(object@item.ref))) {
+      return("Invalid slot `@item.ref` must be logical and not NA")
+    }
     TRUE
 } )
 #' Helper Object for Browsing
@@ -169,19 +175,27 @@ setClass("unitizerBrowse", contains="unitizerList",
     last.id="integer",         # used so that `reviewNext` knows what to show next
     last.reviewed="integer",   # used so that `reviewNext` knows what headers to display
     hist.con="ANY",            # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
-    mode="character"
+    mode="character",
+    review="logical",          # whether to force-show review menu or not
+    inspect.all="logical"      # whether to force inspection of all elements, whether ignored/passed or not
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
     last.id=0L,
     last.reviewed=0L,
     hist.con=NULL,
-    mode="unitize"
+    mode="unitize",
+    review=FALSE,
+    inspect.all=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
       return("Slot `@mode` must be character(1L) in c(\"unitize\", \"review\")")
     }
+    if(length(object@review) != 1L || is.na(object@review))
+      return("Slot `@review` must be logical(1L) and not NA.")
+    if(length(object@inspect.all) != 1L || is.na(object@inspect.all))
+      return("Slot `@inspect.all` must be logical(1L) and not NA.")
     TRUE
   }
 )
@@ -197,7 +211,16 @@ setClass("unitizerBrowse", contains="unitizerList",
 
 setMethod("show", "unitizerBrowse", function(object) {
   obj.rendered <- as.character(object)
-  cat(obj.rendered, sep="\n")
+  cat(obj.rendered, "\n", sep="")
+  if(!identical(object@mode, "review")) {
+    cat(
+      "Note that tests are displayed in the order they appear in the test ",
+      "file, not in the order they would be reviewed in, which is why the test ",
+      "numbers are not necessarily sequential (see vignette for details and ",
+      "exception).\n\n",
+      sep=""
+    )
+  }
   invisible(obj.rendered)
 } )
 setGeneric("render", function(object, ...) standardGeneric("render"))
@@ -221,32 +244,51 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
-    tests.to.show <- !x@mapping@ignored & x@mapping@reviewed & (
-      if(identical(x@mode, "unitize")) x@mapping@review.type != "Passed" else TRUE
-    )
+    tests.to.show <- rep(TRUE, length(x@mapping@review.type))  # this used to limit what test were shown
     out.calls <- character(sum(tests.to.show))
     out.calls.idx <- integer(sum(tests.to.show))
     out.sec <- character(length(unique(x@mapping@sec.id[tests.to.show])))
     out.sec.idx <- integer(length(out.sec))
     out <- character(length(out.calls) + length(out.sec))
 
+    # Figure out order as stuff showed up in original file; reference ids are
+    # put at the end.  Note the implicit assumption here is that the stuff in
+    # sections is in the same order in file and here, which is almost certainly
+    # true except for stuff outside of sections
+
+    ids <- x@mapping@item.id.orig
+    max.id.orig <- max(c(0, ids[!x@mapping@item.ref]))
+    ids[x@mapping@item.ref] <- rank(ids[x@mapping@item.ref]) + max.id.orig
+
     # Work on figuring out all the various display lengths
 
     min.deparse.len <- 20L
-    disp.len <- width.max - 12L - 6L - max(nchar(x@mapping@item.id))
+    sec.id.prev <- 0L
+    item.id.formatted <- format(justify="right",
+      paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id)
+    )
+    review.formatted <- format(
+      paste(sep=":",
+        ifelse(!x@mapping@ignored, as.character(x@mapping@review.type), "-"),
+        ifelse(x@mapping@reviewed, as.character(x@mapping@review.val), "-")
+      ),
+      justify="right"
+    )[tests.to.show]
+    disp.len <- width.max - 7L - max(nchar(item.id.formatted)) -
+      max(nchar(review.formatted))
     if(disp.len < min.deparse.len) {
       warning("Selected display width too small, will be ignored")
       disp.len <- min.deparse.len
     }
-    sec.id.prev <- 0L
-    item.id.formatted <- format(x@mapping@item.id)
-    review.formatted <- format(
-      paste(x@mapping@review.type, x@mapping@review.val, sep=":"),
-      justify="right"
-    )[tests.to.show]
     j <- k <- l <- 0L
 
-    for(i in x@mapping@item.id) {
+    dot.pad <- substr(  # this will be the padding template
+      paste0(rep(".  ", ceiling(disp.len / 3)), collapse=""), 1L, disp.len
+    )
+    # Display in order tests appear in file; note this is not in same order
+    # as they show up in review
+
+    for(i in x@mapping@item.id[order(x@mapping@sec.id, ids)]) {
       if(!tests.to.show[[i]]) next
       j <- j + 1L
       l <- l + 1L
@@ -262,36 +304,27 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       }
       if(!identical(sec.id.prev, sec.id)) {
         k <- k + 1L
-        out.sec[[k]] <- x[[sec.id]]@section.title
+        out.sec[[k]] <- as.character(H2(x[[sec.id]]@section.title), margin="none")
         out.sec.idx[[k]] <- l
         sec.id.prev <- sec.id
         l <- l + 1L
       }
-      call.dep <- deparse_peek(item@call, disp.len)
+      # Now paste the call together, substituting into the padding template
+      call.dep <- paste0(deparse_peek(item@call, disp.len), " ")
+      call.str <- dot.pad
+      substr(call.str, 1L, nchar(call.dep)) <- call.dep
+
       out.calls[[j]] <- paste0(
-        "  ", item.id.formatted[[i]], ". ",
-        call.dep, " "
+        "    ", item.id.formatted[[i]], ". ", call.str, " ",
+        review.formatted[[i]], "\n"
       )
       out.calls.idx[[j]] <- l
     }
-    # We now want to rpad the calls with hyphens.  We also don't want any calls
-    # plus hyphens to end up narrower than `min.deparse.len`, so this gets a
-    # bit messy
+    # Now interleave contents and headers
 
-    out[out.calls.idx] <- paste0(
-      out.calls,
-      vapply(
-        max(
-          max(
-            nchar(out.calls),
-            min.deparse.len + 2L + max(nchar(item.id.formatted))
-        ) )  - nchar(out.calls) + 1L,
-        function(times) paste0(rep("-", times), collapse=""),
-        character(1L)
-      ), " ",
-      review.formatted
-    )
+    out[out.calls.idx] <- out.calls
     out[out.sec.idx] <- out.sec
+
     if(length(out.sec) == 1L) out[-out.sec.idx] else out
 } )
 #' Indicate Whether to Exit Review Loop
@@ -371,9 +404,13 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
     test.types <- unlist(lapply(as.list(e2), slot, "title"))
     max.item <- length(e1@mapping@item.id)
     max.sub.sec <- if(max.item) max(e1@mapping@sub.sec.id) else 0L
+    sec.item.list <- as.list(extractItems(e2))
+
     mapping.new <- new("unitizerBrowseMapping",
       item.id=(max.item + 1L):(max.item + sum(item.count)),
       item.id.rel=unlist(lapply(item.count, function(x) seq(len=x))),
+      item.id.orig=vapply(sec.item.list, slot, 1L, "id"),
+      item.ref=vapply(sec.item.list, slot, FALSE, "reference"),
       sec.id=rep(length(e1), sum(item.count)),
       sub.sec.id=rep(
         seq_along(item.count), item.count
@@ -479,9 +516,11 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
 } )
 #' Pull Out Deparsed Calls From Objects
 #'
-#' Used primarily as a debugging tool
+#' Used primarily as a debugging tool, should probably be migrated to use
+#' \code{`\link{extractItems}`}
 #'
-#' @value character the deparsed calls
+#' @keywords internal
+#' @return character the deparsed calls
 
 setGeneric("deparseCalls", function(x, ...) standardGeneric("deparseCalls"))
 setMethod("deparseCalls", "unitizerBrowse",
@@ -505,7 +544,28 @@ setMethod("deparseCalls", "unitizerItems",
       as.list(x),
       function(x) paste0(deparse(x@call, width=500L), collapse=""), character(1L)
 ) } )
+#' Pull out items from unitizerBrowse objects
+#'
+#' @keywords internal
 
+setGeneric("extractItems", function(x, ...) standardGeneric("extractItems"))
+setMethod("extractItems", "unitizerBrowse", valueClass="unitizerItems",
+  function(x, ...) {
+    Reduce(append, lapply(as.list(x), extractItems))
+  }
+)
+setMethod("extractItems", "unitizerBrowseSection", valueClass="unitizerItems",
+  function(x, ...) {
+    item.list <- lapply(
+      as.list(x),
+      function(y) {
+        if(is.null(y@items.new) && is.null(y@items.ref)) return(new("unitizerItems"))
+        if(!is.null(y@items.new)) y@items.new else y@items.ref
+      }
+    )
+    Reduce(append, item.list)
+  }
+)
 #' Assemble Title for Display
 #'
 #' Uses \code{`title`} slot
@@ -523,7 +583,10 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
     prompt="Overwrite item in store with new value",
-    detail="Reference test does not match new test from test script.",
+    detail=paste0(
+      "Reference test does not match new test from test script (compare `.new` ",
+      "and `.ref` to see differences)."
+    ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
@@ -554,9 +617,9 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Drop item in store",
-    detail="The following test passed.",
-    actions=c(Y="C", N="A")
+    prompt="Drop test from store",
+    detail="The following tests passed.",
+    actions=c(Y="C", N="A"), show.out=TRUE
 ) )
 #' Add a browsing sub-section to a browse section
 #'

@@ -29,47 +29,47 @@
 #'   ),
 #'   class="sql_unitizer"
 #' )
-#' get_store.sql_unitizer <- function(store.id) { # FUNCTION BODY }
-#' set_store.sql_unitizer <- function(store.id, unitizer) { # FUNCTION BODY }
+#' get_unitizer.sql_unitizer <- function(store.id) { # FUNCTION BODY }
+#' set_unitizer.sql_unitizer <- function(store.id, unitizer) { # FUNCTION BODY }
 #'
 #' unitize("unitizer/cornertestcases.R", my.sql.store.id)
 #' }
 #' For inspirations for the bodies of the _store functions look at the source
-#' code for \code{`unitizer:::get_store.character`} and \code{`unitizer:::set_store.character`}.
-#' Expectations for the functions are as follows.  \code{`get_store`} must return:
+#' code for \code{`unitizer:::get_unitizer.character`} and \code{`unitizer:::set_unitizer.character`}.
+#' Expectations for the functions are as follows.  \code{`get_unitizer`} must return:
 #' \itemize{
 #'   \item a \code{`\link{unitizer-class}`} object if \code{`store.id`} exists and contains a valid object
 #'   \item FALSE if the object doesn't exist (e.g. first time run-through, so reference copy doesn't exist yet)
 #'   \item \code{`\link{stop}`} on error
 #' }
-#' \code{`set_store`} must return:
+#' \code{`set_unitizer`} must return:
 #' \itemize{
 #'   \item TRUE on success
 #'   \item \code{`\link{stop}`} on error
 #' }
 #'
-#' @aliases get_store
+#' @aliases get_unitizer
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
 #' @param unitizer a \code{`\link{unitizer-class}`} object containing the store data
 #' @return
 #'   \itemize{
-#'     \item set_store TRUE if unitizer storing worked, error otherwise
-#'     \item get_store a \code{`\link{unitizer-class}`} object, FALSE
+#'     \item set_unitizer TRUE if unitizer storing worked, error otherwise
+#'     \item get_unitizer a \code{`\link{unitizer-class}`} object, FALSE
 #'       if \code{`store.id`} doesn't exist yet , or error otherwise
 #'   }
 
-set_store <- function(store.id, unitizer) {
-  UseMethod("set_store")
+set_unitizer <- function(store.id, unitizer) {
+  UseMethod("set_unitizer")
 }
 #' @export
 
-set_store.default <- function(store.id, unitizer) {
+set_unitizer.default <- function(store.id, unitizer) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }
 #' @export
 
-set_store.character <- function(store.id, unitizer) {
+set_unitizer.character <- function(store.id, unitizer) {
   if(!is.character(store.id) || length(store.id) != 1L) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
@@ -88,12 +88,12 @@ set_store.character <- function(store.id, unitizer) {
 }
 #' @export
 
-get_store <- function(store.id) {
-  UseMethod("get_store")
+get_unitizer <- function(store.id) {
+  UseMethod("get_unitizer")
 }
 #' @export
 
-get_store.character <- function(store.id) {
+get_unitizer.character <- function(store.id) {
   if(!is.character(store.id) || length(store.id) != 1L ) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
@@ -126,6 +126,6 @@ get_store.character <- function(store.id) {
 }
 #' @export
 
-get_store.default <- function(store.id) {
+get_unitizer.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }

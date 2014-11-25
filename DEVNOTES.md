@@ -53,11 +53,13 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 ## Order of Tests
 
 * what do we do with default section that has values scattered throughout?
+    * In particular, how do we handle this in review menu?
 * And how to make it clear that tests are ordered first by test outcome, and as
   a result a display order will not be the same as the order in the file?
   Document clearly?
 * removed tests coming last?  Trying to match them back to a section is too
   onerous, and besides, likely wouldn't have them in the same spot anyway.
+
 
 ## Internal
 

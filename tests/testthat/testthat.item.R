@@ -10,6 +10,16 @@ library(testthat)
 # Basically everything that can be tested non-interactively
 
 local( {
+
+  # Helper funs
+
+  callDep <- function(x) paste0(deparse(x@call, width=500), collapse="")
+  lsObjs <- function(x) paste0(x@ls$name, x@ls$status, collapse=", ")
+  lsStat <- function(x) x@ls$status
+  lsInv <- function(x) isTRUE(attr(x@ls, "invalid"))
+
+  # Get started
+
   new.exps <- expression(
     1 + 1,
     a <- 54,     # keep
@@ -52,10 +62,7 @@ local( {
   } )
   test_that("Environment healing works", {
     items.mixed <- my.unitizer2@items.new[4:5] + my.unitizer2@items.ref[[1]] + my.unitizer2@items.new[c(2, 6, 8)]
-    expect_warning(
-      items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2),
-      "Logic Problem: would have assigned circular environment reference"
-    )
+    items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2)
     env.anc <- lapply(
       unitizer:::as.list(items.sorted),
       function(x) rev(unitizer:::env_ancestry(x@env, my.unitizer2@base.env))
@@ -68,23 +75,23 @@ local( {
     expect_equal(length(unique(unlist(env.anc.df[2, ]))), 1L)
     expect_true(all(apply(env.anc.df[-(1:2), -1], 1, function(x) length(unique(Filter(Negate(is.na), x)))) == 1L))
     expect_equal(  # First item is reference, all others are new
-      unitizer:::itemsType(items.sorted), c("reference", rep("new", 5))
+      unitizer:::itemsType(items.sorted), c("reference", rep("new", 7L))
     )
     expect_equal(  # Expected order of ids
       vapply(unitizer:::as.list(items.sorted), function(x) x@id, integer(1L)),
-      c(1, 2, 4, 5, 6, 8)
+      1:8
     )
     expect_equal(
       lapply(unitizer:::as.list(items.sorted), function(x) x@ls$names),
-      list(character(0), "a", c("a", "b"), c("a", "b", "e"), c("a",  "b", "e"), c("a", "b", "e", "f"))
+      list(character(0), character(0), character(0), c("a", "b"), character(0), c("a", "b", "e"), character(0), c("a", "b", "e", "f"))
     )
     expect_equal(unique(unlist(lapply(unitizer:::as.list(items.sorted), function(x) x@ls$status))), "")
   } )
   new.exps2 <- expression(
-    1 + 1,                #  1 *
-    a <- 54,              #  2
-    b <- runif(5),        #  3
-    howdy <- "yowser",    #  4 *
+    1 + 1,                #  1 *    Stars highlight items we are selecting, but keep in mind that
+    a <- 54,              #  2      unitizer only cares about non ignored tests, and that the selection
+    b <- runif(5),        #  3      status of ignored test has nothing to do with what we end up
+    howdy <- "yowser",    #  4 *    with wrt to ignored tests
     a + b,                #  5 *
     e <- 5 * a,           #  6
     a ^ 2,                #  7
@@ -104,6 +111,10 @@ local( {
     e ^ 3,                   # 10 *
     e * a                    # 11 *
   )
+  # Note that healEnvs modifies objects that contain environments, and as such
+  # you won't get the same result if you run this function twice, so don't be
+  # surprised if tests fail in those circumstances
+
   my.unitizer3 <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer3 <- my.unitizer3 + ref.exps2   # add ref.exps as new items
   my.unitizer4 <- new("unitizer", id=2, zero.env=new.env())
@@ -120,36 +131,43 @@ local( {
     max.len <- max(vapply(env.anc, length, 1L))
     env.anc.2 <- lapply(env.anc, function(x) {length(x) <- max.len; x})
     unname(env.anc.df <- as.data.frame(env.anc.2, stringsAsFactors=FALSE))
-    which.ref <- unitizer:::itemsType(items.sorted2) == "reference"
 
     expect_equal(length(unique(unlist(env.anc.df[1, ]))), 1L, info="all tests should have same base.env")
     expect_identical(env.anc.df[1, 1], unitizer:::env_name(my.unitizer4@base.env), info="base.env should be unitizer env")
     expect_equal(length(unique(unlist(env.anc.df[2, ]))), 1L, info="all tests should also have another sub base.env")
     expect_identical(env.anc.df[2, 1], unitizer:::env_name(my.unitizer4@items.ref@base.env), info="and it should be the items.ref here")
-    expect_equal(info="Checking that new/reference items are in correct order", which.ref, c(F, T, T, F, F, T, F, T, T))
-    expect_equal(info="Checking that items are in order",
-      vapply(unitizer:::as.list(items.sorted2), function(x) x@id, integer(1L)),
-      c(1, 3, 5, 4, 5, 8, 9, 10 ,11)
+
+    items <- items.sorted2
+    items.lst <- unitizer:::as.list(items)
+
+    heal.info <- cbind(
+      type=unitizer:::itemsType(items),
+      ignored=unitizer:::ignored(items),
+      id=vapply(items.lst, slot, 1L, "id"),
+      call=vapply(items.lst, callDep, ""),
+      ls=vapply(items.lst, lsObjs, ""),
+      ls.invalid=vapply(items.lst, lsInv, TRUE)
     )
-    i.calls <- lapply(unitizer:::as.list(items.sorted2), function(x) x@call)  # FOR DEBUGGING
-    i.ls <- lapply(unitizer:::as.list(items.sorted2), function(x) x@ls)
-    #names(i.ls) <- paste0(i.calls, ifelse(sapply(unitizer:::as.list(items.sorted2), function(x) x@reference), " REFERENCE", ""))
-    i.ls.bind <- do.call(rbind, i.ls)
-    expect_equal(info="these are all the objects in the environment",
-      i.ls.bind$names,
-      c("a", "b", "a", "b", "q", "a", "b", "howdy", "a", "b", "howdy",  "a", "b", "howdy", "q", "w", "z", "a", "b", "e", "f", "howdy",  "a", "b", "e", "f", "howdy", "q", "w", "z", "a", "b", "e", "f",  "howdy", "q", "w", "z")
+    expect_equal(
+      info="new items should all have normal status",
+      unique(unlist(lapply(items.lst[unitizer:::itemsType(items) == "new"], lsStat))), ""
     )
-    expect_equal(info="environment object status",
-      i.ls.bind$status,
-      c("", "", "*", "*", "", "", "", "", "", "", "", "", "'", "**", "*", "", "", "", "", "", "", "", "", "'", "", "**", "**", "*", "*", "*", "", "'", "", "**", "**", "*", "*", "*")
+    expect_equal(
+      info="Reference tests should have no ls data",
+      unique(vapply(items.lst[unitizer:::ignored(items)], lsObjs, "")), ""
     )
-    expect_equal(unique(do.call(rbind, i.ls[!which.ref])$status), "", info="new items should all have normal status")
+    expect_true(
+      info="Reference tests should have invalid ls",
+      all(vapply(items.lst[unitizer:::ignored(items)], lsInv, logical(1L)))
+    )
   } )
   my.unitizer5 <- new("unitizer", id=2, zero.env=new.env())
   my.unitizer5 <- my.unitizer5 + items.sorted2   # now add back our composite elements as references
   my.unitizer5 <- my.unitizer5 + new.exps2       # and new items
 
   test_that("ls works", {
+    # This is an ignored test, so there will be some problems
+
     env.obj <- new.env(parent=my.unitizer5@items.new[[3]]@env)
     env.val <- new.env(parent=env.obj)
     env.eval <- new.env(parent=env.val)
@@ -157,10 +175,16 @@ local( {
     assign(".new", my.unitizer5@items.new[[3]]@data@value, env.val)
     assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]], env.obj)
     assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]]@data@value, env.val)
-    expect_equal(
+    expect_warning(
       evalq(unitizer:::unitizer_ls(), env.eval),
-      structure(list(new = c("a", "b"), ref = c("a", "b"), tests = c(".new", ".ref")), .Names = c("new", "ref", "tests"), class = "unitizer_ls", mods = character(0))
+      "The ls output for `.ref` is invalid"
     )
+    expect_equal(  # Reference tests won't show up since they were nuked by `healEnvs`
+      evalq(unitizer:::unitizer_ls(), env.eval),
+      structure(list(new = c("a", "b"), tests = c(".new", ".ref")), .Names = c("new", "tests"), class = "unitizer_ls", mods = character(0))
+    )
+    # These are normal tests so should work
+
     env.obj <- new.env(parent=my.unitizer5@items.new[[9]]@env)
     env.val <- new.env(parent=env.obj)
     env.eval <- new.env(parent=env.val)
@@ -171,6 +195,63 @@ local( {
     expect_equal(
       evalq(unitizer:::unitizer_ls(), env.eval),
       structure(list(new = c("a", "b", "e", "f", "howdy"), ref = c("a",  "b", "e", "f", "howdy"), tests = c(".new", ".ref")), .Names = c("new",  "ref", "tests"), class = "unitizer_ls", mods = character(0))
+    )
+  } )
+  # Test that reference tests moving around doesn't cause major issues
+
+  new.exps6 <- expression(
+    1 + 1,                #  1   *
+    a <- 54,              #  2
+    b <- runif(5),        #  3
+    howdy <- "yowser",    #  4
+    a + b,                #  5
+    e <- 5 * a,           #  6
+    a ^ 2,                #  7   *
+    f <- 25,              #  8   *
+    matrix(rep(f, 20))    #  9
+  )
+  ref.exps6 <- expression(
+    1 + 1,                #  1
+    a <- 54,              #  2
+    f <- 25,              #  3
+    matrix(rep(f, 20)),   #  4   *
+    b <- runif(5),        #  5
+    boomboom <- "boo",    #  6
+    a + b,                #  7   *
+    a + b + f,            #  8
+    e <- 5 * a,           #  9
+    a ^ 2                 # 10
+  )
+  my.unitizer10 <- new("unitizer", id=1, zero.env=new.env())
+  my.unitizer10 <- my.unitizer10 + ref.exps6   # add ref.exps as new items
+  my.unitizer11 <- new("unitizer", id=2, zero.env=new.env())
+  my.unitizer11 <- my.unitizer11 + my.unitizer10@items.new    # now convert them to reference items
+  my.unitizer11 <- my.unitizer11 + new.exps6   # now test against new.exps
+  items.mixed3 <- my.unitizer11@items.ref[c(4, 7)] + my.unitizer11@items.new[c(1, 7, 8)]
+  items.sorted3 <- unitizer:::healEnvs(items.mixed3, my.unitizer11)
+
+  # Main difference to previous versions is that we're testing that moving the
+  # order of tests around between ref and new still works
+
+  test_that("Environment Healing Works #3", {
+
+    # Both reference tests get appended to item #1, which means among other things
+    # that for the second refernce test, the `a` object is absent (but `b` is
+    # present because it gets sucked in by virtue of being an ignored test just
+    # ahead of it)
+
+    items <- items.sorted3
+    items.lst <- unitizer:::as.list(items)
+    expect_equal(
+      cbind(
+        type=unitizer:::itemsType(items),
+        ignored=unitizer:::ignored(items),
+        id=vapply(items.lst, slot, 1L, "id"),
+        call=vapply(items.lst, callDep, ""),
+        ls=vapply(items.lst, lsObjs, ""),
+        ls.invalid=vapply(items.lst, lsInv, TRUE)
+      ),
+      structure(c("new", "reference", "reference", "reference", "reference", "reference", "reference", "new", "new", "FALSE", "TRUE", "TRUE", "FALSE", "TRUE", "TRUE", "FALSE", "TRUE", "FALSE", "1", "2", "3", "4", "5", "6", "7", "6", "7", "1 + 1", "a <- 54", "f <- 25", "matrix(rep(f, 20))", "b <- runif(5)", "boomboom <- \"boo\"", "a + b", "e <- 5 * a", "a^2", "", "", "", "a, f", "", "", "a*, b, boomboom, f*", "", "a, b, e, howdy", "FALSE", "TRUE", "TRUE", "FALSE", "TRUE", "TRUE", "FALSE", "TRUE", "FALSE"), .Dim = c(9L, 6L), .Dimnames = list(NULL, c("type", "ignored", "id", "call", "ls", "ls.invalid")))
     )
   } )
   # This is to test for issue #2, which resulted in a self referential environment
@@ -231,4 +312,27 @@ local( {
 
     expect_equal(x@items.new[[4]]@data@message[[1]], "Error in a() : could not find function \"b\"")
   } )
+
+  test_that("Comparison Function Errors", {
+
+    exps <- expression(
+      fun <- function(x, y) warning("not gonna work"),
+      unitizer_sect(compare=fun, expr={
+        1 + 1
+      })
+    )
+    my.unitizer <- new("unitizer", id=25, zero.env=new.env())
+    my.unitizer <- my.unitizer + exps   # add ref.exps as new items
+
+    my.unitizer2 <- new("unitizer", id=26, zero.env=new.env()) + my.unitizer@items.new
+    my.unitizer2 <- my.unitizer2 + exps
+
+    expect_identical(as.character(my.unitizer2@tests.status), c("Pass", "Error"))
+    expect_identical(
+      my.unitizer2@tests.errorDetails[[2]]@value@value,
+      "comparison function `fun` signaled a condition of type \"warning\", with message \"not gonna work\" and call `fun(2, 2)`."
+    )
+  } )
 } )
+
+
