@@ -22,7 +22,7 @@ cat(
   y <- x ^ 2
   res <- fastlm(x, y)
 
-  res
+  res                     # first reviewable expression
   get_slope(res)
   get_rsq(res)
 
@@ -37,8 +37,9 @@ prompt_to_proceed()
 install(fastlm_dir(version=0))
 
 # We are now ready to `unitize`.  Once `unitize` runs, press Y at the prompts to
-# add the tests to the `unitizer` store (in this case, we know our functions are
-# correct because they just wrap `base::lm`).
+# add the tests to the `unitizer` store.  Normally, this is the step where you
+# would carefully review results to ensure they are as expected.  In this case,
+# we know our functions are correct because they just wrap `base::lm`.
 #
 # Note you can always type H at the `unitizer` prompt to get contextual help.
 
@@ -48,8 +49,8 @@ unitize(test.file)
 
 # If all went well you added four tests to `unitizer`.
 
-# We will now update our `fastlm` package to use the real computations instead
-# of piggybacking of `lm` as our first version did.
+# We will now update our `unitizer.fastlm` package to use the real computations
+# instead of piggybacking of `lm` as our first version did.
 
 prompt_to_proceed()
 
@@ -60,8 +61,9 @@ install(fastlm_dir(version=1))
 # formulas.  This means we will have to re-implement our functions.
 #
 # In the meantime, type N at the `unitizer` prompt to reject the new values
-# since they are wrong.  You can compare the correct reference value with the
-# newly computed one by inspecting the `.ref` and `.new` objects
+# and keep the original ones we generated witht the previous version of
+# `unitizer.fastlm`.  You can compare the correct reference value with the
+# newly computed one by inspecting the `.ref` and `.new` objects.
 
 prompt_to_proceed()
 
