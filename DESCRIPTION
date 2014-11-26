@@ -36,6 +36,7 @@ Collate:
     'browse.struct.R'
     'browse.R'
     'capture.R'
+    'demo.R'
     'faux_prompt.R'
     'get.R'
     'heal.R'
