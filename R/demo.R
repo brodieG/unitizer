@@ -19,4 +19,4 @@ fastlm_dir <- function(version) {
 #' @export
 
 prompt_to_proceed <- function()
-  invisible(readline("[Press ENTER Continue]"))  # helper fun
+  invisible(readline("[Press ENTER to Continue]"))  # helper fun

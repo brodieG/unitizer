@@ -12,7 +12,7 @@ library(unitizer)
 
 prompt_to_proceed()  # stop execution until you hit ENTER
 
-cat(
+cat(  # cat tests to temp file
   file=(test.file <- tempfile(fileext=".R")),
   "# Calls to `library` and assignments are not normally considered tests, so
   # you will not be prompted to review them
@@ -28,7 +28,6 @@ cat(
 
   fastlm(x, head(y))      # This should cause an error; press Y to add to store\n"
 )
-
 # Install `unitizer.fastlm` (`fastlm_dir` returns the location of the
 # `unitizer.fastlm` sources embedded within `unitizer`)
 
@@ -64,6 +63,9 @@ install(fastlm_dir(version=1))
 # and keep the original ones we generated witht the previous version of
 # `unitizer.fastlm`.  You can compare the correct reference value with the
 # newly computed one by inspecting the `.ref` and `.new` objects.
+#
+# Since the only changes to the tests are mistakes, and we're not keeping them,
+# the `unitizer` will not be modified.
 
 prompt_to_proceed()
 
@@ -81,9 +83,16 @@ prompt_to_proceed()
 
 unitize(test.file)
 
-# Clean-up
+# We can now comfortably make further modifications to `unitizer.fastlm` knowing
+# that any regressions we introduce to existing functionality will be detected
+# by `unitize`.
+
+prompt_to_proceed()
+
+# DEMO OVER: Now we clean-up / remove temp files, etc
 {
   remove.packages("unitizer.fastlm")
   unlink(test.file)
   unlink(sub(".R", ".unitizer", test.file), recursive=TRUE)
 }
+
