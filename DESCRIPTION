@@ -46,6 +46,7 @@ Collate:
     'parse.R'
     'repairenvs.R'
     'unitize.R'
+    'unitize.core.R'
     'unitizer-package.r'
     'unitizer.add.R'
     'upgrade.R'
