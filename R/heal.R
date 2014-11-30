@@ -51,7 +51,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' to the new environment.  When there are difference between the two,
 #' the output of \code{`ls`} is customized to highlight
 #' which objects were actually available/unmodifed at the time of the
-#' reference test evaluation.  Object namees will have the following
+#' reference test evaluation.  Object names will have the following
 #' symbols appended to explain the object status:
 #' \itemize{
 #'   \item ': object exists in browsing environment, but not the same as
@@ -73,7 +73,6 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   where x is just a data frame with column 1 the item index, and column 2
 #'   whether it originated from "new" or "ref"
 #'
-#' @keywords internal
 #' @seealso \code{`\link{updateLs,unitizerItem-method}`}
 #' @param x \code{`\link{unitizerItems-class}`} object
 #' @param y \code{`\link{unitizer-class}`} object \code{`x`} was generated from
