@@ -1,3 +1,15 @@
+---
+title: "Introduction"
+author: "Brodie Gaslam"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+
+vignette: >
+  %\VignetteIndexEntry{01 - Introduction / Quick Start}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+
 # unitizeR - Easy Unit Tests for R
 
 ## Introduction
@@ -32,7 +44,6 @@ To run the demo:
 library(unitizer)
 demo(unitizer)
 ```
-
 There is a companion vignette for the demo as well, though both the demo and the `unitizer` interactive environment provide documentation.
 
 ### How is `unitizer` Different to `testthat`?
@@ -52,16 +63,13 @@ expect_error(
   "Error in log10\\(letters\\) : non-numeric argument to mathematical function\n"
 )
 ```
-
 And as implemented in `unitizer`:
-
 ```
 ## unitizer.log10.R
 
 log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500))  # succeed with warnings
 log10(letters)                                    # input error
 ```
-
 This examples highlights benefits of both approaches.  In favor of `unitizer`:
 
 * It just took a few seconds to write our tests
@@ -121,6 +129,16 @@ install_github("brodieg/unitizer")
 
 ## Things You Should Know About `unitizer`
 
+### Comparisons
+
+Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](03tests.html)).
+
+### The `unitizer` Evaluation Environment is Special
+
+Objects in `.GlobalEnv` will not be visible, and any non basic packages will be detached prior to test evaluation (you can re-attach them in your tests with `library`).  For more details see the [reproducible tests vignette](05reproducibletests.html).
+
+Additionally, each test is evaluated in its own environment, though the environments are structured in a way that makes it seem like all the tests are in the same environment.  For more details see the [reproducible tests vignette](05reproducibletests.html).
+
 ### `unitizer` Writes To Your Filesystem
 
 `unitizer` stores unit tests and their results.  By default, it stores them in `rds` files in your filesystem.  You will be prompted before a file is saved to your filesystem.
@@ -133,7 +151,7 @@ install_github("brodieg/unitizer")
 
 If your tests produce massive objects, the `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
 
-Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in version controlled projects.  See [insert appropriate vignettte name here].
+Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in version controlled projects.  See the version control section of the [nitty gritty vignette](06nittygritty.html).
 
 ### Backup Your `unitizer` Stores
 

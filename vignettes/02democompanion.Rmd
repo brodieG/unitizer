@@ -1,5 +1,5 @@
 ---
-title: "A `unitizer` Walk Through"
+title: "unitizeR - Demo Companion"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -10,9 +10,11 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-## Overview
+# Demo Companion
 
-### A Demo Companion
+## Introduction
+
+### Running the Demo
 
 This vignette is the companion to the demo you get if you run:
 ```
