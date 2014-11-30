@@ -23,29 +23,29 @@ Or alternative, review the [introduction vignette](00introduction.Rmd).
 
 ## Table of Contents
 
-### [Introduction](01introduction.html):
+### Introduction
 
-Explains the motivation for developing `unitizer`, compares it to other unit testing frameworks, and provides a quick start guide.
+The [introduction vignette](01introduction.html) Explains the motivation for developing `unitizer`, compares it to other unit testing frameworks, and provides a quick start guide.
 
-### [Demo Companion](02democompanion.html):
+### Demo Companion
 
-Provides additional details and documentation for the included interactive demo.
+The [demo companion vignette](02democompanion.html) provides additional details and documentation for the included interactive demo.
 
-### [Details On Tests](03tests.html):
+### Details on Tests
 
-Delves into the details of what constitutes a test in `unitizer`, how to modify how new tests are compared to reference values, how to organize your tests into sections, how to test different aspects of expression evaluation (e.g. stdout, stderr, etc.).
+The [details on tests vignette](03tests.html) delves into the details of what constitutes a test in `unitizer`, how to modify how new tests are compared to reference values, how to organize your tests into sections, how to test different aspects of expression evaluation (e.g. stdout, stderr, etc.).
 
-### [The Interactive Environment](04interactiveenvironment.html)
+### Interactive Environment
 
-Reviews the `unitizer` prompt, highlights differences with the standard R prompt, explains the different `unitizer` commands, discussing the `.new` and `.ref` `unitizer` objects, and introduces some of the complexities of `unitizer` evaluation environments.
+The [interactive environment vignette](04interactiveenvironment.html) reviews the `unitizer` prompt, highlights differences with the standard R prompt, explains the different `unitizer` commands, discussing the `.new` and `.ref` `unitizer` objects, and introduces some of the complexities of `unitizer` evaluation environments.
 
-### [Reproducible Tests](05reproducibletests.html)
+### Reproducible Tests
 
-By default `unitizer` runs expressions in an environment that does not inherit from `.GlobalEnv` and with a search path reduced to the standard search path of a fresh R session.  This vignette discusses how this is done and potential implications for your tests.
+By default `unitizer` runs expressions in an environment that does not inherit from `.GlobalEnv` and with a search path reduced to the standard search path of a fresh R session.  The [reproducible tests vignette](05reproducibletests.html) discusses how this is done and potential implications for your tests.
 
-### [Nitty Gritty](06nittygritty.html)
+### Nitty Gritty
 
-Covers a number of estoric topics, including:
+The [nitty gritty vignette](06nittygritty.html) covers a number of more estoric topics, including:
 
 * More details on `unitizer` environment structure
 * Alternate Store Locations
