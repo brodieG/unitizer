@@ -125,7 +125,10 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
                   } else y <- y.tmp
                 }
                 next
-            } },
+              } else {
+
+              }
+            },
             earlyExit=function() user.quit <<- TRUE
           )
         }
@@ -222,7 +225,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
         }
         cat(nav.msg, " (", paste0(valid.opts, collapse=", "), ")?", sep="")
         user.input <- navigate_prompt(
-          y, curr.id=max(y@mapping@item.id),
+          y, curr.id=max(y@mapping@item.id) + 1L,
           text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
           valid.opts=valid.opts
         )
