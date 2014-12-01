@@ -129,12 +129,14 @@ navigate_prompt <- function(
   if(identical(prompt.val, "B")) {
 
     # Go back to previous
-
     if(curr.id == 1L) {
       message("At first reviewable item; nothing to undo")
       return(x)
     }
-    prev.tests <- x@mapping@item.id[!x@mapping@ignored] < curr.id
+    prev.tests <- x@mapping@item.id < curr.id & !x@mapping@ignored & (
+      if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
+      else TRUE
+    )
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
     return(x)
   } else if (identical(prompt.val, "R")) {
@@ -198,19 +200,19 @@ review_prompt <- function(x, nav.env) {
   } else if (identical(nav.id, "U")) {
     # Go to unreviewed test
 
+    unreviewed <- !x@mapping@reviewed & !x@mapping@ignored &
+      (
+        if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
+        else TRUE
+      )
     item.len <- length(x@mapping@review.val)
-    if(all(x@mapping@reviewed)) {
+    if(!any(unreviewed)) {
       message("No unreviewed tests.")
       x@last.id <- item.len
       return(x)
     }
     message("Jumping to first unreviewed test.") # But note that we also show all ignored tests before that one for context
-
-    nav.id <- min(
-      which(
-        !x@mapping@reviewed & !x@mapping@ignored &
-        (if(!identical(x@mode, "review")) !x@mapping@review.type == "Passed" else TRUE)
-    ) )
+    nav.id <- min(which(unreviewed))
   } else if (
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
   ) {
