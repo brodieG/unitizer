@@ -1,0 +1,173 @@
+---
+title: "Introduction"
+author: "Brodie Gaslam"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+
+vignette: >
+  %\VignetteIndexEntry{01 - Introduction / Quick Start}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+
+# unitizeR - Easy Unit Tests for R
+
+## Introduction
+
+### Motivation
+
+> it’s not that we don’t test our code, it’s that we don’t store our tests so they can be re-run automatically
+>
+> Hadley Wickham ([The R Journal Vol. 3/1, June 2011, P5](http://journal.r-project.org/archive/2011-1/RJournal_2011-1_Wickham.pdf)).
+
+`unitizer` sets out to make storing these tests as easy as possible by blurring the line between informal in-development testing and formal unit testing.  For example to create unit tests with `unitizer`, you would:
+
+* Save your "informal" tests to an R file
+* Run `unitize("my_file_name.R")`
+
+By "informal" tests we mean anything you would normally type in the command line when informally testing functionality.
+
+`unitizer` will then:
+
+* step through each test in your file
+* have you review the test result as you would on the command line
+* store the result if you confirm it is what it is supposed to be
+
+As part of this process you will need to review test results carefully, but only the first time.  Any time you make changes to your project, you can just re-run `unitize` and it will alert you if tests start producing different values or errors.
+
+### Demo
+
+A big part of `unitizer` is the interactive environment.  It is designed to allow you to quickly review, add, and remove tests from your unit test store.  The best way to get a feel for the `unitizer` process is to run the provided demo.
+
+To run the demo:
+```
+library(unitizer)
+demo(unitizer)
+```
+There is a companion vignette for the demo as well, though both the demo and the `unitizer` interactive environment provide documentation.
+
+### How is `unitizer` Different to `testthat`?
+
+`unitizer` trades off some formality for ease of use, and as with any trade-off, there are pros and cons.  We will illustrate some of these trade-offs with a contrived example.  Here are some unit tests for the base `log10` function as implemented in `testthat`:
+
+```
+## testthat.log10.R
+
+expect_equal(
+  log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)),
+  c(2, NaN, -Inf, -1, Inf, NaN, NA, 2.69897000433602)
+)
+expect_warning(log10(x), "NaNs produced")
+expect_error(
+  log10(letters),
+  "Error in log10\\(letters\\) : non-numeric argument to mathematical function\n"
+)
+```
+And as implemented in `unitizer`:
+```
+## unitizer.log10.R
+
+log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500))  # succeed with warnings
+log10(letters)                                    # input error
+```
+This examples highlights benefits of both approaches.  In favor of `unitizer`:
+
+* It just took a few seconds to write our tests
+* Conditions are captured automatically
+    * we do not need separate tests to check for warnings and values
+    * error conditions are also captured without any special handling
+
+In favor of `testthat`:
+
+* The tests are self documenting: it is obvious from looking at them what the results should be, whereas it is not so for `unitizer`
+* Once you write the test you're done, whereas with `unitizer` you still need to `unitize` them and confirm the results are as expected
+
+The main selling point for `unitizer` is that the tests are very easy to write.  This is particularly helpful when the return values from the tests are complex (e.g., conditions with messages, as shown above, or simply complex objects, as returned by `lm` for example).  You review the test result, confirm it is what it should be, and tell `unitizer` to store it.  There is no need to copy and paste awkward deparsed expressions into tests.
+
+On the other hand, `unitizer` is not conducive to either self documentation or to test driven / [extreme](http://www.extremeprogramming.org/rules/testfirst.html) programming.  If these features are important to you then you are likely better off using more formal unit testing frameworks like `testthat`.
+
+### `unitizer` and Packages
+
+The simplest way to use `unitizer` as part of your package development process is to create a `tests/unitizer` folder for all your `unitizer` test scripts, and then, in `tests`, add an additional file with calls to `unitize`, much like you would with `testthat`.  Here is a sample test structure for our `unitizer.fastlm` demo package:
+```
+unitizer.fastlm/         # top level package directory
+    R/
+    tests/
+        run.R
+        unitizer/
+            fastlm.R
+            cornerCases.R
+```
+And this is what the `run.R` file would look like
+```
+## file: tests/run.R
+
+library(unitzer)
+unitize("unitizer/fastlm.R")
+unitize("unitizer/cornerCases.R")
+```
+Note that the path specification for test files should be relative to the `tests` directory as that is what `R CMD check` effectively sets the working directory to before running the files in `tests/`.  This means you can't just source your `run.R` file without also first setting the working directory to `tests/`.
+
+When `unitize` is run through `R CMD check` it will run in a non-interactive mode that will produce an error if any test fails or if there are new / removed tests in the test file.
+
+There is also a `unitize_dir` function that will run `unitize` against all files in a directory.
+
+## Quick Start
+
+### Installation Instructions
+
+Currently `unitizer` is only available on github:
+```
+library(devtools)
+install_github("brodieg/unitizer")
+```
+### Running `unitizer`
+
+1. Write some R expressions and save to a file (e.g. "my_test_file.R")
+2. Type `unitize("my_test_file.R")` at the prompt
+3. Follow interactive environment instructions
+
+## Things You Should Know About `unitizer`
+
+### Comparisons
+
+Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](03tests.html)).
+
+### The `unitizer` Evaluation Environment is Special
+
+Objects in `.GlobalEnv` will not be visible, and any non basic packages will be detached prior to test evaluation (you can re-attach them in your tests with `library`).  For more details see the [reproducible tests vignette](05reproducibletests.html).
+
+Additionally, each test is evaluated in its own environment, though the environments are structured in a way that makes it seem like all the tests are in the same environment.  For more details see the [reproducible tests vignette](05reproducibletests.html).
+
+### `unitizer` Writes To Your Filesystem
+
+`unitizer` stores unit tests and their results.  By default, it stores them in `rds` files in your filesystem.  You will be prompted before a file is saved to your filesystem.
+
+ The `rds` file is placed in a directory with the same name as your test file, but with "unitizer" appended.  For example, if your tests are in "my_file_name.R", then `unitizer` will create a folder called "my_file_name.unitizer/" and put an `rds` file in it.
+
+ See `?get_unitizer` for potential alternatives to saving to your file system.
+
+### File Space Considerations
+
+If your tests produce massive objects, the `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
+
+Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in version controlled projects.  See the version control section of the [nitty gritty vignette](06nittygritty.html).
+
+### Backup Your `unitizer` Stores
+
+`unitizer` does not backup the `rds` beyond the single copy in the aforementioned folder.  Unit tests are valuable, and without the `rds` file `unitizer` tests become a lot less useful.  To the extent you backup your test R files, you should also backup the ".unitizer/" folder.  You could lose / corrupt your `unitizer` store in many ways.  Some non-exhaustive examples:
+
+- Standard file system SNAFU
+- Careless updates to existing `unitizer`
+- `unitizer` developer messes up an update and destroys your `unitizer`
+
+Backup up your `unitizer` stores!
+
+### Ancillary `unitize` Packages
+
+`unitizer` uses anscillary packages in examples and tests.  These are are in `inst/example.pkgs` in the `unitizer` sources.  You should not have a need to use these, but if you do:
+```
+unitizer.path <- system.file(package="unitizer")
+library(devtools)
+install(paste0(unitizer.path, "/example.pkgs/unitizerdummypkg1"))  # one of several dummy packages
+```

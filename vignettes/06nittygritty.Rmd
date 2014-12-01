@@ -1,0 +1,89 @@
+---
+title: "The Interative Environment"
+author: "Brodie Gaslam"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+
+vignette: >
+  %\VignetteIndexEntry{06 - Nitty Gritty Details}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+
+# Nitty Gritty
+
+## Subtleties Of The Interactive Environment
+
+Clearly the `unitizer` prompt environment is not as straightforward as the standard R console environment, or even the `browser` environment.  In reality it is even more complex than we have shown so far.
+
+`unitizer` batch processes all the tests when it is first run before it breaks into interactive mode.  It does this for two reasons: 1. this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly, 2. it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.
+
+While there are good reasons for batch processing the tests, it means that the review process is complicated substantially.  If we used a single evaluation environment it would be cluttered by all the objects created throughout the whole test script, so when we started reviewing the first test we would be seeing all the objects, even objects that did not exist when the first test was run.  Much worse, it is entirely possible for a variable to be re-used several times in a file, adopting different values for different tests, with the implication that objects used by our first test may have values that are different to what they were when the test was originally run.
+
+To get around this problem each test is run in its own environment.  Each of these environments has for parent the environment of the previous test.  This means that a test has access to all the objects created/used by earlier tests, but not objects created/used by subsequent tests.  When a later test "modifies" an existing object, the existing object is not really modified; rather, the test creates a new object of the same name in the child environment which masks the object in the earlier test.  This is functionally equivalent to overwriting the object as far as the later test is concerned.
+
+For the most part this environment trickery should be transparent to the user.  The `ls` function is specially modified to, among other things, list objects in all the parent test environments.  But there are exceptions to this "transparency".  The simplest exception is that you can't actually remove an object created in an earlier test (well, it is possible, but the how isn't documented and you are advised not to attempt to do it).  Here is a more complex exception:
+
+    a <- function() b()
+    b <- function() TRUE
+    a()
+
+In this case, when we evaluate `a()` we must step back two environments to find `a`, but that's okay.  The problem is that once inside `a`, we must now evaluate `b()`, but `b` is defined in a child environment, not a parent environment so R's object lookup fails.
+
+It turns out the above example actually works because as noted in [INSERT LINK TO TESTS VIGNETTE], environments are only defined for tests, an neither the `a` or `b` assignments are tests, so both `a` and `b` are assigned to the environment
+of the `a()` call.  However, this really breaks:
+
+    a <- function() b()
+    NULL
+    b <- function() TRUE
+    a()
+
+Since NULL is a valid test, `a` is assigned to the environment associated with the `NULL` line, and `b` is assigned to the `a()` call test environment, and the illusion is shattered.
+
+If you are getting weird "object not found" errors when you run your tests, but the same code doesn't generate those errors when run directly in the command line, the illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
+
+One other point to keep in mind is that the `unitzer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
+
+## Patchwork Reference Environments
+
+When we review `unitizer` tests, it is possible to end up in a situation where we wish to update our store by keeping a mix of the new tests as well as some of the old ones.  This leads to some complications because in order to faithfully reproduce the environments associated with both the reference and the new tests we would potentially have to store the entire set of environments produced by the test script for both the new and reference tests.  Even worse, if we re-run unitizer again, we run the risk of having to store yet another set of environments (the old reference environments, what were new environments but became reference ones on this additional run, and the new environments created by this third run).  The problem continues to grow with as each incremental run of the `unitizer` script potentially creates the need to store yet another set of environments.
+
+As a work-around to this problem `unitizer` only keeps the environment associated with the actual reference test when you type `N` at the `unitizer` prompt.  `unitizer` then grafts that test to the environment set associated with the new test runs.  This means that in future `unitizer` runs the reference objects we examine when reviewing this test may not be the same objects that existed when the test itself was evaluated.  The `ls` command will highlight which objects have this problem by.
+
+Clearly this is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing `unitizer` stores.  For more details see the documentation for `unitizer:::healEnvs`.
+
+## Alternate Store Locations
+
+While this is not tested, in theory `unitizer` allows you to keep the `unitizer` store outside of the file system.  For example, you could keep the store in an SQL database.  To do so you need to define `get_store` and `set_store` S3 methods.  See the documentation for those functions for details on how to implement this.
+
+## Overridden Functionality
+
+In order to perpetuate the R console prompt illusion, `unitizer` needs to override some buit-in functionality, including:
+
+* `ls` is replaced by a special version that can explore the `unitizerItem` environments
+* `quit` and `q` are wrappers around the base functions that allow `unitizer` to quit gracefully
+* `traceback` while not replaced, is supported by a fair bit of voodoo involving among other things assigning to `.Traceback`
+* History is replaced during `unitizer` prompt evaluations with a temporary version of the history file containing only commands evaluated at the `unitizer` prompt.  The normal history file is restored on exit.
+* All attached packages and environments other than those that are pre-loaded with a clean R session are detached (see [LINK TO REPRODUCIBLE TESTS VIGNETTE]).
+
+## Version Control and Unitizer
+
+### Handling Binary Files
+
+The main issue with using `unitizer` with a version controlled package is that you have to decide whether you want to include the binary `rds` files in the version control history.  Some options:
+
+* Don't track the binary files at all (but they are valuable and now not backed up)
+* Don't track the binary files at all, but implement a secondary back-up system (this sounds really annoying)
+* Use a backed-up, non-file system store (see "Alternate Store Locations" above)
+* Track the binary files, but only commit them for major releases
+
+### Suggested Workflow with Git
+
+The approach we suggest is the last one above: just commit your `rds` files for major releases.  Also, note that to the extent you have a lot of test files that aren't changing, this should minimize how much binary data you commit.  One possible way to handle this with Git is to use the following command (adapted from twalberg's [SO answer](http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory)):
+```
+git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged
+```
+This will prevent the `rds` files as showing up as being modified when you run `git status`.  Once you reach the major release point, you can:
+```
+git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged
+```

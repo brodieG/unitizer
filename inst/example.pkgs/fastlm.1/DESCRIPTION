@@ -1,8 +1,8 @@
-Package: fastlm
+Package: unitizer.fastlm
 Title: Quickly Compute Simple Linear Regressions
 Description: This is a demo package used to illustrate usage of the `unitizer`
     package.
-Version: 0.1
+Version: 0.1.1
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodieDOTgaslam@MARISSAMAYERSCOMPANY.com>
 Depends:
