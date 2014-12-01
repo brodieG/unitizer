@@ -160,11 +160,17 @@ comments_assign <- function(expr, comment.dat) {
   comm.comm <- subset(comment.dat, token=="COMMENT")
   comm.expr <- subset(comm.notcomm, token=="expr")
 
-  comm.expr <- transform(  # identify whether a token is the first or last on it's line
+  # identify whether a token is the first or last on it's line.  Values mean
+  # - 3L is only item on line (we think)
+  # - 2L is last item on line (we think)
+
+  comm.expr <- transform(
     comm.expr,
     first.last.on.line=ave(
       col1, line1,
-      FUN=function(x) if(identical(length(x), 1L)) 3L else ifelse(x == max(x), 2L, ifelse(x == min(x), 1L, 0L))
+      FUN=function(x)
+        if(identical(length(x), 1L)) 3L
+        else ifelse(x == max(x), 2L, ifelse(x == min(x), 1L, 0L))
   ) )
   # For each comment on a line that also has an expression, find the expression
   # that is also on that line
