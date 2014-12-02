@@ -304,7 +304,9 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       }
       if(!identical(sec.id.prev, sec.id)) {
         k <- k + 1L
-        out.sec[[k]] <- as.character(H2(x[[sec.id]]@section.title), margin="none")
+        out.sec[[k]] <- as.character(
+          H2(x[[sec.id]]@section.title), margin="none", width=width.max
+        )
         out.sec.idx[[k]] <- l
         sec.id.prev <- sec.id
         l <- l + 1L

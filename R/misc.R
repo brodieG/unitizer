@@ -84,20 +84,20 @@ as.character.header <- function(x, margin="bottom", ...) {
 }
 #' @export
 
-as.character.H3 <- function(x, margin="bottom", ...) {
-  x <- header_help(x, ..., pad.char="-")
+as.character.H3 <- function(x, margin="bottom", width=getOption("width"), ...) {
+  x <- header_help(x, width=width,..., pad.char="-")
   NextMethod()
 }
 #' @export
 
-as.character.H2 <- function(x, margin="bottom", ...) {
-  x <- header_help(x, ..., pad.char="=")
+as.character.H2 <- function(x, margin="bottom", width=getOption("width"), ...) {
+  x <- header_help(x, width=width,..., pad.char="=")
   NextMethod()
 }
 #' @export
 
-as.character.H1 <- function(x, margin="bottom", ...) {
-  if((width <- getOption("width")) < 5L) return(x)
+as.character.H1 <- function(x, margin="bottom", width=getOption("width"), ...) {
+  if(width < 5L) return(x)
   x <- c(
     paste0(c("+", rep("-", width - 2L), "+"), collapse=""),
     paste0(
@@ -121,15 +121,17 @@ as.character.H1 <- function(x, margin="bottom", ...) {
 #'
 #' @keywords internal
 #' @param x the contents of the header
+#' @param width how wide we want the header to display
 #' @param ... unused, for compatibility with print generic
 #' @param pad.char which character to use to form the header structure
 
-header_help <- function(x, ..., pad.char="-") {
+header_help <- function(x, width, ..., pad.char="-") {
   par.call <- sys.call(-1L)
   stop2 <- function(msg) stop(simpleCondition(msg, par.call))
   if(!is.character(x) || length(x) != 1L) stop2("Argument `x` must be a 1 length character vector")
   if(!is.character(pad.char) || length(pad.char) != 1L || nchar(pad.char) != 1L) stop2("Argument `pad.char` must be a 1 length 1 character character vector.")
-  if((width <- getOption("width")) < 8L) return(x)
+  if(!is.numeric(width) || length(width) != 1L) stop2("Argument `width` must be a 1 length numeric vector.")
+  if(width < 8L) return(x)
   if(isTRUE(nchar(x) > width - 4L)) x <- paste0(substr(x, 1, width - 7L), "...")
   paste0(
     pad.char, " ", x, " ",
