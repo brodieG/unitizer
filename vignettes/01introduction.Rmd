@@ -10,7 +10,7 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-# unitizeR - Easy Unit Tests for R
+# unitizeR - Easy-R Unit Tests
 
 ## Introduction
 
@@ -20,20 +20,14 @@ vignette: >
 >
 > Hadley Wickham ([The R Journal Vol. 3/1, June 2011, P5](http://journal.r-project.org/archive/2011-1/RJournal_2011-1_Wickham.pdf)).
 
-`unitizer` sets out to make storing these tests as easy as possible by blurring the line between informal in-development testing and formal unit testing.  For example to create unit tests with `unitizer`, you would:
+`unitizer` automatically stores the informal tests you write during development that you might not bother to formalize into unit tests.  To use:
 
 * Save your "informal" tests to an R file
 * Run `unitize("my_file_name.R")`
 
-By "informal" tests we mean anything you would normally type in the command line when informally testing functionality.
+By "informal" tests we mean anything you would type in the command line to test that your code is working as expected.
 
-`unitizer` will then:
-
-* step through each test in your file
-* have you review the test result as you would on the command line
-* store the result if you confirm it is what it is supposed to be
-
-As part of this process you will need to review test results carefully, but only the first time.  Any time you make changes to your project, you can just re-run `unitize` and it will alert you if tests start producing different values or errors.
+`unitize` will walk you through your tests in an interactive environment where you can review them before they are stored for use as reference values.  That's it.  Any time you make changes to your project, you can just re-run `unitize` and it will alert you if tests start producing different values or errors.
 
 ### Demo
 
@@ -44,7 +38,7 @@ To run the demo:
 library(unitizer)
 demo(unitizer)
 ```
-There is a companion vignette for the demo as well, though both the demo and the `unitizer` interactive environment provide documentation.
+There is a [companion vignette](02democompanion.html) for the demo as well.
 
 ### How is `unitizer` Different to `testthat`?
 
@@ -52,7 +46,6 @@ There is a companion vignette for the demo as well, though both the demo and the
 
 ```
 ## testthat.log10.R
-
 expect_equal(
   log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)),
   c(2, NaN, -Inf, -1, Inf, NaN, NA, 2.69897000433602)
@@ -66,7 +59,6 @@ expect_error(
 And as implemented in `unitizer`:
 ```
 ## unitizer.log10.R
-
 log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500))  # succeed with warnings
 log10(letters)                                    # input error
 ```
@@ -74,21 +66,21 @@ This examples highlights benefits of both approaches.  In favor of `unitizer`:
 
 * It just took a few seconds to write our tests
 * Conditions are captured automatically
-    * we do not need separate tests to check for warnings and values
-    * error conditions are also captured without any special handling
+    * Values and warnings are both captured at the same time
+    * Errors don't require any special handling
 
 In favor of `testthat`:
 
 * The tests are self documenting: it is obvious from looking at them what the results should be, whereas it is not so for `unitizer`
 * Once you write the test you're done, whereas with `unitizer` you still need to `unitize` them and confirm the results are as expected
 
-The main selling point for `unitizer` is that the tests are very easy to write.  This is particularly helpful when the return values from the tests are complex (e.g., conditions with messages, as shown above, or simply complex objects, as returned by `lm` for example).  You review the test result, confirm it is what it should be, and tell `unitizer` to store it.  There is no need to copy and paste awkward deparsed expressions into tests.
+The main selling point for `unitizer` is that the tests are easy to write.  This is particularly true when the return values from the tests are complex (e.g., conditions with messages, as shown above, or simply complex objects, as returned by `lm` for example).  You review the test result, confirm it is what it should be, and tell `unitizer` to store it.  There is no need to copy and paste awkward deparsed expressions into tests.
 
 On the other hand, `unitizer` is not conducive to either self documentation or to test driven / [extreme](http://www.extremeprogramming.org/rules/testfirst.html) programming.  If these features are important to you then you are likely better off using more formal unit testing frameworks like `testthat`.
 
 ### `unitizer` and Packages
 
-The simplest way to use `unitizer` as part of your package development process is to create a `tests/unitizer` folder for all your `unitizer` test scripts, and then, in `tests`, add an additional file with calls to `unitize`, much like you would with `testthat`.  Here is a sample test structure for our `unitizer.fastlm` demo package:
+The simplest way to use `unitizer` as part of your package development process is to create a `tests/unitizer` folder for all your `unitizer` test scripts.  Then, in `tests`, add an additional file with calls to `unitize`.  Here is a sample test structure for our `unitizer.fastlm` demo package:
 ```
 unitizer.fastlm/         # top level package directory
     R/
@@ -149,19 +141,19 @@ Additionally, each test is evaluated in its own environment, though the environm
 
 ### File Space Considerations
 
-If your tests produce massive objects, the `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
+If your tests produce massive objects, the `unitizer` `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
 
 Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in version controlled projects.  See the version control section of the [nitty gritty vignette](06nittygritty.html).
 
 ### Backup Your `unitizer` Stores
 
-`unitizer` does not backup the `rds` beyond the single copy in the aforementioned folder.  Unit tests are valuable, and without the `rds` file `unitizer` tests become a lot less useful.  To the extent you backup your test R files, you should also backup the ".unitizer/" folder.  You could lose / corrupt your `unitizer` store in many ways.  Some non-exhaustive examples:
+`unitizer` does not backup the `rds` beyond the single copy in the aforementioned folder.  Unit tests are valuable, and without the `rds` file `unitizer` tests become a lot less useful.  To the extent you backup your R test files, you should also backup the corresponding ".unitizer/" folder.  You could lose / corrupt your `unitizer` store in many ways.  Some non-exhaustive examples:
 
 - Standard file system SNAFU
 - Careless updates to existing `unitizer`
 - `unitizer` developer messes up an update and destroys your `unitizer`
 
-Backup up your `unitizer` stores!
+Backup your `unitizer` stores!
 
 ### Ancillary `unitize` Packages
 
@@ -171,3 +163,7 @@ unitizer.path <- system.file(package="unitizer")
 library(devtools)
 install(paste0(unitizer.path, "/example.pkgs/unitizerdummypkg1"))  # one of several dummy packages
 ```
+
+## Acknowledgments
+
+A big thank you to Hadley Wickham for devoting so much of his life to making the R universe a better place to live in.  `unitizer` borrows several concepts from `testthat`, and uses `testthat` for internal unit tests.  Additionally, we used `devtools` extensively during package development.
