@@ -4,6 +4,7 @@ NULL
 
 #' Deparse, But Make It Look Like It Would On Prompt
 #'
+#' @keywords internal
 #' @param expr an expression or call
 #' @return character vector
 
@@ -293,9 +294,18 @@ over_print <- function(x, min.width=30L, max.width=getOption("width")) {
 
 #' Contains A List of Conditions
 #'
-#' Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
+#' Used by \code{`unitizer`} to capture conditions emitted by tests.
+#'
+#' When submitting custom comparison functions with:
+#'
+#' \code{`unitizer_sect(..., compare=unitizerItemTestsFuns(...))`}
+#'
+#' functions that compare conditions must compare \code{`conditionList`} objects
+#'
+#' @note Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
 #' compatibility issues.
 #'
+#' @seealso \code{`\link{unitizer_sect}`}
 #' @export
 
 setClass("conditionList", contains="unitizerList")

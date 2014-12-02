@@ -37,7 +37,8 @@ load_unitizer <- function(store.id, par.frame) {
   ) } }
   unitizer
 }
-#' Handles Storage
+#' @keywords internal
+#' @rdname load_unitizer
 
 store_unitizer <- function(unitizer, store.id, wd) {
   if(!is(unitizer, "unitizer") || is.null(store.id)) return(invisible(TRUE))

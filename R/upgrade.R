@@ -2,7 +2,7 @@
 #'
 #' Sequentially applies all applicable patches
 #'
-#' @export
+#' @keywords internal
 #' @param object an unitizer object
 #' @param ... other arguments
 #' @return an upgraded unitizer object

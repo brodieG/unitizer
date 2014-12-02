@@ -36,15 +36,15 @@
 #' }
 #' For inspirations for the bodies of the _store functions look at the source
 #' code for \code{`unitizer:::get_unitizer.character`} and \code{`unitizer:::set_unitizer.character`}.
-#' Expectations for the functions are as follows.  \code{`get_unitizer`} must return:
+#' Expectations for the functions are as follows.  \code{`get_unitizer`} must:
 #' \itemize{
-#'   \item a \code{`\link{unitizer-class}`} object if \code{`store.id`} exists and contains a valid object
-#'   \item FALSE if the object doesn't exist (e.g. first time run-through, so reference copy doesn't exist yet)
+#'   \item return a \code{`\link{unitizer-class}`} object if \code{`store.id`} exists and contains a valid object
+#'   \item return FALSE if the object doesn't exist (e.g. first time run-through, so reference copy doesn't exist yet)
 #'   \item \code{`\link{stop}`} on error
 #' }
-#' \code{`set_unitizer`} must return:
+#' \code{`set_unitizer`} must:
 #' \itemize{
-#'   \item TRUE on success
+#'   \item return TRUE on success
 #'   \item \code{`\link{stop}`} on error
 #' }
 #'
@@ -86,6 +86,7 @@ set_unitizer.character <- function(store.id, unitizer) {
   }
   TRUE
 }
+#' @rdname set_unitizer
 #' @export
 
 get_unitizer <- function(store.id) {

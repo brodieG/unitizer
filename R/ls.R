@@ -122,6 +122,8 @@ print.unitizer_ls <- function(x, ...) {
 #'
 #' Useful when tests envs are repaired, or if we're looking at an ignored
 #' test
+#'
+#' @keywords internal
 
 setGeneric("invalidateLs", function(x, ...) standardGeneric("invalidateLs"))
 

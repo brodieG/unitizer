@@ -3,11 +3,13 @@
 #' Turn standard R scripts into unit tests by evaluating the expressions and
 #' storing them along with their resuls.
 #'
-#' \code{`unitize`} creates unit tests from a single R file, \code{`unitize_dir`}
-#' creates tests from all the R files in the specified directory (analogous to
-#' \code{`\link{testthat::test_dir}`}), \code{`unitize_files`} creates tests
-#' for all the specified files, and \code{`review`} allows you to review or
-#' potentially modify an existing \code{`unitizer`} store.
+#' \code{`unitize`} creates unit tests from a single R file, and
+#' \code{`unitize_dir`} creates tests from all the R files in the specified
+#' directory (analogous to \code{`\link{testthat::test_dir}`}).
+#'
+#' \code{`review`} allows you to review existing \code{`unitizer`} or modify it
+#' by dropping tests from it.  This is useful if you ever have second thoughts
+#' about previously accepted tests and wish to inspect them.
 #'
 #' \code{`unitizer`} stores are identified by \code{`unitizer`} ids, which by
 #' default are character strings containing the location of the folder the
@@ -18,10 +20,10 @@
 #' implementing S3 methods for \code{`\link{get_unitizer}`} and
 #' \code{`\link{set_unitizer}`}.
 #'
-#' See \code{`unitizer`} vignette and demos for details and examples.
+#' See \code{`unitizer`} vignettes and demo for details and examples.
 #'
 #' @export
-#' @aliases review, unitize_dir, unitize_files
+#' @aliases review unitize_dir
 #' @seealso \code{`\link{get_unitizer}`}
 #' @param test.file path to the file containing tests
 #' @param store.id a folder to store the \code{`unitizer`} objects in; will auto-
@@ -41,11 +43,9 @@
 #'   namespaces for detached packages remain loaded.  Additionally, the search
 #'   path is restored to its initial state upon exiting \code{`unitizer`} so any
 #'   packages added/removed, or objects attached/detached from search path are
-#'   restored to original state.  This feature is somewhat experimental and is
-#'   disabled by default, though this will likely change in the future.  See
-#'   "Reproducible Tests" vignette for details.
+#'   restored to original state.  See "Reproducible Tests" vignette for details.
 #' @param search.path.keep character any additional items on the search path
-#'   to keep attached; has no effect unless \code{`search.path.clean`} is TRUE
+#'   to keep attached; has no effect if \code{`search.path.clean`} is FALSE
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @param test.dir the directory to run the tests on
@@ -85,6 +85,7 @@ unitize <- function(
   ) )
 }
 #' @export
+#' @rdname unitize
 
 review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
@@ -108,6 +109,7 @@ review <- function(
   )
 }
 #' @export
+#' @rdname unitize
 
 unitize_dir <- function(
   test.dir, test.file.regex="\\.[Rr]$",

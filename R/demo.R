@@ -17,6 +17,7 @@ fastlm_dir <- function(version) {
 }
 
 #' @export
+#' @rdname fastlm_dir
 
 prompt_to_proceed <- function()
   invisible(readline("[Press ENTER to Continue]"))  # helper fun

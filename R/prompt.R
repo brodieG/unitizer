@@ -148,6 +148,7 @@ navigate_prompt <- function(
 #'
 #' Probably should be an S4 method, along with \code{`\link{navigatePrompt}`}
 #'
+#' @keywords internal
 #' @param x a unitizerBrowse object
 #' @param nav.env an environment
 #' @return either a \code{`unitizerBrowse`}, or "Q" if the user chose to quit
