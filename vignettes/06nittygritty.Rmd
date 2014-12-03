@@ -2,15 +2,16 @@
 title: "The Interative Environment"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
 
 vignette: >
   %\VignetteIndexEntry{06 - Nitty Gritty Details}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
-
-# Nitty Gritty
 
 ## Subtleties Of The Interactive Environment
 
@@ -87,3 +88,15 @@ This will prevent the `rds` files as showing up as being modified when you run `
 ```
 git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged
 ```
+
+## Other Issues
+
+### Ancillary `unitizer` Packages
+
+`unitizer` uses anscillary packages in examples and tests.  These are are in `inst/example.pkgs` in the `unitizer` sources.  You should not have a need to use these, but if you do:
+```
+unitizer.path <- system.file(package="unitizer")
+library(devtools)
+install(paste0(unitizer.path, "/example.pkgs/unitizerdummypkg1"))  # one of several dummy packages
+```
+

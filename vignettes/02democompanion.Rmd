@@ -2,16 +2,16 @@
 title: "unitizeR - Demo Companion"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
 
 vignette: >
   %\VignetteIndexEntry{02 - Demo Companion}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
-
-# Demo Companion
-
 ## Introduction
 
 ### Running the Demo
@@ -36,7 +36,9 @@ We will use the pseudo package `unitizer.fastlm` which is provided as part of th
 
 ## Setup
 
-### Introduction
+### Notes on Simulating `unitizer` Use In This Demo
+
+Unfortunately the demo is complicated by the need to automate some steps that would normally be taken by the package developer.  We try to isolate these steps to the "Setup" section of the demo so that the rest of the `demo` is as close as possible to what a typical `unitizer` experience.
 
 When you run `demo(unitizer)` you will first see something like:
 ```

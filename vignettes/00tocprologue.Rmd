@@ -2,7 +2,10 @@
 title: "unitizeR - Table of Contents"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
 
 vignette: >
   %\VignetteIndexEntry{Table of Contents}
@@ -10,7 +13,7 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-## TL;DR (Prologue)
+## Prologue (TL;DR)
 
 `unitizer` bakes in a lot of contextual help so you can get started using it without wading into this rather lengthy vignette.
 

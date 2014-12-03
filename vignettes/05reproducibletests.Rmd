@@ -2,15 +2,16 @@
 title: "unitizeR - Reproducible Tests"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
 
 vignette: >
   %\VignetteIndexEntry{05 - Reproducible Tests}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
-
-# Reproducible Tests
 
 ## Clean Environments
 

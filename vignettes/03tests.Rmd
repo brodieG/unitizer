@@ -1,16 +1,17 @@
 ---
-title: "Unitizer Tests"
+title: "unitizeR - Test Details"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
 
 vignette: >
   %\VignetteIndexEntry{03 - Unitizer Tests}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
-
-# `unitizer` Tests
 
 ## Test Details
 
