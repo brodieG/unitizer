@@ -19,7 +19,7 @@ Suggests:
     unitizerdummypkg1,
     unitizerdummypkg2,
     fastlm
-License: GPL-2
+License: GPL-3
 LazyData: true
 Collate:
     'class_unions.R'
