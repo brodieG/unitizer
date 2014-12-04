@@ -15,9 +15,7 @@ vignette: >
 
 ## Prologue (TL;DR)
 
-`unitizer` bakes in a lot of contextual help so you use it without wading into this rather lengthy set of vignettes.
-
-The best way to get started is to review the interactive demo (and the [companion vignette](02democompanion.html) if you are into documentation):
+`unitizer` bakes in a lot of contextual help so you can use it without wading into this rather lengthy set of vignettes. The best way to get started is to review the interactive demo (and the [companion vignette](02democompanion.html) if you are into documentation):
 ```
 library(unitizer)
 demo(unitizer)
@@ -28,7 +26,7 @@ Or alternative, review the [introduction vignette](00introduction.Rmd).
 
 ### Introduction
 
-The [introduction vignette](01introduction.html) Explains the motivation for developing `unitizer`, compares it to other unit testing frameworks, provides a quick start guide, and highlights some issues you should be aware of when using `unitizer`.
+The [introduction vignette](01introduction.html) explains the motivation for developing `unitizer`, compares it to other unit testing frameworks, provides a quick start guide, and highlights some issues you should be aware of when using `unitizer`.
 
 ### Demo Companion
 
@@ -51,6 +49,6 @@ By default `unitizer` runs expressions in an environment that does not inherit f
 The [esoteric topics vignette](06nittygritty.html) covers a number of miscellaneous topics, including:
 
 * More details on `unitizer` environment structure
-* Alternate Store Locations
+* How `unitizer`s are stored, and implications thereof
 * Overridden functionality
 * `unitizer` and version control

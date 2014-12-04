@@ -29,7 +29,7 @@ When reviewing tests, `unitizer` will group tests by test type, so you will revi
 
 ### What Constitutes a Test?
 
-As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them, and their values are not be compared with existing reference values prior to storage.  The implicit assumption is that if there is an assignment the intent is to use the resulting object in some later test at which point any issues will crop up.  Skipping assignment review saves some unnecessary user interaction.
+As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them, and their values are not compared to existing reference values prior to storage.  The implicit assumption is that if there is an assignment the intent is to use the resulting object in some later test at which point any issues will crop up.  Skipping assignment review saves some unnecessary user interaction.
 
 You can force assignments to become tests by wrapping them in parentheses:
 ```
@@ -158,7 +158,3 @@ In order to properly capture output, `unitizer` will modify streams and options.
 This should all be transparent to the user, unless the user is also attempting to modify these settings in the test expressions.  The problematic interaction are around the `options` function.  If the user sets `options(warn=1)` with the hopes that setting will persist beyond the execution of the test scripts, that will not happen.  If the user sets `options(error=recover)` or some such in a test expression, and that expression throws an error, you will be thrown into recovery mode with no visibility of `stderr` or `stdout`, which will make for pretty challenging debugging.  Similarly, `unitize`ing `debug`ged functions, or interactive functions, is unlikely to work well.
 
 If the `unitize` is run with `sdtderr` sunk, then it will not capture any `stderr` produced by the test expressions.  If one of the test expressions enables `stderr` capture, then `unitize` will stop capturing messages from that point on.  If after this another test expression disables message capture, this function will start capturing messages starting with the subsequent test expression.
-
-### Error Handling
-
-Because `unitize` evaluates test expressions within a call to `withCallingHandlers`, there are some limitations on successfully running `unitize` inside your own error handling calls.  In particular, `unitize` will not work properly if run inside a `tryCatch` or `try` statement. If test expressions throw conditions, the internal `withCallingHandlers` will automatically hand over control to your `tryCatch`/`try` statement without an opportunity to complete `unitize` computations.  Unfortunately there does not seem to be a way around this since we have to use `withCallingHandlers` so that test statements after non-aborting conditions are run.

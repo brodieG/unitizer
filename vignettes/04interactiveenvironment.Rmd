@@ -36,7 +36,7 @@ unitizer>
 
 ## `unitizer` Commands
 
-Much like the `browser()` prompt, the `unitizer` prompt accepts several special expressions that allow you to control `unitizer` behavior.  What the expressions are and what they do depends on context.  We will review them in the context of the failed test described above.  Let's go back and look at what the `unitizer` prompt stated before we started reviewing our failed tests:
+Much like the `browser()` prompt, the `unitizer` prompt accepts several special expressions that allow you to control `unitizer` behavior.  What the expressions are and what they do depends on context.  We will review them in the context of the failed test described above.  let us go back and look at what the `unitizer` prompt stated before we started reviewing our failed tests:
 
 ```
 - Failed ----------------------------------------------------------------------
@@ -68,7 +68,7 @@ If at any time you forget what `unitizer` options are available to you you can j
 
 ### Selecting A Test to Review
 
-`unitize` will present to you all the tests that require review, but if you wish to review a specific test you can use the `B` (for Back) and `R` (for Review) commands. These commands can come in handy if you realize that you incorrectly accepted or rejected an earlier test, but don't wish to quit `unitizer` completely and lose all the other properly reviewed tests. `B` just steps you back to the previous test.  `R` gives you the option to go back to any previously reviewed test.
+`unitize` will present to you all the tests that require review, but if you wish to review a specific test you can use the `B` (for Back) and `R` (for Review) commands. These commands can come in handy if you realize that you incorrectly accepted or rejected an earlier test, but do not wish to quit `unitizer` completely and lose all the other properly reviewed tests. `B` just steps you back to the previous test.  `R` gives you the option to go back to any previously reviewed test.
 
 `B` is trivially straightforward, so we will not discuss it further.  We will type `R` at the prompt of our second failed test to examine what it does:
 ```
@@ -89,7 +89,7 @@ necessarily sequential (see vignette for details and exceptions).
 What test do you wish to review (input a test number, [U]nreviewed)?
 unitizer>
 ```
-The `[R]eview` option produces a list of all the tests in the order in which they appear in the test file.  You can type the number of a test to review it, or U to go to the first test that hasn't been reviewed (more on this in a minute).  Let's examine one of the lines in more detail:
+The `[R]eview` option produces a list of all the tests in the order in which they appear in the test file.  You can type the number of a test to review it, or U to go to the first test that hasn't been reviewed (more on this in a minute).  let us examine one of the lines in more detail:
 ```
      3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
      ^   ^                                                                ^   ^
@@ -155,8 +155,8 @@ The `unitizer` prompt is designed to emulate the standard R prompt.  For the mos
 
 There are, however, some suble differences created by the structure of the evaluation environments `unitizer` uses:
 
-* Even though you can see objects produced by tests, you can't actually remove them with `rm`
-* Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so don't expect them to still be there at subsequent prompts
+* Even though you can see objects produced by tests, you can not actually remove them with `rm`
+* Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts
 * Other subtle issues discussed at length in the ([estoeric topics vignette](06nittygritty.html))
 * There are special `unitizer` objects `.new` and `.ref` that let you review the results of tests (we will discuss these next)
 * `ls` is over-ridden by a special `unitizer` version (we will also dicuss this next)
@@ -172,7 +172,7 @@ As we saw in the demo there are special objects available at the prompt: `.new` 
 * `getConds(.new)` returns the list of conditions produced by the test
 * `getMsg(.new)` returns the stderr captured during test evaluation
 * `getOut(.new)` returns the screen output captured during test evaluation (note often this will be similar to what you get from `.new` or `getVal(.new)` since typing those expressions at the prompt leads to the value being printed)
-* `getExpr(.new)` returns the test expression (don't confuse this with `getCall`, a built-in R function with no relation to `unitizer`)
+* `getExpr(.new)` returns the test expression (do not confuse this with `getCall`, a built-in R function with no relation to `unitizer`)
 * `getAborted(.new)` returns whether the test expression invoked an "abort" restart (e.g. called `stop` at some point)
 
 You can substitute `.ref` for `.new` in any of the above, provided that `.ref` is defined (i.e. that won't work when you are reviewing new tests since there is no corresponding reference test for those by definition).
