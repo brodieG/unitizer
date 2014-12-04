@@ -124,6 +124,7 @@ pre {
   border-radius: 3px;
   margin: 5px 0px;
   padding: 10px;
+  font-size: 85%;
 }
 pre:not([class]) {
   background-color: #eee;
@@ -152,8 +153,10 @@ img {
 
 h1 {
   margin-top: 0;
+  padding-bottom: 3px;
   font-size: 35px;
   line-height: 40px;
+  border-bottom: 1px solid #999;
 }
 
 h2 {

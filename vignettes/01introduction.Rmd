@@ -1,5 +1,5 @@
 ---
-title: "unitizeR: Easy-R Unit Tests"
+title: "unitizeR - Easy R Unit Tests"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
 output:
@@ -28,7 +28,7 @@ vignette: >
 
 By "informal" tests we mean anything you would type in the command line to test that your code is working as expected.
 
-`unitize` will step through your tests in an interactive environment so that you can review them before they are stored as reference values.  That's it.  Any time you make changes to your project, you can just re-run `unitize` and it will alert you of any regressions.
+`unitize` will step through your tests in an interactive environment where you can review them and confirm they should be kept as unit tests.  That's it.  Any time you make changes to your project, you can just re-run `unitize` and it will alert you of any regressions.
 
 ### Demo
 
@@ -41,15 +41,17 @@ There is a [companion vignette](02democompanion.html) for the demo as well.
 
 ### How is `unitizer` Different to `testthat`?
 
-`unitizer` trades off some formality for ease of use, and as with any trade-off, there are pros and cons.  We will illustrate some of these trade-offs with a contrived example.  Here are some unit tests for the `base::log10` function as implemented in `testthat`:
+`unitizer` trades off some formality for ease of use, and as with any trade-off, there are pros and cons.  Let's illustrate with some unit tests for the `base::log10` function.  First, as implemented in `testthat`:
 
 ```
-## testthat.log10.R
 expect_equal(
   log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)),
   c(2, NaN, -Inf, -1, Inf, NaN, NA, 2.69897000433602)
 )
-expect_warning(log10(x), "NaNs produced")
+expect_warning(
+  log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)),
+  "NaNs produced"
+)
 expect_error(
   log10(letters),
   "Error in log10\\(letters\\) : non-numeric argument to mathematical function\n"
@@ -57,14 +59,13 @@ expect_error(
 ```
 And as implemented in `unitizer`:
 ```
-## unitizer.log10.R
 log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500))  # succeed with warnings
 log10(letters)                                    # input error
 ```
 There are benefits to both approaches.  In favor of `unitizer`:
 
 * Tests are easy to write
-    * Notice how we don't need to provide the result vector
+    * Notice how we don't need to provide the result vector for the first test
 * Conditions are captured automatically
     * Values and warnings are both captured at the same time
     * Errors don't require any special handling
@@ -72,13 +73,13 @@ There are benefits to both approaches.  In favor of `unitizer`:
 In favor of `testthat`:
 
 * The tests are self documenting
-    * Expected results are obvious from the source, whereas it isn't so with `unitizer`
-* Once you write the test you're done
-    * With `unitizer` you still need to `unitize` and review them
+    * Expected results are obvious from the source, whereas it is not so with `unitizer`
+* Once you write the test you are done
+    * With `unitizer` you still need to `unitize` and review the tests
 
 The main selling point for `unitizer` is that the tests are easy to write.  This is particularly true when the return values from the tests are complex (e.g., conditions with messages, as shown above, or simply complex objects, as returned by `lm` for example).  You review the test result, confirm it is what it should be, and tell `unitizer` to store it.  There is no need to copy and paste awkward deparsed expressions into tests.
 
-On the other hand, `unitizer` is not conducive to either self documentation or to test driven / [extreme](http://www.extremeprogramming.org/rules/testfirst.html) programming.  If these features are important to you then you are likely better off using more formal unit testing frameworks like `testthat`.
+On the other hand, `unitizer` is not conducive to either self documentation or to test driven / [extreme](http://www.extremeprogramming.org/rules/testfirst.html) programming.  If these features are important to you then you are likely better off using more formal unit testing frameworks.
 
 ### `unitizer` and Packages
 
@@ -87,7 +88,7 @@ The simplest way to use `unitizer` as part of your package development process i
 unitizer.fastlm/         # top level package directory
     R/
     tests/
-        run.R
+        run.R            # <- calls `unitize`
         unitizer/
             fastlm.R
             cornerCases.R
@@ -95,14 +96,13 @@ unitizer.fastlm/         # top level package directory
 And this is what the `run.R` file would look like
 ```
 ## file: tests/run.R
-
 library(unitzer)
 unitize("unitizer/fastlm.R")
 unitize("unitizer/cornerCases.R")
 ```
-The path specification for test files should be relative to the `tests` directory as that is what `R CMD check` effectively sets the working directory to before running the files in `tests/`.  This means you can't just source your `run.R` file without also first setting the working directory to `tests/`.
+The path specification for test files should be relative to the `tests` directory as that is what `R CMD check` effectively sets the working directory to before running the files in `tests/`.  This means you cannot just source your `run.R` file without also first setting the working directory to `tests/`.
 
-When `unitize` is run through `R CMD check` it will run in a non-interactive mode that will produce an error if any test fails or if there are new / removed tests in the test file.
+When `unitize` is run by `R CMD check` it will run in a non-interactive mode that will succeed only if all tests pass.
 
 There is also a `unitize_dir` function that will run `unitize` against all files in a directory.
 
@@ -139,7 +139,7 @@ install_github("brodieg/unitizer")
 
 If your tests produce massive objects, the `unitizer` `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
 
-Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in version controlled projects.  See the version control section of the [nitty gritty vignette](06nittygritty.html).
+Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in version controlled projects.  See the version control section of the [esoteric topics vignette](06nittygritty.html).
 
 #### Backup Your `unitizer` Stores
 
@@ -165,11 +165,15 @@ In order to create an intuitive (hopefully) interactive unit testing framework w
 
 * `library`, `require`, `attach`, and `detach` are `trace`d during `unitize` evaluation (see [reproducible tests vignette](05reproducibletests.html))
 * Each tests is evaluated in its own environment, a child of the previous test's environment; because `R` looks up objects in parent environments it appears that all tests are evaluated one environment (see [interactive environment vignette](04interactiveenvironment.html))
-* We provide modified versions of `quit`/`q` and `ls` (see [nitty gritty vignette](06nittygritty.html)) at the `unitizer` prompt
+* We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics vignette](06nittygritty.html)) at the `unitizer` prompt
 * `traceback` should work when reviewing tests that produce errors, but only because we capture the trace with `sys.calls` and write it to `base::.Traceback` during review
 * We sink `stdout` and `stderr` during test evaluation to capture those streams; be careful if you are also sinking those streams (see [details on tests vignette](03tests.html))
 * We parse the test file and extract comments so that they can be attached to the correct test for review
 * The history file is temporary replaced so that your `unitizer` interactions don't pollute it
+
+### Avoid Tests That Require User Input
+
+In particular, you should avoid evaluating tests that invoke `debug`ged functions, or introducing interactivity by using something like `options(error=recover)`, or `readline`, or some such.  Tests will work, but the interaction will be challenging because you will have to do it with `stderr` and `stdout` captured...
 
 ## Acknowledgments
 

@@ -13,23 +13,23 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-## Test Details
+## Understanding Tests
 
 ### Test Outcomes
 
-So far we have only seen three test outcomes: New, Passed, and Failed.  For reference here is a list of all the test outcomes:
+When `unitize` is run with a test file against an existing `unitizer` store, each test in the file is matched and compared to the corresponding test in the store.  Here is a comprehensive list of possible outcomes:
 
-* New: the test is not present in the `unitizer` store and needs to be reviewed prior to storage to ensure it actually does what you expect
-* Passed: the test passed successfully and you will not be prompted to review
-* Failed: the stored test differs from the one produced by the re-evaluation of the same expression, as was the case in our examples above
-* Deleted/Removed: a test present in the `unitizer` store no longer exists in the test R file
-* Corrupted/Error: an error occurred while attempting to compare the new and reference tests; this should occur very rarely and is likely the result of using a custom comparison function to compare the tests (see `unitizer_sect` section for more details on custom comparison functions).  When this happens `unitizer` has no way of knowing whether the test passed or failed; you can think of it as an `NA` outcome.
+* **New**: a test present in the file is not in the store and needs to be reviewed to confirm it is correct
+* **Passed**: the test matched the reference test in the store and need not be reviewed
+* **Failed**: the evaluation of the test from the file differs from the one produced by same expression in the store
+* **Deleted/Removed**: a test present in the `unitizer` store no longer exists in the test file so you will be prompted to remove it from the store
+* **Corrupted/Error**: an error occurred while attempting to compare the file and store tests; this should occur very rarely and is likely the result of using a custom comparison function to compare the tests (see [`unitizer_sect`](#controlling-test-comparison) for more details on custom comparison functions).  Because the comparison function itself failed, `unitizer` has no way of knowing whether the test passed or failed; you can think of it as an `NA` outcome.
 
-When reviewing tests, `unitizer` will group tests by test type, so you will review all new tests  in one go, then the failed tests, and so on.  The implication here is that the order that you review tests may not be the same as the order they appear in in the test file.
+When reviewing tests, `unitizer` will group tests by test type, so you will review all new tests  in one go, then the failed tests, and so on.  As a result, the order that you review tests may not be the same as the order they appear in in the test file.
 
 ### What Constitutes a Test?
 
-As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them, and their values are not be compared to values produced by future evaluations of the same assignment expression.  The implicit assumption is that if there is an assignment the intent is to use it as an input to another test that will be reviewed, so skipping assignment review saves some unnecessary user interaction.
+As noted previously simple assignments are not considered tests.  They are stored in the `unitizer` store, but you are not asked to review them, and their values are not be compared with existing reference values prior to storage.  The implicit assumption is that if there is an assignment the intent is to use the resulting object in some later test at which point any issues will crop up.  Skipping assignment review saves some unnecessary user interaction.
 
 You can force assignments to become tests by wrapping them in parentheses:
 ```
@@ -46,15 +46,19 @@ The following aspects of a unitizer tests are recorded for future comparison:
 * Conditions
 * Screen (stdout) output
 * Message (stderr) output
-* Whether the expression issued an "abort" `invokeRestart`
+* Whether the expression issued an "abort" `invokeRestart` (e.g. was `stop` called in the expression)
 
 Currently only the first two elements are actually compared when determining whether a test passes or fails.  These two should capture almost all you would care about from a unit test perspective.
 
-Screen output is omitted from comparison because it can be caused to vary substantially by factors unrelated to source code changes (e.g. console display width).  Message output is omitted because all typical mechanisms for producing stderr output also produce conditions with messages embedded, so it is usually superfluous to compare them.  The "abort" `invokeRestart` is omitted because it generally is implied by the presence of an error condition and actively monitoring it clutters the diagnostic messaging produced by `unitizer`.
+Screen output is omitted from comparison because it can be caused to vary substantially by factors unrelated to source code changes (e.g. console display width). Screen output will also seem identical to the value as most of the time screen output is just the result of printing the return value of an expression.  This will not be the case if the expression itself prints to `stdout` explicitly, or if the function returns invisibly.
 
-While we omit the last three components from comparison, this is just default behavior.  You can change this by using the `compare` argument for `unitizer_sect` (see the `unitizer_sect` section below).
+Message output is omitted because all typical mechanisms for producing `stderr` output also produce conditions with messages embedded, so it is usually superfluous to compare them.  One exception would be if an expression `cat`ed to `stderr` directly.
 
-## Test Sections
+The "abort" `invokeRestart` is omitted because it generally is implied by the presence of an error condition and actively monitoring it clutters the diagnostic messaging produced by `unitizer`.  It exists because it is possible to signal a "stop" condition without actually triggering the "abort" restart so in some cases it could come in handy.
+
+While we omit the last three components from comparison, this is just default behavior.  You can change this by using the `compare` argument for [`unitizer_sect`](#controlling-test-comparison).
+
+## Sections
 
 ### `untizer_sect`
 
@@ -126,34 +130,34 @@ unitizer_sect("Accessor Functions",
 ```
 This will cause the value of tests to be compared with `identical`, the screen output with `all.equal`, and messages (stderr) with `identical`.
 
-If you want to change the comparison function for conditions, keep in mind that what you are comparing are `conditionList` objects so it isn't completely straightforward to compare them (see `getMethod("all.equal", "conditionList")`).  In the future we might expose a better interface for custom comparison functions for conditions (see issue #32).
+If you want to change the comparison function for conditions, keep in mind that what you are comparing are `conditionList` objects so this is not straightforward (see `getMethod("all.equal", "conditionList")`).  In the future we might expose a better interface for custom comparison functions for conditions (see issue #32).
 
 If you need to have different comparison functions within a section, use nested sections.  While `unitizer` will only report the outermost section metrics in top-level summaries, the specified comparison functions will be used for each nested section.
 
-## Nitty Gritty
+## Other Details
 
 ### Matching Tests
 
-Whenever you re-run `unitizer` on a file that has already been "unitized", `unitizer` matches the expressions in that file to what the expressions were in the file when it was first run.  `unitizer` matches only on the deparsed expression, and does not care at all where in the file the expression occurs.  If multiple identical expressions exist in a file they will be matched in the order they show up.
+Whenever you re-run `unitize` on a file that has already been `unitize`d, `unitizer` matches the expressions in that file to those stored in the corresponding `unitizer` store.  `unitizer` matches only on the deparsed expression, and does not care at all where in the file the expression occurs.  If multiple identical expressions exist in a file they will be matched in the order they show up.
 
-One particularly important point is that the `unitizer_sect` in which a test was when it was first "unitized" has no bearing whatsoever on matching a new test to a reference test.  For example, if a particular test was in "Section A" when it was first unitized, but in the current version of the test file it is in "Section X", that test will be matched to the current one in "Section X".
+The `unitizer_sect` in which a test was when it was first `unitize`d has no bearing whatsoever on matching a new test to a reference test.  For example, if a particular test was in "Section A" when it was first `unitize`d, but in the current version of the test file it is in "Section X", that test will be matched to the current one in "Section X".
 
 ### Commenting Tests
 
-`unitizer` parses the comments in the test files and attaches them to the test that they document.  Comments are attached to tests if they are on the same line as the test, or just above the test.  Comments are displayed with the test expression during the interactive review mode.
+`unitizer` parses the comments in the test files and attaches them to the test that they document.  Comments are attached to tests if they are on the same line as the test, or in the lines between a test and the previous test.  Comments are displayed with the test expression during the interactive review mode.
 
 ### Options and Streams
 
-In order to properly capture output, this function must mess with streams and options.  In particular, it will do the following:
+In order to properly capture output, `unitizer` will modify streams and options.  In particular, it will do the following:
 
 * temporarily set `options(warn=1L)` during expression evaluation
 * temporarily set `options(error=null)` during expression evaluation
 * use `sink()` to capture any output to `stdout`
 * use `sink(type="message")` to capture output to `stderr`
 
-This should all be transparent to the user, unless the user is also attempting to modify these settings in the test expressions.  The problematic interaction are around the `options` function.  If the user sets `options(warn=1)` with the hopes that setting will persist beyond the execution of the test scripts, that will not happen.  If the user sets `options(error=recover)` or some such in a test expression, and that expression throws an error, you will be thrown into recovery mode with no visibility of `stderr` or `stdout`, which will make for pretty challenging debugging.
+This should all be transparent to the user, unless the user is also attempting to modify these settings in the test expressions.  The problematic interaction are around the `options` function.  If the user sets `options(warn=1)` with the hopes that setting will persist beyond the execution of the test scripts, that will not happen.  If the user sets `options(error=recover)` or some such in a test expression, and that expression throws an error, you will be thrown into recovery mode with no visibility of `stderr` or `stdout`, which will make for pretty challenging debugging.  Similarly, `unitize`ing `debug`ged functions, or interactive functions, is unlikely to work well.
 
-If the function is run with message diversion already activated, then it will not capture any messages produced by the test expressions.  If one of the test expressions enables message capture, then this function will stop capturing messages from that point on.  If after this another test expression disables message capture, this function will start capturing messages starting with the subsequent test expression (i.e. any message output between the expression self disabling message output and the end of the expression will go to `stdout`).
+If the `unitize` is run with `sdtderr` sunk, then it will not capture any `stderr` produced by the test expressions.  If one of the test expressions enables `stderr` capture, then `unitize` will stop capturing messages from that point on.  If after this another test expression disables message capture, this function will start capturing messages starting with the subsequent test expression.
 
 ### Error Handling
 

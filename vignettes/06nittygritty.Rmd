@@ -1,5 +1,5 @@
 ---
-title: "The Interative Environment"
+title: "unitizeR - Esoteric Topics"
 author: "Brodie Gaslam"
 date: "`r Sys.Date()`"
 output:
@@ -8,7 +8,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{06 - Nitty Gritty Details}
+  %\VignetteIndexEntry{06 - Esoteric Topics}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
@@ -17,13 +17,16 @@ vignette: >
 
 Clearly the `unitizer` prompt environment is not as straightforward as the standard R console environment, or even the `browser` environment.  In reality it is even more complex than we have shown so far.
 
-`unitizer` batch processes all the tests when it is first run before it breaks into interactive mode.  It does this for two reasons: 1. this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly, 2. it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.
+`unitizer` batch processes all the tests when it is first run before it breaks into interactive mode.  It does this for two reasons:
 
-While there are good reasons for batch processing the tests, it means that the review process is complicated substantially.  If we used a single evaluation environment it would be cluttered by all the objects created throughout the whole test script, so when we started reviewing the first test we would be seeing all the objects, even objects that did not exist when the first test was run.  Much worse, it is entirely possible for a variable to be re-used several times in a file, adopting different values for different tests, with the implication that objects used by our first test may have values that are different to what they were when the test was originally run.
+1. this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly,
+2. it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.
+
+While there are good reasons for batch processing the tests, it means that the review process is complicated substantially.  If we used a single evaluation environment it would be cluttered by all the objects created throughout the whole test script, so when we started reviewing the first test we would be seeing all the objects, even objects that did not exist when the first test was run.  Much worse, it is entirely possible for a symbol to be re-used several times in a file, adopting different values for different tests, with the implication that objects used by our first test may have values that are different to what they were when the test was originally run.
 
 To get around this problem each test is run in its own environment.  Each of these environments has for parent the environment of the previous test.  This means that a test has access to all the objects created/used by earlier tests, but not objects created/used by subsequent tests.  When a later test "modifies" an existing object, the existing object is not really modified; rather, the test creates a new object of the same name in the child environment which masks the object in the earlier test.  This is functionally equivalent to overwriting the object as far as the later test is concerned.
 
-For the most part this environment trickery should be transparent to the user.  The `ls` function is specially modified to, among other things, list objects in all the parent test environments.  But there are exceptions to this "transparency".  The simplest exception is that you can't actually remove an object created in an earlier test (well, it is possible, but the how isn't documented and you are advised not to attempt to do it).  Here is a more complex exception:
+For the most part this environment trickery should be transparent to the user.  The `ls` function is specially modified to, among other things, list objects in all the parent test environments.  But there are exceptions to this "transparency".  The simplest exception is that you can't actually remove an object created in an earlier test (well, it is possible, but the how isn't documented and you are advised not to attempt it).  Here is a more complex exception:
 
     a <- function() b()
     b <- function() TRUE
@@ -31,7 +34,7 @@ For the most part this environment trickery should be transparent to the user.  
 
 In this case, when we evaluate `a()` we must step back two environments to find `a`, but that's okay.  The problem is that once inside `a`, we must now evaluate `b()`, but `b` is defined in a child environment, not a parent environment so R's object lookup fails.
 
-It turns out the above example actually works because as noted in [INSERT LINK TO TESTS VIGNETTE], environments are only defined for tests, an neither the `a` or `b` assignments are tests, so both `a` and `b` are assigned to the environment
+It turns out the above example actually works because as noted in [details on tests vignette](03tests.html), environments are only defined for tests, an neither the `a` or `b` assignments are tests, so both `a` and `b` are assigned to the environment
 of the `a()` call.  However, this really breaks:
 
     a <- function() b()
@@ -39,9 +42,9 @@ of the `a()` call.  However, this really breaks:
     b <- function() TRUE
     a()
 
-Since NULL is a valid test, `a` is assigned to the environment associated with the `NULL` line, and `b` is assigned to the `a()` call test environment, and the illusion is shattered.
+Since NULL is a valid test, `a` is assigned to the environment associated with the `NULL` line, and `b` is assigned to the `a()` test environment, and the illusion is shattered.
 
-If you are getting weird "object not found" errors when you run your tests, but the same code doesn't generate those errors when run directly in the command line, the illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
+If you are getting weird "object not found" errors when you run your tests, but the same code doesn't generate those errors when run directly in the command line, this illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
 
 One other point to keep in mind is that the `unitzer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
 
@@ -49,9 +52,9 @@ One other point to keep in mind is that the `unitzer` prompt environment is diff
 
 When we review `unitizer` tests, it is possible to end up in a situation where we wish to update our store by keeping a mix of the new tests as well as some of the old ones.  This leads to some complications because in order to faithfully reproduce the environments associated with both the reference and the new tests we would potentially have to store the entire set of environments produced by the test script for both the new and reference tests.  Even worse, if we re-run unitizer again, we run the risk of having to store yet another set of environments (the old reference environments, what were new environments but became reference ones on this additional run, and the new environments created by this third run).  The problem continues to grow with as each incremental run of the `unitizer` script potentially creates the need to store yet another set of environments.
 
-As a work-around to this problem `unitizer` only keeps the environment associated with the actual reference test when you type `N` at the `unitizer` prompt.  `unitizer` then grafts that test to the environment set associated with the new test runs.  This means that in future `unitizer` runs the reference objects we examine when reviewing this test may not be the same objects that existed when the test itself was evaluated.  The `ls` command will highlight which objects have this problem by.
+As a work-around to this problem `unitizer` only keeps the environment associated with the actual reference tests you chose to keep (e.g. when you type `N` at the `unitizer` prompt when reviewing a failed test).  `unitizer` then grafts that test and its environment to the environment chain from the newly evaluated tests (note that for all tests that pass, we keep the new version of the tests, not the reference one).  This means that in future `unitizer` runs where you examine this same reference test, the other "reference" objects available for inspection may not be from the same evaluation that produced the test.  The `ls` command will highlight which objects are from the same evaluation vs which ones are not (see the [discussion on `ls`](04interactiveenvironment.html#ls)).
 
-Clearly this is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing `unitizer` stores.  For more details see the documentation for `unitizer:::healEnvs`.
+Clearly this is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing `unitizer` stores.  For more details see `?"healEnvs,unitizerItems,unitizer-method"`.
 
 ## Alternate Store Locations
 
@@ -63,9 +66,8 @@ In order to perpetuate the R console prompt illusion, `unitizer` needs to overri
 
 * `ls` is replaced by a special version that can explore the `unitizerItem` environments
 * `quit` and `q` are wrappers around the base functions that allow `unitizer` to quit gracefully
-* `traceback` while not replaced, is supported by a fair bit of voodoo involving among other things assigning to `.Traceback`
+* `traceback` while not replaced, is supported by a fair bit of voodoo involving among other things assigning to `base::.Traceback`
 * History is replaced during `unitizer` prompt evaluations with a temporary version of the history file containing only commands evaluated at the `unitizer` prompt.  The normal history file is restored on exit.
-* All attached packages and environments other than those that are pre-loaded with a clean R session are detached (see [LINK TO REPRODUCIBLE TESTS VIGNETTE]).
 
 ## Version Control and Unitizer
 
