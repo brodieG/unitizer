@@ -36,7 +36,7 @@ unitizer>
 
 ## `unitizer` Commands
 
-Much like the `browser()` prompt, the `unitizer` prompt accepts several special expressions that allow you to control `unitizer` behavior.  What the expressions are and what they do depends on context.  We will review them in the context of the failed test described above.  let us go back and look at what the `unitizer` prompt stated before we started reviewing our failed tests:
+Much like the `browser()` prompt, the `unitizer` prompt accepts several special expressions that allow you to control `unitizer` behavior.  What the expressions are and what they do depends on context.  We will review them in the context of the failed test described above.  Look at what the `unitizer` prompt stated before we started reviewing our failed tests:
 
 ```
 - Failed ----------------------------------------------------------------------
@@ -89,7 +89,7 @@ necessarily sequential (see vignette for details and exceptions).
 What test do you wish to review (input a test number, [U]nreviewed)?
 unitizer>
 ```
-The `[R]eview` option produces a list of all the tests in the order in which they appear in the test file.  You can type the number of a test to review it, or U to go to the first test that hasn't been reviewed (more on this in a minute).  let us examine one of the lines in more detail:
+The `[R]eview` option produces a list of all the tests in the order in which they appear in the test file.  You can type the number of a test to review it, or U to go to the first test that hasn't been reviewed (more on this in a minute).  We will examine the line for test #3 in more detail:
 ```
      3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
      ^   ^                                                                ^   ^

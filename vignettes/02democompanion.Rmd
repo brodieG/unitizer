@@ -53,7 +53,7 @@ When you run `demo(unitizer)` you will first see something like:
 > prompt_to_proceed()
 [Press ENTER to Continue]
 ```
-We will be using `devtools::install` as part of the demo, which is why we require `devtools`.  We will also be using the `.unitizer.test.file` variable so we want to make sure it isn't already defined so we don't overwrite it.
+We will be using `devtools::install` as part of the demo, which is why we require `devtools`.  We will also be using the `.unitizer.test.file` variable so we want to make sure it isn't already defined so we do not overwrite it.
 
 Throughout the demo, you will see calls to `prompt_to_proceed()`.  All this function does is pause the evaluation of the demo to give you an opportunity to read through the console output up to that point.  This function is technically part of `unitizer`, but it is intended for use solely by the demo.  You will not need to use this function when you use `unitizer`.
 
@@ -108,7 +108,7 @@ Once we are done with the setup and ready to `unitize`, you will see:
 
 ## Initial Run
 
-Let's `unitize`:
+We run `unitize`:
 ```
 > unitize(test.file)
 ```
@@ -192,7 +192,7 @@ So far we have only queued the tests for storage.  By answering `Y` at this prom
 unitizer> Y
 unitizer updated
 ```
-After the above screen output we have exited from `unitize` and the demo picks up again.  For educational purposes, we will break away from the demo for a second here and type at the R prompt (don't do this yourself):
+After the above screen output we have exited from `unitize` and the demo picks up again.  For educational purposes, we will break away from the demo for a second here and type at the R prompt (do not do this yourself):
 ```
 > list.files(dirname(test.file))
 [1] "filee6924af3d708.R"        "filee6924af3d708.unitizer"
@@ -231,7 +231,7 @@ Test Failed Because:
 Value mismatch: Mean relative difference: 19854602162
 unitizer>
 ```
-`unitizer` is telling us the value of our test doesn't match the reference value.  Notice at the top how `unitizer` suggests we use `.new` and `.ref` to compare our results.  Let's try it:
+`unitizer` is telling us the value of our test does not match the reference value.  Notice at the top how `unitizer` suggests we use `.new` and `.ref` to compare our results.  Consider:
 ```
 unitizer> .new
     intercept         slope           rsq
@@ -260,11 +260,11 @@ You didn't accept any changes so there are no items to store.
 Exit unitizer ([Y]es, [B]ack, [R]eview)?
 unitizer>
 ```
-This brings us up to the final prompt.  Since we rejected all the items that don't match the existing stored items, `unitizer` tells us that it will not modify the underlying store.  We are still prompted at the end so that we have an opportunity to make changes if we made a mistake.  Both the `[B]ack` and `[R]eview` options allow us to re-review the tests (see [test navigation](04interactiveenvironment.html#test-navigation) for more details).
+This brings us up to the final prompt.  Since we rejected all the items that do not match the existing stored items, `unitizer` tells us that it will not modify the underlying store.  We are still prompted at the end so that we have an opportunity to make changes if we made a mistake.  Both the `[B]ack` and `[R]eview` options allow us to re-review the tests (see [test navigation](04interactiveenvironment.html#test-navigation) for more details).
 
 ## Third Run -- Fix Problems
 
-We figured out the problem in our new implementation of `fastlm` and fixed it.  Let's update our package and re-run `unitize`:
+We figured out the problem in our new implementation of `fastlm` and fixed it.  Now we update our package and re-run `unitize`:
 
 ```
 > install(fastlm_dir(version=2))

@@ -43,7 +43,7 @@ It turns out the above example actually works because as noted in [details on te
 
 Since NULL is a valid test, `a` is assigned to the environment associated with the `NULL` line, and `b` is assigned to the `a()` test environment, and the illusion is shattered.
 
-If you are getting weird "object not found" errors when you run your tests, but the same code doesn't generate those errors when run directly in the command line, this illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
+If you are getting weird "object not found" errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
 
 One other point to keep in mind is that the `unitzer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
 
