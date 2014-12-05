@@ -17,7 +17,7 @@
 #'
 #' @keywords internal
 
-unitizer_core <- function(
+unitize_core <- function(
   test.file, store.id, interactive.mode, env.clean,
   search.path.clean, search.path.keep, force.update
 ) {

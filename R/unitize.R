@@ -79,7 +79,7 @@ unitize <- function(
     stop("Argument `force.update` must be TRUE or FALSE")
   print(H1(paste0("unitizer for: ", test.file, collapse="")))
   invisible(
-    unitizer_core(
+    unitize_core(
       test.file, store.id, interactive.mode, env.clean, search.path.clean,
       search.path.keep, force.update=force.update
   ) )
@@ -101,7 +101,7 @@ review <- function(
   }
   print(H1(paste0("unitizer for: ", u.name, collapse="")))
   invisible(
-    unitizer_core(
+    unitize_core(
       test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
       search.path.clean=search.path.clean, search.path.keep=search.path.keep,
       force.update=FALSE
