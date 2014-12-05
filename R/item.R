@@ -96,7 +96,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
-#' Collection of \code{`\link{unitizerItem-class}`} Object
+#' Collection of \code{`\link{unitizerItem-class}`} Objects
 #'
 #' @keywords internal
 

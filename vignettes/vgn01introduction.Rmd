@@ -17,7 +17,7 @@ vignette: >
 
 ### Motivation
 
-> it’s not that we don’t test our code, it’s that we don’t store our tests so they can be re-run automatically
+> it's not that we don't test our code, it's that we don't store our tests so they can be re-run automatically
 >
 > Hadley Wickham ([The R Journal Vol. 3/1, June 2011, P5](http://journal.r-project.org/archive/2011-1/RJournal_2011-1_Wickham.pdf)).
 

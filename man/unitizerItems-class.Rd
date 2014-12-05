@@ -2,9 +2,9 @@
 \docType{class}
 \name{unitizerItems-class}
 \alias{unitizerItems-class}
-\title{Collection of \code{`\link{unitizerItem-class}`} Object}
+\title{Collection of \code{`\link{unitizerItem-class}`} Objects}
 \description{
-Collection of \code{`\link{unitizerItem-class}`} Object
+Collection of \code{`\link{unitizerItem-class}`} Objects
 }
 \keyword{internal}
 

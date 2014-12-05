@@ -114,9 +114,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 #'
 #' One aspect of copying reference items which isn't handled here is moving
 #' over the section data because this is kept at the \code{`\link{unitizer-class}`}
-#' level, not at the \code{`\link{unitizer-items}`} level.  The section copying
-#' is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.  This
-#' is something that we should clean-up eventually.
+#' level, not at the \code{`\link{unitizerItems-class}`} level.  The
+#' section copying is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.
+#' This is something that we should clean-up eventually.
 #'
 #' @keywords internal
 
