@@ -46,6 +46,7 @@ unitizer_prompt <- function(
   text, browse.env=globalenv(), help=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE
 ) {
+  if(!interactive()) stop("Logic Error: attempting to use interactive `unitizer` environment in non-interactive session.")
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
   if(!is.environment(browse.env))
