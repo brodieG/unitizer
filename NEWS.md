@@ -27,7 +27,7 @@ Bugfixes:
 Other:
 
 Summary titles cleaned up, interative prompts made clearer, package reload warn
-conflicts quieted (d2fe594c747)
+conflicts quieted (d2fe594c747, #23)
 
 unitizer 0.5.0
 --------------------------------------------------------------------------------
