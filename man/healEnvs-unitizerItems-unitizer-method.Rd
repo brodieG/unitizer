@@ -2,7 +2,7 @@
 \docType{methods}
 \name{healEnvs,unitizerItems,unitizer-method}
 \alias{healEnvs,unitizerItems,unitizer-method}
-\title{Fixes The Ancestries of our New Reference Items Object}
+\title{Fix Environment Ancestries}
 \usage{
 \S4method{healEnvs}{unitizerItems,unitizer}(x, y, ...)
 }
@@ -17,17 +17,20 @@
 \code{`unitizerItems-class`}
 }
 \description{
-This is necessary because when we let the user pick and chose which
-tests to store and which ones to reject, there may no longer be a clear
-ancestry chain within the remaining tests.
+This is an internal method and exposed so that this aspect of \code{`unitizer`}
+is documented for package users (see Details).
 }
 \details{
+Environment healing is necessary because when we let the user pick and chose
+which tests to store and which ones to reject, there may no longer be a clear
+ancestry chain within the remaining tests.
+
 The healing process is somewhat complex and full of compromises.  We
 are attempting to create a self consistent set of nested parent environments
 for each test, but at the same time, we don't want to store all the
 combinations of reference and new objects.
 
-We only store new objects in `unitizer`, with the lone exception of
+We only store new objects in \code{`unitizer`}, with the lone exception of
 objects associated to a test environment.  These will include any assignments
 that occur just prior to a test, as well as any objects created by the
 actual test.
@@ -61,7 +64,7 @@ keep their evaluation environment.  Often this environment is similar
 to the new environment.  When there are difference between the two,
 the output of \code{`ls`} is customized to highlight
 which objects were actually available/unmodifed at the time of the
-reference test evaluation.  Object namees will have the following
+reference test evaluation.  Object names will have the following
 symbols appended to explain the object status:
 \itemize{
   \item ': object exists in browsing environment, but not the same as
@@ -73,12 +76,14 @@ symbols appended to explain the object status:
 }
 }
 \note{
-This is an internal method and should not be used by package users; the
-  documentation is exposed so that this aspect of \code{`unitizer`} is
-  documented for package users
+Could be more robust by ensuring that items in \code{`x`} actually do
+  come from \code{`y`}. This is particularly important since when
+  we re-assemble the final list, we don't actually use `x` at all.  Signature
+  for this should probably ultimately change to be something like `unitizer`, `x`,
+  where x is just a data frame with column 1 the item index, and column 2
+  whether it originated from "new" or "ref"
 }
 \seealso{
 \code{`\link{updateLs,unitizerItem-method}`}
 }
-\keyword{internal}
 

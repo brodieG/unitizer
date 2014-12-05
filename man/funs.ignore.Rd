@@ -5,8 +5,9 @@
 \title{Functions To Ignore}
 \format{\preformatted{List of 2
  $ :.Primitive("<-") 
- $ :function (package, help, pos = 2, lib.loc = NULL, character.only = FALSE, logical.return = FALSE, warn.conflicts = TRUE, 
-    quietly = FALSE, verbose = getOption("verbose"))  
+ $ :function (package, help, pos = 2, lib.loc = NULL, character.only = FALSE, 
+    logical.return = FALSE, warn.conflicts = TRUE, quietly = FALSE, 
+    verbose = getOption("verbose"))  
 }}
 \usage{
 funs.ignore

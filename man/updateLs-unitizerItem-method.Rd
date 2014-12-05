@@ -13,7 +13,8 @@
 }
 \value{
 \code{`\link{unitizerItem-class}`} object with updated
-  \code{`ls`} field and environment reference parent
+  \code{`ls`} field and environment reference parent, or FALSE if the item
+  has a corrupted environment history
 }
 \description{
 Makes sure that when we call \code{`ls`} when browsing its environment

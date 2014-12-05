@@ -20,6 +20,10 @@ towards compiling a test}
 all relevant objects}
 
 \item{\code{data}}{the container for the results of the evaluation of \code{`call`}}
+
+\item{\code{the}}{\code{`unitizer_sect`} from the newly added items this test item
+corresponds to; can be NA if section not known; this is used primarily to
+keep track of original sections when storing reference tests.}
 }}
 \keyword{internal}
 

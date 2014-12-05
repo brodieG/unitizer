@@ -11,5 +11,12 @@ Any added \code{`\link{unitizerItems-class}`} objects are treated as
 reference items.  The only way to add new items is by adding each
 item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
 }
+\details{
+One aspect of copying reference items which isn't handled here is moving
+over the section data because this is kept at the \code{`\link{unitizer-class}`}
+level, not at the \code{`\link{unitizer-items}`} level.  The section copying
+is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.  This
+is something that we should clean-up eventually.
+}
 \keyword{internal}
 

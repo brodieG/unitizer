@@ -4,7 +4,7 @@
 \alias{upgrade,unitizer-method}
 \title{Alter Older unitizer Versions So They Pass Validation in Latest Version}
 \usage{
-\S4method{upgrade}{unitizer}(object, ...)
+\S4method{upgrade}{unitizer}(object, par.frame, ...)
 }
 \arguments{
 \item{object}{an unitizer object}
@@ -17,4 +17,5 @@ an upgraded unitizer object
 \description{
 Sequentially applies all applicable patches
 }
+\keyword{internal}
 
