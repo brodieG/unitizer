@@ -160,8 +160,9 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
 
         if(
-          (length(x@changes) > 0L || something.happened) &&
-          (prompt.on.quit || !user.quit)
+          length(x@changes) > 0L || (
+            something.happened && (prompt.on.quit || !user.quit)
+          )
         ) {
           print(H2("Finalize Unitizer"))
           # Make sure we did not skip anything we were supposed to review
