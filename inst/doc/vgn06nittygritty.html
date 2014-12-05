@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="Brodie Gaslam" />
+
+<meta name="date" content="2014-12-04" />
+
+<title>unitizeR - Esoteric Topics</title>
+
+
+
+
+<link href="data:text/css,%2F%2A%0AStyles%20primarily%20borrowed%20from%20rmarkdown%2Ftemplates%2Fhtml%5Fvignette%2Fresources%2Fvignette%2Ecss%0Aat%20a%20time%2012%2F2%2F2014%20when%20rmarkdown%20was%20%28and%20probably%20still%20is%29%20under%20the%20GPL%2D3%0Alicense%0A%2A%2F%0A%0Abody%20%7B%0A%20%20background%2Dcolor%3A%20%23fff%3B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20max%2Dwidth%3A%20700px%3B%0A%20%20overflow%3A%20visible%3B%0A%20%20padding%2Dleft%3A%202em%3B%0A%20%20padding%2Dright%3A%202em%3B%0A%20%20font%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0A%20%20font%2Dsize%3A%2014px%3B%0A%20%20line%2Dheight%3A%201%2E5%3B%0A%7D%0A%0A%23header%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0A%0A%23TOC%20%7B%0A%20%20clear%3A%20both%3B%0A%20%20%2F%2Amargin%3A%200%200%2010px%2010px%3B%2A%2F%0A%20%20padding%3A%204px%3B%0A%20%20width%3A%20100%25%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20border%2Dradius%3A%205px%3B%0A%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20font%2Dsize%3A%2013px%3B%0A%20%20line%2Dheight%3A%201%2E3%3B%0A%7D%0A%20%20%23TOC%20%2Etoctitle%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%20%20font%2Dsize%3A%2015px%3B%0A%20%20%20%20margin%2Dleft%3A%205px%3B%0A%20%20%7D%0A%0A%20%20%23TOC%20ul%20%7B%0A%20%20%20%20padding%2Dleft%3A%2040px%3B%0A%20%20%20%20margin%2Dleft%3A%20%2D1%2E5em%3B%0A%20%20%20%20margin%2Dtop%3A%205px%3B%0A%20%20%20%20margin%2Dbottom%3A%205px%3B%0A%20%20%7D%0A%20%20%23TOC%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dleft%3A%20%2D2em%3B%0A%20%20%7D%0A%20%20%23TOC%20li%20%7B%0A%20%20%20%20line%2Dheight%3A%2016px%3B%0A%20%20%7D%0A%0Atable%20%7B%0A%20%20margin%3A%201em%20auto%3B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dcolor%3A%20%23DDDDDD%3B%0A%20%20border%2Dstyle%3A%20outset%3B%0A%20%20border%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0A%20%20border%2Dwidth%3A%202px%3B%0A%20%20padding%3A%205px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0A%20%20border%2Dwidth%3A%201px%3B%0A%20%20border%2Dstyle%3A%20inset%3B%0A%20%20line%2Dheight%3A%2018px%3B%0A%20%20padding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0A%20%20border%2Dleft%2Dstyle%3A%20none%3B%0A%20%20border%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0A%20%20background%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0A%0Ap%20%7B%0A%20%20margin%3A%201em%200%3B%0A%7D%0A%0Ablockquote%20%7B%0A%20%20background%2Dcolor%3A%20%23f6f6f6%3B%0A%20%20padding%3A%200%2E25em%200%2E75em%3B%0A%7D%0A%0Ahr%20%7B%0A%20%20border%2Dstyle%3A%20solid%3B%0A%20%20border%3A%20none%3B%0A%20%20border%2Dtop%3A%201px%20solid%20%23777%3B%0A%20%20margin%3A%2028px%200%3B%0A%7D%0A%0Adl%20%7B%0A%20%20margin%2Dleft%3A%200%3B%0A%7D%0A%20%20dl%20dd%20%7B%0A%20%20%20%20margin%2Dbottom%3A%2013px%3B%0A%20%20%20%20margin%2Dleft%3A%2013px%3B%0A%20%20%7D%0A%20%20dl%20dt%20%7B%0A%20%20%20%20font%2Dweight%3A%20bold%3B%0A%20%20%7D%0A%0Aul%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%7D%0A%20%20ul%20li%20%7B%0A%20%20%20%20list%2Dstyle%3A%20circle%20outside%3B%0A%20%20%7D%0A%20%20ul%20ul%20%7B%0A%20%20%20%20margin%2Dbottom%3A%200%3B%0A%20%20%7D%0A%0Apre%2C%20code%20%7B%0A%20%20background%2Dcolor%3A%20%23eee%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20color%3A%20%23333%3B%0A%7D%0Apre%20%7B%0A%20%20white%2Dspace%3A%20pre%2Dwrap%3B%20%20%20%20%2F%2A%20Wrap%20long%20lines%20%2A%2F%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20margin%3A%205px%200px%3B%0A%20%20padding%3A%2010px%3B%0A%20%20font%2Dsize%3A%2085%25%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0A%20%20background%2Dcolor%3A%20%23eee%3B%0A%7D%0A%0Acode%20%7B%0A%20%20font%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%2C%20h1%20%3E%20code%2C%20h2%20%3E%20code%2C%20h3%20%3E%20code%2C%0Ah4%20%3E%20code%2C%20h5%20%3E%20code%2C%20h6%20%3E%20code%20%7B%0A%20%20padding%3A%202px%200px%3B%0A%20%20line%2Dheight%3A%201%3B%0A%20%20font%2Dweight%3A%20bold%3B%0A%7D%0Adiv%2Efigure%20%7B%0A%20%20text%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0A%20%20background%2Dcolor%3A%20%23FFFFFF%3B%0A%20%20padding%3A%202px%3B%0A%20%20border%3A%201px%20solid%20%23DDDDDD%3B%0A%20%20border%2Dradius%3A%203px%3B%0A%20%20border%3A%201px%20solid%20%23CCCCCC%3B%0A%20%20margin%3A%200%205px%3B%0A%7D%0A%0Ah1%20%7B%0A%20%20margin%2Dtop%3A%200%3B%0A%20%20padding%2Dbottom%3A%203px%3B%0A%20%20font%2Dsize%3A%2035px%3B%0A%20%20line%2Dheight%3A%2040px%3B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23999%3B%0A%7D%0A%0Ah2%20%7B%0A%20%20border%2Dbottom%3A%201px%20solid%20%23999%3B%0A%20%20padding%2Dtop%3A%205px%3B%0A%20%20padding%2Dbottom%3A%202px%3B%0A%20%20font%2Dsize%3A%20145%25%3B%0A%7D%0A%0Ah3%20%7B%0A%20%20padding%2Dtop%3A%205px%3B%0A%20%20font%2Dsize%3A%20120%25%3B%0A%7D%0A%0Ah4%20%7B%0A%20%20%2F%2Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%2A%2F%0A%20%20color%3A%20%23777%3B%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Ah4%2Eauthor%2C%20h4%2Edate%20%7Bdisplay%3A%20none%3B%7D%0A%0Ah5%2C%20h6%20%7B%0A%20%20%2F%2Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%2A%2F%0A%20%20font%2Dsize%3A%20105%25%3B%0A%7D%0A%0Aa%20%7B%0A%20%20color%3A%20%232255dd%3B%0A%20%20font%2Dweight%3A%20bold%3B%0A%20%20text%2Ddecoration%3A%20none%3B%0A%7D%0A%20%20a%3Ahover%20%7B%0A%20%20%20%20color%3A%20%236666ff%3B%20%7D%0A%20%20a%3Avisited%20%7B%0A%20%20%20%20color%3A%20%23800080%3B%20%7D%0A%20%20a%3Avisited%3Ahover%20%7B%0A%20%20%20%20color%3A%20%23BB00BB%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%20%20a%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0A%20%20%20%20text%2Ddecoration%3A%20underline%3B%20%7D%0A%0A%2F%2A%20Class%20described%20in%20https%3A%2F%2Fbenjeffrey%2Ecom%2Fposts%2Fpandoc%2Dsyntax%2Dhighlighting%2Dcss%0A%20%20%20Colours%20from%20https%3A%2F%2Fgist%2Egithub%2Ecom%2Frobsimmons%2F1172277%20%2A%2F%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Keyword%20%2A%2F%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%2F%2A%20DataType%20%2A%2F%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%2F%2A%20DecVal%20%28decimal%20values%29%20%2A%2F%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20BaseN%20%2A%2F%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Float%20%2A%2F%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20Char%20%2A%2F%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%2F%2A%20String%20%2A%2F%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%2F%2A%20Comment%20%2A%2F%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%2F%2A%20OtherToken%20%2A%2F%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20AlertToken%20%2A%2F%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%2F%2A%20Function%20calls%20%2A%2F%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%2F%2A%20ErrorTok%20%2A%2F%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div id="header">
+<h1 class="title">unitizeR - Esoteric Topics</h1>
+<h4 class="author"><em>Brodie Gaslam</em></h4>
+<h4 class="date"><em>2014-12-04</em></h4>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#subtleties-of-the-interactive-environment">Subtleties Of The Interactive Environment</a></li>
+<li><a href="#patchwork-reference-environments">Patchwork Reference Environments</a></li>
+<li><a href="#overridden-functionality">Overridden Functionality</a></li>
+<li><a href="#storing-unitized-tests">Storing <code>unitize</code>d Tests</a><ul>
+<li><a href="#unitizer-writes-to-your-file-system"><code>unitizer</code> Writes to Your File System</a></li>
+<li><a href="#version-control-and-unitizer">Version Control and Unitizer</a></li>
+</ul></li>
+<li><a href="#error-handling">Error Handling</a></li>
+<li><a href="#other-issues">Other Issues</a><ul>
+<li><a href="#ancillary-unitizer-packages">Ancillary <code>unitizer</code> Packages</a></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="subtleties-of-the-interactive-environment" class="section level2">
+<h2>Subtleties Of The Interactive Environment</h2>
+<p>Clearly the <code>unitizer</code> prompt environment is not as straightforward as the standard R console environment, or even the <code>browser</code> environment. In reality it is even more complex than we have shown so far.</p>
+<p><code>unitizer</code> batch processes all the tests when it is first run before it breaks into interactive mode. It does this for two reasons:</p>
+<ol style="list-style-type: decimal">
+<li>this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly,</li>
+<li>it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.</li>
+</ol>
+<p>While there are good reasons for batch processing the tests, it means that the review process is complicated substantially. If we used a single evaluation environment it would be cluttered by all the objects created throughout the whole test script, so when we started reviewing the first test we would be seeing all the objects, even objects that did not exist when the first test was run. Much worse, it is entirely possible for a symbol to be re-used several times in a file, adopting different values for different tests, with the implication that objects used by our first test may have values that are different to what they were when the test was originally run.</p>
+<p>To get around this problem each test is run in its own environment. Each of these environments has for parent the environment of the previous test. This means that a test has access to all the objects created/used by earlier tests, but not objects created/used by subsequent tests. When a later test “modifies” an existing object, the existing object is not really modified; rather, the test creates a new object of the same name in the child environment which masks the object in the earlier test. This is functionally equivalent to overwriting the object as far as the later test is concerned.</p>
+<p>For the most part this environment trickery should be transparent to the user. The <code>ls</code> function is specially modified to, among other things, list objects in all the parent test environments. But there are exceptions to this “transparency”. The simplest exception is that you can not actually remove an object created in an earlier test (well, it is possible, but the how isn’t documented and you are advised not to attempt it). Here is a more complex exception:</p>
+<pre><code>a &lt;- function() b()
+b &lt;- function() TRUE
+a()</code></pre>
+<p>In this case, when we evaluate <code>a()</code> we must step back two environments to find <code>a</code>, but that’s okay. The problem is that once inside <code>a</code>, we must now evaluate <code>b()</code>, but <code>b</code> is defined in a child environment, not a parent environment so R’s object lookup fails.</p>
+<p>It turns out the above example actually works because as noted in <a href="03tests.html">details on tests vignette</a>, environments are only defined for tests, an neither the <code>a</code> or <code>b</code> assignments are tests, so both <code>a</code> and <code>b</code> are assigned to the environment of the <code>a()</code> call. However, this really breaks:</p>
+<pre><code>a &lt;- function() b()
+NULL
+b &lt;- function() TRUE
+a()</code></pre>
+<p>Since NULL is a valid test, <code>a</code> is assigned to the environment associated with the <code>NULL</code> line, and <code>b</code> is assigned to the <code>a()</code> test environment, and the illusion is shattered.</p>
+<p>If you are getting weird “object not found” errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you. In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.</p>
+<p>One other point to keep in mind is that the <code>unitzer</code> prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.</p>
+</div>
+<div id="patchwork-reference-environments" class="section level2">
+<h2>Patchwork Reference Environments</h2>
+<p>When we review <code>unitizer</code> tests, it is possible to end up in a situation where we wish to update our store by keeping a mix of the new tests as well as some of the old ones. This leads to some complications because in order to faithfully reproduce the environments associated with both the reference and the new tests we would potentially have to store the entire set of environments produced by the test script for both the new and reference tests. Even worse, if we re-run unitizer again, we run the risk of having to store yet another set of environments (the old reference environments, what were new environments but became reference ones on this additional run, and the new environments created by this third run). The problem continues to grow with as each incremental run of the <code>unitizer</code> script potentially creates the need to store yet another set of environments.</p>
+<p>As a work-around to this problem <code>unitizer</code> only keeps the environment associated with the actual reference tests you chose to keep (e.g. when you type <code>N</code> at the <code>unitizer</code> prompt when reviewing a failed test). <code>unitizer</code> then grafts that test and its environment to the environment chain from the newly evaluated tests (note that for all tests that pass, we keep the new version of the tests, not the reference one). This means that in future <code>unitizer</code> runs where you examine this same reference test, the other “reference” objects available for inspection may not be from the same evaluation that produced the test. The <code>ls</code> command will highlight which objects are from the same evaluation vs which ones are not (see the <a href="04interactiveenvironment.html#ls">discussion on <code>ls</code></a>).</p>
+<p>Clearly this is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing <code>unitizer</code> stores. For more details see <code>?&quot;healEnvs,unitizerItems,unitizer-method&quot;</code>.</p>
+</div>
+<div id="overridden-functionality" class="section level2">
+<h2>Overridden Functionality</h2>
+<p>In order to perpetuate the R console prompt illusion, <code>unitizer</code> needs to override some buit-in functionality, including:</p>
+<ul>
+<li><code>ls</code> is replaced by a special version that can explore the <code>unitizerItem</code> environments</li>
+<li><code>quit</code> and <code>q</code> are wrappers around the base functions that allow <code>unitizer</code> to quit gracefully</li>
+<li><code>traceback</code> while not replaced, is supported by a fair bit of voodoo involving among other things assigning to <code>base::.Traceback</code></li>
+<li>History is replaced during <code>unitizer</code> prompt evaluations with a temporary version of the history file containing only commands evaluated at the <code>unitizer</code> prompt. The normal history file is restored on exit.</li>
+</ul>
+</div>
+<div id="storing-unitized-tests" class="section level2">
+<h2>Storing <code>unitize</code>d Tests</h2>
+<div id="unitizer-writes-to-your-file-system" class="section level3">
+<h3><code>unitizer</code> Writes to Your File System</h3>
+<div id="default-mode-is-to-store-tests-in-rds-files" class="section level4">
+<h4>Default Mode is to Store Tests in <code>rds</code> Files</h4>
+<p><code>unitizer</code> stores unit tests and their results. By default, it stores them in <code>rds</code> files in your filesystem. You will be prompted before a file is saved to your filesystem.</p>
+<p>The <code>rds</code> file is placed in a directory with the same name as your test file, but with “unitizer” appended. For example, if your tests are in “my_file_name.R”, then <code>unitizer</code> will create a folder called “my_file_name.unitizer/” and put an <code>rds</code> file in it.</p>
+<p>See <code>?get_unitizer</code> for potential alternatives to saving to your file system.</p>
+</div>
+<div id="file-space-considerations" class="section level4">
+<h4>File Space Considerations</h4>
+<p>If your tests produce massive objects, the <code>unitizer</code> <code>rds</code> file will be massive. Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.</p>
+<p>Additionally, note that the <code>rds</code> files are binary, which needs to be accounted for when using them in <a href>version controlled projects</a>.</p>
+</div>
+<div id="backup-your-unitizer-stores" class="section level4">
+<h4>Backup Your <code>unitizer</code> Stores</h4>
+<p><code>unitizer</code> does not backup the <code>rds</code> beyond the single copy in the aforementioned folder. Unit tests are valuable, and without the <code>rds</code> file <code>unitizer</code> tests become a lot less useful. To the extent you backup your R test files, you should also backup the corresponding “.unitizer/” folder. You could lose / corrupt your <code>unitizer</code> store in many ways. Some non-exhaustive examples:</p>
+<ul>
+<li>Standard file system SNAFU</li>
+<li>Careless updates to existing <code>unitizer</code></li>
+<li><code>unitizer</code> developer accidentally introduces a bug that destroys your <code>unitizer</code></li>
+</ul>
+<p>Backup your <code>unitizer</code> stores!</p>
+</div>
+<div id="alternate-store-locations" class="section level4">
+<h4>Alternate Store Locations</h4>
+<p><code>unitize</code> stores and loads <code>unitizer</code>s using the <code>set_unitizer</code> and <code>get_unitizer</code> S3 generics . This means you can implement your own S3 methods for those generics to store the <code>unitizer</code> object off-filesystem (e.g. MySQL databse, etc). See <code>?get_unitizer</code> for more details, though note this feature is untested.</p>
+<p>If you only wish to save your <code>unitizer</code> to a different location in your filesystem than the default, you do not need to resort to these methods as you can provide the target directory with <code>unitize(..., store.id=)</code>.</p>
+</div>
+</div>
+<div id="version-control-and-unitizer" class="section level3">
+<h3>Version Control and Unitizer</h3>
+<div id="handling-binary-files" class="section level4">
+<h4>Handling Binary Files</h4>
+<p>The main issue with using <code>unitizer</code> with a version controlled package is that you have to decide whether you want to include the binary <code>rds</code> files in the version control history. Some options:</p>
+<ul>
+<li>do not track the binary files at all (but they are valuable and now not backed up)</li>
+<li>do not track the binary files at all, but implement a secondary back-up system (this sounds really annoying)</li>
+<li>Use a backed-up, non-file system store (see “Alternate Store Locations” above)</li>
+<li>Track the binary files, but only commit them for major releases</li>
+</ul>
+</div>
+<div id="suggested-workflow-with-git" class="section level4">
+<h4>Suggested Workflow with Git</h4>
+<p>The approach we suggest is the last one above: just commit your <code>rds</code> files for major releases. Also, note that to the extent you have a lot of test files that aren’t changing, this should minimize how much binary data you commit. One possible way to handle this with Git is to use the following command (adapted from twalberg’s <a href="http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory">SO answer</a>):</p>
+<pre><code>git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged</code></pre>
+<p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Once you reach the major release point, you can:</p>
+<pre><code>git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged</code></pre>
+</div>
+</div>
+</div>
+<div id="error-handling" class="section level2">
+<h2>Error Handling</h2>
+<p>Because <code>unitize</code> evaluates test expressions within a call to <code>withCallingHandlers</code>, there are some limitations on successfully running <code>unitize</code> inside your own error handling calls. In particular, <code>unitize</code> will not work properly if run inside a <code>tryCatch</code> or <code>try</code> statement. If test expressions throw conditions, the internal <code>withCallingHandlers</code> will automatically hand over control to your <code>tryCatch</code>/<code>try</code> statement without an opportunity to complete <code>unitize</code> computations. Unfortunately there does not seem to be a way around this since we have to use <code>withCallingHandlers</code> so that test statements after non-aborting conditions are run.</p>
+</div>
+<div id="other-issues" class="section level2">
+<h2>Other Issues</h2>
+<div id="ancillary-unitizer-packages" class="section level3">
+<h3>Ancillary <code>unitizer</code> Packages</h3>
+<p><code>unitizer</code> uses anscillary packages in examples and tests. These are are in <code>inst/example.pkgs</code> in the <code>unitizer</code> sources. You should not have a need to use these, but if you do:</p>
+<pre><code>unitizer.path &lt;- system.file(package=&quot;unitizer&quot;)
+library(devtools)
+install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # one of several dummy packages</code></pre>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

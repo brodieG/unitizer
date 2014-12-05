@@ -101,7 +101,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' the global environment, so functions defined there will not be automatically
 #' available.  You can either specify the function in the test file before the
 #' section that uses it, or change the base environment tests are evaluated in with
-#' \code{`\link{unitize(..., env.clean)}`}, or make sure that the package that
+#' \code{`unitize(..., env.clean)`}, or make sure that the package that
 #' contains your function is loaded within the test script.
 #'
 #' @section Nested Sections:

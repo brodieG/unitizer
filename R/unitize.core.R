@@ -1,6 +1,6 @@
 #' Runs The Basic Stuff
 #'
-#' Used by both \code{`\link{unitize}`} and \code{`\link{review,unitizer-method}`}
+#' Used by both \code{`\link{unitize}`} and \code{`\link{review}`}
 #' to launch the interactive interface for reviewing tests.
 #'
 #' Right now we distinguish in what mode we're running based on whether

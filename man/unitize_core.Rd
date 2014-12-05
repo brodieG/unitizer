@@ -7,7 +7,7 @@ unitize_core(test.file, store.id, interactive.mode, env.clean,
   search.path.clean, search.path.keep, force.update)
 }
 \description{
-Used by both \code{`\link{unitize}`} and \code{`\link{review,unitizer-method}`}
+Used by both \code{`\link{unitize}`} and \code{`\link{review}`}
 to launch the interactive interface for reviewing tests.
 }
 \details{

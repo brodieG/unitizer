@@ -147,7 +147,7 @@ navigate_prompt <- function(
 }
 #' Manages Producing Test Navigation Message / Prompt
 #'
-#' Probably should be an S4 method, along with \code{`\link{navigatePrompt}`}
+#' Probably should be an S4 method, along with \code{`\link{navigate_prompt}`}
 #'
 #' @keywords internal
 #' @param x a unitizerBrowse object

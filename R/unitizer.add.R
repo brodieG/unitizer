@@ -132,6 +132,7 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
     e1
   }
 )
+setGeneric("refSections", function(x, y) standardGeneric("refSections"))
 #' Extract Reference Section Data
 #'
 #' Using one unitizer with existing new items, and another unitizer that we
@@ -146,7 +147,6 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
 #' @param x the new unitizer that will be stored with the reference tests
 #' @param y the unitizer that will be used to generate the sections
 
-setGeneric("refSections", function(x, y) standardGeneric("refSections"))
 setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
   function(x, y) {
     if(!length(x@items.ref)) return(x)

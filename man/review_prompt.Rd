@@ -14,7 +14,7 @@ review_prompt(x, nav.env)
 either a \code{`unitizerBrowse`}, or "Q" if the user chose to quit
 }
 \description{
-Probably should be an S4 method, along with \code{`\link{navigatePrompt}`}
+Probably should be an S4 method, along with \code{`\link{navigate_prompt}`}
 }
 \keyword{internal}
 

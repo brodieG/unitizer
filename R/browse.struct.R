@@ -544,7 +544,7 @@ setMethod("deparseCalls", "unitizerItems",
   function(x, ...) {
     vapply(
       as.list(x),
-      function(x) paste0(deparse(x@call, width=500L), collapse=""), character(1L)
+      function(x) paste0(deparse(x@call, width.cutoff=500L), collapse=""), character(1L)
 ) } )
 #' Pull out items from unitizerBrowse objects
 #'

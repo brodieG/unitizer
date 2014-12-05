@@ -81,7 +81,7 @@ storing them along with their resuls.
 \details{
 \code{`unitize`} creates unit tests from a single R file, and
 \code{`unitize_dir`} creates tests from all the R files in the specified
-directory (analogous to \code{`\link{testthat::test_dir}`}).
+directory (analogous to \code{`testthat::test_dir`}).
 
 \code{`review`} allows you to review existing \code{`unitizer`} or modify it
 by dropping tests from it.  This is useful if you ever have second thoughts

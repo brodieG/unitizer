@@ -1,0 +1,283 @@
+---
+title: "unitizeR - Demo Companion"
+author: "Brodie Gaslam"
+date: "`r Sys.Date()`"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
+
+vignette: >
+  %\VignetteIndexEntry{02 - Demo Companion}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+## Introduction
+
+### Running the Demo
+
+This vignette is the companion to the demo you get if you run:
+```
+library(unitizer)
+demo(unitizer)
+```
+We recommend you read this document as you run the demo.  Due to the interactive nature of the demo we cannot easily embed it within this document, so please be forgiving of small discrepancies you may find between what the demo shows and what we discuss here.
+
+### About The Demo
+
+The demo is simulates the process of developing a package while using `unitizer` for your unit tests.  It will walk you through:
+
+0. Creating a test file and installing the package we will test
+1. `unitize`ing our test file (i.e. turning it into `unitizer` tests)
+2. Modifying the package and re-`unitize`ing to check for regressions
+3. Finding regressions, fixing them, and confirming they are fixed with `unitize`
+
+We will use the pseudo package `unitizer.fastlm` which is provided as part of the `unitizer` sources. `unitizer.fastlm` fits a single variable linear model (i.e. `y ~ x`) and returns slope, intercept, and R squared.  The limited scope of the functionality means we can rely on fast computations to produce the results.
+
+## Setup
+
+### Notes on Simulating `unitizer` Use In This Demo
+
+Unfortunately the demo is complicated by the need to automate some steps that would normally be taken by the package developer.  We try to isolate these steps to the "Setup" section of the demo so that the rest of the `demo` is as close as possible to a typical `unitizer` experience.
+
+When you run `demo(unitizer)` you will first see something like:
+```
+> {
++   if(!require(devtools)) stop("Package `devtools` is required for this demo.")
++   library(unitizer)
++   if(exists(".unitizer.test.file")) stop("Cannot run if variable `.unitizer.test.file` is defined")
++ }
+
+> # In this script we will demonstrate the `unitize` workflow by running `unitize`
+... several lines omitted ...
+> prompt_to_proceed()
+[Press ENTER to Continue]
+```
+We will be using `devtools::install` as part of the demo, which is why we require `devtools`.  We will also be using the `.unitizer.test.file` variable so we want to make sure it isn't already defined so we do not overwrite it.
+
+Throughout the demo, you will see calls to `prompt_to_proceed()`.  All this function does is pause the evaluation of the demo to give you an opportunity to read through the console output up to that point.  This function is technically part of `unitizer`, but it is intended for use solely by the demo.  You will not need to use this function when you use `unitizer`.
+
+The text ahead of the prompt gives you a quick summary of what the demo is about, and then tells you we are about to create a test file.
+
+### Creating the Test File
+
+After your press ENTER at the next couple of prompts you will see something like:
+```
+> # Write tests to temp file by `cat`ing a string to a `tempfile()`
+>
+> cat(
++   file=(.unitizer.test.file <- tempfile(fileext=".R")),
++   "# Calls to `library` and assignments are not normally considered tests, so
++   # you will not be prompted to review them
++
++   library(unitizer.fastlm)
++   x <- 1:100
++   y <- x ^ 2
++   res <- fastlm(x, y)
++
++   res                     # first reviewable expression
++   get_slope(res)
++   get_rsq(res)
++
++   fastlm(x, head(y))      # This should cause an error; press Y to add to store\n"
++ )
+```
+Normally you would create the test file in your favorite text editor and save it to a reasonable place in your file system (e.g. `~/mypackages/unitizer.fastlm/tests/unitizer/fastlm.R`), but because we need the demo to create the test file we will `cat` out the character string containing our tests into a temporary file.  The name of that file is stored in the variable `.unitizer.test.file`.
+
+### Installing the Package
+
+After we create our test file we will install `unitizer.fastlm` with:
+```
+install(fastlm_dir(version=0))
+```
+`install` here is just `devtools::install`.  `fastlm_dir` is a helper function that returns the location of our `unitizer.fastlm` package within the `unitizer` package (it is in `inst/example.pkgs` in the sources).  The reason we use `fastlm_dir` is that the `unitizer` package actually includes three different versions of the `unitizer.fastlm` package.  Each version is supposed to represent the state of our package at a different point in development:
+
+* `fastlm_dir(version=0)` is basically a mock-up that just wraps `stats::lm`; the nice thing about it is it gives us a known correct starting point which is very useful for our initial tests
+* `fastlm_dir(version=1)` is our first attempt at implementing our own computations for slope / intercept / R squared, but it is not properly implemented
+* `fastlm_dir(version=2)` is the final versions with the correct computations
+
+In normal `unitizer` use we would just be modifying the sources of our package and re-instaling the exact same package, but for the purposes of our demo we must rely on these pre-existing versions of the `unitizer.fastlm` package.
+
+Once we are done with the setup and ready to `unitize`, you will see:
+```
+> # ~~~~~~~~~~~~~~~~~~~~~~~~~~ SETUP COMPLETE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+>
+> prompt_to_proceed()
+[Press ENTER to Continue]
+```
+
+## Initial Run
+
+We run `unitize`:
+```
+> unitize(test.file)
+```
+This launches the interactive user environment.  Consider the first portion of `unitizer` output:
+```
++-----------------------------------------------------------------------------+
+| unitizer for: /var/folders/56/qcx6p6f94695mh7ywq9m6z_80000gq/T//RtmpbDH8w9/ |
+| filee6924af3d708.R                                                          |
++-----------------------------------------------------------------------------+
+
+  Pass  Fail   New
+     0     0     4
+```
+The banner across the top gives us the location of the test file we are `unitize`ing.  We get a gnarly name here because we are using a temp file, though in typical use it would be a more normal looking file name.
+
+Below the banner is a summary of our test file.  This summary tells us that we have four new tests.  This is important because `unitizer` requires that we review any new tests to confirm they actually produce the desired outcome.
+
+If there are any non-passed tests, as is the case here, `unitizer` will automatically bring up a prompt for review of the tests that require it, as is the case here:
+```
+- New -------------------------------------------------------------------------
+
+Test script contains tests not present in unitizer. Add new item to store (
+[Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+
+# Calls to `library` and assignments are not normally considered tests, so
+# you will not be prompted to review them
+> library(unitizer.fastlm)
+> x <- 1:100
+> y <- x^2
+> res <- fastlm(x, y)
+# first reviewable expression
+> res
+   intercept        slope          rsq
+-1717.000000   101.000000     0.938679
+attr(,"class")
+[1] "fastlm"
+unitizer>
+```
+The banner tells us we are about to review new tests (as opposed to existing tests that failed, for example).  Right under the banner is a question addressed to the user.  In this case `unitizer` wants to know whether we are satisfied with the result of the test and wish for it to be formally added to the `unitizer` store.  We must carefully review the test results because once we add that result to the store it becomes the correct result as far as `unitizer` is concerned.
+
+In the parentheses at the end of the question are the options available to the user.  You can type any of the letters in square brackets at the `unitizer>` prompt, and `unitizer` will recognize them as commands.
+
+Following the question, `unitizer` starts showing you the results of evaluating the test file and eventually stops after the first test with a `unitizer>` prompt.  Note that neither simple assignment expressions or calls to `library` are considered tests, which is why the `unitizer>` prompt only appears after the `> res` line.  The reason for not treating assignments as tests is that presumably assignments will be re-used elsewhere in the test file, at which point they will cause problems if they are incorrect.  By ignoring the original assignment we reduce the number of tests that need to be reviewed.  We ignore `library` because its primary purpose is to produce side effects and its output is not necessarily meaningful in the context of unit tests.
+
+In addition to accepting the `unitizer` commands highlighted earlier (i.e. Y, N, etc.), the `unitizer>` prompt allows you to run arbirary R expressions.  We can use this to check that our function did what it is supposed to:
+```
+unitizer> lm(y ~ x, data.frame(x, y))$coefficients
+(Intercept)           x
+      -1717         101
+unitizer> summary(lm(y ~ x, data.frame(x, y)))$r.squared
+[1] 0.938679
+```
+Sure enough, it looks like our function did what it was supposed to do.  We can accept the test by typing Y at the prompt.  If the result looked incorrect, we could reject it by typing N.  If you happened to have a variable called Y or N as part of your tests, you could access them by using typing `(Y)`, or `get(Y)`, or any other expression that evaluates to your variable.
+```
+unitizer> Y
+> get_slope(res)
+[1] 101
+```
+This brings up our next test, which also looks correct, so we will also acccept it (and the next one too), leading to:
+```
+unitizer> Y
+> get_rsq(res)
+[1] 0.938679
+unitizer> Y
+# This should cause an error; press Y to add to store
+> fastlm(x, head(y))
+Error in fastlm(x, head(y)) :
+  Arguments `x` and `y` must be the same length.
+```
+The last test caused an error.  It was supposed to as the inputs were purposefully wrong.  We want to store this particular error to ensure that in the future our function keeps erroring out in the same way with this type of erroneous input.  Conveniently all we have to do is hit Y at the prompt as we did with our other tests.  The error becomes part of the store and any future re-runs will compare the result of the expression against the stored error and will notify if the expression fails to produce an error or produces a different error.  This brings us to the final prompt:
+```
+unitizer> Y
+= Finalize Unitizer ===========================================================
+
+You are about to IRREVERSIBLY:
+- Add 4 out of 4 new tests
+Update unitizer ([Y]es, [N]o, [B]ack, [R]eview)?
+```
+So far we have only queued the tests for storage.  By answering `Y` at this prompt we will be storing all the tests we accepted into the unitizer store:
+```
+unitizer> Y
+unitizer updated
+```
+After the above screen output we have exited from `unitize` and the demo picks up again.  For educational purposes, we will break away from the demo for a second here and type at the R prompt (do not do this yourself):
+```
+> list.files(dirname(test.file))
+[1] "filee6924af3d708.R"        "filee6924af3d708.unitizer"
+```
+We redacted the above for clarity since there are often other files in the temporary directory, but you can see that in the directory that contains `test.file`, there is both our `test.file` and a new directory ending in `.unitizer` created by `unitize`.  Our four new tests and their accepted results are stored in that directory.  Obviously the `.unitizer` directory would not normally be in a temporary directory as we want our stored tests to persist, but again, we are putting it here for the purposes of the demo.
+
+## Second Run -- Check For Regressions
+
+As you know `unitizer.fastlm` isn't fast at all.  It is just a wrapper for the standard `lm` function.  We will now modify `unitizer.fastlm` to use our new fast computations.  For our demo purposes, all we need to do is install the new version of the package:
+```
+> install(fastlm_dir(version=1))
+```
+And re-run `unitize` to make sure we did it right:
+```
+> unitize(test.file)
++-----------------------------------------------------------------------------+
+| unitizer for: /var/folders/56/qcx6p6f94695mh7ywq9m6z_80000gq/T//RtmpbDH8w9/ |
+| filee6922bc66583.R                                                          |
++-----------------------------------------------------------------------------+
+
+  Pass  Fail   New
+     2     2     0
+```
+Clearly something is wrong.  Two tests failed.  `unitizer` prompts us to review the failed tests and decide whether to replace the existing tests with the new ones:
+```
+- Failed ----------------------------------------------------------------------
+
+Reference test does not match new test from test script (compare `.new` and
+`.ref` to see differences). Overwrite item in store with new value ([Y]es,
+[N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+
+> res <- fastlm(x, y)
+# first reviewable expression
+> res
+Test Failed Because:
+Value mismatch: Mean relative difference: 19854602162
+unitizer>
+```
+`unitizer` is telling us the value of our test does not match the reference value.  Notice at the top how `unitizer` suggests we use `.new` and `.ref` to compare our results.  Consider:
+```
+unitizer> .new
+    intercept         slope           rsq
+-3.541306e+13  7.012486e+11  9.386790e-01
+attr(,"class")
+[1] "fastlm"
+unitizer> .ref
+   intercept        slope          rsq
+-1717.000000   101.000000     0.938679
+attr(,"class")
+[1] "fastlm"
+unitizer>
+```
+`.new.` and `.ref` are special objects created by `unitizer` to allow us to easily compare our new test results to previously stored test results.  By using them here it becomes obvious that both our intercept and slope calculations are completely wrong in our updated package.  The rsq value looks correct though.  We could also have re-evaluated our test instead of typing `.new` at the prompt, but if the computation is slow using `.new` avoids recomputation.  The only way to get the original value is with `.ref`
+
+Since this new test is wrong, we will reject it as well as the subsequent related tests by typing N at the prompt:
+```
+unitizer> N
+> get_slope(res)
+Test Failed Because:
+Value mismatch: Mean relative difference: 6943055624
+unitizer> N
+= Finalize Unitizer ===========================================================
+
+You didn't accept any changes so there are no items to store.
+Exit unitizer ([Y]es, [B]ack, [R]eview)?
+unitizer>
+```
+This brings us up to the final prompt.  Since we rejected all the items that do not match the existing stored items, `unitizer` tells us that it will not modify the underlying store.  We are still prompted at the end so that we have an opportunity to make changes if we made a mistake.  Both the `[B]ack` and `[R]eview` options allow us to re-review the tests (see [test navigation](04interactiveenvironment.html#test-navigation) for more details).
+
+## Third Run -- Fix Problems
+
+We figured out the problem in our new implementation of `fastlm` and fixed it.  Now we update our package and re-run `unitize`:
+
+```
+> install(fastlm_dir(version=2))
+> unitize(test.file)
++-----------------------------------------------------------------------------+
+| unitizer for: /var/folders/56/qcx6p6f94695mh7ywq9m6z_80000gq/T//RtmpbDH8w9/ |
+| filee6922bc66583.R                                                          |
++-----------------------------------------------------------------------------+
+
+  Pass  Fail   New
+     4     0     0
+
+All tests passed.
+unitizer store unchanged
+```
+Success! Since all our tests passed we know that our functionality is implemented properly.  We can now comfortably make further modifications to `unitizer.fastlm` knowing that any regressions we introduce to existing functionality will be detected by `unitize`.

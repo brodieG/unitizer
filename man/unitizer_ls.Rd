@@ -14,8 +14,9 @@ Much like `ls`, except that it is designed to crawl up the \code{`.new`} and
 \code{`.ref`} environments and display all the objects.
 }
 \details{
-This is used in \code{`\link{browse,unitizer-method}`}, and is re-assigned to
-\code{`ls`} for use in the \code{`unitizer`} prompt environment.
+This is used in \code{`\link{browseUnitizer,unitizer-unitizerBrowse-method}`},
+and is re-assigned to \code{`ls`} for use in the \code{`unitizer`} prompt
+environment.
 }
 \keyword{internal}
 

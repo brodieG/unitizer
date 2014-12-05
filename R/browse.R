@@ -268,7 +268,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 
     unitizer
 } )
-
+setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 #' Bring up Review of Next test
 #'
 #' Generally we will go from one test to the next, where the next test is
@@ -279,7 +279,6 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
 #'
 #' @keywords internal
 
-setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, ...) {
     curr.id <- x@last.id + 1L
