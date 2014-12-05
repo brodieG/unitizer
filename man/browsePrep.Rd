@@ -3,7 +3,7 @@
 \alias{browsePrep}
 \title{Prepares a \code{`unitizer`} Object for Review}
 \usage{
-browsePrep(x, ...)
+browsePrep(x, mode, ...)
 }
 \description{
 Mainly, splits up the tests by section and subsection and creates an indexing

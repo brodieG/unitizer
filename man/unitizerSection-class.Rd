@@ -3,6 +3,7 @@
 \name{unitizerSection-class}
 \alias{unitizerSection-class}
 \alias{unitizerSectionExpression-class}
+\alias{unitizerSectionNA-class}
 \title{Contains Representation For a Section of Tests}
 \description{
 \code{`unitizerSectionExpression-class`} contains the actual expressions that
@@ -10,6 +11,11 @@ belong to the section, whereas \code{`unitizerSection-class`} only contains
 the meta data.  The latter objects are used within \code{`\link{unitizer-class}`},
 whereas the former is really just a temporary object until we can generate
 the latter.
+}
+\details{
+\code{`unitizerSectionNA-class`} is a specialized section for tests that actually
+don't have a section (removed tests that are nonetheless chosen to be kept
+by user in interactive environment)
 }
 \section{Slots}{
 

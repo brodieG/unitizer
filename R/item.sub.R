@@ -136,6 +136,7 @@ setMethod("as.character", "unitizerItemTestsErrors",
 #'   \item aborted: not compared (also implied in conditions, hopefully)
 #' }
 #' @seealso \code{`\link{unitizer_sect}`}
+#' @rdname unitizerItemTestsFuns
 #' @export unitizerItemTestsFuns
 #' @examples
 #' unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values

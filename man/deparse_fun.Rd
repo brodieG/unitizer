@@ -9,7 +9,8 @@ deparse_fun(x)
 \item{x}{a call or a symbol}
 }
 \value{
-character 1 length, NA if \code{`x`} can't possibly be a function
+character 1 length if a function name, NA if an anonymous function, or
+  character(0L) if neither
 }
 \description{
 Note this doesn't really try to check too hard whether the \code{`x`} is

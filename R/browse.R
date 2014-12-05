@@ -3,7 +3,7 @@
 #' @include browse.struct.R
 #' @include prompt.R
 
-setGeneric("browse", function(x, ...) standardGeneric("browse"))
+setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer"))
 
 #' Browse unitizer
 #'
@@ -12,6 +12,7 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #'   \item tests that don't match the stored reference tests
 #'   \item tests that don't exist in the reference tests
 #'   \item tests that exist in the reference tests but no the new file
+#'   \item tests that passed (these are omitted )
 #' }
 #' Because a lot of the logic for browsing these three types of situations is
 #' shared, that logic has been split off into \code{`\link{reviewNext,unitizerBrowse-method}`}.
@@ -33,11 +34,32 @@ setGeneric("browse", function(x, ...) standardGeneric("browse"))
 #'
 #' @keywords internal
 #' @param x the object to browse
+#' @param y the derivative unitizerBrowse object of x; this needs to be passed in
+#'   as an argument because the logic for generating it is different depending on
+#'   whether we are using `unitize` or `review`.
 #' @param prompt.on.quit whether to prompt for review even if there are no changes
-#' @param env the environment to use as a parent to the environment to browse the tests
+#' @param a unitizer if the unitizer was modified, FALSE otherwise
 
-setMethod("browse", c("unitizer"), valueClass="unitizer",
-  function(x, prompt.on.quit, ...) {
+setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
+  function(x, y, prompt.on.quit, force.update, ...) {
+    unitizer <- withRestarts(
+      browseUnitizerInternal(
+        x, y, prompt.on.quit=prompt.on.quit, force.update=force.update
+      ),
+      unitizerQuitExit=unitizer_quit_handler
+    )
+    # Reset the parent env of zero env so we don't get all sorts of warnings related
+    # to trying to store a package environment when we save this unitizer
+
+    if(is(unitizer, "unitizer")) {
+      parent.env(unitizer@zero.env) <- baseenv()
+    }
+    unitizer
+  }
+)
+setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
+setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
+  function(x, y, prompt.on.quit, force.update, ...) {
 
     # set up local history
 
@@ -60,59 +82,111 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
-    unitizer.browse <- browsePrep(x)      # Group tests by section and outcome for review
-    unitizer.browse@hist.con <- hist.con  # User expression to this file for use in history
+    y@hist.con <- hist.con  # User expression to this file for use in history
 
-    if(!length(unitizer.browse)) {
-      message("All tests passed; nothing to store.")
+    if(!length(y)) {
+      message("No tests to review.")
       return(TRUE)
-    } else if(length(unitizer.browse)) {
+    } else if(length(y)) {
+
+      # `repeat` loop allows us to keep going if at the last minute we decide
+      # we are not ready to exit the unitizer
+
+      first.time <- TRUE
+
       repeat {
-
         user.quit <- FALSE
-        withRestarts(
-          {
-           # Interactively review all tests
+        if(!user.quit) {
 
-            if(!done(unitizer.browse)) {
-              unitizer.browse <- reviewNext(unitizer.browse)
-              next
-          } },
-          earlyExit=function() user.quit <<- TRUE
-        )
+          # Now review each test, special handling required to ensure that the
+          # test selection menu shows up as appropriate (i.e. starting off in
+          # review mode, or we just reviewed a typically non-reviewed test)
+
+          withRestarts(
+            {
+              if(!done(y)) {
+                if(first.time && identical(y@mode, "review")) { # for passed tests, start by showing the list of tests
+                  first.time <- FALSE
+                  y@review <- TRUE
+                } else {
+                  review.prev <- y@review
+                  y <- reviewNext(y)
+                  if(!review.prev && y@review) next
+                }
+                if(y@review) {
+                  y.tmp <- review_prompt(y, new.env(parent=x@base.env))
+                  if(identical(y.tmp, "Q")) {
+                    invokeRestart("earlyExit")
+                  } else if(!is(y.tmp, "unitizerBrowse")) {
+                    stop(
+                      "Logic Error: review should return `unitizerBrowse`; contact ",
+                      "maintainer."
+                    )
+                  } else y <- y.tmp
+                }
+                next
+              } else {
+
+              }
+            },
+            earlyExit=function() user.quit <<- TRUE
+          )
+        }
         # Nothing happened at all, so quit without even option for prompting
 
         if(
           !(
-            something.happened <- length(unitizer.browse@mapping@item.id) &&
-              any(!unitizer.browse@mapping@ignored)
-          )
+            something.happened <- any(
+              y@mapping@review.type != "Passed" & !y@mapping@ignored
+            ) || (
+              any(!y@mapping@ignored) && identical(y@mode, "review")
+          ) )
         ) {
           message("All tests passed.")
-          invokeRestart("noSaveExit")
-        }
+          if(!force.update) {
+            message("unitizer store unchanged")
+            return(FALSE)
+        } }
         # Get summary of changes
 
-        keep <- !unitizer.browse@mapping@ignored
+        keep <- !y@mapping@ignored
         changes <- split(
-          unitizer.browse@mapping@review.val[keep],
-          unitizer.browse@mapping@review.type[keep]
+          y@mapping@review.val[keep] == "Y", y@mapping@review.type[keep]
         )
-        change.sum <- lapply(changes, function(x) c(sum(x == "Y"), length(x)))
+        change.sum <- lapply(
+          changes,
+          function(x) c(sum(x), length(x))
+        )
         for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
 
         if(
-          (length(x@changes) > 0L || something.happened) &&
-          (prompt.on.quit || !user.quit)
-        )
+          length(x@changes) > 0L || (
+            something.happened && (prompt.on.quit || !user.quit)
+          )
+        ) {
           print(H2("Finalize Unitizer"))
+          # Make sure we did not skip anything we were supposed to review
 
-        if(length(x@changes) == 0L) {
+          if(identical(y@mode, "unitize")) {
+            unreviewed <- sum(
+              !y@mapping@reviewed & y@mapping@review.type != "Passed" &
+              !y@mapping@ignored
+            )
+            if(unreviewed) {
+              message(
+                "You have ", unreviewed, " unreviewed tests; press `R` to see ",
+                "which tests you have skipped, and then `U` to go to first ",
+                "unreviewed."
+        ) } } }
+        # Prompt for user input if necessary to finalize
+
+        if(length(x@changes) == 0L && !force.update) {
           message(
             "You didn't accept any changes so there are no items to store."
           )
           if(!prompt.on.quit && user.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
-            invokeRestart("noSaveExit")
+            message("unitizer store unchanged")
+            return(FALSE)
           }
           valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
           nav.msg <- "Exit unitizer"
@@ -124,50 +198,77 @@ setMethod("browse", c("unitizer"), valueClass="unitizer",
           )
         } else {
           message("You are about to IRREVERSIBLY:")
-          show(x@changes)
+          if(length(x@changes) > 0) {
+            update.w.changes <- " updated with all the changes you approved, "
+            show(x@changes)
+          } else {
+            if(!force.update) stop("Logic Error: should be in forced update mode; contact maintainer.")
+            update.w.changes <- character()
+            cat(
+              "replace the existing unitizer with a reloaded version that ",
+              "contains the same tests.  If you are seeing this message it is ",
+              "because you chose to run in `force.update` mode.  Note that the ",
+              "reloaded version of the `unitizer` will not be completely ",
+              "identical to the currently stored one.  In particular sections ",
+              "and comments will reflect the latest source file, and test ",
+              "environments will be re-generated.\n",
+              sep=""
+            )
+          }
           valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
           nav.msg <- "Update unitizer"
           nav.hlp <- paste0(
-            "Pressing Y will replace the previous unitizer with a new one updated ",
-            "with all the changes you approved, pressing R or B will allow you to ",
+            "Pressing Y will replace the previous unitizer with a new one, ",
+            update.w.changes, "pressing R or B will allow you to ",
             "re-review your choices.  Pressing N or Q both quit without saving ",
             "changes to the unitizer"
           )
         }
         cat(nav.msg, " (", paste0(valid.opts, collapse=", "), ")?", sep="")
         user.input <- navigate_prompt(
-          unitizer.browse, curr.id=max(unitizer.browse@mapping@item.id),
+          y, curr.id=max(y@mapping@item.id) + 1L,
           text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
           valid.opts=valid.opts
         )
         if(is(user.input, "unitizerBrowse")) {
-          unitizer.browse <- user.input
+          y <- user.input
           next
         } else if (identical(user.input, "Q") || identical(user.input, "N")) {
-          invokeRestart("noSaveExit")
+          message("unitizer store unchanged")
+          return(FALSE)
         } else if (identical(user.input, "Y")) {
           if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
-            invokeRestart("noSaveExit")
+            message("unitizer store unchanged")
+            return(FALSE)
           } else break
         }
         stop("Logic Error; unexpected user input, contact maintainer.")
     } }
     # Create the new unitizer
 
-    items.user <- processInput(unitizer.browse)
-
-    # By definition, "Pass" items were not reviewed so cannot be part of
-    # `items.user`
-
-    items.ref <- x@items.new[x@tests.status == "Pass"] + items.user
+    items.ref <- processInput(y)
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
     zero.env <- new.env(parent=parent.env(x@zero.env))
     unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
-    unitizer + items.ref
+    unitizer <- unitizer + items.ref
+
+    # Extract and re-map sections of tests we're saving as reference
+
+    if(identical(y@mode, "review")) {
+      # Need to re-use our reference sections so `refSections` works since we
+      # will not have created any sections by parsing/evaluating tests.  This
+      # is super hacky as we're partly using the stuff related to `items.new`,
+      # and could cause problems further down the road if we're not careful
+
+      x@sections <- x@sections.ref
+      x@section.map <- x@section.ref.map
+    }
+    unitizer <- refSections(unitizer, x)
+
+    unitizer
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
-
 #' Bring up Review of Next test
 #'
 #' Generally we will go from one test to the next, where the next test is
@@ -201,33 +302,47 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
 
+    # Pre compute whether sections are effectively ignored or not; these will
+    # control whether stuff gets shown to screen or not
+
+    ignore.passed <- !identical(x@mode, "review") &&
+      is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
+      !x@inspect.all
+    ignore.sec <- all(
+      (
+        x@mapping@ignored[x@mapping@sec.id == curr.sec] &
+        !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
+      ) | (
+        x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
+        !identical(x@mode, "review")
+    ) ) && !x@inspect.all
+    ignore.sub.sec <- (
+      all(
+        x@mapping@ignored[cur.sub.sec.items] &
+        !x@mapping@new.conditions[cur.sub.sec.items]
+      ) || ignore.passed
+    ) && !x@inspect.all
+    multi.sect <- length(
+      unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])
+    ) > 1L
+
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
     # conditions
 
-    if(
-      !identical(last.reviewed.sec, curr.sec) &&
-      !all(
-        x@mapping@ignored[x@mapping@sec.id == curr.sec] &
-        !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
-      ) &&
-      length(unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])) > 1L
-    ) {
+    if(!identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect) {
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate
       (
         !identical(last.reviewed.sub.sec, curr.sub.sec) ||
         !identical(last.reviewed.sec, curr.sec)
-      ) && !all(
-        x@mapping@ignored[cur.sub.sec.items] &
-        !x@mapping@new.conditions[cur.sub.sec.items]
-      )
+      ) && !ignore.sub.sec
     ) {
       print(H3(curr.sub.sec.obj@title))
       cat(
         curr.sub.sec.obj@detail,
-        if(!all(x@mapping@ignored[cur.sub.sec.items])) {
+        if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
           paste0(
             " ", curr.sub.sec.obj@prompt, " ",
             "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
@@ -249,15 +364,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
       item.main <- item.new
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
     }
-    # Show test to screen, but only if the entire section is not ignored
+    # Show test to screen, but only if the entire section is not ignored, and
+    # not passed tests and requesting that those not be shown
 
-    if(
-      !all(
-        x@mapping@ignored[cur.sub.sec.items] &
-        !x@mapping@new.conditions[cur.sub.sec.items]
-      )
-    ) {
-      if(x@mapping@reviewed[[curr.id]]) {
+    if(!ignore.sub.sec) {
+      if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
         message(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
@@ -292,14 +403,15 @@ setMethod("reviewNext", c("unitizerBrowse"),
           ),
           sep="\n"
     ) } }
-    # Need to add ignored tests as default action is N. Not clear if we also
-    # need to set reviewed to TRUE (seems like we should not do so)
+    # Need to add ignored tests as default action is N, though note that ignored
+    # tests are treated specially in `healEnvs` and are either included or removed
+    # based on what happens to the subsequent non-ignored test.
 
-    if(x@mapping@ignored[[curr.id]]) {
-      #x@mapping@reviewed[[curr.id]] <- TRUE
-      x@mapping@review.val[[curr.id]] <- "Y"
-      x@last.id <- curr.id
-      return(x)
+    if(!x@inspect.all) {
+      if(x@mapping@ignored[[curr.id]] || ignore.passed) {
+        x@last.id <- curr.id
+        return(x)
+      }
     }
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the unitizerItem values and the child
@@ -352,8 +464,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
       "`B` to go Back to the previous test",
       "`R` to see a listing of all previously reviewed tests",
       "`ls()` to see what objects are available to inspect",
+      if(!is.null(item.new))
+        "`.new` to see newly evaluated test result",
+      if(!is.null(item.ref))
+        "`.ref` to see result from reference test from `unitizer` store",
       paste0(collapse="",
-        paste0(get.msg, collapse=" or "),
+        paste0(get.msg, collapse=" or "), " ",
         "to see more details about the test (see documentation for `getTest` ",
         "for details on other accessor functions such as (",
         paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."

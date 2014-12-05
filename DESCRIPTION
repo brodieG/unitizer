@@ -3,8 +3,8 @@ Title: Turn Arbitrary Code into Unit Tests
 Description: Simplifies regression tests by comparing objects produced by test
     code with earlier versions of those same objects.  If objects are unchanged
     the tests pass.  `unitizer` provides an interactive interface to review
-    failing tests or new tests.  See vignette for details.
-Version: 0.5.1
+    failing tests or new tests.  See vignettes for details.
+Version: 0.6.0
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
@@ -19,7 +19,7 @@ Suggests:
     unitizerdummypkg1,
     unitizerdummypkg2,
     fastlm
-License: GPL-2
+License: GPL-3
 LazyData: true
 Collate:
     'class_unions.R'
@@ -36,14 +36,18 @@ Collate:
     'browse.struct.R'
     'browse.R'
     'capture.R'
+    'demo.R'
     'faux_prompt.R'
     'get.R'
     'heal.R'
     'is.R'
+    'load.R'
     'ls.R'
     'onload.R'
     'parse.R'
+    'repairenvs.R'
     'unitize.R'
+    'unitize.core.R'
     'unitizer-package.r'
     'unitizer.add.R'
     'upgrade.R'

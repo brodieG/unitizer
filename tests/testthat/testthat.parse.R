@@ -173,4 +173,26 @@ local( {
       unitizer:::comm_extract(unitizer:::parse_with_comments(text=txt3))
     )
   } )
+  txt3 <- "# Calls to `library` and assignments are not normally considered tests, so
+  # you will not be prompted to review them
+
+  library(unitizer.fastlm)
+  x <- 1:100
+  y <- x ^ 2
+  res <- fastlm(x, y)
+
+  res                     # first reviewable expression
+  get_slope(res)
+  get_rsq(res)
+
+  fastlm(x, head(y))      # This should cause an error; press Y to add to store"
+  expr <- unitizer:::parse_with_comments(text=txt3)
+  my.unitizer <- new("unitizer", id=1, zero.env=new.env())
+  my.unitizer <- my.unitizer + expr
+  test_that("Weird missing comment on `res` works", {
+    expect_identical(
+      list(c("# Calls to `library` and assignments are not normally considered tests, so", "# you will not be prompted to review them"), NULL, NULL, NULL, "# first reviewable expression", NULL, NULL, "# This should cause an error; press Y to add to store"),
+      lapply(unitizer:::as.list(my.unitizer@items.new), slot, "comment")
+    )
+  } )
 } )

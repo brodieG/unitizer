@@ -1,0 +1,226 @@
+---
+title: "unitizeR - The Interative Environment"
+author: "Brodie Gaslam"
+date: "`r Sys.Date()`"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
+
+vignette: >
+  %\VignetteIndexEntry{04 - Interactive Environment}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+## Overview
+
+### `unitize` vs `review`
+
+`unitizer` offers two functions to access the interactive review environment: `unitize` and `review`.  `unitize` is used when you either want to generate a `unitizer` from a test file, or when you want to compare the re-evaluation of a test file to an existing `unitizer`.
+
+`review` is a helper function used when you want to review the contents of an existing `unitizer`.  This is useful if you grow uncertain about tests that you previously approved and want to ensure they actually do what you want them to.  You can review and potentially remove items from a `unitizer` with `review`.
+
+Both these functions use the same interactive environment, though rules therein are slightly different.  For example, in `review`, all the tests are considered passed since there is nothing to compare them to, and the interactive environment will step you through all the passed tests.  `unitize` will normally omit passed tests from the review process.
+
+We will focus on `unitize` for the rest of this vignette since most of the commentary about it applies equally to `review`.
+
+### Example Set-up
+
+To examine the interactive environment more thoroughly we will go back to the demo.  This is the `unitizer` prompt right after our first failed test when our `unitizer.fastlm` implementation was returning the wrong values:
+```
+> get_slope(res)
+Test Failed Because:
+Value mismatch: Mean relative difference: 6943055624
+unitizer>
+```
+
+## `unitizer` Commands
+
+Much like the `browser()` prompt, the `unitizer` prompt accepts several special expressions that allow you to control `unitizer` behavior.  What the expressions are and what they do depends on context.  We will review them in the context of the failed test described above.  Look at what the `unitizer` prompt stated before we started reviewing our failed tests:
+
+```
+- Failed ----------------------------------------------------------------------
+
+Reference test does not match new test from test script (compare `.new` and
+`.ref` to see differences). Overwrite item in store with new value ([Y]es, [N]o,
+[B]ack, [R]eview, [Q]uit, [H]elp)?
+```
+This clearly lays out all the special commands available to us:
+
+* `Y` will accept the new value as the correct reference value to use for a test
+* `N` will keep the previous reference value as the reference value for future tests
+* `B` takes us back to the previously reviewed test (see "Test Navigation" next)
+* `R` allows us to navigate to any previously reviewed test (see "Test Navigation" next)
+* `Q` quits `unitizer` (see "Quitting `unitizer`")
+* `H` provides contextual help
+
+If you type any of those letters into the `unitizer` prompt you will cause `unitizer` to respond as described above instead of evaluating the expression as it would be at the normal R console prompt.  If you have a variable assigned to one of those letters and you wish to access it, you can do so with any of `get`, `(`, `print`, etc.  For example, suppose we stored something in `Y`, then to access it all these commands would work:
+
+* `(Y)`
+* `get("Y")`
+* `print(Y)`
+
+`unitizer` checks for an exact match of a user expression to the special command letters, so something like `(Y)` does not match `Y` which allows you to reach the value stored in `Y`.
+
+If at any time you forget what `unitizer` options are available to you you can just hit the "ENTER" key and `unitizer` will re-print the options to screen.
+
+## Test Navigation
+
+### Selecting A Test to Review
+
+`unitize` will present to you all the tests that require review, but if you wish to review a specific test you can use the `B` (for Back) and `R` (for Review) commands. These commands can come in handy if you realize that you incorrectly accepted or rejected an earlier test, but do not wish to quit `unitizer` completely and lose all the other properly reviewed tests. `B` just steps you back to the previous test.  `R` gives you the option to go back to any previously reviewed test.
+
+`B` is trivially straightforward, so we will not discuss it further.  We will type `R` at the prompt of our second failed test to examine what it does:
+```
+unitizer> R
+    *4. library(unitizer.fastlm)   .  .  .  .  .  .  .  .  .  .  .  .       -:-
+    *5. x <- 1:100  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .       -:-
+    *6. y <- x^2 .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .       -:-
+    *1. res <- fastlm(x, y)  .  .  .  .  .  .  .  .  .  .  .  .  .  .       -:-
+     2. res   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:N
+     3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
+     7. get_rsq(res)   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
+     8. fastlm(x, head(y))   .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
+
+Note that tests are displayed in the order they appear in the test file, not in
+the order they would be reviewed in, which is why the test numbers are not
+necessarily sequential (see vignette for details and exceptions).
+
+What test do you wish to review (input a test number, [U]nreviewed)?
+unitizer>
+```
+The `[R]eview` option produces a list of all the tests in the order in which they appear in the test file.  You can type the number of a test to review it, or U to go to the first test that hasn't been reviewed (more on this in a minute).  We will examine the line for test #3 in more detail:
+```
+     3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
+     ^   ^                                                                ^   ^
+     |   |                                                                |   |
+     |   +--  Deparsed test expression                    Test status ----+   |
+     |                                                                        |
+     +- Test ID                                                    User Input +
+```
+The value and order of the test IDs shouldn't mean anything to you other than being the number to type in if you wish to review that test.  Tests that have a `*` to the left of the test id are expessions that are not reviewed or checked by `unitizer` (we call these [ignored tests](03tests.html#what-constitutes-a-test)).
+
+The test status (see [tests outcomes](03tests.html#test-outcomes)) indicates the outcome of comparison of the reference test in the `unitizer` store to the newly evaluated ones.  The first four tests are ignored tests, so they do not have a status.  The User Input column marks which tests have been reviewed and what the user decision was.  In this case we had reviewed test #2 and decided not to keep it (hence the "N").  Typically neither ignored tests nor passed tests require user input so they will typically have a "-" as the user input, as will tests that would be reviewed, but haven't been yet.
+
+Typing `U` at the review prompt will take you to the first unreviewed test.  Since ignored tests and passed tests are not typically reviewed, `U` will take you to the first unreviewed test that is neither passed nor ignored.
+
+If we type 2 at the prompt, we get:
+```
+unitizer> 2
+You are re-reviewing a test; previous selection was: "N"
+> res
+Test Failed Because:
+Value mismatch: Mean relative difference: 19854602162
+unitizer>
+```
+`unitizer` tells us we are re-reviewing this test and that previously we had chosen not to keep the new version.  At this point we could re-examine the test, and potentially change our previous selection.
+
+You can jump ahead to any test from the review menu, even tests that are typically not reviewed (i.e. ignored or passed, though if you go to those you will be brought back to the review menu once you complete the review because those tests are not part of the normal review flow).
+
+If you skip ahead some tests and then get to the end of the review cycle `unitizer` will warn you about unreviewed tests.
+
+### Finalizing `unitizer`
+
+Once you review all reviewable tests you will be asked to finalize the `unitizer`:
+```
+= Finalize Unitizer ===========================================================
+
+You are about to IRREVERSIBLY:
+- Replace 1 out of 2 failed tests
+Update unitizer ([Y]es, [N]o, [B]ack, [R]eview)?
+unitizer>
+```
+In this case we were reviewing a `unitizer` with two failed tests, one of which we chose to update with the newer value.  `unitizer` will summarize for you all the changes that it is about to make to the `unitizer` store.  If you type `Y` at the prompt, the existing `unitizer` store will be overwritten with the new version you just reviewed.
+
+If you are unsure about the changes you just approved for the `unitizer`, you can re-review them with `R` or `B`.  You can also quit without saving your changes by typing `N`, but once you do so you will no longer be able to recover your changes.
+
+### Quitting `unitizer`
+
+At any point you may quit `unitizer` by typing `Q` at the `unitizer` prompt.  If you have already reviewed tests, you will be given the opportunity to save what you have done so far as you would when finalizing the `unitizer`.  Note that if you chose to quit `unitizer` may exit without giving you the opportunity to review the tests.  This will happen if:
+
+* You did not make any changes to the `unitizer` (e.g. if you chose `N` at failed tests, you are keeping the reference value, so the `unitizer` is not actually changing)
+* And test evaluation took less than `getOption("unitizer.prompt.b4.quit.time")` seconds (currently 10 seconds)
+
+You can also use `quit()` or `q()` from the `unitizer` prompt, though this is not recommended as it will override standard `unitizer` behavior.
+
+### Differences in `review` Mode
+
+`review` works exactly like `unitize`, except that passed tests are automatically queued up for review, and that the only test statuses you should see are "Passed" or "-", the latter for ignored tests.
+
+## Evaluating Expressions at the `unitizer` Prompt
+
+### As Compared To The Standard R Prompt
+
+The `unitizer` prompt is designed to emulate the standard R prompt.  For the most part you can type any expression that you would type at the R prompt and get the same result as you would there.  This means you can examine the objects created by your test script, run R computations, etc.
+
+There are, however, some suble differences created by the structure of the evaluation environments `unitizer` uses:
+
+* Even though you can see objects produced by tests, you can not actually remove them with `rm`
+* Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts
+* Other subtle issues discussed at length in the ([estoeric topics vignette](06nittygritty.html))
+* There are special `unitizer` objects `.new` and `.ref` that let you review the results of tests (we will discuss these next)
+* `ls` is over-ridden by a special `unitizer` version (we will also dicuss this next)
+
+### `.new` and `.ref`
+
+As we saw in the demo there are special objects available at the prompt: `.new` (except for removed/deleted tests), and for all but new tests, `.ref`.  These objects contain the values produced by the newly evaluated test (`.new`) and by the test when it was previously run and accepted (`.ref`).  `.new` might seem a bit superfluous since the user can always re-evaluate the test expression at the `unitizer` prompt to review the value, but if that evaluation is slow you can save a little time by using `.new`.  `.ref` is the only option you have to see what the test used to produce back when it was first accepted into the `unitizer` store.
+
+`.new` and `.ref` contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation.  To do so you can use the `get*` accessor functions in conjunction with the `.new` or `.ref` objects:
+
+* `getTest(.new)` gets general information about the test
+* `getVal(.new)` returns the test value; equivalent to typing `.new` at the prompt
+* `getConds(.new)` returns the list of conditions produced by the test
+* `getMsg(.new)` returns the stderr captured during test evaluation
+* `getOut(.new)` returns the screen output captured during test evaluation (note often this will be similar to what you get from `.new` or `getVal(.new)` since typing those expressions at the prompt leads to the value being printed)
+* `getExpr(.new)` returns the test expression (do not confuse this with `getCall`, a built-in R function with no relation to `unitizer`)
+* `getAborted(.new)` returns whether the test expression invoked an "abort" restart (e.g. called `stop` at some point)
+
+You can substitute `.ref` for `.new` in any of the above, provided that `.ref` is defined (i.e. that won't work when you are reviewing new tests since there is no corresponding reference test for those by definition).
+
+### `ls`
+
+Using `ls` at the `unitizer` prompt calls an `unitizer` version of the function.  This is what happens when we type `ls()` at the first failed test in the `unitizer` we've been reviewing in this vignette:
+```
+unitizer> ls()
+$`objects in new test env:`
+[1] "res" "x"   "y"
+
+$`objects in ref test env:`
+[1] "res" "x"   "y"
+
+$`unitizer objects:`
+[1] ".new" ".ref"
+
+Use `ref(obj_name)` to access reference objects.
+`.new` / `.ref` for test value, `getTest(.new)` / `getTest(.ref)` for details.
+unitizer>
+```
+This special version of `ls` highlights that our environment is more complex than that at the typical R prompt.  This is necessary to allow us to review both the newly evaluated objects as well as the objects from the reference `unitizer` store to compare them for differences.  For instance, in this example, we can see that there are both new and reference copies of the `res`, `x`, and `y` objects.  The reference copies are from the previous time we ran `unitizer`.  `ls` also notes what `unitizer` special objects are available.
+
+When you type at the prompt the name of one of the objects `ls` lists, you will see the newly evaluated version of that variable.  If you wish to see the reference value, then use the `ref` function:
+```
+unitizer> res
+    intercept         slope           rsq
+-3.541306e+13  7.012486e+11  9.386790e-01
+attr(,"class")
+[1] "fastlm"
+unitizer> ref(res)
+   intercept        slope          rsq
+-1717.000000   101.000000     0.938679
+attr(,"class")
+[1] "fastlm"
+```
+Note that at times when you use `ls` at the `unitizer` promopt you may see something along the lines of:
+```
+$`objects in ref test env:`
+[1] "res" "x*"   "y'"
+```
+where object names have symbols such as `*` or `'` appended to them.  This happens because `unitizer` does not store the entire environment structure of the reference tests.  Here is a description of the possible situations you can run into:
+
+* `*` Object existed during reference test evaluation, but is no longer available
+* `'` Object existed during reference test evaluation, and still does, but it has a different value than it did during reference test evaluation
+* `**` Object exists now, but did not exist during reference test evaluation
+
+For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [patchwork reference environments](06nittygritty.html#patchwork-reference-environments).
+
+Objects assigned right before a test are part of that test's environment so will always be available.

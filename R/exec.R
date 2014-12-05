@@ -19,6 +19,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     # Prep message and std output capture, note this is reset with every test expression
     # evaluation
 
+    x.comments <- attr(x, "comment") # for some reason making a copy of x an NULLING attributes kills comments in some corner cases, so must do this first
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
     std.err.capt <- tempfile()        # Inefficient to do this for every test? Convenient though
@@ -74,7 +75,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       "unitizerItem", call=x.to.eval, value=res$value,
       conditions=new("conditionList", .items=res$conditions),
       output=capt$output, message=capt$message, aborted=res$aborted,
-      env=test.env, comment=attr(x, "comment"), trace=res$trace
+      env=test.env, comment=x.comments, trace=res$trace
     )
 } )
 #' Utility function to evaluate user expressions

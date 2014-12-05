@@ -4,6 +4,7 @@ NULL
 
 #' Deparse, But Make It Look Like It Would On Prompt
 #'
+#' @keywords internal
 #' @param expr an expression or call
 #' @return character vector
 
@@ -33,7 +34,7 @@ deparse_peek <- function(expr, len, width=500L) {
     stop("Argument `width` must be an integer greater than zero")
   chr <- paste0(sub("\n", " ", deparse(expr, width)), collapse="")
   if(nchar(chr) > len) {
-    paste0(substr(chr, 1L, len), "...")
+    paste0(substr(chr, 1L, len -3L), "...")
   } else {
     chr
   }
@@ -66,16 +67,49 @@ strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE)
 #' @return 1 length character vector
 #' @export
 
-print.H1 <- function(x, ...) {
-  if(!is.character(x) || length(x) != 1L) stop("Argument `x` must be a 1 length character vector")
-  if((width <- getOption("width")) < 5L) return(x)
+print.header <- function(x, margin="bottom", ...) {
+  y <- as.character(x, margin, ...)
+  cat(y)
+  invisible(y)
+}
+#' @export
+
+as.character.header <- function(x, margin="bottom", ...) {
+  if(!is.character(x)) stop("Argument `x` must be a character vector")
+  margin.legal <- c("both", "none", "top", "bottom")
+  if(!is.character(margin) || !isTRUE(margin %in% margin.legal))
+    stop("Argument `margin` must be in ", deparse(margin.legal))
+  if(isTRUE(margin %in% c("both", "top"))) x <- paste0(c("", x), collapse="\n")
+  if(isTRUE(margin %in% c("both", "bottom"))) x <- paste0(c(x, ""), collapse="\n")
+  paste0(c(x, ""), collapse="\n")
+}
+#' @export
+
+as.character.H3 <- function(x, margin="bottom", width=getOption("width"), ...) {
+  x <- header_help(x, width=width,..., pad.char="-")
+  NextMethod()
+}
+#' @export
+
+as.character.H2 <- function(x, margin="bottom", width=getOption("width"), ...) {
+  x <- header_help(x, width=width,..., pad.char="=")
+  NextMethod()
+}
+#' @export
+
+as.character.H1 <- function(x, margin="bottom", width=getOption("width"), ...) {
+  if(width < 5L) return(x)
   x <- c(
     paste0(c("+", rep("-", width - 2L), "+"), collapse=""),
     paste0(
       "| ",
       paste0(
-        text.wrapped <- unlist(text_wrap(x, width - 4L), use.names=FALSE),
-        vapply((width - 4L) - nchar(text.wrapped), function(x) paste0(rep(" ", x), collapse=""), character(1L))
+        text.wrapped <- unlist(text_wrap(unclass(x), width - 4L), use.names=FALSE),
+        vapply(
+          (width - 4L) - nchar(text.wrapped),
+          function(x) paste0(rep(" ", x), collapse=""),
+          character(1L)
+        )
       ),
       " |"
     ),
@@ -83,49 +117,27 @@ print.H1 <- function(x, ...) {
   )
   NextMethod()
 }
-#' @export
 
-print.H2 <- function(x, ...) {
-  x <- header_help(x, pad.char="=")
-  NextMethod()
-}
-#' @export
-
-print.H3 <- function(x, ...) {
-  x <- header_help(x, pad.char="-")
-  NextMethod()
-}
-#' @export
-
-print.header <- function(x, margin="bottom", ...) {
-  if(!is.character(x)) stop("Argument `x` must be a character vector")
-  margin.legal <- c("both", "none", "top", "bottom")
-  if(!is.character(margin) || !isTRUE(margin %in% margin.legal)) stop("Argument `margin` must be in ", deparse(margin.legal))
-  if(isTRUE(margin %in% c("both", "top"))) x <- paste0(c("", x), collapse="\n")
-  if(isTRUE(margin %in% c("both", "bottom"))) x <- paste0(c(x, ""), collapse="\n")
-  x <- paste0(c(x, ""), collapse="\n")
-  cat(x)
-  invisible(x)
-}
 #' Helper function for single line headers
 #'
 #' @keywords internal
 #' @param x the contents of the header
+#' @param width how wide we want the header to display
 #' @param ... unused, for compatibility with print generic
 #' @param pad.char which character to use to form the header structure
 
-header_help <- function(x, ..., pad.char="-") {
-  if(inherits(try(par.call <- sys.call(-1L), silent=TRUE), "try-error") ||
-    !isTRUE(grepl("^print\\.H[1-9][0-9]*$", as.character(par.call[[1]])))
-  ) {
-    stop("This function may only be called from a print.H* function.")
-  }
+header_help <- function(x, width, ..., pad.char="-") {
+  par.call <- sys.call(-1L)
   stop2 <- function(msg) stop(simpleCondition(msg, par.call))
   if(!is.character(x) || length(x) != 1L) stop2("Argument `x` must be a 1 length character vector")
   if(!is.character(pad.char) || length(pad.char) != 1L || nchar(pad.char) != 1L) stop2("Argument `pad.char` must be a 1 length 1 character character vector.")
-  if((width <- getOption("width")) < 8L) return(x)
+  if(!is.numeric(width) || length(width) != 1L) stop2("Argument `width` must be a 1 length numeric vector.")
+  if(width < 8L) return(x)
   if(isTRUE(nchar(x) > width - 4L)) x <- paste0(substr(x, 1, width - 7L), "...")
-  paste0(pad.char, " ", x, " ", paste0(rep_len(pad.char, width - 3L - nchar(x)), collapse=""), collapse="")
+  paste0(
+    pad.char, " ", x, " ",
+    paste0(rep_len(pad.char, width - 3L - nchar(x)), collapse=""), collapse=""
+  )
 }
 #' Create Header Objects
 #'
@@ -242,14 +254,17 @@ as.character.OL <- function(x, width=0L, ...) {
 #'   of the item wrapped to length \code{`width`}
 
 text_wrap <- function(x, width) {
-  if(!is.character(x) || !is.numeric(width) || any(width < 1L) || !identical(round(width), as.numeric(width))) {
+  if(
+    !is.character(x) || !is.numeric(width) || any(width < 1L) ||
+    !identical(round(width), as.numeric(width))
+  ) {
     stop("Arguments `x` and `width` must be character and integer like (all values >= 1) respectively")
   }
   if(!identical((length(x) %% length(width)), 0L)) {
     stop("Argument `x` must be a multiple in length of argument `width`")
   }
   mapply(
-    x, width, SIMPLIFY=FALSE,
+    unclass(x), width, SIMPLIFY=FALSE,
     FUN=function(x.sub, width.sub) {
       breaks <- ceiling(nchar(x.sub) / width.sub)
       substr(
@@ -279,9 +294,18 @@ over_print <- function(x, min.width=30L, max.width=getOption("width")) {
 
 #' Contains A List of Conditions
 #'
-#' Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
+#' Used by \code{`unitizer`} to capture conditions emitted by tests.
+#'
+#' When submitting custom comparison functions with:
+#'
+#' \code{`unitizer_sect(..., compare=unitizerItemTestsFuns(...))`}
+#'
+#' functions that compare conditions must compare \code{`conditionList`} objects
+#'
+#' @note Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
 #' compatibility issues.
 #'
+#' @seealso \code{`\link{unitizer_sect}`}
 #' @export
 
 setClass("conditionList", contains="unitizerList")
@@ -318,8 +342,9 @@ setMethod("all.equal", "conditionList",
       return(
         c(
           paste0(
-            "`target` and `current` do not have the same number of conditions (",
-            length(target), " vs ", length(current), ")"
+            "`target` (a.k.a `.ref`) and `current` (a.k.a `.new`) do not have ",
+            "the same number of conditions (",length(target), " vs ",
+            length(current), ")"
           ),
           if(
             any(
@@ -379,8 +404,8 @@ all.equal.condition <- function(target, current, ...) {
   ) {
     return(
       paste0(
-        "Condition type mismatch, target is '", type.targ,
-        "', but current is '", type.curr, "'"
+        "Condition type mismatch, `target` (a.k.a. `.ref`) is '", type.targ,
+        "', but `current` (a.k.a. `.new`) is '", type.curr, "'"
   ) ) }
   if(!isTRUE(all.equal(conditionMessage(target), conditionMessage(current))))
     return(paste0(type.targ, " condition messages do not match"))
@@ -513,18 +538,18 @@ valid_names <- function(x) {
 #'
 #' @keywords internal
 #' @param x a call or a symbol
-#' @return character 1 length, NA if \code{`x`} can't possibly be a function
+#' @return character 1 length if a function name, NA if an anonymous function, or
+#'   character(0L) if neither
 
 deparse_fun <- function(x) {
   if(is.symbol(x)) {
     as.character(x)
   } else if (is.call(x)) {
-    "<anon.FUN>"
-  } else {
     NA_character_
+  } else {
+    character(0L)
   }
 }
-
 #' Captalizes First Letter
 #'
 #' @keywords internal

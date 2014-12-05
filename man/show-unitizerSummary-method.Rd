@@ -10,7 +10,9 @@
 \item{object}{the object to show}
 }
 \description{
-Display Unitizer Summary
+Unfortunately no choice but to use \code{`getOptions("width")`} from within
+here.  Maybe could pre-compute in one of earlier stages and stuff into
+\code{`object`}?  Not a big deal
 }
 \keyword{internal}
 

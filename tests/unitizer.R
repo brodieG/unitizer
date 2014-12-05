@@ -3,5 +3,5 @@
 library(unitizer)
 
 set.seed(1)
-unitize("interactive/unitizer/tests2.R")
-unitize("interactive/unitizer/sectionsRCMDCHECK.R")
+unitize("noninteractive/tests2.R")
+unitize("noninteractive/sectionsRCMDCHECK.R")

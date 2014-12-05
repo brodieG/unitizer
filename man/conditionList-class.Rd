@@ -4,7 +4,20 @@
 \alias{conditionList-class}
 \title{Contains A List of Conditions}
 \description{
+Used by \code{`unitizer`} to capture conditions emitted by tests.
+}
+\details{
+When submitting custom comparison functions with:
+
+\code{`unitizer_sect(..., compare=unitizerItemTestsFuns(...))`}
+
+functions that compare conditions must compare \code{`conditionList`} objects
+}
+\note{
 Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
 compatibility issues.
+}
+\seealso{
+\code{`\link{unitizer_sect}`}
 }
 

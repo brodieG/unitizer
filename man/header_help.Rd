@@ -3,10 +3,12 @@
 \alias{header_help}
 \title{Helper function for single line headers}
 \usage{
-header_help(x, ..., pad.char = "-")
+header_help(x, width, ..., pad.char = "-")
 }
 \arguments{
 \item{x}{the contents of the header}
+
+\item{width}{how wide we want the header to display}
 
 \item{...}{unused, for compatibility with print generic}
 

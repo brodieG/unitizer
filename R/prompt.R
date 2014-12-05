@@ -46,6 +46,7 @@ unitizer_prompt <- function(
   text, browse.env=globalenv(), help=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE
 ) {
+  if(!interactive()) stop("Logic Error: attempting to use interactive `unitizer` environment in non-interactive session.")
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
   if(!is.environment(browse.env))
@@ -129,102 +130,115 @@ navigate_prompt <- function(
   if(identical(prompt.val, "B")) {
 
     # Go back to previous
-
     if(curr.id == 1L) {
       message("At first reviewable item; nothing to undo")
       return(x)
     }
-    prev.tests <- x@mapping@item.id[!x@mapping@ignored] < curr.id
+    prev.tests <- x@mapping@item.id < curr.id & !x@mapping@ignored & (
+      if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
+      else TRUE
+    )
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
     return(x)
   } else if (identical(prompt.val, "R")) {
-
-    # Navigation Prompt
-
-    if(!length(x@mapping@item.id[x@mapping@reviewed])) {
-      message("You have not reviewed any tests yet; there is nothing to revisit.")
-      return(x)
-    }
-    nav.help <- paste0(
-      "You may re-review any of the tests that you have already reviewed by ",
-      "selecting that test's number.  The last letter on each line represents ",
-      "your previous input.  The word before the colon before the last letter ",
-      "describes the type of test (e.g. Failed / Removed / Corrupted). The ",
-      "numbering is not continuous because some statements in the store are ",
-      "not considered tests (e.g. assignments). Additionally, the numbers may ",
-      "not line up to the expressions in the test file because passed tests ",
-      "are excluded from the numbering sequence. Alternatively, typing U will ",
-      "take you to the first unreviewed test."
-    )
-    nav.opts <- c(
-      "input an integer-like number corresponding to a reviewed test",
-      U="[U]nreviewed"
-    )
-    nav.prompt <- "What test do you wish to review"
-    cat(nav.prompt, " (", paste0(nav.opts, collapse=", "), ")?\n\n", sep="")
-    show(x)
-    exit.fun <- function(y, env) {               # keep re-prompting until user types in valid value
-      if(!is.expression(y)) stop("Argument `y` should be an expression.")
-      if(
-        length(y) != 1L || !is.numeric(y[[1L]]) || length(y[[1L]]) != 1L ||
-        y[[1L]] != as.integer(y[[1L]])
-      ) return(FALSE)
-      valid.vals <- x@mapping@item.id[x@mapping@reviewed]
-      if(!isTRUE(y[[1L]] %in% valid.vals)) {
-        message(
-          "Input must be integer-like and in ",
-          paste0(range(valid.vals), collapse=":")
-        )
-        return(FALSE)
-      }
-      return(y[[1L]])
-    }
-    nav.id <- unitizer_prompt(
-      text=nav.prompt, help=nav.help,
-      browse.env=browse.env2, exit.condition=exit.fun,
-      valid.opts=nav.opts
-    )
-    if(identical(nav.id, "Q")) {
-      return("Q")
-    } else if (identical(nav.id, "U")) {
-      # Go to unreviewed test
-
-      reviewed <- as.logical(rev(cumsum(rev(x@mapping@reviewed))))  # because ignored tests are not explicitly marked as reviewed, so
-      item.len <- length(x@mapping@review.val)
-      if(all(reviewed)) {
-        message("No unreviewed tests.")
-        x@last.id <- item.len
-        return(x)
-      }
-      message("Jumping to first unreviewed test.")
-
-      if ((reviewed.num <- max(which(reviewed))) == 1L) {
-        x@last.id <- 1L
-        return(x)
-      }
-      # Find out if there were any ignored tests adjacent to first unreviewed,
-      # note, this is overcomplicated..., should just found first non-ignored
-      # before this one
-
-      adj.ignored <- which(
-        cumsum(rev(x@mapping@ignored[1:reviewed.num])) == 1:reviewed.num
-      )
-      if(length(adj.ignored)) {
-        x@last.id <- min(item.len, reviewed.num - min(adj.ignored))
-      } else {
-        x@last.id <- min(item.len, reviewed.num)
-      }
-      return(x)
-    } else if (
-      !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
-    ) {
-      stop("Logic Error: Unexpected user input allowed through in Review mode; contact maintainer")
-    }
-    prev.tests <- x@mapping@item.id[!x@mapping@ignored] < nav.id
-    x@last.id <- if(any(prev.tests)) {
-      x@mapping@item.id[!x@mapping@ignored][[max(which(prev.tests))]]
-    } else 0L
-    return(x)
+    return(review_prompt(x, browse.env2))
   }
   return(prompt.val)
 }
+#' Manages Producing Test Navigation Message / Prompt
+#'
+#' Probably should be an S4 method, along with \code{`\link{navigate_prompt}`}
+#'
+#' @keywords internal
+#' @param x a unitizerBrowse object
+#' @param nav.env an environment
+#' @return either a \code{`unitizerBrowse`}, or "Q" if the user chose to quit
+
+review_prompt <- function(x, nav.env) {
+
+  if(!is(x, "unitizerBrowse") || !is.environment(nav.env))
+    stop("Logic Error: unexpected inputs to internal function; contact maintainer.")
+
+  # Navigation Prompt
+
+  nav.help <- paste0(
+    "Select a test to review by typing that test's number at the prompt. ",
+    "Tests that start with a `*`",
+    if(identical(x@mode, "unitize")) ", or with status \"Passed\",", "are not ",
+    "typically reviewed in this mode.  The letter after the test status ",
+    "represents prior user input to test review (a `-` indicates ",
+    "the test has not been reviewed). Type \"U\" to jump to the first unreviewed ",
+    "test."
+  )
+  nav.opts <- c(
+    "input a test number",
+    U="[U]nreviewed"
+  )
+  nav.prompt <- "What test do you wish to review"
+  show(x)
+  cat(nav.prompt, " (", paste0(nav.opts, collapse=", "), ")?\n", sep="")
+  exit.fun <- function(y, env) {               # keep re-prompting until user types in valid value
+    if(!is.expression(y)) stop("Argument `y` should be an expression.")
+    if(
+      length(y) != 1L || !is.numeric(y[[1L]]) || length(y[[1L]]) != 1L ||
+      y[[1L]] != as.integer(y[[1L]])
+    ) return(FALSE)
+    valid.vals <- x@mapping@item.id
+    if(!isTRUE(y[[1L]] %in% valid.vals)) {
+      message(
+        "Input must be integer-like and in ",
+        paste0(range(valid.vals), collapse=":")
+      )
+      return(FALSE)
+    }
+    return(y[[1L]])
+  }
+  nav.id <- unitizer_prompt(
+    text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit.fun,
+    valid.opts=nav.opts
+  )
+  if(identical(nav.id, "Q")) {
+    return("Q")
+  } else if (identical(nav.id, "U")) {
+    # Go to unreviewed test
+
+    unreviewed <- !x@mapping@reviewed & !x@mapping@ignored &
+      (
+        if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
+        else TRUE
+      )
+    item.len <- length(x@mapping@review.val)
+    if(!any(unreviewed)) {
+      message("No unreviewed tests.")
+      x@last.id <- item.len
+      return(x)
+    }
+    message("Jumping to first unreviewed test.") # But note that we also show all ignored tests before that one for context
+    nav.id <- min(which(unreviewed))
+  } else if (
+    !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
+  ) {
+    stop("Logic Error: Unexpected user input allowed through in Review mode; contact maintainer")
+  }
+  # Determine whether test we selected is a test we would normally not review
+
+  x@inspect.all <- x@mapping@ignored[[nav.id]] || (
+      identical(x@mode, "unitize") &&
+      identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
+    )
+  x@review <- x@inspect.all
+
+  if(x@inspect.all) {
+    message(
+      "You selected a test that is not normally reviewed in this mode; ",
+      "as such, upon test completion, you will be brought back to this menu ",
+      "instead of being taken to the next reviewable test."
+    )
+  }
+  # Set last.id to test just before the one we want to review as process will
+  # then cause desired test to be reviewed
+
+  x@last.id <- as.integer(nav.id) - 1L
+  return(x)
+}
+

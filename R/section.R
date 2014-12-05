@@ -12,8 +12,12 @@ NULL
 #' whereas the former is really just a temporary object until we can generate
 #' the latter.
 #'
+#' \code{`unitizerSectionNA-class`} is a specialized section for tests that actually
+#' don't have a section (removed tests that are nonetheless chosen to be kept
+#' by user in interactive environment)
+#'
 #' @keywords internal
-#' @aliases unitizerSectionExpression-class
+#' @aliases unitizerSectionExpression-class unitizerSectionNA-class
 #' @slot title 1 lenght character, the name of the section
 #' @slot details character vector containing additional info on the section
 #' @slot compare functions to compare the various aspects of a \code{`\link{unitizerItem-class}`}
@@ -28,10 +32,12 @@ setClass(
     length="integer",
     parent="integer"
   ),
-  prototype(parent=NA_integer_),
+  prototype(parent=NA_integer_, length=0L),
   validity=function(object) {
     if(length(object@title) != 1L) return("slot `@title` must be length 1")
-    if(length(object@length) != 1L | object@length < 1L) return("slot `@length` must be length 1 and greater than 0")
+    if(length(object@length) != 1L | object@length < 0L) {
+      return("slot `@length` must be length 1 and >= 0")
+    }
     if(length(object@parent) != 1L) return("slot `@parent` must be a 1 length integer")
   }
 )
@@ -44,6 +50,12 @@ setMethod("initialize", "unitizerSection",
     }
     callNextMethod()
 } )
+setClass(
+  "unitizerSectionNA", contains="unitizerSection",
+  prototype=list(
+    title="<untitled>", details="Dummy section for section-less tests."
+  )
+)
 setClass("unitizerSectionExpression", contains="unitizerList",
   representation(
     title="characterOrNULL",
@@ -67,30 +79,47 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' comparison functions used when determining whether the newly evaluated
 #' values match the reference values.
 #'
+#' @section Comparison Functions:
+#'
 #' \code{`unitizer`} will compare values as well as some side effects from
 #' the test expression evaluation.  If you wish to modify the comparison function
 #' for the value of the test expressions then all you need to do is pass your
 #' comparison function as the \code{`compare`} argument.
 #'
-#' If you wish to modify the comparison functions for the side effects (e.g.
-#' screen output or conditions), then you need to pass a
+#' If a comparison function signals a condition (e.g. throws a warning) the
+#' test will not be evaluated, so make sure that your function does not signal
+#' conditions unless it is genuinely failing.
+#'
+#' If you wish to modify the comparison functions for the side effects of test
+#' evaluation (e.g. screen output or conditions), then you need to pass a
 #' \code{`\link{unitizerItemTestsFuns-class}`} object intialized with the
 #' appropriate functions (see example).
 #'
+#' Make sure your comparison functions are available to \code{`\link{unitize}`}.
+#' Comparisons will be evaluated in the environment of the test.  By default
+#' \code{`\link{unitize}`} runs tests in environments that are not children to
+#' the global environment, so functions defined there will not be automatically
+#' available.  You can either specify the function in the test file before the
+#' section that uses it, or change the base environment tests are evaluated in with
+#' \code{`unitize(..., env.clean)`}, or make sure that the package that
+#' contains your function is loaded within the test script.
+#'
+#' @section Nested Sections:
+#'
 #' It is possible to have nested sections, but titles, etc. are ignored.  The
-#' only effect of sub-sections is to allow you to change the comparison
-#' functions for a sub-section of a \code{`unitizer_sect`}.
+#' only effect of nested sections is to allow you to change the comparison
+#' functions for a portion of the outermost \code{`unitizer_sect`}.
 #'
 #' @note if you want to modify the functions used to compare conditions,
 #' keep in mind that the conditions are stored in lists, so your function
 #' must loop through the lists and compare conditions pairwise.  By default
-#' \code{`unitizer`} uses the \code{`all.equal`} method for S4 class \code{`conditionList`}.
+#' \code{`unitizer`} uses the \code{`all.equal`} method for S4 class
+#' \code{`conditionList`}.
 #'
-#' @note currently sections have no impact whatsoever on reference expressions.
-#' The only thing that matters is what section the new expressions are in.
-#' New expressions are matched to reference expressions based purely on the
-#' deparsed calls irrespective of what section the reference expressions were
-#' in.
+#' @note \code{`untizer`} does not account for sections when matching new and
+#' reference tests.  All tests will be displayed as per the section they belong
+#' to in the newest version of the test file, irrespective of what section they
+#' were in when the tests were last run.
 #'
 #' @export
 #' @param title character 1 length title for the section, can be omitted

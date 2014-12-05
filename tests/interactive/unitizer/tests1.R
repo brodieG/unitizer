@@ -1,7 +1,7 @@
 1 + 1
 print("heya")
 stop("wow")
-matrix(sample(1:21), nrow=3)
+matrix(runif(21), nrow=3)
 warning("this is a warning")
 for(i in 1:3) {
   warning("warning #", j)

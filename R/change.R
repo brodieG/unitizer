@@ -7,8 +7,8 @@
 #' @keywords internal
 
 setClass("unitizerChanges",
-  representation(failed="integer", new="integer", removed="integer", corrupted="integer"),
-  prototype(failed=integer(2L), new=integer(2L), removed=integer(2L), corrupted=integer(2L)),
+  representation(failed="integer", new="integer", removed="integer", corrupted="integer", passed="integer"),
+  prototype(failed=integer(2L), new=integer(2L), removed=integer(2L), corrupted=integer(2L), passed=integer(2L)),
   validity=function(object) {
     for(i in slotNames(object)) {
       if((len <- length(slot(object, i))) > 0L && len != 2L) {
@@ -29,9 +29,15 @@ setMethod("show", "unitizerChanges",
     if(object@new[[1L]]) cat("- Add", object@new[[1L]] , "out of", object@new[[2L]], "new tests\n")
     if(object@removed[[1L]]) cat("- Remove", object@removed[[1L]], "out of", object@removed[[2L]], "removed tests\n")
     if(object@corrupted[[1L]]) cat("- Replace", object@corrupted[[1L]], "out of", object@corrupted[[2L]], "tests with errors\n")
+    if(object@passed[[1L]]) cat("- Drop", object@passed[[1L]], "out of", object@passed[[2L]], "passed tests\n")
   }
 )
 #' Return Sum of Total Changes
 #' @keywords internal
 
-setMethod("length", "unitizerChanges", function(x) sum(vapply(slotNames(x), function(y) slot(x, y)[[1L]], 1L)))
+setMethod(
+  "length", "unitizerChanges",
+  function(x) {
+    sum(vapply(slotNames(x), function(y) slot(x, y)[[1L]], 1L))
+  }
+)

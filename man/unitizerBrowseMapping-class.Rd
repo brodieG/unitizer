@@ -25,6 +25,11 @@ picked.
 
 \item{\code{item.id.rel}}{non-unique, unique within each sec/sub.sec}
 
+\item{\code{item.id.orig}}{the original id of the item used to re-order tests in the
+order they show up in the original files}
+
+\item{\code{item.ref}}{whether a test is a reference test or not}
+
 \item{\code{reviewed}}{whether a test has been reviewed}
 
 \item{\code{review.val}}{what action the user decided ("N") is default}

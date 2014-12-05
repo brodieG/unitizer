@@ -14,4 +14,5 @@ character vector
 \description{
 Deparse, But Make It Look Like It Would On Prompt
 }
+\keyword{internal}
 
