@@ -137,7 +137,7 @@ setMethod("as.character", "unitizerItemTestsErrors",
 #' }
 #' @seealso \code{`\link{unitizer_sect}`}
 #' @rdname unitizerItemTestsFuns
-#' @export
+#' @export unitizerItemTestsFuns
 #' @examples
 #' unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
 
