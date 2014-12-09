@@ -294,17 +294,22 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         comp.fun.name <- slot(section@compare, i)@fun.name
         comp.fun.anon <- isTRUE(is.na(comp.fun.name))
         if(comp.fun.anon) comp.fun.name <- "<anon.FUN>"
+        get_dat <- function(x, i) {
+          dat <- slot(x, i)
+          if(is.call(dat) || is.symbol(dat)) call("quote", dat)
+          else dat
+        }
+        item.new.dat <- get_dat(item.new@data, i)
+        item.ref.dat <- get_dat(item.ref@data, i)
 
         if(comp.fun.anon) {
           test.call <- list(  # pull out and use compare function
-            slot(section@compare, i)@fun, slot(item.ref@data, i),
-            slot(item.new@data, i)
+            slot(section@compare, i)@fun, item.ref.dat, item.new.dat
           )
           mode(test.call) <- "call"
         } else {
           test.call <- call(  # pull out and use compare function
-            comp.fun.name, slot(item.ref@data, i),
-            slot(item.new@data, i)
+            comp.fun.name, item.ref.dat, item.new.dat
           )
         }
         test.res <- tryCatch(

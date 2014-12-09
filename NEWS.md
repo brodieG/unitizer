@@ -1,3 +1,17 @@
+unitizer 0.6.1
+--------------------------------------------------------------------------------
+
+Minor release, no substantive changes.
+
+Bugfixes:
+
+* Loading a `unitizer` no longer automatically modifies it through `upgrade`
+* `upgrade` cleaned up and has tests now
+
+Behavior changes:
+
+* `get` no longer warns if `unitizer` ids don't match
+
 unitizer 0.6.0
 --------------------------------------------------------------------------------
 
