@@ -28,13 +28,18 @@ load_unitizer <- function(store.id, par.frame) {
       stop("Logic Error: `get_unitizer.", class(store.id)[[1]], "` did not return a unitizer")
     stop("Logic Error: `get_unitizer` did not return a unitizer; contact maintainer.")
   } else  {
+    ver <- unitizer@version
     unitizer <- upgrade(unitizer, par.frame=par.frame)
-    success <- try(set_unitizer(store.id, unitizer))
-    if(inherits(success, "try-error"))  {
-      stop(
-        "Logic Error: failed attempting to store upgraded `unitizer`; contact ",
-        " maintainer."
-  ) } }
+    if(!identical(ver, unitizer@version)) { # there was an upgrade, so store new file
+      success <- try(set_unitizer(store.id, unitizer))
+      if(inherits(success, "try-error"))  {
+        stop(
+          "Logic Error: failed attempting to store upgraded `unitizer`; contact ",
+          " maintainer."
+      )
+    }
+    message("Unitizer store updated to version ", unitizer@version)
+  } }
   unitizer
 }
 #' @keywords internal
