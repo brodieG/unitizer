@@ -333,6 +333,26 @@ local( {
       "comparison function `fun` signaled a condition of type \"warning\", with message \"not gonna work\" and call `fun(2, 2)`."
     )
   } )
+  test_that("Language Objects Tested Properly", {
+    exps <- expression(
+      quote(x),
+      quote(x + y),
+      quote(identity(x)),
+      expression(1 + y),
+      quote(expression(1 + y))
+    )
+    my.unitizer <- new("unitizer", id=27, zero.env=new.env())
+    my.unitizer <- my.unitizer + exps   # add ref.exps as new items
+
+    my.unitizer2 <- new("unitizer", id=28, zero.env=new.env()) + my.unitizer@items.new
+    my.unitizer2 <- my.unitizer2 + exps
+
+    # This used to error b/c expressions returning unevaluated calls/symbols were
+    # not compared as such (they were evaluated)
+
+    expect_identical(as.character(my.unitizer2@tests.status), rep("Pass", 5))
+  } )
+
 } )
 
 

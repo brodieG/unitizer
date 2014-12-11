@@ -115,10 +115,15 @@ get_unitizer.character <- function(store.id) {
   if(!is(unitizer, "unitizer")) stop("Retrieved object is not a `unitizer` store")
   if(!identical(path_clean(store.id), path_clean(unitizer@id))) {
     if(is.character(unitizer@id) & length(unitizer@id) == 1L) {
-      warning(
-        "ID in retrieved `unitizer` (", unitizer@id, ") doesn't match `store.id`; this may ",
-        "be happening because you moved the store relative to the script that created it"
-    ) } else {
+      # The following warning occurred more often than not as a result of changes
+      # in working directory, so just quashing for now; could use `normalizePath`
+      # instead...
+      # warning(
+      #   "ID in retrieved `unitizer` (", unitizer@id, ") doesn't match `store.id`; this may ",
+      #   "be happening because you moved the store relative to the script that created it",
+      #   immediate. = TRUE
+      # )
+    } else {
       stop(
         "Logic Error: ID in retrieved `unitizer` is not a 1 length character vector as expected ",
         "(typeof: ", typeof(unitizer@id), ", length: ", length(unitizer@id),"); contact maintainer."

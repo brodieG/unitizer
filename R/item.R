@@ -85,8 +85,10 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   if("env" %in% names(dots.all)) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&
-    exists(as.character(.Object@call[[1L]]), .Object@env) &&
-    any(vapply(funs.ignore, identical_fun, logical(1L), eval(.Object@call[[1L]], .Object@env)))
+    !inherits(
+      try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE), "try-error"
+    ) &&
+    any(vapply(funs.ignore, identical_fun, logical(1L), fun))
   ) {
     .Object@ignore <- TRUE
   }
