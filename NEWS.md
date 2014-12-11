@@ -7,6 +7,8 @@ Bugfixes:
 
 * Loading a `unitizer` no longer automatically modifies it through `upgrade`
 * `upgrade` cleaned up and has tests now
+* calling functions in form `pkg::fun` or `pkg:::fun` no longer causes problems
+  when checking for ignoredness
 
 Behavior changes:
 
