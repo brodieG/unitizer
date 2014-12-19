@@ -142,7 +142,6 @@ test_that("Compare Conditions", {
     all.equal(lst2, lst1[c(1L:2L, 4L)])
   )
 } )
-
 test_that("Compare Functions With Traces", {
   fun.a <- base::library
   expect_true(identical(fun.a, base::library))
@@ -154,3 +153,19 @@ test_that("Compare Functions With Traces", {
   expect_error(unitizer:::identical_fun(1, base::library))
   expect_error(unitizer:::identical_fun(base::library, 1))
 } )
+test_that("word_cat", {
+  str <- "Humpty dumpty sat on a wall and took a big fall.  All the kings horses and men couldn't put humpty dumpty together again"
+  expect_equal(
+    c("Humpty dumpty sat ", "on a wall and took ", "a big fall.  All ", "the kings horses ", "and men couldn't ", "put humpty dumpty ", "together again"),
+    capture.output(unitizer:::word_cat(str, fill=20))
+  )
+  expect_equal(str, capture.output(unitizer:::word_cat(str, fill=20, sep=" ")))  # sep forces this to be treated as cat
+  expect_error(unitizer:::word_cat(stop("boom"), fill=20, sep=" "), ": boom")
+  expect_error(unitizer:::word_cat(stop("boom"), fill=20), "Problem evaluating `\\.\\.\\.`")
+  str2 <- rep("goodbye goodbye")
+  str1 <- rep("hello hello hello", 2)
+  expect_equal(
+    c("hello hello ", "hello hello ", "hello hello ", "goodbye ", "goodbye"),
+    capture.output(unitizer:::word_cat(str1, str2, fill=15))
+  )
+})

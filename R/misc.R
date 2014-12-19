@@ -58,6 +58,43 @@ strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE)
   if(len.target < 1L) stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
   ifelse(nchar(x) <= nchar.max, x, paste0(substr(x, 1, len.target), ctd))
 }
+#' Cat but split by words to allow wrapping
+#'
+#' Parameters are the same as \code{`\link{cat}`}.  Word splitting only happens
+#' if the \code{`sep`} argument is not provided.
+#'
+#' @keywords internal
+#' @seealso \code{`\link{cat}`}
+
+word_cat <- function(...) {
+  par.frame <- parent.frame()
+  matched.args <- as.list(match.call(definition=cat, expand.dots=FALSE))[-1L]
+  if("sep" %in% names(matched.args)) {
+    matched.call <- match.call(definition=cat)
+    matched.call[[1]] <- quote(cat)
+    return(eval(matched.call, envir=par.frame));
+  }
+  cat.args <- formals(cat)
+  args.to.parse <- c(
+    matched.args[setdiff(names(matched.args), names(cat.args))],
+    if("..." %in% names(matched.args)) matched.args[["..."]]
+  )
+  args.to.forward <- matched.args[
+    names(cat.args)[!names(cat.args) %in% "..." &
+    names(cat.args) %in% names(matched.args)]
+  ]
+  args.evaled <- try(
+    lapply(
+      args.to.parse,
+      function(x) {
+        x.eval <- eval(x, envir=par.frame)
+        if(is.character(x.eval)) unlist(strsplit(x.eval, " ")) else x.eval
+  } ) )
+  if(inherits(args.evaled, "try-error"))
+    stop("Problem evaluating `...` arguments; see previous errors")
+  do.call(cat, c(args.to.forward, args.evaled))
+}
+
 #' Print a header
 #'
 #' @keywords internal
