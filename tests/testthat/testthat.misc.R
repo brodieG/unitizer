@@ -168,4 +168,13 @@ test_that("word_cat", {
     c("hello hello ", "hello hello ", "hello hello ", "goodbye ", "goodbye"),
     capture.output(unitizer:::word_cat(str1, str2, fill=15))
   )
+  # Make sure default works
+
+  width <- getOption("width")
+  options(width=20)
+  expect_equal(
+    c("Humpty dumpty sat ", "on a wall and took ", "a big fall.  All ", "the kings horses ", "and men couldn't ", "put humpty dumpty ", "together again"),
+    capture.output(unitizer:::word_cat(str))
+  )
+  options(width=width)
 })
