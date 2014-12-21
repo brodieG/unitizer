@@ -259,6 +259,10 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 
 parse_with_comments <- function(file, text=NULL) {
+  # First line here to deal with weird bug (issue #41)
+  if(inherits(try(parse(text="1 + 1", keep.source=TRUE)), "try-error"))
+    stop("Unable to clean up parse cache")
+  # Now start for real
   if(!is.null(text)) {
     if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
     expr <- try(parse(text=text, keep.source=TRUE))
@@ -267,7 +271,7 @@ parse_with_comments <- function(file, text=NULL) {
   }
   if(inherits(expr, "try-error"))
     stop("Failed attempting to parse inputs; see previous errors for details")
-  expr <- comm_reset(expr)
+  #expr <- comm_reset(expr)
   parse.dat <- prsdat_fix_exprlist(getParseData(expr))
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
@@ -347,8 +351,10 @@ parse_with_comments <- function(file, text=NULL) {
     if(!any(vapply(prsdat.children, function(child) any(child$token == "COMMENT"), logical(1L)))) return(expr)
 
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
-    if(!identical(nrow(prsdat.par.red), length(which(assignable.elems))))
+    if(!identical(nrow(prsdat.par.red), length(which(assignable.elems)))) {
+      browser()
       stop("Logic Error: mismatch between expression and parse data; contact maintainer.")
+    }
     j <- 1
     if(!is.expression(expr) && !is.call(expr)) {
       if(term.len <- length(which(!prsdat.par.red$terminal)) > 1L) {
