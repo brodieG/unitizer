@@ -158,7 +158,10 @@ setMethod("show", "unitizerSummary",
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), max.row.name.width)
     print(sum.mx)
     if(object@dels)
-      cat("\nAdditionally, ", object@dels, " test ", if(object@dels > 1) "were" else "was", " deleted\n", sep="")
+      word_cat(
+        "\nAdditionally,", object@dels, "test",
+        if(object@dels > 1) "were" else "was", "deleted"
+      )
     NULL
 } )
 

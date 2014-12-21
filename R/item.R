@@ -153,12 +153,11 @@ setMethod("show", "unitizerItem",
         paste0(cond.types.summ, " ", paste0(names(cond.types.summ), ifelse(cond.types.summ > 1L, "s", ""), "\n"), collapse=", ")
       )
     }
-    cat(
-      paste0(
-        "To retrieve detailed contents, use the `get*` methods (e.g. getOut(obj)).",
-        " See documentation for `getTest` for ",
-        "details on the other accessor functions.", collapse=""
-      ), fill=TRUE, sep=""
+    word_cat(
+      "To retrieve detailed contents, use the `get*` methods (e.g. getOut(obj)).",
+      " See documentation for `getTest` for",
+      "details on the other accessor functions.",
+      fill=TRUE
     )
 } )
 #' Methods to Track Whether a \code{`\link{unitizerItem-class}`} Object is New Or Reference

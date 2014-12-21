@@ -204,15 +204,14 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           } else {
             if(!force.update) stop("Logic Error: should be in forced update mode; contact maintainer.")
             update.w.changes <- character()
-            cat(
-              "replace the existing unitizer with a reloaded version that ",
-              "contains the same tests.  If you are seeing this message it is ",
-              "because you chose to run in `force.update` mode.  Note that the ",
-              "reloaded version of the `unitizer` will not be completely ",
-              "identical to the currently stored one.  In particular sections ",
-              "and comments will reflect the latest source file, and test ",
-              "environments will be re-generated.\n",
-              sep=""
+            word_cat(
+              "replace the existing unitizer with a reloaded version that",
+              "contains the same tests.  If you are seeing this message it is",
+              "because you chose to run in `force.update` mode.  Note that the",
+              "reloaded version of the `unitizer` will not be completely",
+              "identical to the currently stored one.  In particular sections",
+              "and comments will reflect the latest source file, and test",
+              "environments will be re-generated."
             )
           }
           valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
@@ -224,7 +223,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             "changes to the unitizer"
           )
         }
-        cat(nav.msg, " (", paste0(valid.opts, collapse=", "), ")?", sep="")
+        word_cat(nav.msg, paste0(" (", paste0(valid.opts, collapse=", "), ")?"))
         user.input <- navigate_prompt(
           y, curr.id=max(y@mapping@item.id) + 1L,
           text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -340,15 +339,14 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) && !ignore.sub.sec
     ) {
       print(H3(curr.sub.sec.obj@title))
-      cat(
+      word_cat(
         curr.sub.sec.obj@detail,
         if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
           paste0(
             " ", curr.sub.sec.obj@prompt, " ",
             "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
-            ")?"
-        ) },
-        "\n\n", sep=""
+            ")?\n"
+        ) }
       )
     }
     # Retrieve actual tests objects
@@ -457,9 +455,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # the loop will then advance you to that test
 
     help.prompt <- paste(
-      "In addition to any valid R expression, you may type the following",
-      "at the prompt (without backticks):"
-    )
+        "In addition to any valid R expression, you may type the following",
+        "at the prompt (without backticks):\n"
+      )
     help.opts <- c(
       "`B` to go Back to the previous test",
       "`R` to see a listing of all previously reviewed tests",
@@ -483,7 +481,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x.mod <- navigate_prompt(
           x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
           browse.env1=browse.eval.env, browse.env2=new.env(parent=parent.env(base.env.pri)),
-          valid.opts=valid.opts, help=c(help.prompt, as.character(UL(help.opts)))
+          valid.opts=valid.opts,
+          help=c(help.prompt, paste0(as.character(UL(help.opts)), collapse="\n"))
         ),
         "unitizerBrowse"
       )
