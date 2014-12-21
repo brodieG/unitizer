@@ -60,34 +60,46 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
 setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
 setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
   function(x, y, prompt.on.quit, force.update, ...) {
-
-    # set up local history
-
-    savehistory()
-    hist.file <- tempfile()
-    hist.con <- file(hist.file, "at")
-    cat("## <unitizer> (original history will be restored on exit)\n", file=hist.con)
-    loadhistory(showConnections()[as.character(hist.con), "description"])
-
-    # Revert history and trace on exit
-
-    #curr.trace <- .Traceback
-    on.exit( {
-      close(hist.con);
-      file.remove(hist.file);
-      loadhistory();
-      #assign(".Traceback", curr.trace, envir=getNamespace("base"))
-    } )
-
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
-
-    y@hist.con <- hist.con  # User expression to this file for use in history
 
     if(!length(y)) {
       message("No tests to review.")
       return(TRUE)
     } else if(length(y)) {
+      # Nothing happened at all, so quit without even option for prompting
+
+      if(
+        !(
+          something.happened <- any(
+            y@mapping@review.type != "Passed" & !y@mapping@ignored
+          ) || (
+            any(!y@mapping@ignored) && identical(y@mode, "review")  # Not sure this is
+        ) )
+      ) {
+        message("All tests passed.")
+        if(!force.update) {
+          message("unitizer store unchanged")
+          return(FALSE)
+      } }
+      # set up local history
+
+      savehistory()
+      hist.file <- tempfile()
+      hist.con <- file(hist.file, "at")
+      cat("## <unitizer> (original history will be restored on exit)\n", file=hist.con)
+      loadhistory(showConnections()[as.character(hist.con), "description"])
+
+      # Revert history and trace on exit
+
+      #curr.trace <- .Traceback
+      on.exit( {
+        close(hist.con);
+        file.remove(hist.file);
+        loadhistory();
+        #assign(".Traceback", curr.trace, envir=getNamespace("base"))
+      } )
+      y@hist.con <- hist.con  # User expression to this file for use in history
 
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
@@ -132,21 +144,6 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             earlyExit=function() user.quit <<- TRUE
           )
         }
-        # Nothing happened at all, so quit without even option for prompting
-
-        if(
-          !(
-            something.happened <- any(
-              y@mapping@review.type != "Passed" & !y@mapping@ignored
-            ) || (
-              any(!y@mapping@ignored) && identical(y@mode, "review")
-          ) )
-        ) {
-          message("All tests passed.")
-          if(!force.update) {
-            message("unitizer store unchanged")
-            return(FALSE)
-        } }
         # Get summary of changes
 
         keep <- !y@mapping@ignored
