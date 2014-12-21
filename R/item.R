@@ -192,7 +192,14 @@ setReplaceMethod("itemsType", c("unitizerItems", "character"),
       stop("Argument `value` must be length 1L or have same length as argument `x`")
     }
     if(!all(value %in% c("reference", "new"))) stop("Argument `value` may only contain ", deparse(c("new", "reference")))
-    x@.items <- mapply(function(y, z) {y@reference <- identical(z, "reference"); y}, x@.items, value, SIMPLIFY=F)
+    if(length(x)) {
+      x@.items <- mapply(function(y, z) {
+          y@reference <- identical(z, "reference")
+          y
+        },
+        x@.items, value, SIMPLIFY=F
+      )
+    }
     x
 } )
 setGeneric("ignored", function(x, ...) standardGeneric("ignored"))
