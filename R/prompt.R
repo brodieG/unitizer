@@ -131,7 +131,7 @@ navigate_prompt <- function(
 
     # Go back to previous
     if(curr.id == 1L) {
-      message("At first reviewable item; nothing to undo")
+      message("At first reviewable item; nothing to step back to")
       return(x)
     }
     prev.tests <- x@mapping@item.id < curr.id & !x@mapping@ignored & (
