@@ -259,9 +259,9 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 
 parse_with_comments <- function(file, text=NULL) {
-  # Now start for real
+  # Looping to deal with issue #41
 
-  for(i in 1:2) {  # Looping to deal with issue #41
+  for(i in 1:2) {
     if(!is.null(text)) {
       if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
       expr <- try(parse(text=text, keep.source=TRUE))
@@ -272,12 +272,28 @@ parse_with_comments <- function(file, text=NULL) {
     parse.dat.raw <- getParseData(expr)
     if(!nrow(parse.dat.raw))
       stop("Logic Error: parse data mismatch; contact maintainer.")
-    if(identical(parse.dat.raw[1L, "parent"], 0L))  # Parsing worked as expected
-      break
-    if(identical(i, 1L))  # Try again once to see if that fixes it
-      next
-    stop("Cannot retrieve self consistent parse data")
+    parse.dat.check <- cbind(
+      parse.dat.raw[match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")],
+      setNames(parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child"))
+    )
+    if(
+      length(
+        with(parse.dat.check,
+          which(
+            line1.child < line1 |
+            (line1.child == line1) & col1.child < col1
+      ) ) )
+    ) {
+      # Parsing is not self consistent; some child items have for parents items
+      # that are lexically posterior
+      if(identical(i, 1L))  # Try again once to see if that fixes it
+        next
+      stop("Cannot retrieve self consistent parse data")
+    }
+    break  # Parsing worked as expected
   }
+  # Now proceed with actual parsing
+
   parse.dat <- prsdat_fix_exprlist(parse.dat.raw)
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
