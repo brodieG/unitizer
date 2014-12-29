@@ -220,7 +220,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             "changes to the unitizer"
           )
         }
-        word_cat(nav.msg, paste0(" (", paste0(valid.opts, collapse=", "), ")?"))
+        word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
         user.input <- navigate_prompt(
           y, curr.id=max(y@mapping@item.id) + 1L,
           text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
