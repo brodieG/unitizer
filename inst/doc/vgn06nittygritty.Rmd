@@ -119,6 +119,8 @@ This will prevent the `rds` files as showing up as being modified when you run `
 ```
 git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged
 ```
+**Warning**: be careful when you reset your working directory as your `rds` files will get reset to the last version that you committed (i.e. `git checkout -- .` will replace your currend `rds` with the one in the repo).  If you `--assume-unchanged` other files such as `.o` or `.so` files, you may need to remove those after a checkout as well so that `devtools::install` will recreate them from current sources.
+
 ## Error Handling
 
 Because `unitize` evaluates test expressions within a call to `withCallingHandlers`, there are some limitations on successfully running `unitize` inside your own error handling calls.  In particular, `unitize` will not work properly if run inside a `tryCatch` or `try` statement. If test expressions throw conditions, the internal `withCallingHandlers` will automatically hand over control to your `tryCatch`/`try` statement without an opportunity to complete `unitize` computations.  Unfortunately there does not seem to be a way around this since we have to use `withCallingHandlers` so that test statements after non-aborting conditions are run.

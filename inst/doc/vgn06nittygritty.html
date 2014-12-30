@@ -10,7 +10,7 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2014-12-04" />
+<meta name="date" content="2014-12-29" />
 
 <title>unitizeR - Esoteric Topics</title>
 
@@ -28,7 +28,7 @@
 <div id="header">
 <h1 class="title">unitizeR - Esoteric Topics</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2014-12-04</em></h4>
+<h4 class="date"><em>2014-12-29</em></h4>
 </div>
 
 <div id="TOC">
@@ -136,6 +136,7 @@ a()</code></pre>
 <pre><code>git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged</code></pre>
 <p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Once you reach the major release point, you can:</p>
 <pre><code>git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged</code></pre>
+<p><strong>Warning</strong>: be careful when you reset your working directory as your <code>rds</code> files will get reset to the last version that you committed (i.e. <code>git checkout -- .</code> will replace your currend <code>rds</code> with the one in the repo). If you <code>--assume-unchanged</code> other files such as <code>.o</code> or <code>.so</code> files, you may need to remove those after a checkout as well so that <code>devtools::install</code> will recreate them from current sources.</p>
 </div>
 </div>
 </div>
