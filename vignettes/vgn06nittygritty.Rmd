@@ -1,7 +1,6 @@
 ---
 title: "unitizeR - Esoteric Topics"
 author: "Brodie Gaslam"
-date: "`r Sys.Date()`"
 output:
     rmarkdown::html_vignette:
         toc: true
@@ -135,4 +134,18 @@ unitizer.path <- system.file(package="unitizer")
 library(devtools)
 install(paste0(unitizer.path, "/example.pkgs/unitizerdummypkg1"))  # one of several dummy packages
 ```
+
+## Troubleshooting
+
+### Running `unitizer` Crashes R
+
+Every R crash we have discovered while using `unitizer` was eventually traced to a third party package.  Some of the crashes were linked to issues attaching/detaching packages.  If you think you might be having an issue with this you can always run with `clean.search.path=FALSE` and `clean.env=FALSE` to avoid search path manipulation.
+
+### Different Outcomes in Interactive vs. Non Interactive
+
+Watch out for functions that have default arguments of the type:
+```
+fun <- function(x, y=getOption('blahblah'))
+```
+as those options may be different depending on whether you are running whether you are running R interactively or not.  One prime example is `parse(..., keep.source = getOption("keep.source"))`.
 
