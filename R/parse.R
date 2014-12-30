@@ -294,6 +294,7 @@ parse_with_comments <- function(file, text=NULL) {
   }
   # Now proceed with actual parsing
 
+  expr <- comm_reset(expr)  # hack to deal with issues with expressions retaining previous assigned comments (need to examine this further)
   parse.dat <- prsdat_fix_exprlist(parse.dat.raw)
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
