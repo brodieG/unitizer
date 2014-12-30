@@ -213,12 +213,11 @@ setMethod("show", "unitizerBrowse", function(object) {
   obj.rendered <- as.character(object)
   cat(obj.rendered, "\n", sep="")
   if(!identical(object@mode, "review")) {
-    cat(
-      "Note that tests are displayed in the order they appear in the test ",
-      "file, not in the order they would be reviewed in, which is why the test ",
-      "numbers are not necessarily sequential (see vignette for details and ",
-      "exceptions).\n\n",
-      sep=""
+    word_cat(
+      "Note that tests are displayed in the order they appear in the test",
+      "file, not in the order they would be reviewed in, which is why the test",
+      "numbers are not necessarily sequential (see vignette for details and",
+      "exceptions).\n"
     )
   }
   invisible(obj.rendered)

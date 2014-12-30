@@ -26,7 +26,8 @@ NULL
 #'   typically a character vector where the names are one letter (though they
 #'   don't actually have to be) and are looked for as user typed input; note that
 #'   the quit and help options will always be appended to this
-#' @param help a character vector with help suggestions
+#' @param help a character vector with help suggestions: the first value in the
+#'   vector is \code{`\link{word_cat}`} output, the rest normal \code{`cat`}
 #' @param hist.con connection to save history to
 #' @param exit.condition function used to evaluate whether user input should
 #'   cause the prompt loop to exit; this function should accept two parameters:
@@ -71,7 +72,12 @@ unitizer_prompt <- function(
       if(!length(help)) {
         cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        cat(help, "", paste(text, opts.txt), sep="\n")
+        word_cat(help[[1L]])
+        if(length(help) > 1L) {
+          cat(help[-1L], sep="")
+        }
+        cat("\n\n", sep="")
+        word_cat(paste0(paste(text, opts.txt)))
       }
       next
     }
@@ -98,7 +104,7 @@ unitizer_prompt <- function(
       cat(deparse(val[[1L]]), file=hist.con, sep="\n")
       loadhistory(showConnections()[as.character(hist.con), "description"])
     }
-    if(res$aborted || !length(val)) cat(text, opts.txt)  # error or no user input, re-prompt user
+    if(res$aborted || !length(val)) word_cat(text, opts.txt)  # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
 #' Wrapper Around User Interaction
@@ -131,7 +137,7 @@ navigate_prompt <- function(
 
     # Go back to previous
     if(curr.id == 1L) {
-      message("At first reviewable item; nothing to undo")
+      message("At first reviewable item; nothing to step back to")
       return(x)
     }
     prev.tests <- x@mapping@item.id < curr.id & !x@mapping@ignored & (
@@ -176,7 +182,7 @@ review_prompt <- function(x, nav.env) {
   )
   nav.prompt <- "What test do you wish to review"
   show(x)
-  cat(nav.prompt, " (", paste0(nav.opts, collapse=", "), ")?\n", sep="")
+  word_cat(nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"))
   exit.fun <- function(y, env) {               # keep re-prompting until user types in valid value
     if(!is.expression(y)) stop("Argument `y` should be an expression.")
     if(

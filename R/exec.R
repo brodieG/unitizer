@@ -187,50 +187,64 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
   # function, we need to remove at least 4 calls from trace.new, and possibly
   # more if we ended up evaluating within withVisible
 
+  len.new <- length(trace.new)
+
   if(
-    length(trace.new) > length(trace.base) &&
+    len.new > length(trace.base) &&
     all(
       vapply(
         seq_along(trace.base), FUN.VALUE=logical(1L),
         function(x) identical(trace.base[[x]], trace.new[[x]])
     ) )
   ) {
-    if(
-      !identical(       # likely invoked through signalCondition rather than stop
-        trace.new[[length(trace.new)]],
-        quote(h(simpleError(msg, call)))
-      )
-    ) {
-      return(list())
-    }
-    trace.new[seq_along(trace.base)] <- NULL
-    if(is.function(trace.new[[length(trace.new)]])) {
-      is.function(trace.new[[length(trace.new)]])
-    }
-    if(length(trace.new) >= 7L || (passed.eval && length(trace.new) >= 6L)) {
-      trace.new[1L:(if(passed.eval) 6L else 7L)] <- NULL
-      if(passed.eval) {
-        # Find any calls from the beginning that are length 2 and start with
-        # print/show and then replace the part inside the print/show call with
-        # the actual call
+    # Filter out calls through signalCondition rather than `stop` and
+    # `stop+condition`
 
-        exp.to.rep <- cumsum(
-          vapply(
-            trace.new, FUN.VALUE=logical(1L),
-            function(x) {
-              length(x) == 2L &
-              grepl(paste0("^", print.type, "(\\..*)?$"), as.character(x[[1L]]))
-        } ) ) == 1L:length(trace.new)
-        trace.new <- lapply(seq_along(exp.to.rep),
-          function(idx) {
-            if(exp.to.rep[[idx]]) {
-              `[[<-`(
-                trace.new[[idx]], 2L,
-                if(is.expression(exp)) exp[[length(exp)]] else exp
-              )
-            } else trace.new[[idx]]
-      } ) }
-      if(length(trace.new) >= 2L) return(lapply(rev(head(trace.new, -2L)), deparse))
-  } }
+    is.stop <- identical(trace.new[[len.new]], quote(h(simpleError(msg, call))))
+    is.stop.cond <- length(trace.new) > 1 &&
+      identical(trace.new[[len.new - 1L]][[1L]], quote(stop))
+
+    if(is.stop || is.stop.cond) {
+      trace.new[seq_along(trace.base)] <- NULL
+      if(is.function(trace.new[[length(trace.new)]])) {
+        is.function(trace.new[[length(trace.new)]])
+      }
+      if(length(trace.new) >= 7L || (passed.eval && length(trace.new) >= 6L)) {
+        trace.new[1L:(if(passed.eval) 6L else 7L)] <- NULL
+        if(passed.eval) {
+          # Find any calls from the beginning that are length 2 and start with
+          # print/show and then replace the part inside the print/show call with
+          # the actual call
+
+          exp.to.rep <- cumsum(
+            vapply(
+              trace.new, FUN.VALUE=logical(1L),
+              function(x) {
+                length(x) == 2L &
+                grepl(paste0("^", print.type, "(\\..*)?$"), as.character(x[[1L]]))
+          } ) ) == 1L:length(trace.new)
+          trace.new <- lapply(seq_along(exp.to.rep),
+            function(idx) {
+              if(exp.to.rep[[idx]]) {
+                `[[<-`(
+                  trace.new[[idx]], 2L,
+                  if(is.expression(exp)) exp[[length(exp)]] else exp
+                )
+              } else trace.new[[idx]]
+        } ) }
+        if(length(trace.new) >= 2L) {
+          return(
+            lapply(FUN=deparse,
+              rev(
+                head(
+                  trace.new,
+                  if(is.stop) -2L
+                  else if (is.stop.cond) -1L
+                  else stop(
+                    "Logic Error: must be either stop or stop+cond; contact ",
+                    "maintainer."
+      ) ) ) ) ) } }
+    } else return(list())
+  }
   stop("Logic Error: couldn't extract trace; contact maintainer.")
 }

@@ -259,16 +259,43 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 
 parse_with_comments <- function(file, text=NULL) {
-  if(!is.null(text)) {
-    if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
-    expr <- try(parse(text=text, keep.source=TRUE))
-  } else {
-    expr <- try(parse(file, keep.source=TRUE))
+  # Looping to deal with issue #41
+
+  for(i in 1:2) {
+    if(!is.null(text)) {
+      if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
+      expr <- try(parse(text=text, keep.source=TRUE))
+    } else {
+      expr <- try(parse(file, keep.source=TRUE))
+    }
+    if(!length(expr)) return(expr)
+    parse.dat.raw <- getParseData(expr)
+    if(!nrow(parse.dat.raw))
+      stop("Logic Error: parse data mismatch; contact maintainer.")
+    parse.dat.check <- cbind(
+      parse.dat.raw[match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")],
+      setNames(parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child"))
+    )
+    if(
+      length(
+        with(parse.dat.check,
+          which(
+            line1.child < line1 |
+            (line1.child == line1) & col1.child < col1
+      ) ) )
+    ) {
+      # Parsing is not self consistent; some child items have for parents items
+      # that are lexically posterior
+      if(identical(i, 1L))  # Try again once to see if that fixes it
+        next
+      stop("Cannot retrieve self consistent parse data")
+    }
+    break  # Parsing worked as expected
   }
-  if(inherits(expr, "try-error"))
-    stop("Failed attempting to parse inputs; see previous errors for details")
-  expr <- comm_reset(expr)
-  parse.dat <- prsdat_fix_exprlist(getParseData(expr))
+  # Now proceed with actual parsing
+
+  expr <- comm_reset(expr)  # hack to deal with issues with expressions retaining previous assigned comments (need to examine this further)
+  parse.dat <- prsdat_fix_exprlist(parse.dat.raw)
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
   if(!nrow(parse.dat)) return(expr)
@@ -283,7 +310,6 @@ parse_with_comments <- function(file, text=NULL) {
         "); contact maintainer."
     );
   }
-
   parse.dat <- transform(parse.dat, parent=ifelse(parent < 0, 0L, parent))
 
   prsdat_recurse <- function(expr, parse.dat, top.level) {
@@ -347,8 +373,9 @@ parse_with_comments <- function(file, text=NULL) {
     if(!any(vapply(prsdat.children, function(child) any(child$token == "COMMENT"), logical(1L)))) return(expr)
 
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
-    if(!identical(nrow(prsdat.par.red), length(which(assignable.elems))))
+    if(!identical(nrow(prsdat.par.red), length(which(assignable.elems)))) {
       stop("Logic Error: mismatch between expression and parse data; contact maintainer.")
+    }
     j <- 1
     if(!is.expression(expr) && !is.call(expr)) {
       if(term.len <- length(which(!prsdat.par.red$terminal)) > 1L) {

@@ -17,12 +17,27 @@ local( {
   setMethod("show", "testObj", function(object) stop("Error in Show"))
   fun_signal <- function() signalCondition(simpleError("Error in Function", sys.call()))
   fun_error <- function() stop("Error in function 2")
+  fun_error_cond <- function() stop(simpleError("Error in function 2", sys.call()))
+  fun_error_cond_call <- function() fun_error_cond()
   fun_s3 <- function() test.obj.s3
   fun_s4 <- function() test.obj.s4
   eval.env <- sys.frame(sys.nframe())
 
+  ex0 <- unitizer:::eval_user_exp(expression(stop()), eval.env)
+  unitizer:::set_trace(ex0$trace)
+  trace0 <- traceback()
   ex1 <- unitizer:::eval_user_exp(expression(fun_signal()), eval.env)
+  unitizer:::set_trace(ex1$trace)
+  trace1 <- traceback()
   ex2 <- unitizer:::eval_user_exp(expression(fun_error()), eval.env)
+  unitizer:::set_trace(ex2$trace)
+  trace2 <- traceback()
+  ex6 <- unitizer:::eval_user_exp(expression(fun_error_cond()), eval.env)
+  unitizer:::set_trace(ex6$trace)
+  trace6 <- traceback()
+  ex7 <- unitizer:::eval_user_exp(expression(fun_error_cond_call()), eval.env)
+  unitizer:::set_trace(ex7$trace)
+  trace7 <- traceback()
   ex3 <- unitizer:::eval_user_exp(expression(fun_s3()), eval.env)
   ex4 <- unitizer:::eval_user_exp(expression(fun_s4()), eval.env)
   ex5 <- unitizer:::eval_user_exp(expression(sum(1:20)), eval.env)
@@ -49,6 +64,11 @@ local( {
       ex5   # a normal expression
     )
   } )
-
+  test_that("Trace Setting", {
+    expect_identical(trace0, trace1)
+    expect_identical(trace2, list("stop(\"Error in function 2\")", "fun_error()"))
+    expect_identical(trace6, list("stop(simpleError(\"Error in function 2\", sys.call()))", "fun_error_cond()"))
+    expect_identical(trace7, list("stop(simpleError(\"Error in function 2\", sys.call()))", "fun_error_cond()", "fun_error_cond_call()"))
+  } )
 } )
 

@@ -60,34 +60,46 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
 setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
 setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
   function(x, y, prompt.on.quit, force.update, ...) {
-
-    # set up local history
-
-    savehistory()
-    hist.file <- tempfile()
-    hist.con <- file(hist.file, "at")
-    cat("## <unitizer> (original history will be restored on exit)\n", file=hist.con)
-    loadhistory(showConnections()[as.character(hist.con), "description"])
-
-    # Revert history and trace on exit
-
-    #curr.trace <- .Traceback
-    on.exit( {
-      close(hist.con);
-      file.remove(hist.file);
-      loadhistory();
-      #assign(".Traceback", curr.trace, envir=getNamespace("base"))
-    } )
-
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
-
-    y@hist.con <- hist.con  # User expression to this file for use in history
 
     if(!length(y)) {
       message("No tests to review.")
       return(TRUE)
     } else if(length(y)) {
+      # Nothing happened at all, so quit without even option for prompting
+
+      if(
+        !(
+          something.happened <- any(
+            y@mapping@review.type != "Passed" & !y@mapping@ignored
+          ) || (
+            any(!y@mapping@ignored) && identical(y@mode, "review")  # Not sure this is
+        ) )
+      ) {
+        message("All tests passed.")
+        if(!force.update) {
+          message("unitizer store unchanged")
+          return(FALSE)
+      } }
+      # set up local history
+
+      savehistory()
+      hist.file <- tempfile()
+      hist.con <- file(hist.file, "at")
+      cat("## <unitizer> (original history will be restored on exit)\n", file=hist.con)
+      loadhistory(showConnections()[as.character(hist.con), "description"])
+
+      # Revert history and trace on exit
+
+      #curr.trace <- .Traceback
+      on.exit( {
+        close(hist.con);
+        file.remove(hist.file);
+        loadhistory();
+        #assign(".Traceback", curr.trace, envir=getNamespace("base"))
+      } )
+      y@hist.con <- hist.con  # User expression to this file for use in history
 
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
@@ -132,21 +144,6 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             earlyExit=function() user.quit <<- TRUE
           )
         }
-        # Nothing happened at all, so quit without even option for prompting
-
-        if(
-          !(
-            something.happened <- any(
-              y@mapping@review.type != "Passed" & !y@mapping@ignored
-            ) || (
-              any(!y@mapping@ignored) && identical(y@mode, "review")
-          ) )
-        ) {
-          message("All tests passed.")
-          if(!force.update) {
-            message("unitizer store unchanged")
-            return(FALSE)
-        } }
         # Get summary of changes
 
         keep <- !y@mapping@ignored
@@ -204,15 +201,14 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           } else {
             if(!force.update) stop("Logic Error: should be in forced update mode; contact maintainer.")
             update.w.changes <- character()
-            cat(
-              "replace the existing unitizer with a reloaded version that ",
-              "contains the same tests.  If you are seeing this message it is ",
-              "because you chose to run in `force.update` mode.  Note that the ",
-              "reloaded version of the `unitizer` will not be completely ",
-              "identical to the currently stored one.  In particular sections ",
-              "and comments will reflect the latest source file, and test ",
-              "environments will be re-generated.\n",
-              sep=""
+            word_cat(
+              "replace the existing unitizer with a reloaded version that",
+              "contains the same tests.  If you are seeing this message it is",
+              "because you chose to run in `force.update` mode.  Note that the",
+              "reloaded version of the `unitizer` will not be completely",
+              "identical to the currently stored one.  In particular sections",
+              "and comments will reflect the latest source file, and test",
+              "environments will be re-generated."
             )
           }
           valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
@@ -224,7 +220,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             "changes to the unitizer"
           )
         }
-        cat(nav.msg, " (", paste0(valid.opts, collapse=", "), ")?", sep="")
+        word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
         user.input <- navigate_prompt(
           y, curr.id=max(y@mapping@item.id) + 1L,
           text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -340,15 +336,14 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) && !ignore.sub.sec
     ) {
       print(H3(curr.sub.sec.obj@title))
-      cat(
+      word_cat(
         curr.sub.sec.obj@detail,
         if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
           paste0(
             " ", curr.sub.sec.obj@prompt, " ",
             "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
-            ")?"
-        ) },
-        "\n\n", sep=""
+            ")?\n"
+        ) }
       )
     }
     # Retrieve actual tests objects
@@ -457,9 +452,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # the loop will then advance you to that test
 
     help.prompt <- paste(
-      "In addition to any valid R expression, you may type the following",
-      "at the prompt (without backticks):"
-    )
+        "In addition to any valid R expression, you may type the following",
+        "at the prompt (without backticks):\n"
+      )
     help.opts <- c(
       "`B` to go Back to the previous test",
       "`R` to see a listing of all previously reviewed tests",
@@ -483,7 +478,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x.mod <- navigate_prompt(
           x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
           browse.env1=browse.eval.env, browse.env2=new.env(parent=parent.env(base.env.pri)),
-          valid.opts=valid.opts, help=c(help.prompt, as.character(UL(help.opts)))
+          valid.opts=valid.opts,
+          help=c(help.prompt, paste0(as.character(UL(help.opts)), collapse="\n"))
         ),
         "unitizerBrowse"
       )

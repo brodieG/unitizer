@@ -1,3 +1,17 @@
+unitizer 0.6.2
+--------------------------------------------------------------------------------
+
+Bugfixes:
+
+* Better whitespace wrapping in terminal mode (partially addresses #38)
+* Can now drop all items in review mode (issue #37)
+* Workaround an R parse bug (issue #41)
+* `traceback()` now works for `stop(simpleError(...))` type stops
+
+Behavior changes:
+
+* History is only subbed out if you need to type input (issue #40)
+
 unitizer 0.6.1
 --------------------------------------------------------------------------------
 
