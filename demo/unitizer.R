@@ -134,7 +134,7 @@ prompt_to_proceed()
 
 local({
   DF <- data.frame(x=1:1e5, y=(1:1e5) ^ 2)
-  print(system.time(flm.val <- with(DF, fastlm(x, y))))
+  print(system.time(flm.val <- with(DF, unitizer.fastlm::fastlm(x, y))))
   print(system.time(lm.val <- c((lm.res <- lm(y ~ x, DF))$coefficients, summary(lm.res)$r.squared)))
   all.equal(lm.val, unclass(flm.val), check.attributes=FALSE)
 })
