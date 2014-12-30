@@ -487,10 +487,11 @@ search_path_restore <- function() {
         } else detach(pos=hist@pos, unload=TRUE, character.only=TRUE)
       } else if(hist@mode == "remove") { # Need to add back
         if(hist@type == "package") {
-          library(
-            hist@name, pos=hist@pos, quietly=TRUE, character.only=TRUE,
-            lib.loc=dirname(attr(hist@extra, "path")), warn.conflicts=FALSE
-          )
+          suppressPackageStartupMessages(
+            library(
+              hist@name, pos=hist@pos, quietly=TRUE, character.only=TRUE,
+              lib.loc=dirname(attr(hist@extra, "path")), warn.conflicts=FALSE
+          ) )
         } else if (hist@type == "object") {
           attach(hist@extra, pos=hist@pos, name=hist@name, warn.conflicts=FALSE)
         }
