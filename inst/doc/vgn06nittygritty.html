@@ -10,7 +10,6 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2014-12-29" />
 
 <title>unitizeR - Esoteric Topics</title>
 
@@ -28,7 +27,6 @@
 <div id="header">
 <h1 class="title">unitizeR - Esoteric Topics</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2014-12-29</em></h4>
 </div>
 
 <div id="TOC">
@@ -43,6 +41,10 @@
 <li><a href="#error-handling">Error Handling</a></li>
 <li><a href="#other-issues">Other Issues</a><ul>
 <li><a href="#ancillary-unitizer-packages">Ancillary <code>unitizer</code> Packages</a></li>
+</ul></li>
+<li><a href="#troubleshooting">Troubleshooting</a><ul>
+<li><a href="#running-unitizer-crashes-r">Running <code>unitizer</code> Crashes R</a></li>
+<li><a href="#different-outcomes-in-interactive-vs.non-interactive">Different Outcomes in Interactive vs. Non Interactive</a></li>
 </ul></li>
 </ul>
 </div>
@@ -152,6 +154,19 @@ a()</code></pre>
 <pre><code>unitizer.path &lt;- system.file(package=&quot;unitizer&quot;)
 library(devtools)
 install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # one of several dummy packages</code></pre>
+</div>
+</div>
+<div id="troubleshooting" class="section level2">
+<h2>Troubleshooting</h2>
+<div id="running-unitizer-crashes-r" class="section level3">
+<h3>Running <code>unitizer</code> Crashes R</h3>
+<p>Every R crash we have discovered while using <code>unitizer</code> was eventually traced to a third party package. Some of the crashes were linked to issues attaching/detaching packages. If you think you might be having an issue with this you can always run with <code>clean.search.path=FALSE</code> and <code>clean.env=FALSE</code> to avoid search path manipulation.</p>
+</div>
+<div id="different-outcomes-in-interactive-vs.non-interactive" class="section level3">
+<h3>Different Outcomes in Interactive vs. Non Interactive</h3>
+<p>Watch out for functions that have default arguments of the type:</p>
+<pre><code>fun &lt;- function(x, y=getOption('blahblah'))</code></pre>
+<p>as those options may be different depending on whether you are running whether you are running R interactively or not. One prime example is <code>parse(..., keep.source = getOption(&quot;keep.source&quot;))</code>.</p>
 </div>
 </div>
 
