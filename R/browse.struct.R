@@ -95,7 +95,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         browse.sect <- browse.sect + new(                            # Passed tests
           "unitizerBrowseSubSectionPassed",
           items.new=x@items.ref[sect.map],
-          show.fail=FALSE, new.conditions=rep(FALSE, sum(sect.map))
+          show.msg=TRUE, new.conditions=rep(FALSE, sum(sect.map))
         )
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
