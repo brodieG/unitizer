@@ -1,3 +1,12 @@
+unitizer 0.6.3
+--------------------------------------------------------------------------------
+
+Bugfixes:
+
+* stderr now show in `review` mode (issue #43)
+* package startup messages suppressed (issue #23)
+* small demo bug
+
 unitizer 0.6.2
 --------------------------------------------------------------------------------
 
