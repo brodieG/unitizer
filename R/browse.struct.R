@@ -350,6 +350,7 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
   function(x, ...) {
     items <- new("unitizerItems")
     for(i in x@mapping@item.id) {
+
       sec <- x@mapping@sec.id[[i]]        # while it was nice to have mapping as an object for validation, this is terrible
       sub.sec <- x@mapping@sub.sec.id[[i]]
       id.rel <- x@mapping@item.id.rel[[i]]
@@ -367,10 +368,7 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
       # there is no section
 
       if(!is.null(item)) {
-        if(
-          identical(input.translate, "B") &&
-          identical(as.character(x@mapping@review.type[[i]]), "Removed")
-        ) {
+        if(identical(as.character(x@mapping@review.type[[i]]), "Removed")) {
           sec <- NA_integer_
         }
         item@section.id <- sec

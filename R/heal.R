@@ -165,7 +165,6 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     env.list <- list()
     slot.in <- integer(length(items.ref.idx))  # Note that `slot.in` values can be repeated
     repair <- FALSE
-
     for(i in ref.order) {
       # First find the youngest new test that is verifiably older than
       # our current reference
@@ -251,6 +250,17 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # easy because we know they are all in the right order already in y@items.new
 
     items.new.final <- y@items.new[new.ig.assign %in% items.new.idx]
+
+    # For reference items, need to assign the ignored tests to the correct
+    # section since the ignored ones are not pulled from the processed item list,
+    # but rather from the original unitizer that hasn't had reference items with
+    # meaningless section ids quashed in `processInput`
+
+    ref.sects <- vapply(
+      as.list(y@items.ref[ref.ig.assign]), slot, 1L, "section.id"
+    )
+    for(i in seq_along(ref.ig.assign))
+      y@items.ref[[i]]@section.id <- ref.sects[[i]]
 
     # Refs a bit more complicated since we need to find the correct slot-in spot;
     # slot.in has the correct slot for each item in items.ref.idx, in the order
