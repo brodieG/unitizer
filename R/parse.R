@@ -573,12 +573,11 @@ comm_extract <- function(x) {
 #' @keywords internal
 
 comm_reset <- function(x) {
+  if(is.null(x) || is.name(x) && !nchar(x)) return(x)
   attr(x, "comment") <- NULL
   if(is.pairlist(x)) return(x)
-  if(length(x) > 1L || is.expression(x)) {
-    for(i in seq_along(x)) {
-      if(is.null(x[[i]])) next else x[[i]] <- Recall(x[[i]])
-  } }
+  if(length(x) > 1L || is.expression(x))
+    for(i in seq_along(x)) if(!is.null(x[[i]])) x[[i]] <- Recall(x[[i]])
   x
 }
 #' Listing on known tokens

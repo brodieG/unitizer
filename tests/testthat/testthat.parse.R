@@ -199,10 +199,14 @@ local( {
     txt <- "# For random tests\n\nunitizer_sect(\"blah\", {\n  identity(1);\n})\n";
     prs.dat <- getParseData(parse(text=txt))
     prs.dat <- getParseData(parse(text=txt))  # twice due to issue #41
-    unitizer:::prsdat_fix_exprlist(prs.dat)
+    x <- unitizer:::prsdat_fix_exprlist(prs.dat)
     expect_identical(
       structure(c(1L, 36L, 6L, 8L, 7L, 9L, 11L, 10L, 32L, 14L, 24L, 16L, 18L, 17L, 19L, 20L, 21L, 30L, 33L, 0L, 0L, 8L, 36L, 36L, 11L, 36L, 36L, 36L, 32L, 32L, 18L, 24L, 24L, 20L, 24L, 24L, 32L, 36L), .Dim = c(19L, 2L)),
       unname(as.matrix(x[, 5:6]))
     )
   } )
+  test_that("empty symbols handled okay", {
+    txt <- "mtcars[1:10,]\n";  # the empty second argument to `[` caused problems before
+    unitizer:::parse_with_comments(text=txt)  # shouldn't cause error
+  })
 } )
