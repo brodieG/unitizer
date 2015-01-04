@@ -112,7 +112,7 @@ review <- function(
 #' @rdname unitize
 
 unitize_dir <- function(
-  test.dir, test.file.regex="\\.[Rr]$",
+  test.dir, test.file.regex="^[^.].*\\.[Rr]$",
   unitizer.ids=function(x) sub("(\\.[Rr])?$", ".unitizer", x),
   interactive.mode=interactive(), env.clean=TRUE,
   search.path.clean=getOption("unitizer.search.path.clean"),
