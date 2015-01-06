@@ -65,6 +65,13 @@ local( {
       list(NULL, c("# test that were not crazy", "# TRUE hopefully" ), "# Still not crazy")
     )
   } )
+  test_that("Ancestry Descend", {
+    x <- getParseData(parse(text="1 + 1; fun(x, fun(y + z))"))
+    expect_equal(
+      structure(c(7L, 6L, 34L, 2L, 3L, 5L, 12L, 11L, 15L, 14L, 30L, 31L, 1L, 4L, 10L, 13L, 20L, 19L, 27L, 25L, 18L, 23L, 22L, 26L, 21L, 24L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L), .Dim = c(26L, 2L), .Dimnames = list(NULL, c("children", "level"))),
+      unitizer:::ancestry_descend(x$id, x$parent, 0)
+    )
+  })
   test_that("Clean up Parse Data", {
     dat <- getParseData(parse(text="{function(x) NULL;; #comment\n}"))
     expect_equal(info="Ancestry Descend",

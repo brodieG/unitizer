@@ -76,17 +76,47 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   }
   vapply(par.ids, ancestry_climb, integer(1L))
 }
+#' For Each ID Determines Generation
+#'
+#' @param ids integer() the object ids
+#' @param par.ids integer() the parents of each \code{ids}
+#' @param id integer() the first parent
+#' @return 2 column matrix
+#'
+#' @keywords internal
+
 ancestry_descend <- function(ids, par.ids, id, level=0L) {
-  children <- ids[par.ids == id]
-  if(length(children)) {
-    do.call(rbind,
-      c(
-        list(cbind(children, level)),
-        lapply(children, ancestry_descend, ids=ids, par.ids=par.ids, level=level + 1L)
-    ) )
-  } else {
-    matrix(integer(), ncol=2)
-} }
+  # Initialize result matrix, can be no bigger than ids
+
+  max.size <- length(ids)
+  res <- matrix(
+    rep(NA_integer_, max.size * 2L), ncol=2L,
+    dimnames=list(NULL, c("children", "level"))
+  )
+  ind.start <- 1L
+  par.idx <- 1L
+  par.list <- id
+
+  repeat {
+    if(!length(par.list)) break
+    child.len <- length(children <- ids[par.ids == par.list[[par.idx]]])
+    if(child.len) {
+      ind.end <- ind.start + child.len - 1L
+      if(ind.end > max.size)
+        stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
+      res[ind.start:ind.end, 1L] <- children
+      res[ind.start:ind.end, 2L] <- level
+      ind.start <- ind.end + 1L
+    }
+    par.idx <- par.idx + 1L
+    if(par.idx > length(par.list)) {
+      par.list <- res[which(res[, 2L] == level), 1L]
+      level <- level + 1L
+      par.idx <- 1L
+    }
+  }
+  res[!is.na(res[, 1L]), ]
+}
 # Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
 
