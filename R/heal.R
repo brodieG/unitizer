@@ -231,15 +231,19 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # ignored tests map to.  Note that the logic below means that any ignored
     # tests that don't have any subsequent real tests just get dropped
 
-    new.ig.assign <- ave(       # for each ignored, get id of first non-ignored
-      1:length(y@items.new),
-      c(0L, head(cumsum(!ignored(y@items.new)), -1L)),
-      FUN=max
-    )
-    ref.ig.assign <- ave(1:length(y@items.ref),
-      c(0L, head(cumsum(!ignored(y@items.ref)), -1L)),
-      FUN=max
-    )
+    ig_assign <- function(items) {
+      if(!length(items)) return(integer())
+      ave(       # for each ignored, get id of first non-ignored
+        1:length(items),
+        c(0L, head(cumsum(!ignored(items)), -1L)),
+        FUN=max
+      )
+    }
+    # for each ignored, get id of first non-ignored
+
+    new.ig.assign <- ig_assign(y@items.new)
+    ref.ig.assign <- ig_assign(y@items.ref)
+
     if(
       any(!items.new.idx %in% new.ig.assign) ||
       any(!items.ref.idx %in% ref.ig.assign)
