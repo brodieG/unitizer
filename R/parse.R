@@ -70,7 +70,7 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   ancestry_climb <- function(par.id) {
     par.id <- abs(par.id)
     if(identical(par.id, top.level)) return(par.id)
-    new.id <- abs(par.ids[match(par.id, ids)])
+    new.id <- abs(par.ids[which(par.id == ids)][[1L]])
     if(identical(new.id, top.level)) return(par.id) else if (is.na(new.id)) return(new.id)
     Recall(new.id)
   }
@@ -325,7 +325,10 @@ parse_with_comments <- function(file, text=NULL) {
   # Now proceed with actual parsing
 
   expr <- comm_reset(expr)  # hack to deal with issues with expressions retaining previous assigned comments (need to examine this further)
-  parse.dat <- prsdat_fix_exprlist(parse.dat.raw)
+
+  parse.dat.raw.1 <- transform(parse.dat.raw, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+  ancestry <- with(parse.dat.raw.1, ancestry_descend(id, parent, 0L))
+  parse.dat <- prsdat_fix_exprlist(parse.dat.raw.1, ancestry)
 
   if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
   if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
@@ -561,11 +564,10 @@ prsdat_find_paren <- function(parse.dat) {
     stop("Logic Error; failed attempting to `for` function block; contact maintainer")
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
 }
-prsdat_fix_exprlist <- function(parse.dat) {
-  parse.dat <- transform(parse.dat, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+prsdat_fix_exprlist <- function(parse.dat, ancestry) {
   if(!any(parse.dat$token == "exprlist")) return(parse.dat)
   # Find all the children
-  z <- with(parse.dat, ancestry_descend(id, parent, 0L))
+  z <- ancestry
   levels <- z[match(parse.dat$id, z[, "children"]), "level"]
   # Find first `exprlist`
   exprlist <- with(parse.dat[order(levels),], head(id[token == "exprlist"], 1L))
@@ -577,7 +579,8 @@ prsdat_fix_exprlist <- function(parse.dat) {
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
     stop("Logic Error: `exprlist` excision did not work!")
   # if any "exprlist" remaining, repeat
-  if(any(parse.dat.mod$token == "exprlist")) Recall(parse.dat.mod) else parse.dat.mod
+  if(any(parse.dat.mod$token == "exprlist"))
+    Recall(parse.dat.mod, ancestry) else parse.dat.mod
 }
 
 #' Utility Function to Extract Comments From Expression
