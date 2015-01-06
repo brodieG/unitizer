@@ -1,6 +1,23 @@
 unitizer 0.6.3
 --------------------------------------------------------------------------------
 
+Improvements:
+
+* Comment parsing faster (issue #15)
+
+
+Bugfixes:
+
+* Reference section logic improved (assume fixes #36 until there is evidence against)
+* Several parse errors fixed
+
+Other:
+
+* Now depends on R 3.1.2 (not really, but that's what we are developing on and don't have bandwidth to test against multiple R versions)
+
+unitizer 0.6.3
+--------------------------------------------------------------------------------
+
 Bugfixes:
 
 * stderr now show in `review` mode (issue #43)
