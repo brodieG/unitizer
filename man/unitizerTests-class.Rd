@@ -4,7 +4,7 @@
 \alias{unitizerTests-class}
 \title{Collections of Calls For Testing}
 \description{
-Should probably add an \code{`as.unitizerTests`} function...
+Should probably add an \code{as.unitizerTests} function...
 }
 \keyword{internal}
 

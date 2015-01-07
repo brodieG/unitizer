@@ -1,19 +1,19 @@
 #' Runs The Basic Stuff
 #'
-#' Used by both \code{`\link{unitize}`} and \code{`\link{review}`}
+#' Used by both \code{\link{unitize}} and \code{\link{review}}
 #' to launch the interactive interface for reviewing tests.
 #'
 #' Right now we distinguish in what mode we're running based on whether
-#' \code{`test.file`} is NULL (review mode) vs. not (unitize mode), which isn't
+#' \code{test.file} is NULL (review mode) vs. not (unitize mode), which isn't
 #' very elegant, but whatevs.  This has implications for the parsing / evaluation
-#' step, as well as how the \code{`unitizerBrowse`} object is constructed.  Otherwise
+#' step, as well as how the \code{unitizerBrowse} object is constructed.  Otherwise
 #' stuff is mostly the same.
 #'
 #' Cleary there is a trade-off in increased code complexity to handle both types
 #' of code, vs duplication.  Not ideal, but tasks are so closely related and
 #' there is so much common overhead, that the central function makes sense.
 #' Also, since unfortunately we're relying on side-effects for some features, and
-#' `on.exit` call for safe operation, it is difficult to truly modularize.
+#' \code{on.exit} call for safe operation, it is difficult to truly modularize.
 #'
 #' @keywords internal
 

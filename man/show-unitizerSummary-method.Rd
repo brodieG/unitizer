@@ -10,9 +10,9 @@
 \item{object}{the object to show}
 }
 \description{
-Unfortunately no choice but to use \code{`getOptions("width")`} from within
+Unfortunately no choice but to use \code{getOptions("width")} from within
 here.  Maybe could pre-compute in one of earlier stages and stuff into
-\code{`object`}?  Not a big deal
+\code{object}?  Not a big deal
 }
 \keyword{internal}
 

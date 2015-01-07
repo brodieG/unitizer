@@ -11,7 +11,7 @@ test object or the reference test object.  The check is to ensure the user
 didn't modify the object (maybe we don't need to do this?).
 }
 \details{
-These functions rely on the \code{`ref`} and \code{`obj`} objects being
+These functions rely on the \code{ref} and \code{obj} objects being
 defined in their parent environment.
 }
 \keyword{internal}

@@ -3,15 +3,15 @@
 \name{registerItem,unitizer,unitizerItem-method}
 \alias{registerItem,unitizer,unitizerItem-method}
 \alias{testItem,unitizer,unitizerItem-method}
-\title{Helper Methods for Adding Items to \code{`\link{unitizer-class}`} Object}
+\title{Helper Methods for Adding Items to \code{\link{unitizer-class}} Object}
 \usage{
 \S4method{registerItem}{unitizer,unitizerItem}(e1, e2, ...)
 }
 \description{
-Helper Methods for Adding Items to \code{`\link{unitizer-class}`} Object
+Helper Methods for Adding Items to \code{\link{unitizer-class}} Object
 }
 \seealso{
-\code{`\link{+,unitizer,unitizerItem-method}`}
+\code{\link{+,unitizer,unitizerItem-method}}
 }
 \keyword{internal}
 
