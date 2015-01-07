@@ -10,11 +10,7 @@ we recommend you install this package and use that vignette as the links embedde
 
 ### Motivation
 
-> it’s not that we don’t test our code, it’s that we don’t store our tests so they can be re-run automatically
->
-> Hadley Wickham ([The R Journal Vol. 3/1, June 2011, P5](http://journal.r-project.org/archive/2011-1/RJournal_2011-1_Wickham.pdf)).
-
-`unitizer` turns the "informal" tests you write during code development into unit tests by storing the test expressions **and** their results.
+`unitizer` makes unit tests easy by turning the "informal" tests you write during code development into unit tests.  It does so by storing the test expressions **and** their results.
 
 To use `unitizer`:
 
@@ -27,7 +23,7 @@ Informal tests are R expressions you would normally type in the command line to 
 
 ### Demo
 
-A big part of `unitizer` is the interactive environment.  It allows you to quickly review, add, and remove tests from your unit test store.  The best way to get a feel for the `unitizer` process is to run the provided demo:
+A big part of `unitizer` is the [interactive environment](04interactiveenvironment.html).  It allows you to quickly review, add, and remove tests from your unit test store.  The best way to get a feel for the `unitizer` process is to run the provided demo:
 ```
 library(unitizer)
 demo(unitizer)
@@ -75,6 +71,8 @@ In favor of `testthat`:
 The main selling point for `unitizer` is that the tests are easy to write.  This is particularly true when the return values from the tests are complex (e.g., conditions with messages, as shown above, or simply complex objects, as returned by `lm` for example).  You review the test result, confirm it is what it should be, and tell `unitizer` to store it.  There is no need to copy and paste awkward deparsed expressions into tests.
 
 On the other hand, `unitizer` is not conducive to either self documentation or to test driven / [extreme](http://www.extremeprogramming.org/rules/testfirst.html) programming.  If these features are important to you then you are likely better off using more formal unit testing frameworks.
+
+**UPDATE**: recently `testthat` added `expect_equal_to_reference`, which takes a similar approach by storing test results in an RDS file and subsequently comparing to the pre-calculated value.  The difference is that more user work is required since each test requires a separate file, and both the initial result verification and checking differences requires manual review and/or manually loading the RDS file for comparison.  Additionally, it appears conditions still need to be handled independently.
 
 ### `unitizer` and Packages
 
