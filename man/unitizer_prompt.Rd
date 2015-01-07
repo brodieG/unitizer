@@ -12,7 +12,8 @@ unitizer_prompt(text, browse.env = globalenv(), help = character(),
 \item{browse.env}{the environment to evaluate user expressions in; typically
 this will contain interesting objects (use \code{ls()} to review)}
 
-\item{help}{a character vector with help suggestions}
+\item{help}{a character vector with help suggestions: the first value in the
+vector is \code{`\link{word_cat}`} output, the rest normal \code{`cat`}}
 
 \item{hist.con}{connection to save history to}
 

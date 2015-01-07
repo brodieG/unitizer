@@ -4,11 +4,11 @@ Description: Simplifies regression tests by comparing objects produced by test
     code with earlier versions of those same objects.  If objects are unchanged
     the tests pass.  `unitizer` provides an interactive interface to review
     failing tests or new tests.  See vignettes for details.
-Version: 0.6.3
+Version: 0.6.4
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
-    R (>= 3.1.1)
+    R (>= 3.1.2)
 Imports:
     methods,
     stats

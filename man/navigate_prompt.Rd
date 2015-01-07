@@ -17,7 +17,8 @@ navigate_prompt(x, curr.id, text, browse.env1 = globalenv(),
 
 \item{browse.env2}{navigation environment}
 
-\item{help}{a character vector with help suggestions}
+\item{help}{a character vector with help suggestions: the first value in the
+vector is \code{`\link{word_cat}`} output, the rest normal \code{`cat`}}
 }
 \description{
 Specifically for cases were user has the choice to input something or to try

@@ -165,7 +165,6 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     env.list <- list()
     slot.in <- integer(length(items.ref.idx))  # Note that `slot.in` values can be repeated
     repair <- FALSE
-
     for(i in ref.order) {
       # First find the youngest new test that is verifiably older than
       # our current reference
@@ -232,15 +231,19 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # ignored tests map to.  Note that the logic below means that any ignored
     # tests that don't have any subsequent real tests just get dropped
 
-    new.ig.assign <- ave(       # for each ignored, get id of first non-ignored
-      1:length(y@items.new),
-      c(0L, head(cumsum(!ignored(y@items.new)), -1L)),
-      FUN=max
-    )
-    ref.ig.assign <- ave(1:length(y@items.ref),
-      c(0L, head(cumsum(!ignored(y@items.ref)), -1L)),
-      FUN=max
-    )
+    ig_assign <- function(items) {
+      if(!length(items)) return(integer())
+      ave(       # for each ignored, get id of first non-ignored
+        1:length(items),
+        c(0L, head(cumsum(!ignored(items)), -1L)),
+        FUN=max
+      )
+    }
+    # for each ignored, get id of first non-ignored
+
+    new.ig.assign <- ig_assign(y@items.new)
+    ref.ig.assign <- ig_assign(y@items.ref)
+
     if(
       any(!items.new.idx %in% new.ig.assign) ||
       any(!items.ref.idx %in% ref.ig.assign)
@@ -251,6 +254,17 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # easy because we know they are all in the right order already in y@items.new
 
     items.new.final <- y@items.new[new.ig.assign %in% items.new.idx]
+
+    # For reference items, need to assign the ignored tests to the correct
+    # section since the ignored ones are not pulled from the processed item list,
+    # but rather from the original unitizer that hasn't had reference items with
+    # meaningless section ids quashed in `processInput`
+
+    ref.sects <- vapply(
+      as.list(y@items.ref[ref.ig.assign]), slot, 1L, "section.id"
+    )
+    for(i in seq_along(ref.ig.assign))
+      y@items.ref[[i]]@section.id <- ref.sects[[i]]
 
     # Refs a bit more complicated since we need to find the correct slot-in spot;
     # slot.in has the correct slot for each item in items.ref.idx, in the order

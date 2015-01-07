@@ -65,23 +65,38 @@ local( {
       list(NULL, c("# test that were not crazy", "# TRUE hopefully" ), "# Still not crazy")
     )
   } )
+  test_that("Ancestry Descend", {
+    x <- getParseData(parse(text="1 + 1; fun(x, fun(y + z))"))
+    expect_equal(
+      structure(c(7L, 6L, 34L, 2L, 3L, 5L, 12L, 11L, 15L, 14L, 30L, 31L, 1L, 4L, 10L, 13L, 20L, 19L, 27L, 25L, 18L, 23L, 22L, 26L, 21L, 24L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L), .Dim = c(26L, 2L), .Dimnames = list(NULL, c("children", "level"))),
+      unitizer:::ancestry_descend(x$id, x$parent, 0)
+    )
+  })
   test_that("Clean up Parse Data", {
     dat <- getParseData(parse(text="{function(x) NULL;; #comment\n}"))
+    dat <- transform(dat, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+
     expect_equal(info="Ancestry Descend",
       structure(c(21L, 1L, 18L, 16L, 19L, 15L, 14L, 11L, 9L, 2L, 3L,  4L, 5L, 8L, 7L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L,  4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children",  "level"))),
-      unitizer:::ancestry_descend(dat$id, dat$parent, 0L)
+      dat.anc <- unitizer:::ancestry_descend(dat$id, dat$parent, 0L)
     )
     expect_equal(info="Excise `exprlist`",
       c("expr", "'{'", "expr", "FUNCTION", "'('", "SYMBOL_FORMALS",  "')'", "NULL_CONST", "expr", "COMMENT", "'}'"),
-      unitizer:::prsdat_fix_exprlist(dat)$token
+      unitizer:::prsdat_fix_exprlist(dat, dat.anc)$token
     )
+    dat.1 <- getParseData(parse(text="{1 ; ; ;2;}"))
+    dat.1 <- transform(dat.1, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+
     expect_equal(info="Another `exprlist` test",
       list(c(0L, 18L, 3L, 18L, 12L, 18L, 18L), c("expr", "'{'", "NUM_CONST",  "expr", "NUM_CONST", "expr", "'}'")),
-      unname(as.list(unitizer:::prsdat_fix_exprlist(getParseData(parse(text="{1 ; ; ;2;}")))[c("parent", "token")]))
+      unname(as.list(unitizer:::prsdat_fix_exprlist(dat.1, unitizer:::ancestry_descend(dat.1$id, dat.1$parent, 0L))[c("parent", "token")]))
     )
+    dat.2 <- getParseData(parse(text="{NULL; yowza; #comment\nhello\n}"))
+    dat.2 <- transform(dat.2, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+
     expect_equal(info="Yet another `exprlist`",
       list(c(0L, 22L, 3L, 22L, 9L, 22L, 22L, 17L, 22L, 22L), c("expr",  "'{'", "NULL_CONST", "expr", "SYMBOL", "expr", "COMMENT", "SYMBOL",  "expr", "'}'")),
-      unname(as.list(unitizer:::prsdat_fix_exprlist(getParseData(parse(text="{NULL; yowza; #comment\nhello\n}")))[c("parent", "token")]))
+      unname(as.list(unitizer:::prsdat_fix_exprlist(dat.2, unitizer:::ancestry_descend(dat.2$id, dat.2$parent, 0L))[c("parent", "token")]))
     )
     expect_equal(info="`for` cleanup",
       structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),
@@ -195,4 +210,23 @@ local( {
       lapply(unitizer:::as.list(my.unitizer@items.new), slot, "comment")
     )
   } )
+  test_that("exprlist excission with negative par ids", {
+    txt <- "# For random tests\n\nunitizer_sect(\"blah\", {\n  identity(1);\n})\n";
+    prs.dat <- getParseData(parse(text=txt))
+    prs.dat <- getParseData(parse(text=txt))  # twice due to issue #41
+
+    prs.dat <- transform(prs.dat, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+    ancestry <- with(prs.dat, unitizer:::ancestry_descend(id, parent, 0L))
+
+    x <- unitizer:::prsdat_fix_exprlist(prs.dat, ancestry)
+
+    expect_identical(
+      structure(c(1L, 36L, 6L, 8L, 7L, 9L, 11L, 10L, 32L, 14L, 24L, 16L, 18L, 17L, 19L, 20L, 21L, 30L, 33L, 0L, 0L, 8L, 36L, 36L, 11L, 36L, 36L, 36L, 32L, 32L, 18L, 24L, 24L, 20L, 24L, 24L, 32L, 36L), .Dim = c(19L, 2L)),
+      unname(as.matrix(x[, 5:6]))
+    )
+  } )
+  test_that("empty symbols handled okay", {
+    txt <- "mtcars[1:10,]\n";  # the empty second argument to `[` caused problems before
+    unitizer:::parse_with_comments(text=txt)  # shouldn't cause error
+  })
 } )

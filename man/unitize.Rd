@@ -15,7 +15,7 @@ review(x, env.clean = TRUE,
   search.path.clean = getOption("unitizer.search.path.clean"),
   search.path.keep = c("tools:rstudio", "package:unitizer"))
 
-unitize_dir(test.dir, test.file.regex = "\\\\.[Rr]$",
+unitize_dir(test.dir, test.file.regex = "^[^.].*\\\\.[Rr]$",
   unitizer.ids = function(x) sub("(\\\\.[Rr])?$", ".unitizer", x),
   interactive.mode = interactive(), env.clean = TRUE,
   search.path.clean = getOption("unitizer.search.path.clean"),

@@ -43,6 +43,7 @@
 <li><a href="#ancillary-unitizer-packages">Ancillary <code>unitizer</code> Packages</a></li>
 </ul></li>
 <li><a href="#troubleshooting">Troubleshooting</a><ul>
+<li><a href="#unitizer-freezes-and-pops-up-selection"><code>unitizer</code> Freezes and Pops up “Selection:”</a></li>
 <li><a href="#running-unitizer-crashes-r">Running <code>unitizer</code> Crashes R</a></li>
 <li><a href="#different-outcomes-in-interactive-vs.non-interactive">Different Outcomes in Interactive vs. Non Interactive</a></li>
 </ul></li>
@@ -136,7 +137,7 @@ a()</code></pre>
 <h4>Suggested Workflow with Git</h4>
 <p>The approach we suggest is the last one above: just commit your <code>rds</code> files for major releases. Also, note that to the extent you have a lot of test files that aren’t changing, this should minimize how much binary data you commit. One possible way to handle this with Git is to use the following command (adapted from twalberg’s <a href="http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory">SO answer</a>):</p>
 <pre><code>git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged</code></pre>
-<p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Once you reach the major release point, you can:</p>
+<p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Just make sure you still commit your <code>rds</code> at key release points so you have backups of them. Once you reach the major release point, you can:</p>
 <pre><code>git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged</code></pre>
 <p><strong>Warning</strong>: be careful when you reset your working directory as your <code>rds</code> files will get reset to the last version that you committed (i.e. <code>git checkout -- .</code> will replace your currend <code>rds</code> with the one in the repo). If you <code>--assume-unchanged</code> other files such as <code>.o</code> or <code>.so</code> files, you may need to remove those after a checkout as well so that <code>devtools::install</code> will recreate them from current sources.</p>
 </div>
@@ -158,6 +159,29 @@ install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # o
 </div>
 <div id="troubleshooting" class="section level2">
 <h2>Troubleshooting</h2>
+<div id="unitizer-freezes-and-pops-up-selection" class="section level3">
+<h3><code>unitizer</code> Freezes and Pops up “Selection:”</h3>
+<p>This is almost certainly a result of an R crash. Unfortunately the normal mechanisms to restore <code>stderr</code> don’t seem to work completely with full R crashes, so when you see things like:</p>
+<pre><code>+------------------------------------------------------------------------------+
+| unitizer for: tests/unitizer/alike.R                                         |
++------------------------------------------------------------------------------+
+
+Running: alike(data.frame(a = integer(), b = factor()), data.frame(a = 1:3, Selection:</code></pre>
+<p>what you are not seeing is:</p>
+<pre><code> *** caught segfault ***
+address 0x7fdc20000010, cause 'memory not mapped'
+
+Traceback:
+ 1: .Call(ALIKEC_alike, target, current, int.mode, int.tol, attr.mode)
+ 2: alike(data.frame(a = factor(), b = factor()), data.frame(a = 1:3,     b = letters[1:3]))
+
+Possible actions:
+1: abort (with core dump, if enabled)
+2: normal R exit
+3: exit R without saving workspace
+4: exit R saving workspace</code></pre>
+<p>The “Selection:” bit is prompting you to type 1-4 as per above. We will investigate to see if there is a way to address this problem, but the solution likely is not simple since the R crash circumvents the <code>on.exit</code> handlers used to reset the stream redirects. Also, note that in this case the crash is caused by <code>alike</code>, not <code>unitizer</code> (see below).</p>
+</div>
 <div id="running-unitizer-crashes-r" class="section level3">
 <h3>Running <code>unitizer</code> Crashes R</h3>
 <p>Every R crash we have discovered while using <code>unitizer</code> was eventually traced to a third party package. Some of the crashes were linked to issues attaching/detaching packages. If you think you might be having an issue with this you can always run with <code>clean.search.path=FALSE</code> and <code>clean.env=FALSE</code> to avoid search path manipulation.</p>
