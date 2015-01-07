@@ -27,7 +27,7 @@ Here we are reviewing all the tests in the unitizer under three different lenses
   \item tests that passed (these are omitted )
 }
 Because a lot of the logic for browsing these three types of situations is
-shared, that logic has been split off into \code{`\link{reviewNext,unitizerBrowse-method}`}.
+shared, that logic has been split off into \code{\link{reviewNext,unitizerBrowse-method}}.
 The key is that that function will return the items that are supposed to be
 stored in the unitizer.  These items will either be new or reference ones
 based on user decisions.
@@ -36,7 +36,7 @@ based on user decisions.
 Unfortunately, in order to be able to use the same logic for tasks that are
 not quite the same, a bit of contortion was needed.  In particular, the
 user is always asked to input either Y, N, or Q, but the corresponding output
-from \code{`\link{reviewNext,unitizerBrowse-method}`} is very different
+from \code{\link{reviewNext,unitizerBrowse-method}} is very different
 depending on what situation we're dealing with.
 
 One important point is that by default the user input is defined as N.  In

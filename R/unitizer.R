@@ -8,9 +8,9 @@ NULL
 
 #' Contains All The Data for Our Tests!
 #'
-#' Generally is populated through the \code{`+`} methods, with the exception of
-#' \code{`items.ref`}, which is added on creation.  I guess ideally all would be done
-#' through different \code{`+`} methods, but that would complicate the process a bit
+#' Generally is populated through the \code{+} methods, with the exception of
+#' \code{items.ref}, which is added on creation.  I guess ideally all would be done
+#' through different \code{+} methods, but that would complicate the process a bit
 #' as that would require being able to distinguish between reference item lists and
 #' new item lists (and the latter should never really be added as that should happen
 #' item by item).  Maybe some day this will be cleaned up.
@@ -23,39 +23,39 @@ NULL
 #'
 #' Ultimately, we need far more specialized accessor functions that don't require
 #' understanding what those meta data mean exactly, and how they need to be used.
-#' An example is the \code{`ignored`} function.
+#' An example is the \code{ignored} function.
 #'
-#' Things get particularly complicated with the \code{`browse`} objects, which
+#' Things get particularly complicated with the \code{browse} objects, which
 #' basically rehash a lot of this data, but split into groups and sub-groups,
-#' and at this point with meta-data stored in a \code{`unitizerBrowseMapping`}
+#' and at this point with meta-data stored in a \code{unitizerBrowseMapping}
 #' object that replicates the role of the aforementioned @@tests.* objects in
-#' \code{`unitizer`}.
+#' \code{unitizer}.
 #'
 #' @keywords internal
 #' @slot id the identifier for the unitizer, typically a file name, but can be anything
 #' @slot items.new a list of all the tests in the new file
 #' @slot items.ref a list of all the previously saved tests
-#' @slot items.new.map a vector that maps the entries in \code{`items.new`} to
-#'   those in \code{`items.ref`}, where position in vector is id/position in
-#'   slot \code{`items.new`}, and value is id/position in \code{`items.ref`}
+#' @slot items.new.map a vector that maps the entries in \code{items.new} to
+#'   those in \code{items.ref}, where position in vector is id/position in
+#'   slot \code{items.new}, and value is id/position in \code{items.ref}
 #'   new items will show up as NA here
-#' @slot items.new.calls.deparse a character vector of the deparsed calls in \code{`items.new`}
+#' @slot items.new.calls.deparse a character vector of the deparsed calls in \code{items.new}
 #' @slot items.envs contains the environments for each call
 #' @slot tests.fail vector highlighting which tests failed
 #' @slot tests.new vector highlighting which tests did not exist in reference
 #' @slot test.status a vector that contains the result of the test ("pass", "fail", "new", "indeterminable")
-#'   for every item in \code{`items.new`}
-#' @slot tests.result a logical matrix with a row for each item in \code{`items.new`} where each column
+#'   for every item in \code{items.new}
+#' @slot tests.result a logical matrix with a row for each item in \code{items.new} where each column
 #'   represents the result of each sub tests
 #' @slot tests.errorDetails an S4 object with a slot for each sub test, where the slot contains a
-#'   \code{`\link{unitizerItemTestError-class}`} object
-#'   either NULL or a character vector describing the test failure reason for every item in \code{`items.new`}
-#' @slot items.ref.calls.deparse like \code{`items.new.calls.deparse`}, but for the reference items
+#'   \code{\link{unitizerItemTestError-class}} object
+#'   either NULL or a character vector describing the test failure reason for every item in \code{items.new}
+#' @slot items.ref.calls.deparse like \code{items.new.calls.deparse}, but for the reference items
 #' @slot items.ref.map maps reference items to the new items; deleted items will
 #'   show up as NA here, where position in vector is id/position in slot
-#'   \code{`items.ref`}, and value is id/position in \code{`items.new`}
-#' @slot sections a list of \code{`\link{unitizerSection-class}`}
-#' @slot section.map a map of every item in \code{`items.new`} to a section
+#'   \code{items.ref}, and value is id/position in \code{items.new}
+#' @slot sections a list of \code{\link{unitizerSection-class}}
+#' @slot section.map a map of every item in \code{items.new} to a section
 #' @slot changes contains summary data on the test results
 
 setClass(
@@ -125,9 +125,9 @@ setClass(
 
 #' Display Unitizer Summary
 #'
-#' Unfortunately no choice but to use \code{`getOptions("width")`} from within
+#' Unfortunately no choice but to use \code{getOptions("width")} from within
 #' here.  Maybe could pre-compute in one of earlier stages and stuff into
-#' \code{`object`}?  Not a big deal
+#' \code{object}?  Not a big deal
 #'
 #' @keywords internal
 #' @param object the object to show
@@ -165,7 +165,7 @@ setMethod("show", "unitizerSummary",
     NULL
 } )
 
-#' Determine if a \code{`unitizer`} Passed Based On Summary
+#' Determine if a \code{unitizer} Passed Based On Summary
 #'
 #' @keywords internal
 #' @param object object to test for passing
@@ -186,7 +186,7 @@ setMethod("initialize", "unitizer",
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
     .Object
 } )
-#' Compute Length of a \code{`\link{unitizer-class}`} Object
+#' Compute Length of a \code{\link{unitizer-class}} Object
 #'
 #' @keywords internal
 
@@ -235,10 +235,10 @@ setMethod("summary", "unitizer",
 
 setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
 
-#' Helper Methods for Adding Items to \code{`\link{unitizer-class}`} Object
+#' Helper Methods for Adding Items to \code{\link{unitizer-class}} Object
 #'
 #' @aliases testItem,unitizer,unitizerItem-method
-#' @seealso \code{`\link{+,unitizer,unitizerItem-method}`}
+#' @seealso \code{\link{+,unitizer,unitizerItem-method}}
 #' @keywords internal
 
 setMethod("registerItem", c("unitizer", "unitizerItem"),

@@ -15,7 +15,7 @@ setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer
 #'   \item tests that passed (these are omitted )
 #' }
 #' Because a lot of the logic for browsing these three types of situations is
-#' shared, that logic has been split off into \code{`\link{reviewNext,unitizerBrowse-method}`}.
+#' shared, that logic has been split off into \code{\link{reviewNext,unitizerBrowse-method}}.
 #' The key is that that function will return the items that are supposed to be
 #' stored in the unitizer.  These items will either be new or reference ones
 #' based on user decisions.
@@ -23,7 +23,7 @@ setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer
 #' Unfortunately, in order to be able to use the same logic for tasks that are
 #' not quite the same, a bit of contortion was needed.  In particular, the
 #' user is always asked to input either Y, N, or Q, but the corresponding output
-#' from \code{`\link{reviewNext,unitizerBrowse-method}`} is very different
+#' from \code{\link{reviewNext,unitizerBrowse-method}} is very different
 #' depending on what situation we're dealing with.
 #'
 #' One important point is that by default the user input is defined as N.  In
@@ -268,8 +268,8 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 #' Bring up Review of Next test
 #'
 #' Generally we will go from one test to the next, where the next test is
-#' determined by the value of \code{`x@@last.id`}.  This means it is possible
-#' to affect the browsing order by modifying \code{`x@@last.id`}.
+#' determined by the value of \code{x@@last.id}.  This means it is possible
+#' to affect the browsing order by modifying \code{x@@last.id}.
 #'
 #' This method is in charge of displaying all the output for review.
 #'
@@ -503,7 +503,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 #' test object or the reference test object.  The check is to ensure the user
 #' didn't modify the object (maybe we don't need to do this?).
 #'
-#' These functions rely on the \code{`ref`} and \code{`obj`} objects being
+#' These functions rely on the \code{ref} and \code{obj} objects being
 #' defined in their parent environment.
 #'
 #' @keywords internal
@@ -529,35 +529,35 @@ getItemData <- function(x, name, what, env) {
 }
 #' Retrieve Additional Info About Tests
 #'
-#' Intended for use exclusively within the \code{`unitizer`} interactive command
+#' Intended for use exclusively within the \code{unitizer} interactive command
 #' line.  For example \code{getMsg(.new)} will retrieve any \file{stderr} that occurred
 #' during test evaluation (for reference tests, use \code{getMsg(.ref)}.
 #'
-#' @note these functions are only available at the \code{`unitizer`} prompt
+#' @note these functions are only available at the \code{unitizer} prompt
 #'
 #' @name getTest
 #' @usage getTest(x)
 #' @aliases getVal getConds getMsg getOut getAborted
-#' @param x object to get additional data for (should be one of \code{`.new`}, \code{`.ref`})
+#' @param x object to get additional data for (should be one of \code{.new}, \code{.ref})
 #' @return depends on what you requested:
 #' \itemize{
-#'   \item \code{`getConds`}: the conditions as a list of conditions or an
+#'   \item \code{getConds}: the conditions as a list of conditions or an
 #'     empty list if no conditions occurred.
-#'   \item \code{`getOut`}: the screen output (i.e. anything produced by cat/print,
+#'   \item \code{getOut}: the screen output (i.e. anything produced by cat/print,
 #'     or any visible evaluation output) as a character vector
-#'   \item \code{`getMsg`}: anything that was output to \code{`stderr`}, mostly
+#'   \item \code{getMsg}: anything that was output to \code{stderr}, mostly
 #'     this is all contained in the conditions as well, though there could be
 #'     other output here, as a character vector
-#'   \item \code{`getExpr`}: the call that was tested as an unevaluated call,
+#'   \item \code{getExpr}: the call that was tested as an unevaluated call,
 #'     but keep in mind that if you intend to evaluate this for a reference
 #'     item the environment may not be the same so you could get different
-#'     results (\code{`ls`} will provide more details)
-#'   \item \code{`getAborted`}: returns whether the test call issues a restart
+#'     results (\code{ls} will provide more details)
+#'   \item \code{getAborted}: returns whether the test call issues a restart
 #'     call to the `abort` restart, as `stop` does.
-#'   \item \code{`getVal`}: the value that results from evaluating the test, note
-#'     that typing \code{`obj`} and \code{getVal(`obj`)} at the \code{`unitizer`}
+#'   \item \code{getVal}: the value that results from evaluating the test, note
+#'     that typing \code{obj} and \code{getVal(obj)} at the \code{unitizer}
 #'     prompt are equivalent
-#'   \item \code{`reCall`}: will load the call used to generate the test
+#'   \item \code{reCall}: will load the call used to generate the test
 #'     on the prompt (not implemented yet).
 #' }
 

@@ -259,7 +259,7 @@ You didn't accept any changes so there are no items to store.
 Exit unitizer ([Y]es, [B]ack, [R]eview)?
 unitizer>
 ```
-This brings us up to the final prompt.  Since we rejected all the items that do not match the existing stored items, `unitizer` tells us that it will not modify the underlying store.  We are still prompted at the end so that we have an opportunity to make changes if we made a mistake.  Both the `[B]ack` and `[R]eview` options allow us to re-review the tests (see [test navigation](04interactiveenvironment.html#test-navigation) for more details).
+This brings us up to the final prompt.  Since we rejected all the items that do not match the existing stored items, `unitizer` tells us that it will not modify the underlying store.  We are still prompted at the end so that we have an opportunity to make changes if we made a mistake.  Both the `[B]ack` and `[R]eview` options allow us to re-review the tests (see [test navigation](vgn04interactiveenvironment.html#test-navigation) for more details).
 
 ## Third Run -- Fix Problems
 

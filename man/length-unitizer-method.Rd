@@ -2,12 +2,12 @@
 \docType{methods}
 \name{length,unitizer-method}
 \alias{length,unitizer-method}
-\title{Compute Length of a \code{`\link{unitizer-class}`} Object}
+\title{Compute Length of a \code{\link{unitizer-class}} Object}
 \usage{
 \S4method{length}{unitizer}(x)
 }
 \description{
-Compute Length of a \code{`\link{unitizer-class}`} Object
+Compute Length of a \code{\link{unitizer-class}} Object
 }
 \keyword{internal}
 

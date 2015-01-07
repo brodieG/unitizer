@@ -6,7 +6,7 @@ NULL
 
 #' Collections of Calls For Testing
 #'
-#' Should probably add an \code{`as.unitizerTests`} function...
+#' Should probably add an \code{as.unitizerTests} function...
 #' @keywords internal
 
 setClass("unitizerTests", contains="unitizerList")

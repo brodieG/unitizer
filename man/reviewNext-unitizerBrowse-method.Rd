@@ -8,8 +8,8 @@
 }
 \description{
 Generally we will go from one test to the next, where the next test is
-determined by the value of \code{`x@last.id`}.  This means it is possible
-to affect the browsing order by modifying \code{`x@last.id`}.
+determined by the value of \code{x@last.id}.  This means it is possible
+to affect the browsing order by modifying \code{x@last.id}.
 }
 \details{
 This method is in charge of displaying all the output for review.
