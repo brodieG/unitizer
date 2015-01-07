@@ -10,7 +10,7 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2014-12-30" />
+<meta name="date" content="2015-01-06" />
 
 <title>unitizeR - Easy R Unit Tests</title>
 
@@ -28,7 +28,7 @@
 <div id="header">
 <h1 class="title">unitizeR - Easy R Unit Tests</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2014-12-30</em></h4>
+<h4 class="date"><em>2015-01-06</em></h4>
 </div>
 
 <div id="TOC">
@@ -60,11 +60,7 @@
 <h2>Introduction</h2>
 <div id="motivation" class="section level3">
 <h3>Motivation</h3>
-<blockquote>
-<p>it’s not that we don’t test our code, it’s that we don’t store our tests so they can be re-run automatically</p>
-<p>Hadley Wickham (<a href="http://journal.r-project.org/archive/2011-1/RJournal_2011-1_Wickham.pdf">The R Journal Vol. 3/1, June 2011, P5</a>).</p>
-</blockquote>
-<p><code>unitizer</code> turns the “informal” tests you write during code development into unit tests by storing the test expressions <strong>and</strong> their results.</p>
+<p><code>unitizer</code> makes unit tests easy by turning the “informal” tests you write during code development into unit tests. It does so by storing the test expressions <strong>and</strong> their results.</p>
 <p>To use <code>unitizer</code>:</p>
 <ul>
 <li>Save your “informal” tests to an R file</li>
@@ -123,6 +119,7 @@ log10(letters)                                    # input error</code></pre>
 </ul>
 <p>The main selling point for <code>unitizer</code> is that the tests are easy to write. This is particularly true when the return values from the tests are complex (e.g., conditions with messages, as shown above, or simply complex objects, as returned by <code>lm</code> for example). You review the test result, confirm it is what it should be, and tell <code>unitizer</code> to store it. There is no need to copy and paste awkward deparsed expressions into tests.</p>
 <p>On the other hand, <code>unitizer</code> is not conducive to either self documentation or to test driven / <a href="http://www.extremeprogramming.org/rules/testfirst.html">extreme</a> programming. If these features are important to you then you are likely better off using more formal unit testing frameworks.</p>
+<p><strong>UPDATE</strong>: recently <code>testthat</code> added <code>expect_equal_to_reference</code>, which takes a similar approach by storing test results in an RDS file and subsequently comparing to the pre-calculated value. The difference is that more user work is required since each test requires a separate file, and checking differences requires manually loading the RDS file for comparison. Additionally, it appears conditions still need to be handled independently.</p>
 </div>
 <div id="unitizer-and-packages" class="section level3">
 <h3><code>unitizer</code> and Packages</h3>
