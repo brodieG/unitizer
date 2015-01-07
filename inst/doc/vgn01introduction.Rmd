@@ -30,12 +30,12 @@ Informal tests are R expressions you would normally type in the command line to 
 
 ### Demo
 
-A big part of `unitizer` is the [interactive environment](04interactiveenvironment.html).  It allows you to quickly review, add, and remove tests from your unit test store.  The best way to get a feel for the `unitizer` process is to run the provided demo:
+A big part of `unitizer` is the [interactive environment](vgn04interactiveenvironment.html).  It allows you to quickly review, add, and remove tests from your unit test store.  The best way to get a feel for the `unitizer` process is to run the provided demo:
 ```
 library(unitizer)
 demo(unitizer)
 ```
-There is a [companion vignette](02democompanion.html) for the demo as well.
+There is a [companion vignette](vgn02democompanion.html) for the demo as well.
 
 ### How is `unitizer` Different to `testthat`?
 
@@ -79,7 +79,7 @@ The main selling point for `unitizer` is that the tests are easy to write.  This
 
 On the other hand, `unitizer` is not conducive to either self documentation or to test driven / [extreme](http://www.extremeprogramming.org/rules/testfirst.html) programming.  If these features are important to you then you are likely better off using more formal unit testing frameworks.
 
-**UPDATE**: recently `testthat` added `expect_equal_to_reference`, which takes a similar approach by storing test results in an RDS file and subsequently comparing to the pre-calculated value.  The difference is that more user work is required since each test requires a separate file, and checking differences requires manually loading the RDS file for comparison.  Additionally, it appears conditions still need to be handled independently.
+**UPDATE**: recently `testthat` added `expect_equal_to_reference`, which takes a similar approach by storing test results in an RDS file and subsequently comparing to the pre-calculated value.  The difference is that more user work is required since each test requires a separate file, and both the initial result verification and checking differences requires manual review and/or manually loading the RDS file for comparison.  Additionally, it appears conditions still need to be handled independently.
 
 ### `unitizer` and Packages
 
@@ -126,25 +126,25 @@ install_github("brodieg/unitizer")
 
 ### `unitizer` Writes To Your Filesystem
 
-The `unitize`d tests need to be saved someplace, and the default action is to save to the same directory as the test file.  You will always be prompted by `unitizer` before it writes to your file system.  See [storing `unitized` tests](06nittygritty.html#storing-unitized-tests) for implications and alternatives.
+The `unitize`d tests need to be saved someplace, and the default action is to save to the same directory as the test file.  You will always be prompted by `unitizer` before it writes to your file system.  See [storing `unitized` tests](vgn06nittygritty.html#storing-unitized-tests) for implications and alternatives.
 
 ### Tests are Evaluated in Clean Environments
 
-Objects in `.GlobalEnv` will not be visible, and any non basic packages will be detached prior to test evaluation (you can re-attach those you need in your tests with `library`).  For more details see the [reproducible tests vignette](05reproducibletests.html).
+Objects in `.GlobalEnv` will not be visible, and any non basic packages will be detached prior to test evaluation (you can re-attach those you need in your tests with `library`).  For more details see the [reproducible tests vignette](vgn05reproducibletests.html).
 
 ### Tests Pass If They `all.equal` Stored Reference Values
 
-Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](03tests.html)).
+Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](vgn03tests.html)).
 
 ### `unitizer` Is Complex
 
 In order to create an intuitive (hopefully) interactive unit testing framework we had to resort to a fair bit of trickery.  For the most part this trickery should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it.  Here is a non-exhaustive list of some of the tricky things we do:
 
-* `library`, `require`, `attach`, and `detach` are `trace`d during `unitize` evaluation (see [reproducible tests vignette](05reproducibletests.html))
-* Each tests is evaluated in its own environment, a child of the previous test's environment; because `R` looks up objects in parent environments it appears that all tests are evaluated in one environment (see [interactive environment vignette](04interactiveenvironment.html))
-* We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics vignette](06nittygritty.html)) at the `unitizer` prompt
+* `library`, `require`, `attach`, and `detach` are `trace`d during `unitize` evaluation (see [reproducible tests vignette](vgn05reproducibletests.html))
+* Each tests is evaluated in its own environment, a child of the previous test's environment; because `R` looks up objects in parent environments it appears that all tests are evaluated in one environment (see [interactive environment vignette](vgn04interactiveenvironment.html))
+* We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics vignette](vgn06nittygritty.html)) at the `unitizer` prompt
 * `traceback` should work when reviewing tests that produce errors, but only because we capture the trace with `sys.calls` and write it to `base::.Traceback` during review
-* We sink `stdout` and `stderr` during test evaluation to capture those streams; be careful if you are also sinking those streams (see [details on tests vignette](03tests.html))
+* We sink `stdout` and `stderr` during test evaluation to capture those streams; be careful if you are also sinking those streams (see [details on tests vignette](vgn03tests.html))
 * We parse the test file and extract comments so that they can be attached to the correct test for review
 * The history file is temporary replaced so that your `unitizer` interactions do not pollute it
 
@@ -154,7 +154,7 @@ In particular, you should avoid evaluating tests that invoke `debug`ged function
 
 ### Avoid running `unitize` within `try` / `tryCatch` Blocks
 
-Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](06nittygritty.html#error-handling).
+Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](vgn06nittygritty.html#error-handling).
 
 ## Acknowledgments
 
