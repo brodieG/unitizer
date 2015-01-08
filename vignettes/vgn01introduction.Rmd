@@ -17,7 +17,7 @@ vignette: >
 
 ### Motivation
 
-`unitizer` makes unit tests easy by turning the "informal" tests you write during code development into unit tests.  It does so by storing the test expressions **and** their results.
+`unitizer` makes unit tests easy by turning the "informal" tests you write during code development into unit tests.  It does so by storing the test expressions **and** their results.  While `unitizer` is particularly useful when testing expressions that produce complex objects, it generally simplifies unit testing.
 
 To use `unitizer`:
 
@@ -79,7 +79,7 @@ The main selling point for `unitizer` is that the tests are easy to write.  This
 
 On the other hand, `unitizer` is not conducive to either self documentation or to test driven / [extreme](http://www.extremeprogramming.org/rules/testfirst.html) programming.  If these features are important to you then you are likely better off using more formal unit testing frameworks.
 
-**UPDATE**: recently `testthat` added `expect_equal_to_reference`, which takes a similar approach by storing test results in an RDS file and subsequently comparing to the pre-calculated value.  The difference is that more user work is required since each test requires a separate file, and both the initial result verification and checking differences requires manual review and/or manually loading the RDS file for comparison.  Additionally, it appears conditions still need to be handled independently.
+**UPDATE**: recently `testthat` added `expect_equal_to_reference`, which takes a similar approach by storing test results in an RDS file and subsequently comparing to the pre-calculated value.  The difference is that with `expect_equal_to_reference` more user work is required since each test requires a separate file, and both the initial result verification and checking differences requires manual review and/or manually loading the RDS file for comparison.  Additionally, it appears conditions still need to be handled independently.
 
 ### `unitizer` and Packages
 

@@ -1,5 +1,6 @@
 # For random tests
 
 unitizer_sect("blah", {
-  identity(1);
+  a = 5
+  a + 1
 })

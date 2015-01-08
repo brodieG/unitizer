@@ -19,7 +19,7 @@ vignette: >
 library(unitizer)
 demo(unitizer)
 ```
-Or alternative, review the [introduction vignette](vgn00introduction.html).
+Or alternative, review the [introduction vignette](vgn01introduction.html).
 
 ## Vignettes
 
