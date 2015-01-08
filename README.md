@@ -1,8 +1,6 @@
 # unitizeR - Easy R Unit Tests
 
-## Introduction
-
-### Motivation
+## Motivation
 
 `unitizer` makes unit tests easy by turning the "informal" tests you write during code development into unit tests.  It does so by storing the test expressions **and** their results.  While `unitizer` is particularly useful when testing expressions that produce complex objects, it generally simplifies unit testing.
 
