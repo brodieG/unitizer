@@ -45,6 +45,7 @@ Collate:
     'ls.R'
     'onload.R'
     'parse.R'
+    'rename.R'
     'repairenvs.R'
     'unitize.R'
     'unitize.core.R'
