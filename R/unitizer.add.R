@@ -126,7 +126,7 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
     parent.env(e2@base.env) <- e1@base.env
     e1@items.ref <- e2
     if(length(e1@items.ref)) {
-      e1@items.ref.calls.deparse <- vapply(as.list(e1@items.ref), function(x) paste0(deparse(x@call), collapse=""), character(1L))
+      e1@items.ref.calls.deparse <- vapply(as.list(e1@items.ref), deparse_call, character(1L))
       e1@items.ref.map <- rep(NA_integer_, length(e1@items.ref))
     }
     e1

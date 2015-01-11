@@ -247,7 +247,7 @@ setMethod("registerItem", c("unitizer", "unitizerItem"),
     if(identical(length(e1@items.new), 0L)) e1@items.new@base.env <- parent.env(item.new@env)
     item.new@id <- length(e1@items.new) + 1L
     e1@items.new <- e1@items.new + item.new
-    e1@items.new.calls.deparse <- c(e1@items.new.calls.deparse, call.dep <- paste0(deparse(item.new@call), collapse=""))
+    e1@items.new.calls.deparse <- c(e1@items.new.calls.deparse, call.dep <- deparse_call(item.new@call))
     if(length(e1@items.new.map) > 0L) {
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
       items.already.matched <- Filter(Negate(is.na), e1@items.new.map)
