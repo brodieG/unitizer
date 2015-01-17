@@ -1,5 +1,5 @@
 #' @include unitizer.R
-#' @include misc.R
+#' @include conditions.R
 #' @include browse.struct.R
 #' @include prompt.R
 
