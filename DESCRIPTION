@@ -24,7 +24,9 @@ LazyData: true
 Collate:
     'class_unions.R'
     'list.R'
-    'misc.R'
+    'asciiml.R'
+    'text.R'
+    'conditions.R'
     'item.R'
     'item.sub.R'
     'section.R'
@@ -43,6 +45,7 @@ Collate:
     'is.R'
     'load.R'
     'ls.R'
+    'misc.R'
     'onload.R'
     'parse.R'
     'rename.R'
