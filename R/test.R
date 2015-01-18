@@ -1,6 +1,7 @@
 #' @include list.R
 #' @include class_unions.R
 #' @include section.R
+#' @include item.R
 
 NULL
 
@@ -38,3 +39,17 @@ setMethod("+", c("unitizerTests", "unitizerSectionExpressionOrExpression"), valu
     }
     append(e1, e2, after=e1@.pointer)
 } )
+
+#' Create Template Matrix
+#'
+#' @keywords internal
+
+tests_result_mat <- function(rows=0) {
+  if(!is.numeric(rows) || length(rows) != 1L || rows < 0)
+    stop("Argument `rows` must be numeric(1L) >= 0")
+  col.names <- slotNames("unitizerItemData")
+  res <- matrix(logical(0L), ncol=length(col.names), nrow=rows)
+  colnames(res) <- col.names
+  res[] <- TRUE
+  res
+}

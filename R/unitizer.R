@@ -179,8 +179,7 @@ setMethod("passed", "unitizerSummary",
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
     .Object <- callNextMethod()
-    slot.names <- slotNames(getClass("unitizerItemData"))
-    .Object@tests.result <- matrix(logical(), ncol=length(slot.names), dimnames=list(NULL, slot.names))
+    .Object@tests.result <- tests_result_mat(0L)
     .Object@base.env <- new.env(parent=.Object@zero.env)
     parent.env(.Object@items.new@base.env) <- .Object@base.env
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
@@ -264,7 +263,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
   function(e1, e2, ...) {
     item.new <- e2
     slot.names <- slotNames(getClass(item.new@data))
-    test.result.tpl <- logical(length(slot.names))
+    test.result.tpl <- tests_result_mat(1L)
     names(test.result.tpl) <- slot.names
     test.error.tpl <- vector("list", length(slot.names))
     names(test.error.tpl) <- slot.names
@@ -276,7 +275,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       e1@tests.fail <- c(e1@tests.fail, FALSE)
       e1@tests.error <- c(e1@tests.error, FALSE)
       e1@tests.new <- c(e1@tests.new, TRUE)
-      e1@tests.result <- rbind(e1@tests.result, test.result.tpl, deparse.level=0)
+      e1@tests.result <- rbind(e1@tests.result, test.result.tpl)
       if(length(item.new@data@conditions)) tests.conditions.new <- TRUE  # A new test with conditions by definition has new conditions
     } else {
       e1@items.ref.map[[item.map]] <- length(e1@items.new)
