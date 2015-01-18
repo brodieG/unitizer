@@ -396,8 +396,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
             "Test Failed Because:",
             as.character(curr.sub.sec.obj@show.fail[[id.rel]])
           ),
-          sep="\n"
-    ) } }
+          sep="\n", file=stderr()
+        )
+        if(identical(unname(x@mapping@tests.result[curr.id, "value"]), FALSE)) {
+          obj_out(item.new@data@value, ".new")
+          obj_out(item.ref@data@value, ".ref")
+        }
+    } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
     # based on what happens to the subsequent non-ignored test.

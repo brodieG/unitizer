@@ -50,6 +50,6 @@ tests_result_mat <- function(rows=0) {
   col.names <- slotNames("unitizerItemData")
   res <- matrix(logical(0L), ncol=length(col.names), nrow=rows)
   colnames(res) <- col.names
-  res[] <- TRUE
+  res[] <- FALSE
   res
 }
