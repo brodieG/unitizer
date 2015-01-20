@@ -94,7 +94,6 @@ unitize_core <- function(
 
   unitizer@id <- store.id
   parent.env(unitizer@zero.env) <- par.frame
-  list2env(getItemFuns, unitizer@zero.env)     # functions for accessing unitizerItem contents
   assign("quit", unitizer_quit, unitizer@zero.env)
   assign("q", unitizer_quit, unitizer@zero.env)
 

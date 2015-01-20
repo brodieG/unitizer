@@ -264,7 +264,6 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     item.new <- e2
     slot.names <- slotNames(getClass(item.new@data))
     test.result.tpl <- tests_result_mat(1L)
-    names(test.result.tpl) <- slot.names
     test.error.tpl <- vector("list", length(slot.names))
     names(test.error.tpl) <- slot.names
     item.map <- tail(e1@items.new.map, 1L)
@@ -290,9 +289,10 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 
       test.status <- "Pass"
       test.result <- test.result.tpl
+      if(nrow(test.result) != 1L)
+        stop("Logic Error: tpl matrix should be one row; contact maintainer.")
 
       for(i in slot.names) {
-        # if(identical(i, "conditions")) browser()
         comp.fun.name <- slot(section@compare, i)@fun.name
         comp.fun.anon <- isTRUE(is.na(comp.fun.name))
         if(comp.fun.anon) comp.fun.name <- "<anon.FUN>"
@@ -338,7 +338,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
             compare.err=TRUE
           )
         } else if(isTRUE(test.res)) {
-          test.result[[i]] <- TRUE
+          test.result[1L, i] <- TRUE
           next
         } else if(is.character(test.res)) {
           if(identical(test.status, "Pass")) test.status <- "Fail"

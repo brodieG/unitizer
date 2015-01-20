@@ -123,12 +123,12 @@ setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 
 setMethod("show", "unitizerItem",
   function(object) {
-    cat("** ")
+    cat("~~~ ")
     if(object@reference) cat("Reference") else cat("New")
-    cat(" Test **\n\n")
-    cat("value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
-    if(out.len <- length(object@data@output)) cat("output:", out.len, "lines\n")
-    if(err.len <- length(object@data@message)) cat("message:", err.len, "lines\n")
+    cat(" Test ~~~\n")
+    cat("* value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
+    if(out.len <- length(object@data@output)) cat("* output:", out.len, "lines\n")
+    if(err.len <- length(object@data@message)) cat("* message:", err.len, "lines\n")
     if(cond.len <- length(object@data@conditions)) {
       cond.types <- vapply(
         as.list(object@data@conditions),
@@ -149,13 +149,14 @@ setMethod("show", "unitizerItem",
         tapply(cond.types, factor(cond.types, levels=c("error", "warning", "message", "other condition")), length)
       )
       cat(
-        "conditions:",
+        "* conditions:",
         paste0(cond.types.summ, " ", paste0(names(cond.types.summ), ifelse(cond.types.summ > 1L, "s", ""), "\n"), collapse=", ")
       )
     }
     word_cat(
-      paste0("\n`", if(object@reference) ".REF" else ".NEW", "$<name>`"),
-      "accesses <name> components; see `help(\"$\", \"unitizer\")`",
+      "Access component `x` with",
+      paste0("`", if(object@reference) ".REF" else ".NEW", "$x`;"),
+      "see `help(\"$\", \"unitizer\")`",
       fill=TRUE
     )
 } )
