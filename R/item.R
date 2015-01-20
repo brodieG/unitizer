@@ -125,10 +125,10 @@ setMethod("show", "unitizerItem",
   function(object) {
     cat("** ")
     if(object@reference) cat("Reference") else cat("New")
-    cat(" Test **\n")
+    cat(" Test **\n\n")
     cat("value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
-    if(out.len <- length(object@data@output)) cat("stdout:", out.len, "lines\n")
-    if(err.len <- length(object@data@message)) cat("stderr:", err.len, "lines\n")
+    if(out.len <- length(object@data@output)) cat("output:", out.len, "lines\n")
+    if(err.len <- length(object@data@message)) cat("message:", err.len, "lines\n")
     if(cond.len <- length(object@data@conditions)) {
       cond.types <- vapply(
         as.list(object@data@conditions),
@@ -154,9 +154,8 @@ setMethod("show", "unitizerItem",
       )
     }
     word_cat(
-      "To retrieve detailed contents, use the `get*` methods (e.g. getOut(obj)).",
-      " See documentation for `getTest` for",
-      "details on the other accessor functions.",
+      paste0("\n`", if(object@reference) ".REF" else ".NEW", "$<name>`"),
+      "accesses <name> components; see `help(\"$\", \"unitizer\")`",
       fill=TRUE
     )
 } )
@@ -231,4 +230,48 @@ setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
 
 setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, e2))
 
+#' Retrieve Test Contents From Test Item
+#'
+#' Intended for use within the \code{unitizer} interactive environment, allows
+#' user to retrieve whatever portions of tests are stored by \code{unitizer}.
+#'
+#' Currently the following elements are available:
+#' \itemize{
+#'   \item \code{call} the expression that was evaluated for the test
+#'   \item \code{value} the result of the evaluation
+#'   \item \code{output} the \code{stdout} output, often equivalent to
+#'     \code{print(.NEW$value)}, but not always (e.g. function returning
+#'     invisibly)
+#'   \item \code{message} the \code{stderr} output
+#'   \item \code{conditions} a \code{\link{conditionList-class}} containing all
+#'     the conditions produced during test evaluation
+#'   \item \code{aborted} whether the test evaluation led to an \code{abort}
+#'     \code{invokeRestart}
+#' }
+#' @export
+#' @aliases $
+#' @param x a \code{unitizerItem} object, typically \code{.NEW} or \code{.REF}
+#'   at the \code{unitizer} interactive prompt
+#' @param name a valid test sub-component
+#' @return the test component requested
+#' @examples
+#' ## From the unitizer> prompt:
+#' \dontrun{
+#' .NEW$call
+#' .REF$conditions
+#' .NEW$value              # equivalent to `.new`
+#' }
 
+setMethod("$", c("unitizerItem"),
+  function(x, name) {
+    what <- substitute(name)
+    what <- if(is.symbol(what)) as.character(what) else name
+    data.slots <- slotNames(x@data)
+    if(identical(what, "call")) return(x@call)
+    else if(length(what) != 1L || ! what %in% data.slots) {
+      stop(
+        "Argument `name` must be in ",
+        paste0(deparse(c("call", data.slots), width=500L), collapse=", ")
+    ) }
+    slot(x@data, what)
+} )
