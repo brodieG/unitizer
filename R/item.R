@@ -131,7 +131,7 @@ setMethod("show", "unitizerItem",
     if(err.len <- length(object@data@message)) cat("stderr:", err.len, "lines\n")
     if(cond.len <- length(object@data@conditions)) {
       cond.types <- vapply(
-        object@data@conditions,
+        as.list(object@data@conditions),
         function(x) {
           if(inherits(x, "error")) {
             "error"
