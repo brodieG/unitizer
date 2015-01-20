@@ -436,17 +436,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # easily retrieve the full object with the `get*` functions.
 
     var.list <- list()
-    var.sub.list <- list()
     if(!is.null(item.new)) {
-      var.list <- c(var.list, list(.new=item.new))
-      var.sub.list <- c(var.sub.list, list(.new=item.new@data@value))
+      var.list <- c(var.list, list(.NEW=item.new, .new=item.new@data@value))
     }
     if(!is.null(item.ref)) {
-      var.list <- c(var.list, list(.ref=item.ref))
-      var.sub.list <- c(var.sub.list, list(.ref=item.ref@data@value))
+      var.list <- c(var.list, list(.REF=item.ref, .ref=item.ref@data@value))
     }
-    browse.par.env <- list2env(var.list, parent=item.main@env)
-    browse.env <- list2env(var.sub.list, parent=browse.par.env)
+    browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)
 
     # Functions to override
@@ -465,8 +461,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         base.env.pri
     ) }
     get.msg <- character()
-    if(!is.null(item.new)) get.msg <- "`getTest(.new)`"
-    if(!is.null(item.ref)) get.msg <- c(get.msg, "`getTest(.ref)`")
+    if(!is.null(item.new)) get.msg <- "`.NEW`"
+    if(!is.null(item.ref)) get.msg <- c(get.msg, "`.REF`")
 
     # Options to navigate; when navigating the name of the game is set `@last.id`
     # to the non-ignored test just previous to the one you want to navigate to,
@@ -481,9 +477,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       "`R` to see a listing of all previously reviewed tests",
       "`ls()` to see what objects are available to inspect",
       if(!is.null(item.new))
-        "`.new` to see newly evaluated test result",
+        "`.new` for the current value, or `.NEW` for the full test object",
       if(!is.null(item.ref))
-        "`.ref` to see result from reference test from `unitizer` store",
+        "`.ref` for the reference value, or `.REF` for the full reference object",
       paste0(collapse="",
         paste0(get.msg, collapse=" or "), " ",
         "to see more details about the test (see documentation for `getTest` ",
