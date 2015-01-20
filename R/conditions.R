@@ -129,29 +129,39 @@ all.equal.condition <- function(target, current, ...) {
 setMethod("show", "conditionList",
   function(object) {
     width=getOption("width")
-    if(!length(object)) {
+    cond.len <- length(object)
+    if(!cond.len) {
       cat("Empty condition list\n")
       return(invisible(object))
+    } else {
+      word_cat(
+        "Condition list with", cond.len,
+        paste0("condition", if(cond.len > 1) "s", ":")
+      )
     }
-    out <- paste0(
-      format(seq_along(object)), ": ",
-      ifelse(
-        print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "printed")), logical(1L)),
-        "[print] ", ""
-      ),
-      vapply(as.list(object), get_condition_type, character(1L)),
-      " in "
-    )
-    desc.chars <- max(width - nchar(out), 20L)
-    cond.detail <- vapply(as.list(object), FUN.VALUE=character(1L),
-      function(y) {
-        paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
-    } )
-    out <- paste0(out, substr(cond.detail, 1, desc.chars))
-    if(any(print.show)) {
-      out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
+    if(cond.len == 1L) show(object[[1L]]) else {
+      out <- paste0(
+        format(seq_along(object)), ": ",
+        ifelse(
+          print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "printed")), logical(1L)),
+          "[print] ", ""
+        ),
+        vapply(as.list(object), get_condition_type, character(1L)),
+        " in "
+      )
+      desc.chars <- max(width - nchar(out), 20L)
+      cond.detail <- vapply(as.list(object), FUN.VALUE=character(1L),
+        function(y) {
+          paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
+      } )
+      out <- paste0(out, substr(cond.detail, 1, desc.chars))
+      if(any(print.show)) {
+        out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
+      }
+      out <- c(out)
+      cat(out, sep="\n")
     }
-    cat(out, sep="\n")
+    cat("Access a condition directly with `[[` (e.g. `conditions[[1L]]`)\n")
     return(invisible(object))
 } )
 #' Extracts Condition Type From Condition Classes
