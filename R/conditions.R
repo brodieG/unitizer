@@ -40,7 +40,7 @@ setMethod("all.equal", "conditionList",
 
     print.show.err <- paste0(
       "Condition mismatch may involve print/show methods; carefully review ",
-      "conditions with `getConds(.new)` and `getConds(.ref)` as just ",
+      "conditions with `.NEW$conditions` and `.REF$conditions` as just ",
       "typing `.ref` or `.new` at the prompt will invoke print/show methods, ",
       "which themselves may be the cause of the mismatch."
     )

@@ -132,7 +132,7 @@ test_that("Compare Conditions", {
   attr(lst1[[3L]], "printed") <- TRUE
 
   expect_equal(
-    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, `target` (a.k.a. `.ref`) is 'Error', but `current` (a.k.a. `.new`) is 'Warning'", "Condition mismatch may involve print/show methods; carefully review conditions with `getConds(.new)` and `getConds(.ref)` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch."),
+    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, `target` (a.k.a. `.ref`) is 'Error', but `current` (a.k.a. `.new`) is 'Warning'", "Condition mismatch may involve print/show methods; carefully review conditions with `.NEW$conditions` and `.REF$conditions` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch."),
     all.equal(lst2, lst1[1L:3L])
   )
   attr(lst1[[3L]], "printed") <- NULL

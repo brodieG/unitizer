@@ -236,17 +236,23 @@ setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, 
 #' user to retrieve whatever portions of tests are stored by \code{unitizer}.
 #'
 #' Currently the following elements are available:
+#'
 #' \itemize{
-#'   \item \code{call} the expression that was evaluated for the test
-#'   \item \code{value} the result of the evaluation
-#'   \item \code{output} the \code{stdout} output, often equivalent to
-#'     \code{print(.NEW$value)}, but not always (e.g. function returning
-#'     invisibly)
-#'   \item \code{message} the \code{stderr} output
+#'   \item \code{call} the call that was tested as an unevaluated call,
+#'     but keep in mind that if you intend to evaluate this for a reference
+#'     item the environment may not be the same so you could get different
+#'     results (\code{ls} will provide more details)
+#'   \item \code{value} the value that results from evaluating the test, note
+#'     this is equivalent to using \code{.new} or \code{.ref}
+#'   \item \code{output} the screen output (i.e. anything produced by cat/print,
+#'     or any visible evaluation output) as a character vector
+#'   \item \code{message} anything that was output to \code{stderr}, mostly
+#'     this is all contained in the conditions as well, though there could be
+#'     other output here, as a character vector
 #'   \item \code{conditions} a \code{\link{conditionList-class}} containing all
 #'     the conditions produced during test evaluation
-#'   \item \code{aborted} whether the test evaluation led to an \code{abort}
-#'     \code{invokeRestart}
+#'   \item \code{aborted} whether the test call issues a restart call to the
+#'     `abort` restart, as `stop` does.
 #' }
 #' @export
 #' @aliases $
