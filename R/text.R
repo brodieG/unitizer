@@ -2,13 +2,19 @@
 #'
 #' @keywords internal
 
-screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=stdout()) {
+screen_out <- function(
+  txt, max.len=getOption("unitizer.test.out.lines"), file=stdout(),
+  extra="") {
   if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
     stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
   if(out.len <- length(txt)) {
     cat(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], sep="\n", file=file)
     if(out.len > max.len[[1]]) {
-      cat("... truncated", out.len - max.len[[2]], "lines, review object directly if you wish to see all output\n", file=stderr())
+      cat(
+        "... truncated", out.len - max.len[[2]],
+        "line", if(out.len - max.len[[2]] > 1) "s",
+        file=file
+      )
 } } }
 
 #' Print an object to screen
@@ -21,41 +27,45 @@ screen_out <- function(txt, max.len=getOption("unitizer.test.out.lines"), file=s
 
 obj_out <- function(
   obj, type, width=getOption("width"),
+  max.len=getOption("unitizer.test.fail.out.lines"), file=stdout()
+) {
+  obj.out <- obj_capt(obj, width, max.len)
+  obj_chr_out(obj.out, type, file)
+}
+obj_chr_out <- function(
+  obj.out, type, file=stdout(), extra=type,
   max.len=getOption("unitizer.test.fail.out.lines")
 ) {
   if(!is.character(type) || !isTRUE(type %in% c(".new", ".ref")))
     stop("Argument `type` must be character(1L) and either \".new\" or \".ref\".")
-  if(!is.numeric(width) || length(width) != 1L)
-    stop("Argument `width` must be a one long numeric/integer.")
   if(!is.numeric(max.len) || length(max.len) != 2L)
     stop("Argument `max.len` must be a one long numeric/integer.")
-  width.old <- getOption("width")
-  on.exit(options(width=width.old))
-  width <- max(width, 10L)
+  if(!length(obj.out)) return(invisible(character(1L)))
   max.len <- pmax(max.len, c(1L, 1L))
-
-  options(width=width - 2L)
-  obj.out <- capture.output(if(isS4(obj)) show(obj) else print(obj))
-  options(width=width.old)
-  on.exit(NULL)
-
   if(length(obj.out) > max.len[[1L]]) {
     obj.out <- c(
     obj.out[1:max.len[[2L]]],
     paste0(
       "... truncated ", length(obj.out) - max.len[[2L]],
-      " lines, use `", type, "` to see full object."
+      " lines, use `", extra, "` to see full object."
   ) ) }
-  if(identical(type, ".new")) {
-    pre <- "+"
-    banner <- "@@ .new @@"
-  } else {
-    pre <- "-"
-    banner <- "@@ .ref @@"
-  }
-  res <- c(banner, paste(pre, obj.out))
-  cat(res, sep="\n")
+  pre <- if(identical(type, ".new")) "+" else "-"
+  res <- paste(pre, obj.out)
+  cat(res, sep="\n", file=file)
   invisible(res)
+}
+obj_capt <- function(obj, width=getOption("width")) {
+  if(!is.numeric(width) || length(width) != 1L)
+    stop("Argument `width` must be a one long numeric/integer.")
+  width.old <- getOption("width")
+  on.exit(options(width=width.old))
+  width <- max(width, 10L)
+
+  options(width=width - 2L)
+  obj.out <- capture.output(if(isS4(obj)) show(obj) else print(obj))
+  options(width=width.old)
+  on.exit(NULL)
+  obj.out
 }
 #' Deparse, But Make It Look Like It Would On Prompt
 #'

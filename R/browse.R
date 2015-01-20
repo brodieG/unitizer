@@ -385,7 +385,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
       }
       if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
 
-      # If test failed, show details of failure
+      # If test failed, show details of failure; note this should mean there must
+      # be a `.new` and a `.ref`
 
       if(
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
@@ -398,10 +399,25 @@ setMethod("reviewNext", c("unitizerBrowse"),
           ),
           sep="\n", file=stderr()
         )
-        if(identical(unname(x@mapping@tests.result[curr.id, "value"]), FALSE)) {
-          obj_out(item.new@data@value, ".new")
-          obj_out(item.ref@data@value, ".ref")
-        }
+        # Display output, not super elegant as we only doing val diff and cond
+        # diff for now, and cond diff assumes message output corresponds to
+        # condition, which may or may not be the case, plus it is taken as is
+        # instead of formatted as the val output is.
+
+        val.diff <- identical(unname(x@mapping@tests.result[curr.id, "value"]), FALSE)
+        cond.diff <- identical(
+          unname(x@mapping@tests.result[curr.id, "conditions"]), FALSE
+        ) && length(item.new@data@conditions) == 1L &&
+          length(item.ref@data@conditions) == 1L
+
+        if(val.diff || cond.diff) cat("@@ .new @@\n")
+        if(val.diff) obj_chr_out(obj_capt(item.new@data@value), ".new")
+        if(cond.diff)
+          obj_chr_out(item.new@data@message, ".new", file=stderr())
+        if(val.diff || cond.diff) cat("@@ .ref @@\n")
+        if(val.diff) obj_chr_out(obj_capt(item.ref@data@value), ".ref")
+        if(cond.diff)
+          obj_chr_out(item.ref@data@message, ".ref", file=stderr())
     } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
