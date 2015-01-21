@@ -288,7 +288,7 @@ setMethod("$", c("unitizerItem"),
     else if(length(what) != 1L || ! what %in% data.slots) {
       stop(
         "Argument `name` must be in ",
-        paste0(deparse(c("call", data.slots), width=500L), collapse=", ")
+        paste0(deparse(c("call", data.slots), width.cutoff=500L), collapse=", ")
     ) }
     slot(x@data, what)
 } )

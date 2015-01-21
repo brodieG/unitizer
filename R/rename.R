@@ -1,12 +1,18 @@
+#' @rdname edit_fun_names,unitizer,name,name-method
+#' @export
+
 setGeneric("edit_fun_names", function(x, fun.name.old, fun.name.new, ...)
   standardGeneric("edit_fun_names")
 )
-
 #' Edit Calls In Unitizer
 #'
 #' Used if you want to change the name of a function you have pre-existing
 #' tests for.
 #'
+#' @param x a unitizer object
+#' @param fun.name.old the name of the function replace
+#' @param fun.name.new the new name of the function
+#' @return a untizer object with function names modifies
 #' @export
 
 setMethod("edit_fun_names", c("unitizer", "name", "name"),
