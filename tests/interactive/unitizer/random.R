@@ -10,3 +10,5 @@ unitizer_sect("blah", compare=unitizerItemTestsFuns(value=identical, output=all.
   matrix(runif(1:60), ncol=2)
 }})
 
+list(1, 2, list(list(runif(1))), `names<-`(runif(2), sample(letters, 2, rep=TRUE)))
+
