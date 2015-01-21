@@ -146,12 +146,22 @@ setMethod("show", "unitizerItem",
       )
       cond.types.summ <- Filter(
         Negate(is.na),
-        tapply(cond.types, factor(cond.types, levels=c("error", "warning", "message", "other condition")), length)
-      )
-      cat(
+        tapply(
+          cond.types,
+          factor(
+            cond.types,
+            levels=c("error", "warning", "message", "other condition")),
+          length
+      ) )
+      word_cat(
         "* conditions:",
-        paste0(cond.types.summ, " ", paste0(names(cond.types.summ), ifelse(cond.types.summ > 1L, "s", ""), "\n"), collapse=", ")
-      )
+        paste0(
+          cond.types.summ, " ",
+          paste0(
+            names(cond.types.summ),
+            ifelse(cond.types.summ > 1L, "s", "")
+          ), collapse=", "
+      ) )
     }
     word_cat(
       "Access component `x` with",
