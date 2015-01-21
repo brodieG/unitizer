@@ -26,11 +26,15 @@ We will focus on `unitize` for the rest of this vignette since most of the comme
 ### Example Set-up
 
 To examine the interactive environment more thoroughly we will go back to the demo.  This is the `unitizer` prompt right after our first failed test when our `unitizer.fastlm` implementation was returning the wrong values:
+
 ```
 > get_slope(res)
-Test Failed Because:
-Value mismatch: Mean relative difference: 6943055624
-unitizer>
+unitizer test fails on value mismatch:
+*value* mismatch: Mean relative difference: 6943055624
+@@ .ref @@
+-    [1] 101
+@@ .new @@
++    [1] 701248618125
 ```
 
 ## `unitizer` Commands
@@ -44,6 +48,7 @@ Reference test does not match new test from test script (compare `.new` and
 `.ref` to see differences). Overwrite item in store with new value ([Y]es, [N]o,
 [B]ack, [R]eview, [Q]uit, [H]elp)?
 ```
+
 This clearly lays out all the special commands available to us:
 
 * `Y` will accept the new value as the correct reference value to use for a test
@@ -104,14 +109,27 @@ The test status (see [tests outcomes](vgn03tests.html#test-outcomes)) indicates 
 Typing `U` at the review prompt will take you to the first unreviewed test.  Since ignored tests and passed tests are not typically reviewed, `U` will take you to the first unreviewed test that is neither passed nor ignored.
 
 If we type 2 at the prompt, we get:
+
 ```
 unitizer> 2
 You are re-reviewing a test; previous selection was: "N"
+# first reviewable expression
 > res
-Test Failed Because:
-Value mismatch: Mean relative difference: 19854602162
+unitizer test fails on value mismatch:
+*value* mismatch: Mean relative difference: 19864853591
+@@ .ref @@
+-       intercept        slope          rsq
+-    -1717.000000   101.000000     0.938679
+-    attr(,"class")
+-    [1] "fastlm"
+@@ .new @@
++        intercept         slope           rsq
++    -3.541306e+13  7.012486e+11  9.386790e-01
++    attr(,"class")
++    [1] "fastlm"
 unitizer>
 ```
+
 `unitizer` tells us we are re-reviewing this test and that previously we had chosen not to keep the new version.  At this point we could re-examine the test, and potentially change our previous selection.
 
 You can jump ahead to any test from the review menu, even tests that are typically not reviewed (i.e. ignored or passed, though if you go to those you will be brought back to the review menu once you complete the review because those tests are not part of the normal review flow).
@@ -157,30 +175,29 @@ There are, however, some suble differences created by the structure of the evalu
 * Even though you can see objects produced by tests, you can not actually remove them with `rm`
 * Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts
 * Other subtle issues discussed at length in the ([estoeric topics vignette](vgn06nittygritty.html))
-* There are special `unitizer` objects `.new` and `.ref` that let you review the results of tests (we will discuss these next)
+* There are special `unitizer` objects `.new`, `.NEW`, `.ref`, and `.REF` that let you review the results of tests (we will discuss these next)
 * `ls` is over-ridden by a special `unitizer` version (we will also dicuss this next)
 
 ### `.new` and `.ref`
 
 As we saw in the demo there are special objects available at the prompt: `.new` (except for removed/deleted tests), and for all but new tests, `.ref`.  These objects contain the values produced by the newly evaluated test (`.new`) and by the test when it was previously run and accepted (`.ref`).  `.new` might seem a bit superfluous since the user can always re-evaluate the test expression at the `unitizer` prompt to review the value, but if that evaluation is slow you can save a little time by using `.new`.  `.ref` is the only option you have to see what the test used to produce back when it was first accepted into the `unitizer` store.
 
-`.new` and `.ref` contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation.  To do so you can use the `get*` accessor functions in conjunction with the `.new` or `.ref` objects:
+`.new` and `.ref` contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation.  To do so you can use `.NEW` and `.REF`:
 
-* `getTest(.new)` gets general information about the test
-* `getVal(.new)` returns the test value; equivalent to typing `.new` at the prompt
-* `getConds(.new)` returns the list of conditions produced by the test
-* `getMsg(.new)` returns the stderr captured during test evaluation
-* `getOut(.new)` returns the screen output captured during test evaluation (note often this will be similar to what you get from `.new` or `getVal(.new)` since typing those expressions at the prompt leads to the value being printed)
-* `getExpr(.new)` returns the test expression (do not confuse this with `getCall`, a built-in R function with no relation to `unitizer`)
-* `getAborted(.new)` returns whether the test expression invoked an "abort" restart (e.g. called `stop` at some point)
+* `.NEW` prints general information about the test
+* `.NEW$value` returns the test value; equivalent to typing `.new` at the prompt
+* `.NEW$conditions` returns the list of conditions produced by the test
+* `.NEW$messsage` returns the stderr captured during test evaluation
+* `.NEW$output` returns the screen output captured during test evaluation (note often this will be similar to what you get from `.new` or `.NEW$value` since typing those expressions at the prompt leads to the value being printed)
+* `.NEW$call` returns the test expression
+* `.NEW$aborted` returns whether the test expression invoked an "abort" restart (e.g. called `stop` at some point)
 
-You can substitute `.ref` for `.new` in any of the above, provided that `.ref` is defined (i.e. that won't work when you are reviewing new tests since there is no corresponding reference test for those by definition).
+You can substitute `.REF` for `.NEW` in any of the above, provided that `.REF` is defined (i.e. that will not work when you are reviewing new tests since there is no corresponding reference test for those by definition).
 
 ### `ls`
 
 Using `ls` at the `unitizer` prompt calls an `unitizer` version of the function.  This is what happens when we type `ls()` at the first failed test in the `unitizer` we've been reviewing in this vignette:
 ```
-unitizer> ls()
 $`objects in new test env:`
 [1] "res" "x"   "y"
 
@@ -188,12 +205,13 @@ $`objects in ref test env:`
 [1] "res" "x"   "y"
 
 $`unitizer objects:`
-[1] ".new" ".ref"
+[1] ".new" ".NEW" ".ref" ".REF"
 
-Use `ref(obj_name)` to access reference objects.
-`.new` / `.ref` for test value, `getTest(.new)` / `getTest(.ref)` for details.
+Use `ref(.)` to access objects in ref test env
+`.new` / `.ref` for test value, `.NEW` / `.REF` for details.
 unitizer>
 ```
+
 This special version of `ls` highlights that our environment is more complex than that at the typical R prompt.  This is necessary to allow us to review both the newly evaluated objects as well as the objects from the reference `unitizer` store to compare them for differences.  For instance, in this example, we can see that there are both new and reference copies of the `res`, `x`, and `y` objects.  The reference copies are from the previous time we ran `unitizer`.  `ls` also notes what `unitizer` special objects are available.
 
 When you type at the prompt the name of one of the objects `ls` lists, you will see the newly evaluated version of that variable.  If you wish to see the reference value, then use the `ref` function:
