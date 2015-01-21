@@ -3,14 +3,15 @@
 #' @keywords internal
 
 screen_out <- function(
-  txt, max.len=getOption("unitizer.test.out.lines"), file=stdout(),
-  extra="") {
+  txt, max.len=getOption("unitizer.test.out.lines"), file=stdout()
+) {
   if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
     stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
   if(out.len <- length(txt)) {
-    cat(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], sep="\n", file=file)
+    txt.proc <- paste0(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], "\n")
+    word_cat(txt.proc, "", file=file)
     if(out.len > max.len[[1]]) {
-      cat(
+      word_cat(
         "... truncated", out.len - max.len[[2]],
         "line", if(out.len - max.len[[2]] > 1) "s",
         file=file
