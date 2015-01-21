@@ -65,9 +65,11 @@ setMethod("initialize", "unitizerItemTestFun", function(.Object, ...) {
 setClass("unitizerItemTestError",
   representation(
     value="characterOrNULL",
-    compare.err="logical"
+    compare.err="logical",
+    .new="ANY",
+    .ref="ANY"
   ),
-  prototype(value=NULL, compare.err=FALSE),
+  prototype(value=NULL, compare.err=FALSE, .new=NULL, .ref=NULL),
   validity=function(object) {
     if(!identical(length(object@compare.err), 1L)) return("slot `@compare.err` must be a 1 length logical")
 } )
@@ -119,6 +121,61 @@ setMethod("as.character", "unitizerItemTestsErrors",
         chr <- c(chr, mismatch, paste0("  + ", err))
     } }
     chr
+} )
+
+setMethod("show", "unitizerItemTestsErrors",
+  function(object) {
+    slots <- slotNames(object)
+    for(i in slots) {
+      curr.err <- slot(object, i)
+      if(is.null(curr.err@value)) next  # No error, so continue
+      mismatch <- if(curr.err@compare.err) {
+        paste0("Unable to compare ", i, ": ")
+      } else {
+        paste0("*", i, "* mismatch: ")
+      }
+      if(length(curr.err@value) < 2L) {
+        chr <- paste0(mismatch, curr.err@value)
+      } else {
+        chr <- c(mismatch, paste0("  + ", curr.err@value))
+      }
+      word_cat(paste0(chr, collapse="\n"), file=stderr())
+
+      make_cont <- function(x)
+        if(identical(i, "value")) x else paste0(toupper(x), "$", i)
+      make_banner <- function(x) paste("@@", make_cont(x), "@@\n")
+
+      cat(make_banner(".ref"))
+      obj_chr_out(obj_capt(curr.err@.ref), extra=make_cont(".ref"), add=FALSE)
+      cat(make_banner(".new"))
+      obj_chr_out(obj_capt(curr.err@.new), extra=make_cont(".new"))
+    }
+    invisible(NULL)
+} )
+
+setMethod("summary", "unitizerItemTestsErrors",
+  function(object, ...) {
+    slots <- slotNames(object)
+    slot.err <- logical(length(slots))
+    for(i in seq_along(slots))
+      slot.err[[i]] <- !is.null(slot(object, slots[[i]])@value)
+
+    errs <- slots[slot.err]
+    if(!length(errs)) return(invisible(NULL))
+    if(length(errs) > 1L) {
+      err.chr <- paste(
+        paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
+      )
+      plrl <- "es"
+    } else {
+      err.chr <- errs
+      plrl <- ""
+    }
+    word_cat(
+      "unitizer test fails on", err.chr, paste0("mismatch", plrl, ":"),
+      file=stderr()
+    )
+    return(invisible(NULL))
 } )
 #' Store Functions for New vs. Reference Test Comparisons
 #'

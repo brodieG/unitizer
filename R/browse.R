@@ -370,9 +370,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) }
       if(length(item.main@comment)) cat(item.main@comment, sep="\n")
       cat(deparse_prompt(item.main@call), sep="\n")
+
       # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant
-
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
@@ -392,32 +392,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
       ) {
-        cat(
-          c(
-            "Test Failed Because:",
-            as.character(curr.sub.sec.obj@show.fail[[id.rel]])
-          ),
-          sep="\n", file=stderr()
-        )
-        # Display output, not super elegant as we only doing val diff and cond
-        # diff for now, and cond diff assumes message output corresponds to
-        # condition, which may or may not be the case, plus it is taken as is
-        # instead of formatted as the val output is.
-
-        val.diff <- identical(unname(x@mapping@tests.result[curr.id, "value"]), FALSE)
-        cond.diff <- identical(
-          unname(x@mapping@tests.result[curr.id, "conditions"]), FALSE
-        ) && length(item.new@data@conditions) == 1L &&
-          length(item.ref@data@conditions) == 1L
-
-        if(val.diff || cond.diff) cat("@@ .new @@\n")
-        if(val.diff) obj_chr_out(obj_capt(item.new@data@value), ".new")
-        if(cond.diff)
-          obj_chr_out(item.new@data@message, ".new", file=stderr())
-        if(val.diff || cond.diff) cat("@@ .ref @@\n")
-        if(val.diff) obj_chr_out(obj_capt(item.ref@data@value), ".ref")
-        if(cond.diff)
-          obj_chr_out(item.ref@data@message, ".ref", file=stderr())
+        summary(curr.sub.sec.obj@show.fail[[id.rel]])
+        show(curr.sub.sec.obj@show.fail[[id.rel]])
     } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed

@@ -34,11 +34,13 @@ obj_out <- function(
   obj_chr_out(obj.out, type, file)
 }
 obj_chr_out <- function(
-  obj.out, type, file=stdout(), extra=type,
+  obj.out, add=TRUE, file=stdout(), extra=".new",
   max.len=getOption("unitizer.test.fail.out.lines")
 ) {
-  if(!is.character(type) || !isTRUE(type %in% c(".new", ".ref")))
-    stop("Argument `type` must be character(1L) and either \".new\" or \".ref\".")
+  if(!is.logical(add) || length(add) != 1L || is.na(add))
+    stop("Argument `add` must be integer(1L) and not NA.")
+  if(!is.character(extra) || length(extra) != 1L)
+    stop("Argument `extra` must be character(1L).")
   if(!is.numeric(max.len) || length(max.len) != 2L)
     stop("Argument `max.len` must be a one long numeric/integer.")
   if(!length(obj.out)) return(invisible(character(1L)))
@@ -48,9 +50,9 @@ obj_chr_out <- function(
     obj.out[1:max.len[[2L]]],
     paste0(
       "... truncated ", length(obj.out) - max.len[[2L]],
-      " lines, use `", extra, "` to see full object."
+      " lines, use `", extra, "` to see full result."
   ) ) }
-  pre <- if(identical(type, ".new")) "+" else "-"
+  pre <- if(add) "+   " else "-   "
   res <- paste(pre, obj.out)
   cat(res, sep="\n", file=file)
   invisible(res)
@@ -62,7 +64,7 @@ obj_capt <- function(obj, width=getOption("width")) {
   on.exit(options(width=width.old))
   width <- max(width, 10L)
 
-  options(width=width - 2L)
+  options(width=width - 4L)
   obj.out <- capture.output(if(isS4(obj)) show(obj) else print(obj))
   options(width=width.old)
   on.exit(NULL)
@@ -167,9 +169,10 @@ word_cat <- function(..., fill=TRUE) {
         x.eval <- eval(x, envir=par.frame)
         if(is.character(x.eval)) unlist(strsplit(x.eval, " ")) else x.eval
   } ) )
-  if(inherits(args.evaled, "try-error"))
+  args.fwd.evaled <- try(lapply(args.to.forward, eval, par.frame))
+  if(inherits(args.evaled, "try-error") || inherits(args.fwd.evaled, "try-error"))
     stop("Problem evaluating `...` arguments; see previous errors")
-  invisible(do.call(cat, c(args.to.forward, args.evaled)))
+  invisible(do.call(cat, c(args.fwd.evaled, args.evaled)))
 }
 #' Over-write a Line
 #'
