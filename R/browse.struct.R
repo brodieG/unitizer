@@ -604,24 +604,23 @@ setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",
 setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
-    prompt="Overwrite item in store with new value",
+    prompt="Overwrite with new test",
     detail=paste0(
-      "Reference test does not match new test from test script (compare `.new` ",
-      "and `.ref` to see differences)."
+      "Reference test does not match new test from test script."
     ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
   prototype=list(
     title="New",
-    prompt="Add new item to store",
+    prompt="Add new test to store",
     detail="Test script contains tests not present in unitizer.",
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
 setClass("unitizerBrowseSubSectionCorrupted", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Corrupted",
-    prompt="Overwrite item in store with new value",
+    prompt="Overwrite with new value",
     detail=paste0(
       "Reference tests cannot be compared to new tests because errors occurred ",
       "while attempting comparison. Please review the error and contemplate using ",
@@ -632,7 +631,7 @@ setClass("unitizerBrowseSubSectionCorrupted", contains="unitizerBrowseSubSection
 setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Removed",
-    prompt="Remove item from store",
+    prompt="Remove test from store",
     detail="The following test exists in unitizer but not in the new test script.",
     actions=c(Y="C", N="B")
 ) )
