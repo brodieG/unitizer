@@ -160,6 +160,7 @@ unitize_core <- function(
         stop("Could not parse `test.file`; see prior error for details.")
     }
     if(!length(tests.parsed)) {
+      over_print("")
       message("No tests in ", test.file, "; nothing to do here.")
       on.exit(NULL)
       if(search.path.trim) search_path_restore()        # runs _unsetup() as well
