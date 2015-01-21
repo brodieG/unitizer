@@ -139,7 +139,7 @@ setMethod("show", "unitizerItemTestsErrors",
       } else {
         chr <- c(mismatch, paste0("  + ", curr.err@value))
       }
-      word_cat(paste0(chr, collapse="\n"), file=stderr())
+      for(chr.val in chr) word_cat(chr.val, file=stderr())
 
       make_cont <- function(x)
         if(identical(i, "value")) x else paste0(toupper(x), "$", i)
