@@ -8,8 +8,8 @@ screen_out <- function(
   if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
     stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
   if(out.len <- length(txt)) {
-    txt.proc <- paste0(txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)], "\n")
-    word_cat(txt.proc, "", file=file)
+    txt.proc <- txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)]
+    lapply(txt.proc, function(x) word_cat(x, file=file))
     if(out.len > max.len[[1]]) {
       word_cat(
         "... truncated", out.len - max.len[[2]],
@@ -17,7 +17,6 @@ screen_out <- function(
         file=file
       )
 } } }
-
 #' Print an object to screen
 #'
 #' Similar to \code{\link{screen_out}}, but starts with an object instead of a
