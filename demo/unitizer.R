@@ -1,7 +1,14 @@
 {
   if(!require(devtools)) stop("Package `devtools` is required for this demo.")
   library(unitizer)
-  if(exists(".unitizer.test.file")) stop("Cannot run if variable `.unitizer.test.file` is defined")
+  if(exists(".unitizer.test.file")) {
+    stop(
+      "Cannot run if variable `.unitizer.test.file` is defined; ",
+      "you can remove it with `rm(.unitizer.test.file)` (most likely this file ",
+      "is left over from a previous `unitizer` demo run that was prematurely ",
+      "exited from"
+    )
+  }
 }
 # In this script we will demonstrate the `unitize` workflow by running `unitize`
 # against three different versions of our pseudo package `unitizer.fastlm`.
