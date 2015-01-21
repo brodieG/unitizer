@@ -48,8 +48,7 @@ setMethod("all.equal", "conditionList",
       return(
         c(
           paste0(
-            "`target` (a.k.a `.ref`) and `current` (a.k.a `.new`) do not have ",
-            "the same number of conditions (",length(target), " vs ",
+            "condition count mismatch; expected ",length(target), " (got ",
             length(current), ")"
           ),
           if(
@@ -78,16 +77,11 @@ setMethod("all.equal", "conditionList",
     } )
     errs <- which(vapply(res, is.character, logical(1L)))
     if((err.len <- length(errs)) == 1L) {
-      err.msg <- "There is 1 condition mismatch; "
+      err.msg <- "There is one condition mismatch:"
     } else  {
-      err.msg <- paste0("There are ", err.len, " condition mismatches; ")
+      err.msg <- paste0("There are ", err.len, " condition mismatches:")
     }
-    if(err.len) {
-      return(
-        c(
-          paste0(err.msg, "showing first mismatch at condition #", errs[[1L]]),
-          res[[errs[[1L]]]]
-    ) ) }
+    if(err.len) return(err.msg)
     if(all(unlist(res))) return(TRUE)
     stop("Logic Error, unexpected return values from comparison function.")
 } )
@@ -139,31 +133,30 @@ setMethod("show", "conditionList",
         paste0("condition", if(cond.len > 1) "s", ":")
       )
     }
-    if(cond.len == 1L) show(object[[1L]]) else {
-      out <- paste0(
-        format(seq_along(object)), ": ",
-        ifelse(
-          print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "printed")), logical(1L)),
-          "[print] ", ""
-        ),
-        vapply(as.list(object), get_condition_type, character(1L)),
-        " in "
-      )
-      desc.chars <- max(width - nchar(out), 20L)
-      cond.detail <- vapply(as.list(object), FUN.VALUE=character(1L),
-        function(y) {
-          paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
-      } )
-      out <- paste0(out, substr(cond.detail, 1, desc.chars))
-      if(any(print.show)) {
-        out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
-      }
-      out <- c(out)
-      cat(out, sep="\n")
+    out <- paste0(
+      format(seq_along(object)), ": ",
+      ifelse(
+        print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "printed")), logical(1L)),
+        "[print] ", ""
+      ),
+      vapply(as.list(object), get_condition_type, character(1L)),
+      " in "
+    )
+    desc.chars <- max(width - nchar(out), 20L)
+    cond.detail <- vapply(as.list(object), FUN.VALUE=character(1L),
+      function(y) {
+        paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
+    } )
+    out <- paste0(out, substr(cond.detail, 1, desc.chars))
+    if(any(print.show)) {
+      out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
     }
+    out <- c(out)
+    cat(out, sep="\n")
     cat("Access a condition directly with `[[` (e.g. `conditions[[1L]]`)\n")
     return(invisible(object))
-} )
+  }
+)
 #' Extracts Condition Type From Condition Classes
 #'
 #' Type (e.g. Error, Warning), is taken to be the second to last class.
