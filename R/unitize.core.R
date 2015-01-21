@@ -94,7 +94,6 @@ unitize_core <- function(
 
   unitizer@id <- store.id
   parent.env(unitizer@zero.env) <- par.frame
-  list2env(getItemFuns, unitizer@zero.env)     # functions for accessing unitizerItem contents
   assign("quit", unitizer_quit, unitizer@zero.env)
   assign("q", unitizer_quit, unitizer@zero.env)
 
@@ -161,6 +160,7 @@ unitize_core <- function(
         stop("Could not parse `test.file`; see prior error for details.")
     }
     if(!length(tests.parsed)) {
+      over_print("")
       message("No tests in ", test.file, "; nothing to do here.")
       on.exit(NULL)
       if(search.path.trim) search_path_restore()        # runs _unsetup() as well

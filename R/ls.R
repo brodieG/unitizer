@@ -23,8 +23,8 @@ unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
       "using the `name`, `pos`, or `envir` arguments to `ls`; you can use standard ",
       "`ls` with `base::ls`."
     )
-  new.item <- try(get(".new", parent.env(parent.env(parent.frame()))), silent=T)
-  ref.item <- try(get(".ref", parent.env(parent.env(parent.frame()))), silent=T)
+  new.item <- try(get(".NEW", parent.env(parent.frame())), silent=T)
+  ref.item <- try(get(".REF", parent.env(parent.frame())), silent=T)
 
   ls.lst <- list()
   ls.test <- mods <- character()
@@ -35,13 +35,13 @@ unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
   }
   if (!inherits(new.item, "try-error")) {
     if(nrow(new.item@ls)) ls.lst[["new"]] <- paste0(new.item@ls$names, new.item@ls$status)
-    ls.lst[["tests"]] <- c(ls.lst[["tests"]], ".new")
+    ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".new", ".NEW"))
     mods <- c(mods, Filter(nchar, unique(new.item@ls$status)))
     new.inv <- isTRUE(attr(new.item@ls, "invalid"))
   }
   if (!inherits(ref.item, "try-error")) {
     if(nrow(ref.item@ls)) ls.lst[["ref"]] <- paste0(ref.item@ls$names, ref.item@ls$status)
-    ls.lst[["tests"]] <- c(ls.lst[["tests"]], ".ref")
+    ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".ref", ".REF"))
     mods <- c(mods, Filter(nchar, unique(ref.item@ls$status)))
     ref.inv <- isTRUE(attr(ref.item@ls, "invalid"))
   }
@@ -110,11 +110,11 @@ print.unitizer_ls <- function(x, ...) {
     "*"="  *:  existed during test evaluation, but doesn't anymore",
     "**"="  **: didn't exist during test evaluation"
   )
-  if(all(c("new", "ref") %in% names(x.copy))) extra <- c(extra, "Use `ref(obj_name)` to access reference objects.")
+  if(all(c("new", "ref") %in% names(x.copy))) extra <- c(extra, "Use `ref(.)` to access objects in ref test env")
   if(length(attr(x.copy, "mods"))) {
     extra <- c(extra, explain[attr(x.copy, "mods")])
   }
-  if("tests" %in% names(x.copy)) extra <- c(extra, "`.new` / `.ref` for test value, `getTest(.new)` / `getTest(.ref)` for details.")
+  if("tests" %in% names(x.copy)) extra <- c(extra, "`.new` / `.ref` for test value, `.NEW` / `.REF` for details.")
   if(length(extra)) cat(extra, sep="\n")
   invisible(val)
 }

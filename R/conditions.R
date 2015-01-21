@@ -40,7 +40,7 @@ setMethod("all.equal", "conditionList",
 
     print.show.err <- paste0(
       "Condition mismatch may involve print/show methods; carefully review ",
-      "conditions with `getConds(.new)` and `getConds(.ref)` as just ",
+      "conditions with `.NEW$conditions` and `.REF$conditions` as just ",
       "typing `.ref` or `.new` at the prompt will invoke print/show methods, ",
       "which themselves may be the cause of the mismatch."
     )
@@ -48,8 +48,7 @@ setMethod("all.equal", "conditionList",
       return(
         c(
           paste0(
-            "`target` (a.k.a `.ref`) and `current` (a.k.a `.new`) do not have ",
-            "the same number of conditions (",length(target), " vs ",
+            "condition count mismatch; expected ",length(target), " (got ",
             length(current), ")"
           ),
           if(
@@ -78,16 +77,11 @@ setMethod("all.equal", "conditionList",
     } )
     errs <- which(vapply(res, is.character, logical(1L)))
     if((err.len <- length(errs)) == 1L) {
-      err.msg <- "There is 1 condition mismatch; "
+      err.msg <- "There is one condition mismatch:"
     } else  {
-      err.msg <- paste0("There are ", err.len, " condition mismatches; ")
+      err.msg <- paste0("There are ", err.len, " condition mismatches:")
     }
-    if(err.len) {
-      return(
-        c(
-          paste0(err.msg, "showing first mismatch at condition #", errs[[1L]]),
-          res[[errs[[1L]]]]
-    ) ) }
+    if(err.len) return(err.msg)
     if(all(unlist(res))) return(TRUE)
     stop("Logic Error, unexpected return values from comparison function.")
 } )
@@ -129,9 +123,15 @@ all.equal.condition <- function(target, current, ...) {
 setMethod("show", "conditionList",
   function(object) {
     width=getOption("width")
-    if(!length(object)) {
+    cond.len <- length(object)
+    if(!cond.len) {
       cat("Empty condition list\n")
       return(invisible(object))
+    } else {
+      word_cat(
+        "Condition list with", cond.len,
+        paste0("condition", if(cond.len > 1) "s", ":")
+      )
     }
     out <- paste0(
       format(seq_along(object)), ": ",
@@ -151,9 +151,12 @@ setMethod("show", "conditionList",
     if(any(print.show)) {
       out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
     }
+    out <- c(out)
     cat(out, sep="\n")
+    cat("Access a condition directly with `[[` (e.g. `conditions[[1L]]`)\n")
     return(invisible(object))
-} )
+  }
+)
 #' Extracts Condition Type From Condition Classes
 #'
 #' Type (e.g. Error, Warning), is taken to be the second to last class.

@@ -11,7 +11,7 @@
 <meta name="author" content="Brodie Gaslam" />
 
 
-<title>unitizeR - The Interative Environment</title>
+<title>unitizeR - The Interactive Environment</title>
 
 
 
@@ -25,7 +25,7 @@
 
 
 <div id="header">
-<h1 class="title">unitizeR - The Interative Environment</h1>
+<h1 class="title">unitizeR - The Interactive Environment</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
 </div>
 
@@ -63,9 +63,12 @@
 <h3>Example Set-up</h3>
 <p>To examine the interactive environment more thoroughly we will go back to the demo. This is the <code>unitizer</code> prompt right after our first failed test when our <code>unitizer.fastlm</code> implementation was returning the wrong values:</p>
 <pre><code>&gt; get_slope(res)
-Test Failed Because:
-Value mismatch: Mean relative difference: 6943055624
-unitizer&gt;</code></pre>
+unitizer test fails on value mismatch:
+*value* mismatch: Mean relative difference: 6943055624
+@@ .ref @@
+-    [1] 101
+@@ .new @@
++    [1] 701248618125</code></pre>
 </div>
 </div>
 <div id="unitizer-commands" class="section level2">
@@ -129,9 +132,20 @@ unitizer&gt;</code></pre>
 <p>If we type 2 at the prompt, we get:</p>
 <pre><code>unitizer&gt; 2
 You are re-reviewing a test; previous selection was: &quot;N&quot;
+# first reviewable expression
 &gt; res
-Test Failed Because:
-Value mismatch: Mean relative difference: 19854602162
+unitizer test fails on value mismatch:
+*value* mismatch: Mean relative difference: 19864853591
+@@ .ref @@
+-       intercept        slope          rsq
+-    -1717.000000   101.000000     0.938679
+-    attr(,&quot;class&quot;)
+-    [1] &quot;fastlm&quot;
+@@ .new @@
++        intercept         slope           rsq
++    -3.541306e+13  7.012486e+11  9.386790e-01
++    attr(,&quot;class&quot;)
++    [1] &quot;fastlm&quot;
 unitizer&gt;</code></pre>
 <p><code>unitizer</code> tells us we are re-reviewing this test and that previously we had chosen not to keep the new version. At this point we could re-examine the test, and potentially change our previous selection.</p>
 <p>You can jump ahead to any test from the review menu, even tests that are typically not reviewed (i.e. ignored or passed, though if you go to those you will be brought back to the review menu once you complete the review because those tests are not part of the normal review flow).</p>
@@ -172,41 +186,40 @@ unitizer&gt;</code></pre>
 <ul>
 <li>Even though you can see objects produced by tests, you can not actually remove them with <code>rm</code></li>
 <li>Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts</li>
-<li>Other subtle issues discussed at length in the (<a href="vgn06nittygritty.html">estoeric topics vignette</a>)</li>
-<li>There are special <code>unitizer</code> objects <code>.new</code> and <code>.ref</code> that let you review the results of tests (we will discuss these next)</li>
+<li>Other subtle issues discussed at length in the (<a href="vgn06nittygritty.html">esoteric topics vignette</a>)</li>
+<li>There are special <code>unitizer</code> objects <code>.new</code>, <code>.NEW</code>, <code>.ref</code>, and <code>.REF</code> that let you review the results of tests (we will discuss these next)</li>
 <li><code>ls</code> is over-ridden by a special <code>unitizer</code> version (we will also dicuss this next)</li>
 </ul>
 </div>
 <div id="new-and-.ref" class="section level3">
 <h3><code>.new</code> and <code>.ref</code></h3>
 <p>As we saw in the demo there are special objects available at the prompt: <code>.new</code> (except for removed/deleted tests), and for all but new tests, <code>.ref</code>. These objects contain the values produced by the newly evaluated test (<code>.new</code>) and by the test when it was previously run and accepted (<code>.ref</code>). <code>.new</code> might seem a bit superfluous since the user can always re-evaluate the test expression at the <code>unitizer</code> prompt to review the value, but if that evaluation is slow you can save a little time by using <code>.new</code>. <code>.ref</code> is the only option you have to see what the test used to produce back when it was first accepted into the <code>unitizer</code> store.</p>
-<p><code>.new</code> and <code>.ref</code> contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation. To do so you can use the <code>get*</code> accessor functions in conjunction with the <code>.new</code> or <code>.ref</code> objects:</p>
+<p><code>.new</code> and <code>.ref</code> contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation. To do so you can use <code>.NEW</code> and <code>.REF</code>:</p>
 <ul>
-<li><code>getTest(.new)</code> gets general information about the test</li>
-<li><code>getVal(.new)</code> returns the test value; equivalent to typing <code>.new</code> at the prompt</li>
-<li><code>getConds(.new)</code> returns the list of conditions produced by the test</li>
-<li><code>getMsg(.new)</code> returns the stderr captured during test evaluation</li>
-<li><code>getOut(.new)</code> returns the screen output captured during test evaluation (note often this will be similar to what you get from <code>.new</code> or <code>getVal(.new)</code> since typing those expressions at the prompt leads to the value being printed)</li>
-<li><code>getExpr(.new)</code> returns the test expression (do not confuse this with <code>getCall</code>, a built-in R function with no relation to <code>unitizer</code>)</li>
-<li><code>getAborted(.new)</code> returns whether the test expression invoked an “abort” restart (e.g. called <code>stop</code> at some point)</li>
+<li><code>.NEW</code> prints general information about the test</li>
+<li><code>.NEW$value</code> returns the test value; equivalent to typing <code>.new</code> at the prompt</li>
+<li><code>.NEW$conditions</code> returns the list of conditions produced by the test</li>
+<li><code>.NEW$messsage</code> returns the stderr captured during test evaluation</li>
+<li><code>.NEW$output</code> returns the screen output captured during test evaluation (note often this will be similar to what you get from <code>.new</code> or <code>.NEW$value</code> since typing those expressions at the prompt leads to the value being printed)</li>
+<li><code>.NEW$call</code> returns the test expression</li>
+<li><code>.NEW$aborted</code> returns whether the test expression invoked an “abort” restart (e.g. called <code>stop</code> at some point)</li>
 </ul>
-<p>You can substitute <code>.ref</code> for <code>.new</code> in any of the above, provided that <code>.ref</code> is defined (i.e. that won’t work when you are reviewing new tests since there is no corresponding reference test for those by definition).</p>
+<p>You can substitute <code>.REF</code> for <code>.NEW</code> in any of the above, provided that <code>.REF</code> is defined (i.e. that will not work when you are reviewing new tests since there is no corresponding reference test for those by definition).</p>
 </div>
 <div id="ls" class="section level3">
 <h3><code>ls</code></h3>
 <p>Using <code>ls</code> at the <code>unitizer</code> prompt calls an <code>unitizer</code> version of the function. This is what happens when we type <code>ls()</code> at the first failed test in the <code>unitizer</code> we’ve been reviewing in this vignette:</p>
-<pre><code>unitizer&gt; ls()
-$`objects in new test env:`
+<pre><code>$`objects in new test env:`
 [1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;
 
 $`objects in ref test env:`
 [1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;
 
 $`unitizer objects:`
-[1] &quot;.new&quot; &quot;.ref&quot;
+[1] &quot;.new&quot; &quot;.NEW&quot; &quot;.ref&quot; &quot;.REF&quot;
 
-Use `ref(obj_name)` to access reference objects.
-`.new` / `.ref` for test value, `getTest(.new)` / `getTest(.ref)` for details.
+Use `ref(.)` to access objects in ref test env
+`.new` / `.ref` for test value, `.NEW` / `.REF` for details.
 unitizer&gt;</code></pre>
 <p>This special version of <code>ls</code> highlights that our environment is more complex than that at the typical R prompt. This is necessary to allow us to review both the newly evaluated objects as well as the objects from the reference <code>unitizer</code> store to compare them for differences. For instance, in this example, we can see that there are both new and reference copies of the <code>res</code>, <code>x</code>, and <code>y</code> objects. The reference copies are from the previous time we ran <code>unitizer</code>. <code>ls</code> also notes what <code>unitizer</code> special objects are available.</p>
 <p>When you type at the prompt the name of one of the objects <code>ls</code> lists, you will see the newly evaluated version of that variable. If you wish to see the reference value, then use the <code>ref</code> function:</p>

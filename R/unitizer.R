@@ -264,7 +264,6 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     item.new <- e2
     slot.names <- slotNames(getClass(item.new@data))
     test.result.tpl <- tests_result_mat(1L)
-    names(test.result.tpl) <- slot.names
     test.error.tpl <- vector("list", length(slot.names))
     names(test.error.tpl) <- slot.names
     item.map <- tail(e1@items.new.map, 1L)
@@ -290,9 +289,10 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 
       test.status <- "Pass"
       test.result <- test.result.tpl
+      if(nrow(test.result) != 1L)
+        stop("Logic Error: tpl matrix should be one row; contact maintainer.")
 
       for(i in slot.names) {
-        # if(identical(i, "conditions")) browser()
         comp.fun.name <- slot(section@compare, i)@fun.name
         comp.fun.anon <- isTRUE(is.na(comp.fun.name))
         if(comp.fun.anon) comp.fun.name <- "<anon.FUN>"
@@ -323,36 +323,41 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
             ),
             class=c("testItemTestFail")
         ) )
+        if(isTRUE(test.res)) {
+          test.result[1L, i] <- TRUE
+          next
+        }
+        # Comparison failed
+
+        err.tpl <- new(
+          "unitizerItemTestError", .new=item.new.dat, .ref=item.ref.dat
+        )
         err.msg <- paste0("comparison function `", comp.fun.name, "`")
+
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
           test.cond <- head(tail(test.res$cond.class, 2L), 1L)
           if(!length(test.cond)) test.cond <- "<unknown>"
-          test.error.tpl[[i]] <- new(
-            "unitizerItemTestError",
-            value=paste0(
-              err.msg, " signaled a condition of type \"", test.cond
-              , "\", with message \"", test.res$msg, "\" and call `",
-              paste0(deparse(test.res$call), collapse=""), "`."
-            ),
-            compare.err=TRUE
+          err.tpl@value <- paste0(
+            err.msg, " signaled a condition of type \"", test.cond
+            , "\", with message \"", test.res$msg, "\" and call `",
+            paste0(deparse(test.res$call), collapse=""), "`."
           )
-        } else if(isTRUE(test.res)) {
-          test.result[[i]] <- TRUE
-          next
+          err.tpl@compare.err <- TRUE
         } else if(is.character(test.res)) {
           if(identical(test.status, "Pass")) test.status <- "Fail"
-          test.error.tpl[[i]] <- new("unitizerItemTestError", value=test.res)
+          err.tpl@value <- test.res
         } else if(identical(test.res, FALSE)) {
           test.status <- "Fail"
-          test.error.tpl[[i]] <- new(
-            "unitizerItemTestError", value=paste0(err.msg, " found a mismatch")
-          )
+          err.tpl@value <- paste0(err.msg, " found a mismatch")
         } else {
           test.status <- "Error"
-          msg <- paste0(err.msg, " returned something other than TRUE or character vector")
-          test.error.tpl[[i]] <- new("unitizerItemTestError", value=msg, compare.err=TRUE)
+          err.tpl@value <- paste0(
+            err.msg, " returned something other than TRUE or character vector"
+          )
+          err.tpl@compare.err <- TRUE
         }
+        test.error.tpl[[i]] <- err.tpl
         if(identical(i, "conditions")) {  #only failed/error tests get this far
           if(length(item.new@data@conditions))  # if a mismatch, and new conditions, we'll want to show these
             tests.conditions.new <- TRUE

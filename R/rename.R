@@ -11,7 +11,10 @@ setGeneric("edit_fun_names", function(x, fun.name.old, fun.name.new, ...)
 
 setMethod("edit_fun_names", c("unitizer", "name", "name"),
   function(x, fun.name.old, fun.name.new, ...) {
-
+    warning(
+      "This is an experimental function; make sure you backup any unitizers ",
+      "you edit with this"
+    )
     call_sub <- function(call, old.name, new.name) {
       if(is.call(call)) {
         if(identical(call[[1L]], old.name)) call[[1L]] <- new.name

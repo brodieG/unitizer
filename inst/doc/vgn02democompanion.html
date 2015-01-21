@@ -43,6 +43,7 @@
 <li><a href="#initial-run">Initial Run</a></li>
 <li><a href="#second-run-check-for-regressions">Second Run – Check For Regressions</a></li>
 <li><a href="#third-run-fix-problems">Third Run – Fix Problems</a></li>
+<li><a href="#epilogue">Epilogue</a></li>
 </ul>
 </div>
 
@@ -76,7 +77,9 @@ demo(unitizer)</code></pre>
 <pre><code>&gt; {
 +   if(!require(devtools)) stop(&quot;Package `devtools` is required for this demo.&quot;)
 +   library(unitizer)
-+   if(exists(&quot;.unitizer.test.file&quot;)) stop(&quot;Cannot run if variable `.unitizer.test.file` is defined&quot;)
++   if(exists(&quot;.unitizer.test.file&quot;)) {
++   ... several lines omitted ...
++   }
 + }
 
 &gt; # In this script we will demonstrate the `unitize` workflow by running `unitize`
@@ -145,8 +148,8 @@ demo(unitizer)</code></pre>
 <p>If there are any non-passed tests, as is the case here, <code>unitizer</code> will automatically bring up a prompt for review of the tests that require it, as is the case here:</p>
 <pre><code>- New -------------------------------------------------------------------------
 
-Test script contains tests not present in unitizer. Add new item to store (
-[Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+Test script contains tests not present in unitizer.  Add new test to store
+([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
 
 # Calls to `library` and assignments are not normally considered tests, so
 # you will not be prompted to review them
@@ -214,34 +217,37 @@ unitizer updated</code></pre>
 <p>Clearly something is wrong. Two tests failed. <code>unitizer</code> prompts us to review the failed tests and decide whether to replace the existing tests with the new ones:</p>
 <pre><code>- Failed ----------------------------------------------------------------------
 
-Reference test does not match new test from test script (compare `.new` and
-`.ref` to see differences). Overwrite item in store with new value ([Y]es,
-[N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
+Reference test does not match new test from test script.  Overwrite with new
+test ([Y]es, [N]o, [B]ack, [R]eview, [Q]uit, [H]elp)?
 
 &gt; res &lt;- fastlm(x, y)
 # first reviewable expression
 &gt; res
-Test Failed Because:
-Value mismatch: Mean relative difference: 19854602162
-unitizer&gt;</code></pre>
-<p><code>unitizer</code> is telling us the value of our test does not match the reference value. Notice at the top how <code>unitizer</code> suggests we use <code>.new</code> and <code>.ref</code> to compare our results. Consider:</p>
-<pre><code>unitizer&gt; .new
-    intercept         slope           rsq
--3.541306e+13  7.012486e+11  9.386790e-01
-attr(,&quot;class&quot;)
-[1] &quot;fastlm&quot;
-unitizer&gt; .ref
-   intercept        slope          rsq
--1717.000000   101.000000     0.938679
-attr(,&quot;class&quot;)
-[1] &quot;fastlm&quot;
-unitizer&gt;</code></pre>
-<p><code>.new.</code> and <code>.ref</code> are special objects created by <code>unitizer</code> to allow us to easily compare our new test results to previously stored test results. By using them here it becomes obvious that both our intercept and slope calculations are completely wrong in our updated package. The rsq value looks correct though. We could also have re-evaluated our test instead of typing <code>.new</code> at the prompt, but if the computation is slow using <code>.new</code> avoids recomputation. The only way to get the original value is with <code>.ref</code></p>
-<p>Since this new test is wrong, we will reject it as well as the subsequent related tests by typing N at the prompt:</p>
+unitizer test fails on value mismatch:
+*value* mismatch: Mean relative difference: 19854602162
+@@ .ref @@
+-       intercept        slope          rsq
+-    -1717.000000   101.000000     0.938679
+-    attr(,&quot;class&quot;)
+-    [1] &quot;fastlm&quot;
+@@ .new @@
++        intercept         slope           rsq
++    -3.541306e+13  7.012486e+11  9.386790e-01
++    attr(,&quot;class&quot;)
++    [1] &quot;fastlm&quot;</code></pre>
+<p><code>unitizer</code> is telling us the value of our test does not match the reference value, and displays them to screen for us to inspect. The text decoration around the ouput borrows loosely from the <code>git diff</code> output, using “+/-” to indicate which values will be added/removed from the <code>unitizer</code> store if the new test is accepted.</p>
+<p>Between the @<span class="citation">@s</span> you’ll notice <code>.new</code> and <code>.ref</code>. This is not an accident; <code>.new</code> contains the result of the evaluation of the new test, and <code>.ref</code> the result of the original evaluation. This allows you to use the objects for your own comparisons:</p>
+<pre><code>unitizer&gt; all.equal(.ref, .new)
+[1] &quot;Mean relative difference: 19854602162&quot;</code></pre>
+<p>Once we have had a chance to review, we need to tell <code>unitizer</code> what to do. Since this new test is wrong, we will reject it as well as the subsequent related tests by typing N at the prompt:</p>
 <pre><code>unitizer&gt; N
 &gt; get_slope(res)
-Test Failed Because:
-Value mismatch: Mean relative difference: 6943055624
+unitizer test fails on value mismatch:
+*value* mismatch: Mean relative difference: 6943055624
+@@ .ref @@
+-    [1] 101
+@@ .new @@
++    [1] 701248618125
 unitizer&gt; N
 = Finalize Unitizer ===========================================================
 
@@ -266,6 +272,10 @@ unitizer&gt;</code></pre>
 All tests passed.
 unitizer store unchanged</code></pre>
 <p>Success! Since all our tests passed we know that our functionality is implemented properly. We can now comfortably make further modifications to <code>unitizer.fastlm</code> knowing that any regressions we introduce to existing functionality will be detected by <code>unitize</code>.</p>
+</div>
+<div id="epilogue" class="section level2">
+<h2>Epilogue</h2>
+<p>At the end of the DEMO there are some cleanup commands run, as well as some benchmarks to show that <code>unitizer.fastlm</code> is indeed relative fast for the simple computations it is intended for.</p>
 </div>
 
 
