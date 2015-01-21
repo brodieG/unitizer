@@ -273,7 +273,7 @@ unitizer test fails on value mismatch:
 
 `unitizer` is telling us the value of our test does not match the reference value, and displays them to screen for us to inspect.  The text decoration around the ouput borrows loosely from the `git diff` output, using "+/-" to indicate which values will be added/removed from the `unitizer` store if the new test is accepted.
 
-Between the "@@"s you'll notice `.new` and `.ref`.  This is not an accident; `.new` contains the result of the evaluation of the new test, and `.ref` the result of the original evaluation.  This allows you to use the objects for your own comparisons:
+Between the @@s you'll notice `.new` and `.ref`.  This is not an accident; `.new` contains the result of the evaluation of the new test, and `.ref` the result of the original evaluation.  This allows you to use the objects for your own comparisons:
 
 ```
 unitizer> all.equal(.ref, .new)
@@ -284,7 +284,6 @@ Once we have had a chance to review, we need to tell `unitizer` what to do.  Sin
 
 ```
 unitizer> N
-unitizer> N
 > get_slope(res)
 unitizer test fails on value mismatch:
 *value* mismatch: Mean relative difference: 6943055624
@@ -292,7 +291,8 @@ unitizer test fails on value mismatch:
 -    [1] 101
 @@ .new @@
 +    [1] 701248618125
-unitizer> N= Finalize Unitizer ===========================================================
+unitizer> N
+= Finalize Unitizer ===========================================================
 
 You didn't accept any changes so there are no items to store.
 Exit unitizer ([Y]es, [B]ack, [R]eview)?
@@ -321,3 +321,7 @@ unitizer store unchanged
 ```
 
 Success! Since all our tests passed we know that our functionality is implemented properly.  We can now comfortably make further modifications to `unitizer.fastlm` knowing that any regressions we introduce to existing functionality will be detected by `unitize`.
+
+## Epilogue
+
+At the end of the DEMO there are some cleanup commands run, as well as some benchmarks to show that `unitizer.fastlm` is indeed relative fast for the simple computations it is intended for.

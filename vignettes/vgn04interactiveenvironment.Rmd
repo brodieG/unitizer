@@ -1,5 +1,5 @@
 ---
-title: "unitizeR - The Interative Environment"
+title: "unitizeR - The Interactive Environment"
 author: "Brodie Gaslam"
 output:
     rmarkdown::html_vignette:
@@ -174,7 +174,7 @@ There are, however, some suble differences created by the structure of the evalu
 
 * Even though you can see objects produced by tests, you can not actually remove them with `rm`
 * Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts
-* Other subtle issues discussed at length in the ([estoeric topics vignette](vgn06nittygritty.html))
+* Other subtle issues discussed at length in the ([esoteric topics vignette](vgn06nittygritty.html))
 * There are special `unitizer` objects `.new`, `.NEW`, `.ref`, and `.REF` that let you review the results of tests (we will discuss these next)
 * `ls` is over-ridden by a special `unitizer` version (we will also dicuss this next)
 
