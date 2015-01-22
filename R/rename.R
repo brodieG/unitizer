@@ -1,5 +1,3 @@
-#' @rdname edit_fun_names,unitizer,name,name-method
-#' @export
 
 setGeneric("edit_fun_names", function(x, fun.name.old, fun.name.new, ...)
   standardGeneric("edit_fun_names")
@@ -12,8 +10,8 @@ setGeneric("edit_fun_names", function(x, fun.name.old, fun.name.new, ...)
 #' @param x a unitizer object
 #' @param fun.name.old the name of the function replace
 #' @param fun.name.new the new name of the function
+#' @param ... unused
 #' @return a untizer object with function names modifies
-#' @export
 
 setMethod("edit_fun_names", c("unitizer", "name", "name"),
   function(x, fun.name.old, fun.name.new, ...) {
