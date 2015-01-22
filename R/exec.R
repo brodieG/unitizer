@@ -114,7 +114,7 @@ eval_user_exp <- function(unitizerUSEREXP, env ) {
         NULL
       },
       condition=function(cond) {
-        attr(cond, "printed") <- passed.eval
+        attr(cond, "unitizer.printed") <- passed.eval
         conditions[[length(conditions) + 1L]] <<- cond
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()

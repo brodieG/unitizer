@@ -38,52 +38,31 @@ setMethod("all.equal", "conditionList",
       !all(vapply(as.list(current), inherits, FALSE, "condition"))
     ) return("`target` or `current` are not both lists of conditions")
 
-    print.show.err <- paste0(
-      "Condition mismatch may involve print/show methods; carefully review ",
-      "conditions with `.NEW$conditions` and `.REF$conditions` as just ",
-      "typing `.ref` or `.new` at the prompt will invoke print/show methods, ",
-      "which themselves may be the cause of the mismatch."
-    )
     if(length(target) != length(current)) {
       return(
-        c(
-          paste0(
-            "condition count mismatch; expected ",length(target), " (got ",
-            length(current), ")"
-          ),
-          if(
-            any(
-              unlist(lapply(as.list(append(target, current)), attr, "printed")
-            ) )
-          ) {
-            print.show.err
-          }
+        paste0(
+          "Condition count mismatch; expected ",length(target), " (got ",
+          length(current), ")"
     ) ) }
     cond.len <- min(length(target), length(current))
 
     res <- lapply(
-      seq(len=cond.len),
-      function(x) {
-        target.printed <- isTRUE(attr(target[[x]], "printed"))
-        current.printed <- isTRUE(attr(current[[x]], "printed"))
-        if(!is.null(attr(target[[x]], "printed"))) attr(target[[x]], "printed") <- NULL
-        if(!is.null(attr(current[[x]], "printed"))) attr(current[[x]], "printed") <- NULL
-
-        err.msg <- all.equal(target[[x]], current[[x]])
-        if(!isTRUE(err.msg) && (target.printed || current.printed)) {
-          err.msg <- c(err.msg, print.show.err)
-        }
-        err.msg
-    } )
-    errs <- which(vapply(res, is.character, logical(1L)))
-    if((err.len <- length(errs)) == 1L) {
-      err.msg <- "There is one condition mismatch:"
-    } else  {
-      err.msg <- paste0("There are ", err.len, " condition mismatches:")
+      seq(len=cond.len), function(x) all.equal(target[[x]], current[[x]])
+    )
+    errs <- which(vapply(res, Negate(isTRUE), logical(1L)))
+    if(!(err.len <- length(errs))) {
+      return(TRUE)
+    } else if (err.len == 1) {
+      err.msg <- paste0(
+        "There is one condition mismatch at index [[", errs, "]]"
+      )
+    } else {
+      err.msg <- paste0(
+        "There are ", err.len, " condition mismatches, first one at index [[",
+        errs[[1]],"]]"
+      )
     }
     if(err.len) return(err.msg)
-    if(all(unlist(res))) return(TRUE)
-    stop("Logic Error, unexpected return values from comparison function.")
 } )
 #' Compare Conditions
 #'
@@ -96,21 +75,41 @@ setMethod("all.equal", "conditionList",
 all.equal.condition <- function(target, current, ...) {
   if(!inherits(target, "condition") || !inherits(current, "condition"))
     return("One of `target` or `current` is not a condition")
+
+  target.printed <- isTRUE(attr(target, "unitizer.printed"))
+  current.printed <- isTRUE(attr(current, "unitizer.printed"))
+
+  if(!is.null(attr(target, "unitizer.printed"))) attr(target, "unitizer.printed") <- NULL
+  if(!is.null(attr(current, "unitizer.printed"))) attr(current, "unitizer.printed") <- NULL
+
+  err.msg <- character()
   if(
     !identical(
       type.targ <- get_condition_type(target),
       type.curr <- get_condition_type(current)
     )
   ) {
-    return(
-      paste0(
-        "Condition type mismatch, `target` (a.k.a. `.ref`) is '", type.targ,
-        "', but `current` (a.k.a. `.new`) is '", type.curr, "'"
-  ) ) }
-  if(!isTRUE(all.equal(conditionMessage(target), conditionMessage(current))))
-    return(paste0(type.targ, " condition messages do not match"))
-  if(!isTRUE(all.equal(conditionCall(target), conditionCall(current))))
-    return(paste0(type.targ, " condition calls do not match"))
+    err.msg <- paste0(
+      "Condition type mismatch, `target` is '", type.targ,
+      "', but `current` is '", type.curr, "'"
+    )
+  } else if(
+    !isTRUE(all.equal(conditionMessage(target), conditionMessage(current)))
+  ) {
+    err.msg <- paste0(type.targ, " condition messages do not match")
+  } else if(!isTRUE(all.equal(conditionCall(target), conditionCall(current)))) {
+    err.msg <- paste0(type.targ, " condition calls do not match")
+  }
+  if(length(err.msg) && (target.printed || current.printed)) {
+    print.show.err <- paste0(
+      "Condition mismatch may involve print/show methods; carefully review ",
+      "conditions with `.NEW$conditions` and `.REF$conditions` as just ",
+      "typing `.ref` or `.new` at the prompt will invoke print/show methods, ",
+      "which themselves may be the cause of the mismatch"
+    )
+    err.msg <- c(err.msg, print.show.err)
+  }
+  if(length(err.msg)) return(err.msg)
   TRUE
 }
 #' Prints A list of Conditions
@@ -136,7 +135,7 @@ setMethod("show", "conditionList",
     out <- paste0(
       format(seq_along(object)), ": ",
       ifelse(
-        print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "printed")), logical(1L)),
+        print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "unitizer.printed")), logical(1L)),
         "[print] ", ""
       ),
       vapply(as.list(object), get_condition_type, character(1L)),
