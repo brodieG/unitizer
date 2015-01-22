@@ -122,6 +122,8 @@ setMethod("as.character", "unitizerItemTestsErrors",
     } }
     chr
 } )
+#' Display Test Errors
+#' @keywords internal
 
 setMethod("show", "unitizerItemTestsErrors",
   function(object) {
@@ -135,9 +137,9 @@ setMethod("show", "unitizerItemTestsErrors",
         paste0("*", i, "* mismatch: ")
       }
       if(length(curr.err@value) < 2L) {
-        chr <- paste0(mismatch, curr.err@value)
+        chr <- paste0(mismatch, decap_first(curr.err@value))
       } else {
-        chr <- c(mismatch, paste0("  + ", curr.err@value))
+        chr <- c(mismatch, paste0("  + ", decap_first(curr.err@value)))
       }
       for(chr.val in chr) word_cat(chr.val, file=stderr())
 
