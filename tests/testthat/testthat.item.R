@@ -168,33 +168,31 @@ local( {
   test_that("ls works", {
     # This is an ignored test, so there will be some problems
 
-    env.obj <- new.env(parent=my.unitizer5@items.new[[3]]@env)
-    env.val <- new.env(parent=env.obj)
+    env.val <- new.env(parent=my.unitizer5@items.new[[3]]@env)
     env.eval <- new.env(parent=env.val)
-    assign(".new", my.unitizer5@items.new[[3]], env.obj)
+    assign(".NEW", my.unitizer5@items.new[[3]], env.val)
     assign(".new", my.unitizer5@items.new[[3]]@data@value, env.val)
-    assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]], env.obj)
+    assign(".REF", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]], env.val)
     assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]]@data@value, env.val)
     expect_warning(
       evalq(unitizer:::unitizer_ls(), env.eval),
       "The ls output for `.ref` is invalid"
     )
     expect_equal(  # Reference tests won't show up since they were nuked by `healEnvs`
-      evalq(unitizer:::unitizer_ls(), env.eval),
-      structure(list(new = c("a", "b"), tests = c(".new", ".ref")), .Names = c("new", "tests"), class = "unitizer_ls", mods = character(0))
+      structure(list(new = c("a", "b"), tests = c(".new", ".NEW", ".ref", ".REF")), .Names = c("new", "tests"), class = "unitizer_ls", mods = character(0)),
+      evalq(unitizer:::unitizer_ls(), env.eval)
     )
     # These are normal tests so should work
 
-    env.obj <- new.env(parent=my.unitizer5@items.new[[9]]@env)
-    env.val <- new.env(parent=env.obj)
+    env.val <- new.env(parent=my.unitizer5@items.new[[9]]@env)
     env.eval <- new.env(parent=env.val)
-    assign(".new", my.unitizer5@items.new[[9]], env.obj)
+    assign(".NEW", my.unitizer5@items.new[[9]], env.val)
     assign(".new", my.unitizer5@items.new[[9]]@data@value, env.val)
-    assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]], env.obj)
+    assign(".REF", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]], env.val)
     assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]]@data@value, env.val)
     expect_equal(
-      evalq(unitizer:::unitizer_ls(), env.eval),
-      structure(list(new = c("a", "b", "e", "f", "howdy"), ref = c("a",  "b", "e", "f", "howdy"), tests = c(".new", ".ref")), .Names = c("new",  "ref", "tests"), class = "unitizer_ls", mods = character(0))
+      structure(list(new = c("a", "b", "e", "f", "howdy"), ref = c("a", "b", "e", "f", "howdy"), tests = c(".new", ".NEW", ".ref", ".REF")), .Names = c("new", "ref", "tests"), class = "unitizer_ls", mods = character(0)),
+      evalq(unitizer:::unitizer_ls(), env.eval)
     )
   } )
   # Test that reference tests moving around doesn't cause major issues
@@ -270,7 +268,7 @@ local( {
 
   test_that("No circular environment references", {
     expect_equal(
-      structure(c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE), .Dim = 5:6, .Dimnames = list(c("test.result", "test.result", "", "test.result", "test.result"), c("", "value", "conditions", "output", "message", "aborted"))),
+      structure(c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE), .Dim = 5:6, .Dimnames = list(NULL, c("", "value", "conditions", "output", "message", "aborted"))),
       cbind(my.unitizer7@tests.new, my.unitizer7@tests.result)
     )
   } )
