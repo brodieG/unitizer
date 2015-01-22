@@ -14,7 +14,7 @@ NULL
 #' @keywords internal
 #' @return list of object names, or a list with environments containing the objects
 
-unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
+unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
    all.names = FALSE, pattern
 ) {
   if(!missing(pos) || !missing(name) || !missing(envir))
@@ -23,8 +23,8 @@ unitizer_ls <- function(name, pos = -1L, envir = as.environment(pos),
       "using the `name`, `pos`, or `envir` arguments to `ls`; you can use standard ",
       "`ls` with `base::ls`."
     )
-  new.item <- try(get(".NEW", parent.env(parent.frame())), silent=T)
-  ref.item <- try(get(".REF", parent.env(parent.frame())), silent=T)
+  new.item <- try(get(".NEW", parent.env(envir)), silent=T)
+  ref.item <- try(get(".REF", parent.env(envir)), silent=T)
 
   ls.lst <- list()
   ls.test <- mods <- character()
