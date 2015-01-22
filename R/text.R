@@ -26,14 +26,19 @@ screen_out <- function(
 #' @keywords internal
 
 obj_out <- function(
-  obj, type, width=getOption("width"),
+  obj, add, extra, width=getOption("width"),
   max.len=getOption("unitizer.test.fail.out.lines"), file=stdout()
 ) {
-  obj.out <- obj_capt(obj, width, max.len)
-  obj_chr_out(obj.out, type, file)
+  pre <- if(add) "+   " else "-   "
+  obj.out <- obj_capt(obj, width - nchar(pre[[1L]]))
+  obj_chr_out(
+    obj.out, add, extra=extra, file=file, max.len=max.len,
+    width=width - nchar(pre[[1L]])
+  )
 }
 obj_chr_out <- function(
-  obj.out, add=TRUE, file=stdout(), extra=".new",
+  obj.out, add=TRUE, file=stdout(), extra=".new", pre="+   ",
+  width=getOption("width"),
   max.len=getOption("unitizer.test.fail.out.lines")
 ) {
   if(!is.logical(add) || length(add) != 1L || is.na(add))
@@ -45,15 +50,19 @@ obj_chr_out <- function(
   if(!length(obj.out)) return(invisible(character(1L)))
   max.len <- pmax(max.len, c(1L, 1L))
   if(length(obj.out) > max.len[[1L]]) {
-    obj.out <- c(
-    obj.out[1:max.len[[2L]]],
-    paste0(
-      "... truncated ", length(obj.out) - max.len[[2L]],
-      " lines, use `", extra, "` to see full result."
-  ) ) }
-  pre <- if(add) "+   " else "-   "
+    obj.out <- obj.out[1:max.len[[2L]]]
+    addendum <-
+      paste0(
+        "... truncated ", length(obj.out) - max.len[[2L]],
+        " lines, use `", extra, "` to see full result."
+  ) }
   res <- paste(pre, obj.out)
   cat(res, sep="\n", file=file)
+  width.old <- getOption("width")
+  on.exit(option(width=width.old))
+  option(width=width)
+
+
   invisible(res)
 }
 obj_capt <- function(obj, width=getOption("width")) {
@@ -63,7 +72,7 @@ obj_capt <- function(obj, width=getOption("width")) {
   on.exit(options(width=width.old))
   width <- max(width, 10L)
 
-  options(width=width - 4L)
+  options(width=width)
   obj.out <- capture.output(if(isS4(obj)) show(obj) else print(obj))
   options(width=width.old)
   on.exit(NULL)
@@ -135,6 +144,142 @@ strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE)
   if(len.target < 1L) stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
   ifelse(nchar(x) <= nchar.max, x, paste0(substr(x, 1, len.target), ctd))
 }
+#' Wrap Text At Fixed Column Width
+#'
+#' Some day this should be upgraded to break at whitespaces or use hyphens
+#' instead of wrapping arbitrarily at spec'ed width
+#'
+#' @keywords internal
+#' @param x character vector
+#' @param width integer vector with
+#' @return a list with, for each item in \code{`x`}, a character vector
+#'   of the item wrapped to length \code{`width`}
+
+text_wrap <- function(x, width) {
+  if(
+    !is.character(x) || !is.numeric(width) || any(width < 1L) ||
+    !identical(round(width), as.numeric(width))
+  ) {
+    stop("Arguments `x` and `width` must be character and integer like (all values >= 1) respectively")
+  }
+  if(!identical((length(x) %% length(width)), 0L)) {
+    stop("Argument `x` must be a multiple in length of argument `width`")
+  }
+  mapply(
+    unclass(x), width, SIMPLIFY=FALSE,
+    FUN=function(x.sub, width.sub) {
+      breaks <- ceiling(nchar(x.sub) / width.sub)
+      substr(
+        rep(x.sub, breaks),
+        start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
+) } ) }
+
+#' Wrap Lines at Words
+#'
+#' Similar to \code{\link{text_wrap}}, but only allows one length width and
+#' breaks lines at words if possible.
+#'
+#' Will attempt to hyphenate very crudely.
+#'
+#' @param x character vector
+#' @param width what width to wrap at
+#' @param tolerance how much earlier than \code{width} we're allowed to wrap
+#' @param hyphens whether to allow hyphenation
+#' @return character
+
+word_wrap <- function(x, width, tolerance=8L, hyphens=TRUE) {
+  if(!is.character(x) || !is.integer(width) || length(width) != 1L || is.na(width))
+    stop("Invalid arguments")
+  stopifnot(
+    is.integer(tolerance) && length(tolerance) == 1L && !is.na(tolerance) &&
+    tolerance >= 0L
+  )
+  stopifnot(width > 4L && width - tolerance > 2L)
+  width <- as.integer(width)
+  x.exp <- unlist(strsplit(gsub("\n", "\n\n", x), "\n"))     # replace new lines with 0 char item
+  res <- character(as.integer(sum(nchar(x)) / width) * 1.2) # estimated result size
+  res.cnt <- 1
+
+  # Define patterns, should probably be done outside of function
+
+  let.vows <- c("a", "e", "i", "o", "u", "y")
+  let.vows <- c(let.vows, toupper(let.vows))
+  let.all <- c(letters, LETTERS)
+  let.cons <- let.all[!let.all %in% let.vows]
+
+  cons <- paste0("[", paste0(let.cons, collapse=""),"]")
+  cons.no.h <- paste0(
+    "[", paste0(let.cons[!let.cons %in% c("h", "H")], collapse=""),"]"
+  )
+  vows <- "[aeiouyAEIOUY]"
+  ltrs <- "[a-zA-Z]"
+  seps <- "[^a-zA-Z0-9']"
+  base.ptrn <- paste0(
+    "(?:",
+      "(?:(.*%s).{0,", max(tolerance - 1L, 0L), "}.)|",
+      "(?:(.*%s).{0,", tolerance, "})",
+    ")$"
+  )
+  spc.ptrn <- sprintf(base.ptrn, "\\s", "\\s")
+  non.alph.ptrn <- sprintf(base.ptrn, seps, seps)
+  hyph.base <- paste0(
+    "^(.*[A-Za-z]*%s[A-Za-z]*%s)%s[A-Za-z].{0,", tolerance, "}$"
+  )
+  hyph.ptrns <- c(
+    sprintf(hyph.base, vows, cons, cons.no.h),
+    sprintf(hyph.base, ltrs, cons, vows),
+    sprintf(hyph.base, ltrs, vows, cons),
+    sprintf(hyph.base, ltrs, vows, vows)
+  )
+  break_char <- function(x) {
+    lines.raw <- ceiling(nchar(x) / (width - tolerance))
+    res <- character(lines.raw + ceiling(lines.raw / (width - tolerance))) # for hyphens
+    res.idx <- 1
+
+    while(nchar(x)) {
+      pad <- 0L  # account for hyphen
+      if(nchar(x) > width) {
+        x.sub <- substr(x, 1L, width + 1L)
+        x.trim <- sub(spc.ptrn, "\\1\\2", x.sub)
+        matched <- grepl(spc.ptrn, x.sub)
+        if(!matched) {
+          x.trim <- sub(non.alph.ptrn, "\\1\\2", x.sub)
+          matched <- grepl(non.alph.ptrn, x.sub)
+        }
+        # Attempt to hyphenate
+
+        hyph.match <- FALSE
+        if(hyphens) {
+          if(!matched) {
+            for(pat in hyph.ptrns) {
+              x.trim <- sub(pat, "\\1", x.sub)
+              matched <- grepl(pat, x.sub)
+              if(matched) {
+                x.trim <- paste0(x.trim, "-")
+                pad <- 1L
+                break
+            } }
+        } }
+        if(!matched) x.trim <- substr(x, 1L, width)  # Failed, truncate
+
+        x.trim <- substr(x.trim, 1L, width)  # we allow one extra char for pattern matching in some cases, remove here
+        x <- sub(  # remove leading space if any
+          "^\\s(.*)", "\\1",
+          substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x))
+        )
+      } else {
+        x.trim <- x
+        x <- ""
+      }
+      res[[res.idx]] <- x.trim
+      res.idx <- res.idx + 1L
+    }
+    res[1L:(res.idx - 1L)]
+  }
+  unlist(lapply(x, break_char))
+}
+
+
 #' Cat but split by words to allow wrapping
 #'
 #' Parameters are the same as \code{`\link{cat}`}.  Word splitting and auto-fill
@@ -281,17 +426,22 @@ deparse_fun <- function(x) {
     character(0L)
   }
 }
-#' Captalizes First Letter
+#' Captalizes or Decapitalizes First Letter
 #'
 #' @keywords internal
+#' @aliases decap_first
 #' @param x character
 #' @return character
 
-cap_first <- function(x) {
+cap_first <- function(x) change_first(x, toupper)
+decap_first <- function(x) change_first(x, tolower)
+change_first <- function(x, fun) {
   if(!is.character(x)) stop("Argument `x` must be a character vector.")
   ifelse(
     nchar(x) > 2L,
-    paste0(substr(toupper(x), 1L, 1L), substr(x, 2L, nchar(x))),
-    ifelse(identical(nchar(x), 1L), substr(toupper(x), 1L, 1L), x)
+    paste0(substr(fun(x), 1L, 1L), substr(x, 2L, nchar(x))),
+    ifelse(nchar(x) == 1L, fun(x), x)
   )
 }
+
+
