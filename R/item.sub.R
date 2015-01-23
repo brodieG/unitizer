@@ -137,20 +137,17 @@ setMethod("show", "unitizerItemTestsErrors",
         paste0("*", i, "* mismatch: ")
       }
       if(length(curr.err@value) < 2L) {
-        chr <- paste0(mismatch, decap_first(curr.err@value))
+        word_cat(paste0(mismatch, decap_first(curr.err@value)), file=stderr())
       } else {
-        chr <- c(mismatch, paste0("  + ", decap_first(curr.err@value)))
+        word_cat(mismatch, file=stderr())
+        cat(as.character(UL(decap_first(curr.err@value))), sep="\n", file=stderr())
       }
-      for(chr.val in chr) word_cat(chr.val, file=stderr())
-
       make_cont <- function(x)
         if(identical(i, "value")) x else paste0(toupper(x), "$", i)
-      make_banner <- function(x) paste("@@", make_cont(x), "@@\n")
 
-      cat(make_banner(".ref"))
-      obj_chr_out(obj_capt(curr.err@.ref), extra=make_cont(".ref"), add=FALSE)
-      cat(make_banner(".new"))
-      obj_chr_out(obj_capt(curr.err@.new), extra=make_cont(".new"))
+      diff_obj_out(
+        curr.err@.ref, curr.err@.new, make_cont(".ref"), make_cont(".new")
+      )
     }
     invisible(NULL)
 } )

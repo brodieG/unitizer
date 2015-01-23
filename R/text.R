@@ -17,54 +17,59 @@ screen_out <- function(
         file=file
       )
 } } }
-#' Print an object to screen
+#' Show a Faux Diff Between Two Objects
 #'
-#' Similar to \code{\link{screen_out}}, but starts with an object instead of a
-#' character vector, and has more manipulation options.  Used primarily to allow
-#' us to show \code{.new} and \code{.ref} when tests fails
+#' The idea is to save the user the need to print out the objects to screen.
+#' This will print two objects to screen in a faux git diff look, focusing on a
+#' snippet of the object.
 #'
 #' @keywords internal
+#' @param obj.rem object to compare
+#' @param obj.add object to compare
+#' @param obj.rem.name object to compare
+#' @param obj.add.name object to compare
+#' @param width at what width to wrap output
+#' @param max.len 2 length integer vector with first value threshold at which we start trimming output
+#' @param file whether to show to stdout or stderr
+#' @aliases obj_capt obj_screen_out
 
-obj_out <- function(
-  obj, add, extra, width=getOption("width"),
-  max.len=getOption("unitizer.test.fail.out.lines"), file=stdout()
+diff_obj_out <- function(
+  obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
+  obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
+  max.len=getOption("unitizer.test.fail.out.lines"),
+  file=stdout()
 ) {
-  pre <- if(add) "+   " else "-   "
-  obj.out <- obj_capt(obj, width - nchar(pre[[1L]]))
-  obj_chr_out(
-    obj.out, add, extra=extra, file=file, max.len=max.len,
-    width=width - nchar(pre[[1L]])
-  )
-}
-obj_chr_out <- function(
-  obj.out, add=TRUE, file=stdout(), extra=".new", pre="+   ",
-  width=getOption("width"),
-  max.len=getOption("unitizer.test.fail.out.lines")
-) {
-  if(!is.logical(add) || length(add) != 1L || is.na(add))
-    stop("Argument `add` must be integer(1L) and not NA.")
-  if(!is.character(extra) || length(extra) != 1L)
-    stop("Argument `extra` must be character(1L).")
-  if(!is.numeric(max.len) || length(max.len) != 2L)
-    stop("Argument `max.len` must be a one long numeric/integer.")
-  if(!length(obj.out)) return(invisible(character(1L)))
-  max.len <- pmax(max.len, c(1L, 1L))
-  if(length(obj.out) > max.len[[1L]]) {
-    obj.out <- obj.out[1:max.len[[2L]]]
-    addendum <-
-      paste0(
-        "... truncated ", length(obj.out) - max.len[[2L]],
-        " lines, use `", extra, "` to see full result."
-  ) }
-  res <- paste(pre, obj.out)
-  cat(res, sep="\n", file=file)
-  width.old <- getOption("width")
-  on.exit(option(width=width.old))
-  option(width=width)
+  tar.width <- width - 4L
+  obj.add.capt <- obj_capt(obj.add, tar.width)
+  obj.rem.capt <- obj_capt(obj.rem, tar.width)
 
+  min.len <- min(length(obj.add.capt), length(obj.rem.capt))
+  diffs <-
+    gsub("\\s+", " ", obj.add.capt[1L:min.len]) !=
+    gsub("\\s+", " ", obj.rem.capt[1L:min.len])  # shouldn't have NAs
 
+  first.diff <- if(!any(diffs)) 1L else which(diffs)[[1L]]
+  if(first.diff < max.len[[2L]]) first.diff <- 1L   # don't advance if not needed to show first difference
+  if(first.diff > min.len - max.len[[1L]]) {        # could show more error, so will
+    first.diff <- max(1L, min.len - max.len[[1L]] + 1L)
+    max.len <- rep(max.len[[1L]], 2L)
+  }
+  cat(sep="\n",
+    res <- c(
+      obj_screen_chr(
+        obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
+        width=tar.width, pad="-   "
+      ),
+      obj_screen_chr(
+        obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
+        width=tar.width, pad="+   "
+      )
+  ) )
   invisible(res)
 }
+# @keywords internal
+# @rdname diff_obj_out
+
 obj_capt <- function(obj, width=getOption("width")) {
   if(!is.numeric(width) || length(width) != 1L)
     stop("Argument `width` must be a one long numeric/integer.")
@@ -78,6 +83,36 @@ obj_capt <- function(obj, width=getOption("width")) {
   on.exit(NULL)
   obj.out
 }
+# @keywords internal
+# @rdname diff_obj_out
+
+obj_screen_chr <- function(
+  obj.chr, obj.name, first.diff, max.len, width, pad
+) {
+  pre <- post <- NULL
+  extra <- paste0("; see `", obj.name, "`")
+  if(length(obj.chr) > max.len[[1L]] && first.diff > 1L) {
+    obj.chr <- tail(obj.chr, -(first.diff - 1L))
+    pre <- paste0("... omitted ", first.diff - 1L, " lines")
+  }
+  if((len <- length(obj.chr)) > max.len[[1L]]) {
+    obj.chr <- head(obj.chr, max.len[[2L]])
+    post <- paste0("... omitted ", len - max.len[[2L]], " lines")
+  }
+  if(!is.null(post)) {
+    post <- word_wrap(paste0(post, extra, " ..."), width)
+  }
+  if (!is.null(pre)) {
+    pre <- word_wrap(paste0(pre, if(is.null(post)) extra, " ..."), width)
+  }
+  c(
+    paste0("@@ ", obj.name, " @@"),
+    paste0(pad, c(pre, obj.chr, post))
+  )
+}
+
+
+
 #' Deparse, But Make It Look Like It Would On Prompt
 #'
 #' @keywords internal
@@ -185,9 +220,13 @@ text_wrap <- function(x, width) {
 #' @param width what width to wrap at
 #' @param tolerance how much earlier than \code{width} we're allowed to wrap
 #' @param hyphens whether to allow hyphenation
-#' @return character
+#' @param unlist logical(1L) if FALSE each element in \code{x} is returned as
+#'   an element of a list, otherwise one character vector is returned
+#' @return character vector, or list if \code{unlist} is FALSE
 
-word_wrap <- function(x, width, tolerance=8L, hyphens=TRUE) {
+word_wrap <- function(
+  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE
+) {
   if(!is.character(x) || !is.integer(width) || length(width) != 1L || is.na(width))
     stop("Invalid arguments")
   stopifnot(
@@ -196,9 +235,6 @@ word_wrap <- function(x, width, tolerance=8L, hyphens=TRUE) {
   )
   stopifnot(width > 4L && width - tolerance > 2L)
   width <- as.integer(width)
-  x.exp <- unlist(strsplit(gsub("\n", "\n\n", x), "\n"))     # replace new lines with 0 char item
-  res <- character(as.integer(sum(nchar(x)) / width) * 1.2) # estimated result size
-  res.cnt <- 1
 
   # Define patterns, should probably be done outside of function
 
@@ -236,6 +272,7 @@ word_wrap <- function(x, width, tolerance=8L, hyphens=TRUE) {
     res <- character(lines.raw + ceiling(lines.raw / (width - tolerance))) # for hyphens
     res.idx <- 1
 
+    if(!nchar(x)) return(x)
     while(nchar(x)) {
       pad <- 0L  # account for hyphen
       if(nchar(x) > width) {
@@ -276,47 +313,20 @@ word_wrap <- function(x, width, tolerance=8L, hyphens=TRUE) {
     }
     res[1L:(res.idx - 1L)]
   }
-  unlist(lapply(x, break_char))
+  x.exp <- unlist(strsplit(gsub("\n", "\n\n", x), "\n"))     # replace new lines with 0 char item
+  res <- lapply(x.exp, break_char)
+  if(unlist) unlist(res) else res
 }
-
-
-#' Cat but split by words to allow wrapping
-#'
-#' Parameters are the same as \code{`\link{cat}`}.  Word splitting and auto-fill
-#' only happens if the \code{`sep`} argument is not provided.
+#' Print To Screen Wrapping Words
 #'
 #' @keywords internal
-#' @seealso \code{`\link{cat}`}
+#' @seealso \code{\link{word_wrap}}
 
-word_cat <- function(..., fill=TRUE) {
-  par.frame <- parent.frame()
-  matched.args <- as.list(match.call(definition=cat, expand.dots=FALSE))[-1L]
-  if(!"fill" %in% names(matched.args)) matched.args <- c(matched.args, fill=fill)
-  if("sep" %in% names(matched.args)) {
-    matched.call <- match.call(definition=cat)
-    matched.call[[1]] <- quote(cat)
-    invisible(return(eval(matched.call, envir=par.frame)));
-  }
-  cat.args <- formals(cat)
-  args.to.parse <- c(
-    matched.args[setdiff(names(matched.args), names(cat.args))],
-    if("..." %in% names(matched.args)) matched.args[["..."]]
-  )
-  args.to.forward <- matched.args[
-    names(cat.args)[!names(cat.args) %in% "..." &
-    names(cat.args) %in% names(matched.args)]
-  ]
-  args.evaled <- try(
-    lapply(
-      args.to.parse,
-      function(x) {
-        x.eval <- eval(x, envir=par.frame)
-        if(is.character(x.eval)) unlist(strsplit(x.eval, " ")) else x.eval
-  } ) )
-  args.fwd.evaled <- try(lapply(args.to.forward, eval, par.frame))
-  if(inherits(args.evaled, "try-error") || inherits(args.fwd.evaled, "try-error"))
-    stop("Problem evaluating `...` arguments; see previous errors")
-  invisible(do.call(cat, c(args.fwd.evaled, args.evaled)))
+word_cat <- function(
+  ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
+) {
+  vec <- paste0(unlist(list(...)), collapse=sep)
+  invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
 #' Over-write a Line
 #'

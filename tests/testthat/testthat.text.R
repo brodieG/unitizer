@@ -1,19 +1,17 @@
 local({
   mx.1 <- matrix(1:9, nrow=3)
-  mx.2 <- matrix(1:100, ncol=5)
+  mx.2 <- matrix(1:100, ncol=2)
+  mx.3 <- mx.2
+  mx.3[31, 2] <- 111L
 
-  test_that("obj_out", {
+  test_that("diff", {
     expect_identical(
-      c("+      [,1] [,2] [,3]", "+ [1,]    1    4    7", "+ [2,]    2    5    8", "+ [3,]    3    6    9"),
-      unitizer:::obj_out(mx.1, TRUE, 80L, c(5L, 3L), extra=".new")
+      c("@@ mx.1 @@", "-        [,1] [,2] [,3]", "-   [1,]    1    4    7", "-   [2,]    2    5    8", "-   [3,]    3    6    9", "@@ mx.2 @@", "+         [,1] [,2]", "+    [1,]    1   51", "+    [2,]    2   52", "+    [3,]    3   53", "+    [4,]    4   54", "+   ... omitted 46 lines; see `mx.2` for full object")
+      unitizer:::diff_obj_out(mx.1, mx.2, width=60L, max.len=c(10L, 5L), file=stdout())
     )
     expect_identical(
-      c("+      [,1] [,2]", "+ [1,]    1    4", "+ [2,]    2    5", "+ ... truncated 5 lines, use `.new` to see full object."),
-      unitizer:::obj_out(mx.1, TRUE, 17L, c(5L, 3L), extra=".new")
-    )
-    expect_identical(
-      c("-         [,1] [,2] [,3]", "-    [1,]    1    4    7", "-    [2,]    2    5    8", "-    [3,]    3    6    9"),
-      unitizer:::obj_out(mx.1, FALSE, 80L, c(5L, 3L), extra=".ref")
+      c("@@ mx.2 @@", "-   ... omitted 31 lines", "-   [31,]   31   81", "-   [32,]   32   82", "-   [33,]   33   83", "-   [34,]   34   84", "-   [35,]   35   85", "-   ... omitted 15 lines; see `mx.2` for full object", "@@ mx.3 @@", "+   ... omitted 31 lines", "+   [31,]   31  111", "+   [32,]   32   82", "+   [33,]   33   83", "+   [34,]   34   84", "+   [35,]   35   85", "+   ... omitted 15 lines; see `mx.3` for full object"),
+      unitizer:::diff_obj_out(mx.2, mx.3, width=60L, max.len=c(10L, 5L), file=stdout())
     )
   } )
   test_that("cap_first", {
@@ -55,6 +53,17 @@ local({
       c("/Volumes/FIXED/", "folder1/", "folder2/folder.", "2345/folderabac", "/file.text.", "batch"),
       unitizer:::word_wrap(lorem2, 15L, 8L)
     )
+    expect_identical(
+      c("hello ", "sunset ", "", "there ", "moonrise"),
+      unitizer:::word_wrap("hello sunset \nthere moonrise", width=12L)
+    )
   })
-
+  test_that("bullets" {
+    x <- c("there was once a time when the fantastic unicorns could fly", "bugs bunny ate carrots and drank milk while hunting ducks")
+    xx <- unitizer:::UL(x)
+    expect_identical(
+      c("- there was once a time when ", "  the fantastic unicorns ", "  could fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks"),
+      as.character(xx, width=30L)
+    )
+  })
 })
