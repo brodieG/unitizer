@@ -248,12 +248,13 @@ search_path_setup <- function() {
   unlink(std.err)
   if(
     !identical(
-      shim.out,
-      c(
-        "Tracing function \"library\" in package \"namespace:base\"",
-        "Tracing function \"attach\" in package \"base\"",
-        "Tracing function \"detach\" in package \"base\""
-      )
+      gsub("\\s", "", paste0(shim.out, collapse="")),
+      gsub("\\s", "",
+        paste0(
+          "Tracing function \"library\" in package \"namespace:base\"",
+          "Tracing function \"attach\" in package \"base\"",
+          "Tracing function \"detach\" in package \"base\""
+      ) )
     ) || inherits(shimmed, "try-error")
   ) {
     cat(shim.out, file=stderr(), sep="\n")
@@ -297,12 +298,13 @@ search_path_unsetup <- function() {
   unlink(std.err)
   if(
     !identical(
-      unshim.out,
-      c(
-        "Untracing function \"library\" in package \"namespace:base\"",
-        "Untracing function \"attach\" in package \"namespace:base\"",
-        "Untracing function \"detach\" in package \"namespace:base\""
-      )
+      gsub("\\s", "", paste0(unshim.out, collapse="")),
+      gsub("\\s", "",
+        paste0(
+          "Untracing function \"library\" in package \"namespace:base\"",
+          "Untracing function \"attach\" in package \"namespace:base\"",
+          "Untracing function \"detach\" in package \"namespace:base\""
+      ) )
     ) || inherits(unshim, "try-error")
   ) {
     cat(unshim.out, file=stderr(), sep="\n")
