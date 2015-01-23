@@ -48,7 +48,7 @@ as.character.H1 <- function(x, margin="bottom", width=getOption("width"), ...) {
     paste0(
       "| ",
       paste0(
-        text.wrapped <- unlist(text_wrap(unclass(x), width - 4L), use.names=FALSE),
+        text.wrapped <- unlist(word_wrap(unclass(x), width - 4L), use.names=FALSE),
         vapply(
           (width - 4L) - nchar(text.wrapped),
           function(x) paste0(rep(" ", x), collapse=""),
@@ -141,6 +141,7 @@ print.bullet <- function(x, width=0L, ...) {
 }
 #' Produce Character Vector Representation of Bullet Lists
 #'
+#' @export
 #' @param x object to render
 #' @param width how many characters to wrap at
 #' @param pre what to pre-pend to each bullet
@@ -149,29 +150,32 @@ print.bullet <- function(x, width=0L, ...) {
 #'   corresponds to a line
 #' @keywords internal
 
-as.character.bullet <- function(x, width=0L, pre, ...) {
+as.character.bullet <- function(x, width=0L, pre="", ...) {
   if(!is.numeric(width) || length(width) != 1L || width < 0) {
     stop("Argument `width` must be a one length positive numeric.")
   }
-  width <- round(width)
+  if(!is.character(pre) || length(pre) == 0)
+    stop("Argument `pre` must be character and greater than one long.")
+  if(length(x) %% length(pre))
+    stop("Argument `x` length must be a multiple of argument `pre` length.")
+
+  width <- as.integer(width)
   if(width == 0) width <- getOption("width")
   screen.width <- width - max(nchar(pre))
   if(screen.width < 8L) width <- 8L
-  items <- text_wrap(unclass(x), screen.width)
+  items <- word_wrap(unclass(x), width=screen.width, unlist=FALSE)
+  if(length(items) != length(x))
+    stop("Logic Error: length mismatch when making bullets; contact maintainer.")
+
+  pre.fmt <- format(pre, justify="right")
+  pre.pad <- paste0(rep(" ", len=nchar(pre[[1L]])), collapse="")
+
   unname(
     unlist(
-      mapply(SIMPLIFY=FALSE,
-        function(content, bullet) {
-          paste0(
-            c(
-              bullet,
-              rep(
-                paste0(rep(" ", nchar(bullet)), collapse=""),
-                length(content) - 1L
-            ) ),
-            content
-        ) },
-        items, pre
+      mapply(
+        function(content, bullet)
+          paste0(c(bullet, rep(pre.pad, length(content) - 1L)), content),
+        items, pre.fmt, SIMPLIFY=FALSE
 ) ) ) }
 #' @export
 
@@ -182,36 +186,6 @@ as.character.UL <- function(x, width=0L, ...) {
 #' @export
 
 as.character.OL <- function(x, width=0L, ...) {
-  bullets <- paste0(format(1:length(x)), ". ")
+  bullets <- paste0(1:length(x), ". ")
   NextMethod(pre=bullets)
 }
-
-#' Wrap Text At Fixed Column Width
-#'
-#' Some day this should be upgraded to break at whitespaces or use hyphens
-#' instead of wrapping arbitrarily at spec'ed width
-#'
-#' @keywords internal
-#' @param x character vector
-#' @param width integer vector with
-#' @return a list with, for each item in \code{`x`}, a character vector
-#'   of the item wrapped to length \code{`width`}
-
-text_wrap <- function(x, width) {
-  if(
-    !is.character(x) || !is.numeric(width) || any(width < 1L) ||
-    !identical(round(width), as.numeric(width))
-  ) {
-    stop("Arguments `x` and `width` must be character and integer like (all values >= 1) respectively")
-  }
-  if(!identical((length(x) %% length(width)), 0L)) {
-    stop("Argument `x` must be a multiple in length of argument `width`")
-  }
-  mapply(
-    unclass(x), width, SIMPLIFY=FALSE,
-    FUN=function(x.sub, width.sub) {
-      breaks <- ceiling(nchar(x.sub) / width.sub)
-      substr(
-        rep(x.sub, breaks),
-        start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
-) } ) }
