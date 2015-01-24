@@ -89,12 +89,12 @@ test_that("(Un)ordered Lists", {
     letters[1:10]
   )
   expect_equal(
-    c(" 1. hello htere how are you blah blah blah blah blah", " 2. this is helpful you know", " 3. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut la", "    bore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris ", "    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate vel", "    it esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, ",  "    sunt in culpa qui officia deserunt mollit anim id est laborum.", " 4. a", " 5. b", " 6. c", " 7. d", " 8. e", " 9. f", "10. g", "11. h", "12. i", "13. j"),
-    print(unitizer:::OL(vec), 100)
+    c(" 1. hello htere how are you blah blah blah blah blah", " 2. this is helpful you know", " 3. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut ", "    labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco ", "    laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in ", "    voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat ", "    non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",  " 4. a", " 5. b", " 6. c", " 7. d", " 8. e", " 9. f", "10. g", "11. h", "12. i", "13. j"),
+    as.character(unitizer:::OL(vec), width=100L)
   )
   expect_equal(
-    c("- hello htere how are you blah blah blah blah blah", "- this is helpful you know", "- Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labo", "  re et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi", "   ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit ess", "  e cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in ",  "  culpa qui officia deserunt mollit anim id est laborum.", "- a", "- b", "- c", "- d", "- e", "- f", "- g", "- h", "- i", "- j"),
-    print(unitizer:::UL(vec), 100)
+    c("- hello htere how ", "  are you blah blah ", "  blah blah blah", "- this is helpful ", "  you know", "- Lorem ipsum dolor ", "  sit amet, consec-", "  tetur adipisicing ", "  elit, sed do ", "  eiusmod tempor ", "  incididunt ut ", "  labore et dolore ", "  magna aliqua. Ut ", "  enim ad minim ", "  veniam, quis ", "  nostrud exer-", "  citation ullamco ", "  laboris nisi ut ", "  aliquip ex ea ", "  commodo consequat.", "  Duis aute irure ", "  dolor in reprehen-", "  derit in voluptate", "  velit esse cillum ",  "  dolore eu fugiat ", "  nulla pariatur. ", "  Excepteur sint ", "  occaecat cupidatat", "  non proident, ", "  sunt in culpa qui ", "  officia deserunt ", "  mollit anim id ", "  est laborum.", "- a", "- b", "- c", "- d", "- e", "- f", "- g", "- h", "- i", "- j"),
+    as.character(unitizer:::UL(vec), width=20L)
   )
 } )
 # test_that("Messing with traceback", {
@@ -160,21 +160,19 @@ test_that("word_cat", {
   str <- "Humpty dumpty sat on a wall and took a big fall.  All the kings horses and men couldn't put humpty dumpty together again"
   expect_equal(
     c("Humpty dumpty sat ", "on a wall and took ", "a big fall.  All ", "the kings horses ", "and men couldn't ", "put humpty dumpty ", "together again"),
-    capture.output(unitizer:::word_cat(str, fill=20))
+    capture.output(unitizer:::word_cat(str, width=20L))
   )
-  expect_equal(str, capture.output(unitizer:::word_cat(str, fill=20, sep=" ")))  # sep forces this to be treated as cat
-  expect_error(unitizer:::word_cat(stop("boom"), fill=20, sep=" "), ": boom")
-  expect_error(unitizer:::word_cat(stop("boom"), fill=20), "Problem evaluating `\\.\\.\\.`")
+  expect_error(unitizer:::word_cat(stop("boom"), width=20L, sep=" "), ": boom")
   str2 <- rep("goodbye goodbye")
   str1 <- rep("hello hello hello", 2)
   expect_equal(
     c("hello hello ", "hello hello ", "hello hello ", "goodbye ", "goodbye"),
-    capture.output(unitizer:::word_cat(str1, str2, fill=15))
+    capture.output(unitizer:::word_cat(str1, str2, width=14L))
   )
   # Make sure default works
 
   width <- getOption("width")
-  options(width=20)
+  options(width=20L)
   expect_equal(
     c("Humpty dumpty sat ", "on a wall and took ", "a big fall.  All ", "the kings horses ", "and men couldn't ", "put humpty dumpty ", "together again"),
     capture.output(unitizer:::word_cat(str))

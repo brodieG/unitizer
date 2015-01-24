@@ -6,11 +6,11 @@ local({
 
   test_that("diff", {
     expect_identical(
-      c("@@ mx.1 @@", "-        [,1] [,2] [,3]", "-   [1,]    1    4    7", "-   [2,]    2    5    8", "-   [3,]    3    6    9", "@@ mx.2 @@", "+         [,1] [,2]", "+    [1,]    1   51", "+    [2,]    2   52", "+    [3,]    3   53", "+    [4,]    4   54", "+   ... omitted 46 lines; see `mx.2` for full object")
+      c("@@ mx.1 @@", "-        [,1] [,2] [,3]", "-   [1,]    1    4    7", "-   [2,]    2    5    8", "-   [3,]    3    6    9", "@@ mx.2 @@", "+         [,1] [,2]", "+    [1,]    1   51", "+    [2,]    2   52", "+    [3,]    3   53", "+    [4,]    4   54", "+    [5,]    5   55", "+    [6,]    6   56", "+    [7,]    7   57", "+    [8,]    8   58", "+    [9,]    9   59", "+   ... omitted 41 lines; see `mx.2` ..."),
       unitizer:::diff_obj_out(mx.1, mx.2, width=60L, max.len=c(10L, 5L), file=stdout())
     )
     expect_identical(
-      c("@@ mx.2 @@", "-   ... omitted 31 lines", "-   [31,]   31   81", "-   [32,]   32   82", "-   [33,]   33   83", "-   [34,]   34   84", "-   [35,]   35   85", "-   ... omitted 15 lines; see `mx.2` for full object", "@@ mx.3 @@", "+   ... omitted 31 lines", "+   [31,]   31  111", "+   [32,]   32   82", "+   [33,]   33   83", "+   [34,]   34   84", "+   [35,]   35   85", "+   ... omitted 15 lines; see `mx.3` for full object"),
+      c("@@ mx.2 @@", "-   ... omitted 31 lines ...", "-   [31,]   31   81", "-   [32,]   32   82", "-   [33,]   33   83", "-   [34,]   34   84", "-   [35,]   35   85", "-   ... omitted 15 lines; see `mx.2` ...", "@@ mx.3 @@", "+   ... omitted 31 lines ...", "+   [31,]   31  111", "+   [32,]   32   82", "+   [33,]   33   83", "+   [34,]   34   84", "+   [35,]   35   85", "+   ... omitted 15 lines; see `mx.3` ..."),
       unitizer:::diff_obj_out(mx.2, mx.3, width=60L, max.len=c(10L, 5L), file=stdout())
     )
   } )
@@ -58,7 +58,7 @@ local({
       unitizer:::word_wrap("hello sunset \nthere moonrise", width=12L)
     )
   })
-  test_that("bullets" {
+  test_that("bullets", {
     x <- c("there was once a time when the fantastic unicorns could fly", "bugs bunny ate carrots and drank milk while hunting ducks")
     xx <- unitizer:::UL(x)
     expect_identical(
