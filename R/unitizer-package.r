@@ -9,7 +9,7 @@
 #'
 #' @import methods
 #' @import stats
-#' @name unitzer-package
+#' @name unitizer-package
 #' @docType package
 
 NULL
