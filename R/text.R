@@ -216,6 +216,7 @@ text_wrap <- function(x, width) {
 #'
 #' Will attempt to hyphenate very crudely.
 #'
+#' @keywords internal
 #' @param x character vector
 #' @param width what width to wrap at
 #' @param tolerance how much earlier than \code{width} we're allowed to wrap
