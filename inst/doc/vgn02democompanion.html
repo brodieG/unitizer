@@ -74,13 +74,9 @@ demo(unitizer)</code></pre>
 <h3>Notes on Simulating <code>unitizer</code> Use In This Demo</h3>
 <p>Unfortunately the demo is complicated by the need to automate some steps that would normally be taken by the package developer. We try to isolate these steps to the “Setup” section of the demo so that the rest of the <code>demo</code> is as close as possible to a typical <code>unitizer</code> experience.</p>
 <p>When you run <code>demo(unitizer)</code> you will first see something like:</p>
-<pre><code>&gt; {
-+   if(!require(devtools)) stop(&quot;Package `devtools` is required for this demo.&quot;)
-+   library(unitizer)
-+   if(exists(&quot;.unitizer.test.file&quot;)) {
-+   ... several lines omitted ...
-+   }
-+ }
+<pre><code>&gt; if(!require(devtools)) stop(&quot;Package `devtools` is required for this demo.&quot;)
+
+&gt; library(unitizer)
 
 &gt; # In this script we will demonstrate the `unitize` workflow by running `unitize`
 ... several lines omitted ...

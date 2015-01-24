@@ -136,6 +136,11 @@ Objects in `.GlobalEnv` will not be visible, and any non basic packages will be 
 
 Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](vgn03tests.html)).
 
+### Tests Involving Reference Objects May Be Confusing
+
+`unitizer` evaluates all tests first, and only then does it prompt you for review if it is required.  Each time you review a test, `unitizer` recreates that test's environment as it was when it was first run
+ (see [subtleties of interactive environment](vgn06nittygritty.html#subtleties-of-the-interactive-environment)).  This works most of the time, except that reference objects will always reflect the latest modifications made to them in testing.  In other words, the value reference objects have during review may not be the value they had when the test was evaluated, which can be confusing if you do not realize what is happening.  We are considering ways to address this issue.
+
 ### `unitizer` Is Complex
 
 In order to create an intuitive (hopefully) interactive unit testing framework we had to resort to a fair bit of trickery.  For the most part this trickery should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it.  Here is a non-exhaustive list of some of the tricky things we do:

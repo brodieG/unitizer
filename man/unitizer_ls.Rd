@@ -3,8 +3,8 @@
 \alias{unitizer_ls}
 \title{An `ls` Like Function}
 \usage{
-unitizer_ls(name, pos = -1L, envir = as.environment(pos),
-  all.names = FALSE, pattern)
+unitizer_ls(name, pos = -1L, envir = parent.frame(), all.names = FALSE,
+  pattern)
 }
 \value{
 list of object names, or a list with environments containing the objects

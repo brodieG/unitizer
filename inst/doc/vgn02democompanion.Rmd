@@ -42,13 +42,9 @@ Unfortunately the demo is complicated by the need to automate some steps that wo
 When you run `demo(unitizer)` you will first see something like:
 
 ```
-> {
-+   if(!require(devtools)) stop("Package `devtools` is required for this demo.")
-+   library(unitizer)
-+   if(exists(".unitizer.test.file")) {
-+   ... several lines omitted ...
-+   }
-+ }
+> if(!require(devtools)) stop("Package `devtools` is required for this demo.")
+
+> library(unitizer)
 
 > # In this script we will demonstrate the `unitize` workflow by running `unitize`
 ... several lines omitted ...

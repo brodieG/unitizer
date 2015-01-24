@@ -32,6 +32,7 @@
 <div id="TOC">
 <ul>
 <li><a href="#subtleties-of-the-interactive-environment">Subtleties Of The Interactive Environment</a></li>
+<li><a href="#issues-with-reference-objects">Issues With Reference Objects</a></li>
 <li><a href="#patchwork-reference-environments">Patchwork Reference Environments</a></li>
 <li><a href="#overridden-functionality">Overridden Functionality</a></li>
 <li><a href="#storing-unitized-tests">Storing <code>unitize</code>d Tests</a><ul>
@@ -77,7 +78,12 @@ b &lt;- function() TRUE
 a()</code></pre>
 <p>Since NULL is a valid test, <code>a</code> is assigned to the environment associated with the <code>NULL</code> line, and <code>b</code> is assigned to the <code>a()</code> test environment, and the illusion is shattered.</p>
 <p>If you are getting weird “object not found” errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you. In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.</p>
-<p>One other point to keep in mind is that the <code>unitzer</code> prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.</p>
+<p>One other point to keep in mind is that the <code>unitizer</code> prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.</p>
+</div>
+<div id="issues-with-reference-objects" class="section level2">
+<h2>Issues With Reference Objects</h2>
+<p>For the most part R is a copy-on-modify language, which allows us to employ the trickery described above. There are however “reference” objects that are not copied when they are modified. Notable examples include environments, reference classes, and <code>data.table</code>. Since our trickery requires us to keep copies of each object in different environments as they are modified, it does not work with reference objects since they are not automatically duplicated.</p>
+<p>The main consequence of this is that when you are reviewing a test that involves a reference object, the value of that reference object during review will be the value after the last reference modification, which may have been made after the test you are reviewing. The tests will still work as they should, passing if you did not introduce regressions, and failing otherwise. However if you review a failed test you may have a hard time making sense of what happened since the objects you review will may not have the values they had when the test was actually run.</p>
 </div>
 <div id="patchwork-reference-environments" class="section level2">
 <h2>Patchwork Reference Environments</h2>

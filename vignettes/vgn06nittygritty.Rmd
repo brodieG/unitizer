@@ -44,7 +44,13 @@ Since NULL is a valid test, `a` is assigned to the environment associated with t
 
 If you are getting weird "object not found" errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
 
-One other point to keep in mind is that the `unitzer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
+One other point to keep in mind is that the `unitizer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
+
+## Issues With Reference Objects
+
+For the most part R is a copy-on-modify language, which allows us to employ the trickery described above.  There are however "reference" objects that are not copied when they are modified.  Notable examples include environments, reference classes, and `data.table`.  Since our trickery requires us to keep copies of each object in different environments as they are modified, it does not work with reference objects since they are not automatically duplicated.
+
+The main consequence of this is that when you are reviewing a test that involves a reference object, the value of that reference object during review will be the value after the last reference modification, which may have been made after the test you are reviewing.  The tests will still work as they should, passing if you did not introduce regressions, and failing otherwise.  However if you review a failed test you may have a hard time making sense of what happened since the objects you review will may not have the values they had when the test was actually run.
 
 ## Patchwork Reference Environments
 
