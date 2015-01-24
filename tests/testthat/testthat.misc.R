@@ -1,4 +1,4 @@
-  library(testthat)
+library(testthat)
 library(unitizer)
 
 test_that("Text wrapping", {
@@ -89,12 +89,12 @@ test_that("(Un)ordered Lists", {
     letters[1:10]
   )
   expect_equal(
-    c(" 1. hello htere how are you blah blah blah blah blah", " 2. this is helpful you know", " 3. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut la", "    bore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris ", "    nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate vel", "    it esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, ",  "    sunt in culpa qui officia deserunt mollit anim id est laborum.", " 4. a", " 5. b", " 6. c", " 7. d", " 8. e", " 9. f", "10. g", "11. h", "12. i", "13. j"),
-    print(unitizer:::OL(vec), 100)
+    c(" 1. hello htere how are you blah blah blah blah blah", " 2. this is helpful you know", " 3. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut ", "    labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco ", "    laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in ", "    voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat ", "    non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",  " 4. a", " 5. b", " 6. c", " 7. d", " 8. e", " 9. f", "10. g", "11. h", "12. i", "13. j"),
+    as.character(unitizer:::OL(vec), width=100L)
   )
   expect_equal(
-    c("- hello htere how are you blah blah blah blah blah", "- this is helpful you know", "- Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labo", "  re et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi", "   ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit ess", "  e cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in ",  "  culpa qui officia deserunt mollit anim id est laborum.", "- a", "- b", "- c", "- d", "- e", "- f", "- g", "- h", "- i", "- j"),
-    print(unitizer:::UL(vec), 100)
+    c("- hello htere how ", "  are you blah blah ", "  blah blah blah", "- this is helpful ", "  you know", "- Lorem ipsum dolor ", "  sit amet, consec-", "  tetur adipisicing ", "  elit, sed do ", "  eiusmod tempor ", "  incididunt ut ", "  labore et dolore ", "  magna aliqua. Ut ", "  enim ad minim ", "  veniam, quis ", "  nostrud exer-", "  citation ullamco ", "  laboris nisi ut ", "  aliquip ex ea ", "  commodo consequat.", "  Duis aute irure ", "  dolor in reprehen-", "  derit in voluptate", "  velit esse cillum ",  "  dolore eu fugiat ", "  nulla pariatur. ", "  Excepteur sint ", "  occaecat cupidatat", "  non proident, ", "  sunt in culpa qui ", "  officia deserunt ", "  mollit anim id ", "  est laborum.", "- a", "- b", "- c", "- d", "- e", "- f", "- g", "- h", "- i", "- j"),
+    as.character(unitizer:::UL(vec), width=20L)
   )
 } )
 # test_that("Messing with traceback", {
@@ -118,27 +118,30 @@ test_that("Compare Conditions", {
   ) )
   expect_true(all.equal(lst1, lst1))
   expect_equal(
-    "`target` (a.k.a `.ref`) and `current` (a.k.a `.new`) do not have the same number of conditions (4 vs 3)",
+    "Condition count mismatch; expected 4 (got 3)",
     all.equal(lst1, lst2)
   )
   expect_equal(
-    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, `target` (a.k.a. `.ref`) is 'Error', but `current` (a.k.a. `.new`) is 'Warning'"),
+    "There is one condition mismatch at index [[3]]",
     all.equal(lst2, lst1[1L:3L])
   )
   expect_equal(
-    c("There are 2 condition mismatches; showing first mismatch at condition #1", "Warning condition messages do not match"),
+    "There are 2 condition mismatches, first one at index [[1]]",
     all.equal(lst2, lst1[2L:4L])
   )
-  attr(lst1[[3L]], "printed") <- TRUE
-
+  attr(lst1[[3L]], "unitizer.printed") <- TRUE
   expect_equal(
-    c("There is 1 condition mismatch; showing first mismatch at condition #3", "Condition type mismatch, `target` (a.k.a. `.ref`) is 'Error', but `current` (a.k.a. `.new`) is 'Warning'", "Condition mismatch may involve print/show methods; carefully review conditions with `getConds(.new)` and `getConds(.ref)` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch."),
+    "There is one condition mismatch at index [[3]]",
     all.equal(lst2, lst1[1L:3L])
   )
-  attr(lst1[[3L]], "printed") <- NULL
+  expect_equal(
+    c("Condition type mismatch, `target` is 'Error', but `current` is 'Warning'", "Condition mismatch may involve print/show methods; carefully review conditions with `.NEW$conditions` and `.REF$conditions` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch"),
+    all.equal(lst2[[3]], lst1[[3]])
+  )
+  attr(lst1[[3L]], "unitizer.printed") <- NULL
   lst1[[2L]] <- simpleWarning("warning2", quote(yo2 + yoyo))
   expect_equal(
-    c("There is 1 condition mismatch; showing first mismatch at condition #2", "Warning condition calls do not match"),
+    "There is one condition mismatch at index [[2]]",
     all.equal(lst2, lst1[c(1L:2L, 4L)])
   )
 } )
@@ -157,21 +160,19 @@ test_that("word_cat", {
   str <- "Humpty dumpty sat on a wall and took a big fall.  All the kings horses and men couldn't put humpty dumpty together again"
   expect_equal(
     c("Humpty dumpty sat ", "on a wall and took ", "a big fall.  All ", "the kings horses ", "and men couldn't ", "put humpty dumpty ", "together again"),
-    capture.output(unitizer:::word_cat(str, fill=20))
+    capture.output(unitizer:::word_cat(str, width=20L))
   )
-  expect_equal(str, capture.output(unitizer:::word_cat(str, fill=20, sep=" ")))  # sep forces this to be treated as cat
-  expect_error(unitizer:::word_cat(stop("boom"), fill=20, sep=" "), ": boom")
-  expect_error(unitizer:::word_cat(stop("boom"), fill=20), "Problem evaluating `\\.\\.\\.`")
+  expect_error(unitizer:::word_cat(stop("boom"), width=20L, sep=" "), ": boom")
   str2 <- rep("goodbye goodbye")
   str1 <- rep("hello hello hello", 2)
   expect_equal(
     c("hello hello ", "hello hello ", "hello hello ", "goodbye ", "goodbye"),
-    capture.output(unitizer:::word_cat(str1, str2, fill=15))
+    capture.output(unitizer:::word_cat(str1, str2, width=14L))
   )
   # Make sure default works
 
   width <- getOption("width")
-  options(width=20)
+  options(width=20L)
   expect_equal(
     c("Humpty dumpty sat ", "on a wall and took ", "a big fall.  All ", "the kings horses ", "and men couldn't ", "put humpty dumpty ", "together again"),
     capture.output(unitizer:::word_cat(str))

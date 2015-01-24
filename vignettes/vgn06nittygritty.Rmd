@@ -44,7 +44,13 @@ Since NULL is a valid test, `a` is assigned to the environment associated with t
 
 If you are getting weird "object not found" errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
 
-One other point to keep in mind is that the `unitzer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
+One other point to keep in mind is that the `unitizer` prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.
+
+## Issues With Reference Objects
+
+For the most part R is a copy-on-modify language, which allows us to employ the trickery described above.  There are however "reference" objects that are not copied when they are modified.  Notable examples include environments, reference classes, and `data.table`.  Since our trickery requires us to keep copies of each object in different environments as they are modified, it does not work with reference objects since they are not automatically duplicated.
+
+The main consequence of this is that when you are reviewing a test that involves a reference object, the value of that reference object during review will be the value after the last reference modification, which may have been made after the test you are reviewing.  The tests will still work as they should, passing if you did not introduce regressions, and failing otherwise.  However if you review a failed test you may have a hard time making sense of what happened since the objects you review will may not have the values they had when the test was actually run.
 
 ## Patchwork Reference Environments
 
@@ -134,6 +140,29 @@ unitizer.path <- system.file(package="unitizer")
 library(devtools)
 install(paste0(unitizer.path, "/example.pkgs/unitizerdummypkg1"))  # one of several dummy packages
 ```
+## Modifying an Existing Unitizer
+
+### `review`
+
+`review` allows you to review all tests in a unitizer rds with the option of dropping tests from it.  See `?review`.
+
+### `edit_fun_names`
+
+*Warning*: this is experimental.
+
+`edit_fun_names` allows you to modify function names in calls stored in an `unitizer`.  This is useful when you decide to change a function name, but otherwise leave the behavior and rest of the call unchanged.  You can then upate your test script and the renamed calls will be matched against the correct values in the `unitizer` store.  Without this you would have to re-review and re-store every test since `unitizer` identifies tests by the deparsed expression.
+
+### `split`
+
+There is currently no direct way to split a `unitizer` into pieces (see [issue #44](https://github.com/brodieG/unitizer/issues/44)), but the current work around is to:
+
+1. copy the test file and the corresponding `unitizer` to a new location
+2. edit the original test file to remove the tests we want to split off
+3. run unitizer and agree to drop all removed tests (hint, use CAPSLOCK)
+4. edit the new test file and remove the tests that are still in the old test file
+5. run unitizer and agree to drop all removed tests
+
+The net result will be two new `unitizer`, each with a portion of the tests from the original `unitizer`.  Clearly less than ideal, but will work in a pinch.
 
 ## Troubleshooting
 

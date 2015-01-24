@@ -32,6 +32,7 @@
 <div id="TOC">
 <ul>
 <li><a href="#subtleties-of-the-interactive-environment">Subtleties Of The Interactive Environment</a></li>
+<li><a href="#issues-with-reference-objects">Issues With Reference Objects</a></li>
 <li><a href="#patchwork-reference-environments">Patchwork Reference Environments</a></li>
 <li><a href="#overridden-functionality">Overridden Functionality</a></li>
 <li><a href="#storing-unitized-tests">Storing <code>unitize</code>d Tests</a><ul>
@@ -41,6 +42,11 @@
 <li><a href="#error-handling">Error Handling</a></li>
 <li><a href="#other-issues">Other Issues</a><ul>
 <li><a href="#ancillary-unitizer-packages">Ancillary <code>unitizer</code> Packages</a></li>
+</ul></li>
+<li><a href="#modifying-an-existing-unitizer">Modifying an Existing Unitizer</a><ul>
+<li><a href="#review"><code>review</code></a></li>
+<li><a href="#edit_fun_names"><code>edit_fun_names</code></a></li>
+<li><a href="#split"><code>split</code></a></li>
 </ul></li>
 <li><a href="#troubleshooting">Troubleshooting</a><ul>
 <li><a href="#unitizer-freezes-and-pops-up-selection"><code>unitizer</code> Freezes and Pops up “Selection:”</a></li>
@@ -72,7 +78,12 @@ b &lt;- function() TRUE
 a()</code></pre>
 <p>Since NULL is a valid test, <code>a</code> is assigned to the environment associated with the <code>NULL</code> line, and <code>b</code> is assigned to the <code>a()</code> test environment, and the illusion is shattered.</p>
 <p>If you are getting weird “object not found” errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you. In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.</p>
-<p>One other point to keep in mind is that the <code>unitzer</code> prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.</p>
+<p>One other point to keep in mind is that the <code>unitizer</code> prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.</p>
+</div>
+<div id="issues-with-reference-objects" class="section level2">
+<h2>Issues With Reference Objects</h2>
+<p>For the most part R is a copy-on-modify language, which allows us to employ the trickery described above. There are however “reference” objects that are not copied when they are modified. Notable examples include environments, reference classes, and <code>data.table</code>. Since our trickery requires us to keep copies of each object in different environments as they are modified, it does not work with reference objects since they are not automatically duplicated.</p>
+<p>The main consequence of this is that when you are reviewing a test that involves a reference object, the value of that reference object during review will be the value after the last reference modification, which may have been made after the test you are reviewing. The tests will still work as they should, passing if you did not introduce regressions, and failing otherwise. However if you review a failed test you may have a hard time making sense of what happened since the objects you review will may not have the values they had when the test was actually run.</p>
 </div>
 <div id="patchwork-reference-environments" class="section level2">
 <h2>Patchwork Reference Environments</h2>
@@ -155,6 +166,30 @@ a()</code></pre>
 <pre><code>unitizer.path &lt;- system.file(package=&quot;unitizer&quot;)
 library(devtools)
 install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # one of several dummy packages</code></pre>
+</div>
+</div>
+<div id="modifying-an-existing-unitizer" class="section level2">
+<h2>Modifying an Existing Unitizer</h2>
+<div id="review" class="section level3">
+<h3><code>review</code></h3>
+<p><code>review</code> allows you to review all tests in a unitizer rds with the option of dropping tests from it. See <code>?review</code>.</p>
+</div>
+<div id="edit_fun_names" class="section level3">
+<h3><code>edit_fun_names</code></h3>
+<p><em>Warning</em>: this is experimental.</p>
+<p><code>edit_fun_names</code> allows you to modify function names in calls stored in an <code>unitizer</code>. This is useful when you decide to change a function name, but otherwise leave the behavior and rest of the call unchanged. You can then upate your test script and the renamed calls will be matched against the correct values in the <code>unitizer</code> store. Without this you would have to re-review and re-store every test since <code>unitizer</code> identifies tests by the deparsed expression.</p>
+</div>
+<div id="split" class="section level3">
+<h3><code>split</code></h3>
+<p>There is currently no direct way to split a <code>unitizer</code> into pieces (see <a href="https://github.com/brodieG/unitizer/issues/44">issue #44</a>), but the current work around is to:</p>
+<ol style="list-style-type: decimal">
+<li>copy the test file and the corresponding <code>unitizer</code> to a new location</li>
+<li>edit the original test file to remove the tests we want to split off</li>
+<li>run unitizer and agree to drop all removed tests (hint, use CAPSLOCK)</li>
+<li>edit the new test file and remove the tests that are still in the old test file</li>
+<li>run unitizer and agree to drop all removed tests</li>
+</ol>
+<p>The net result will be two new <code>unitizer</code>, each with a portion of the tests from the original <code>unitizer</code>. Clearly less than ideal, but will work in a pinch.</p>
 </div>
 </div>
 <div id="troubleshooting" class="section level2">

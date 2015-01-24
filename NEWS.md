@@ -1,3 +1,15 @@
+unitizer 0.7.0
+--------------------------------------------------------------------------------
+
+Improvements:
+
+* Failed tests now automatically output a snippet of new and reference objects (Issue #34)
+* Text handling generally improved (better wrapping, etc. Issue #38)
+* Parsing speed improved (Issue #15)
+* Got rid of `get*` functions, instead, access test details with `.NEW`/`.REF` (Issue #29)
+* Implemented `editFunNames` to allow user to modify stored calls in `unitizer`
+  so that tests can be re-used even if function names are changed
+
 unitizer 0.6.5
 --------------------------------------------------------------------------------
 

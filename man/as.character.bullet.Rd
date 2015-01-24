@@ -3,7 +3,7 @@
 \alias{as.character.bullet}
 \title{Produce Character Vector Representation of Bullet Lists}
 \usage{
-\method{as.character}{bullet}(x, width = 0L, pre, ...)
+\method{as.character}{bullet}(x, width = 0L, pre = "", ...)
 }
 \arguments{
 \item{x}{object to render}

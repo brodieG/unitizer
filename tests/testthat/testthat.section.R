@@ -68,15 +68,15 @@ local({
   test_that("Custom Comparison Functions",
     {
       expect_equal(
-        structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = 4:5, .Dimnames = list(c("test.result", "test.result", "test.result", "test.result"), c("value", "conditions", "output", "message", "aborted"))),
+        structure(c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = 4:5, .Dimnames = list(NULL, c("value", "conditions", "output", "message", "aborted"))),
         my.unitizer2@tests.result
       )
       expect_equal(
-        structure(c(FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = 4:5, .Dimnames = list(c("test.result", "test.result", "test.result", "test.result"), c("value", "conditions", "output", "message", "aborted"))),
+        structure(c(FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = 4:5, .Dimnames = list(NULL, c("value", "conditions", "output", "message", "aborted"))),
         my.unitizer3@tests.result
       )
       expect_equal(
-        structure(c(FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE), .Dim = 4:5, .Dimnames = list(c("test.result", "test.result", "test.result", "test.result"), c("value", "conditions", "output", "message", "aborted"))),
+        structure(c(FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, TRUE, TRUE), .Dim = 4:5, .Dimnames = list(NULL, c("value", "conditions", "output", "message", "aborted"))),
         my.unitizer4@tests.result
       )
   } )

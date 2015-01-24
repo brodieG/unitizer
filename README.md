@@ -1,8 +1,6 @@
 # unitizeR - Easy R Unit Tests
 
-## Introduction
-
-### Motivation
+## Motivation
 
 To use `unitizer`:
 
@@ -13,7 +11,9 @@ To use `unitizer`:
 
 Informal tests are R expressions you would normally type in the command line to test that your code is working as expected.  There is no need for special syntax, functions, or anything other than the R expression itself.
 
-We strongly recommend you review the **[introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html)** for more details.  This page is an excerpt of that vignette.  There is also a **[vignette index](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn00tocprologue.html)** if you really want to get into the nitty gritty.
+## Details, Installation, Etc.
+
+We strongly recommend you review the **[introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html)** for more details.  This page is an excerpt of that vignette.  There is also a **[vignette index](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)** if you really want to get into the nitty gritty.
 
 ## Acknowledgments
 

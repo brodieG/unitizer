@@ -10,7 +10,7 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2015-01-07" />
+<meta name="date" content="2015-01-24" />
 
 <title>unitizeR - Easy R Unit Tests</title>
 
@@ -28,7 +28,7 @@
 <div id="header">
 <h1 class="title">unitizeR - Easy R Unit Tests</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2015-01-07</em></h4>
+<h4 class="date"><em>2015-01-24</em></h4>
 </div>
 
 <div id="TOC">
@@ -47,6 +47,7 @@
 <li><a href="#unitizer-writes-to-your-filesystem"><code>unitizer</code> Writes To Your Filesystem</a></li>
 <li><a href="#tests-are-evaluated-in-clean-environments">Tests are Evaluated in Clean Environments</a></li>
 <li><a href="#tests-pass-if-they-all.equal-stored-reference-values">Tests Pass If They <code>all.equal</code> Stored Reference Values</a></li>
+<li><a href="#tests-involving-reference-objects-may-be-confusing">Tests Involving Reference Objects May Be Confusing</a></li>
 <li><a href="#unitizer-is-complex"><code>unitizer</code> Is Complex</a></li>
 <li><a href="#avoid-tests-that-require-user-input">Avoid Tests That Require User Input</a></li>
 <li><a href="#avoid-running-unitize-within-try-trycatch-blocks">Avoid running <code>unitize</code> within <code>try</code> / <code>tryCatch</code> Blocks</a></li>
@@ -171,6 +172,10 @@ install_github(&quot;brodieg/unitizer&quot;)</code></pre>
 <div id="tests-pass-if-they-all.equal-stored-reference-values" class="section level3">
 <h3>Tests Pass If They <code>all.equal</code> Stored Reference Values</h3>
 <p>Once you have created your first <code>unitizer</code> with <code>unitize</code>, subsequent calls to <code>unitize</code> will compare the old stored value to the new one using <code>all.equal</code>. You can change the comparison function by using <code>unitizer_sect</code> (see <a href="vgn03tests.html">tests vignette</a>).</p>
+</div>
+<div id="tests-involving-reference-objects-may-be-confusing" class="section level3">
+<h3>Tests Involving Reference Objects May Be Confusing</h3>
+<p><code>unitizer</code> evaluates all tests first, and only then does it prompt you for review if it is required. Each time you review a test, <code>unitizer</code> recreates that test’s environment as it was when it was first run (see <a href="vgn06nittygritty.html#subtleties-of-the-interactive-environment">subtleties of interactive environment</a>). This works most of the time, except that reference objects will always reflect the latest modifications made to them in testing. In other words, the value reference objects have during review may not be the value they had when the test was evaluated, which can be confusing if you do not realize what is happening. We are considering ways to address this issue.</p>
 </div>
 <div id="unitizer-is-complex" class="section level3">
 <h3><code>unitizer</code> Is Complex</h3>

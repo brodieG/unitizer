@@ -1,6 +1,6 @@
 # - Required Code -------------------------------------------------------------
 
-#' @include misc.R
+#' @include conditions.R
 #' @include class_unions.R
 #' @include list.R
 
@@ -123,15 +123,15 @@ setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 
 setMethod("show", "unitizerItem",
   function(object) {
-    cat("** ")
+    cat("~~~ ")
     if(object@reference) cat("Reference") else cat("New")
-    cat(" Test **\n")
-    cat("value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
-    if(out.len <- length(object@data@output)) cat("stdout:", out.len, "lines\n")
-    if(err.len <- length(object@data@message)) cat("stderr:", err.len, "lines\n")
+    cat(" Test ~~~\n")
+    cat("* value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
+    if(out.len <- length(object@data@output)) cat("* output:", out.len, "lines\n")
+    if(err.len <- length(object@data@message)) cat("* message:", err.len, "lines\n")
     if(cond.len <- length(object@data@conditions)) {
       cond.types <- vapply(
-        object@data@conditions,
+        as.list(object@data@conditions),
         function(x) {
           if(inherits(x, "error")) {
             "error"
@@ -146,17 +146,27 @@ setMethod("show", "unitizerItem",
       )
       cond.types.summ <- Filter(
         Negate(is.na),
-        tapply(cond.types, factor(cond.types, levels=c("error", "warning", "message", "other condition")), length)
-      )
-      cat(
-        "conditions:",
-        paste0(cond.types.summ, " ", paste0(names(cond.types.summ), ifelse(cond.types.summ > 1L, "s", ""), "\n"), collapse=", ")
-      )
+        tapply(
+          cond.types,
+          factor(
+            cond.types,
+            levels=c("error", "warning", "message", "other condition")),
+          length
+      ) )
+      word_cat(
+        "* conditions:",
+        paste0(
+          cond.types.summ, " ",
+          paste0(
+            names(cond.types.summ),
+            ifelse(cond.types.summ > 1L, "s", "")
+          ), collapse=", "
+      ) )
     }
     word_cat(
-      "To retrieve detailed contents, use the `get*` methods (e.g. getOut(obj)).",
-      " See documentation for `getTest` for",
-      "details on the other accessor functions.",
+      "Access component `x` with",
+      paste0("`", if(object@reference) ".REF" else ".NEW", "$x`;"),
+      "see `help(\"$\", \"unitizer\")`",
       fill=TRUE
     )
 } )
@@ -231,4 +241,54 @@ setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
 
 setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, e2))
 
+#' Retrieve Test Contents From Test Item
+#'
+#' Intended for use within the \code{unitizer} interactive environment, allows
+#' user to retrieve whatever portions of tests are stored by \code{unitizer}.
+#'
+#' Currently the following elements are available:
+#'
+#' \itemize{
+#'   \item \code{call} the call that was tested as an unevaluated call,
+#'     but keep in mind that if you intend to evaluate this for a reference
+#'     item the environment may not be the same so you could get different
+#'     results (\code{ls} will provide more details)
+#'   \item \code{value} the value that results from evaluating the test, note
+#'     this is equivalent to using \code{.new} or \code{.ref}
+#'   \item \code{output} the screen output (i.e. anything produced by cat/print,
+#'     or any visible evaluation output) as a character vector
+#'   \item \code{message} anything that was output to \code{stderr}, mostly
+#'     this is all contained in the conditions as well, though there could be
+#'     other output here, as a character vector
+#'   \item \code{conditions} a \code{\link{conditionList-class}} containing all
+#'     the conditions produced during test evaluation
+#'   \item \code{aborted} whether the test call issues a restart call to the
+#'     `abort` restart, as `stop` does.
+#' }
+#' @export
+#' @aliases $
+#' @param x a \code{unitizerItem} object, typically \code{.NEW} or \code{.REF}
+#'   at the \code{unitizer} interactive prompt
+#' @param name a valid test sub-component
+#' @return the test component requested
+#' @examples
+#' ## From the unitizer> prompt:
+#' \dontrun{
+#' .NEW$call
+#' .REF$conditions
+#' .NEW$value              # equivalent to `.new`
+#' }
 
+setMethod("$", c("unitizerItem"),
+  function(x, name) {
+    what <- substitute(name)
+    what <- if(is.symbol(what)) as.character(what) else name
+    data.slots <- slotNames(x@data)
+    if(identical(what, "call")) return(x@call)
+    else if(length(what) != 1L || ! what %in% data.slots) {
+      stop(
+        "Argument `name` must be in ",
+        paste0(deparse(c("call", data.slots), width.cutoff=500L), collapse=", ")
+    ) }
+    slot(x@data, what)
+} )

@@ -22,6 +22,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
 
     # - Unitize ----------------------------------------------------------------
 
+    # At some point need to rationalize this to a simpler instantiator for the
+    # sub section objects since so much of the logic is similar
+
     if(identical(mode, "unitize")) {
       for(i in unique(x@section.parent)) {                           # Loop through parent sections
         sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
@@ -42,26 +45,30 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           items.new=x@items.new[x@tests.fail & sect.map],
           show.fail=x@tests.errorDetails[x@tests.fail & sect.map],
           items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]],
-          new.conditions=x@tests.conditions.new[x@tests.fail & sect.map]
+          new.conditions=x@tests.conditions.new[x@tests.fail & sect.map],
+          tests.result=x@tests.result[x@tests.fail & sect.map, , drop=FALSE]
         )
         browse.sect <- browse.sect + new(                            # New tests
           "unitizerBrowseSubSectionNew",
           show.msg=TRUE, show.out=TRUE,
           items.new=x@items.new[x@tests.new & sect.map],
-          new.conditions=x@tests.conditions.new[x@tests.new & sect.map]
+          new.conditions=x@tests.conditions.new[x@tests.new & sect.map],
+          tests.result=x@tests.result[x@tests.new & sect.map, , drop=FALSE]
         )
         browse.sect <- browse.sect + new(                            # Corrupted tests
           "unitizerBrowseSubSectionCorrupted",
           items.new=x@items.new[x@tests.error & sect.map],
           show.fail=x@tests.errorDetails[x@tests.error & sect.map],
           items.ref=x@items.ref[x@items.new.map[x@tests.error & sect.map]],
-          new.conditions=x@tests.conditions.new[x@tests.error & sect.map]
+          new.conditions=x@tests.conditions.new[x@tests.error & sect.map],
+          tests.result=x@tests.result[x@tests.error & sect.map, , drop=FALSE]
         )
         browse.sect <- browse.sect + new(                            # Passed tests
           "unitizerBrowseSubSectionPassed",
           items.new=x@items.new[x@tests.status == "Pass" & sect.map],
           show.fail=FALSE,
-          new.conditions=rep(F, sum(x@tests.status == "Pass" & sect.map))
+          new.conditions=rep(F, sum(x@tests.status == "Pass" & sect.map)),
+          tests.result=x@tests.result[x@tests.status == "Pass" & sect.map, , drop=FALSE]
         )
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
@@ -71,10 +78,12 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           "unitizerBrowseSection", section.id=0L,
           section.title="Removed Items"
         )
+        rem.item.count <- length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionRemoved",
           items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)],
-          new.conditions=rep(FALSE, length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))) # by definition can't have new conditions on removed tests
+          new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
+          tests.result=tests_result_mat(rem.item.count)
         )
         unitizer.browse <- unitizer.browse + browse.sect
       }
@@ -95,7 +104,8 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         browse.sect <- browse.sect + new(                            # Passed tests
           "unitizerBrowseSubSectionPassed",
           items.new=x@items.ref[sect.map],
-          show.msg=TRUE, new.conditions=rep(FALSE, sum(sect.map))
+          show.msg=TRUE, new.conditions=rep(FALSE, sum(sect.map)),
+          tests.result=tests_result_mat(sum(sect.map))
         )
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
@@ -142,11 +152,13 @@ setClass("unitizerBrowseMapping",
     reviewed="logical",
     review.val="character",
     review.type="factor",
+    tests.result="matrix",
     ignored="logical",
     new.conditions="logical"
   ),
   prototype=list(
-    review.type=factor(levels=c("New", "Passed", "Failed", "Removed", "Corrupted"))
+    review.type=factor(levels=c("New", "Passed", "Failed", "Removed", "Corrupted")),
+    tests.result=tests_result_mat(0L)
   ),
   validity=function(object) {
     if(
@@ -199,7 +211,6 @@ setClass("unitizerBrowse", contains="unitizerList",
     TRUE
   }
 )
-
 #' Display Summary of Tests and User Decisions
 #'
 #' Used to help navigate tests.  Will only show reviewed tests because
@@ -421,10 +432,12 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
         levels=levels(e1@mapping@review.type)
       ),
       ignored=unlist(lapply(as.list(e2), ignored)),
-      new.conditions=unlist(lapply(as.list(e2), slot, "new.conditions"))  # get conditions from each sub-section
+      new.conditions=unlist(lapply(as.list(e2), slot, "new.conditions")),  # get conditions from each sub-section
+      tests.result=do.call(rbind, lapply(as.list(e2), slot, "tests.result"))
     )
     for(i in slotNames(e1@mapping)) {
-      slot(e1@mapping, i) <- append(slot(e1@mapping, i), slot(mapping.new, i))
+      comb_fun <- if(is.matrix(slot(e1@mapping, i))) rbind else append
+      slot(e1@mapping, i) <- comb_fun(slot(e1@mapping, i), slot(mapping.new, i))
     }
     e1
   }
@@ -460,7 +473,8 @@ setClass("unitizerBrowseSubSection",
     show.out="logical",
     show.msg="logical",
     show.fail="unitizerItemsTestsErrorsOrLogical",
-    new.conditions="logical"
+    new.conditions="logical",
+    tests.result="matrix"
   ),
   prototype=list(show.msg=FALSE, show.fail=FALSE, show.out=FALSE),
   validity=function(object) {
@@ -497,6 +511,15 @@ setClass("unitizerBrowseSubSection",
       return("Argument `new.condtions` must be supplied and be the same length as the items.")
     } else if (any(is.na(object@new.conditions))) {
       return("Argument `new.conditions` may not contain any NA values.")
+    } else if(
+      !is.logical(object@tests.result) ||
+      !identical(colnames(object@tests.result), slotNames("unitizerItemData"))
+    ) {
+      return(
+        paste0(
+          "Argument `tests.result` must be logical matrix with colnames equal ",
+          "to slot names for `unitizerItemData`"
+      ) )
     }
     TRUE
   }
@@ -581,24 +604,23 @@ setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",
 setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
-    prompt="Overwrite item in store with new value",
+    prompt="Overwrite with new test",
     detail=paste0(
-      "Reference test does not match new test from test script (compare `.new` ",
-      "and `.ref` to see differences)."
+      "Reference test does not match new test from test script."
     ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
   prototype=list(
     title="New",
-    prompt="Add new item to store",
+    prompt="Add new test to store",
     detail="Test script contains tests not present in unitizer.",
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
 setClass("unitizerBrowseSubSectionCorrupted", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Corrupted",
-    prompt="Overwrite item in store with new value",
+    prompt="Overwrite with new value",
     detail=paste0(
       "Reference tests cannot be compared to new tests because errors occurred ",
       "while attempting comparison. Please review the error and contemplate using ",
@@ -609,7 +631,7 @@ setClass("unitizerBrowseSubSectionCorrupted", contains="unitizerBrowseSubSection
 setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Removed",
-    prompt="Remove item from store",
+    prompt="Remove test from store",
     detail="The following test exists in unitizer but not in the new test script.",
     actions=c(Y="C", N="B")
 ) )

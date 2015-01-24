@@ -1,5 +1,5 @@
 #' @include unitizer.R
-#' @include misc.R
+#' @include conditions.R
 #' @include browse.struct.R
 #' @include prompt.R
 
@@ -370,9 +370,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) }
       if(length(item.main@comment)) cat(item.main@comment, sep="\n")
       cat(deparse_prompt(item.main@call), sep="\n")
+
       # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant
-
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
@@ -385,19 +385,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
       }
       if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
 
-      # If test failed, show details of failure
+      # If test failed, show details of failure; note this should mean there must
+      # be a `.new` and a `.ref`
 
       if(
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
       ) {
-        cat(
-          c(
-            "Test Failed Because:",
-            as.character(curr.sub.sec.obj@show.fail[[id.rel]])
-          ),
-          sep="\n"
-    ) } }
+        summary(curr.sub.sec.obj@show.fail[[id.rel]])
+        show(curr.sub.sec.obj@show.fail[[id.rel]])
+    } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
     # based on what happens to the subsequent non-ignored test.
@@ -415,17 +412,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # easily retrieve the full object with the `get*` functions.
 
     var.list <- list()
-    var.sub.list <- list()
     if(!is.null(item.new)) {
-      var.list <- c(var.list, list(.new=item.new))
-      var.sub.list <- c(var.sub.list, list(.new=item.new@data@value))
+      var.list <- c(var.list, list(.NEW=item.new, .new=item.new@data@value))
     }
     if(!is.null(item.ref)) {
-      var.list <- c(var.list, list(.ref=item.ref))
-      var.sub.list <- c(var.sub.list, list(.ref=item.ref@data@value))
+      var.list <- c(var.list, list(.REF=item.ref, .ref=item.ref@data@value))
     }
-    browse.par.env <- list2env(var.list, parent=item.main@env)
-    browse.env <- list2env(var.sub.list, parent=browse.par.env)
+    browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)
 
     # Functions to override
@@ -443,10 +436,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
         ) },
         base.env.pri
     ) }
-    get.msg <- character()
-    if(!is.null(item.new)) get.msg <- "`getTest(.new)`"
-    if(!is.null(item.ref)) get.msg <- c(get.msg, "`getTest(.ref)`")
-
     # Options to navigate; when navigating the name of the game is set `@last.id`
     # to the non-ignored test just previous to the one you want to navigate to,
     # the loop will then advance you to that test
@@ -460,15 +449,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
       "`R` to see a listing of all previously reviewed tests",
       "`ls()` to see what objects are available to inspect",
       if(!is.null(item.new))
-        "`.new` to see newly evaluated test result",
+        "`.new` for the current value, or `.NEW` for the full test object",
       if(!is.null(item.ref))
-        "`.ref` to see result from reference test from `unitizer` store",
-      paste0(collapse="",
-        paste0(get.msg, collapse=" or "), " ",
-        "to see more details about the test (see documentation for `getTest` ",
-        "for details on other accessor functions such as (",
-        paste0(paste0("`", names(getItemFuns), "`"), collapse=", "), ")."
-    ) )
+        "`.ref` for the reference value, or `.REF` for the full reference object"
+    )
     # navigate_prompt handles the B and R cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a function
     # because same logic is re-used elsewhere
@@ -497,78 +481,3 @@ setMethod("reviewNext", c("unitizerBrowse"),
     x
   }
 )
-#' Retrieves Additional Info About Test
-#'
-#' Uses the test result to identify whether the get request was issued on the
-#' test object or the reference test object.  The check is to ensure the user
-#' didn't modify the object (maybe we don't need to do this?).
-#'
-#' These functions rely on the \code{ref} and \code{obj} objects being
-#' defined in their parent environment.
-#'
-#' @keywords internal
-
-getItemData <- function(x, name, what, env) {
-  if(!(name %in% c(".new", ".ref"))) {
-    stop("unitizer::get* functions may only be called on the test objects (`.new`, or `.ref`).")
-  }
-  if(!(is.environment(env))) stop("Argument `env` must be an environment")
-  if(inherits(obj <- try(get(name, inherits=FALSE, envir=env), silent=TRUE), "try-error")) {
-    stop("Requested test object `", name, "` is not defined for this test.")
-  }
-  if(!is(obj, "unitizerItem")) stop("Logic Error: retrieved object is not a `unitizerItem`; contact package maintainer.")
-  if(!identical(obj@data@value, x)) {
-    stop(
-      "Passed `", name, "` value cannot be matched to the test that puportedly produced it; ",
-      "are you sure you did not change the value of `", name,"`?"
-  ) }
-  if(identical(what, "test")) return(obj)
-  if(identical(what, "call")) return(obj@call)
-  if(!(what %in% slotNames(obj@data))) stop("Logic Error: unknown slot, contact maintainer.")
-  slot(obj@data, what)
-}
-#' Retrieve Additional Info About Tests
-#'
-#' Intended for use exclusively within the \code{unitizer} interactive command
-#' line.  For example \code{getMsg(.new)} will retrieve any \file{stderr} that occurred
-#' during test evaluation (for reference tests, use \code{getMsg(.ref)}.
-#'
-#' @note these functions are only available at the \code{unitizer} prompt
-#'
-#' @name getTest
-#' @usage getTest(x)
-#' @aliases getVal getConds getMsg getOut getAborted
-#' @param x object to get additional data for (should be one of \code{.new}, \code{.ref})
-#' @return depends on what you requested:
-#' \itemize{
-#'   \item \code{getConds}: the conditions as a list of conditions or an
-#'     empty list if no conditions occurred.
-#'   \item \code{getOut}: the screen output (i.e. anything produced by cat/print,
-#'     or any visible evaluation output) as a character vector
-#'   \item \code{getMsg}: anything that was output to \code{stderr}, mostly
-#'     this is all contained in the conditions as well, though there could be
-#'     other output here, as a character vector
-#'   \item \code{getExpr}: the call that was tested as an unevaluated call,
-#'     but keep in mind that if you intend to evaluate this for a reference
-#'     item the environment may not be the same so you could get different
-#'     results (\code{ls} will provide more details)
-#'   \item \code{getAborted}: returns whether the test call issues a restart
-#'     call to the `abort` restart, as `stop` does.
-#'   \item \code{getVal}: the value that results from evaluating the test, note
-#'     that typing \code{obj} and \code{getVal(obj)} at the \code{unitizer}
-#'     prompt are equivalent
-#'   \item \code{reCall}: will load the call used to generate the test
-#'     on the prompt (not implemented yet).
-#' }
-
-getTest <- function(x) NULL # This will be overwritten
-getItemSlots <- c(
-  getTest="test", getConds="conditions", getVal="value",
-  getMsg="message", getOut="output", getAborted="aborted", getExpr="call"
-)
-getItemFuns <- lapply(
-  getItemSlots, function(slot) {
-    force(slot)
-    function(x) getItemData(x, deparse(substitute(x)), slot, parent.env(parent.env(parent.frame())))
-} )
-getItemFuns <- c(getItemFuns, list(recall=function(x) stop("Not Implemented")))

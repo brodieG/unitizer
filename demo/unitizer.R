@@ -1,8 +1,6 @@
-{
-  if(!require(devtools)) stop("Package `devtools` is required for this demo.")
-  library(unitizer)
-  if(exists(".unitizer.test.file")) stop("Cannot run if variable `.unitizer.test.file` is defined")
-}
+if(!require(devtools)) stop("Package `devtools` is required for this demo.")
+library(unitizer)
+
 # In this script we will demonstrate the `unitize` workflow by running `unitize`
 # against three different versions of our pseudo package `unitizer.fastlm`.
 
@@ -145,4 +143,3 @@ local({
   unlink(sub(".R", ".unitizer", .unitizer.test.file), recursive=TRUE)
   rm(.unitizer.test.file)
 }
-

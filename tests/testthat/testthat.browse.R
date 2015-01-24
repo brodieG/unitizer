@@ -12,38 +12,13 @@ local( {
     unitizer:::as.list(obj.item@data@conditions), conditionMessage, character(1L)
   )
   obj.item@data@aborted <- TRUE
-  .new <- obj.item@data@value
-
-  par.env <- new.env()
-  assign(".new", obj.item, par.env)
-  child.env <- new.env(parent=par.env)
-  assign(".new", .new, child.env)
-  eval.env <- new.env(parent=child.env)
 
   test_that("unitizerItem accessor functions work", {
-    expect_equal(evalq(unitizer:::getItemFuns[["getVal"]](.new), eval.env), obj.item@data@value)
-    expect_equal(evalq(unitizer:::getItemFuns[["getOut"]](.new), eval.env), obj.item@data@output)
-    expect_equal(evalq(unitizer:::getItemFuns[["getConds"]](.new), eval.env), obj.item@data@conditions)
-    expect_equal(evalq(unitizer:::getItemFuns[["getTest"]](.new), eval.env), obj.item)
-
-    ref <- .new
-    assign(".ref", obj.item, par.env)
-    assign(".ref", .new, eval.env)
-
-    expect_equal(evalq(unitizer:::getItemFuns[["getMsg"]](.ref), eval.env), obj.item@data@message)
-    expect_equal(evalq(unitizer:::getItemFuns[["getAborted"]](.ref), eval.env), obj.item@data@aborted)
+    expect_equal(obj.item$value, obj.item@data@value)
+    expect_equal(obj.item$output, obj.item@data@output)
+    expect_equal(obj.item$conditions, obj.item@data@conditions)
   } )
 
-  test_that("unitizerItem accessor handler function works and errors with incorrect inputs", {
-    expect_equal(evalq(unitizer:::getItemData(.new, ".new", "value", par.env), eval.env), obj.item@data@value)
-    expect_error(evalq(unitizer:::getItemData(.new, ".new", "value", eval.env), eval.env))
-    expect_error(evalq(unitizer:::getItemData(.new, ".new", "vaLue", par.env), eval.env))
-    expect_error(evalq(unitizer:::getItemData(.new, "object", "value", par.env), eval.env))
-    item <- .new
-    assign("item", obj.item, par.env)
-    assign("item", .new, eval.env)
-    expect_error(evalq(unitizer:::getItemFuns[["getConds"]](item), eval.env))
-  } )
   # Create a bunch of expressions for testing, has to be done outside of
   # `test_that`
 

@@ -1,4 +1,9 @@
 library(testthat)
+library(devtools)
+
+unitizer.dir <- system.file(package="unitizer")
+install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
+install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg2"))
 
 try(detach("package:unitizer", unload=TRUE))
 try(detach("package:unitizerdummypkg1", unload=TRUE))
@@ -286,5 +291,6 @@ test_that("Messing with path is detected", {
 })
 try(detach("package:unitizerdummypkg1", unload=TRUE))
 try(detach("package:unitizerdummypkg2", unload=TRUE))
+remove.packages(c("unitizerdummypkg1", "unitizerdummypkg2"))
 
 message("COMPLETED zeroenv tests")
