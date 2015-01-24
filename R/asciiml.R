@@ -168,7 +168,7 @@ as.character.bullet <- function(x, width=0L, pre="", ...) {
     stop("Logic Error: length mismatch when making bullets; contact maintainer.")
 
   pre.fmt <- format(pre, justify="right")
-  pre.pad <- paste0(rep(" ", len=nchar(pre[[1L]])), collapse="")
+  pre.pad <- paste0(rep(" ", len=nchar(pre.fmt[[1L]])), collapse="")
 
   unname(
     unlist(
