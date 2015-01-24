@@ -25,7 +25,7 @@ setGeneric("editFunNames", function(x, fun.name.old, fun.name.new, ...)
 #'   run in non-interactive mode, but warnings will be suppressed and will
 #'   proceed without prompting, obviously...
 #' @examples
-#' \donrun{
+#' \dontrun{
 #' untz <- get_unitizer("tests/unitizer/mytests.unitizer")
 #' untz.edited <- editFunNames(untz, quote(myFun), quote(my_fun))
 #' set_unitizer(untz.edited, "tests/unitizer/mytests.unitizer")
