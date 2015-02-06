@@ -28,7 +28,7 @@ setGeneric("editFunNames", function(x, fun.name.old, fun.name.new, ...)
 #' \dontrun{
 #' untz <- get_unitizer("tests/unitizer/mytests.unitizer")
 #' untz.edited <- editFunNames(untz, quote(myFun), quote(my_fun))
-#' set_unitizer(untz.edited, "tests/unitizer/mytests.unitizer")
+#' set_unitizer("tests/unitizer/mytests.unitizer", untz.edited)
 #' }
 
 setMethod("editFunNames", c("unitizer", "name", "name"),
@@ -54,6 +54,13 @@ setMethod("editFunNames", c("unitizer", "name", "name"),
     call_sub <- function(call, old.name, new.name) {
       if(is.call(call)) {
         if(identical(call[[1L]], old.name)) call[[1L]] <- new.name
+        else if(
+          is.call(call[[1L]]) &&
+          (
+            identical(call[[1L]][[1L]], quote(`:::`)) ||
+            identical(call[[1L]][[1L]], quote(`::`))
+          ) && identical(call[[1L]][[3L]], old.name)
+        ) call[[1L]][[3L]] <- new.name
         if(length(call) < 2L) return(call)
         for(i in 2:length(call)) {
           if(is.call(call[[i]]))
