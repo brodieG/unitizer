@@ -116,7 +116,12 @@ The main issue with using `unitizer` with a version controlled package is that y
 
 #### Suggested Workflow with Git
 
-The approach we suggest is the last one above: just commit your `rds` files for major releases.  Also, note that to the extent you have a lot of test files that aren't changing, this should minimize how much binary data you commit.  One possible way to handle this with Git is to use the following command (adapted from twalberg's [SO answer](http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory)):
+The approach we suggest is the last one above: just commit your `rds` files for major releases.  Also, note that to the extent you have a lot of test files that aren't changing, this should minimize how much binary data you commit.  One possible way to handle this with Git is to use the following command (adapted from twalberg's [SO answer](http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory)).
+
+**Warning**: be careful when you reset your working directory as your `rds` files will get reset to the last version that you committed (i.e. `git checkout -- .` will replace your currend `rds` with the one in the repo).  If you update your `rds` within a branch and then merge the branch back, make sure you either commit or stash the `rds` before the merge.
+
+To implement:
+
 ```
 git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged
 ```
@@ -124,7 +129,8 @@ This will prevent the `rds` files as showing up as being modified when you run `
 ```
 git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged
 ```
-**Warning**: be careful when you reset your working directory as your `rds` files will get reset to the last version that you committed (i.e. `git checkout -- .` will replace your currend `rds` with the one in the repo).  If you `--assume-unchanged` other files such as `.o` or `.so` files, you may need to remove those after a checkout as well so that `devtools::install` will recreate them from current sources.
+
+If you `--assume-unchanged` other files such as `.o` or `.so` files, you may need to remove those after a checkout as well so that `devtools::install` will recreate them from current sources.
 
 ## Error Handling
 
