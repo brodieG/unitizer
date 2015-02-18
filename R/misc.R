@@ -41,7 +41,7 @@ env_name <- function(env) {
 #' @param y the current function, if \code{`x`} is not traced and \code{`y`}
 #'   is traced, will compare using \code{`y@@original`} instead of \code{`y`}
 
-funs.ignore <- list(base::`<-`, base::library, base::`=`)
+funs.ignore <- list(base::`<-`, base::library, base::`=`, base::set.seed)
 identical_fun <- function(x, y) {
   if(!is.function(x) || !is.function(y))
     stop("Arguments `x` and `y` must both be functions.")
