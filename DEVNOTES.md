@@ -85,6 +85,10 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * should `library` be ignored?  How do we reconcile that with the addition of the
   new clean path functions?  In theory `library` should be returning the same
   thing when using the clean paths.
+* mechanism for submitting comments in language interferes with cases where we
+  don't care about comments (e.g. when showing the review listing, or when
+  matching stored calls to the newly parsed ones).  Having to blow away comments
+  each time seems inefficient...
 
 ## Conditions
 

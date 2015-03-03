@@ -152,11 +152,11 @@ install(paste0(unitizer.path, "/example.pkgs/unitizerdummypkg1"))  # one of seve
 
 `review` allows you to review all tests in a unitizer rds with the option of dropping tests from it.  See `?review`.
 
-### `edit_fun_names`
+### `editCalls`
 
 *Warning*: this is experimental.
 
-`edit_fun_names` allows you to modify function names in calls stored in an `unitizer`.  This is useful when you decide to change a function name, but otherwise leave the behavior and rest of the call unchanged.  You can then upate your test script and the renamed calls will be matched against the correct values in the `unitizer` store.  Without this you would have to re-review and re-store every test since `unitizer` identifies tests by the deparsed expression.
+`editCalls` allows you to modify the calls calls stored in a `unitizer`.  This is useful when you decide to change the call (e.g. a function name), but otherwise leave the behavior of the call unchanged.  You can then upate your test script and the renamed calls will be matched against the correct values in the `unitizer` store.  Without this you would have to re-review and re-store every test since `unitizer` identifies tests by the deparsed call.
 
 ### `split`
 

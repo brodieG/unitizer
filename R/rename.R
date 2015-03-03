@@ -1,38 +1,39 @@
 #' Edit Calls In Unitizer
 #'
-#' Used if you want to change the name of a function you have pre-existing
-#' tests for.  Useful if you want to change the function name, but not have to
-#' re-run and review all the tests since they will no longer match due to the
-#' function name change.
+#' Used if you want to change language in test expression in a unitizer when
+#' the actual results of running the expressions is unchanged.  This is useful
+#' if you decided to rename functions, etc., without having to re-run the entire
+#' \code{unitize} process since \code{unitize} matches tests based on
+#' expressions.
 #'
 #' @note this is a somewhat experimental function, so make sure you backup any
 #'   unitizers before you try to use it.
 #'
 #' @export
-#' @rdname editFunNames
+#' @rdname editCalls
 #' @param x a unitizer object
-#' @param fun.name.old the name of the function replace
-#' @param fun.name.new the new name of the function
+#' @param lang.old the name of the function replace
+#' @param lang.new the new name of the function
 #' @param ... unused
 #' @return a untizer object with function names modifies
 
-setGeneric("editFunNames", function(x, fun.name.old, fun.name.new, ...)
-  standardGeneric("editFunNames")
+setGeneric("editCalls", function(x, lang.old, lang.new, ...)
+  standardGeneric("editCalls")
 )
 #' @export
-#' @rdname editFunNames
+#' @rdname editCalls
 #' @param interactive.only logical(1L) set to FALSE if you want to allow this to
 #'   run in non-interactive mode, but warnings will be suppressed and will
 #'   proceed without prompting, obviously...
 #' @examples
 #' \dontrun{
 #' untz <- get_unitizer("tests/unitizer/mytests.unitizer")
-#' untz.edited <- editFunNames(untz, quote(myFun), quote(my_fun))
+#' untz.edited <- editCalls(untz, quote(myFun), quote(my_fun))
 #' set_unitizer("tests/unitizer/mytests.unitizer", untz.edited)
 #' }
 
-setMethod("editFunNames", c("unitizer", "name", "name"),
-  function(x, fun.name.old, fun.name.new, interactive.only=TRUE, ...) {
+setMethod("editCalls", c("unitizer", "language", "language"),
+  function(x, lang.old, lang.new, interactive.only=TRUE, ...) {
     warning(
       "This is an experimental function; make sure you backup any unitizers ",
       "before you edit them", immediate.=TRUE
@@ -52,26 +53,18 @@ setMethod("editFunNames", c("unitizer", "name", "name"),
       if((i <- i + 1L) > 2L) stop("You are not making sense; I give up!")
     }
     call_sub <- function(call, old.name, new.name) {
-      if(is.call(call)) {
-        if(identical(call[[1L]], old.name)) call[[1L]] <- new.name
-        else if(
-          is.call(call[[1L]]) &&
-          (
-            identical(call[[1L]][[1L]], quote(`:::`)) ||
-            identical(call[[1L]][[1L]], quote(`::`))
-          ) && identical(call[[1L]][[3L]], old.name)
-        ) call[[1L]][[3L]] <- new.name
-        if(length(call) < 2L) return(call)
-        for(i in 2:length(call)) {
-          if(is.call(call[[i]]))
-            call[[i]] <- Recall(call[[i]], old.name, new.name)
-        }
+      if(is.language(call)) {
+        if(identical(call, old.name)) return(new.name)
+        if(length(call) > 1)
+          for(j in 1:length(call))
+            if(is.language(call[[j]]))
+              call[[j]] <- Recall(call[[j]], old.name, new.name)
       }
       call
     }
     for(i in seq_along(x@items.ref)) {
       x@items.ref[[i]]@call <-
-        call_sub(x@items.ref[[i]]@call, fun.name.old, fun.name.new)
+        call_sub(x@items.ref[[i]]@call, lang.old, lang.new)
       x@items.ref.calls.deparse[[i]] <- deparse_call(x@items.ref[[i]]@call)
     }
     x

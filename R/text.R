@@ -131,6 +131,25 @@ deparse_prompt <- function(expr) {
   prompt.vec <- c(prompt, rep(continue, length(expr.deparsed) - 1L))
   paste0(prompt.vec, expr.deparsed)
 }
+#' Remove any comment attributes
+#'
+#' Used by the internal deparse functions
+#'
+#' @keywords internal
+
+uncomment <- function(lang) {
+  if(is.expression(lang))
+    stop("Logic Error: unexpected expression; contact maintainer") # should be a call or symbol or constant, not an expression
+  if(!(missing(lang) || is.null(lang))) attr(lang, "comment") <- NULL
+  if(is.call(lang) && length(lang) > 1)
+    for(i in seq_along(lang)) {
+      lang.tmp <- lang[[i]]
+      if(!(missing(lang.tmp) || is.null(lang.tmp)))
+        lang[[i]] <- Recall(lang[[i]])
+    }
+  lang
+}
+
 #' Deparse, but only provide first X characters
 #'
 #' @keywords internal
@@ -143,7 +162,7 @@ deparse_peek <- function(expr, len, width=500L) {
     stop("Argument `len` must be an integer greater than four")
   if(!is.integer(width) || length(width) != 1L || width < 1L)
     stop("Argument `width` must be an integer greater than zero")
-  chr <- paste0(sub("\n", " ", deparse(expr, width)), collapse="")
+  chr <- paste0(sub("\n", " ", deparse(uncomment(expr), width)), collapse="")
   if(nchar(chr) > len) {
     paste0(substr(chr, 1L, len -3L), "...")
   } else {
@@ -157,7 +176,7 @@ deparse_peek <- function(expr, len, width=500L) {
 #' @return character(1L)
 
 deparse_call <- function(expr) {
-  paste0(deparse(expr), collapse="")
+  paste0(deparse(uncomment(expr)), collapse="")
 }
 
 #' Print Only First X characters
