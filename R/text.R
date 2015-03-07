@@ -133,14 +133,19 @@ deparse_prompt <- function(expr) {
 }
 #' Remove any comment attributes
 #'
-#' Used by the internal deparse functions
+#' Used by the internal deparse functions.  Really removes all attributes.
+#' Resorting to desperate measures due to the reference like behavior of
+#' expressions and messing with their attributes, most likely due to the
+#' srcref style environment attributes.
 #'
 #' @keywords internal
 
 uncomment <- function(lang) {
   if(is.expression(lang))
     stop("Logic Error: unexpected expression; contact maintainer") # should be a call or symbol or constant, not an expression
-  if(!(missing(lang) || is.null(lang))) attr(lang, "comment") <- NULL
+  lang.new <- if(!(missing(lang) || is.null(lang)))
+   `attributes<-`(expr[[1]], NULL)
+  else lang
   if(is.call(lang) && length(lang) > 1)
     for(i in seq_along(lang)) {
       lang.tmp <- lang[[i]]
