@@ -96,10 +96,11 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
   ind.start <- 1L
   par.idx <- 1L
   par.list <- id
+  id.split <- split(ids, par.ids)
 
   repeat {
     if(!length(par.list)) break
-    child.len <- length(children <- ids[par.ids == par.list[[par.idx]]])
+    child.len <- length(children <- id.split[[as.character(par.list[[par.idx]])]])
     if(child.len) {
       ind.end <- ind.start + child.len - 1L
       if(ind.end > max.size)
