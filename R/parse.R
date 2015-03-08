@@ -67,11 +67,22 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   } else if (any(par.ids) < 0) {
     stop("Argument `par.ids` contains values less than zero, but that is only allowed when `top.level` == 0L")
   }
+  # Create lookup matrix so we can look up ids directly.  This will be a slightly
+  # sparse matrix to the extend `ids` doesn't contain every number between
+  # range(ids).  The idea is to be able to lookup id-par pairs by direct index
+  # access
+
+  id.range <- range(ids)
+  if(id.range[[1L]] < 1L)
+    stop("Expected only strictly positive unique ids")
+  id.mx <- matrix( nrow=id.range[[2L]], ncol=2L)
+  id.mx[ids, ] <- cbind(ids, par.ids)
+
   ancestry_climb <- function(par.id) {
-    par.id <- abs(par.id)
     if(identical(par.id, top.level)) return(par.id)
-    new.id <- abs(par.ids[which(par.id == ids)][[1L]])
-    if(identical(new.id, top.level)) return(par.id) else if (is.na(new.id)) return(new.id)
+    new.id <- id.mx[par.id, 2L]
+    if(identical(new.id, top.level)) return(par.id)
+    else if (is.na(new.id)) return(new.id)
     Recall(new.id)
   }
   vapply(par.ids, ancestry_climb, integer(1L))
