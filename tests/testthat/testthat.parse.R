@@ -229,4 +229,14 @@ local( {
     txt <- "mtcars[1:10,]\n";  # the empty second argument to `[` caused problems before
     unitizer:::parse_with_comments(text=txt)  # shouldn't cause error
   })
+  test_that("uncommenting works", {
+    expect_identical(
+      quote(library(unitizer.fastlm)),
+      unitizer:::uncomment(expr[[1]])
+    )
+    expect_equal(info="don't blow away function arg names",
+      quote(function(a, b) NULL),
+      unitizer:::uncomment(quote(function(a, b) NULL))
+    )
+  } )
 } )
