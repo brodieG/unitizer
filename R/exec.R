@@ -19,7 +19,15 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     # Prep message and std output capture, note this is reset with every test expression
     # evaluation
 
-    x.comments <- attr(x, "comment") # for some reason making a copy of x an NULLING attributes kills comments in some corner cases, so must do this first
+    x.comments <- attr(x, "comment") # need to recover comments from container since we can't attach comments directly to name
+    if(isTRUE(attr(x, "unitizer_parse_symb"))) {
+      if(length(x) != 2L || x[[1L]] != as.name("(") || !is.name(x[[2L]])) {
+        stop(
+          "Logic Error: Unexpected structure for object with language with ",
+          "'unitizer_parse_symb' attribute attached; contact maintainer"
+      ) }
+      x <- x[[2L]]
+    }
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
     std.err.capt <- tempfile()        # Inefficient to do this for every test? Convenient though

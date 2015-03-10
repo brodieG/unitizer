@@ -241,8 +241,21 @@ comments_assign <- function(expr, comment.dat) {
     if(is.na(comm.comm$match[[i]])) next
     expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
     if(!identical(length(expr.pos), 1L)) stop("Logic Error; contact maintainer.")
-    if(!is.null(expr[[expr.pos]]))
-      attr(expr[[expr.pos]], "comment") <- c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
+    if(!is.null(expr[[expr.pos]])) {
+      # names are registered in global pool, so you can only attach attributes
+      # to as single unique in memory instance, irrespective of where or how
+      # many times a name occurs in an expression.  Because of this, we must
+      # turn names that we want to attach comments to into simple language by
+      # adding parens.  Note this changes structure of expression but hopefully
+      # doesn't mess anything up later on...
+
+      if(is.name(expr[[expr.pos]])) {
+        expr[[expr.pos]] <- call("(", expr[[expr.pos]])
+        attr(expr[[expr.pos]], "unitizer_parse_symb") <- TRUE
+      }
+      attr(expr[[expr.pos]], "comment") <-
+        c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
+    }
   }
   expr
 }
