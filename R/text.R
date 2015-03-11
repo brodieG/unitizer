@@ -144,15 +144,14 @@ uncomment <- function(lang) {
   if(is.expression(lang))
     stop("Logic Error: unexpected expression; contact maintainer") # should be a call or symbol or constant, not an expression
   lang.new <- if(!(missing(lang) || is.null(lang)))
-   `attributes<-`(expr[[1]], NULL)
-  else lang
-  if(is.call(lang) && length(lang) > 1)
-    for(i in seq_along(lang)) {
-      lang.tmp <- lang[[i]]
+   `attr<-`(lang, "comment", NULL) else lang
+  if(is.call(lang.new) && length(lang.new) > 1)
+    for(i in seq_along(lang.new)) {
+      lang.tmp <- lang.new[[i]]
       if(!(missing(lang.tmp) || is.null(lang.tmp)))
-        lang[[i]] <- Recall(lang[[i]])
+        lang.new[[i]] <- Recall(lang.tmp)
     }
-  lang
+  lang.new
 }
 
 #' Deparse, but only provide first X characters
@@ -181,7 +180,8 @@ deparse_peek <- function(expr, len, width=500L) {
 #' @return character(1L)
 
 deparse_call <- function(expr) {
-  paste0(deparse(uncomment(expr)), collapse="")
+  expr.no.com <- uncomment(expr)
+  paste0(deparse(expr.no.com), collapse="")
 }
 
 #' Print Only First X characters

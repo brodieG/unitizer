@@ -241,8 +241,21 @@ comments_assign <- function(expr, comment.dat) {
     if(is.na(comm.comm$match[[i]])) next
     expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
     if(!identical(length(expr.pos), 1L)) stop("Logic Error; contact maintainer.")
-    if(!is.null(expr[[expr.pos]]))
-      attr(expr[[expr.pos]], "comment") <- c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
+    if(!is.null(expr[[expr.pos]])) {
+      # names are registered in global pool, so you can only attach attributes
+      # to as single unique in memory instance, irrespective of where or how
+      # many times a name occurs in an expression.  Because of this, we must
+      # turn names that we want to attach comments to into simple language by
+      # adding parens.  Note this changes structure of expression but hopefully
+      # doesn't mess anything up later on...
+
+      if(is.name(expr[[expr.pos]])) {
+        expr[[expr.pos]] <- call("(", expr[[expr.pos]])
+        attr(expr[[expr.pos]], "unitizer_parse_symb") <- TRUE
+      }
+      attr(expr[[expr.pos]], "comment") <-
+        c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
+    }
   }
   expr
 }
@@ -269,7 +282,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #'     to allow mapping the parsed data back to the expression.  What
 #'     confuses the issue a bit is that operators show up at the top level,
 #'     but you can actually
-#'     ignore them.  Also, parantheses should only be kept if they are the
+#'     ignore them.  Also, parentheses should only be kept if they are the
 #'     topmost item, as otherwise they are part of a function call and
 #'     should be ignored.
 #'   \item Comments inside function formals are not assigned to the formals
@@ -595,18 +608,42 @@ prsdat_fix_exprlist <- function(parse.dat, ancestry) {
     Recall(parse.dat.mod, ancestry) else parse.dat.mod
 }
 
+#' Removes Symbol Marker Used To Hold Comments
+#'
+#' @keywords internal
+
+symb_mark_rem <- function(x) {
+  if(isTRUE(attr(x, "unitizer_parse_symb"))) {
+    if(length(x) != 2L || x[[1L]] != as.name("(") || !is.name(x[[2L]])) {
+      stop(
+        "Logic Error: Unexpected structure for object with language with ",
+        "'unitizer_parse_symb' attribute attached; contact maintainer"
+    ) }
+    x <- x[[2L]]
+  }
+  x
+}
+
 #' Utility Function to Extract Comments From Expression
 #'
 #' Note that when dealing with expressions the very first item will typically
-#' be NULL to allow for logic that works with nested structures
+#' be NULL to allow for logic that works with nested structures.
+#'
+#' Used mostly for testing purposes.
 #'
 #' @keywords internal
 
 comm_extract <- function(x) {
-  if(length(x) > 1L || is.expression(x)) {
-    return(c(list(attr(x, "comment")), lapply(x, comm_extract)))
+
+  if(missing(x)) return(list(NULL))
+  comm <- attr(x, "comment")
+  x <- symb_mark_rem(x)             # get rid of comment container
+  if(missing(x)) return(list(NULL)) # need to do this twice because missing args that are parsed aren't necessarily recognized as missing immediately
+
+  if(is.expression(x) || length(x) > 1L) {
+    return(c(list(comm), lapply(x, comm_extract)))
   } else {
-    return(list(attr(x, "comment")))
+    return(list(comm))
 } }
 
 #' Utility Function to Reset Comments
