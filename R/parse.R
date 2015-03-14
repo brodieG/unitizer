@@ -55,7 +55,7 @@
 #' @param top.level the id of the top level
 #' @return integer the top level parent ids for \code{`ids`}
 
-top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
+ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   if(!is.integer(ids) || !is.integer(par.ids) || !identical(length(ids), length(par.ids)))
     stop("Arguments `ids` and `par.ids` must be equal length integer vectors")
   if(!identical(length(setdiff(abs(par.ids), c(ids, top.level))), 0L))
@@ -79,11 +79,11 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   id.mx[ids, ] <- cbind(ids, par.ids)
 
   ancestry_climb <- function(par.id) {
-    if(identical(par.id, top.level)) return(par.id)
+    if(par.id == top.level) return(par.id)  # par.id should only be 1 length
     new.id <- id.mx[par.id, 2L]
-    if(identical(new.id, top.level)) return(par.id)
-    else if (is.na(new.id)) return(new.id)
-    Recall(new.id)
+    if(is.na(new.id)) return(new.id)
+    if(new.id == top.level) return(par.id)
+    ancestry_climb(new.id)  # a smidge faster than Recall, and used a lot
   }
   vapply(par.ids, ancestry_climb, integer(1L))
 }
@@ -387,10 +387,14 @@ parse_with_comments <- function(file, text=NULL) {
     line.dat <- vapply(prsdat.children, function(x) c(max=max(x$line2), min=min(x$line1)), c(max=0L, min=0L))
     col.dat <- vapply(
       seq_along(prsdat.children),
-      function(i) c(
-        max=max(subset(prsdat.children[[i]], line2==line.dat["max", i])$col2),
-        min=min(subset(prsdat.children[[i]], line1==line.dat["min", i])$col1)
-      ),
+      function(i)
+        with(
+          prsdat.children[[i]],
+          {
+            c(
+              max=max(col2[which(line2 == line.dat["max", i])]),
+              min=min(col1[which(line1 == line.dat["min", i])])
+        ) } ),
       c(max=0L, min=0L)
     )
     if(
@@ -594,11 +598,22 @@ prsdat_fix_exprlist <- function(parse.dat, ancestry) {
   # Find all the children
   z <- ancestry
   levels <- z[match(parse.dat$id, z[, "children"]), "level"]
+  lev.ord <- order(levels)          # order matters in parse.dat, so must keep track of order to restore
+  dat.ord <- parse.dat[lev.ord,]
+  tokens <- dat.ord[["token"]]
+  parents <- dat.ord[["parent"]]
+  dat.exprlist <- which(tokens == "exprlist")
+
   # Find first `exprlist`
-  exprlist <- with(parse.dat[order(levels),], head(id[token == "exprlist"], 1L))
-  exprlist.par <- subset(parse.dat, id == exprlist)$parent
+  exprlist.ind <- dat.exprlist[[1L]]
+  exprlist <- dat.ord[["id"]][[exprlist.ind]]
+
   # Promote all children and remove semi-colons and actual exprlist
-  parse.dat.mod <- subset(parse.dat, id != exprlist & (parent != exprlist | token != "';'"))
+
+  exprlist.par <- parents[[exprlist.ind]]
+  par.exprlist <- which(parents == exprlist & tokens == "';'")
+  exclude.ind <- -c(exprlist.ind, if(length(par.exprlist)) par.exprlist)
+  parse.dat.mod <- dat.ord[exclude.ind, ][order(lev.ord[exclude.ind]), ]
   parse.dat.mod[parse.dat.mod$parent == exprlist, ]$parent <- exprlist.par
   # Check nothing screwed up
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
