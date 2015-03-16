@@ -206,18 +206,20 @@ comments_assign <- function(expr, comment.dat) {
   # - 3L is only item on line (we think)
   # - 2L is last item on line (we think)
 
-  comm.expr <- transform(
+  comm.expr$first.last.on.line <- with(
     comm.expr,
-    first.last.on.line=ave(
+    ave(
       col1, line1,
       FUN=function(x)
-        if(identical(length(x), 1L)) 3L
+        if(length(x) == 1L) 3L
         else ifelse(x == max(x), 2L, ifelse(x == min(x), 1L, 0L))
   ) )
   # For each comment on a line that also has an expression, find the expression
   # that is also on that line
 
-  comm.comm <- transform(comm.comm, assign.to.prev=comm.expr$line2[match(line1, comm.expr$line2)])
+  comm.comm$assign.to.prev <- with(
+    comm.expr, line2[match(comm.comm$line1, line2)]
+  )
   comm.comm$match <- with(comm.expr,  {
     last.or.only <- first.last.on.line %in% 2L:3L
     id[last.or.only][match(comm.comm$assign.to.prev, line1[last.or.only])]
@@ -384,7 +386,10 @@ parse_with_comments <- function(file, text=NULL) {
     # particularly, that for any child section, there are no overlapping
     # sections at the top level
 
-    line.dat <- vapply(prsdat.children, function(x) c(max=max(x$line2), min=min(x$line1)), c(max=0L, min=0L))
+    line.dat <- vapply(
+      prsdat.children,
+      function(x) with(x, c(max=max(line2), min=min(line1))), c(max=0L, min=0L)
+    )
     col.dat <- vapply(
       seq_along(prsdat.children),
       function(i)
@@ -414,7 +419,7 @@ parse_with_comments <- function(file, text=NULL) {
 
     assignable.elems <- vapply(
       expr,
-      function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x),
+      function(x) !identical(typeof(x), "pairlist") && !any("srcref" == class(x)),
       logical(1L)
     )
     if(!is.call(expr) && !is.expression(expr)) {
@@ -431,7 +436,13 @@ parse_with_comments <- function(file, text=NULL) {
     # the only time there are order mismatches are with infix operators and those
     # are terminal leaves anyway.
 
-    if(!any(vapply(prsdat.children, function(child) any(child$token == "COMMENT"), logical(1L)))) return(expr)
+    if(
+      !any(
+        vapply(
+          prsdat.children,
+          function(child) with(child, "COMMENT" %in% token),
+          logical(1L)
+    ) ) ) return(expr)
 
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
     if(!identical(nrow(prsdat.par.red), length(which(assignable.elems)))) {
