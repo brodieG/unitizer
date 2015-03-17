@@ -89,7 +89,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 #' @seealso exec, unitizer_prompt
 
 eval_user_exp <- function(unitizerUSEREXP, env ) {
-  exp <- as.call(quote(withVisible), unitizerUSEREXP)
+  exp <- call("withVisible", call("eval", unitizerUSEREXP))
   res <- user_exp_handle(exp, env, "")
   if(!res$aborted && res$value$visible && length(unitizerUSEREXP)) {
     res2 <- user_exp_display(res$value$value, env)
