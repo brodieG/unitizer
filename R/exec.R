@@ -97,8 +97,7 @@ eval_user_exp <- function(unitizerUSEREXP, env ) {
     if(length(res2$trace)) res$trace <- res2$trace
     res$aborted <- res2$aborted
   }
-  res$value <- res$value$value
-  res
+  modifyList(res, list(value=res$value$value), keep.null=TRUE)  # convolution required due to possible NULL value
 }
 #' Evaluate Print/Show of an Object
 #'
