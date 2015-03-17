@@ -125,6 +125,7 @@ user_exp_handle <- function(expr, env, print.mode) {
   trace <- list()
   print.type <- print.mode
   printed <- nchar(print.mode) > 1
+  value <- NULL
 
   withRestarts(
     withCallingHandlers(
@@ -138,7 +139,7 @@ user_exp_handle <- function(expr, env, print.mode) {
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()
           trace <<- get_trace(
-            trace.base, trace.new, printed, print.type, unitizerUSEREXP
+            trace.base, trace.new, printed, print.type, expr
           )
       } }
     ),
@@ -225,10 +226,10 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
     if(is.stop || is.stop.cond) {
       trace.new[seq_along(trace.base)] <- NULL
       if(is.function(trace.new[[length(trace.new)]])) {
-        is.function(trace.new[[length(trace.new)]])
+        is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
       }
-      if(length(trace.new) >= 7L || (passed.eval && length(trace.new) >= 6L)) {
-        trace.new[1L:(if(passed.eval) 6L else 7L)] <- NULL
+      if(length(trace.new) >= 9L || (passed.eval && length(trace.new) >= 8L)) {
+        trace.new[1L:(if(passed.eval) 8L else 9L)] <- NULL
         if(passed.eval) {
           # Find any calls from the beginning that are length 2 and start with
           # print/show and then replace the part inside the print/show call with
