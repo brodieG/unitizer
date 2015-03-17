@@ -98,6 +98,7 @@ eval_user_exp <- function(unitizerUSEREXP, env ) {
     res$aborted <- res2$aborted
   }
   res$value <- res$value$value
+  res
 }
 #' Evaluate Print/Show of an Object
 #'
@@ -107,14 +108,14 @@ eval_user_exp <- function(unitizerUSEREXP, env ) {
 user_exp_display <- function(value, env) {
   print.env <- new.env(parent=env)
   assign("unitizerTESTRES", value, envir=print.env)
-  if(isS4(unitizerTESTRES)) {
+  if(isS4(value)) {
     print.type <- "show"
     disp.expr <- quote(show(unitizerTESTRES))
   } else {
     print.type <- "print"
     disp.expr <- quote(print(unitizerTESTRES))
   }
-  user_exp_handle(disp.expr, print.env)
+  user_exp_handle(disp.expr, print.env, print.mode=print.type)
 }
 #' @rdname eval_user_exp
 #' @keywords internal
