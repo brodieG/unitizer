@@ -90,9 +90,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
 eval_user_exp <- function(unitizerUSEREXP, env ) {
   exp <- call("withVisible", call("eval", unitizerUSEREXP))
-  res <- user_exp_handle(exp, env, "")
+  res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
   if(!res$aborted && res$value$visible && length(unitizerUSEREXP)) {
-    res2 <- user_exp_display(res$value$value, env)
+    res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
     res$conditions <- append(res$conditions, res2$conditions)
     if(length(res2$trace)) res$trace <- res2$trace
     res$aborted <- res2$aborted
@@ -104,7 +104,7 @@ eval_user_exp <- function(unitizerUSEREXP, env ) {
 #' @rdname eval_user_exp
 #' @keywords internal
 
-user_exp_display <- function(value, env) {
+user_exp_display <- function(value, env, expr) {
   print.env <- new.env(parent=env)
   assign("unitizerTESTRES", value, envir=print.env)
   if(isS4(value)) {
@@ -114,12 +114,12 @@ user_exp_display <- function(value, env) {
     print.type <- "print"
     disp.expr <- quote(print(unitizerTESTRES))
   }
-  user_exp_handle(disp.expr, print.env, print.mode=print.type)
+  user_exp_handle(disp.expr, print.env, print.mode=print.type, expr.raw=expr)
 }
 #' @rdname eval_user_exp
 #' @keywords internal
 
-user_exp_handle <- function(expr, env, print.mode) {
+user_exp_handle <- function(expr, env, print.mode, expr.raw) {
   aborted <- FALSE
   conditions <- list()
   trace <- list()
@@ -139,7 +139,7 @@ user_exp_handle <- function(expr, env, print.mode) {
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()
           trace <<- get_trace(
-            trace.base, trace.new, printed, print.type, expr
+            trace.base, trace.new, printed, print.type, expr.raw
           )
       } }
     ),
@@ -199,7 +199,7 @@ set_trace <- function(trace) {
 #'   eval
 #' @keywords internal
 
-get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
+get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
 
   # because withCallingHandlers/withRestarts don't register when calling
   # sys.calls() within them, but do when calling sys.calls() from the handling
@@ -216,7 +216,7 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
         function(x) identical(trace.base[[x]], trace.new[[x]])
     ) )
   ) {
-    # Filter out calls through signalCondition rather than `stop` and
+    # Filter out calls through signalCondition rather than stop and
     # `stop+condition`
 
     is.stop <- identical(trace.new[[len.new]], quote(h(simpleError(msg, call))))
@@ -228,9 +228,9 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
       if(is.function(trace.new[[length(trace.new)]])) {
         is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
       }
-      if(length(trace.new) >= 9L || (passed.eval && length(trace.new) >= 8L)) {
-        trace.new[1L:(if(passed.eval) 8L else 9L)] <- NULL
-        if(passed.eval) {
+      if(length(trace.new) >= 9L || (printed && length(trace.new) >= 6L)) {
+        trace.new[1L:(if(printed) 6L else 9L)] <- NULL
+        if(printed) {
           # Find any calls from the beginning that are length 2 and start with
           # print/show and then replace the part inside the print/show call with
           # the actual call
