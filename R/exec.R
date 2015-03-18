@@ -10,8 +10,8 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 #'
 #' @keywords internal
 #' @param test the call to test
-#' @param test.env the environment to evaluate the \code{`test`} in
-#' @return a \code{`\link{unitizerItem-class}`} object
+#' @param test.env the environment to evaluate the \code{test} in
+#' @return a \code{\link{unitizerItem-class}} object
 
 setMethod("exec", "ANY", valueClass="unitizerItem",
   function(x, test.env) {
@@ -160,10 +160,10 @@ user_exp_handle <- function(expr, env, print.mode) {
 #' a handling loop, but we still want the trace so we can emulate command line
 #' behavior.
 #'
-#' This will modify the .Traceback system variable (see \code{`\link{traceback}`}
+#' This will modify the .Traceback system variable (see \code{\link{traceback}}
 #' documentation).
 #'
-#' Assumption right now is that the outer most call to \code{`withCallingHandlers`}
+#' Assumption right now is that the outer most call to \code{withCallingHandlers}
 #' is the baseline level from which we want to repor the traceback.
 #'
 #' @keywords internal
@@ -176,22 +176,22 @@ set_trace <- function(trace) {
 }
 #' Collect the Call Stack And Clean-up
 #'
-#' Only intended for use within \code{`eval_user_exp`}, will clean up the result
-#' from two different \code{`sys.calls`} calls to extract the calls that a
+#' Only intended for use within \code{eval_user_exp}, will clean up the result
+#' from two different \code{sys.calls} calls to extract the calls that a
 #' trace would show on error.
 #'
-#' How much of the stack is used is affected by the \code{`passed.eval`}
+#' How much of the stack is used is affected by the \code{printed}
 #' argument because if something didn't pass evaluation, it means the error
-#' occurred within \code{`withVisible`} which in this setup means we need to
+#' occurred within \code{withVisible} which in this setup means we need to
 #' remove two additional levels.
 #'
 #' Relies on calls being evaluated in a very particular environment.
 #'
 #' @seealso set_trace
 #' @param trace.base starting point for what we care about in the trace, as
-#'   produced by \code{`sys.calls`}
+#'   produced by \code{sys.calls}
 #' @param trace.new the trace within the condition handler, as produced by
-#'   \code{`sys.calls`}
+#'   \code{sys.calls}
 #' @param passsed.eval whether the evaluatation succeeded in the first step (see
 #'   details)
 #' @param print.type character(1L) one of "print", "show", or ""
