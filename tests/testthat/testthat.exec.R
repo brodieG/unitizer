@@ -4,7 +4,7 @@ library(unitizer)
 local( {
   test_that("Invisible Expression", {
     e <- new.env()
-    exp <- quote(invisible(x <- 1:30))
+    exp <- quote(x <- 1:30)
     expect_equal(1:30, unitizer:::eval_user_exp(exp, e)$value)
   } )
   # `eval_user_exp` must be evaluated outside of test_that; also note that by

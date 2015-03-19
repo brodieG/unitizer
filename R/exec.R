@@ -88,8 +88,10 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 #' @return TBD
 #' @seealso exec, unitizer_prompt
 
-eval_user_exp <- function(unitizerUSEREXP, env ) {
-  exp <- call("withVisible", call("eval", unitizerUSEREXP))
+eval_user_exp <- function(unitizerUSEREXP, env) {
+  exp <- if(is.expression(unitizerUSEREXP)) {
+    call("withVisible", call("eval", unitizerUSEREXP))
+  } else  call("withVisible", unitizerUSEREXP)
   res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
   if(!res$aborted && res$value$visible && length(unitizerUSEREXP)) {
     res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
