@@ -23,24 +23,24 @@ local( {
   fun_s4 <- function() test.obj.s4
   eval.env <- sys.frame(sys.nframe())
 
-  ex0 <- unitizer:::eval_user_exp(expression(stop()), eval.env)
+  ex0 <- unitizer:::eval_user_exp(quote(stop()), eval.env)
   unitizer:::set_trace(ex0$trace)
   trace0 <- traceback()
-  ex1 <- unitizer:::eval_user_exp(expression(fun_signal()), eval.env)
+  ex1 <- unitizer:::eval_user_exp(quote(fun_signal()), eval.env)
   unitizer:::set_trace(ex1$trace)
   trace1 <- traceback()
-  ex2 <- unitizer:::eval_user_exp(expression(fun_error()), eval.env)
+  ex2 <- unitizer:::eval_user_exp(quote(fun_error()), eval.env)
   unitizer:::set_trace(ex2$trace)
   trace2 <- traceback()
-  ex6 <- unitizer:::eval_user_exp(expression(fun_error_cond()), eval.env)
+  ex6 <- unitizer:::eval_user_exp(quote(fun_error_cond()), eval.env)
   unitizer:::set_trace(ex6$trace)
   trace6 <- traceback()
-  ex7 <- unitizer:::eval_user_exp(expression(fun_error_cond_call()), eval.env)
+  ex7 <- unitizer:::eval_user_exp(quote(fun_error_cond_call()), eval.env)
   unitizer:::set_trace(ex7$trace)
   trace7 <- traceback()
-  ex3 <- unitizer:::eval_user_exp(expression(fun_s3()), eval.env)
-  ex4 <- unitizer:::eval_user_exp(expression(fun_s4()), eval.env)
-  ex5 <- unitizer:::eval_user_exp(expression(sum(1:20)), eval.env)
+  ex3 <- unitizer:::eval_user_exp(quote(fun_s3()), eval.env)
+  ex4 <- unitizer:::eval_user_exp(quote(fun_s4()), eval.env)
+  ex5 <- unitizer:::eval_user_exp(quote(sum(1:20)), eval.env)
 
   test_that("User Expression Evaluation", {
     expect_equal(
