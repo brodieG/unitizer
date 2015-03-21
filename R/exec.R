@@ -89,12 +89,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 #' @seealso exec, unitizer_prompt
 
 eval_user_exp <- function(unitizerUSEREXP, env) {
-  if(is.expression(unitizerUSEREXP))
-    stop(
-      "Logic Error: asked to evaluate an expression, but expect only ",
-      "language objects; please contact maintainer."
-    )
-  exp <- call("withVisible", unitizerUSEREXP)
+  exp <- if(is.expression(unitizerUSEREXP)) {
+     call("withVisible", call("eval", unitizerUSEREXP))
+  } else call("withVisible", unitizerUSEREXP)
   res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
   if(!res$aborted && res$value$visible && length(unitizerUSEREXP)) {
     res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
@@ -234,7 +231,9 @@ get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
         is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
       }
       if(length(trace.new) >= 7L || (printed && length(trace.new) >= 6L)) {
-        trace.new[1L:(if(printed) 6L else 7L)] <- NULL
+        trace.new[
+          1L:(if(printed) 6L else 7L + is.expression(exp) * 2L)  # printing removes expression
+        ] <- NULL
         if(printed) {
           # Find any calls from the beginning that are length 2 and start with
           # print/show and then replace the part inside the print/show call with
