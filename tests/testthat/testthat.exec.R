@@ -4,7 +4,7 @@ library(unitizer)
 local( {
   test_that("Invisible Expression", {
     e <- new.env()
-    exp <- quote(invisible(x <- 1:30))
+    exp <- quote(x <- 1:30)
     expect_equal(1:30, unitizer:::eval_user_exp(exp, e)$value)
   } )
   # `eval_user_exp` must be evaluated outside of test_that; also note that by
@@ -23,24 +23,35 @@ local( {
   fun_s4 <- function() test.obj.s4
   eval.env <- sys.frame(sys.nframe())
 
-  ex0 <- unitizer:::eval_user_exp(expression(stop()), eval.env)
+  ex0 <- unitizer:::eval_user_exp(quote(stop()), eval.env)
   unitizer:::set_trace(ex0$trace)
   trace0 <- traceback()
-  ex1 <- unitizer:::eval_user_exp(expression(fun_signal()), eval.env)
+  ex1 <- unitizer:::eval_user_exp(quote(fun_signal()), eval.env)
   unitizer:::set_trace(ex1$trace)
   trace1 <- traceback()
-  ex2 <- unitizer:::eval_user_exp(expression(fun_error()), eval.env)
+  ex2 <- unitizer:::eval_user_exp(quote(fun_error()), eval.env)
   unitizer:::set_trace(ex2$trace)
   trace2 <- traceback()
-  ex6 <- unitizer:::eval_user_exp(expression(fun_error_cond()), eval.env)
+  ex2a <- unitizer:::eval_user_exp(expression(fun_error()), eval.env)
+  unitizer:::set_trace(ex2a$trace)
+  trace2a <- traceback()
+  ex6 <- unitizer:::eval_user_exp(quote(fun_error_cond()), eval.env)
   unitizer:::set_trace(ex6$trace)
   trace6 <- traceback()
-  ex7 <- unitizer:::eval_user_exp(expression(fun_error_cond_call()), eval.env)
+  ex7 <- unitizer:::eval_user_exp(quote(fun_error_cond_call()), eval.env)
   unitizer:::set_trace(ex7$trace)
   trace7 <- traceback()
-  ex3 <- unitizer:::eval_user_exp(expression(fun_s3()), eval.env)
-  ex4 <- unitizer:::eval_user_exp(expression(fun_s4()), eval.env)
-  ex5 <- unitizer:::eval_user_exp(expression(sum(1:20)), eval.env)
+  ex3 <- unitizer:::eval_user_exp(quote(fun_s3()), eval.env)
+  unitizer:::set_trace(ex3$trace)
+  trace3 <- traceback()
+  ex3a <- unitizer:::eval_user_exp(expression(fun_s3()), eval.env)
+  unitizer:::set_trace(ex3a$trace)
+  trace3a <- traceback()
+  ex4 <- unitizer:::eval_user_exp(quote(fun_s4()), eval.env)
+  ex4a <- unitizer:::eval_user_exp(expression(fun_s4()), eval.env)
+  unitizer:::set_trace(ex4a$trace)
+  trace4a <- traceback()
+  ex5 <- unitizer:::eval_user_exp(quote(sum(1:20)), eval.env)
 
   test_that("User Expression Evaluation", {
     expect_equal(
@@ -56,8 +67,16 @@ local( {
       ex3   # a stop in print
     )
     expect_equal(
+      structure(list(value = structure("hello", class = "test_obj"), aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Print", call = quote(print.test_obj(unitizerTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Print\")", "print.test_obj(fun_s3())", "print(fun_s3())")), .Names = c("value", "aborted", "conditions", "trace")),
+      ex3a
+    )
+    expect_equal(
       structure(list(aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Show", call = quote(show(unitizerTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Show\")", "show(fun_s4())", "show(fun_s4())")), .Names = c("aborted", "conditions", "trace")),
       ex4[-1L]   # a stop in show, have to remove 1L because S4 object doesn't deparse
+    )
+    expect_equal(
+      structure(list(aborted = structure(TRUE, printed = TRUE), conditions = list(structure(list(message = "Error in Show", call = quote(show(unitizerTESTRES))), .Names = c("message", "call"), class = c("simpleError", "error", "condition"), printed = TRUE)), trace = list("stop(\"Error in Show\")", "show(fun_s4())", "show(fun_s4())")), .Names = c("aborted", "conditions", "trace")),
+      ex4a[-1L]   # a stop in show, have to remove 1L because S4 object doesn't deparse
     )
     expect_equal(
       structure(list(value = 210L, aborted = FALSE, conditions = list(), trace = list()), .Names = c("value", "aborted", "conditions", "trace")),
@@ -69,6 +88,7 @@ local( {
     expect_identical(trace2, list("stop(\"Error in function 2\")", "fun_error()"))
     expect_identical(trace6, list("stop(simpleError(\"Error in function 2\", sys.call()))", "fun_error_cond()"))
     expect_identical(trace7, list("stop(simpleError(\"Error in function 2\", sys.call()))", "fun_error_cond()", "fun_error_cond_call()"))
+    expect_identical(trace3a, list("stop(\"Error in Print\")", "print.test_obj(fun_s3())", "print(fun_s3())"))
   } )
 } )
 

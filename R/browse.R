@@ -352,6 +352,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       curr.sub.sec.obj@items.new[[id.rel]]
     item.ref <- if(!is.null(curr.sub.sec.obj@items.ref))
       curr.sub.sec.obj@items.ref[[id.rel]]
+
     if(is.null(item.new)) {
       item.main <- item.ref
       base.env.pri <- parent.env(curr.sub.sec.obj@items.ref@base.env)

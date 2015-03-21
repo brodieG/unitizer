@@ -10,8 +10,8 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 #'
 #' @keywords internal
 #' @param test the call to test
-#' @param test.env the environment to evaluate the \code{`test`} in
-#' @return a \code{`\link{unitizerItem-class}`} object
+#' @param test.env the environment to evaluate the \code{test} in
+#' @return a \code{\link{unitizerItem-class}} object
 
 setMethod("exec", "ANY", valueClass="unitizerItem",
   function(x, test.env) {
@@ -88,65 +88,84 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 #' @return TBD
 #' @seealso exec, unitizer_prompt
 
-eval_user_exp <- function(unitizerUSEREXP, env ) {
-  passed.eval <- FALSE
+eval_user_exp <- function(unitizerUSEREXP, env) {
+  exp <- if(is.expression(unitizerUSEREXP)) {
+     call("withVisible", call("eval", unitizerUSEREXP))
+  } else call("withVisible", unitizerUSEREXP)
+  res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
+  if(!res$aborted && res$value$visible && length(unitizerUSEREXP)) {
+    res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
+    res$conditions <- append(res$conditions, res2$conditions)
+    if(length(res2$trace)) res$trace <- res2$trace
+    res$aborted <- res2$aborted
+  }
+  c(list(value=res$value$value), res[-1L])  # convolution required due to possible NULL value
+}
+#' Evaluate Print/Show of an Object
+#'
+#' @rdname eval_user_exp
+#' @keywords internal
+
+user_exp_display <- function(value, env, expr) {
+  print.env <- new.env(parent=env)
+  assign("unitizerTESTRES", value, envir=print.env)
+  if(isS4(value)) {
+    print.type <- "show"
+    disp.expr <- quote(show(unitizerTESTRES))
+  } else {
+    print.type <- "print"
+    disp.expr <- quote(print(unitizerTESTRES))
+  }
+  user_exp_handle(disp.expr, print.env, print.mode=print.type, expr.raw=expr)
+}
+#' @rdname eval_user_exp
+#' @keywords internal
+
+user_exp_handle <- function(expr, env, print.mode, expr.raw) {
   aborted <- FALSE
   conditions <- list()
   trace <- list()
-  unitizerTESTRES <- NULL
-  print.type <- ""
+  print.type <- print.mode
+  printed <- nchar(print.mode) > 1
+  value <- NULL
 
   withRestarts(
     withCallingHandlers(
       {
         trace.base <- sys.calls()
-        value <- withVisible(eval(unitizerUSEREXP, env))
-        passed.eval <- TRUE
-        unitizerTESTRES <- value$value
-        if(value$visible && length(unitizerUSEREXP)) {
-          print.env <- new.env(parent=env)
-          assign("unitizerTESTRES", unitizerTESTRES, envir=print.env)
-          if(isS4(unitizerTESTRES)) {
-            print.type <- "show"
-            evalq(show(unitizerTESTRES), print.env)
-          } else {
-            print.type <- "print"
-            evalq(print(unitizerTESTRES), print.env)
-        } }
-        NULL
+        value <- eval(expr, env)
       },
       condition=function(cond) {
-        attr(cond, "unitizer.printed") <- passed.eval
+        attr(cond, "unitizer.printed") <- printed
         conditions[[length(conditions) + 1L]] <<- cond
         if(inherits(cond, "error")) {
           trace.new <- sys.calls()
           trace <<- get_trace(
-            trace.base, trace.new, passed.eval, print.type, unitizerUSEREXP
+            trace.base, trace.new, printed, print.type, expr.raw
           )
       } }
     ),
     abort=function() {
-      aborted <<- structure(TRUE, printed=passed.eval)
+      aborted <<- structure(TRUE, printed=printed)
     }
   )
   list(
-    value=unitizerTESTRES,
+    value=value,
     aborted=aborted,
     conditions=conditions,
     trace=trace
   )
 }
-
 #' Recompute a Traceback
 #'
 #' Used for cases where the trace isn't generated because the error was run within
 #' a handling loop, but we still want the trace so we can emulate command line
 #' behavior.
 #'
-#' This will modify the .Traceback system variable (see \code{`\link{traceback}`}
+#' This will modify the .Traceback system variable (see \code{\link{traceback}}
 #' documentation).
 #'
-#' Assumption right now is that the outer most call to \code{`withCallingHandlers`}
+#' Assumption right now is that the outer most call to \code{withCallingHandlers}
 #' is the baseline level from which we want to repor the traceback.
 #'
 #' @keywords internal
@@ -159,22 +178,22 @@ set_trace <- function(trace) {
 }
 #' Collect the Call Stack And Clean-up
 #'
-#' Only intended for use within \code{`eval_user_exp`}, will clean up the result
-#' from two different \code{`sys.calls`} calls to extract the calls that a
+#' Only intended for use within \code{eval_user_exp}, will clean up the result
+#' from two different \code{sys.calls} calls to extract the calls that a
 #' trace would show on error.
 #'
-#' How much of the stack is used is affected by the \code{`passed.eval`}
+#' How much of the stack is used is affected by the \code{printed}
 #' argument because if something didn't pass evaluation, it means the error
-#' occurred within \code{`withVisible`} which in this setup means we need to
+#' occurred within \code{withVisible} which in this setup means we need to
 #' remove two additional levels.
 #'
 #' Relies on calls being evaluated in a very particular environment.
 #'
 #' @seealso set_trace
 #' @param trace.base starting point for what we care about in the trace, as
-#'   produced by \code{`sys.calls`}
+#'   produced by \code{sys.calls}
 #' @param trace.new the trace within the condition handler, as produced by
-#'   \code{`sys.calls`}
+#'   \code{sys.calls}
 #' @param passsed.eval whether the evaluatation succeeded in the first step (see
 #'   details)
 #' @param print.type character(1L) one of "print", "show", or ""
@@ -182,7 +201,7 @@ set_trace <- function(trace) {
 #'   eval
 #' @keywords internal
 
-get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
+get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
 
   # because withCallingHandlers/withRestarts don't register when calling
   # sys.calls() within them, but do when calling sys.calls() from the handling
@@ -199,7 +218,7 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
         function(x) identical(trace.base[[x]], trace.new[[x]])
     ) )
   ) {
-    # Filter out calls through signalCondition rather than `stop` and
+    # Filter out calls through signalCondition rather than stop and
     # `stop+condition`
 
     is.stop <- identical(trace.new[[len.new]], quote(h(simpleError(msg, call))))
@@ -209,11 +228,13 @@ get_trace <- function(trace.base, trace.new, passed.eval, print.type, exp) {
     if(is.stop || is.stop.cond) {
       trace.new[seq_along(trace.base)] <- NULL
       if(is.function(trace.new[[length(trace.new)]])) {
-        is.function(trace.new[[length(trace.new)]])
+        is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
       }
-      if(length(trace.new) >= 7L || (passed.eval && length(trace.new) >= 6L)) {
-        trace.new[1L:(if(passed.eval) 6L else 7L)] <- NULL
-        if(passed.eval) {
+      if(length(trace.new) >= 7L || (printed && length(trace.new) >= 6L)) {
+        trace.new[
+          1L:(if(printed) 6L else 7L + is.expression(exp) * 2L)  # printing removes expression
+        ] <- NULL
+        if(printed) {
           # Find any calls from the beginning that are length 2 and start with
           # print/show and then replace the part inside the print/show call with
           # the actual call

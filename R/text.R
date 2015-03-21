@@ -78,9 +78,29 @@ obj_capt <- function(obj, width=getOption("width")) {
   width <- max(width, 10L)
 
   options(width=width)
-  obj.out <- capture.output(if(isS4(obj)) show(obj) else print(obj))
+  obj.out <- capture.output(
+    invisible(print.res <- user_exp_display(obj, environment(), quote(obj)))
+  )
   options(width=width.old)
   on.exit(NULL)
+
+  if(print.res$aborted) {  # If failed during eval retrieve conditions
+    err.cond <-
+      which(vapply(print.res$conditions, inherits, logical(1L), "error"))
+    err.cond.msg <- if(length(err.cond)) {
+      c(
+        paste0(
+          "<Error in print/show",
+          if(is.object(obj))
+            paste0(" method for object of class \"", class(obj)[[1L]], "\""),
+          ">"
+        ),
+        paste0(
+          conditionMessage(print.res$conditions[[err.cond[[1L]]]]), collapse=""
+      ) )
+    } else ""
+    obj.out <- c(obj.out, err.cond.msg)
+  }
   obj.out
 }
 # @keywords internal
