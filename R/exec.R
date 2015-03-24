@@ -14,8 +14,9 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 #' @return a \code{\link{unitizerItem-class}} object
 
 setMethod("exec", "ANY", valueClass="unitizerItem",
-  function(x, test.env) {
+  function(x, test.env, capt.cons) {
     if(!is.environment(test.env)) stop("Argument `test.env` must be an environment.")
+    if(!is.list(capt.cons)) stop("Argument `capt.cons` must be a list")
     # Prep message and std output capture, note this is reset with every test expression
     # evaluation
 
@@ -24,10 +25,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
-    std.err.capt <- tempfile()        # Inefficient to do this for every test? Convenient though
-    std.out.capt <- tempfile()
-    std.err.capt.con <- set_text_capture(std.err.capt, "message")
-    std.out.capt.con <- set_text_capture(std.out.capt, "output")
+    browser()
+    std.err.capt.con <- set_text_capture(capt.cons$err.c, "message")
+    std.out.capt.con <- set_text_capture(capt.cons$out.c, "output")
     x.to.eval <- `attributes<-`(x, NULL)
 
     # Manage unexpected outcomes
@@ -35,8 +35,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     on.exit({
       options(warn=warn.opt)
       options(error=err.opt)
-      capt <- get_capture(std.err.capt.con, std.err.capt, std.out.capt.con, std.out.capt)
-      file.remove(std.err.capt, std.out.capt)
+      try(get_capture(capt.cons, display=TRUE))
+      release_sinks()
+      close_and_clear(capt.cons)
       message(
         "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
         paste0(deparse(x.to.eval), collapse=""),
@@ -66,8 +67,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     # Revert settings, get captured messages, if any and if user isn't capturing already
 
-    capt <- get_capture(std.err.capt.con, std.err.capt, std.out.capt.con, std.out.capt)
-    file.remove(std.err.capt, std.out.capt)
+    capt <- get_capture(capt.cons)
     if(aborted & is.call(x)) {   # check to see if `unitizer_sect` failed
       test.fun <- try(eval(x[[1L]], test.env), silent=TRUE)
       if(identical(test.fun, unitizer_sect)) {
