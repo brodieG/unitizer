@@ -7,6 +7,7 @@
 #' A lot of the logic here is devoted to detecting whether users set their
 #' own sinks in the course of execution.
 #'
+#' @param con either a file name or an open connection
 #' @keywords internal
 #' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
 
@@ -22,6 +23,8 @@ set_text_capture <- function(con, type) {
   } else {
     stop("Argument `type` must be either \"message\" or \"output\"")
   }
+  if(!(inherits(con, "file") && isOpen(con)))
+    stop("Argument `con` must be an open file connection.")
   if(!waive.capt) {
     sink(con, type=type)
     return(con)
