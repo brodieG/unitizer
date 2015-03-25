@@ -25,7 +25,6 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
-    browser()
     std.err.capt.con <- set_text_capture(capt.cons$err.c, "message")
     std.out.capt.con <- set_text_capture(capt.cons$out.c, "output")
     x.to.eval <- `attributes<-`(x, NULL)
@@ -37,7 +36,6 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       options(error=err.opt)
       try(get_capture(capt.cons, display=TRUE))
       release_sinks()
-      close_and_clear(capt.cons)
       message(
         "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
         paste0(deparse(x.to.eval), collapse=""),

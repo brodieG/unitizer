@@ -23,7 +23,6 @@ set_text_capture <- function(con, type) {
     stop("Argument `type` must be either \"message\" or \"output\"")
   }
   if(!waive.capt) {
-    browser()
     sink(con, type=type)
     return(con)
   }
@@ -81,7 +80,7 @@ release_stderr_sink <- function(silent=FALSE) {
 }
 get_capture <- function(cons, display=getOption("unitizer.show.output")) {
   message <- get_text_capture(cons$err.c, cons$err.f, "message")  # Do message first, so we can see subsequent errors
-  output <- get_text_capture(cons$out.c, cons$err.f, "output")
+  output <- get_text_capture(cons$out.c, cons$out.f, "output")
   if(isTRUE(display)) {
     cat(c(message, "\n"), file=stderr(), sep="\n")
     cat(c(output, "\n"), sep="\n")

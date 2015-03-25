@@ -75,7 +75,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       err.f=std.err.capt, err.c=std.err.capt.con, out.f=std.out.capt,
       out.c=std.out.capt.con
     )
-    on.exit(release_sinks())  # In case something went wrong
+    on.exit(close_and_clear(capt.cons))
 
     repeat {
       if(done(e2 <- nextItem(e2))) break
@@ -113,7 +113,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
       i <- i + 1L
     }
-    on.exit(NULL)
+
     over_print("")
     e1
 } )
