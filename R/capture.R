@@ -7,13 +7,11 @@
 #' A lot of the logic here is devoted to detecting whether users set their
 #' own sinks in the course of execution.
 #'
+#' @param con either a file name or an open connection
 #' @keywords internal
 #' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
 
-set_text_capture <- function(file.name, type) {
-  if(!is.character(file.name) || !identical(length(file.name), 1L)) {
-    stop("Argument `file.name` must be a 1 length character.")
-  }
+set_text_capture <- function(con, type) {
   if(isTRUE(getOption("unitizer.disable.capt"))) {
     warning(type, " capture disabled (see getOption(unitizer.disable.capt))")
     return(FALSE)
@@ -25,12 +23,9 @@ set_text_capture <- function(file.name, type) {
   } else {
     stop("Argument `type` must be either \"message\" or \"output\"")
   }
+  if(!(inherits(con, "file") && isOpen(con)))
+    stop("Argument `con` must be an open file connection.")
   if(!waive.capt) {
-    if(inherits(try(con <- file(file.name, "wt")), "try-error")) {
-      stop(
-        "Failed opening ", type, " capture buffer ", file.name, "; either you, your OS, or an admin ",
-        "removed the file, changed its access, or there is a bug in the code here."
-    ) }
     sink(con, type=type)
     return(con)
   }
@@ -62,10 +57,10 @@ get_text_capture <- function(con, file.name, type) {
       ) }
       sink()
     }
-    if(inherits(try(capture <- readLines(file.name, warn=FALSE)), "try-error")) {
+    if(inherits(try(capture <- readLines(con, warn=FALSE)), "try-error")) {
       stop("Logic Error: could not read ", type, " capture buffer file ", file.name)
     }
-    close(con)
+    truncate(con)
     return(capture)
   } else if (!identical(con, FALSE)) {
     stop("Logic Error: argument `con` must be a file connection or FALSE")
@@ -86,21 +81,18 @@ release_stderr_sink <- function(silent=FALSE) {
   if(!isTRUE(silent)) message("Stderr sink released.")
   if(!identical(sink.number(type="message"), 2L)) sink(type="message")
 }
-get_capture <- function(std.err.capt.con, std.err.capt, std.out.capt.con, std.out.capt) {
-  tryCatch(
-    {
-      message <- get_text_capture(std.err.capt.con, std.err.capt, "message")  # Do message first, so we can see subsequent errors
-      output <- get_text_capture(std.out.capt.con, std.out.capt, "output")
-      if(isTRUE(getOption("unitizer.show.output"))) {
-        cat(c(message, "\n"), file=stderr(), sep="\n")
-        cat(c(output, "\n"), sep="\n")
-      }
-    },
-    error=function(e) {
-      release_sinks()
-      if(isTRUE(is.open_con(std.err.capt.con))) close(std.err.capt.con)
-      if(isTRUE(is.open_con(std.out.capt.con))) close(std.out.capt.con)
-      stop(e)
-  } )
+get_capture <- function(cons, display=getOption("unitizer.show.output")) {
+  message <- get_text_capture(cons$err.c, cons$err.f, "message")  # Do message first, so we can see subsequent errors
+  output <- get_text_capture(cons$out.c, cons$out.f, "output")
+  if(isTRUE(display)) {
+    cat(c(message, "\n"), file=stderr(), sep="\n")
+    cat(c(output, "\n"), sep="\n")
+  }
   list(output=output, message=message)
 }
+close_and_clear <- function(cons) {
+  close(cons$err.c)
+  close(cons$out.c)
+  file.remove(cons$err.f, cons$out.f)
+}
+

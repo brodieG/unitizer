@@ -66,12 +66,22 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
     test.env <- new.env(parent=e1@items.new@base.env)
     chr.width <- getOption("width")
+    std.err.capt <- tempfile()
+    std.err.capt.con <- file(std.err.capt, "w+")
+    std.out.capt <- tempfile()
+    std.out.capt.con <- file(std.out.capt, "w+")
+
+    capt.cons <- list(
+      err.f=std.err.capt, err.c=std.err.capt.con, out.f=std.out.capt,
+      out.c=std.out.capt.con
+    )
+    on.exit(close_and_clear(capt.cons))
 
     repeat {
       if(done(e2 <- nextItem(e2))) break
 
       item <- withRestarts(
-        exec(getItem(e2), test.env),
+        exec(getItem(e2), test.env, capt.cons),
         unitizerQuitExit=unitizer_quit_handler
       )
       # If item is a section, added to the store and update the tests with the contents of
@@ -103,6 +113,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
       i <- i + 1L
     }
+
     over_print("")
     e1
 } )
