@@ -8,15 +8,16 @@
 
 NULL
 
+data.slots <- sort(slotNames("unitizerItemData"))  # cache this for validity
+
 #' Virtual Class To Enforce Slots on Subclasses
 #'
 #' @keywords internal
 
 setClass("unitizerItemTests", contains="VIRTUAL",
   validity=function(object) {
-    if(!isTRUE(msg <- all.equal(sort(slotNames(getClass(object))), sort(slotNames("unitizerItemData"))))) {
-      return("slots must be defined as ", deparse(slotNames("unitizerItemData")))
-    }
+    if(!all(sort(slotNames(getClass(object))) == data.slots))
+      return("slots must be defined as ", deparse(data.slots))
     TRUE
   }
 )
@@ -84,17 +85,20 @@ setClass("unitizerItemTestsErrors", contains="unitizerItemTests",
 setMethod("initialize", "unitizerItemTestsErrors",
   function(.Object, ...) {
     dots <- list(...)
-    if(!all(s.n <- names(dots) %in% slotNames(.Object))) stop("Unused arguments ", paste0(deparse(names(dots)[!s.n])))
-    for(i in seq_along(dots)) if(is.null(dots[[i]])) dots[[i]] <- new("unitizerItemTestError")
+    if(!all(s.n <- names(dots) %in% slotNames(.Object)))
+      stop("Unused arguments ", paste0(deparse(names(dots)[!s.n])))
+    for(i in seq_along(dots))
+      if(is.null(dots[[i]])) dots[[i]] <- new("unitizerItemTestError")
     do.call(callNextMethod, c(list(.Object), dots))
 } )
 setClass(
-  "unitizerItemsTestsErrors", contains="unitizerList",
-  validity=function(object) {
-    tests <- vapply(as.list(object), is, logical(1L), class2="unitizerItemTestsErrors")
-    if(!all(tests)) return("\"unitizerItemsTestsErrors\" may only contain objects of class \"unitizerItemTestsErrors\"")
-    TRUE
-} )
+  "unitizerItemsTestsErrors", contains="unitizerList"
+  # ,validity=function(object) { # commented out for computation cost
+  #   tests <- vapply(as.list(object), is, logical(1L), class2="unitizerItemTestsErrors")
+  #   if(!all(tests)) return("\"unitizerItemsTestsErrors\" may only contain objects of class \"unitizerItemTestsErrors\"")
+  #   TRUE
+  # }
+)
 setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
 
 #' Convert An Error Into Character

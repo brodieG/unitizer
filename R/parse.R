@@ -70,29 +70,37 @@
   # Create lookup matrix so we can look up ids directly.  This will be a slightly
   # sparse matrix to the extend `ids` doesn't contain every number between
   # range(ids).  The idea is to be able to lookup id-par pairs by direct index
-  # access
+  # access.  This is not super efficient since we keep recalculating some of the
+  # data over and over with each recursion.
 
   id.range <- range(ids)
   if(id.range[[1L]] < 1L)
     stop("Expected only strictly positive unique ids")
-  id.mx <- matrix( nrow=id.range[[2L]], ncol=2L)
-  id.mx[ids, ] <- cbind(ids, par.ids)
+  par.full <- rep(NA_integer_, id.range[[2L]])
+  par.full[ids] <- par.ids
+  res <- rep(NA_integer_, length(ids))
 
-  ancestry_climb <- function(par.id) {
-    if(par.id == top.level) return(par.id)  # par.id should only be 1 length
-    new.id <- id.mx[par.id, 2L]
-    if(is.na(new.id)) return(new.id)
-    if(new.id == top.level) return(par.id)
-    ancestry_climb(new.id)  # a smidge faster than Recall, and used a lot
+  for(i in seq_along(par.ids)) {
+    cur.id <- new.id <- par.ids[[i]]
+    while(cur.id != top.level) {
+      new.id <- par.full[[cur.id]]
+      if(is.na(new.id)) break;
+      if(new.id == top.level) {
+        new.id <- cur.id
+        break;
+      }
+      cur.id <- new.id
+    }
+    res[[i]] <- new.id
   }
-  vapply(par.ids, ancestry_climb, integer(1L))
+  res
 }
 #' For Each ID Determines Generation
 #'
 #' @param ids integer() the object ids
 #' @param par.ids integer() the parents of each \code{ids}
 #' @param id integer() the first parent
-#' @return 2 column matrix
+#' @return matrix containing ids and corresponding generation for the ids
 #'
 #' @keywords internal
 
@@ -107,17 +115,18 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
   ind.start <- 1L
   par.idx <- 1L
   par.list <- id
-  id.split <- split(ids, par.ids)
+  id.split <- list2env(split(ids, par.ids))
 
   repeat {
     if(!length(par.list)) break
     child.len <- length(children <- id.split[[as.character(par.list[[par.idx]])]])
     if(child.len) {
       ind.end <- ind.start + child.len - 1L
-      if(ind.end > max.size)
-        stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
-      res[ind.start:ind.end, 1L] <- children
-      res[ind.start:ind.end, 2L] <- level
+      # if(ind.end > max.size)
+      #   stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
+      inds <- ind.start:ind.end
+      res[inds, 1L] <- children
+      res[inds, 2L] <- level
       ind.start <- ind.end + 1L
     }
     par.idx <- par.idx + 1L
@@ -604,36 +613,75 @@ prsdat_find_paren <- function(parse.dat) {
     stop("Logic Error; failed attempting to `for` function block; contact maintainer")
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
 }
+#' Removes Exprlists
+#'
+#' These don't do anything, and have extraneous semi colons.  We need to remove
+#' them, and then make sure all their children become children of the exprlist
+#' parent
+
 prsdat_fix_exprlist <- function(parse.dat, ancestry) {
-  if(!any(parse.dat$token == "exprlist")) return(parse.dat)
-  # Find all the children
+
   z <- ancestry
-  levels <- z[match(parse.dat$id, z[, "children"]), "level"]
-  lev.ord <- order(levels)          # order matters in parse.dat, so must keep track of order to restore
-  dat.ord <- parse.dat[lev.ord,]
-  tokens <- dat.ord[["token"]]
-  parents <- dat.ord[["parent"]]
-  dat.exprlist <- which(tokens == "exprlist")
+  z[, "level"] <- z[match(parse.dat$id, z[, "children"]), "level"]
+  lev.ord <- order(z[, "level"])  # order by level to make sure we remove exprlists in correct order
+  dat.ord <- parse.dat[lev.ord, ]
+  ind.all <- seq.int(nrow(dat.ord))
+  par.map <- list2env(split(ind.all, dat.ord[["parent"]]))  # map parents vs. position in ordered list
 
-  # Find first `exprlist`
-  exprlist.ind <- dat.exprlist[[1L]]
-  exprlist <- dat.ord[["id"]][[exprlist.ind]]
+  dat.exprlist <- which(dat.ord[["token"]] == "exprlist")
+  ind.exp <- seq_along(dat.exprlist)
+  ind.exclude <- logical(length(ind.all))
 
-  # Promote all children and remove semi-colons and actual exprlist
+  if(length(dat.exprlist)) {
+    dat.ord <- within(
+      dat.ord,
+      {
+        for(exprlist.ind in dat.exprlist) {
 
-  exprlist.par <- parents[[exprlist.ind]]
-  par.exprlist <- which(parents == exprlist & tokens == "';'")
-  exclude.ind <- -c(exprlist.ind, if(length(par.exprlist)) par.exprlist)
-  parse.dat.mod <- dat.ord[exclude.ind, ][order(lev.ord[exclude.ind]), ]
-  parse.dat.mod[parse.dat.mod$parent == exprlist, ]$parent <- exprlist.par
-  # Check nothing screwed up
+          # Find first `exprlist`
+
+          exprlist.par <- parent[[exprlist.ind]]
+
+          # Promote all children of exprlist and remove semi-colons and actual
+          # exprlist.  This requires updating the value of the parent column in
+          # `dat.ord`, and then re-assigning the parent ship relationship
+
+          exprlist.par.chr <- as.character(exprlist.par)
+          exprlist.id.chr <- as.character(id[[exprlist.ind]])
+          exprlist.children <- par.map[[exprlist.id.chr]]
+
+          # semi colons with exprlist as parent need to be discarded
+
+          semicol.ind <- exprlist.children[which(token[exprlist.children] == "';'")]
+
+          # change exprlist children parent to exprlist parent
+
+          parent[exprlist.children] <- exprlist.par
+
+          # Update mapping to reflect new parentship
+
+          par.map[[exprlist.par.chr]] <<- c(
+            par.map[[exprlist.par.chr]],
+            par.map[[exprlist.id.chr]]
+          )
+          par.map[[exprlist.id.chr]] <<- NULL
+
+          # extend exclusion list
+
+          ind.exclude[c(exprlist.ind, semicol.ind)] <<- TRUE
+        }
+        rm(
+          exprlist.par, exprlist.par.chr, exprlist.id.chr, exprlist.children,
+          exprlist.ind, semicol.ind
+  ) } ) }
+  # Now actually remove the exprlist and semi colons, and re-order
+
+  parse.dat.mod <-
+    dat.ord[order(lev.ord), ][which(!ind.exclude[order(lev.ord)]), ]
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
     stop("Logic Error: `exprlist` excision did not work!")
-  # if any "exprlist" remaining, repeat
-  if(any(parse.dat.mod$token == "exprlist"))
-    Recall(parse.dat.mod, ancestry) else parse.dat.mod
+  parse.dat.mod
 }
-
 #' Removes Symbol Marker Used To Hold Comments
 #'
 #' @keywords internal
