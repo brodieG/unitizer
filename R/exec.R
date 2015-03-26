@@ -135,13 +135,26 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
       },
       condition=function(cond) {
         attr(cond, "unitizer.printed") <- printed
+        trace.new <- sys.calls()
+        trace.net <- get_trace(
+          trace.base, trace.new, printed, print.type, expr.raw
+        )
+        if(attr(trace.net, "set.trace")) trace <<- c(trace.net)
+
+        # manipulate call so it looks like it should
+        if(!printed && identical(cond$call, trace.net[[1L]])) {
+          cond <- modifyList(cond, list(call=NULL), keep.null=TRUE)
+        } else if(printed && !is.null(cond$call)) {
+          # can't just use the stuff from the trace because it is deparsed,
+          # could but would have to refactor other stuff; note also this won't
+          # fix the initial display of the condition, but can't doo much about
+          # that, at least not easily
+
+          cond$call <-
+            eval(call("substitute", cond$call, list(unitizerTESTRES=expr.raw)))
+        }
         conditions[[length(conditions) + 1L]] <<- cond
-        if(inherits(cond, "error")) {
-          trace.new <- sys.calls()
-          trace <<- get_trace(
-            trace.base, trace.new, printed, print.type, expr.raw
-          )
-      } }
+      }
     ),
     abort=function() {
       aborted <<- structure(TRUE, printed=printed)
@@ -151,7 +164,7 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
     value=value,
     aborted=aborted,
     conditions=conditions,
-    trace=trace
+    trace=tail(trace, -1L)
   )
 }
 #' Recompute a Traceback
@@ -171,7 +184,10 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
 #' @return TRUE (only purpose of this is side effect)
 
 set_trace <- function(trace) {
-  if(length(trace)) assign(".Traceback", trace, envir=getNamespace("base"))
+  if(length(trace)) {
+    res <- lapply(FUN=deparse, rev(trace))
+    assign(".Traceback", res, envir=getNamespace("base"))
+  }
   TRUE
 }
 #' Collect the Call Stack And Clean-up
@@ -220,52 +236,49 @@ get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
     # `stop+condition`
 
     is.stop <- identical(trace.new[[len.new]], quote(h(simpleError(msg, call))))
-    is.stop.cond <- length(trace.new) > 1 &&
+    is.stop.cond <- length(trace.new) > 1L &&
       identical(trace.new[[len.new - 1L]][[1L]], quote(stop))
 
-    if(is.stop || is.stop.cond) {
-      trace.new[seq_along(trace.base)] <- NULL
-      if(is.function(trace.new[[length(trace.new)]])) {
-        is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
-      }
-      if(length(trace.new) >= 7L || (printed && length(trace.new) >= 6L)) {
-        trace.new[
-          1L:(if(printed) 6L else 7L + is.expression(exp) * 2L)  # printing removes expression
-        ] <- NULL
-        if(printed) {
-          # Find any calls from the beginning that are length 2 and start with
-          # print/show and then replace the part inside the print/show call with
-          # the actual call
+    trace.new[seq_along(trace.base)] <- NULL
+    if(is.function(trace.new[[length(trace.new)]])) {
+      is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
+    }
+    if(length(trace.new) >= 7L || (printed && length(trace.new) >= 6L)) {
+      trace.new[
+        1L:(if(printed) 5L else 6L + is.expression(exp) * 2L)  # printing removes expression
+      ] <- NULL
+      if(printed) {
+        # Find any calls from the beginning that are length 2 and start with
+        # print/show and then replace the part inside the print/show call with
+        # the actual call
 
-          exp.to.rep <- cumsum(
-            vapply(
-              trace.new, FUN.VALUE=logical(1L),
-              function(x) {
-                length(x) == 2L &
-                grepl(paste0("^", print.type, "(\\..*)?$"), as.character(x[[1L]]))
-          } ) ) == 1L:length(trace.new)
-          trace.new <- lapply(seq_along(exp.to.rep),
-            function(idx) {
-              if(exp.to.rep[[idx]]) {
-                `[[<-`(
-                  trace.new[[idx]], 2L,
-                  if(is.expression(exp)) exp[[length(exp)]] else exp
-                )
-              } else trace.new[[idx]]
-        } ) }
-        if(length(trace.new) >= 2L) {
-          return(
-            lapply(FUN=deparse,
-              rev(
-                head(
-                  trace.new,
-                  if(is.stop) -2L
-                  else if (is.stop.cond) -1L
-                  else stop(
-                    "Logic Error: must be either stop or stop+cond; contact ",
-                    "maintainer."
-      ) ) ) ) ) } }
-    } else return(list())
-  }
+        exp.to.rep <- cumsum(
+          vapply(
+            trace.new, FUN.VALUE=logical(1L),
+            function(x) {
+              length(x) == 2L &
+              grepl(paste0("^", print.type, "(\\..*)?$"), as.character(x[[1L]]))
+        } ) ) == 1L:length(trace.new)
+
+        trace.new <- lapply(
+          seq_along(exp.to.rep),
+          function(idx) {
+            if(exp.to.rep[[idx]]) {
+              `[[<-`(
+                trace.new[[idx]], 2L,
+                if(is.expression(exp)) exp[[length(exp)]] else exp
+              )
+            } else trace.new[[idx]]
+      } ) }
+
+      if(length(trace.new) >= 2L) {
+        trace.drop <- if(is.stop) -2L else if (is.stop.cond) -1L else 0L
+        trace.trim <- trace.new[1L:(length(trace.new) + trace.drop)]
+      } else {
+        stop("Logic Error: unexpected trace length")
+      }
+      attr(trace.trim, "set.trace") <- is.stop || is.stop.cond  # only actually set trace on `stop` calls
+      return(trace.trim)
+  } }
   stop("Logic Error: couldn't extract trace; contact maintainer.")
 }
