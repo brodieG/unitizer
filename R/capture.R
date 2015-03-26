@@ -7,6 +7,13 @@
 #' A lot of the logic here is devoted to detecting whether users set their
 #' own sinks in the course of execution.
 #'
+#' All output to \code{stdout} and \code{stderr} is capture in a single file for
+#' each of those streams.  The captures happen sequentially, and are read off
+#' by \code{\link{readChar}}.  It is important to note this method implies that
+#' the files grow throughout the entire test evaluation process, and are only
+#' dumped at the very end.  This is to avoid overhead from repeatedly creating
+#' and opening new connections.
+#'
 #' @param con either a file name or an open connection
 #' @keywords internal
 #' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
@@ -33,8 +40,9 @@ set_text_capture <- function(con, type) {
 }
 get_text_capture <- function(con, file.name, type) {
   if(
-    !isTRUE(type %in% c("message", "output")) || !is.character(file.name) || length(file.name) != 1L ||
-    !(inherits(con, "file") && isOpen(con) || identical(con, FALSE))
+    !isTRUE(type %in% c("message", "output")) || !is.character(file.name) ||
+    length(file.name) != 1L || !(inherits(con, "file") && isOpen(con) ||
+    identical(con, FALSE))
   ) {
     stop("Logic Error: invalid arguments; contact maintainer.")
   }
@@ -56,12 +64,40 @@ get_text_capture <- function(con, file.name, type) {
           "`sink`), contact maintainer."
       ) }
       sink()
+    } else {
+      stop("Logic Error: unexpected connection type; contact maintainer.")
     }
-    if(inherits(try(capture <- readLines(con, warn=FALSE)), "try-error")) {
-      stop("Logic Error: could not read ", type, " capture buffer file ", file.name)
+    # Read captured, do so with `readChar` for performance reasons, growing
+    # buffer as needed up to maximum allowable capture
+
+    chrs.prev <- 0
+    chrs <- 1e4
+    chrs.mlt <- 10
+    chrs.max <- getOption("unitizer.max.capture.chars")
+    res <- ""
+
+    while(chrs.prev < chrs.max) {
+      chrs <- min(chrs, chrs.max)
+      chrs.extra <- chrs - chrs.prev
+      capture <- readChar(con, chrs.extra)
+      res <- paste0(res, capture)
+      if(!length(capture) || nchar(capture) < chrs.extra) break
+      chrs.prev <- chrs
+      chrs <- chrs * chrs.mlt
     }
-    truncate(con)
-    return(capture)
+    if(chrs.prev >= chrs.max) {
+      if((err.con.num <- sink.number(type="message")) != 2) {
+        err.con <- getConnection(err.con.num)
+        sink(type="message")  # temporarily clear so we can issue warning
+      }
+      warning(
+        "Reached maximum text capture characters ", chrs.max,
+        "; see `getOption(\"unitizer.max.capture.chars\")`",
+        immediate. = TRUE
+      )
+      if(err.con.num != 2) sink(err.con, type="message")
+    }
+    return(res)
   } else if (!identical(con, FALSE)) {
     stop("Logic Error: argument `con` must be a file connection or FALSE")
   }

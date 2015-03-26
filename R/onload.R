@@ -7,6 +7,7 @@
   options(unitizer.non.interactive=FALSE)     # Pretend we're running in non-interactive mode
   options(unitizer.prompt.b4.quit.time=10)    # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   options(unitizer.search.path.clean=TRUE)    # Whether to run in clean search path by default
+  options(unitizer.max.capture.chars=200000)  # Maximum number of characters we allow capture of per test
 }
 .onUnload <- function(libpath) {
   options(unitizer.show.output=NULL)
@@ -17,5 +18,6 @@
   options(unitizer.non.interactive=NULL)
   options(unitizer.prompt.b4.quit.time=NULL)
   options(unitizer.search.path.clean=NULL)
+  options(unitizer.max.capture.chars=NULL)
 }
 

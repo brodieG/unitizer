@@ -67,9 +67,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     test.env <- new.env(parent=e1@items.new@base.env)
     chr.width <- getOption("width")
     std.err.capt <- tempfile()
-    std.err.capt.con <- file(std.err.capt, "w+")
+    std.err.capt.con <- file(std.err.capt, "w+b")
     std.out.capt <- tempfile()
-    std.out.capt.con <- file(std.out.capt, "w+")
+    std.out.capt.con <- file(std.out.capt, "w+b")
 
     capt.cons <- list(
       err.f=std.err.capt, err.c=std.err.capt.con, out.f=std.out.capt,
@@ -104,7 +104,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         next
       }
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
-      over_print(paste0("Running: ", deparse(item@call)[[1L]]))
+      #over_print(paste0("Running: ", deparse(item@call)[[1L]]))
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
       # ignored items share environment with subsequent items

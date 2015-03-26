@@ -126,7 +126,7 @@ search_path_setup <- function() {
   # Suppress std.err because of "Tracing Function..." messages produced by trace
 
   std.err <- tempfile()
-  std.err.con <- file(std.err, "w+")
+  std.err.con <- file(std.err, "w+b")
   set_text_capture(std.err.con, "message")
 
   # Attempt to apply shims
@@ -289,7 +289,7 @@ search_path_unsetup <- function() {
   # Suppress std.err because of "Untracing function..." messages produced by trace
 
   std.err <- tempfile()
-  std.err.con <- file(std.err, "w+")
+  std.err.con <- file(std.err, "w+b")
   set_text_capture(std.err.con, "message")
 
   unshim <- try({  # this needs to go

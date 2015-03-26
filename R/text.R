@@ -390,8 +390,12 @@ over_print <- function(x, min.width=30L, max.width=getOption("width")) {
   if(!is.integer(max.width) || length(max.width) != 1L)
     stop("Argument `max.width` must be integer(1L)")
 
-  cat("\r", rep(" ", max(min.width, max.width)), sep="")
-  cat(paste0("\r", substr(x, 1, max(min.width, max.width))))
+  writeLines(
+    c(
+      "\r", rep(" ", max(min.width, max.width)), "\r",
+      substr(x, 1, max(min.width, max.width))
+    ), sep=""
+  )
   NULL
 }
 #' Produces 1 Line Description of Value
