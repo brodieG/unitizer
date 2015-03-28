@@ -1,3 +1,4 @@
+set.seed(1)
 1 + 1
 print("heya")
 stop("wow")
