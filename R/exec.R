@@ -114,10 +114,10 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
 user_exp_display <- function(value, env, expr) {
   if(isS4(value)) {
     print.type <- "show"
-    disp.expr <- call("show", value)
+    disp.expr <- call("show", if(is.language(value)) enquote(value) else value)
   } else {
     print.type <- "print"
-    disp.expr <- call("print", value)
+    disp.expr <- call("print", if(is.language(value)) enquote(value) else value)
   }
   user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
 }

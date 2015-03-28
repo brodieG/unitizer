@@ -56,6 +56,9 @@ local( {
   ex5 <- unitizer:::eval_user_exp(quote(sum(1:20)), eval.env)
   ex9 <- unitizer:::eval_user_exp(quote(fun_warn()), eval.env)
   ex10 <- unitizer:::eval_user_exp(quote(fun_msg()), eval.env)
+  ex11 <- unitizer:::eval_user_exp(
+    quote((function() quote(stop("shouldn't error")))()), eval.env
+  )
 
   # NOTE: deparsed test values generated with unitizer:::deparse_mixed
 
@@ -99,6 +102,7 @@ local( {
       structure(list(value = NULL, aborted = FALSE, conditions = list(structure(list(message = "This is a Message\n", call = quote(message("This is a Message"))), .Names = c("message", "call"), class = c("simpleMessage", "message", "condition"), unitizer.printed = FALSE)), trace = list()), .Names = c("value", "aborted", "conditions", "trace")),
       ex10
     )
+    expect_false(ex11$aborted)
   } )
   test_that("Trace Setting", {
     expect_identical(trace0, trace1)
