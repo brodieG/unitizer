@@ -14,7 +14,11 @@
 #' dumped at the very end.  This is to avoid overhead from repeatedly creating
 #' and opening new connections.
 #'
-#' @param con either a file name or an open connection
+#' @param con either a file name or an open connection; make sure that you use
+#'   a \code{con} created by \code{set_text_capture} for \code{get_text_capture}
+#'   since \code{set_text_capture} detects whether sinking is already in process
+#'   and returns FALSE if it is, which then tells \code{get_text_capture} not to
+#'   undo the sink
 #' @keywords internal
 #' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
 

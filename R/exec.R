@@ -25,8 +25,8 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
-    std.err.capt.con <- set_text_capture(capt.cons$err.c, "message")
-    std.out.capt.con <- set_text_capture(capt.cons$out.c, "output")
+    capt.cons$err.c <- set_text_capture(capt.cons$err.c, "message")
+    capt.cons$out.c <- set_text_capture(capt.cons$out.c, "output")
     x.to.eval <- `attributes<-`(x, NULL)
 
     # Manage unexpected outcomes

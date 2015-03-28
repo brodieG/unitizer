@@ -127,7 +127,7 @@ search_path_setup <- function() {
 
   std.err <- tempfile()
   std.err.con <- file(std.err, "w+b")
-  set_text_capture(std.err.con, "message")
+  capt.con <- set_text_capture(std.err.con, "message")
 
   # Attempt to apply shims
 
@@ -245,7 +245,8 @@ search_path_setup <- function() {
   })
   # Process std.err to make sure nothing untoward happened
 
-  shim.out <- get_text_capture(std.err.con, std.err, "message")
+  shim.out <- get_text_capture(capt.con, std.err, "message")
+
   close(std.err.con)
   unlink(std.err)
   if(
@@ -290,14 +291,14 @@ search_path_unsetup <- function() {
 
   std.err <- tempfile()
   std.err.con <- file(std.err, "w+b")
-  set_text_capture(std.err.con, "message")
+  capt.con <- set_text_capture(std.err.con, "message")
 
   unshim <- try({  # this needs to go
     untrace(library, where=.BaseNamespaceEnv)
     untrace(attach, where=.BaseNamespaceEnv)
     untrace(detach, where=.BaseNamespaceEnv)
   })
-  unshim.out <- get_text_capture(std.err.con, std.err, "message")
+  unshim.out <- get_text_capture(capt.con, std.err, "message")
   close(std.err.con)
   unlink(std.err)
 
