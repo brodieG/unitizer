@@ -20,8 +20,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     # Prep message and std output capture, note this is reset with every test expression
     # evaluation
 
-    x.comments <- attr(x, "comment")  # need to recover comments from container since we can't attach comments directly to name
-    x <- symb_mark_rem(x)             # get rid of comment container
+    x.extracted <- comm_and_call_extract(x)
+    x.comments <- x.extracted$comments      # need to recover comments from container since we can't attach comments directly to name
+    x <- x.extracted$call                   # get rid of comment container
 
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")

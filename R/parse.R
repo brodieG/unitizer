@@ -55,7 +55,7 @@
 #' @param top.level the id of the top level
 #' @return integer the top level parent ids for \code{`ids`}
 
- top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
+top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   if(!is.integer(ids) || !is.integer(par.ids) || !identical(length(ids), length(par.ids)))
     stop("Arguments `ids` and `par.ids` must be equal length integer vectors")
   if(!identical(length(setdiff(abs(par.ids), c(ids, top.level))), 0L))
@@ -703,6 +703,10 @@ symb_mark_rem <- function(x) {
 #' Note that when dealing with expressions the very first item will typically
 #' be NULL to allow for logic that works with nested structures.
 #'
+#' \code{comm_and_call_extract} also pulls out a cleaned up version of the call
+#' along with the comments, but the comments come out in a vector instead of a
+#' list showing the structure where the comments were pulled from.
+#'
 #' Used mostly for testing purposes.
 #'
 #' @keywords internal
@@ -719,6 +723,30 @@ comm_extract <- function(x) {
   } else {
     return(list(comm))
 } }
+
+comm_and_call_extract <- function(x) {
+
+  comments <- character()
+
+  rec <- function(call) {
+    if(missing(call)) return(call)
+    comm <- attr(call, "comment")
+    if(!is.null(comm)) {
+      comments <<- c(comments, comm)
+      attr(call, "comment") <- NULL
+    }
+    call.clean <- symb_mark_rem(call)             # get rid of comment container
+    if(missing(call.clean)) return(call.clean)    # need to do this twice because missing args that are parsed aren't necessarily recognized as missing immediately
+
+    if(is.expression(call.clean) || length(call.clean) > 1L) {
+      for(i in seq_along(call.clean)) {
+        call.sub <- call.clean[[i]]
+        if(!missing(call.sub) && !is.null(call.sub)) call.clean[[i]] <- rec(call.clean[[i]])
+    } }
+    call.clean
+  }
+  list(call=rec(x), comments=comments)
+}
 
 #' Utility Function to Reset Comments
 #'
