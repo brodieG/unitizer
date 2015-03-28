@@ -238,5 +238,23 @@ local( {
       quote(function(a, b) NULL),
       unitizer:::uncomment(quote(function(a, b) NULL))
     )
+    # Recover comments and uncomment
+
+    txt <- ".alike(  # FALSE, match.call disabled
+    quote(fun(b=fun2(x, y), 1, 3)),  # first sub.call
+    quote(fun(NULL, fun2(a, b), 1)), # second sub.call
+    alike_settings(lang.mode=1))"
+
+    exp <- unitizer:::parse_with_comments(text=txt)
+    candc <- unitizer:::comm_and_call_extract(exp)
+    expect_identical(
+      quote(.alike(quote(fun(b = fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), alike_settings(lang.mode = 1))),
+      candc$call[[1L]]
+    )
+    expect_identical(
+      c("# FALSE, match.call disabled", "# first sub.call", "# second sub.call"),
+      candc$comments
+    )
+
   } )
 } )
