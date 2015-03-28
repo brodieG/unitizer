@@ -80,6 +80,13 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 } )
 #' Utility function to evaluate user expressions
 #'
+#' A fair bit of manipulation required to ensure the trace and calls associated
+#' with conditions are reasonable.  This should be mostly correct except for the
+#' notable exception of top-level conditions, which will be recorded correctly,
+#' but for which the \code{std.err()} output will show the
+#' \code{withVisible(...)} call.  Doesn't seem to be a straightforward way of
+#' capturing that short of tossing the \code{stderr} and spoofing the message.
+#'
 #' @keywords internal
 #' @param unitizerUSEREXP an expression to evaluate
 #' @param env environment the environment to evaluate the expression in
@@ -105,16 +112,14 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
 #' @keywords internal
 
 user_exp_display <- function(value, env, expr) {
-  print.env <- new.env(parent=env)
-  assign("unitizerTESTRES", value, envir=print.env)
   if(isS4(value)) {
     print.type <- "show"
-    disp.expr <- quote(show(unitizerTESTRES))
+    disp.expr <- call("show", value)
   } else {
     print.type <- "print"
-    disp.expr <- quote(print(unitizerTESTRES))
+    disp.expr <- call("print", value)
   }
-  user_exp_handle(disp.expr, print.env, print.mode=print.type, expr.raw=expr)
+  user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
 }
 #' @rdname eval_user_exp
 #' @keywords internal
@@ -142,16 +147,9 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
         if(attr(trace.net, "set.trace")) trace <<- c(trace.net)
 
         # manipulate call so it looks like it should
-        if(!printed && identical(cond$call, trace.net[[1L]])) {
+        cond.call.noattr <- `attributes<-`(cond$call, NULL)
+        if(!printed && identical(cond.call.noattr, trace.net[[1L]])) {
           cond <- modifyList(cond, list(call=NULL), keep.null=TRUE)
-        } else if(printed && !is.null(cond$call)) {
-          # can't just use the stuff from the trace because it is deparsed,
-          # could but would have to refactor other stuff; note also this won't
-          # fix the initial display of the condition, but can't doo much about
-          # that, at least not easily
-
-          cond$call <-
-            eval(call("substitute", cond$call, list(unitizerTESTRES=expr.raw)))
         }
         conditions[[length(conditions) + 1L]] <<- cond
       }
@@ -185,7 +183,7 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
 
 set_trace <- function(trace) {
   if(length(trace)) {
-    res <- lapply(FUN=deparse, rev(trace))
+    res <- lapply(FUN=deparse, rev(trace), control="keepInteger")
     assign(".Traceback", res, envir=getNamespace("base"))
   }
   TRUE
@@ -240,11 +238,10 @@ get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
       identical(trace.new[[len.new - 1L]][[1L]], quote(stop))
 
     trace.new[seq_along(trace.base)] <- NULL
-    if(is.function(trace.new[[length(trace.new)]])) {
-      is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
-    }
-    if(length(trace.new) >= 7L || (printed && length(trace.new) >= 6L)) {
-      trace.new[
+    trace.new.clean <- lapply(trace.new, `attributes<-`, NULL) # remove srcref attributes
+
+    if(length(trace.new.clean) >= 7L || (printed && length(trace.new.clean) >= 6L)) {
+      trace.new.clean[
         1L:(if(printed) 5L else 6L + is.expression(exp) * 2L)  # printing removes expression
       ] <- NULL
       if(printed) {
@@ -252,28 +249,15 @@ get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
         # print/show and then replace the part inside the print/show call with
         # the actual call
 
-        exp.to.rep <- cumsum(
-          vapply(
-            trace.new, FUN.VALUE=logical(1L),
-            function(x) {
-              length(x) == 2L &
-              grepl(paste0("^", print.type, "(\\..*)?$"), as.character(x[[1L]]))
-        } ) ) == 1L:length(trace.new)
-
-        trace.new <- lapply(
-          seq_along(exp.to.rep),
-          function(idx) {
-            if(exp.to.rep[[idx]]) {
-              `[[<-`(
-                trace.new[[idx]], 2L,
-                if(is.expression(exp)) exp[[length(exp)]] else exp
-              )
-            } else trace.new[[idx]]
-      } ) }
-
-      if(length(trace.new) >= 2L) {
+        exp.rep <- if(is.expression(exp)) exp[[length(exp)]] else exp
+        trace.new.clean <- lapply(
+          trace.new.clean,
+          function(x) eval(call("substitute", x, list(unitizerTESTRES=exp.rep)))
+        )
+      }
+      if(length(trace.new.clean) >= 2L) {
         trace.drop <- if(is.stop) -2L else if (is.stop.cond) -1L else 0L
-        trace.trim <- trace.new[1L:(length(trace.new) + trace.drop)]
+        trace.trim <- trace.new.clean[1L:(length(trace.new.clean) + trace.drop)]
       } else {
         stop("Logic Error: unexpected trace length")
       }
