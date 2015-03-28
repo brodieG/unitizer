@@ -370,8 +370,12 @@ word_wrap <- function(
 word_cat <- function(
   ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
 ) {
-  vec <- try(paste0(unlist(list(...)), collapse=sep), silent=TRUE)
+  vec <- try(
+    paste0(unlist(list(...)), collapse=sep),
+    silent=TRUE
+  )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
+  vec <- unlist(strsplit(vec, "\n"))
   invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
 #' Over-write a Line
