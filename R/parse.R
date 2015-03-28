@@ -55,7 +55,7 @@
 #' @param top.level the id of the top level
 #' @return integer the top level parent ids for \code{`ids`}
 
-top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
+ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   if(!is.integer(ids) || !is.integer(par.ids) || !identical(length(ids), length(par.ids)))
     stop("Arguments `ids` and `par.ids` must be equal length integer vectors")
   if(!identical(length(setdiff(abs(par.ids), c(ids, top.level))), 0L))
@@ -70,29 +70,37 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   # Create lookup matrix so we can look up ids directly.  This will be a slightly
   # sparse matrix to the extend `ids` doesn't contain every number between
   # range(ids).  The idea is to be able to lookup id-par pairs by direct index
-  # access
+  # access.  This is not super efficient since we keep recalculating some of the
+  # data over and over with each recursion.
 
   id.range <- range(ids)
   if(id.range[[1L]] < 1L)
     stop("Expected only strictly positive unique ids")
-  id.mx <- matrix( nrow=id.range[[2L]], ncol=2L)
-  id.mx[ids, ] <- cbind(ids, par.ids)
+  par.full <- rep(NA_integer_, id.range[[2L]])
+  par.full[ids] <- par.ids
+  res <- rep(NA_integer_, length(ids))
 
-  ancestry_climb <- function(par.id) {
-    if(identical(par.id, top.level)) return(par.id)
-    new.id <- id.mx[par.id, 2L]
-    if(identical(new.id, top.level)) return(par.id)
-    else if (is.na(new.id)) return(new.id)
-    Recall(new.id)
+  for(i in seq_along(par.ids)) {
+    cur.id <- new.id <- par.ids[[i]]
+    while(cur.id != top.level) {
+      new.id <- par.full[[cur.id]]
+      if(is.na(new.id)) break;
+      if(new.id == top.level) {
+        new.id <- cur.id
+        break;
+      }
+      cur.id <- new.id
+    }
+    res[[i]] <- new.id
   }
-  vapply(par.ids, ancestry_climb, integer(1L))
+  res
 }
 #' For Each ID Determines Generation
 #'
 #' @param ids integer() the object ids
 #' @param par.ids integer() the parents of each \code{ids}
 #' @param id integer() the first parent
-#' @return 2 column matrix
+#' @return matrix containing ids and corresponding generation for the ids
 #'
 #' @keywords internal
 
@@ -107,17 +115,18 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
   ind.start <- 1L
   par.idx <- 1L
   par.list <- id
-  id.split <- split(ids, par.ids)
+  id.split <- list2env(split(ids, par.ids))
 
   repeat {
     if(!length(par.list)) break
     child.len <- length(children <- id.split[[as.character(par.list[[par.idx]])]])
     if(child.len) {
       ind.end <- ind.start + child.len - 1L
-      if(ind.end > max.size)
-        stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
-      res[ind.start:ind.end, 1L] <- children
-      res[ind.start:ind.end, 2L] <- level
+      # if(ind.end > max.size)
+      #   stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
+      inds <- ind.start:ind.end
+      res[inds, 1L] <- children
+      res[inds, 2L] <- level
       ind.start <- ind.end + 1L
     }
     par.idx <- par.idx + 1L
@@ -206,18 +215,20 @@ comments_assign <- function(expr, comment.dat) {
   # - 3L is only item on line (we think)
   # - 2L is last item on line (we think)
 
-  comm.expr <- transform(
+  comm.expr$first.last.on.line <- with(
     comm.expr,
-    first.last.on.line=ave(
+    ave(
       col1, line1,
       FUN=function(x)
-        if(identical(length(x), 1L)) 3L
+        if(length(x) == 1L) 3L
         else ifelse(x == max(x), 2L, ifelse(x == min(x), 1L, 0L))
   ) )
   # For each comment on a line that also has an expression, find the expression
   # that is also on that line
 
-  comm.comm <- transform(comm.comm, assign.to.prev=comm.expr$line2[match(line1, comm.expr$line2)])
+  comm.comm$assign.to.prev <- with(
+    comm.expr, line2[match(comm.comm$line1, line2)]
+  )
   comm.comm$match <- with(comm.expr,  {
     last.or.only <- first.last.on.line %in% 2L:3L
     id[last.or.only][match(comm.comm$assign.to.prev, line1[last.or.only])]
@@ -384,13 +395,20 @@ parse_with_comments <- function(file, text=NULL) {
     # particularly, that for any child section, there are no overlapping
     # sections at the top level
 
-    line.dat <- vapply(prsdat.children, function(x) c(max=max(x$line2), min=min(x$line1)), c(max=0L, min=0L))
+    line.dat <- vapply(
+      prsdat.children,
+      function(x) with(x, c(max=max(line2), min=min(line1))), c(max=0L, min=0L)
+    )
     col.dat <- vapply(
       seq_along(prsdat.children),
-      function(i) c(
-        max=max(subset(prsdat.children[[i]], line2==line.dat["max", i])$col2),
-        min=min(subset(prsdat.children[[i]], line1==line.dat["min", i])$col1)
-      ),
+      function(i)
+        with(
+          prsdat.children[[i]],
+          {
+            c(
+              max=max(col2[which(line2 == line.dat["max", i])]),
+              min=min(col1[which(line1 == line.dat["min", i])])
+        ) } ),
       c(max=0L, min=0L)
     )
     if(
@@ -410,7 +428,7 @@ parse_with_comments <- function(file, text=NULL) {
 
     assignable.elems <- vapply(
       expr,
-      function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x),
+      function(x) !identical(typeof(x), "pairlist") && !any("srcref" == class(x)),
       logical(1L)
     )
     if(!is.call(expr) && !is.expression(expr)) {
@@ -427,7 +445,13 @@ parse_with_comments <- function(file, text=NULL) {
     # the only time there are order mismatches are with infix operators and those
     # are terminal leaves anyway.
 
-    if(!any(vapply(prsdat.children, function(child) any(child$token == "COMMENT"), logical(1L)))) return(expr)
+    if(
+      !any(
+        vapply(
+          prsdat.children,
+          function(child) with(child, "COMMENT" %in% token),
+          logical(1L)
+    ) ) ) return(expr)
 
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
     if(!identical(nrow(prsdat.par.red), length(which(assignable.elems)))) {
@@ -589,25 +613,75 @@ prsdat_find_paren <- function(parse.dat) {
     stop("Logic Error; failed attempting to `for` function block; contact maintainer")
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
 }
+#' Removes Exprlists
+#'
+#' These don't do anything, and have extraneous semi colons.  We need to remove
+#' them, and then make sure all their children become children of the exprlist
+#' parent
+
 prsdat_fix_exprlist <- function(parse.dat, ancestry) {
-  if(!any(parse.dat$token == "exprlist")) return(parse.dat)
-  # Find all the children
+
   z <- ancestry
-  levels <- z[match(parse.dat$id, z[, "children"]), "level"]
-  # Find first `exprlist`
-  exprlist <- with(parse.dat[order(levels),], head(id[token == "exprlist"], 1L))
-  exprlist.par <- subset(parse.dat, id == exprlist)$parent
-  # Promote all children and remove semi-colons and actual exprlist
-  parse.dat.mod <- subset(parse.dat, id != exprlist & (parent != exprlist | token != "';'"))
-  parse.dat.mod[parse.dat.mod$parent == exprlist, ]$parent <- exprlist.par
-  # Check nothing screwed up
+  z[, "level"] <- z[match(parse.dat$id, z[, "children"]), "level"]
+  lev.ord <- order(z[, "level"])  # order by level to make sure we remove exprlists in correct order
+  dat.ord <- parse.dat[lev.ord, ]
+  ind.all <- seq.int(nrow(dat.ord))
+  par.map <- list2env(split(ind.all, dat.ord[["parent"]]))  # map parents vs. position in ordered list
+
+  dat.exprlist <- which(dat.ord[["token"]] == "exprlist")
+  ind.exp <- seq_along(dat.exprlist)
+  ind.exclude <- logical(length(ind.all))
+
+  if(length(dat.exprlist)) {
+    dat.ord <- within(
+      dat.ord,
+      {
+        for(exprlist.ind in dat.exprlist) {
+
+          # Find first `exprlist`
+
+          exprlist.par <- parent[[exprlist.ind]]
+
+          # Promote all children of exprlist and remove semi-colons and actual
+          # exprlist.  This requires updating the value of the parent column in
+          # `dat.ord`, and then re-assigning the parent ship relationship
+
+          exprlist.par.chr <- as.character(exprlist.par)
+          exprlist.id.chr <- as.character(id[[exprlist.ind]])
+          exprlist.children <- par.map[[exprlist.id.chr]]
+
+          # semi colons with exprlist as parent need to be discarded
+
+          semicol.ind <- exprlist.children[which(token[exprlist.children] == "';'")]
+
+          # change exprlist children parent to exprlist parent
+
+          parent[exprlist.children] <- exprlist.par
+
+          # Update mapping to reflect new parentship
+
+          par.map[[exprlist.par.chr]] <<- c(
+            par.map[[exprlist.par.chr]],
+            par.map[[exprlist.id.chr]]
+          )
+          par.map[[exprlist.id.chr]] <<- NULL
+
+          # extend exclusion list
+
+          ind.exclude[c(exprlist.ind, semicol.ind)] <<- TRUE
+        }
+        rm(
+          exprlist.par, exprlist.par.chr, exprlist.id.chr, exprlist.children,
+          exprlist.ind, semicol.ind
+  ) } ) }
+  # Now actually remove the exprlist and semi colons, and re-order
+
+  parse.dat.mod <-
+    dat.ord[order(lev.ord), ][which(!ind.exclude[order(lev.ord)]), ]
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
     stop("Logic Error: `exprlist` excision did not work!")
-  # if any "exprlist" remaining, repeat
-  if(any(parse.dat.mod$token == "exprlist"))
-    Recall(parse.dat.mod, ancestry) else parse.dat.mod
+  parse.dat.mod
 }
-
 #' Removes Symbol Marker Used To Hold Comments
 #'
 #' @keywords internal

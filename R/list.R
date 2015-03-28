@@ -180,12 +180,13 @@ setMethod("done", "unitizerList",
 
 setGeneric("append")
 
-#' Append To a \code{`\link{unitizerList-class}`} Object
+#' Append To a \code{\link{unitizerList-class}} Object
 #'
-#' \code{`values`} is coerced to list or expression depending on
-#' type of \code{`x`} \code{`.items`} slot.
+#' \code{values} is coerced to list or expression depending on
+#' type of \code{x} \code{.items} slot.
 #'
-#' The resulting object must pass the validity method for \code{`x`}.
+#' The resulting object is not tested for validity as this is too expensive
+#' on a regular basis.  You should check validity with \code{validObject}
 #'
 #' @keywords internal
 #' @param x the object to append to
@@ -211,7 +212,7 @@ setMethod("append", c("unitizerList", "ANY"),
     x <- x@.items
     y@.items <- callNextMethod()
     if(y@.pointer > after) y@.pointer <- y@.pointer + length(values)
-    validObject(y)
+    # validObject(y) # too expensive, commented
     y
 } )
 #' Concatenate to a \code{`\link{unitizerList-class}`}

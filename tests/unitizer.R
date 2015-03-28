@@ -2,6 +2,5 @@
 
 library(unitizer)
 
-set.seed(1)
 unitize("noninteractive/tests2.R")
 unitize("noninteractive/sectionsRCMDCHECK.R")
