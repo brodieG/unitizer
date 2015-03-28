@@ -25,8 +25,8 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
-    std.err.capt.con <- set_text_capture(capt.cons$err.c, "message")
-    std.out.capt.con <- set_text_capture(capt.cons$out.c, "output")
+    capt.cons$err.c <- set_text_capture(capt.cons$err.c, "message")
+    capt.cons$out.c <- set_text_capture(capt.cons$out.c, "output")
     x.to.eval <- `attributes<-`(x, NULL)
 
     # Manage unexpected outcomes
@@ -80,6 +80,13 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 } )
 #' Utility function to evaluate user expressions
 #'
+#' A fair bit of manipulation required to ensure the trace and calls associated
+#' with conditions are reasonable.  This should be mostly correct except for the
+#' notable exception of top-level conditions, which will be recorded correctly,
+#' but for which the \code{std.err()} output will show the
+#' \code{withVisible(...)} call.  Doesn't seem to be a straightforward way of
+#' capturing that short of tossing the \code{stderr} and spoofing the message.
+#'
 #' @keywords internal
 #' @param unitizerUSEREXP an expression to evaluate
 #' @param env environment the environment to evaluate the expression in
@@ -105,16 +112,14 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
 #' @keywords internal
 
 user_exp_display <- function(value, env, expr) {
-  print.env <- new.env(parent=env)
-  assign("unitizerTESTRES", value, envir=print.env)
   if(isS4(value)) {
     print.type <- "show"
-    disp.expr <- quote(show(unitizerTESTRES))
+    disp.expr <- call("show", if(is.language(value)) enquote(value) else value)
   } else {
     print.type <- "print"
-    disp.expr <- quote(print(unitizerTESTRES))
+    disp.expr <- call("print", if(is.language(value)) enquote(value) else value)
   }
-  user_exp_handle(disp.expr, print.env, print.mode=print.type, expr.raw=expr)
+  user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
 }
 #' @rdname eval_user_exp
 #' @keywords internal
@@ -135,13 +140,19 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
       },
       condition=function(cond) {
         attr(cond, "unitizer.printed") <- printed
+        trace.new <- sys.calls()
+        trace.net <- get_trace(
+          trace.base, trace.new, printed, print.type, expr.raw
+        )
+        if(attr(trace.net, "set.trace")) trace <<- c(trace.net)
+
+        # manipulate call so it looks like it should
+        cond.call.noattr <- `attributes<-`(cond$call, NULL)
+        if(!printed && identical(cond.call.noattr, trace.net[[1L]])) {
+          cond <- modifyList(cond, list(call=NULL), keep.null=TRUE)
+        }
         conditions[[length(conditions) + 1L]] <<- cond
-        if(inherits(cond, "error")) {
-          trace.new <- sys.calls()
-          trace <<- get_trace(
-            trace.base, trace.new, printed, print.type, expr.raw
-          )
-      } }
+      }
     ),
     abort=function() {
       aborted <<- structure(TRUE, printed=printed)
@@ -151,7 +162,7 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
     value=value,
     aborted=aborted,
     conditions=conditions,
-    trace=trace
+    trace=tail(trace, -1L)
   )
 }
 #' Recompute a Traceback
@@ -171,7 +182,10 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
 #' @return TRUE (only purpose of this is side effect)
 
 set_trace <- function(trace) {
-  if(length(trace)) assign(".Traceback", trace, envir=getNamespace("base"))
+  if(length(trace)) {
+    res <- lapply(FUN=deparse, rev(trace), control="keepInteger")
+    assign(".Traceback", res, envir=getNamespace("base"))
+  }
   TRUE
 }
 #' Collect the Call Stack And Clean-up
@@ -220,52 +234,35 @@ get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
     # `stop+condition`
 
     is.stop <- identical(trace.new[[len.new]], quote(h(simpleError(msg, call))))
-    is.stop.cond <- length(trace.new) > 1 &&
+    is.stop.cond <- length(trace.new) > 1L &&
       identical(trace.new[[len.new - 1L]][[1L]], quote(stop))
 
-    if(is.stop || is.stop.cond) {
-      trace.new[seq_along(trace.base)] <- NULL
-      if(is.function(trace.new[[length(trace.new)]])) {
-        is.function(trace.new[[length(trace.new)]])  # er, does this do anything?
-      }
-      if(length(trace.new) >= 7L || (printed && length(trace.new) >= 6L)) {
-        trace.new[
-          1L:(if(printed) 6L else 7L + is.expression(exp) * 2L)  # printing removes expression
-        ] <- NULL
-        if(printed) {
-          # Find any calls from the beginning that are length 2 and start with
-          # print/show and then replace the part inside the print/show call with
-          # the actual call
+    trace.new[seq_along(trace.base)] <- NULL
+    trace.new.clean <- lapply(trace.new, `attributes<-`, NULL) # remove srcref attributes
 
-          exp.to.rep <- cumsum(
-            vapply(
-              trace.new, FUN.VALUE=logical(1L),
-              function(x) {
-                length(x) == 2L &
-                grepl(paste0("^", print.type, "(\\..*)?$"), as.character(x[[1L]]))
-          } ) ) == 1L:length(trace.new)
-          trace.new <- lapply(seq_along(exp.to.rep),
-            function(idx) {
-              if(exp.to.rep[[idx]]) {
-                `[[<-`(
-                  trace.new[[idx]], 2L,
-                  if(is.expression(exp)) exp[[length(exp)]] else exp
-                )
-              } else trace.new[[idx]]
-        } ) }
-        if(length(trace.new) >= 2L) {
-          return(
-            lapply(FUN=deparse,
-              rev(
-                head(
-                  trace.new,
-                  if(is.stop) -2L
-                  else if (is.stop.cond) -1L
-                  else stop(
-                    "Logic Error: must be either stop or stop+cond; contact ",
-                    "maintainer."
-      ) ) ) ) ) } }
-    } else return(list())
-  }
+    if(length(trace.new.clean) >= 7L || (printed && length(trace.new.clean) >= 6L)) {
+      trace.new.clean[
+        1L:(if(printed) 5L else 6L + is.expression(exp) * 2L)  # printing removes expression
+      ] <- NULL
+      if(printed) {
+        # Find any calls from the beginning that are length 2 and start with
+        # print/show and then replace the part inside the print/show call with
+        # the actual call
+
+        exp.rep <- if(is.expression(exp)) exp[[length(exp)]] else exp
+        trace.new.clean <- lapply(
+          trace.new.clean,
+          function(x) eval(call("substitute", x, list(unitizerTESTRES=exp.rep)))
+        )
+      }
+      if(length(trace.new.clean) >= 2L) {
+        trace.drop <- if(is.stop) -2L else if (is.stop.cond) -1L else 0L
+        trace.trim <- trace.new.clean[1L:(length(trace.new.clean) + trace.drop)]
+      } else {
+        stop("Logic Error: unexpected trace length")
+      }
+      attr(trace.trim, "set.trace") <- is.stop || is.stop.cond  # only actually set trace on `stop` calls
+      return(trace.trim)
+  } }
   stop("Logic Error: couldn't extract trace; contact maintainer.")
 }

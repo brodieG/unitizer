@@ -1,5 +1,6 @@
 # Version of sections2.R for use with R CMD Check
 
+set.seed(1)
 unitizer_sect("basic tests", {
   1 + 1 + 1/10^16
   print("heya")
