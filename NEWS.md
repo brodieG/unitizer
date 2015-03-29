@@ -1,3 +1,19 @@
+unitizer 0.7.1
+--------------------------------------------------------------------------------
+
+Improvements:
+
+* Reduced test execution and parsing overhead
+* Better handling of call recording for traceback and condition calls
+* `editFunNames` becomes `editCalls` and provides more comprehensive editing of
+  calls (Issue #52)
+
+Bufixes:
+
+* Comment handling in calls (Issues #56, #58)
+* Comment deparsing (Issues #39, #47, #52)
+
+
 unitizer 0.7.0
 --------------------------------------------------------------------------------
 
