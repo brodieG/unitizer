@@ -199,10 +199,7 @@ deparse_peek <- function(expr, len, width=500L) {
 #' @param expr language to deparse
 #' @return character(1L)
 
-deparse_call <- function(expr) {
-  expr.no.com <- uncomment(expr)
-  paste0(deparse(expr.no.com), collapse="")
-}
+deparse_call <- function(expr) paste0(deparse(expr), collapse="")
 
 #' Print Only First X characters
 #'
