@@ -7,6 +7,19 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## Optim
+
+* A lot of the overhead is related to the display and capture of text.  One
+  possibility would be disabling the default printing and letting the user
+  print if there are substantive issues (in particular, do we really need to
+  print stuff for passed tests? maybe, if we need the reference stored stuff)
+* using `run_ls` on new tests is super inefficient and is likely the next
+  obvious point to optimize, but would take a little work in an area of the code
+  that is a bit finicky
+* `all.equal` adds a little overhead, but not a huge ammount
+* `append` also adds some overhead
+
+
 ## Capture
 
 * Should we really allow execution in interactive mode with stderr() and
