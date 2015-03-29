@@ -206,7 +206,7 @@ local( {
   my.unitizer <- my.unitizer + expr
   test_that("Weird missing comment on `res` works", {
     expect_identical(
-      list(c("# Calls to `library` and assignments are not normally considered tests, so", "# you will not be prompted to review them"), NULL, NULL, NULL, "# first reviewable expression", NULL, NULL, "# This should cause an error; press Y to add to store"),
+      list(c("# Calls to `library` and assignments are not normally considered tests, so", "# you will not be prompted to review them"), character(0), character(0), character(0), "# first reviewable expression", character(0), character(0), "# This should cause an error; press Y to add to store"),
       lapply(unitizer:::as.list(my.unitizer@items.new), slot, "comment")
     )
   } )
