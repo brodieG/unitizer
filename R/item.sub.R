@@ -8,7 +8,7 @@
 
 NULL
 
-data.slots <- sort(slotNames("unitizerItemData"))  # cache this for validity
+unitizerItemDataSlots <- slotNames("unitizerItemData")  # cache this for validity
 
 #' Virtual Class To Enforce Slots on Subclasses
 #'
@@ -16,8 +16,8 @@ data.slots <- sort(slotNames("unitizerItemData"))  # cache this for validity
 
 setClass("unitizerItemTests", contains="VIRTUAL",
   validity=function(object) {
-    if(!all(sort(slotNames(getClass(object))) == data.slots))
-      return("slots must be defined as ", deparse(data.slots))
+    if(!all(slotNames(getClass(object)) == unitizerItemDataSlots))
+      return("slots must be defined as ", deparse(unitizerItemDataSlots))
     TRUE
   }
 )
@@ -74,7 +74,7 @@ setClass("unitizerItemTestError",
   validity=function(object) {
     if(!identical(length(object@compare.err), 1L)) return("slot `@compare.err` must be a 1 length logical")
 } )
-setClass("unitizerItemTestsErrors", contains="unitizerItemTests",
+setClass("unitizerItemTestsErrors",
   representation(
     value="unitizerItemTestError",
     conditions="unitizerItemTestError",
@@ -82,14 +82,22 @@ setClass("unitizerItemTestsErrors", contains="unitizerItemTests",
     message="unitizerItemTestError",
     aborted="unitizerItemTestError"
 ) )
+unitizerItemTestsErrorsSlots <- slotNames("unitizerItemTestsErrors")
+if(!identical(unitizerItemDataSlots, unitizerItemTestsErrorsSlots)) { # used to do this with virtual class, but slow
+  stop(
+    "Install error: `unitizerItemData` and `unitizerItemTestsErrors` slots ",
+    "not identical; contact maintainer."
+  )
+}
+unitizerItemTestErrorObj <- new("unitizerItemTestError")
 setMethod("initialize", "unitizerItemTestsErrors",
   function(.Object, ...) {
     dots <- list(...)
-    if(!all(s.n <- names(dots) %in% slotNames(.Object)))
+    if(!all((s.n <- names(dots)) %in% unitizerItemTestsErrorsSlots))
       stop("Unused arguments ", paste0(deparse(names(dots)[!s.n])))
     for(i in seq_along(dots))
-      if(is.null(dots[[i]])) dots[[i]] <- new("unitizerItemTestError")
-    do.call(callNextMethod, c(list(.Object), dots))
+      if(is.null(dots[[i]])) slot(.Object, s.n[[i]]) <- unitizerItemTestErrorObj
+    .Object
 } )
 setClass(
   "unitizerItemsTestsErrors", contains="unitizerList"

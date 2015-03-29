@@ -6,6 +6,16 @@
 
 NULL
 
+# - Validity ------------------------------------------------------------------
+
+#' Used to run "validity" methods
+#'
+#' This is to avoid having to automatically run validity on object
+#' instantiation as is the case with actual built-in validity objects.  We can
+#' create a bunch of objects, and then only run validity when
+
+setGeneric("isValid", function(object, ...) standardGeneric("isValid"))
+
 # - Classes -------------------------------------------------------------------
 
 #' Data Produced During Evaluation of \code{`unitizer`} Test
@@ -59,19 +69,25 @@ setClass(
     reference=FALSE, ignore=FALSE, id=1L,
     ls=data.frame(names=character(), status=character()),
     section.id=NA_integer_
-  ),
-  validity=function(object) {
-    if(!identical(length(object@reference), 1L)) return("Slot `@reference` must be length 1")
-    if(!identical(length(object@id), 1L) || !isTRUE(object@id > 0)) return("Slot `@id` must be length 1 and greater than zero.")
+) )
+unitizerItemSlotNames <- slotNames("unitizerItem")  # cache names
+
+setMethod("isValid", "unitizerItem",
+  function(object) {
+    if(!identical(length(object@reference), 1L))
+      return("Slot `@reference` must be length 1")
+    if(!identical(length(object@id), 1L) || !isTRUE(object@id > 0))
+      return("Slot `@id` must be length 1 and greater than zero.")
     if(!identical(names(object@ls), c("names", "status")) ||
-      !identical(vapply(objecs@ls, class, ""), rep("character", 2L)))
+      !identical(unname(vapply(object@ls, class, "")), rep("character", 2L))) {
       return("Slot `@ls` has incorrect data structure")
+    }
     if(length(object@section.id) != 1L || object@section.id < 1L)
       return("Slot `@section.id` must be integer(1L) >= 1L")
     TRUE
-  }
-)
+} )
 setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
+
 #' Initialize A \code{`\link{unitizerItem-class}`}
 #'
 #' Makes the fact that most of the data needs to be part of a
@@ -81,8 +97,9 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
-  if(!("call" %in% names(dots.all))) .Object@call <- NULL else .Object@call <- dots.all$call
-  if("env" %in% names(dots.all)) .Object@env <- dots.all$env
+  dots.names <- names(dots.all)
+  if(!("call" %in% dots.names)) .Object@call <- NULL else .Object@call <- dots.all$call
+  if("env" %in% dots.names) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&
     !inherits(
@@ -92,9 +109,9 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   ) {
     .Object@ignore <- TRUE
   }
-  if("comment" %in% names(dots.all)) .Object@comment <- dots.all$comment
-  if("trace" %in% names(dots.all)) .Object@trace <- dots.all$trace
-  dots <- dots.all[!(names(dots.all) %in% slotNames(.Object))]
+  if("comment" %in% dots.names) .Object@comment <- dots.all$comment
+  if("trace" %in% dots.names) .Object@trace <- dots.all$trace
+  dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
