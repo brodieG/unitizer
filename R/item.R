@@ -82,8 +82,13 @@ setMethod("isValid", "unitizerItem",
       !identical(unname(vapply(object@ls, class, "")), rep("character", 2L))) {
       return("Slot `@ls` has incorrect data structure")
     }
-    if(length(object@section.id) != 1L || object@section.id < 1L)
+    if(
+      length(object@section.id) != 1L || (
+        !is.na(object@section.id) && object@section.id < 1L # not 100% about allowing NA section ids, seems required for sectionless reference tests
+      )
+    ) {
       return("Slot `@section.id` must be integer(1L) >= 1L")
+    }
     TRUE
 } )
 setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))

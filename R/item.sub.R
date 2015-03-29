@@ -96,7 +96,9 @@ setMethod("initialize", "unitizerItemTestsErrors",
     if(!all((s.n <- names(dots)) %in% unitizerItemTestsErrorsSlots))
       stop("Unused arguments ", paste0(deparse(names(dots)[!s.n])))
     for(i in seq_along(dots))
-      if(is.null(dots[[i]])) slot(.Object, s.n[[i]]) <- unitizerItemTestErrorObj
+      slot(.Object, s.n[[i]]) <- if(is.null(dots[[i]])) {
+        unitizerItemTestErrorObj
+      } else dots[[i]]
     .Object
 } )
 setClass(
