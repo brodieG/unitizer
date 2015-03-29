@@ -67,21 +67,40 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   } else if (any(par.ids) < 0) {
     stop("Argument `par.ids` contains values less than zero, but that is only allowed when `top.level` == 0L")
   }
-  ancestry_climb <- function(par.id) {
-    par.id <- abs(par.id)
-    if(identical(par.id, top.level)) return(par.id)
-    new.id <- abs(par.ids[which(par.id == ids)][[1L]])
-    if(identical(new.id, top.level)) return(par.id) else if (is.na(new.id)) return(new.id)
-    Recall(new.id)
+  # Create lookup matrix so we can look up ids directly.  This will be a slightly
+  # sparse matrix to the extend `ids` doesn't contain every number between
+  # range(ids).  The idea is to be able to lookup id-par pairs by direct index
+  # access.  This is not super efficient since we keep recalculating some of the
+  # data over and over with each recursion.
+
+  id.range <- range(ids)
+  if(id.range[[1L]] < 1L)
+    stop("Expected only strictly positive unique ids")
+  par.full <- rep(NA_integer_, id.range[[2L]])
+  par.full[ids] <- par.ids
+  res <- rep(NA_integer_, length(ids))
+
+  for(i in seq_along(par.ids)) {
+    cur.id <- new.id <- par.ids[[i]]
+    while(cur.id != top.level) {
+      new.id <- par.full[[cur.id]]
+      if(is.na(new.id)) break;
+      if(new.id == top.level) {
+        new.id <- cur.id
+        break;
+      }
+      cur.id <- new.id
+    }
+    res[[i]] <- new.id
   }
-  vapply(par.ids, ancestry_climb, integer(1L))
+  res
 }
 #' For Each ID Determines Generation
 #'
 #' @param ids integer() the object ids
 #' @param par.ids integer() the parents of each \code{ids}
 #' @param id integer() the first parent
-#' @return 2 column matrix
+#' @return matrix containing ids and corresponding generation for the ids
 #'
 #' @keywords internal
 
@@ -96,16 +115,18 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
   ind.start <- 1L
   par.idx <- 1L
   par.list <- id
+  id.split <- list2env(split(ids, par.ids))
 
   repeat {
     if(!length(par.list)) break
-    child.len <- length(children <- ids[par.ids == par.list[[par.idx]]])
+    child.len <- length(children <- id.split[[as.character(par.list[[par.idx]])]])
     if(child.len) {
       ind.end <- ind.start + child.len - 1L
-      if(ind.end > max.size)
-        stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
-      res[ind.start:ind.end, 1L] <- children
-      res[ind.start:ind.end, 2L] <- level
+      # if(ind.end > max.size)
+      #   stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
+      inds <- ind.start:ind.end
+      res[inds, 1L] <- children
+      res[inds, 2L] <- level
       ind.start <- ind.end + 1L
     }
     par.idx <- par.idx + 1L
@@ -194,18 +215,20 @@ comments_assign <- function(expr, comment.dat) {
   # - 3L is only item on line (we think)
   # - 2L is last item on line (we think)
 
-  comm.expr <- transform(
+  comm.expr$first.last.on.line <- with(
     comm.expr,
-    first.last.on.line=ave(
+    ave(
       col1, line1,
       FUN=function(x)
-        if(identical(length(x), 1L)) 3L
+        if(length(x) == 1L) 3L
         else ifelse(x == max(x), 2L, ifelse(x == min(x), 1L, 0L))
   ) )
   # For each comment on a line that also has an expression, find the expression
   # that is also on that line
 
-  comm.comm <- transform(comm.comm, assign.to.prev=comm.expr$line2[match(line1, comm.expr$line2)])
+  comm.comm$assign.to.prev <- with(
+    comm.expr, line2[match(comm.comm$line1, line2)]
+  )
   comm.comm$match <- with(comm.expr,  {
     last.or.only <- first.last.on.line %in% 2L:3L
     id[last.or.only][match(comm.comm$assign.to.prev, line1[last.or.only])]
@@ -229,8 +252,21 @@ comments_assign <- function(expr, comment.dat) {
     if(is.na(comm.comm$match[[i]])) next
     expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
     if(!identical(length(expr.pos), 1L)) stop("Logic Error; contact maintainer.")
-    if(!is.null(expr[[expr.pos]]))
-      attr(expr[[expr.pos]], "comment") <- c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
+    if(!is.null(expr[[expr.pos]])) {
+      # names are registered in global pool, so you can only attach attributes
+      # to as single unique in memory instance, irrespective of where or how
+      # many times a name occurs in an expression.  Because of this, we must
+      # turn names that we want to attach comments to into simple language by
+      # adding parens.  Note this changes structure of expression but hopefully
+      # doesn't mess anything up later on...
+
+      if(is.name(expr[[expr.pos]])) {
+        expr[[expr.pos]] <- call("(", expr[[expr.pos]])
+        attr(expr[[expr.pos]], "unitizer_parse_symb") <- TRUE
+      }
+      attr(expr[[expr.pos]], "comment") <-
+        c(attr(expr[[expr.pos]], "comment"), comm.comm$text[[i]])
+    }
   }
   expr
 }
@@ -257,7 +293,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #'     to allow mapping the parsed data back to the expression.  What
 #'     confuses the issue a bit is that operators show up at the top level,
 #'     but you can actually
-#'     ignore them.  Also, parantheses should only be kept if they are the
+#'     ignore them.  Also, parentheses should only be kept if they are the
 #'     topmost item, as otherwise they are part of a function call and
 #'     should be ignored.
 #'   \item Comments inside function formals are not assigned to the formals
@@ -359,13 +395,20 @@ parse_with_comments <- function(file, text=NULL) {
     # particularly, that for any child section, there are no overlapping
     # sections at the top level
 
-    line.dat <- vapply(prsdat.children, function(x) c(max=max(x$line2), min=min(x$line1)), c(max=0L, min=0L))
+    line.dat <- vapply(
+      prsdat.children,
+      function(x) with(x, c(max=max(line2), min=min(line1))), c(max=0L, min=0L)
+    )
     col.dat <- vapply(
       seq_along(prsdat.children),
-      function(i) c(
-        max=max(subset(prsdat.children[[i]], line2==line.dat["max", i])$col2),
-        min=min(subset(prsdat.children[[i]], line1==line.dat["min", i])$col1)
-      ),
+      function(i)
+        with(
+          prsdat.children[[i]],
+          {
+            c(
+              max=max(col2[which(line2 == line.dat["max", i])]),
+              min=min(col1[which(line1 == line.dat["min", i])])
+        ) } ),
       c(max=0L, min=0L)
     )
     if(
@@ -385,7 +428,7 @@ parse_with_comments <- function(file, text=NULL) {
 
     assignable.elems <- vapply(
       expr,
-      function(x) !identical(typeof(x), "pairlist") && !"srcref" %in% class(x),
+      function(x) !identical(typeof(x), "pairlist") && !any("srcref" == class(x)),
       logical(1L)
     )
     if(!is.call(expr) && !is.expression(expr)) {
@@ -402,7 +445,13 @@ parse_with_comments <- function(file, text=NULL) {
     # the only time there are order mismatches are with infix operators and those
     # are terminal leaves anyway.
 
-    if(!any(vapply(prsdat.children, function(child) any(child$token == "COMMENT"), logical(1L)))) return(expr)
+    if(
+      !any(
+        vapply(
+          prsdat.children,
+          function(child) with(child, "COMMENT" %in% token),
+          logical(1L)
+    ) ) ) return(expr)
 
     prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
     if(!identical(nrow(prsdat.par.red), length(which(assignable.elems)))) {
@@ -564,38 +613,140 @@ prsdat_find_paren <- function(parse.dat) {
     stop("Logic Error; failed attempting to `for` function block; contact maintainer")
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
 }
+#' Removes Exprlists
+#'
+#' These don't do anything, and have extraneous semi colons.  We need to remove
+#' them, and then make sure all their children become children of the exprlist
+#' parent
+
 prsdat_fix_exprlist <- function(parse.dat, ancestry) {
-  if(!any(parse.dat$token == "exprlist")) return(parse.dat)
-  # Find all the children
+
   z <- ancestry
-  levels <- z[match(parse.dat$id, z[, "children"]), "level"]
-  # Find first `exprlist`
-  exprlist <- with(parse.dat[order(levels),], head(id[token == "exprlist"], 1L))
-  exprlist.par <- subset(parse.dat, id == exprlist)$parent
-  # Promote all children and remove semi-colons and actual exprlist
-  parse.dat.mod <- subset(parse.dat, id != exprlist & (parent != exprlist | token != "';'"))
-  parse.dat.mod[parse.dat.mod$parent == exprlist, ]$parent <- exprlist.par
-  # Check nothing screwed up
+  z[, "level"] <- z[match(parse.dat$id, z[, "children"]), "level"]
+  lev.ord <- order(z[, "level"])  # order by level to make sure we remove exprlists in correct order
+  dat.ord <- parse.dat[lev.ord, ]
+  ind.all <- seq.int(nrow(dat.ord))
+  par.map <- list2env(split(ind.all, dat.ord[["parent"]]))  # map parents vs. position in ordered list
+
+  dat.exprlist <- which(dat.ord[["token"]] == "exprlist")
+  ind.exp <- seq_along(dat.exprlist)
+  ind.exclude <- logical(length(ind.all))
+
+  if(length(dat.exprlist)) {
+    dat.ord <- within(
+      dat.ord,
+      {
+        for(exprlist.ind in dat.exprlist) {
+
+          # Find first `exprlist`
+
+          exprlist.par <- parent[[exprlist.ind]]
+
+          # Promote all children of exprlist and remove semi-colons and actual
+          # exprlist.  This requires updating the value of the parent column in
+          # `dat.ord`, and then re-assigning the parent ship relationship
+
+          exprlist.par.chr <- as.character(exprlist.par)
+          exprlist.id.chr <- as.character(id[[exprlist.ind]])
+          exprlist.children <- par.map[[exprlist.id.chr]]
+
+          # semi colons with exprlist as parent need to be discarded
+
+          semicol.ind <- exprlist.children[which(token[exprlist.children] == "';'")]
+
+          # change exprlist children parent to exprlist parent
+
+          parent[exprlist.children] <- exprlist.par
+
+          # Update mapping to reflect new parentship
+
+          par.map[[exprlist.par.chr]] <<- c(
+            par.map[[exprlist.par.chr]],
+            par.map[[exprlist.id.chr]]
+          )
+          par.map[[exprlist.id.chr]] <<- NULL
+
+          # extend exclusion list
+
+          ind.exclude[c(exprlist.ind, semicol.ind)] <<- TRUE
+        }
+        rm(
+          exprlist.par, exprlist.par.chr, exprlist.id.chr, exprlist.children,
+          exprlist.ind, semicol.ind
+  ) } ) }
+  # Now actually remove the exprlist and semi colons, and re-order
+
+  parse.dat.mod <-
+    dat.ord[order(lev.ord), ][which(!ind.exclude[order(lev.ord)]), ]
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
     stop("Logic Error: `exprlist` excision did not work!")
-  # if any "exprlist" remaining, repeat
-  if(any(parse.dat.mod$token == "exprlist"))
-    Recall(parse.dat.mod, ancestry) else parse.dat.mod
+  parse.dat.mod
+}
+#' Removes Symbol Marker Used To Hold Comments
+#'
+#' @keywords internal
+
+symb_mark_rem <- function(x) {
+  if(isTRUE(attr(x, "unitizer_parse_symb"))) {
+    if(length(x) != 2L || x[[1L]] != as.name("(") || !is.name(x[[2L]])) {
+      stop(
+        "Logic Error: Unexpected structure for object with language with ",
+        "'unitizer_parse_symb' attribute attached; contact maintainer"
+    ) }
+    x <- x[[2L]]
+  }
+  x
 }
 
 #' Utility Function to Extract Comments From Expression
 #'
 #' Note that when dealing with expressions the very first item will typically
-#' be NULL to allow for logic that works with nested structures
+#' be NULL to allow for logic that works with nested structures.
+#'
+#' \code{comm_and_call_extract} also pulls out a cleaned up version of the call
+#' along with the comments, but the comments come out in a vector instead of a
+#' list showing the structure where the comments were pulled from.
+#'
+#' Used mostly for testing purposes.
 #'
 #' @keywords internal
 
 comm_extract <- function(x) {
-  if(length(x) > 1L || is.expression(x)) {
-    return(c(list(attr(x, "comment")), lapply(x, comm_extract)))
+
+  if(missing(x)) return(list(NULL))
+  comm <- attr(x, "comment")
+  x <- symb_mark_rem(x)             # get rid of comment container
+  if(missing(x)) return(list(NULL)) # need to do this twice because missing args that are parsed aren't necessarily recognized as missing immediately
+
+  if(is.expression(x) || length(x) > 1L) {
+    return(c(list(comm), lapply(x, comm_extract)))
   } else {
-    return(list(attr(x, "comment")))
+    return(list(comm))
 } }
+
+comm_and_call_extract <- function(x) {
+
+  comments <- character()
+
+  rec <- function(call) {
+    if(missing(call)) return(call)
+    comm <- attr(call, "comment")
+    if(!is.null(comm)) {
+      comments <<- c(comments, comm)
+      attr(call, "comment") <- NULL
+    }
+    call.clean <- symb_mark_rem(call)             # get rid of comment container
+    if(missing(call.clean)) return(call.clean)    # need to do this twice because missing args that are parsed aren't necessarily recognized as missing immediately
+
+    if(is.expression(call.clean) || length(call.clean) > 1L) {
+      for(i in seq_along(call.clean)) {
+        call.sub <- call.clean[[i]]
+        if(!missing(call.sub) && !is.null(call.sub)) call.clean[[i]] <- rec(call.clean[[i]])
+    } }
+    call.clean
+  }
+  list(call=rec(x), comments=comments)
+}
 
 #' Utility Function to Reset Comments
 #'

@@ -78,9 +78,29 @@ obj_capt <- function(obj, width=getOption("width")) {
   width <- max(width, 10L)
 
   options(width=width)
-  obj.out <- capture.output(if(isS4(obj)) show(obj) else print(obj))
+  obj.out <- capture.output(
+    invisible(print.res <- user_exp_display(obj, environment(), quote(obj)))
+  )
   options(width=width.old)
   on.exit(NULL)
+
+  if(print.res$aborted) {  # If failed during eval retrieve conditions
+    err.cond <-
+      which(vapply(print.res$conditions, inherits, logical(1L), "error"))
+    err.cond.msg <- if(length(err.cond)) {
+      c(
+        paste0(
+          "<Error in print/show",
+          if(is.object(obj))
+            paste0(" method for object of class \"", class(obj)[[1L]], "\""),
+          ">"
+        ),
+        paste0(
+          conditionMessage(print.res$conditions[[err.cond[[1L]]]]), collapse=""
+      ) )
+    } else ""
+    obj.out <- c(obj.out, err.cond.msg)
+  }
   obj.out
 }
 # @keywords internal
@@ -144,15 +164,14 @@ uncomment <- function(lang) {
   if(is.expression(lang))
     stop("Logic Error: unexpected expression; contact maintainer") # should be a call or symbol or constant, not an expression
   lang.new <- if(!(missing(lang) || is.null(lang)))
-   `attributes<-`(expr[[1]], NULL)
-  else lang
-  if(is.call(lang) && length(lang) > 1)
-    for(i in seq_along(lang)) {
-      lang.tmp <- lang[[i]]
+   `attr<-`(lang, "comment", NULL) else lang
+  if(is.call(lang.new) && length(lang.new) > 1)
+    for(i in seq_along(lang.new)) {
+      lang.tmp <- lang.new[[i]]
       if(!(missing(lang.tmp) || is.null(lang.tmp)))
-        lang[[i]] <- Recall(lang[[i]])
+        lang.new[[i]] <- Recall(lang.tmp)
     }
-  lang
+  lang.new
 }
 
 #' Deparse, but only provide first X characters
@@ -180,9 +199,7 @@ deparse_peek <- function(expr, len, width=500L) {
 #' @param expr language to deparse
 #' @return character(1L)
 
-deparse_call <- function(expr) {
-  paste0(deparse(uncomment(expr)), collapse="")
-}
+deparse_call <- function(expr) paste0(deparse(expr), collapse="")
 
 #' Print Only First X characters
 #'
@@ -350,8 +367,12 @@ word_wrap <- function(
 word_cat <- function(
   ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
 ) {
-  vec <- try(paste0(unlist(list(...)), collapse=sep), silent=TRUE)
+  vec <- try(
+    paste0(unlist(list(...)), collapse=sep),
+    silent=TRUE
+  )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
+  vec <- unlist(strsplit(vec, "\n"))
   invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
 #' Over-write a Line
@@ -370,8 +391,12 @@ over_print <- function(x, min.width=30L, max.width=getOption("width")) {
   if(!is.integer(max.width) || length(max.width) != 1L)
     stop("Argument `max.width` must be integer(1L)")
 
-  cat("\r", rep(" ", max(min.width, max.width)), sep="")
-  cat(paste0("\r", substr(x, 1, max(min.width, max.width))))
+  writeLines(
+    c(
+      "\r", rep(" ", max(min.width, max.width)), "\r",
+      substr(x, 1, max(min.width, max.width))
+    ), sep=""
+  )
   NULL
 }
 #' Produces 1 Line Description of Value

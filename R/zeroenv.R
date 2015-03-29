@@ -126,7 +126,8 @@ search_path_setup <- function() {
   # Suppress std.err because of "Tracing Function..." messages produced by trace
 
   std.err <- tempfile()
-  std.err.con <- set_text_capture(std.err, "message")
+  std.err.con <- file(std.err, "w+b")
+  capt.con <- set_text_capture(std.err.con, "message")
 
   # Attempt to apply shims
 
@@ -244,7 +245,9 @@ search_path_setup <- function() {
   })
   # Process std.err to make sure nothing untoward happened
 
-  shim.out <- get_text_capture(std.err.con, std.err, "message")
+  shim.out <- get_text_capture(capt.con, std.err, "message")
+
+  close(std.err.con)
   unlink(std.err)
   if(
     !identical(
@@ -287,15 +290,18 @@ search_path_unsetup <- function() {
   # Suppress std.err because of "Untracing function..." messages produced by trace
 
   std.err <- tempfile()
-  std.err.con <- set_text_capture(std.err, "message")
+  std.err.con <- file(std.err, "w+b")
+  capt.con <- set_text_capture(std.err.con, "message")
 
   unshim <- try({  # this needs to go
     untrace(library, where=.BaseNamespaceEnv)
     untrace(attach, where=.BaseNamespaceEnv)
     untrace(detach, where=.BaseNamespaceEnv)
   })
-  unshim.out <- get_text_capture(std.err.con, std.err, "message")
+  unshim.out <- get_text_capture(capt.con, std.err, "message")
+  close(std.err.con)
   unlink(std.err)
+
   if(
     !identical(
       gsub("\\s", "", paste0(unshim.out, collapse="")),

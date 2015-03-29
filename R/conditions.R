@@ -132,19 +132,30 @@ setMethod("show", "conditionList",
         paste0("condition", if(cond.len > 1) "s", ":")
       )
     }
+    cond.calls <- vapply(
+      as.list(object), function(x) !is.null(conditionCall(x)), logical(1L)
+    )
     out <- paste0(
       format(seq_along(object)), ": ",
       ifelse(
-        print.show <- vapply(as.list(object), function(y) isTRUE(attr(y, "unitizer.printed")), logical(1L)),
+        print.show <- vapply(
+          as.list(object),
+          function(y) isTRUE(attr(y, "unitizer.printed")), logical(1L)
+        ),
         "[print] ", ""
       ),
       vapply(as.list(object), get_condition_type, character(1L)),
-      " in "
+      ifelse(cond.calls, " in ", "")
     )
     desc.chars <- max(width - nchar(out), 20L)
-    cond.detail <- vapply(as.list(object), FUN.VALUE=character(1L),
+    cond.detail <- vapply(
+      as.list(object), FUN.VALUE=character(1L),
       function(y) {
-        paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
+        if(is.null(conditionCall(y))) {
+          paste0(": ", conditionMessage(y))
+        } else {
+          paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
+        }
     } )
     out <- paste0(out, substr(cond.detail, 1, desc.chars))
     if(any(print.show)) {

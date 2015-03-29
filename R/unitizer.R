@@ -91,7 +91,7 @@ setClass(
     section.parent="integer",    # same length as sections, for each section links to parent, where parent is the outermost section a section is nested within
 
     sections.ref="list",
-    section.ref.map="integer",   # Note, all section references for ref objecs are parent sections since when we browse we don't track nested sections
+    section.ref.map="integer",   # Note, all section references for ref objects are parent sections since when we browse we don't track nested sections
 
     changes="unitizerChanges"                  # Summary of user changes
   ),
@@ -107,7 +107,24 @@ setClass(
         return("Non sequential ids in reference items.")
       if(length(ids) != length(object@section.ref.map))
         return("Reference section mapping error")
+
+      # Randomly test a subset of the items for validity (testing all becomes
+      # too time consuming)
+
+      samp <- sample(
+        seq_along(object@items.ref), min(5L, length(object@items.ref))
+      )
+      if(length(samp))
+        item.check <- lapply(as.list(object@items.ref[samp]), isValid)
+      if(any(is.chr <- vapply(item.check, is.character, logical(1L))))
+        return(
+          paste0(
+            "Invalid reference item at index[", samp[which(is.chr)[[1L]]], "]: ",
+            item.check[[which(is.chr)[[1L]]]], " (note we randomly pick up to ",
+            "three reference tests to check validity)."
+        ) )
     }
+    TRUE
   }
 )
 setClass(
@@ -246,10 +263,11 @@ setMethod("registerItem", c("unitizer", "unitizerItem"),
     if(identical(length(e1@items.new), 0L)) e1@items.new@base.env <- parent.env(item.new@env)
     item.new@id <- length(e1@items.new) + 1L
     e1@items.new <- e1@items.new + item.new
-    e1@items.new.calls.deparse <- c(e1@items.new.calls.deparse, call.dep <- deparse_call(item.new@call))
+    e1@items.new.calls.deparse <-
+      c(e1@items.new.calls.deparse, call.dep <- deparse_call(item.new@call))
     if(length(e1@items.new.map) > 0L) {
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
-      items.already.matched <- Filter(Negate(is.na), e1@items.new.map)
+      items.already.matched <- e1@items.new.map[!is.na(e1@items.new.map)]
       items.already.matched.vec <- if(!length(items.already.matched)) TRUE else -items.already.matched
       item.map <- match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec])
       e1@items.new.map <- c(e1@items.new.map, item.map <- idx.vec[items.already.matched.vec][item.map])
@@ -262,7 +280,7 @@ setGeneric("testItem", function(e1, e2, ...) standardGeneric("testItem"))
 setMethod("testItem", c("unitizer", "unitizerItem"),
   function(e1, e2, ...) {
     item.new <- e2
-    slot.names <- slotNames(getClass(item.new@data))
+    slot.names <- unitizerItemDataSlots
     test.result.tpl <- tests_result_mat(1L)
     test.error.tpl <- vector("list", length(slot.names))
     names(test.error.tpl) <- slot.names
@@ -292,15 +310,15 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       if(nrow(test.result) != 1L)
         stop("Logic Error: tpl matrix should be one row; contact maintainer.")
 
+      get_dat <- function(x, i) {
+        dat <- slot(x, i)
+        if(is.call(dat) || is.symbol(dat)) call("quote", dat)
+        else dat
+      }
       for(i in slot.names) {
         comp.fun.name <- slot(section@compare, i)@fun.name
         comp.fun.anon <- isTRUE(is.na(comp.fun.name))
         if(comp.fun.anon) comp.fun.name <- "<anon.FUN>"
-        get_dat <- function(x, i) {
-          dat <- slot(x, i)
-          if(is.call(dat) || is.symbol(dat)) call("quote", dat)
-          else dat
-        }
         item.new.dat <- get_dat(item.new@data, i)
         item.ref.dat <- get_dat(item.ref@data, i)
 

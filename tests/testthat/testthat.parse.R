@@ -206,7 +206,7 @@ local( {
   my.unitizer <- my.unitizer + expr
   test_that("Weird missing comment on `res` works", {
     expect_identical(
-      list(c("# Calls to `library` and assignments are not normally considered tests, so", "# you will not be prompted to review them"), NULL, NULL, NULL, "# first reviewable expression", NULL, NULL, "# This should cause an error; press Y to add to store"),
+      list(c("# Calls to `library` and assignments are not normally considered tests, so", "# you will not be prompted to review them"), character(0), character(0), character(0), "# first reviewable expression", character(0), character(0), "# This should cause an error; press Y to add to store"),
       lapply(unitizer:::as.list(my.unitizer@items.new), slot, "comment")
     )
   } )
@@ -229,4 +229,32 @@ local( {
     txt <- "mtcars[1:10,]\n";  # the empty second argument to `[` caused problems before
     unitizer:::parse_with_comments(text=txt)  # shouldn't cause error
   })
+  test_that("uncommenting works", {
+    expect_identical(
+      quote(library(unitizer.fastlm)),
+      unitizer:::uncomment(expr[[1]])
+    )
+    expect_equal(info="don't blow away function arg names",
+      quote(function(a, b) NULL),
+      unitizer:::uncomment(quote(function(a, b) NULL))
+    )
+    # Recover comments and uncomment
+
+    txt <- ".alike(  # FALSE, match.call disabled
+    quote(fun(b=fun2(x, y), 1, 3)),  # first sub.call
+    quote(fun(NULL, fun2(a, b), 1)), # second sub.call
+    alike_settings(lang.mode=1))"
+
+    exp <- unitizer:::parse_with_comments(text=txt)
+    candc <- unitizer:::comm_and_call_extract(exp)
+    expect_identical(
+      quote(.alike(quote(fun(b = fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, b), 1)), alike_settings(lang.mode = 1))),
+      candc$call[[1L]]
+    )
+    expect_identical(
+      c("# FALSE, match.call disabled", "# first sub.call", "# second sub.call"),
+      candc$comments
+    )
+
+  } )
 } )

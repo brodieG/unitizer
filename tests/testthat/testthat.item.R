@@ -175,12 +175,12 @@ local( {
     assign(".REF", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]], env.val)
     assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]]@data@value, env.val)
     expect_warning(
-      evalq(unitizer:::unitizer_ls(), env.eval),
+      ls.res <- evalq(unitizer:::unitizer_ls(), env.eval),
       "The ls output for `.ref` is invalid"
     )
     expect_equal(  # Reference tests won't show up since they were nuked by `healEnvs`
       structure(list(new = c("a", "b"), tests = c(".new", ".NEW", ".ref", ".REF")), .Names = c("new", "tests"), class = "unitizer_ls", mods = character(0)),
-      evalq(unitizer:::unitizer_ls(), env.eval)
+      ls.res
     )
     # These are normal tests so should work
 
@@ -285,6 +285,7 @@ local( {
   my.unitizer8 <- new("unitizer", id=3, zero.env=new.env())
   new.exps5 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
   my.unitizer9 <- new("unitizer", id=4, zero.env=new.env())
+  try(stop("Flushing warnings"))
   x <- my.unitizer9 + new.exps5
 
   test_that("Misc", {
@@ -308,7 +309,10 @@ local( {
     # this should break because the NULL forces `b` to be stored in a different
     # environment to `a`.
 
-    expect_equal(x@items.new[[4]]@data@message[[1]], "Error in a() : could not find function \"b\"")
+    expect_equal(
+      x@items.new[[4]]@data@message[[1]],
+      "Error in a() : could not find function \"b\"\n"
+    )
   } )
 
   test_that("Comparison Function Errors", {
