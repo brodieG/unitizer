@@ -31,17 +31,19 @@ screen_out <- function(
 #' @param width at what width to wrap output
 #' @param max.len 2 length integer vector with first value threshold at which we start trimming output
 #' @param file whether to show to stdout or stderr
+#' @param what frame to capture in, relevant mostly if looking for a print method
 #' @aliases obj_capt obj_screen_out
 
 diff_obj_out <- function(
   obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
   obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
   max.len=getOption("unitizer.test.fail.out.lines"),
-  file=stdout()
+  file=stdout(), frame=parent.frame()
 ) {
+  frame # force
   tar.width <- width - 4L
-  obj.add.capt <- obj_capt(obj.add, tar.width)
-  obj.rem.capt <- obj_capt(obj.rem, tar.width)
+  obj.add.capt <- obj_capt(obj.add, tar.width, frame)
+  obj.rem.capt <- obj_capt(obj.rem, tar.width, frame)
 
   min.len <- min(length(obj.add.capt), length(obj.rem.capt))
   diffs <-
@@ -70,16 +72,18 @@ diff_obj_out <- function(
 # @keywords internal
 # @rdname diff_obj_out
 
-obj_capt <- function(obj, width=getOption("width")) {
+obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
   if(!is.numeric(width) || length(width) != 1L)
     stop("Argument `width` must be a one long numeric/integer.")
+  if(!is.environment(frame))
+    stop("Argument `frame` must be an environment") # note this forces eval, which is needed
   width.old <- getOption("width")
   on.exit(options(width=width.old))
   width <- max(width, 10L)
 
   options(width=width)
   obj.out <- capture.output(
-    invisible(print.res <- user_exp_display(obj, environment(), quote(obj)))
+    invisible(print.res <- user_exp_display(obj, frame, quote(obj)))
   )
   options(width=width.old)
   on.exit(NULL)

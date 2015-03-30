@@ -394,7 +394,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !item.main@ignore
       ) {
         summary(curr.sub.sec.obj@show.fail[[id.rel]])
-        show(curr.sub.sec.obj@show.fail[[id.rel]])
+        eval(  # must eval to make sure that correct methods are available when outputing failures to screen
+          call("show", curr.sub.sec.obj@show.fail[[id.rel]]),
+          if(is.environment(item.main@env)) item.main@env else base.env.pri
+        )
     } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
