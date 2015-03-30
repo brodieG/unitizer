@@ -31,7 +31,8 @@ screen_out <- function(
 #' @param width at what width to wrap output
 #' @param max.len 2 length integer vector with first value threshold at which we start trimming output
 #' @param file whether to show to stdout or stderr
-#' @param what frame to capture in, relevant mostly if looking for a print method
+#' @param frame what frame to capture in, relevant mostly if looking for a print
+#'   method
 #' @aliases obj_capt obj_screen_out
 
 diff_obj_out <- function(

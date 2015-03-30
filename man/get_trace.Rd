@@ -3,14 +3,14 @@
 \alias{get_trace}
 \title{Collect the Call Stack And Clean-up}
 \usage{
-get_trace(trace.base, trace.new, passed.eval, print.type, exp)
+get_trace(trace.base, trace.new, printed, print.type, exp)
 }
 \arguments{
 \item{trace.base}{starting point for what we care about in the trace, as
-produced by \code{`sys.calls`}}
+produced by \code{sys.calls}}
 
 \item{trace.new}{the trace within the condition handler, as produced by
-\code{`sys.calls`}}
+\code{sys.calls}}
 
 \item{print.type}{character(1L) one of "print", "show", or ""}
 
@@ -21,14 +21,14 @@ eval}
 details)}
 }
 \description{
-Only intended for use within \code{`eval_user_exp`}, will clean up the result
-from two different \code{`sys.calls`} calls to extract the calls that a
+Only intended for use within \code{eval_user_exp}, will clean up the result
+from two different \code{sys.calls} calls to extract the calls that a
 trace would show on error.
 }
 \details{
-How much of the stack is used is affected by the \code{`passed.eval`}
+How much of the stack is used is affected by the \code{printed}
 argument because if something didn't pass evaluation, it means the error
-occurred within \code{`withVisible`} which in this setup means we need to
+occurred within \code{withVisible} which in this setup means we need to
 remove two additional levels.
 
 Relies on calls being evaluated in a very particular environment.

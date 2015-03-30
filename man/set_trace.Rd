@@ -17,10 +17,10 @@ a handling loop, but we still want the trace so we can emulate command line
 behavior.
 }
 \details{
-This will modify the .Traceback system variable (see \code{`\link{traceback}`}
+This will modify the .Traceback system variable (see \code{\link{traceback}}
 documentation).
 
-Assumption right now is that the outer most call to \code{`withCallingHandlers`}
+Assumption right now is that the outer most call to \code{withCallingHandlers}
 is the baseline level from which we want to repor the traceback.
 }
 \keyword{internal}

@@ -8,7 +8,14 @@
 \alias{set_text_capture}
 \title{Helper Functions to Capture and Process stdout/err Output}
 \usage{
-set_text_capture(file.name, type)
+set_text_capture(con, type)
+}
+\arguments{
+\item{con}{either a file name or an open connection; make sure that you use
+a \code{con} created by \code{set_text_capture} for \code{get_text_capture}
+since \code{set_text_capture} detects whether sinking is already in process
+and returns FALSE if it is, which then tells \code{get_text_capture} not to
+undo the sink}
 }
 \description{
 \code{`set_text_capture`} sets the sinks, while \code{`get_text_capture`}
@@ -18,6 +25,13 @@ retrieves the captured tests and releases the sinks with \code{`release_sinks`}.
 \details{
 A lot of the logic here is devoted to detecting whether users set their
 own sinks in the course of execution.
+
+All output to \code{stdout} and \code{stderr} is capture in a single file for
+each of those streams.  The captures happen sequentially, and are read off
+by \code{\link{readChar}}.  It is important to note this method implies that
+the files grow throughout the entire test evaluation process, and are only
+dumped at the very end.  This is to avoid overhead from repeatedly creating
+and opening new connections.
 }
 \keyword{internal}
 

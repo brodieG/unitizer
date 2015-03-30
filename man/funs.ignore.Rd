@@ -3,11 +3,12 @@
 \name{funs.ignore}
 \alias{funs.ignore}
 \title{Functions To Ignore}
-\format{\preformatted{List of 3
+\format{\preformatted{List of 4
  $ :.Primitive("<-") 
  $ :function (package, help, pos = 2, lib.loc = NULL, character.only = FALSE, 
     logical.return = FALSE, warn.conflicts = TRUE, quietly = FALSE, verbose = getOption("verbose"))  
  $ :.Primitive("=") 
+ $ :function (seed, kind = NULL, normal.kind = NULL)  
 }}
 \usage{
 funs.ignore
