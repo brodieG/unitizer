@@ -8,15 +8,16 @@
 
 NULL
 
+unitizerItemDataSlots <- slotNames("unitizerItemData")  # cache this for validity
+
 #' Virtual Class To Enforce Slots on Subclasses
 #'
 #' @keywords internal
 
 setClass("unitizerItemTests", contains="VIRTUAL",
   validity=function(object) {
-    if(!isTRUE(msg <- all.equal(sort(slotNames(getClass(object))), sort(slotNames("unitizerItemData"))))) {
-      return("slots must be defined as ", deparse(slotNames("unitizerItemData")))
-    }
+    if(!all(slotNames(getClass(object)) == unitizerItemDataSlots))
+      return("slots must be defined as ", deparse(unitizerItemDataSlots))
     TRUE
   }
 )
@@ -73,7 +74,7 @@ setClass("unitizerItemTestError",
   validity=function(object) {
     if(!identical(length(object@compare.err), 1L)) return("slot `@compare.err` must be a 1 length logical")
 } )
-setClass("unitizerItemTestsErrors", contains="unitizerItemTests",
+setClass("unitizerItemTestsErrors",
   representation(
     value="unitizerItemTestError",
     conditions="unitizerItemTestError",
@@ -81,20 +82,33 @@ setClass("unitizerItemTestsErrors", contains="unitizerItemTests",
     message="unitizerItemTestError",
     aborted="unitizerItemTestError"
 ) )
+unitizerItemTestsErrorsSlots <- slotNames("unitizerItemTestsErrors")
+if(!identical(unitizerItemDataSlots, unitizerItemTestsErrorsSlots)) { # used to do this with virtual class, but slow
+  stop(
+    "Install error: `unitizerItemData` and `unitizerItemTestsErrors` slots ",
+    "not identical; contact maintainer."
+  )
+}
+unitizerItemTestErrorObj <- new("unitizerItemTestError")
 setMethod("initialize", "unitizerItemTestsErrors",
   function(.Object, ...) {
     dots <- list(...)
-    if(!all(s.n <- names(dots) %in% slotNames(.Object))) stop("Unused arguments ", paste0(deparse(names(dots)[!s.n])))
-    for(i in seq_along(dots)) if(is.null(dots[[i]])) dots[[i]] <- new("unitizerItemTestError")
-    do.call(callNextMethod, c(list(.Object), dots))
+    if(!all((s.n <- names(dots)) %in% unitizerItemTestsErrorsSlots))
+      stop("Unused arguments ", paste0(deparse(names(dots)[!s.n])))
+    for(i in seq_along(dots))
+      slot(.Object, s.n[[i]]) <- if(is.null(dots[[i]])) {
+        unitizerItemTestErrorObj
+      } else dots[[i]]
+    .Object
 } )
 setClass(
-  "unitizerItemsTestsErrors", contains="unitizerList",
-  validity=function(object) {
-    tests <- vapply(as.list(object), is, logical(1L), class2="unitizerItemTestsErrors")
-    if(!all(tests)) return("\"unitizerItemsTestsErrors\" may only contain objects of class \"unitizerItemTestsErrors\"")
-    TRUE
-} )
+  "unitizerItemsTestsErrors", contains="unitizerList"
+  # ,validity=function(object) { # commented out for computation cost
+  #   tests <- vapply(as.list(object), is, logical(1L), class2="unitizerItemTestsErrors")
+  #   if(!all(tests)) return("\"unitizerItemsTestsErrors\" may only contain objects of class \"unitizerItemTestsErrors\"")
+  #   TRUE
+  # }
+)
 setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
 
 #' Convert An Error Into Character

@@ -26,7 +26,11 @@ prsdat_fix_fun(parse.dat)
   \item \code{`prsdat_fix_for`} extracts expression from the condition (though
     apparently not from `ifcond`)
   \item \code{`prsdat_fix_exprlist`} excises the \code{`exprlist`} portions of
-    \code{`exprlist`} as those don't exist in the expressions proper
+    \code{`exprlist`} as those don't exist in the expressions proper; they
+    don't do anything, and have extraneous semi colons.  We need to remove
+    them, and then make sure all their children become children of the
+    parent of the exprlist
+parent
   \item \code{`prsdat_find_paren`} returns locations of first set
     of open and close parens
 }

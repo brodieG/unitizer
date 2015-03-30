@@ -7,7 +7,14 @@ comm_extract(x)
 }
 \description{
 Note that when dealing with expressions the very first item will typically
-be NULL to allow for logic that works with nested structures
+be NULL to allow for logic that works with nested structures.
+}
+\details{
+\code{comm_and_call_extract} also pulls out a cleaned up version of the call
+along with the comments, but the comments come out in a vector instead of a
+list showing the structure where the comments were pulled from.
+
+Used mostly for testing purposes.
 }
 \keyword{internal}
 

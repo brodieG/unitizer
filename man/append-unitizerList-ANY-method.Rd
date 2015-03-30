@@ -2,7 +2,7 @@
 \docType{methods}
 \name{append,unitizerList,ANY-method}
 \alias{append,unitizerList,ANY-method}
-\title{Append To a \code{`\link{unitizerList-class}`} Object}
+\title{Append To a \code{\link{unitizerList-class}} Object}
 \usage{
 \S4method{append}{unitizerList,ANY}(x, values, after = length(x))
 }
@@ -14,11 +14,12 @@
 \item{after}{a subscript, after which the values are to be appended.}
 }
 \description{
-\code{`values`} is coerced to list or expression depending on
-type of \code{`x`} \code{`.items`} slot.
+\code{values} is coerced to list or expression depending on
+type of \code{x} \code{.items} slot.
 }
 \details{
-The resulting object must pass the validity method for \code{`x`}.
+The resulting object is not tested for validity as this is too expensive
+on a regular basis.  You should check validity with \code{validObject}
 }
 \keyword{internal}
 

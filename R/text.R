@@ -31,17 +31,20 @@ screen_out <- function(
 #' @param width at what width to wrap output
 #' @param max.len 2 length integer vector with first value threshold at which we start trimming output
 #' @param file whether to show to stdout or stderr
+#' @param frame what frame to capture in, relevant mostly if looking for a print
+#'   method
 #' @aliases obj_capt obj_screen_out
 
 diff_obj_out <- function(
   obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
   obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
   max.len=getOption("unitizer.test.fail.out.lines"),
-  file=stdout()
+  file=stdout(), frame=parent.frame()
 ) {
+  frame # force
   tar.width <- width - 4L
-  obj.add.capt <- obj_capt(obj.add, tar.width)
-  obj.rem.capt <- obj_capt(obj.rem, tar.width)
+  obj.add.capt <- obj_capt(obj.add, tar.width, frame)
+  obj.rem.capt <- obj_capt(obj.rem, tar.width, frame)
 
   min.len <- min(length(obj.add.capt), length(obj.rem.capt))
   diffs <-
@@ -70,17 +73,39 @@ diff_obj_out <- function(
 # @keywords internal
 # @rdname diff_obj_out
 
-obj_capt <- function(obj, width=getOption("width")) {
+obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
   if(!is.numeric(width) || length(width) != 1L)
     stop("Argument `width` must be a one long numeric/integer.")
+  if(!is.environment(frame))
+    stop("Argument `frame` must be an environment") # note this forces eval, which is needed
   width.old <- getOption("width")
   on.exit(options(width=width.old))
   width <- max(width, 10L)
 
   options(width=width)
-  obj.out <- capture.output(if(isS4(obj)) show(obj) else print(obj))
+  obj.out <- capture.output(
+    invisible(print.res <- user_exp_display(obj, frame, quote(obj)))
+  )
   options(width=width.old)
   on.exit(NULL)
+
+  if(print.res$aborted) {  # If failed during eval retrieve conditions
+    err.cond <-
+      which(vapply(print.res$conditions, inherits, logical(1L), "error"))
+    err.cond.msg <- if(length(err.cond)) {
+      c(
+        paste0(
+          "<Error in print/show",
+          if(is.object(obj))
+            paste0(" method for object of class \"", class(obj)[[1L]], "\""),
+          ">"
+        ),
+        paste0(
+          conditionMessage(print.res$conditions[[err.cond[[1L]]]]), collapse=""
+      ) )
+    } else ""
+    obj.out <- c(obj.out, err.cond.msg)
+  }
   obj.out
 }
 # @keywords internal
@@ -131,6 +156,29 @@ deparse_prompt <- function(expr) {
   prompt.vec <- c(prompt, rep(continue, length(expr.deparsed) - 1L))
   paste0(prompt.vec, expr.deparsed)
 }
+#' Remove any comment attributes
+#'
+#' Used by the internal deparse functions.  Really removes all attributes.
+#' Resorting to desperate measures due to the reference like behavior of
+#' expressions and messing with their attributes, most likely due to the
+#' srcref style environment attributes.
+#'
+#' @keywords internal
+
+uncomment <- function(lang) {
+  if(is.expression(lang))
+    stop("Logic Error: unexpected expression; contact maintainer") # should be a call or symbol or constant, not an expression
+  lang.new <- if(!(missing(lang) || is.null(lang)))
+   `attr<-`(lang, "comment", NULL) else lang
+  if(is.call(lang.new) && length(lang.new) > 1)
+    for(i in seq_along(lang.new)) {
+      lang.tmp <- lang.new[[i]]
+      if(!(missing(lang.tmp) || is.null(lang.tmp)))
+        lang.new[[i]] <- Recall(lang.tmp)
+    }
+  lang.new
+}
+
 #' Deparse, but only provide first X characters
 #'
 #' @keywords internal
@@ -143,7 +191,7 @@ deparse_peek <- function(expr, len, width=500L) {
     stop("Argument `len` must be an integer greater than four")
   if(!is.integer(width) || length(width) != 1L || width < 1L)
     stop("Argument `width` must be an integer greater than zero")
-  chr <- paste0(sub("\n", " ", deparse(expr, width)), collapse="")
+  chr <- paste0(sub("\n", " ", deparse(uncomment(expr), width)), collapse="")
   if(nchar(chr) > len) {
     paste0(substr(chr, 1L, len -3L), "...")
   } else {
@@ -156,9 +204,7 @@ deparse_peek <- function(expr, len, width=500L) {
 #' @param expr language to deparse
 #' @return character(1L)
 
-deparse_call <- function(expr) {
-  paste0(deparse(expr), collapse="")
-}
+deparse_call <- function(expr) paste0(deparse(expr), collapse="")
 
 #' Print Only First X characters
 #'
@@ -326,8 +372,12 @@ word_wrap <- function(
 word_cat <- function(
   ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
 ) {
-  vec <- try(paste0(unlist(list(...)), collapse=sep), silent=TRUE)
+  vec <- try(
+    paste0(unlist(list(...)), collapse=sep),
+    silent=TRUE
+  )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
+  vec <- unlist(strsplit(vec, "\n"))
   invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
 #' Over-write a Line
@@ -346,8 +396,12 @@ over_print <- function(x, min.width=30L, max.width=getOption("width")) {
   if(!is.integer(max.width) || length(max.width) != 1L)
     stop("Argument `max.width` must be integer(1L)")
 
-  cat("\r", rep(" ", max(min.width, max.width)), sep="")
-  cat(paste0("\r", substr(x, 1, max(min.width, max.width))))
+  writeLines(
+    c(
+      "\r", rep(" ", max(min.width, max.width)), "\r",
+      substr(x, 1, max(min.width, max.width))
+    ), sep=""
+  )
   NULL
 }
 #' Produces 1 Line Description of Value

@@ -13,7 +13,7 @@ ancestry_descend(ids, par.ids, id, level = 0L)
 \item{id}{integer() the first parent}
 }
 \value{
-2 column matrix
+matrix containing ids and corresponding generation for the ids
 }
 \description{
 For Each ID Determines Generation

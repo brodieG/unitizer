@@ -352,6 +352,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       curr.sub.sec.obj@items.new[[id.rel]]
     item.ref <- if(!is.null(curr.sub.sec.obj@items.ref))
       curr.sub.sec.obj@items.ref[[id.rel]]
+
     if(is.null(item.new)) {
       item.main <- item.ref
       base.env.pri <- parent.env(curr.sub.sec.obj@items.ref@base.env)
@@ -393,7 +394,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !item.main@ignore
       ) {
         summary(curr.sub.sec.obj@show.fail[[id.rel]])
-        show(curr.sub.sec.obj@show.fail[[id.rel]])
+        eval(  # must eval to make sure that correct methods are available when outputing failures to screen
+          call("show", curr.sub.sec.obj@show.fail[[id.rel]]),
+          if(is.environment(item.main@env)) item.main@env else base.env.pri
+        )
     } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed

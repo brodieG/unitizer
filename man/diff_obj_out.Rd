@@ -9,7 +9,8 @@ diff_obj_out(obj.rem, obj.add,
   obj.rem.name = deparse(substitute(obj.rem))[[1L]],
   obj.add.name = deparse(substitute(obj.add))[[1L]],
   width = getOption("width"),
-  max.len = getOption("unitizer.test.fail.out.lines"), file = stdout())
+  max.len = getOption("unitizer.test.fail.out.lines"), file = stdout(),
+  frame = parent.frame())
 }
 \arguments{
 \item{obj.rem}{object to compare}
@@ -25,6 +26,9 @@ diff_obj_out(obj.rem, obj.add,
 \item{max.len}{2 length integer vector with first value threshold at which we start trimming output}
 
 \item{file}{whether to show to stdout or stderr}
+
+\item{frame}{what frame to capture in, relevant mostly if looking for a print
+method}
 }
 \description{
 The idea is to save the user the need to print out the objects to screen.

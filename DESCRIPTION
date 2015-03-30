@@ -1,10 +1,10 @@
 Package: unitizer
-Title: Turn Arbitrary Code into Unit Tests
+Title: Easy R Unit Tests
 Description: Simplifies regression tests by comparing objects produced by test
     code with earlier versions of those same objects.  If objects are unchanged
     the tests pass.  `unitizer` provides an interactive interface to review
     failing tests or new tests.  See vignettes for details.
-Version: 0.7.0
+Version: 0.7.1
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:

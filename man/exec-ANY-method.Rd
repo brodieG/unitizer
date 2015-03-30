@@ -4,15 +4,15 @@
 \alias{exec,ANY-method}
 \title{Manages Test Expression Evaluation}
 \usage{
-\S4method{exec}{ANY}(x, test.env)
+\S4method{exec}{ANY}(x, test.env, capt.cons)
 }
 \arguments{
-\item{test.env}{the environment to evaluate the \code{`test`} in}
+\item{test.env}{the environment to evaluate the \code{test} in}
 
 \item{test}{the call to test}
 }
 \value{
-a \code{`\link{unitizerItem-class}`} object
+a \code{\link{unitizerItem-class}} object
 }
 \description{
 Runs test, captures value, stdout, stderr, conditions, etc.

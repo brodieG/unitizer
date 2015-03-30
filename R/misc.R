@@ -41,7 +41,7 @@ env_name <- function(env) {
 #' @param y the current function, if \code{`x`} is not traced and \code{`y`}
 #'   is traced, will compare using \code{`y@@original`} instead of \code{`y`}
 
-funs.ignore <- list(base::`<-`, base::library, base::`=`)
+funs.ignore <- list(base::`<-`, base::library, base::`=`, base::set.seed)
 identical_fun <- function(x, y) {
   if(!is.function(x) || !is.function(y))
     stop("Arguments `x` and `y` must both be functions.")
@@ -90,4 +90,43 @@ path_clean <- function(path) {
   if(!is.character(path)) stop("Argument `path` must be character")
   path.norm <- paste0(dirname(path), "/", basename(path))
   sub("/+", "/", path.norm)
+}
+
+#' Special Deparse
+#'
+#' Required to deal with language objects that contain non-language objects
+#' that have attributes.
+#'
+#' Not completely fool proof since you can probably created an object that nests
+#' call and non-call stuff repeatedly that would confuse this thing.
+#'
+#' @keywords internal
+
+deparse_mixed <- function(expr, width.cutoff = 500L, control = "all", ...) {
+
+  rec_lang <- function(expr) {
+    if(!is.language(expr)) stop("Logic Error: expecting language object")
+    if(length(expr) > 1L) {
+      for(i in seq_along(expr)) {
+        if(!is.language(expr[[i]])) {
+          expr[[i]] <-
+            parse(
+              text=deparse(expr[[i]], width.cutoff, control, ...),
+              keep.source=FALSE
+            )[[1L]]
+        } else expr[[i]] <- Recall(expr[[i]])
+    } }
+    expr
+  }
+  rec_norm <- function(expr) {
+    if(is.recursive(expr) && !is.environment(expr)) {
+      for(i in seq_along(expr)) {
+        if(is.language(expr[[i]])) {
+          expr[[i]] <- rec_lang(expr[[i]])
+        } else {
+          expr[[i]] <- Recall(expr[[i]])
+    } } }
+    expr
+  }
+  deparse(rec_norm(expr), width.cutoff=width.cutoff, control=control, ...)
 }

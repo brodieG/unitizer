@@ -32,6 +32,10 @@ where objects of different status are marked like so:
   \item **: object was not present during test evaluation, but exists
      in current environment
 }
+
+This could definitely be optimized for new items.  It actually represents
+a substantial portion of total evaluation time and does a lot of repetitive
+stuff that could easily be avoided if we put some work into it.
 }
 \keyword{internal}
 
