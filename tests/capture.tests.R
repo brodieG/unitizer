@@ -16,14 +16,13 @@ con <- unitizer:::set_text_capture(std.out.con, "output")
 print(readLines(test.file))
 sink()
 print(readLines(std.out))      # should see contents of test.file
-close(std.out.con)
 
 # Pre-existing sink
 
 pre.sink <- tempfile()
 sink(pre.sink)
 
-con <- unitizer:::set_text_capture(std.out, "output")
+con <- unitizer:::set_text_capture(std.out.con, "output")
 message(typeof(con))    # should be logical
 
 print("oogabooga")
@@ -49,14 +48,13 @@ message("blargh")      # no output to screen
 sink(type="message")
 
 print(readLines(std.err))     # blargh
-close(con)
 
 # Pre-existing sink
 
 pre.sink.con <- file(pre.sink, "wt")
 sink(pre.sink.con, type="message")
 
-con <- unitizer:::set_text_capture(std.err, "message")
+con <- unitizer:::set_text_capture(std.err.con, "message")
 print(con)         # FALSE
 
 message("marshmallows")  # no output to screen
@@ -116,7 +114,7 @@ close(pre.sink.con)
 print(readLines(pre.sink))
 
 pre.sink.con <- file(pre.sink, "wt")
-con <- unitizer:::set_text_capture(std.err, "message")
+con <- unitizer:::set_text_capture(std.err.con, "message")
 sink(type="message")
 sink(pre.sink.con, "message")                            # Subvert the sink, but this is not an error with message
 message("Dragon barfed hats")

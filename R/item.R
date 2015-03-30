@@ -13,6 +13,11 @@ NULL
 #' This is to avoid having to automatically run validity on object
 #' instantiation as is the case with actual built-in validity objects.  We can
 #' create a bunch of objects, and then only run validity when
+#'
+#' @keywords internal
+#' @param object object to validate
+#' @param ... additional arguments
+#' @return TRUE on success, character vector explaining failure otherwise
 
 setGeneric("isValid", function(object, ...) standardGeneric("isValid"))
 

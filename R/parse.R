@@ -536,7 +536,11 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "token"))
 #'   \item \code{`prsdat_fix_for`} extracts expression from the condition (though
 #'     apparently not from `ifcond`)
 #'   \item \code{`prsdat_fix_exprlist`} excises the \code{`exprlist`} portions of
-#'     \code{`exprlist`} as those don't exist in the expressions proper
+#'     \code{`exprlist`} as those don't exist in the expressions proper; they
+#'     don't do anything, and have extraneous semi colons.  We need to remove
+#'     them, and then make sure all their children become children of the
+#'     parent of the exprlist
+#' parent
 #'   \item \code{`prsdat_find_paren`} returns locations of first set
 #'     of open and close parens
 #' }
@@ -613,12 +617,6 @@ prsdat_find_paren <- function(parse.dat) {
     stop("Logic Error; failed attempting to `for` function block; contact maintainer")
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
 }
-#' Removes Exprlists
-#'
-#' These don't do anything, and have extraneous semi colons.  We need to remove
-#' them, and then make sure all their children become children of the exprlist
-#' parent
-
 prsdat_fix_exprlist <- function(parse.dat, ancestry) {
 
   z <- ancestry
