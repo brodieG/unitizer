@@ -135,3 +135,74 @@ get_unitizer.character <- function(store.id) {
 get_unitizer.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }
+
+#' Infers Path From Context
+#'
+#' If working directory appears to be an R package (contains description, an
+#' R folder, a tests folder)
+#'
+#' Rules:
+#' \itemize{
+#'   \item if
+#' }
+#'
+
+infer_path <- function(name=".", type="f") {
+  if(file_test("-d", name)) {  # Is a directory, check if a package
+
+  }
+
+
+
+}
+#' Check Whether a Directory Likey Contains An R Package
+#'
+#' Approximate check based on DESCRIPTION file and directory structure.
+#'
+#' @param name a directory to check for package-ness
+#' @param has.tests whether to require that the package have tests to qualify
+#' @return TRUE if criteria met, character vector explaining first failure
+#'   otherwise
+
+
+is_package_dir <- function(name, has.tests=FALSE) {
+  if(!file_test("-d", name)) stop("Argument `name` must be a directory")
+
+  # DESCRIPTION file matches directory?
+
+  if(!file_test("-f", file.path(name, "DESCRIPTION")))
+    return("No DESCRIPTION file")
+  desc <- try(readLines(file.path(name, "DESCRIPTION")))
+  if(inherits(desc, "try-error"))
+    return("Unable to read DESCRIPTION file")
+
+  pkg.pat <- "^\\s*package:\\s+(\\S+)\\s*$"
+  desc.pkg <- grep(pkg.pat, desc, value=T, perl=T, ignore.case=TRUE)
+  if(length(desc.pkg) != 1L)
+    return(
+      paste0(
+        "DESCRIPTION file ",
+        if(length(desc.pkg)) "had more than one" else "did not have a",
+        " package name entry"
+    ) )
+  desc.pkg.name <- sub(pkg.pat, "\\1", desc.pkg, perl=T, ignore.case=TRUE)
+  dir.name <- if(identical(dirname(name), ".")) name else basename(name)
+
+  if(!identical(tolower(dir.name), tolower(desc.pkg.name)))
+    return(
+      paste0(
+        "DESCRIPTION package name (", desc.pkg.name,
+        ") does not match dir name (", dir.name, ")"
+    ) )
+  # Has requisite directories?
+
+  if(!file_test("-d", file.path(name, "R")))
+    return("Missing 'R' directory")
+  if(has.tests && !file_test("-d", file.path(name, "tests")))
+    return("Missing 'tests' directory")
+
+  # Woohoo
+
+  TRUE
+}
+

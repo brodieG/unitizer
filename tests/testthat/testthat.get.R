@@ -47,4 +47,30 @@ local({
   file.remove(paste0(tmp.sub.dir2, "/data.rds"))
   file.remove(tmp.sub.dir2)
   print("random print to flush warnings")
+
+  test_that("is_package", {
+    expect_true(unitizer:::is_package_dir(system.file(package="stats")))
+    expect_true(unitizer:::is_package_dir(system.file(package="methods")))
+    expect_true(unitizer:::is_package_dir(system.file(package="stats"), has.tests=TRUE))
+    expect_true(unitizer:::is_package_dir(system.file(package="methods"), has.tests=TRUE))
+    expect_match(
+      unitizer:::is_package_dir(file.path(system.file(package="stats"), "R")),  # just picked some folder we know will not work
+      "No DESCRIPTION file"
+    )
+    expect_error(unitizer:::is_package_dir("ASDFASDF"), "must be a directory")
+    expect_match(
+      unitizer:::is_package_dir(
+        file.path(
+          system.file(package="unitizer"), "example.pkgs", "baddescription0"
+      ) ),
+      "unitizerdummypkg2.*not match.*baddescription0"
+    )
+    expect_match(
+      unitizer:::is_package_dir(
+        file.path(
+          system.file(package="unitizer"), "example.pkgs", "baddescription1"
+      ) ),
+      "DESCRIPTION file did not have a package name entry"
+    )
+  } )
 } )
