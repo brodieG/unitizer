@@ -136,6 +136,104 @@ get_unitizer.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }
 
+#' Infers Possible Unitizer Path From Context
+#'
+#' Used by most \code{unitizer} functions that operate on \code{unitizers} to
+#' make it easy to specify the most likely intended \code{unitizer} in a
+#' package or a directory.
+#'
+#' If \code{name} is a directory that appears to be an R package (contains
+#' DESCRIPTION, an R folder, a tests folder), will look for candidate files in
+#' \code{file.path(name, "tests", "unitizer")}, starting with files with the
+#' same name as the package (ending in ".R" or ".unitizer" if \code{type} is
+#' \code{"f"} or \code{"d"} respectively), or if there is only one file, that
+#' file, or if there are multiple candidate files and in interactive mode
+#' prompting user for a selection.
+#'
+#' If \code{name} is not a directory, will try to find a file by that name, and
+#' if that fails, will try to partially match a file by that name.  Partial
+#' matching requires the front portion of the name to be fully specified and
+#' no extension be provided (e.g. for \code{"mytests.R"}, \code{"myt"} is valid,
+#' but \code{"tests"} and \code{"myt.R"} are both invalid).  Partially specified
+#' files may be specified in subdirectories (e.g. \code{"tests/myt"}).
+#'
+#' Inference assumes your files end in \code{".R"} for code files and
+#' \code{".unitizer"} for \code{unitizer} data directories.
+#'
+#' @export
+#' @param name character(1L) file or directory name, the file name portion (i.e
+#'   after the last slash) may be partially specified so long as t
+#' @param type character(1L) %in% \code{c("f", "d")}, \code{"f"} for test file,
+#'   and \code{"d"} for test data directory
+#' @param interactive logical(1L) whether to allow user input to resolve
+#'   ambiguities
+#' @return character(1L) an inferred path
+
+infer_unitizer_path <- function(name=".", type="f", interactive=interactive()) {
+  if(!is.character())
+  if(!is.character(type) || length(type) != 1L || !isTRUE(type %in% c("f", "d")))
+    stop("Argument `type` must be one of `c(\"f\", \"d\")`")
+  if(!isTRUE(interactive) || !identical(interactive, FALSE))
+    stop("Argument `interactive` must be TRUE or FALSE")
+
+  if(type == "f") {
+    test.flag <- "-f"
+    test.ext <- ".R"
+    list.fun <- list.dirs
+  } else {
+    test.flag <- "-d"
+    test.ext <- ".unitizer"
+    list.fun <- list.files
+  }
+  # Is a directory, check if a package and pick tests/unitizer as the directory
+
+  if(file_test("-d", name) && isTRUE(is_package_dir(name))) {
+    test.base <- file.path(name, "tests", "unitizer")
+    if(!file_test("-d", test.base))
+      stop("Unable to infer path since \"tests/unitizer\" directory is missing")
+
+    found.file <- file_test(
+      test.flag,
+      fp <- file.path(test.base, paste0(basename(name), test.ext))
+    )
+    if(found.file) return(fp)
+    name <- test.base           # use tests/unitizer as starting point for any package
+  }
+  # Check request is coherent already and if so return
+
+  if(test_file(test.flag, name)) return(name)
+
+  # Resolve potential ambiguities by trying to find file / directory
+
+  candidate.files <- list.fun(
+    dirname(name), pattern=paste0("^", basename(name), ".*\\", test.ext, "$"),
+    recursive=FALSE
+  )
+  cand.len <- length(candidate.files)
+  selection <- if(cand.len > 1L) {
+    if(!interactive || cand.len > 100L)
+      stop(
+        cand.len, " possible targets; ",
+        if(interactive) "cannot" else "too many to",
+        " unambiguously infer desired file"
+      )
+    pick_one(candidate.files)
+  } else if (cand.len == 1L) {
+    1L
+  } else 0L
+  if(!selection)
+    stop("Invalid file selected or no matching files, cannot proceed.")
+
+  # Return
+
+  candidate.files[[selection]]
+}
+#' Utility Fun to Poll User Input
+#'
+#' @keywords internal
+#' @param x a character vector
+#' @return integer(1L) selected item or 0L if invalid user input
+
 pick_one <- function(x) {
   if(!is.character(x)) stop("Argument `x` must be character")
   if(!length(x)) return(0L)
