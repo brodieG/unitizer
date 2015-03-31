@@ -136,29 +136,36 @@ get_unitizer.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }
 
-#' Infers Path From Context
-#'
-#' If working directory appears to be an R package (contains description, an
-#' R folder, a tests folder)
-#'
-#' Rules:
-#' \itemize{
-#'   \item if
-#' }
-#'
+pick_one <- function(x) {
+  if(!is.character(x)) stop("Argument `x` must be character")
+  if(!length(x)) return(0L)
 
-infer_path <- function(name=".", type="f") {
-  if(file_test("-d", name)) {  # Is a directory, check if a package
+  valid <- seq_along(x)
 
+  cat("Select Item Number:\n")
+  cat(paste0("  ", format(valid), ": ", x), sep="\n")
+
+  fail.count <- 0
+  while(!(choice <- readline("unitizer> ")) %in% c(valid, "Q")) {
+    if(fail.count < 3) {
+      message(
+        "Pick a number in ", paste0(range(valid), collapse=":"), " or Q to quit"
+      )
+      fail.count <- fail.count + 1
+    } else {
+      message("Too many attempts; quitting.")
+      choice <- 0L
+      break
+    }
   }
-
-
-
+  if(identical(choice, "Q")) 0L else as.integer(choice)
 }
+
 #' Check Whether a Directory Likey Contains An R Package
 #'
 #' Approximate check based on DESCRIPTION file and directory structure.
 #'
+#' @keywords internal
 #' @param name a directory to check for package-ness
 #' @param has.tests whether to require that the package have tests to qualify
 #' @return TRUE if criteria met, character vector explaining first failure
