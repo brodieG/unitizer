@@ -174,7 +174,8 @@ get_unitizer.default <- function(store.id) {
 #'   and \code{"d"} for test data directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
 #'   ambiguities
-#' @return character(1L) an inferred path
+#' @return character(1L) an inferred path, or \code{store.id} with a warning if
+#'   path cannot be inferred
 
 infer_unitizer_location <- function(store.id, ...)
   UseMethod("infer_unitizer_location")
@@ -253,12 +254,15 @@ infer_unitizer_location.character <- function(
   )
   cand.len <- length(candidate.files)
   selection <- if(cand.len > 1L) {
-    if(!interactive.mode || cand.len > 100L)
-      stop(
+    if(!interactive.mode || cand.len > 100L) {
+      warning(
         cand.len, " possible targets; ",
         if(interactive.mode) "cannot" else "too many to",
-        " unambiguously infer desired file"
+        " unambiguously infer desired file",
+        immediate.=TRUE
       )
+      return(store.id)
+    }
     dir.disp <- if(!identical(dir.store.id, dir.store.id.proc)) {
       paste0(
         " from \"",
@@ -273,10 +277,18 @@ infer_unitizer_location.character <- function(
     pick_one(candidate.files, paste0("Select file", dir.disp, ":\n"))
   } else if (cand.len == 1L) {
     1L
-  } else 0L
-  if(!selection)
-    stop("Invalid file selected or no matching files, cannot proceed.")
-
+  } else if (cand.len == 0L) {
+    warning("No possible matching files", immediate.=TRUE)
+    return(store.id)
+  }
+  if(!selection && interactive.mode) {
+    warning("Invalid user selection", immediate.=TRUE)
+    return(store.id)
+  } else if(!selection)
+    stop(
+      "Logic Error: should never have non.interative zero selection; ", "
+      contact maintainer."
+    )
   # Return
 
   file.path(dir.store.id.proc, candidate.files[[selection]])
