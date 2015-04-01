@@ -202,17 +202,17 @@ infer_unitizer_location.character <- function(
     stop("Argument `interactive.mode` must be TRUE or FALSE")
 
   if(type == "f") {
-    test.flag <- "-f"
+    test.fun <- function(x) file_test("-f", x)
     test.ext <- ".R"
     list.fun <- list.files
   } else {
-    test.flag <- "-d"
+    test.fun <- is_unitizer_dir
     test.ext <- ".unitizer"
     list.fun <- list.dirs
   }
   # Check for exact match first and return that if found
 
-  if(file_test(test.flag, store.id)) return(store.id)
+  if(test.fun(store.id)) return(store.id)
 
   # Is a directory, check if a package and pick tests/unitizer as the directory
 
@@ -230,8 +230,7 @@ infer_unitizer_location.character <- function(
     if(!file_test("-d", test.base))
       stop("Unable to infer path since \"tests/unitizer\" directory is missing")
 
-    found.file <- file_test(
-      test.flag,
+    found.file <- test.fun(
       fp <- file.path(
         test.base, paste0(file.store.id, basename(dir.store.id), test.ext)
     ) )
@@ -243,7 +242,7 @@ infer_unitizer_location.character <- function(
   # Check request is coherent already and if so return
 
   f.path <- file.path(dir.store.id.proc, file.store.id)
-  if(file_test(test.flag, f.path)) return(f.path)
+  if(test.fun(f.path)) return(f.path)
 
   # Resolve potential ambiguities by trying to find file / directory
 
