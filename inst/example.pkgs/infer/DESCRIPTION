@@ -1,0 +1,11 @@
+Package: infer
+Title: Faux package for testing `infer_unitizer_location`
+Version: 0.1
+Description: Nothing
+Depends: R (>= 3.1.2)
+License: GPL-3
+LazyData: true
+Author: Brodie Gaslam
+Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
+Suggests:
+    unitizer

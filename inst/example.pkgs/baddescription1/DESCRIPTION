@@ -1,0 +1,10 @@
+Packaage: nopackagenam e
+Title: Dummy Package 3 For `unitizer` Testing
+Version: 0.1
+Author: Brodie Gaslam
+Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
+Description: package tag is wrong
+Depends:
+    R (>= 3.1.1)
+License: GPL-2
+LazyData: true

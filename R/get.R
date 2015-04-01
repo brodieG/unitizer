@@ -135,3 +135,250 @@ get_unitizer.character <- function(store.id) {
 get_unitizer.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
 }
+
+#' Infers Possible Unitizer Path From Context
+#'
+#' Used by most \code{unitizer} functions that operate on \code{unitizers} to
+#' make it easy to specify the most likely intended \code{unitizer} in a
+#' package or a directory.
+#'
+#' This is implemented as an S3 generic to allow third parties to define
+#' inference methods for other types of \code{store.id}, but the documentation
+#' here is for the \code{"character"} method which is what \code{unitizer} uses
+#' by default.  Note a \code{NULL} as \code{store.id} dispatches
+#'
+#' If \code{name} is a directory that appears to be an R package (contains
+#' DESCRIPTION, an R folder, a tests folder), will look for candidate files in
+#' \code{file.path(name, "tests", "unitizer")}, starting with files with the
+#' same name as the package (ending in ".R" or ".unitizer" if \code{type} is
+#' \code{"f"} or \code{"d"} respectively), or if there is only one file, that
+#' file, or if there are multiple candidate files and in interactive mode
+#' prompting user for a selection.
+#'
+#' If \code{name} is not a directory, will try to find a file by that name, and
+#' if that fails, will try to partially match a file by that name.  Partial
+#' matching requires the front portion of the name to be fully specified and
+#' no extension be provided (e.g. for \code{"mytests.R"}, \code{"myt"} is valid,
+#' but \code{"tests"} and \code{"myt.R"} are both invalid).  Partially specified
+#' files may be specified in subdirectories (e.g. \code{"tests/myt"}).
+#'
+#' Inference assumes your files end in \code{".R"} for code files and
+#' \code{".unitizer"} for \code{unitizer} data directories.
+#'
+#' @export
+#' @seealso \code{\link{get_unitizer}} for discussion of alternate
+#'   \code{store.id} objects
+#' @param name character(1L) file or directory name, the file name portion (i.e
+#'   after the last slash) may be partially specified so long as t
+#' @param type character(1L) %in% \code{c("f", "d")}, \code{"f"} for test file,
+#'   and \code{"d"} for test data directory
+#' @param interactive.mode logical(1L) whether to allow user input to resolve
+#'   ambiguities
+#' @return character(1L) an inferred path, or \code{store.id} with a warning if
+#'   path cannot be inferred
+
+infer_unitizer_location <- function(store.id, ...)
+  UseMethod("infer_unitizer_location")
+
+#' @rdname infer_unitizer_location
+#' @export
+
+infer_unitizer_location.default <- function(store.id, ...) {
+  if(missing(store.id)) return(infer_unitizer_location.character(".", ...))
+  store.id
+}
+
+#' @rdname infer_unitizer_location
+#' @export
+
+infer_unitizer_location.character <- function(
+  store.id, type="f", interactive.mode=interactive(), ...
+) {
+  if(!is.character(store.id) || length(store.id) != 1L || is.na(store.id))
+    stop("Argument `store.id` must be character(1L) and not NA")
+  if(!is.character(type) || length(type) != 1L || !isTRUE(type %in% c("f", "d")))
+    stop("Argument `type` must be one of `c(\"f\", \"d\")`")
+  if(!isTRUE(interactive.mode) && !identical(interactive.mode, FALSE))
+    stop("Argument `interactive.mode` must be TRUE or FALSE")
+
+  if(type == "f") {
+    test.fun <- function(x) file_test("-f", x)
+    test.ext <- ".R"
+    list.fun <- list.files
+  } else {
+    test.fun <- is_unitizer_dir
+    test.ext <- ".unitizer"
+    list.fun <- list.dirs
+  }
+  # Check for exact match first and return that if found
+
+  if(test.fun(store.id)) return(store.id)
+
+  # Is a directory, check if a package and pick tests/unitizer as the directory
+
+  if(!file_test("-d", store.id)) {
+    dir.store.id <- dirname(store.id)
+    file.store.id <- basename(store.id)
+  } else {
+    dir.store.id <- store.id
+    file.store.id <- ""
+  }
+  dir.store.id <- normalizePath(dir.store.id)
+
+  if(file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))) {
+    test.base <- file.path(dir.store.id, "tests", "unitizer")
+    if(!file_test("-d", test.base))
+      stop("Unable to infer path since \"tests/unitizer\" directory is missing")
+
+    found.file <- test.fun(
+      fp <- file.path(
+        test.base, paste0(file.store.id, basename(dir.store.id), test.ext)
+    ) )
+    if(found.file) return(fp)
+    dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
+  } else {
+    dir.store.id.proc <- dir.store.id
+  }
+  # Check request is coherent already and if so return
+
+  f.path <- file.path(dir.store.id.proc, file.store.id)
+  if(test.fun(f.path)) return(f.path)
+
+  # Resolve potential ambiguities by trying to find file / directory
+
+  candidate.files <- grep(
+    paste0("^", file.store.id, ".*\\", test.ext, "$"),
+    basename(list.fun(dir.store.id.proc, recursive=FALSE)),
+    value=TRUE
+  )
+  cand.len <- length(candidate.files)
+  selection <- if(cand.len > 1L) {
+    if(!interactive.mode || cand.len > 100L) {
+      warning(
+        cand.len, " possible targets; ",
+        if(interactive.mode) "cannot" else "too many to",
+        " unambiguously infer desired file",
+        immediate.=TRUE
+      )
+      return(store.id)
+    }
+    dir.disp <- if(!identical(dir.store.id, dir.store.id.proc)) {
+      paste0(
+        " from \"",
+        sub(
+          paste0("^", normalizePath(dir.store.id), "/?"), "",
+          normalizePath(dir.store.id.proc)
+        ),
+        "\""
+      )
+    } else ""
+
+    pick_one(candidate.files, paste0("Select file", dir.disp, ":\n"))
+  } else if (cand.len == 1L) {
+    1L
+  } else if (cand.len == 0L) {
+    warning("No possible matching files", immediate.=TRUE)
+    return(store.id)
+  }
+  if(!selection && interactive.mode) {
+    warning("Invalid user selection", immediate.=TRUE)
+    return(store.id)
+  } else if(!selection)
+    stop(
+      "Logic Error: should never have non.interative zero selection; ", "
+      contact maintainer."
+    )
+  # Return
+
+  file.path(dir.store.id.proc, candidate.files[[selection]])
+}
+#' Utility Fun to Poll User Input
+#'
+#' @keywords internal
+#' @param x a character vector
+#' @return integer(1L) selected item or 0L if invalid user input
+
+pick_one <- function(x, prompt="Select Item Number:\n") {
+  if(!is.character(x)) stop("Argument `x` must be character")
+  if(!length(x)) return(0L)
+
+  valid <- seq_along(x)
+
+  cat(prompt)
+  cat(paste0("  ", format(valid), ": ", x), sep="\n")
+
+  fail.count <- 0
+  while(!(choice <- readline("unitizer> ")) %in% c(valid, "Q")) {
+    if(fail.count < 3) {
+      message(
+        "Pick a number in ", paste0(range(valid), collapse=":"), " or Q to quit"
+      )
+      fail.count <- fail.count + 1
+    } else {
+      message("Too many attempts; quitting.")
+      choice <- 0L
+      break
+    }
+  }
+  if(identical(choice, "Q")) 0L else as.integer(choice)
+}
+
+#' Check Whether a Directory Likey Contains An R Package
+#'
+#' Approximate check based on DESCRIPTION file and directory structure.
+#'
+#' @keywords internal
+#' @param name a directory to check for package-ness
+#' @param has.tests whether to require that the package have tests to qualify
+#' @return TRUE if criteria met, character vector explaining first failure
+#'   otherwise
+
+is_package_dir <- function(name, has.tests=FALSE) {
+  if(!file_test("-d", name)) stop("Argument `name` must be a directory")
+
+  # DESCRIPTION file matches directory?
+
+  if(!file_test("-f", file.path(name, "DESCRIPTION")))
+    return("No DESCRIPTION file")
+  desc <- try(readLines(file.path(name, "DESCRIPTION")))
+  if(inherits(desc, "try-error"))
+    return("Unable to read DESCRIPTION file")
+
+  pkg.pat <- "^\\s*package:\\s+(\\S+)\\s*$"
+  desc.pkg <- grep(pkg.pat, desc, value=T, perl=T, ignore.case=TRUE)
+  if(length(desc.pkg) != 1L)
+    return(
+      paste0(
+        "DESCRIPTION file ",
+        if(length(desc.pkg)) "had more than one" else "did not have a",
+        " package name entry"
+    ) )
+  desc.pkg.name <- sub(pkg.pat, "\\1", desc.pkg, perl=T, ignore.case=TRUE)
+  dir.name <- if(identical(dirname(name), ".")) name else basename(name)
+
+  if(!identical(tolower(dir.name), tolower(desc.pkg.name)))
+    return(
+      paste0(
+        "DESCRIPTION package name (", desc.pkg.name,
+        ") does not match dir name (", dir.name, ")"
+    ) )
+  # Has requisite directories?
+
+  if(!file_test("-d", file.path(name, "R")))
+    return("Missing 'R' directory")
+  if(has.tests && !file_test("-d", file.path(name, "tests")))
+    return("Missing 'tests' directory")
+
+  # Woohoo
+
+  TRUE
+}
+#' Check Whether a Directory as a Unitizer Data Directory
+#'
+#' Just checks that it \emph{could} be a data directory, the test ultimately is
+#' to attempt a \code{\link{get_unitizer}} call and see if we actually resurrect
+#' a working \code{unitizer}
+
+is_unitizer_dir <- function(dir)
+  is.character(dir) && length(dir) == 1L && !is.na(dir) &&
+  file_test("-d", dir) && file_test("-f", file.path(dir, "data.rds"))

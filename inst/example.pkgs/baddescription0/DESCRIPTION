@@ -1,0 +1,11 @@
+Package: unitizerdummypkg2
+Title: Dummy Package 2 For `unitizer` Testing
+Version: 0.1
+Author: Brodie Gaslam
+Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
+Description: Allows testing of search path manipulation functionality built
+    into `unitizer`
+Depends:
+    R (>= 3.1.1)
+License: GPL-2
+LazyData: true
