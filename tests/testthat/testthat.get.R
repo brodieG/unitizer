@@ -73,4 +73,55 @@ local({
       "DESCRIPTION file did not have a package name entry"
     )
   } )
+  test_that("is_unitizer_dir", {
+    base.dir <- file.path(
+      system.file(package="unitizer"), "example.pkgs", "infer"
+    )
+    expect_false(unitizer:::is_unitizer_dir(base.dir))
+    expect_true(
+      unitizer:::is_unitizer_dir(
+        file.path(base.dir, "tests", "unitizer", "infer.unitizer")
+    ) )
+
+  })
+  test_that("infer_unitizer_location", {
+    infer <- function(...) infer_unitizer_location(..., interactive.mode=FALSE)
+    base.dir <- file.path(
+      system.file(package="unitizer"), "example.pkgs", "infer"
+    )
+    # Verify package is still in state we built tests on
+
+    expect_equal(
+      c("aaa.R", "aaa.unitizer", "abc.R", "abc.unitizer", "inf.R", "inf.unitizer", "infer.R", "infer.unitizer", "zzz.R", "zzz.unitizer"),
+      list.files(file.path(base.dir, "tests", "unitizer"))
+    )
+    # Package dir
+
+    expect_match(infer(base.dir), "tests/unitizer/infer\\.R$")
+    expect_match(infer(base.dir, type="d"), "tests/unitizer/infer\\.unitizer$")
+
+    expect_warning(
+      inf.dir <- infer(file.path(base.dir, "*")), "5 possible targets"
+    )
+    expect_equal(file.path(base.dir, "*"), inf.dir)
+    expect_match(infer(file.path(base.dir, "z")), "tests/unitizer/zzz\\.R$")
+    expect_match(
+      infer(file.path(base.dir, "z"), type="d"),
+      "tests/unitizer/zzz\\.unitizer$"
+    )
+    # Normal dir
+
+    base.dir2 <- file.path(base.dir, "tests", "unitizer")
+    expect_warning(inf.dir2 <- infer(base.dir2), "5 possible targets")  # note don't need * to generate warning
+    expect_equal(base.dir2, inf.dir2)
+    expect_warning(infer(file.path(base.dir2, "a")), "2 possible targets")
+    expect_warning(
+      infer(file.path(base.dir2, "a"), type="d"), "2 possible targets"
+    )
+    expect_match(infer(file.path(base.dir2, "z")), "tests/unitizer/zzz\\.R$")
+    expect_match(
+      infer(file.path(base.dir2, "z"), type="d"),
+      "tests/unitizer/zzz\\.unitizer$"
+    )
+  } )
 } )
