@@ -248,7 +248,7 @@ infer_unitizer_location.character <- function(
 
   candidate.files <- grep(
     paste0("^", file.store.id, ".*\\", test.ext, "$"),
-    list.fun(dir.store.id.proc, recursive=FALSE),
+    basename(list.fun(dir.store.id.proc, recursive=FALSE)),
     value=TRUE
   )
   cand.len <- length(candidate.files)
