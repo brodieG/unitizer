@@ -562,10 +562,11 @@ setMethod("[", signature(x="unitizerBrowse", i="subIndex", j="missing", drop="mi
     if(!is.numeric(i) || any(is.na(i)) || any(i < 0))
       stop("Argument `i` must be stricitly positive numeric")
     i <- as.integer(i)
-    if(!all(i %in% x@mapping@item.id)) stop("Index out of bounds")
+    ub.new <- new("unitizerBrowse")
+    if((length(i) == 1L) && !i || !any(i)) return(ub.new)
+    if(!all(i %in% c(0L, x@mapping@item.id))) stop("Index out of bounds")
 
     id.ind <- match(i, x@mapping@item.id)
-    ub.new <- new("unitizerBrowse")
 
     # need to select all sections and subsections, even including empty ones?
     # won't for now, but need to think about whether this could cause problems
@@ -601,7 +602,8 @@ setMethod("[",
     if(!is.numeric(i) || any(is.na(i)) || any(i < 0))
       stop("Argument `i` must be stricitly positive numeric")
     i <- as.integer(i)
-    if(!all(i %in% seq(max(length(x))))) stop("Index out of bounds")
+    if(!all(i %in% 0:max(length(x)))) stop("Index out of bounds")
+    new.sub <- new(class(x))
 
     # Unfortunately we have a hodgepodge of slots that need subsetting vs not
     # and no systematic way of knowing which is which
@@ -609,7 +611,6 @@ setMethod("[",
     subset.slots <- c(
       "items.new", "items.ref", "new.conditions", "show.fail", "tests.result"
     )
-    new.sub <- new("unitizerBrowseSubSection")
     for(s.name in slotNames(x)) {
       if(s.name %in% subset.slots) {
         slot.old <- slot(x, s.name)
