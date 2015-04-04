@@ -176,7 +176,11 @@ review_prompt <- function(x, nav.env) {
     "typically reviewed in this mode.  The letter after the test status ",
     "represents prior user input to test review (a `-` indicates ",
     "the test has not been reviewed). Type \"U\" to jump to the first unreviewed ",
-    "test."
+    "test.\n\n",
+    "Note that tests are displayed in the order they appear in the test",
+    "file, not in the order they would be reviewed in, which is why the test",
+    "numbers are not necessarily sequential (see vignette for details and",
+    "exceptions).\n"
   )
   nav.opts <- c(
     "input a test number",
