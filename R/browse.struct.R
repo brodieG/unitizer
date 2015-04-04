@@ -225,7 +225,6 @@ setMethod("show", "unitizerBrowse", function(object) {
   cat(obj.rendered, "\n", sep="")
   invisible(obj.rendered)
 } )
-setGeneric("render", function(object, ...) standardGeneric("render"))
 
 #' Create a Text Representation of an Object
 #'
