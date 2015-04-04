@@ -56,7 +56,9 @@ unitizer_prompt <- function(
     stop("Argument `valid.opts` must be character")
   valid.opts <- c(valid.opts, Q="[Q]uit", H="[H]elp")
   # should validate other parameters as well
-  opts.txt <- paste0("(", paste0(valid.opts, collapse=", "), ")?")
+  opts.txt <- paste0(
+    "(", paste0(valid.opts[nchar(valid.opts) > 0], collapse=", "), ")?"
+  )
   repeat {
     while(inherits(try(val <- faux_prompt("unitizer> ")), "try-error")) NULL
 

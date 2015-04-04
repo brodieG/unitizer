@@ -138,7 +138,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
                 }
                 next
               } else {
-
+                # wtf? intended to be NULL??
               }
             },
             earlyExit=function() user.quit <<- TRUE
@@ -296,8 +296,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     # Display Section Headers as Necessary
 
-    valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
-
+    valid.opts <- c(
+      Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview", YY="", YYY="", YYYY="",
+      NN="", NNN="", NNNNN=""
+    )
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
 
@@ -341,7 +343,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
         if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
           paste0(
             " ", curr.sub.sec.obj@prompt, " ",
-            "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
+            "(",
+            paste0(
+              c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
+              collapse=", "
+            ),
             ")?\n"
         ) }
       )
@@ -455,7 +461,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(!is.null(item.new))
         "`.new` for the current value, or `.NEW` for the full test object",
       if(!is.null(item.ref))
-        "`.ref` for the reference value, or `.REF` for the full reference object"
+        "`.ref` for the reference value, or `.REF` for the full reference object",
+      "`YY` or `NN` to apply same choice to all remaining unreviewed items in sub-section",
+      "`YYY` or `NNN` to apply same choice to all remaining unreviewed items in section",
+      "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer"
     )
     # navigate_prompt handles the B and R cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a function
@@ -465,7 +474,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
       is(
         x.mod <- navigate_prompt(
           x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
-          browse.env1=browse.eval.env, browse.env2=new.env(parent=parent.env(base.env.pri)),
+          browse.env1=browse.eval.env,
+          browse.env2=new.env(parent=parent.env(base.env.pri)),
           valid.opts=valid.opts,
           help=c(help.prompt, paste0(as.character(UL(help.opts)), collapse="\n"))
         ),
@@ -473,10 +483,34 @@ setMethod("reviewNext", c("unitizerBrowse"),
       )
     ) {
       return(x.mod)
-    } else if (x.mod %in% c("Y", "N")) { # Actual user input
-      x@mapping@reviewed[[curr.id]] <- TRUE
-      x@mapping@review.val[[curr.id]] <- x.mod
-      x@last.id <- curr.id
+    } else if (isTRUE(grepl("(Y|N)\\1{0,3}", x.mod))) { # Actual user input
+      act <- substr(x.mod, 1L, 1L)
+      act.times <- nchar(x.mod)
+      rev.ind <- if(act.times == 1L) {
+        curr.id
+      } else {
+        rev.ind.tmp <- if (act.times == 2L) {
+          cur.sub.sec.items                # all items in sub section
+        } else if (act.times == 3L) {
+          x@mapping@sec.id == curr.sec     # all items in sub-section
+        } else if (act.times == 4L) {
+          TRUE                             # all items
+        } else
+          stop("Logic Error: unexpected number of Y/N; contact maintainer.")
+
+        # exclude already reviewed items as well as ignored items as well as
+        # passed items (unless in review mode for last one)
+
+        which(
+          rev.ind.tmp & !x@mapping@reviewed & !x@mapping@ignored &
+          (x@mapping@review.type != "Passed" & !identical(x@mode, "review"))
+      ) }
+      if(!any(rev.ind)) stop("Logic Error: no tests to accept/reject")
+
+      x@mapping@reviewed[rev.ind] <- TRUE
+      x@mapping@review.val[rev.ind] <- act
+      x@last.id <- max(rev.ind)
+
     } else if (identical(x.mod, "Q")) {
       invokeRestart("earlyExit")
     } else {
