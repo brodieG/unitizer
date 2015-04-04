@@ -536,6 +536,91 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
     sub.sect <- if(is.null(x@items.new)) x@items.ref else x@items.new
     vapply(as.list(sub.sect), ignored, logical(1L))
 } )
+#' Subset A \code{unitizerBrowse} Object
+#'
+#' Used primarily to confirm actions on multiple items.  Note this means ids
+#' are no longer continuous, something that we assume when we cycle through
+#' items.  Need to think about this a bit...
+#'
+#' Generally, be careful about using a subsetted browse object as you would
+#' a non-subsetted one until we get around to making cycling more robust.
+#'
+#' Finally, note that this conflicts with the underlying nature of a
+#' \code{unitizerList} since we're overriding the \code{[} method.  All of this
+#' is caused by the nested nature of sections and sub-sections, which is
+#' feeling like a worse design decision every time I look at it.  Note also that
+#' something like \code{ubobj[4]} and \code{ubobj[[4]]} will likely return
+#' completely different things as in the former we are subsetting based on the
+#' order implied by \code{ubobj@@mapping}, whereas in the latter we're directly
+#' pulling out an entire section.  Obviously not ideal, but since this is
+#' internal we're going to ignore the problem for now.
+#'
+#' @keywords internal
+
+setMethod("[", signature(x="unitizerBrowse", i="subIndex", j="missing", drop="missing"),
+  function(x, i) {
+    if(!is.numeric(i) || any(is.na(i)) || any(i < 0))
+      stop("Argument `i` must be stricitly positive numeric")
+    i <- as.integer(i)
+    if(!all(i %in% x@mapping@item.id)) stop("Index out of bounds")
+
+    id.ind <- match(i, x@mapping@item.id)
+    ub.new <- new("unitizerBrowse")
+
+    # need to select all sections and subsections, even including empty ones?
+    # won't for now, but need to think about whether this could cause problems
+
+    id.df <- data.frame(
+      i=x@mapping@sec.id, j=x@mapping@sub.sec.id, k=x@mapping@item.id.rel
+    )[id.ind, ]
+
+    ids.split <- lapply(
+      split(id.df[-1L], id.df$i), function(x) split(x$k, x$j)
+    )
+    for(i in names(ids.split)) {
+      ub.sec <- x[[as.integer(i)]][0L]    # get section with no contents
+
+      # Cycle through selected sub-sections, and add them to our empty section
+      # after subsetting them
+
+      for(j in names(ids.split[[i]])) {
+        ub.sec <- ub.sec +
+          x[[as.integer(i)]][[as.integer(j)]][ids.split[[i]][[j]]]
+      }
+      # Now add section to new browser object
+
+      ub.new <- ub.new + ub.sec
+    }
+    ub.new
+} )
+setMethod("[",
+  signature(
+    x="unitizerBrowseSubSection", i="subIndex", j="missing", drop="missing"
+  ),
+  function(x, i) {
+    if(!is.numeric(i) || any(is.na(i)) || any(i < 0))
+      stop("Argument `i` must be stricitly positive numeric")
+    i <- as.integer(i)
+    if(!all(i %in% seq(max(length(x))))) stop("Index out of bounds")
+
+    # Unfortunately we have a hodgepodge of slots that need subsetting vs not
+    # and no systematic way of knowing which is which
+
+    subset.slots <- c(
+      "items.new", "items.ref", "new.conditions", "show.fail", "tests.result"
+    )
+    new.sub <- new("unitizerBrowseSubSection")
+    for(s.name in slotNames(x)) {
+      if(s.name %in% subset.slots) {
+        slot.old <- slot(x, s.name)
+        slot(new.sub, s.name) <-
+          if(is.matrix(slot.old)) slot.old[i, , drop=FALSE] else slot.old[i]
+      } else {
+        slot(new.sub, s.name) <- slot(x, s.name)
+      }
+    }
+    return(new.sub)
+} )
 #' Pull Out Deparsed Calls From Objects
 #'
 #' Used primarily as a debugging tool, should probably be migrated to use
