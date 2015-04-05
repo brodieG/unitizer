@@ -153,6 +153,7 @@ setMethod("show", "unitizerItem",
     cat("~~~ ")
     if(object@reference) cat("Reference") else cat("New")
     cat(" Test ~~~\n")
+    cat(deparse_call(object@call), sep="\n")
     cat("* value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
     if(out.len <- length(object@data@output)) cat("* output:", out.len, "lines\n")
     if(err.len <- length(object@data@message)) cat("* message:", err.len, "lines\n")
@@ -193,8 +194,7 @@ setMethod("show", "unitizerItem",
     word_cat(
       "Access component `x` with",
       paste0("`", if(object@reference) ".REF" else ".NEW", "$x`;"),
-      "see `help(\"$\", \"unitizer\")`",
-      fill=TRUE
+      "see `help(\"$\", \"unitizer\")`"
     )
 } )
 #' Methods to Track Whether a \code{`\link{unitizerItem-class}`} Object is New Or Reference
