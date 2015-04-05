@@ -384,11 +384,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
       ) {
-        screen_out(
-          item.main@data@message,
-          max.len=getOption("unitizer.test.msg.lines"), stderr()
-        )
-        set_trace(item.main@trace)
+        if(nchar(item.main@data@message))
+          screen_out(
+            item.main@data@message,
+            max.len=getOption("unitizer.test.msg.lines"), stderr()
+          )
+        if(length(item.main@trace)) set_trace(item.main@trace)
       }
       if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
 
