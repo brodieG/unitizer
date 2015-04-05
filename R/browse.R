@@ -534,6 +534,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           if(identical(act.conf, "Q")) invokeRestart("earlyExit")
           if(identical(act.conf, "N")) return(x)
         }
+        indices
       }
       if(!any(rev.ind)) stop("Logic Error: no tests to accept/reject")
 
