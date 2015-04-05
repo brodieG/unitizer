@@ -501,16 +501,45 @@ setMethod("reviewNext", c("unitizerBrowse"),
         # exclude already reviewed items as well as ignored items as well as
         # passed items (unless in review mode for last one)
 
-        which(
+        indices <- which(
           rev.ind.tmp & !x@mapping@reviewed & !x@mapping@ignored &
           (x@mapping@review.type != "Passed" & !identical(x@mode, "review"))
-      ) }
+        )
+        if(length(indices)) {
+          show(x[indices])
+          help.mx <- rbind(
+            c("Add New", "Keep New", "Drop Ref", "Drop New", "Keep New"),
+            c("Drop New", "Keep Ref", "Keep Ref", "Keep New", "Keep Ref")
+          )
+          rownames(help.mx) <- c("[Y]es", "[N]o")
+          colnames(help.mx) <- c("*New*", "*Failed*", "*Removed*", "*Passed*", "*Corrupted*")
+
+          help.txt <- capture.output(print(as.data.frame(help.mx), quote=TRUE))
+          help <- paste0(
+            paste0(
+              "The effect of 'Y' or 'N' depends on what type of test you ",
+              "are reviewing.  Consult the following table for details:\n\n"
+            ),
+            paste0(help.txt, collapse="\n")
+          )
+          prompt <- paste0(
+            "Choose '", act, "' for the ", length(indices),
+            " tests shown above ([Y]es, [N]o)?"
+          )
+          cat(prompt, "\n", sep="")
+          act.conf <- unitizer_prompt(
+            prompt, new.env(parent=parent.env(base.env.pri)), help,
+            valid.opts=c(Y="[Y]es", N="[N]o")
+          )
+          if(identical(act.conf, "Q")) invokeRestart("earlyExit")
+          if(identical(act.conf, "N")) return(x)
+        }
+      }
       if(!any(rev.ind)) stop("Logic Error: no tests to accept/reject")
 
       x@mapping@reviewed[rev.ind] <- TRUE
       x@mapping@review.val[rev.ind] <- act
       x@last.id <- max(rev.ind)
-
     } else if (identical(x.mod, "Q")) {
       invokeRestart("earlyExit")
     } else {
