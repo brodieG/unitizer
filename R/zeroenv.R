@@ -127,6 +127,19 @@ search_path_setup <- function() {
 
   std.err <- tempfile()
   std.err.con <- file(std.err, "w+b")
+  on.exit({
+    try(get_text_capture(std.err.con, std.err, type="message"))
+    release_sinks()
+    close(std.err.con)
+    unlink(std.err)
+    try(search_path_unsetup())
+    stop(
+      "Unexpectedly failed while attempting to setup search path.  You may ",
+      "need to exit R to restore search path and to untrace ",
+      "`library/attach/detach`; this should not happen so please report to ",
+      "maintainer."
+    )
+  } )
   capt.con <- set_text_capture(std.err.con, "message")
 
   # Attempt to apply shims
@@ -247,6 +260,7 @@ search_path_setup <- function() {
 
   shim.out <- get_text_capture(capt.con, std.err, "message")
 
+  on.exit(NULL)
   close(std.err.con)
   unlink(std.err)
   if(
@@ -291,6 +305,18 @@ search_path_unsetup <- function() {
 
   std.err <- tempfile()
   std.err.con <- file(std.err, "w+b")
+  on.exit({
+    try(get_text_capture(std.err.con, std.err, type="message"))
+    release_sinks()
+    close(std.err.con)
+    unlink(std.err)
+    stop(
+      "Unexpectedly failed while attempting to restore search path.  You may ",
+      "need to exit R to restore search path and to untrace ",
+      "`library/attach/detach`; this should not happen so please report to ",
+      "maintainer."
+    )
+  } )
   capt.con <- set_text_capture(std.err.con, "message")
 
   unshim <- try({  # this needs to go
@@ -299,6 +325,7 @@ search_path_unsetup <- function() {
     untrace(detach, where=.BaseNamespaceEnv)
   })
   unshim.out <- get_text_capture(capt.con, std.err, "message")
+  on.exit(NULL)
   close(std.err.con)
   unlink(std.err)
 
