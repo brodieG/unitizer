@@ -78,7 +78,7 @@ unitizer_prompt <- function(
         if(length(help) > 1L) {
           cat(help[-1L], sep="")
         }
-        cat("\n\n", sep="")
+        cat("\n", sep="")
         word_cat(paste0(paste(text, opts.txt)))
       }
       next
