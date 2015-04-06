@@ -121,6 +121,12 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' to in the newest version of the test file, irrespective of what section they
 #' were in when the tests were last run.
 #'
+#' @note Calls to \code{unitizer_sect} should be at the top level of your test
+#' script, or nested within other \code{unitizer_sect}s (see "Nested Sections").
+#' Do not expect code like \code{(untizer_sect(..., ...))} or
+#' \code{{unitizer_sect(..., ...)}} or \code{fun(unitizer_sect(..., ...))} to
+#' work.
+#'
 #' @export
 #' @param title character 1 length title for the section, can be omitted
 #'   though if you do omit it you will have to refer to the subsequent

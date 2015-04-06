@@ -26,6 +26,45 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     # sub section objects since so much of the logic is similar
 
     if(identical(mode, "unitize")) {
+
+      # Re-assign any ignored tests to be of the type of the next non-ignored
+      # test, irrespective of what the ignored test was (only within a section)
+
+      ign.test <- ignored(x@items.new)
+      ign.split <- split(ign.test, x@section.map)
+      ign.split.map.interim <- lapply(  # find next non-ignored in section
+        ign.split,
+        function(x) {
+          oob <- length(x) + 1L
+          id.seq <- seq_along(x)
+          ids <- integer(length(x))
+          ids <- ifelse(x, oob, id.seq)
+          res <- rev(cummin(rev(ids)))
+          res[res == oob] <- id.seq[res == oob]
+          res
+      } )
+      ids.split <- split(seq_along(x@items.new), x@section.map)
+      ign.map <- unlist(  # map back to non-ignored id
+        lapply(
+          seq_along(ids.split),
+          function(x) ids.split[[x]][ign.split.map.interim[[x]]]
+      ) )
+      # Copy over non-ignored outcomes; one slot we don't change is
+      # `tests.conditions.new` because we still want to use that to show errors
+      # if they happen.
+
+      fields.to.map <- c(
+        "tests.fail", "tests.error", "tests.new", "tests.status", "tests.result"
+      )
+      for(i in seq_along(ign.map)[ign.test]) {
+        for(j in fields.to.map) {
+          if(is.matrix(slot(x, j))) {
+            slot(x, j)[i, ] <- slot(x, j)[ign.map[i], ]
+          } else {
+            slot(x, j)[i] <- slot(x, j)[ign.map[i]]
+      } } }
+      # Add sub-sections
+
       for(i in unique(x@section.parent)) {                           # Loop through parent sections
         sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
         if(

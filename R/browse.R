@@ -391,7 +391,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
           )
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
-      if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
+      if(curr.sub.sec.obj@show.out && nchar(item.main@data@output))
+        screen_out(item.main@data@output)
 
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
