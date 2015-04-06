@@ -51,6 +51,8 @@ Unfortunately R does not provide any built-in ways to create clean environments 
 
 In addition to resetting the test environment parent, `unitizer` uses the traced functions to record the additions and removal of objects from the search path so that these can be undone once the tests evaluation and review is completed.
 
+`unitizer` **does not modify the search path itself** other than by using `library`, `attach`, and `detach`.
+
 ### Potential Pitfalls
 
 Clearly overriding such fundemental functions such as `library` / `attach` / `detach` is not good form.  We recognize this, and try to do the overriding in as lightweight a manner as possible.  For `attach` and `detach` we rely primarily on the `exit` parameter to `trace` so that the functions are as close to their original form as possible.  Unfortunately this method is not compatible with `library` since it uses `on.exit`, but again we use an implementation that should be transparent to users.  Additionally, these functions are only traced during `unitizer` execution and are returned to their original state on exit.  The untracing is registered to the `on.exit` of `unitize` so the functions should get untraced even if `unitize` fails.

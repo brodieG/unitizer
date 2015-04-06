@@ -98,8 +98,8 @@ unitize <- function(
       search.path.keep, force.update=force.update
   ) )
 }
-#' @export
 #' @rdname unitize
+#' @export
 
 review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
@@ -122,8 +122,8 @@ review <- function(
     )
   )
 }
-#' @export
 #' @rdname unitize
+#' @export
 
 unitize_dir <- function(
   test.dir, test.file.regex="^[^.].*\\.[Rr]$",

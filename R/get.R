@@ -138,7 +138,7 @@ get_unitizer.default <- function(store.id) {
 
 #' Infers Possible Unitizer Path From Context
 #'
-#' Used by most \code{unitizer} functions that operate on \code{unitizers} to
+#' Used by most \code{unitizer} functions that operate on \code{unitizer}s to
 #' make it easy to specify the most likely intended \code{unitizer} in a
 #' package or a directory.
 #'
@@ -169,8 +169,8 @@ get_unitizer.default <- function(store.id) {
 #' @seealso \code{\link{get_unitizer}} for discussion of alternate
 #'   \code{store.id} objects
 #' @param name character(1L) file or directory name, the file name portion (i.e
-#'   after the last slash) may be partially specified so long as t
-#' @param type character(1L) %in% \code{c("f", "d")}, \code{"f"} for test file,
+#'   after the last slash) may be partially specified
+#' @param type character(1L) in \code{c("f", "d")}, \code{"f"} for test file,
 #'   and \code{"d"} for test data directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
 #'   ambiguities
@@ -322,7 +322,6 @@ pick_one <- function(x, prompt="Select Item Number:\n") {
   }
   if(identical(choice, "Q")) 0L else as.integer(choice)
 }
-
 #' Check Whether a Directory Likey Contains An R Package
 #'
 #' Approximate check based on DESCRIPTION file and directory structure.
@@ -378,6 +377,10 @@ is_package_dir <- function(name, has.tests=FALSE) {
 #' Just checks that it \emph{could} be a data directory, the test ultimately is
 #' to attempt a \code{\link{get_unitizer}} call and see if we actually resurrect
 #' a working \code{unitizer}
+#'
+#' @keywords internal
+#' @param dir character(1L) directory to check
+#' @return logical(1L)
 
 is_unitizer_dir <- function(dir)
   is.character(dir) && length(dir) == 1L && !is.na(dir) &&
