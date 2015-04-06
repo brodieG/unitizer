@@ -348,7 +348,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
               c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
               collapse=", "
             ),
-            ")?\n"
+            ")?\n\n"
         ) }
       )
     }
@@ -526,9 +526,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
           )
           prompt <- paste0(
             "Choose '", act, "' for the ", length(indices),
-            " tests shown above ([Y]es, [N]o)?"
+            " test", if(length(indices) > 1L) "s", " shown above"
           )
-          cat(prompt, "\n", sep="")
+          cat(prompt, " ([Y]es, [N]o)?\n", sep="")
           act.conf <- unitizer_prompt(
             prompt, new.env(parent=parent.env(base.env.pri)), help,
             valid.opts=c(Y="[Y]es", N="[N]o")

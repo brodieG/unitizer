@@ -45,7 +45,7 @@
 </ul></li>
 <li><a href="#modifying-an-existing-unitizer">Modifying an Existing Unitizer</a><ul>
 <li><a href="#review"><code>review</code></a></li>
-<li><a href="#edit_fun_names"><code>edit_fun_names</code></a></li>
+<li><a href="#editcalls"><code>editCalls</code></a></li>
 <li><a href="#split"><code>split</code></a></li>
 </ul></li>
 <li><a href="#troubleshooting">Troubleshooting</a><ul>
@@ -146,11 +146,13 @@ a()</code></pre>
 </div>
 <div id="suggested-workflow-with-git" class="section level4">
 <h4>Suggested Workflow with Git</h4>
-<p>The approach we suggest is the last one above: just commit your <code>rds</code> files for major releases. Also, note that to the extent you have a lot of test files that aren’t changing, this should minimize how much binary data you commit. One possible way to handle this with Git is to use the following command (adapted from twalberg’s <a href="http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory">SO answer</a>):</p>
+<p>The approach we suggest is the last one above: just commit your <code>rds</code> files for major releases. Also, note that to the extent you have a lot of test files that aren’t changing, this should minimize how much binary data you commit. One possible way to handle this with Git is to use the following command (adapted from twalberg’s <a href="http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory">SO answer</a>).</p>
+<p><strong>Warning</strong>: be careful when you reset your working directory as your <code>rds</code> files will get reset to the last version that you committed (i.e. <code>git checkout -- .</code> will replace your currend <code>rds</code> with the one in the repo). If you update your <code>rds</code> within a branch and then merge the branch back, make sure you either commit or stash the <code>rds</code> before the merge.</p>
+<p>To implement:</p>
 <pre><code>git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged</code></pre>
 <p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Just make sure you still commit your <code>rds</code> at key release points so you have backups of them. Once you reach the major release point, you can:</p>
 <pre><code>git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged</code></pre>
-<p><strong>Warning</strong>: be careful when you reset your working directory as your <code>rds</code> files will get reset to the last version that you committed (i.e. <code>git checkout -- .</code> will replace your currend <code>rds</code> with the one in the repo). If you <code>--assume-unchanged</code> other files such as <code>.o</code> or <code>.so</code> files, you may need to remove those after a checkout as well so that <code>devtools::install</code> will recreate them from current sources.</p>
+<p>If you <code>--assume-unchanged</code> other files such as <code>.o</code> or <code>.so</code> files, you may need to remove those after a checkout as well so that <code>devtools::install</code> will recreate them from current sources.</p>
 </div>
 </div>
 </div>
@@ -174,10 +176,10 @@ install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # o
 <h3><code>review</code></h3>
 <p><code>review</code> allows you to review all tests in a unitizer rds with the option of dropping tests from it. See <code>?review</code>.</p>
 </div>
-<div id="edit_fun_names" class="section level3">
-<h3><code>edit_fun_names</code></h3>
+<div id="editcalls" class="section level3">
+<h3><code>editCalls</code></h3>
 <p><em>Warning</em>: this is experimental.</p>
-<p><code>edit_fun_names</code> allows you to modify function names in calls stored in an <code>unitizer</code>. This is useful when you decide to change a function name, but otherwise leave the behavior and rest of the call unchanged. You can then upate your test script and the renamed calls will be matched against the correct values in the <code>unitizer</code> store. Without this you would have to re-review and re-store every test since <code>unitizer</code> identifies tests by the deparsed expression.</p>
+<p><code>editCalls</code> allows you to modify the calls calls stored in a <code>unitizer</code>. This is useful when you decide to change the call (e.g. a function name), but otherwise leave the behavior of the call unchanged. You can then upate your test script and the renamed calls will be matched against the correct values in the <code>unitizer</code> store. Without this you would have to re-review and re-store every test since <code>unitizer</code> identifies tests by the deparsed call.</p>
 </div>
 <div id="split" class="section level3">
 <h3><code>split</code></h3>
@@ -185,7 +187,7 @@ install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # o
 <ol style="list-style-type: decimal">
 <li>copy the test file and the corresponding <code>unitizer</code> to a new location</li>
 <li>edit the original test file to remove the tests we want to split off</li>
-<li>run unitizer and agree to drop all removed tests (hint, use CAPSLOCK)</li>
+<li>run unitizer and agree to drop all removed tests (hint: this is a good time to use <code>YY</code>)</li>
 <li>edit the new test file and remove the tests that are still in the old test file</li>
 <li>run unitizer and agree to drop all removed tests</li>
 </ol>

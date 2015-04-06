@@ -508,7 +508,13 @@ search_path_restore <- function() {
     )
     return(invisible(FALSE))
   }
-  # Step back through history, undoing each step
+  # Step back through history, undoing each step; not this means we need to
+  # potentially re-attach an object that was previously attached to the search
+  # path.  While we realize this is bad practice, the only reason we are doing
+  # this is because said object was already attached and we are restoring the
+  # search path to its previous state
+
+  reattach <- base::attach   # quash a NOTE (as per above, we don't think this is against the spirit of the note)
 
   for(i in rev(seq_along(pack.env$history))) {
     hist <- pack.env$history[[i]]
@@ -528,7 +534,7 @@ search_path_restore <- function() {
               lib.loc=dirname(attr(hist@extra, "path")), warn.conflicts=FALSE
           ) )
         } else if (hist@type == "object") {
-          attach(hist@extra, pos=hist@pos, name=hist@name, warn.conflicts=FALSE)
+          reattach(hist@extra, pos=hist@pos, name=hist@name, warn.conflicts=FALSE)
         }
       }
     })

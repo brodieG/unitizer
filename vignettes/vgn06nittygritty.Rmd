@@ -164,7 +164,7 @@ There is currently no direct way to split a `unitizer` into pieces (see [issue #
 
 1. copy the test file and the corresponding `unitizer` to a new location
 2. edit the original test file to remove the tests we want to split off
-3. run unitizer and agree to drop all removed tests (hint, use CAPSLOCK)
+3. run unitizer and agree to drop all removed tests (hint: this is a good time to use `YY`)
 4. edit the new test file and remove the tests that are still in the old test file
 5. run unitizer and agree to drop all removed tests
 

@@ -23,7 +23,7 @@
 #' See \code{unitizer} vignettes and demo for details and examples.
 #'
 #' @export
-#' @aliases review unitize_dir
+#' @aliases unitize review unitize_dir
 #' @seealso \code{\link{get_unitizer}}
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
@@ -98,8 +98,8 @@ unitize <- function(
       search.path.keep, force.update=force.update
   ) )
 }
-#' @export
 #' @rdname unitize
+#' @export
 
 review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
@@ -122,8 +122,8 @@ review <- function(
     )
   )
 }
-#' @export
 #' @rdname unitize
+#' @export
 
 unitize_dir <- function(
   test.dir, test.file.regex="^[^.].*\\.[Rr]$",
