@@ -23,7 +23,7 @@
 #' See \code{unitizer} vignettes and demo for details and examples.
 #'
 #' @export
-#' @aliases review unitize_dir
+#' @aliases unitize review unitize_dir
 #' @seealso \code{\link{get_unitizer}}
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
