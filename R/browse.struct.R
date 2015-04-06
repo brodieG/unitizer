@@ -624,6 +624,10 @@ setMethod("[", signature(x="unitizerBrowse", i="subIndex", j="missing", drop="mi
     }
     ub.new
 } )
+#' Subset a \code{unitizerBrowseSubSection} Object
+#'
+#' @keywords internal
+
 setMethod("[",
   signature(
     x="unitizerBrowseSubSection", i="subIndex", j="missing", drop="missing"

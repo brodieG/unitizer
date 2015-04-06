@@ -168,12 +168,13 @@ get_unitizer.default <- function(store.id) {
 #' @export
 #' @seealso \code{\link{get_unitizer}} for discussion of alternate
 #'   \code{store.id} objects
-#' @param name character(1L) file or directory name, the file name portion (i.e
+#' @param store.id character(1L) file or directory name, the file name portion (i.e
 #'   after the last slash) may be partially specified
 #' @param type character(1L) in \code{c("f", "d")}, \code{"f"} for test file,
 #'   and \code{"d"} for test data directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
 #'   ambiguities
+#' @param ... arguments to pass on to other methods
 #' @return character(1L) an inferred path, or \code{store.id} with a warning if
 #'   path cannot be inferred
 
