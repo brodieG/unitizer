@@ -116,7 +116,12 @@ The main issue with using `unitizer` with a version controlled package is that y
 
 #### Suggested Workflow with Git
 
-The approach we suggest is the last one above: just commit your `rds` files for major releases.  Also, note that to the extent you have a lot of test files that aren't changing, this should minimize how much binary data you commit.  One possible way to handle this with Git is to use the following command (adapted from twalberg's [SO answer](http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory)):
+The approach we suggest is the last one above: just commit your `rds` files for major releases.  Also, note that to the extent you have a lot of test files that aren't changing, this should minimize how much binary data you commit.  One possible way to handle this with Git is to use the following command (adapted from twalberg's [SO answer](http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory)).
+
+**Warning**: be careful when you reset your working directory as your `rds` files will get reset to the last version that you committed (i.e. `git checkout -- .` will replace your currend `rds` with the one in the repo).  If you update your `rds` within a branch and then merge the branch back, make sure you either commit or stash the `rds` before the merge.
+
+To implement:
+
 ```
 git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged
 ```
@@ -124,7 +129,8 @@ This will prevent the `rds` files as showing up as being modified when you run `
 ```
 git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged
 ```
-**Warning**: be careful when you reset your working directory as your `rds` files will get reset to the last version that you committed (i.e. `git checkout -- .` will replace your currend `rds` with the one in the repo).  If you `--assume-unchanged` other files such as `.o` or `.so` files, you may need to remove those after a checkout as well so that `devtools::install` will recreate them from current sources.
+
+If you `--assume-unchanged` other files such as `.o` or `.so` files, you may need to remove those after a checkout as well so that `devtools::install` will recreate them from current sources.
 
 ## Error Handling
 
@@ -146,11 +152,11 @@ install(paste0(unitizer.path, "/example.pkgs/unitizerdummypkg1"))  # one of seve
 
 `review` allows you to review all tests in a unitizer rds with the option of dropping tests from it.  See `?review`.
 
-### `edit_fun_names`
+### `editCalls`
 
 *Warning*: this is experimental.
 
-`edit_fun_names` allows you to modify function names in calls stored in an `unitizer`.  This is useful when you decide to change a function name, but otherwise leave the behavior and rest of the call unchanged.  You can then upate your test script and the renamed calls will be matched against the correct values in the `unitizer` store.  Without this you would have to re-review and re-store every test since `unitizer` identifies tests by the deparsed expression.
+`editCalls` allows you to modify the calls calls stored in a `unitizer`.  This is useful when you decide to change the call (e.g. a function name), but otherwise leave the behavior of the call unchanged.  You can then upate your test script and the renamed calls will be matched against the correct values in the `unitizer` store.  Without this you would have to re-review and re-store every test since `unitizer` identifies tests by the deparsed call.
 
 ### `split`
 
@@ -158,7 +164,7 @@ There is currently no direct way to split a `unitizer` into pieces (see [issue #
 
 1. copy the test file and the corresponding `unitizer` to a new location
 2. edit the original test file to remove the tests we want to split off
-3. run unitizer and agree to drop all removed tests (hint, use CAPSLOCK)
+3. run unitizer and agree to drop all removed tests (hint: this is a good time to use `YY`)
 4. edit the new test file and remove the tests that are still in the old test file
 5. run unitizer and agree to drop all removed tests
 

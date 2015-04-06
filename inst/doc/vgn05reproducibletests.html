@@ -72,6 +72,7 @@
 <p>Unfortunately R does not provide any built-in ways to create clean environments that will remain at the top of the search path, or any straightforward way to evaluate expressions in alternate search paths. As a result <code>unitizer</code> must resort to some tricks to provide this functionality.</p>
 <p><code>unitizer</code> will trace <code>base::library</code>, <code>base::attach</code>, and <code>base::detach</code>. Any time any of those functions is called, <code>unitizer</code> will update the parent of the test evaluation environment to be the second environment on the search path (i.e. the parent of <code>.GlobalEnv</code>). By doing this we can ensure that our evaluation environment always has access to any packages that are loaded by the test code.</p>
 <p>In addition to resetting the test environment parent, <code>unitizer</code> uses the traced functions to record the additions and removal of objects from the search path so that these can be undone once the tests evaluation and review is completed.</p>
+<p><code>unitizer</code> <strong>does not modify the search path itself</strong> other than by using <code>library</code>, <code>attach</code>, and <code>detach</code>.</p>
 </div>
 <div id="potential-pitfalls" class="section level3">
 <h3>Potential Pitfalls</h3>
