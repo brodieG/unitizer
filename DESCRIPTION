@@ -15,7 +15,8 @@ Imports:
 VignetteBuilder: knitr
 Suggests:
     knitr,
-    testthat
+    testthat,
+    devtools
 License: GPL-3
 LazyData: true
 Collate:
