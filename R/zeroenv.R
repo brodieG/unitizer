@@ -515,6 +515,7 @@ search_path_restore <- function() {
   # search path to its previous state
 
   reattach <- base::attach   # quash a NOTE (as per above, we don't think this is against the spirit of the note)
+  relib <- base::library     # as above
 
   for(i in rev(seq_along(pack.env$history))) {
     hist <- pack.env$history[[i]]
@@ -529,7 +530,7 @@ search_path_restore <- function() {
       } else if(hist@mode == "remove") { # Need to add back
         if(hist@type == "package") {
           suppressPackageStartupMessages(
-            library(
+            relib(
               hist@name, pos=hist@pos, quietly=TRUE, character.only=TRUE,
               lib.loc=dirname(attr(hist@extra, "path")), warn.conflicts=FALSE
           ) )
