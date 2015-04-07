@@ -1,6 +1,6 @@
-[![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png)](https://travis-ci.org/brodieG/unitizer)
-
 # unitizeR - Easy R Unit Tests
+
+[![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png)](https://travis-ci.org/brodieG/unitizer)
 
 ## Motivation
 
