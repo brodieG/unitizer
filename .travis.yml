@@ -10,7 +10,8 @@ warnings_are_errors: true
 
 sudo: required
 
-script: echo "options(repos = c(CRAN='http://cran.r-project.org'))" >> ~/.Rprofile
+cran: http://cran.rstudio.com/
+
 # notifications:
 #   email:
 #     on_success: brodie.gaslam@yahoo.com
