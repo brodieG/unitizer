@@ -85,7 +85,7 @@ In order to perpetuate the R console prompt illusion, `unitizer` needs to overri
 
 If your tests produce massive objects, the `unitizer` `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
 
-Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in [version controlled projects]().
+Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in [version controlled projects](#version-control-and-unitizer).
 
 #### Backup Your `unitizer` Stores
 
