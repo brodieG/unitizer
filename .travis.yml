@@ -4,6 +4,7 @@ language: r
 
 r_packages:
   - testthat
+  - devtools
 
 warnings_are_errors: true
 
