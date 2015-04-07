@@ -156,7 +156,7 @@ search_path_setup <- function() {
         character.only <- TRUE
       }
       library <- unitizer.env$lib.copy
-      res <- library(
+      res <- unitizer.env$lib.copy(
         package=package, help=help, pos = pos, lib.loc = lib.loc,
         character.only = character.only, logical.return = logical.return,
         warn.conflicts = warn.conflicts, quietly = quietly,
