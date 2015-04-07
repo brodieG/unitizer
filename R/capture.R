@@ -19,6 +19,10 @@
 #'   since \code{set_text_capture} detects whether sinking is already in process
 #'   and returns FALSE if it is, which then tells \code{get_text_capture} not to
 #'   undo the sink
+#' @param type charcter(1L) in \code{c("output", "message")}
+#' @param file.name character(1L) file location corresponding to \code{con}
+#' @param no.unsink logical(1L) for testing purposes so we don't release a sink
+#'   when none was actually set
 #' @keywords internal
 #' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
 
@@ -42,7 +46,10 @@ set_text_capture <- function(con, type) {
   }
   return(FALSE)
 }
-get_text_capture <- function(con, file.name, type) {
+#' @rdname set_text_capture
+#' @keywords internal
+
+get_text_capture <- function(con, file.name, type, no.unsink=FALSE) {
   if(
     !isTRUE(type %in% c("message", "output")) || !is.character(file.name) ||
     length(file.name) != 1L || !(inherits(con, "file") && isOpen(con) ||
@@ -59,7 +66,7 @@ get_text_capture <- function(con, file.name, type) {
         "test code is manipulating connections, or there is a bug in this code."
     ) }
     if(identical(type, "message")) {
-      release_stderr_sink(silent=TRUE)  # close sink since it is the same we opened
+      if(!no.unsink) release_stderr_sink(silent=TRUE)  # close sink since it is the same we opened
     } else if (identical(type, "output")) {
       if(isTRUE(sink.number() > 1L)) {  # test expression added a diversion
         stop(
@@ -67,7 +74,7 @@ get_text_capture <- function(con, file.name, type) {
           "If you don't believe the test expressions introduced diversions (i.e. used ",
           "`sink`), contact maintainer."
       ) }
-      sink()
+      if(!no.unsink) sink()
     } else {
       stop("Logic Error: unexpected connection type; contact maintainer.")
     }
@@ -100,6 +107,11 @@ get_text_capture <- function(con, file.name, type) {
         immediate. = TRUE
       )
       if(err.con.num != 2) sink(err.con, type="message")
+
+      # Reset writing point to last point read
+
+      pos <- seek(con, origin="current", rw="read")
+      seek(con, pos, rw="write")
     }
     return(res)
   } else if (!identical(con, FALSE)) {

@@ -1,3 +1,26 @@
+unitizer 0.8.0
+--------------------------------------------------------------------------------
+
+Improvements:
+
+* Added ability to accept multiple tests at once (Issue #45, use wisely...)
+* `unitize` can now infer partially specified test file names (in particular,
+  will know to look in `pkgname/tests/unitizer`; see `?infer_unitizer_location`)
+* `parse_with_comments` no longer run in non-interactive mode (#63)
+* Test call now part of output of test object `show` method (#54)
+
+Bugfixes:
+
+* Comments inside `unitizer_sect` preserved (#64)
+* Ignored tests assigned to first non-ignored test section (#57)
+* Prompt display issues (#65, #66)
+
+Internal:
+
+* `search_path_cleanup` more robust (#59)
+* `get_text_capture` tests added (#60)
+
+
 unitizer 0.7.1
 --------------------------------------------------------------------------------
 
@@ -19,17 +42,19 @@ unitizer 0.7.0
 
 Improvements:
 
-* Failed tests now automatically output a snippet of new and reference objects (Issue #34)
+* Failed tests now automatically output a snippet of new and reference objects
+  (Issue #34)
 * Text handling generally improved (better wrapping, etc. Issue #38)
 * Parsing speed improved (Issue #15)
-* Got rid of `get*` functions, instead, access test details with `.NEW`/`.REF` (Issue #29)
+* Got rid of `get*` functions, instead, access test details with `.NEW`/`.REF`
+  (Issue #29)
 * Implemented `editFunNames` to allow user to modify stored calls in `unitizer`
   so that tests can be re-used even if function names are changed
 
 unitizer 0.6.5
 --------------------------------------------------------------------------------
 
-Doc updates; should have been part of 0.6.4, but was too rushed to push to github...
+Doc updates; should have been part of 0.6.4, but was too rushed to push...
 
 unitizer 0.6.4
 --------------------------------------------------------------------------------
@@ -41,12 +66,14 @@ Improvements:
 
 Bugfixes:
 
-* Reference section logic improved (assume fixes #36 until there is evidence against)
+* Reference section logic improved (assume fixes #36 until there is evidence
+  against)
 * Several parse errors fixed
 
 Other:
 
-* Now depends on R 3.1.2 (not really, but that's what we are developing on and don't have bandwidth to test against multiple R versions)
+* Now depends on R 3.1.2 (not really, but that's what we are developing on and
+  don't have bandwidth to test against multiple R versions)
 
 unitizer 0.6.3
 --------------------------------------------------------------------------------

@@ -106,6 +106,19 @@ local( {
       lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call")
     )
   } )
+  test_that("unitizerBrowse subsetting works", {
+    # note single bracket subsetting for `unitizerBrowse` overrides the `unitizerList`
+    # subsetting
+
+    expect_equal(
+      c("matrix(1:9, 3)", "1 + 20", "matrix(1:9, ncol = 3)"),
+      unitizer:::deparseCalls(unitizer:::extractItems(unitizer.prepped[c(4, 8, 10)]))
+    )
+    expect_equal(
+      c("runif(20)", "var <- 200", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))"),
+      unitizer:::deparseCalls(unitizer:::extractItems(unitizer.prepped[c(2, 3, 11)]))
+    )
+  })
   test_that("Reference section mapping works", {
 
     # Copy over just two sections

@@ -96,6 +96,7 @@ Reference test does not match new test from test script (compare `.new` and
 </ul>
 <p><code>unitizer</code> checks for an exact match of a user expression to the special command letters, so something like <code>(Y)</code> does not match <code>Y</code> which allows you to reach the value stored in <code>Y</code>.</p>
 <p>If at any time you forget what <code>unitizer</code> options are available to you you can just hit the “ENTER” key and <code>unitizer</code> will re-print the options to screen.</p>
+<p>You can accept all unreviewed tests in a sub-section, section, or unitizer with <code>YY</code>, <code>YYY</code>, and <code>YYYY</code> respectively. You can also reject them with <code>NN</code>, <code>NNN</code>, and <code>NNNN</code>. Please note that accepting multiple tests without reviewing them is <strong>a really bad idea</strong>, and you should only resort to these shortcuts when you are absolutely certain of what you are doing. The most common use case for these shortcuts is to drop multiple removed tests from a <code>unitizer</code>.</p>
 </div>
 <div id="test-navigation" class="section level2">
 <h2>Test Navigation</h2>
@@ -112,10 +113,6 @@ Reference test does not match new test from test script (compare `.new` and
      3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
      7. get_rsq(res)   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
      8. fastlm(x, head(y))   .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
-
-Note that tests are displayed in the order they appear in the test file, not in
-the order they would be reviewed in, which is why the test numbers are not
-necessarily sequential (see vignette for details and exceptions).
 
 What test do you wish to review (input a test number, [U]nreviewed)?
 unitizer&gt;</code></pre>

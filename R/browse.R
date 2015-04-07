@@ -138,7 +138,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
                 }
                 next
               } else {
-
+                # wtf? intended to be NULL??
               }
             },
             earlyExit=function() user.quit <<- TRUE
@@ -296,8 +296,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     # Display Section Headers as Necessary
 
-    valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
-
+    valid.opts <- c(
+      Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview", YY="", YYY="", YYYY="",
+      NN="", NNN="", NNNNN=""
+    )
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
 
@@ -341,8 +343,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
         if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
           paste0(
             " ", curr.sub.sec.obj@prompt, " ",
-            "(", paste0(c(valid.opts, Q="[Q]uit", H="[H]elp"), collapse=", "),
-            ")?\n"
+            "(",
+            paste0(
+              c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
+              collapse=", "
+            ),
+            ")?\n\n"
         ) }
       )
     }
@@ -378,13 +384,15 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
       ) {
-        screen_out(
-          item.main@data@message,
-          max.len=getOption("unitizer.test.msg.lines"), stderr()
-        )
-        set_trace(item.main@trace)
+        if(nchar(item.main@data@message))
+          screen_out(
+            item.main@data@message,
+            max.len=getOption("unitizer.test.msg.lines"), stderr()
+          )
+        if(length(item.main@trace)) set_trace(item.main@trace)
       }
-      if(curr.sub.sec.obj@show.out) screen_out(item.main@data@output)
+      if(curr.sub.sec.obj@show.out && nchar(item.main@data@output))
+        screen_out(item.main@data@output)
 
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
@@ -455,7 +463,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(!is.null(item.new))
         "`.new` for the current value, or `.NEW` for the full test object",
       if(!is.null(item.ref))
-        "`.ref` for the reference value, or `.REF` for the full reference object"
+        "`.ref` for the reference value, or `.REF` for the full reference object",
+      "`YY` or `NN` to apply same choice to all remaining unreviewed items in sub-section",
+      "`YYY` or `NNN` to apply same choice to all remaining unreviewed items in section",
+      "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer"
     )
     # navigate_prompt handles the B and R cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a function
@@ -465,7 +476,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
       is(
         x.mod <- navigate_prompt(
           x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
-          browse.env1=browse.eval.env, browse.env2=new.env(parent=parent.env(base.env.pri)),
+          browse.env1=browse.eval.env,
+          browse.env2=new.env(parent=parent.env(base.env.pri)),
           valid.opts=valid.opts,
           help=c(help.prompt, paste0(as.character(UL(help.opts)), collapse="\n"))
         ),
@@ -473,10 +485,64 @@ setMethod("reviewNext", c("unitizerBrowse"),
       )
     ) {
       return(x.mod)
-    } else if (x.mod %in% c("Y", "N")) { # Actual user input
-      x@mapping@reviewed[[curr.id]] <- TRUE
-      x@mapping@review.val[[curr.id]] <- x.mod
-      x@last.id <- curr.id
+    } else if (isTRUE(grepl("(Y|N)\\1{0,3}", x.mod))) { # Actual user input
+      act <- substr(x.mod, 1L, 1L)
+      act.times <- nchar(x.mod)
+      rev.ind <- if(act.times == 1L) {
+        curr.id
+      } else {
+        rev.ind.tmp <- if (act.times == 2L) {
+          cur.sub.sec.items                # all items in sub section
+        } else if (act.times == 3L) {
+          x@mapping@sec.id == curr.sec     # all items in sub-section
+        } else if (act.times == 4L) {
+          TRUE                             # all items
+        } else
+          stop("Logic Error: unexpected number of Y/N; contact maintainer.")
+
+        # exclude already reviewed items as well as ignored items as well as
+        # passed items (unless in review mode for last one)
+
+        indices <- which(
+          rev.ind.tmp & !x@mapping@reviewed & !x@mapping@ignored &
+          (x@mapping@review.type != "Passed" & !identical(x@mode, "review"))
+        )
+        if(length(indices)) {
+          show(x[indices])
+          help.mx <- rbind(
+            c("Add New", "Keep New", "Drop Ref", "Drop New", "Keep New"),
+            c("Drop New", "Keep Ref", "Keep Ref", "Keep New", "Keep Ref")
+          )
+          rownames(help.mx) <- c("[Y]es", "[N]o")
+          colnames(help.mx) <- c("*New*", "*Failed*", "*Removed*", "*Passed*", "*Corrupted*")
+
+          help.txt <- capture.output(print(as.data.frame(help.mx), quote=TRUE))
+          help <- paste0(
+            paste0(
+              "The effect of 'Y' or 'N' depends on what type of test you ",
+              "are reviewing.  Consult the following table for details:\n\n"
+            ),
+            paste0(help.txt, collapse="\n")
+          )
+          prompt <- paste0(
+            "Choose '", act, "' for the ", length(indices),
+            " test", if(length(indices) > 1L) "s", " shown above"
+          )
+          cat(prompt, " ([Y]es, [N]o)?\n", sep="")
+          act.conf <- unitizer_prompt(
+            prompt, new.env(parent=parent.env(base.env.pri)), help,
+            valid.opts=c(Y="[Y]es", N="[N]o")
+          )
+          if(identical(act.conf, "Q")) invokeRestart("earlyExit")
+          if(identical(act.conf, "N")) return(x)
+        }
+        indices
+      }
+      if(!any(rev.ind)) stop("Logic Error: no tests to accept/reject")
+
+      x@mapping@reviewed[rev.ind] <- TRUE
+      x@mapping@review.val[rev.ind] <- act
+      x@last.id <- max(rev.ind)
     } else if (identical(x.mod, "Q")) {
       invokeRestart("earlyExit")
     } else {

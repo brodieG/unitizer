@@ -17,12 +17,24 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
   function(x, test.env, capt.cons) {
     if(!is.environment(test.env)) stop("Argument `test.env` must be an environment.")
     if(!is.list(capt.cons)) stop("Argument `capt.cons` must be a list")
-    # Prep message and std output capture, note this is reset with every test expression
-    # evaluation
 
-    x.extracted <- comm_and_call_extract(x)
-    x.comments <- x.extracted$comments      # need to recover comments from container since we can't attach comments directly to name
-    x <- x.extracted$call                   # get rid of comment container
+    # Check whether we are dealing with a unitizer_sect
+
+    is_unitizer_sect <- FALSE
+    if(is.call(x))
+      is_unitizer_sect <-
+        identical(try(eval(x[[1L]], test.env), silent=TRUE), unitizer_sect)
+
+    # Prep message and std output capture, note this is reset with every test
+    # expressionevaluation
+
+    x.comments <- character()
+
+    if(!is_unitizer_sect) {
+      x.extracted <- comm_and_call_extract(x)
+      x.comments <- x.extracted$comments      # need to recover comments from container since we can't attach comments directly to name
+      x <- x.extracted$call                   # get rid of comment container
+    }
 
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
@@ -67,11 +79,10 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     # Revert settings, get captured messages, if any and if user isn't capturing already
 
     capt <- get_capture(capt.cons)
-    if(aborted & is.call(x)) {   # check to see if `unitizer_sect` failed
-      test.fun <- try(eval(x[[1L]], test.env), silent=TRUE)
-      if(identical(test.fun, unitizer_sect)) {
-        stop("Failed instantiating a unitizer section:\n", paste0(capt$message, "\n"))
-    } }
+
+    if(aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
+      stop("Failed instantiating a unitizer section:\n", paste0(capt$message, "\n"))
+
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
       conditions=new("conditionList", .items=res$conditions),

@@ -2,9 +2,9 @@ Package: unitizer
 Title: Easy R Unit Tests
 Description: Simplifies regression tests by comparing objects produced by test
     code with earlier versions of those same objects.  If objects are unchanged
-    the tests pass.  `unitizer` provides an interactive interface to review
-    failing tests or new tests.  See vignettes for details.
-Version: 0.7.1
+    the tests pass, otherwise you can optionally review failing tests or new
+    tests through the provided interactive interface.
+Version: 0.8.0
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
@@ -15,7 +15,8 @@ Imports:
 VignetteBuilder: knitr
 Suggests:
     knitr,
-    testthat
+    testthat,
+    devtools
 License: GPL-3
 LazyData: true
 Collate:

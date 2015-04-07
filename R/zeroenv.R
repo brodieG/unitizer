@@ -127,6 +127,19 @@ search_path_setup <- function() {
 
   std.err <- tempfile()
   std.err.con <- file(std.err, "w+b")
+  on.exit({
+    try(get_text_capture(std.err.con, std.err, type="message"))
+    release_sinks()
+    close(std.err.con)
+    unlink(std.err)
+    try(search_path_unsetup())
+    stop(
+      "Unexpectedly failed while attempting to setup search path.  You may ",
+      "need to exit R to restore search path and to untrace ",
+      "`library/attach/detach`; this should not happen so please report to ",
+      "maintainer."
+    )
+  } )
   capt.con <- set_text_capture(std.err.con, "message")
 
   # Attempt to apply shims
@@ -143,7 +156,7 @@ search_path_setup <- function() {
         character.only <- TRUE
       }
       library <- unitizer.env$lib.copy
-      res <- library(
+      res <- unitizer.env$lib.copy(
         package=package, help=help, pos = pos, lib.loc = lib.loc,
         character.only = character.only, logical.return = logical.return,
         warn.conflicts = warn.conflicts, quietly = quietly,
@@ -247,6 +260,7 @@ search_path_setup <- function() {
 
   shim.out <- get_text_capture(capt.con, std.err, "message")
 
+  on.exit(NULL)
   close(std.err.con)
   unlink(std.err)
   if(
@@ -291,6 +305,18 @@ search_path_unsetup <- function() {
 
   std.err <- tempfile()
   std.err.con <- file(std.err, "w+b")
+  on.exit({
+    try(get_text_capture(std.err.con, std.err, type="message"))
+    release_sinks()
+    close(std.err.con)
+    unlink(std.err)
+    stop(
+      "Unexpectedly failed while attempting to restore search path.  You may ",
+      "need to exit R to restore search path and to untrace ",
+      "`library/attach/detach`; this should not happen so please report to ",
+      "maintainer."
+    )
+  } )
   capt.con <- set_text_capture(std.err.con, "message")
 
   unshim <- try({  # this needs to go
@@ -299,6 +325,7 @@ search_path_unsetup <- function() {
     untrace(detach, where=.BaseNamespaceEnv)
   })
   unshim.out <- get_text_capture(capt.con, std.err, "message")
+  on.exit(NULL)
   close(std.err.con)
   unlink(std.err)
 
@@ -481,7 +508,14 @@ search_path_restore <- function() {
     )
     return(invisible(FALSE))
   }
-  # Step back through history, undoing each step
+  # Step back through history, undoing each step; not this means we need to
+  # potentially re-attach an object that was previously attached to the search
+  # path.  While we realize this is bad practice, the only reason we are doing
+  # this is because said object was already attached and we are restoring the
+  # search path to its previous state
+
+  reattach <- base::attach   # quash a NOTE (as per above, we don't think this is against the spirit of the note)
+  relib <- base::library     # as above
 
   for(i in rev(seq_along(pack.env$history))) {
     hist <- pack.env$history[[i]]
@@ -496,12 +530,12 @@ search_path_restore <- function() {
       } else if(hist@mode == "remove") { # Need to add back
         if(hist@type == "package") {
           suppressPackageStartupMessages(
-            library(
+            relib(
               hist@name, pos=hist@pos, quietly=TRUE, character.only=TRUE,
               lib.loc=dirname(attr(hist@extra, "path")), warn.conflicts=FALSE
           ) )
         } else if (hist@type == "object") {
-          attach(hist@extra, pos=hist@pos, name=hist@name, warn.conflicts=FALSE)
+          reattach(hist@extra, pos=hist@pos, name=hist@name, warn.conflicts=FALSE)
         }
       }
     })

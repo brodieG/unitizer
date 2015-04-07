@@ -17,7 +17,7 @@ vignette: >
 
 ### Motivation
 
-`unitizer` makes unit tests easy by turning the "informal" tests you write during code development into unit tests.  It does so by storing the test expressions **and** their results.  While `unitizer` is particularly useful when testing expressions that produce complex objects, it generally simplifies unit testing.
+`unitizer` makes unit tests easy by turning the "informal" tests you write during code development into unit tests.  It does so by storing the test expressions **and** their results.  `unitizer` is particularly useful when testing expressions that produce complex objects, but it also generally simplifies unit testing.
 
 To use `unitizer`:
 
@@ -130,7 +130,7 @@ The `unitize`d tests need to be saved someplace, and the default action is to sa
 
 ### Tests are Evaluated in Clean Environments
 
-Objects in `.GlobalEnv` will not be visible, and any non basic packages will be detached prior to test evaluation (you can re-attach those you need in your tests with `library`).  For more details see the [reproducible tests vignette](vgn05reproducibletests.html).
+Objects in `.GlobalEnv` will not be visible, and any non basic packages will be detached prior to test evaluation (you can re-attach those you need in your tests with `library`).  The search path will be restored to its original state after `unitizer` completes execution.  For more details see the [reproducible tests vignette](vgn05reproducibletests.html).
 
 ### Tests Pass If They `all.equal` Stored Reference Values
 

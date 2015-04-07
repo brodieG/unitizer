@@ -68,6 +68,8 @@ If you type any of those letters into the `unitizer` prompt you will cause `unit
 
 If at any time you forget what `unitizer` options are available to you you can just hit the "ENTER" key and `unitizer` will re-print the options to screen.
 
+You can accept all unreviewed tests in a sub-section, section, or unitizer with `YY`, `YYY`, and `YYYY` respectively.  You can also reject them with `NN`, `NNN`, and `NNNN`.  Please note that accepting multiple tests without reviewing them is **a really bad idea**, and you should only resort to these shortcuts when you are absolutely certain of what you are doing.  The most common use case for these shortcuts is to drop multiple removed tests from a `unitizer`.
+
 ## Test Navigation
 
 ### Selecting A Test to Review
@@ -85,10 +87,6 @@ unitizer> R
      3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
      7. get_rsq(res)   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
      8. fastlm(x, head(y))   .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
-
-Note that tests are displayed in the order they appear in the test file, not in
-the order they would be reviewed in, which is why the test numbers are not
-necessarily sequential (see vignette for details and exceptions).
 
 What test do you wish to review (input a test number, [U]nreviewed)?
 unitizer>

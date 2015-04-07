@@ -85,7 +85,7 @@ In order to perpetuate the R console prompt illusion, `unitizer` needs to overri
 
 If your tests produce massive objects, the `unitizer` `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
 
-Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in [version controlled projects]().
+Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in [version controlled projects](#version-control-and-unitizer).
 
 #### Backup Your `unitizer` Stores
 
@@ -164,7 +164,7 @@ There is currently no direct way to split a `unitizer` into pieces (see [issue #
 
 1. copy the test file and the corresponding `unitizer` to a new location
 2. edit the original test file to remove the tests we want to split off
-3. run unitizer and agree to drop all removed tests (hint, use CAPSLOCK)
+3. run unitizer and agree to drop all removed tests (hint: this is a good time to use `YY`)
 4. edit the new test file and remove the tests that are still in the old test file
 5. run unitizer and agree to drop all removed tests
 

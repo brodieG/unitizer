@@ -56,7 +56,9 @@ unitizer_prompt <- function(
     stop("Argument `valid.opts` must be character")
   valid.opts <- c(valid.opts, Q="[Q]uit", H="[H]elp")
   # should validate other parameters as well
-  opts.txt <- paste0("(", paste0(valid.opts, collapse=", "), ")?")
+  opts.txt <- paste0(
+    "(", paste0(valid.opts[nchar(valid.opts) > 0], collapse=", "), ")?"
+  )
   repeat {
     while(inherits(try(val <- faux_prompt("unitizer> ")), "try-error")) NULL
 
@@ -76,7 +78,7 @@ unitizer_prompt <- function(
         if(length(help) > 1L) {
           cat(help[-1L], sep="")
         }
-        cat("\n\n", sep="")
+        cat("\n", sep="")
         word_cat(paste0(paste(text, opts.txt)))
       }
       next
@@ -174,7 +176,11 @@ review_prompt <- function(x, nav.env) {
     "typically reviewed in this mode.  The letter after the test status ",
     "represents prior user input to test review (a `-` indicates ",
     "the test has not been reviewed). Type \"U\" to jump to the first unreviewed ",
-    "test."
+    "test.\n\n",
+    "Note that tests are displayed in the order they appear in the test",
+    "file, not in the order they would be reviewed in, which is why the test",
+    "numbers are not necessarily sequential (see vignette for details and",
+    "exceptions).\n"
   )
   nav.opts <- c(
     "input a test number",
