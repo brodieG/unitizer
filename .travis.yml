@@ -1,0 +1,18 @@
+# Sample .travis.yml for R projects from https://github.com/craigcitro/r-travis
+
+language: r
+
+r_packages:
+  - testthat
+  - devtools
+
+warnings_are_errors: true
+
+sudo: required
+
+cran: http://cran.rstudio.com/
+
+# notifications:
+#   email:
+#     on_success: brodie.gaslam@yahoo.com
+#     on_failure: brodie.gaslam@yahoo.com
