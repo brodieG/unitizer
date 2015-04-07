@@ -1,4 +1,4 @@
-![Travis-CI Build Status](https://travis-ci.org/brodieg/unitizer.png?branch=rc0.8.0)
+[![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png)](https://travis-ci.org/brodieG/unitizer)
 
 # unitizeR - Easy R Unit Tests
 
