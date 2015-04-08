@@ -23,6 +23,9 @@
 #' the functions to convert based on symbols only; if you assign a
 #' \code{testthat} function to another symbol, or another function to a
 #' \code{testthat} symbol the conversion will not know the difference.
+#' Additionally we expect that the arguments to the \code{testthat} functions
+#' will be the test expressions themselves (as opposed to variables containing
+#' test expressions or the like).
 #'
 #' Calls to \code{test_that} are replaced with calls to \code{unitizer_sect}.
 #' Calls to \code{context} are commented out since there currently is no
@@ -35,12 +38,15 @@
 #' ancillary function, especially since none of the \code{testthat} functions
 #' are called directly.  We use the functions for matching arguments.
 #'
+#' @export
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
-#'   test store in
+#'   test store in, if NULL will not store the result (note return value is
+#'   still useful)
 #' @param keep.testthat.call whether to preserve the \code{testthat} call that
 #'   was converted, as a comment (does not apply to \code{test_that} calls)
-#' @return logical(1L) TRUE on success
+#' @return character the contents of the translated file (saved to
+#'   \code{target.dir} if that parameter is not \code{NULL})
 
 testthat_to_unitizer <- function(
   file.name, target.dir = file.path(dirname(file.name), "..", "unitizer"),
@@ -53,7 +59,7 @@ testthat_to_unitizer <- function(
   tt.env <- as.environment("package:testthat")
   funs.special <- c("test_that", "context")  # functions that shouldn't be simply replaced
   obj.names <- ls(tt.env)
-  obj.list <- mget(fun.names, tt.env)
+  obj.list <- mget(obj.names, tt.env)
   obj.funs <- vapply(obj.list, function(x) is.function(x) && ! isS4(x), logical(1L))
   fun.list <- obj.list[obj.funs]
   fun.names <- obj.names[obj.funs]
@@ -74,130 +80,154 @@ testthat_to_unitizer <- function(
   }
   # Extract
 
-  cln.dbl <- quote(::)
-  cln.trp <- quote(:::)
+  cln.dbl <- quote(a::b)[[1L]]
+  cln.trp <- quote(a:::b)[[1L]]
   tt.symb <- quote(testthat)
   t_t.symb <- quote(test_that)
 
-  res.expr <- expression()
-  res.comments <- list()
+  # convert the calls back to character, done as an in-body function since only
+  # ever called here, and a bunch of variables are useful to share
 
-  res.idx <- failures <- attempts <- 0L
+  testthat_extract_all <- function(expr, mode="all") {
 
-  for(i in seq_along(parsed)) {
-    res.idx <- res.idx + 1L
-    res.comments[[res.idx]] <- character(0L)
+    res.expr <- expression()
+    res.comments <- list()
+    result.final <- character()
+    res.idx <- failures <- attempts <- 0L
 
-    if(is.call(parsed[[i]])) {
-      sub.call <- parsed[[i]][[1L]]
-      if(
-        is.call(sub.call) && length(sub.call) == 3L && (
-          identical(sub.call[[1L]], cln.dbl) ||
-          identical(sub.call[[1L]], cln.trp)
-        ) && identical(sub.call[[2L]], tt.symb)
-      ) {
-        sub.call <- sub.call[[3L]]
-      }
-      # test_that call requires special handling
+    for(i in seq_along(expr)) {
+      success <- FALSE
+      result <- character()
 
-      if(
-        (sub.call.symb <- is.symbol(sub.call)) && identical(sub.call, test_that)
-      ) {
-        res.extract <- testtthat_extract(
-          parsed[[i]], fun.list[[which(fun.names == "test_that")]], "code"
-        )
-        if(any(nchar(res.extract$msg))) {
-          res.comments[[res.idx]] <- c(res.comments[[res.idx]], res.extract$msg)
-        }
+      if(is.call(expr[[i]])) {
+        # pull out function symbol for idendification
 
-
-
-
-
-      } else {
-        # pull out comments for all of these if relevant
-
-        res.pre <- comm_and_call_extract(parsed[[i]])
-        res.comments[[res.idx]] <- res.pre$comments
-
-        # expect_* or other similar test that calls require extraction
-
+        sub.call <- expr[[i]][[1L]]
         if(
-          is.symbol(sub.call) &&
-          (fun.id <- match(fun.name, fun.names[funs.to.extract], nomatch=0L))
+          is.call(sub.call) && length(sub.call) == 3L && (
+            identical(sub.call[[1L]], cln.dbl) ||
+            identical(sub.call[[1L]], cln.trp)
+          ) && identical(sub.call[[2L]], tt.symb)
         ) {
-          attempts <- attempts + 1L
-          res.extract <- testtthat_extract(
-            res.pre$call, fun.list[funs.to.extract][[fun.id]], "object"
-          )
-          res.expr[[res.idx]] <- res.extract$call
-          res.comments[[res.idx]] <- c(
-            res.comments[[res.idx]],
-            if(any(nchar(res.extract$msg))) res.extract$msg
-          )
-        } else {  # normal calls or anything
-          res.expr[[res.idx]] <- res.pre$call
+          sub.call <- sub.call[[3L]]
         }
+        if(
+          (sub.call.symb <- is.symbol(sub.call)) && identical(sub.call, test_that)
+        ) {
+          # test_that call requires special handling,
 
+          if(!identical(mode, "all")) {  # check we don't have nested `test_that`
+            result <- c(
+              result, paste0(
+                "# [ERROR: testthat -> unitizer] cannot extract nested `test_that` ",
+                "calls"
+            ) )
+            result <- c(result, deparse(expr[[i]]))
+          } else {
+            # First extract params
 
+            res.extract <- testtthat_extract(
+              expr[[i]], fun.list[[which(fun.names == "test_that")]],
+              c("code", "desc")
+            )
+            if(any(nchar(res.extract$msg))) { # failed
+              result <- c(result, res.extract$msg)
+              result <- c(result, deparse(expr[[i]]))
+            } else {
+              success <- TRUE
+              result <- c(result(attr(expr[[i]], "comment")))
+            }
+            # Now parse the `code` param looking for
+
+            code <- res.extract$call$code
+            code.block <- FALSE
+            if(
+              code.block <- is.language(code) && length(code) > 1L &&
+              identical(code[[1L]], quote("{"))
+            ) {
+              sub.expr <- code[-1L]
+            } else sub.expr <- code
+            sub.res <- Recall(sub.expr, mode="sub")
+            if(code.block)
+              sub.res <- paste0(
+                c("{", paste0("    ", sub.expr), "}"), collapse="\n"
+              )
+            # Put it all together
+
+            result <- c(
+              result,
+              paste0(
+                "unitizer_sect(", paste0(deparse(res.extract$call$desc), sep=""),
+                ", ", sub.res, ")"
+            ) )
+          }
+        } else {
+          # pull out comments for all of these if relevant
+
+          res.pre <- comm_and_call_extract(expr[[i]])
+          result <- c(result, res.pre$comments)
+
+          # expect_* or other similar test that calls require extraction
+
+          if(
+            is.symbol(sub.call) && (
+              fun.id <- match(
+                as.character(sub.call),
+                fun.names[funs.to.extract], nomatch=0L
+            ) )
+          ) {
+            res.extract <- testtthat_extract(
+              res.pre$call, fun.list[funs.to.extract][[fun.id]], "object"
+            )
+            result <- c(result, if(any(nchar(res.extract$msg))) res.extract$msg)
+            result <- c(result, deparse(res.extract$call))
+            success <- !any(nchar(res.extract$msg))
+          } else {  # normal calls or anything
+            result <- c(result, deparse(res.pre$call))
+          }
+        }
+      } else {
+        # Not a call; not sure whether we can actually ever get here due to
+        # parse_with_comments wrapping, but just in case
+
+        res <- comm_and_call_extract(expr[[i]])
+        result <- c(result, res$comments, deparse(res$call))
       }
-    } else {
-      # Not a call; not sure whether we can actually ever get here due to
-      # parse_with_comments wrapping, but just in case
+      if(success && keep.testthat.call) {
+        # Add back call as comment
 
-      res <- comm_and_call_extract(parsed[[i]])
-      res.expr[[res.idx]] <- res$call
-      res.comments[[res.idx]] <- res$comments
+        result <- c(
+          paste0("# ", deparse(comm_and_call_extract(expr[[i]])$call)),
+          result
+        )
+      }
+      result.final <- c(result.final, result)
     }
-
   }
-
-
-  # Evaluate each call in the file and extract at the same time
-
-
-
-
-
-
-
-
-
-
-
-
-
-  if(
-    inherits(
-      try(fun.names <- ls(as.environment("package:testthat"))),
-      "try-error"
-    )
-  ) {
-    stop("Package `testthat` must be loaded before you run this function")
+  translated <- testthat_extract_all(parsed)
+  if(!is.null(target.dir)) {
+    stop("Running/storing Not implemented yet")
   }
-
-  fun.list <- mget(ls(as.environment("package:testthat")), as.environment("package:testthat"))
-  fun.names[sapply(fun.list, function(x) is.function(x) && "object" %in% names(formals(x)))]
-
-
-
-  for(exp in parsed) {
-
-  }
-
+  return(translated)
 }
+
 #' Pull out parameter from call
 #'
+#' @param target.params parameters required in the matched call
 #' @keywords internal
 
-testthat_extract <- function(call, fun, target.param) {
+testthat_match_call <- function(call, fun, target.params) {
   call.matched <- try(match.call(definition=fun, call), silent=TRUE)
   fail.msg <- ""
   if(inherits(call.matched, "try-error")) {
-    fail.msg <- conditionMessage(attr(x, "condition"))
+    fail.msg <- conditionMessage(attr(call.matched, "condition"))
     if(!any(nchar(fail.msg))) fail.msg <- "Failed matching call"
-  } else if (! target.param %in% names(call.matched)) {
-    fail.msg <- paste0("no `", target.param, "` parameter to match and extract")
+  } else if (!all(param.matched <- target.params %in% names(call.matched))) {
+    fail.msg <- paste0(
+      "`", paste0(deparse(target.params[!param.matched]), sep=""),
+      "` parameter", if(length(which(!param.matched)) > 1L) "s",
+      " missing"
+    )
   }
   if(any(nchar(fail.msg))) {
     fail.msg <- paste0(
@@ -207,11 +237,9 @@ testthat_extract <- function(call, fun, target.param) {
           "[ERROR: testthat -> unitizer] ", paste0(fail.msg, collapse="\n")
         ), width=78L
     ) )
-  } else call <- call[[target.param]]
-  list(call=call, msg=fail.msg)
+  }
+  list(call=call.matched, msg=fail.msg)
 }
-
-
 #' Confirm that `testthat` Is Attached
 #'
 #' Would normally do this via NAMESPACE, but do not want to introduce an
@@ -219,8 +247,8 @@ testthat_extract <- function(call, fun, target.param) {
 #' conversion to \code{unitizer}
 
 is_testthat_attached <- function() {
-  if(!inherits(try(as.environment("package:testthat"), silent=TRUE)))
-    stop("Package `testthat` must be loaded")
+  if(inherits(try(as.environment("package:testthat"), silent=TRUE), "try-error"))
+    stop("Package `testthat` must be loaded and attached to search path")
   TRUE
 }
 
