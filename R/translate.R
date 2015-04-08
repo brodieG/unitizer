@@ -52,6 +52,11 @@ testthat_to_unitizer <- function(
   file.name, target.dir = file.path(dirname(file.name), "..", "unitizer"),
   keep.testthat.call = FALSE
 ) {
+  if(!is.character(file.name) || length(file.name) != 1L)
+    stop("Argument `file.name` must be character(1L)")
+  if(!file_test("-f", file.name))
+    stop("Argument `file.name` does not point to a readable file")
+
   is_testthat_attached()
 
   # Get function list to extract
@@ -91,9 +96,7 @@ testthat_to_unitizer <- function(
   testthat_extract_all <- function(expr, mode="all") {
 
     res.expr <- expression()
-    res.comments <- list()
     result.final <- character()
-    res.idx <- failures <- attempts <- 0L
 
     for(i in seq_along(expr)) {
       success <- FALSE

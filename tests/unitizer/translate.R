@@ -31,6 +31,8 @@ unitizer_sect("extract calls", {
 })
 
 unitizer_sect("translate simple", {
+  # NOTE: paths relative to R CMD check set-up
+
   testthat_to_unitizer("blahbalh")  # not real file, should fail
-  testthat_to_unitizer("unitizer/helper/translate1.R")  # path relative to R CMD check set-up
+  testthat_to_unitizer("unitizer/helper/translate1.R", NULL)
 })
