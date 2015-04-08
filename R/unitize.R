@@ -105,8 +105,9 @@ review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer")
 ) {
-  u.name <- if(is.character(x) && length(x) == 1L) {
-    x
+
+  if(is.character(x) && length(x) == 1L) {
+    u.name <- x <- infer_unitizer_location(x, type="d")
   } else {
     u.name <- if(is(x, "unitizer")) x@id else x
     u.name <- try(as.character(u.name), silent=TRUE)
