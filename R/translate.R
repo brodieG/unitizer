@@ -69,7 +69,7 @@ testthat_to_unitizer <- function(
   fun.list <- obj.list[obj.funs]
   fun.names <- obj.names[obj.funs]
 
-  fun.to.extract <- sapply(
+  funs.to.extract <- sapply(
     fun.list,
     function(x) is.function(x) && "object" %in% names(formals(x))
   ) & ! fun.names %in% funs.special
@@ -86,7 +86,6 @@ testthat_to_unitizer <- function(
 
   testthat_extract_all <- function(expr, mode="all") {
 
-    res.expr <- expression()
     result.final <- character()
 
     for(i in seq_along(expr)) {
@@ -120,7 +119,7 @@ testthat_to_unitizer <- function(
           } else {
             # First extract params
 
-            res.extract <- testtthat_extract(
+            res.extract <- testthat_match_call(
               expr[[i]], fun.list[[which(fun.names == "test_that")]],
               c("code", "desc")
             )
@@ -170,11 +169,11 @@ testthat_to_unitizer <- function(
                 fun.names[funs.to.extract], nomatch=0L
             ) )
           ) {
-            res.extract <- testtthat_extract(
+            res.extract <- testthat_match_call(
               res.pre$call, fun.list[funs.to.extract][[fun.id]], "object"
             )
             result <- c(result, if(any(nchar(res.extract$msg))) res.extract$msg)
-            result <- c(result, deparse(res.extract$call))
+            result <- c(result, deparse(res.extract$call[["object"]]))
             success <- !any(nchar(res.extract$msg))
           } else {  # normal calls or anything
             result <- c(result, deparse(res.pre$call))
@@ -197,6 +196,7 @@ testthat_to_unitizer <- function(
       }
       result.final <- c(result.final, result)
     }
+    result.final
   }
   # Parse and translate
 
