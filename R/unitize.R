@@ -114,7 +114,7 @@ review <- function(
     if(inherits(u.name, "try-error")) u.name <- "<unknown>"
 
   }
-  print(H1(paste0("unitizer for: ", u.name, collapse="")))
+  print(H1(paste0("unitizer for: ", basename(u.name), collapse="")))
   invisible(
     unitize_core(
       test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
