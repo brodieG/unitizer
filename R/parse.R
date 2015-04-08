@@ -334,6 +334,7 @@ parse_with_comments <- function(file, text=NULL) {
     } else {
       expr <- try(parse(file, keep.source=TRUE))
     }
+    if(inherits(expr, "try-error")) stop("parsing failed")
     if(!length(expr)) return(expr)
     parse.dat.raw <- getParseData(expr)
     if(!nrow(parse.dat.raw))
