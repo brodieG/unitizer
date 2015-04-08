@@ -74,16 +74,7 @@ testthat_to_unitizer <- function(
     function(x) is.function(x) && "object" %in% names(formals(x))
   ) & ! fun.names %in% funs.special
 
-  # Parse
-
-  comments <- TRUE
-  parsed <- try(parse_with_comments(file.name))
-  if(inherits(parsed, "try-error")) {
-    warning("Unable to recover comments in parse; attempting simple parse")
-    parsed <- parse(file.name, keep.source=FALSE)
-    comments <- FALSE
-  }
-  # Extract
+  # These should probably be defined at top level in package...
 
   cln.dbl <- quote(a::b)[[1L]]
   cln.trp <- quote(a:::b)[[1L]]
@@ -207,6 +198,10 @@ testthat_to_unitizer <- function(
       result.final <- c(result.final, result)
     }
   }
+  # Parse and translate
+
+  parsed <- parse_tests(file.name)
+
   translated <- testthat_extract_all(parsed)
   if(!is.null(target.dir)) {
     stop("Running/storing Not implemented yet")

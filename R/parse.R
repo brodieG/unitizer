@@ -318,9 +318,11 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #' than an expression as an input (but even that didn't fix it!!!)
 #'
 #' @keywords internal
+#' @aliases parse_tests
 #' @seealso comments_assign, getParseData, parse
 #' @param file containing code to parse with comments
 #' @param text optional, text to parse if \code{`file`} is not specified
+#' @param comment logical(1L) whether to try to get comments
 #' @return an expression with comments retrieved from the parse attached
 #'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 
@@ -477,6 +479,42 @@ parse_with_comments <- function(file, text=NULL) {
     expr
   }
   prsdat_recurse(expr, parse.dat, top.level=0L)
+}
+
+#' @rdname parse_with_comments
+#' @keywords internal
+
+parse_tests <- function(file, comments=TRUE, text=NULL) {
+
+  if(!isTRUE(comments) && !identical(comments, FALSE))
+    stop("Argument `comments` must be TRUE or FALSE")
+  if(!is.null(text) && !missing(file))
+    stop("If Argument `text` is specified, argument `file` must be missing")
+
+  parsed <- NULL
+  if(comments) {
+    parsed <- try(parse_with_comments(file, text))
+    if(inherits(parsed, "try-error")) {
+      if(
+        identical(
+          conditionMessage(attr(parsed, "condition")),
+          "parsing failed"
+        )
+      )
+        stop("Unable to parse test file; see previous messages")
+    } else {
+      return(parsed)
+  } }
+  # Either no comment mode, or couldn't extract in comment mode
+
+  if(inherits(parsed, "try-error"))
+    warning(
+      "Unable to recover comments in parse; attempting simple parse",
+      immediate.=TRUE
+    )
+  if(is.null(text)) {
+    parse(file, keep.source=FALSE)
+  } else parse(text=text, keep.source=FALSE)
 }
 # Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.

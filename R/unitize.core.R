@@ -151,19 +151,7 @@ unitize_core <- function(
   search.path.restored <- FALSE
   if(!is.null(test.file)) {
     over_print("Parsing tests...")
-    tests.parsed <- NULL
-    if(interactive.mode) {
-      if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
-        warning(
-          "Unable to parse `test.file`; see prior error for details.  ",
-          "Proceeding without comment parsing", immediate.=TRUE
-        )
-    } }
-    if(
-      is.null(tests.parsed) &&
-      inherits(try(tests.parsed <- parse(test.file)), "try-error")
-    )
-      stop("Could not parse `test.file`; see prior error for details.")
+    tests.parsed <- parse_tests(test.file, comments=interactive.mode)
 
     if(!length(tests.parsed)) {
       over_print("")
