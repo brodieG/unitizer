@@ -337,6 +337,8 @@ parse_with_comments <- function(file, text=NULL) {
     if(inherits(expr, "try-error")) stop("parsing failed")
     if(!length(expr)) return(expr)
     parse.dat.raw <- getParseData(expr)
+    if(is.null(parse.dat.raw)) return(expr)
+
     if(!nrow(parse.dat.raw))
       stop("Logic Error: parse data mismatch; contact maintainer.")
     parse.dat.check <- cbind(
