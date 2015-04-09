@@ -76,8 +76,8 @@ testthat_to_unitizer <- function(
 
   # These should probably be defined at top level in package...
 
-  cln.dbl <- quote(a::b)[[1L]]
-  cln.trp <- quote(a:::b)[[1L]]
+  cln.dbl <- quote(`::`)
+  cln.trp <- quote(`:::`)
   tt.symb <- quote(testthat)
   t_t.symb <- quote(test_that)
 
@@ -105,7 +105,7 @@ testthat_to_unitizer <- function(
           sub.call <- sub.call[[3L]]
         }
         if(
-          (sub.call.symb <- is.symbol(sub.call)) && identical(sub.call, test_that)
+          is.symbol(sub.call) && identical(sub.call, t_t.symb)
         ) {
           # test_that call requires special handling,
 
@@ -128,7 +128,7 @@ testthat_to_unitizer <- function(
               result <- c(result, deparse(expr[[i]]))
             } else {
               success <- TRUE
-              result <- c(result(attr(expr[[i]], "comment")))
+              result <- c(result, attr(expr[[i]], "comment"))
             }
             # Now parse the `code` param looking for
 
@@ -136,15 +136,17 @@ testthat_to_unitizer <- function(
             code.block <- FALSE
             if(
               code.block <- is.language(code) && length(code) > 1L &&
-              identical(code[[1L]], quote("{"))
+              identical(code[[1L]], quote(`{`))
             ) {
               sub.expr <- code[-1L]
             } else sub.expr <- code
             sub.res <- Recall(sub.expr, mode="sub")
-            if(code.block)
+            if(code.block) {
               sub.res <- paste0(
-                c("{", paste0("    ", sub.expr), "}"), collapse="\n"
+                c("{", paste0("    ", sub.res, collapse="\n"), "}"),
+                collapse="\n"
               )
+            } else sub.res <- paste0(sub.expr, collapse="\n")
             # Put it all together
 
             result <- c(
