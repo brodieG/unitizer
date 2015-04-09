@@ -36,4 +36,5 @@ unitizer_sect("translate simple", {
   testthat_to_unitizer("blahbalh")  # not real file, should fail
   testthat_to_unitizer("unitizer/helper/translate1.R", NULL)
   testthat_to_unitizer("unitizer/helper/translate2.R", NULL)
+  testthat_to_unitizer("unitizer/helper/translate2.R", NULL, TRUE) # keep testthat call
 })

@@ -128,8 +128,11 @@ testthat_to_unitizer <- function(
               result <- c(result, res.extract$msg)
               result <- c(result, deparse(expr[[i]]))
             } else {
-              success <- TRUE
-              result <- c(result, attr(expr[[i]], "comment"))
+              result <- c(
+                result, attr(expr[[i]], "comment"),
+                if(keep.testthat.call)
+                  paste0("# ", deparse(comm_and_call_extract(expr[[i]])$call))
+              )
             }
             # Now parse the `code` param looking for
 
@@ -183,9 +186,13 @@ testthat_to_unitizer <- function(
             res.extract <- testthat_match_call(
               res.pre$call, fun.list[funs.to.extract][[fun.id]], "object"
             )
-            result <- c(result, if(any(nchar(res.extract$msg))) res.extract$msg)
-            result <- c(result, deparse(res.extract$call[["object"]]))
-            success <- !any(nchar(res.extract$msg))
+            result <- c(
+              result,
+              if(any(nchar(res.extract$msg))) res.extract$msg,
+              if(keep.testthat.call)
+                  paste0("# ", deparse(comm_and_call_extract(expr[[i]])$call)),
+              deparse(res.extract$call[["object"]])
+            )
           } else {  # normal calls or anything
             result <- c(result, deparse(res.pre$call))
           }
@@ -196,14 +203,6 @@ testthat_to_unitizer <- function(
 
         res <- comm_and_call_extract(expr[[i]])
         result <- c(result, res$comments, deparse(res$call))
-      }
-      if(success && keep.testthat.call) {
-        # Add back call as comment
-
-        result <- c(
-          paste0("# ", deparse(comm_and_call_extract(expr[[i]])$call)),
-          result
-        )
       }
       result.final <- c(result.final, result)
     }
