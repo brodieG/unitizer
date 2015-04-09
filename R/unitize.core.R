@@ -30,8 +30,6 @@ unitize_core <- function(
 
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
-  if(!is.logical(non.interactive) || length(non.interactive) != 1L)
-    stop("Logic Error: unitizer option `unitizer.non.interactive` is miss-specified")
   if(!isTRUE(env.clean) && !is.environment(env.clean))
     stop("Argument `env.clean` must be TRUE or an environment.")
   if(
@@ -178,7 +176,7 @@ unitize_core <- function(
     unitizer.summary <- summary(unitizer)
     cat("\n")
 
-    if(!interactive.mode || non.interactive) {
+    if(!interactive.mode) {
       if(!passed(unitizer.summary)) {  # Passed tests are first column
         delta.show <- unitizer@tests.status != "Pass" & !ignored(unitizer@items.new)
         message(
