@@ -80,6 +80,7 @@ testthat_to_unitizer <- function(
   cln.trp <- quote(`:::`)
   tt.symb <- quote(testthat)
   t_t.symb <- quote(test_that)
+  cont.symb <- quote(context)
 
   # convert the calls back to character, done as an in-body function since only
   # ever called here, and a bunch of variables are useful to share
@@ -156,6 +157,14 @@ testthat_to_unitizer <- function(
                 ", ", sub.res, ")"
             ) )
           }
+        } else if (
+          is.symbol(sub.call) && identical(sub.call, cont.symb)
+        ) {
+          res.pre <- comm_and_call_extract(expr[[i]])
+          result <- c(
+            result, res.pre$comments,
+            paste0("# ", paste0(deparse(res.pre$call), collapse="\n"))
+          )
         } else {
           # pull out comments for all of these if relevant
 
