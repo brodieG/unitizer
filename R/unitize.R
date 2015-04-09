@@ -105,15 +105,16 @@ review <- function(
   x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer")
 ) {
-  u.name <- if(is.character(x) && length(x) == 1L) {
-    x
+
+  if(is.character(x) && length(x) == 1L) {
+    u.name <- x <- infer_unitizer_location(x, type="d")
   } else {
     u.name <- if(is(x, "unitizer")) x@id else x
     u.name <- try(as.character(u.name), silent=TRUE)
     if(inherits(u.name, "try-error")) u.name <- "<unknown>"
 
   }
-  print(H1(paste0("unitizer for: ", u.name, collapse="")))
+  print(H1(paste0("unitizer for: ", basename(u.name), collapse="")))
   invisible(
     unitize_core(
       test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
