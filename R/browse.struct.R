@@ -229,7 +229,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     mode="character",
     review="logical",          # whether to force-show review menu or not
     inspect.all="logical",     # whether to force inspection of all elements, whether ignored/passed or not
-    navigating="logical"       # whether user has triggered at least one navigation command
+    navigating="logical",      # whether user has triggered at least one navigation command
+    human="logical"            # whether user has had any interaction at all
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -239,7 +240,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     mode="unitize",
     review=FALSE,
     inspect.all=FALSE,
-    navigating=FALSE
+    navigating=FALSE,
+    human=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {

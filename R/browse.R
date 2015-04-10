@@ -221,24 +221,31 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           )
         }
         word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
-        user.input <- navigate_prompt(
-          y, curr.id=max(y@mapping@item.id) + 1L,
-          text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
-          valid.opts=valid.opts
-        )
-        if(is(user.input, "unitizerBrowse")) {
-          y <- user.input
-          next
-        } else if (identical(user.input, "Q") || identical(user.input, "N")) {
-          message("unitizer store unchanged")
-          return(FALSE)
-        } else if (identical(user.input, "Y")) {
-          if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
+        if(!y@human) {
+          if(y@navigating)
+            stop("Logic Error: should only get here in `auto.accept` mode, contact maintainer")
+          message("Auto-accepting changes...")
+          break
+        } else {
+          user.input <- navigate_prompt(
+            y, curr.id=max(y@mapping@item.id) + 1L,
+            text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
+            valid.opts=valid.opts
+          )
+          if(is(user.input, "unitizerBrowse")) {
+            y <- user.input
+            next
+          } else if (identical(user.input, "Q") || identical(user.input, "N")) {
             message("unitizer store unchanged")
             return(FALSE)
-          } else break
+          } else if (identical(user.input, "Y")) {
+            if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
+              message("unitizer store unchanged")
+              return(FALSE)
+            } else break
+          }
+          stop("Logic Error; unexpected user input, contact maintainer.")
         }
-        stop("Logic Error; unexpected user input, contact maintainer.")
     } }
     # Create the new unitizer
 
@@ -420,6 +427,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
         return(x)
       }
     }
+    # If we get past this point, then we will need some sort of human input, so
+    # we mark the browse object
+
+    x@human <- TRUE
+
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the unitizerItem values and the child
     # environment containing the actual unitizer items.  This is so that when
