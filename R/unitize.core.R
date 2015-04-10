@@ -19,7 +19,7 @@
 
 unitize_core <- function(
   test.file, store.id, interactive.mode, env.clean,
-  search.path.clean, search.path.keep, force.update
+  search.path.clean, search.path.keep, force.update=FALSE, auto.accept=character(0L)
 ) {
   # -  Setup / Load ------------------------------------------------------------
 
@@ -39,6 +39,20 @@ unitize_core <- function(
     stop("Argument `search.path.clean` must be TRUE or FALSE.")
   if(!is.character(search.path.keep))
     stop("Argument `search.path.keep` must be character()")
+  if(any(is.na(auto.accept)))
+    stop("Argument `auto.accept` contains NAs but should not")
+  if(is.character(auto.accept)) {
+    auto.accept <- unique(tolower(auto.accept))
+    if(!all(auto.accept %in% c("new", "deleted", "error", "failed")))
+      stop(
+        "Argument `auto.accept` must be FALSE or contain only values in ",
+        "c(\"new\", \"removed\", \"corrupted\", \"failed\")"
+      )
+  }
+  if(length(auto.accept) && (!interactive.mode))
+    stop("Argument `auto.accept` must be empty in non-interactive mode")
+  if(is.null(test.file))
+    stop("Argument `test.file` must be specified when using `auto.accept`")
 
   # Retrieve or create unitizer environment (note that the search path trimming)
   # happens later.  Also note that pack.env$zero.env can still be tracking the
@@ -219,11 +233,30 @@ unitize_core <- function(
   } else {
     unitizer.browse <- browsePrep(unitizer, mode="unitize")
   }
-  # Interactively decide what to keep / override / etc.
-
   tot.time <- (proc.time() - start.time)[["elapsed"]]
+
+  # Decide what to keep / override / etc.
+
+  if(length(auto.accept)) {
+    # Apply auto-accepts, if any
+
+    if(
+      !all(
+        auto.accept %in%
+        tolower(levels(unitizer.browse@mapping@review.type))
+      )
+    ) stop("Logic Error: invalid auto.accept values; contact maintainer.")
+    for(auto.val in auto.accept) {
+      auto.type <- which(
+        tolower(unitizer.browse@mapping@review.type) == auto.val
+      )
+      unitizer.browse@mapping@review.val[auto.type] <- "Y"
+      unitizer.browse@mapping@reviewed[auto.type] <- TRUE
+  } }
+  # Now manual accepts
+
   unitizer <- browseUnitizer(
-    unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time,
+    unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time && !length(auto.accept),
     force.update=force.update
   )
   # -  Finalize ------------------------------------------------------------------
