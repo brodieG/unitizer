@@ -221,7 +221,7 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           )
         }
         word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
-        if(!y@human) {
+        if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
           if(y@navigating)
             stop("Logic Error: should only get here in `auto.accept` mode, contact maintainer")
           message("Auto-accepting changes...")
