@@ -313,18 +313,28 @@ setMethod("reviewNext", c("unitizerBrowse"),
     ignore.passed <- !identical(x@mode, "review") &&
       is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
       !x@inspect.all
+
     ignore.sec <- all(
-      (
+      (       # ignored and no errors
         x@mapping@ignored[x@mapping@sec.id == curr.sec] &
         !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
-      ) | (
+      ) | (   # passed and not in review mode
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
         !identical(x@mode, "review")
-    ) ) && !x@inspect.all
+      ) | (   # auto.accept
+        x@mapping@reviewed[x@mapping@sec.id == curr.sec] &
+        !x@navigating
+      )
+    ) && !x@inspect.all
+
     ignore.sub.sec <- (
       all(
-        x@mapping@ignored[cur.sub.sec.items] &
-        !x@mapping@new.conditions[cur.sub.sec.items]
+        (
+          x@mapping@ignored[cur.sub.sec.items] &
+          !x@mapping@new.conditions[cur.sub.sec.items]
+        ) | (
+          x@mapping@reviewed[cur.sub.sec.items] & !x@navigating
+        )
       ) || ignore.passed
     ) && !x@inspect.all
     multi.sect <- length(
