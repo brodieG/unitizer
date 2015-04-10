@@ -39,16 +39,22 @@ unitize_core <- function(
     stop("Argument `search.path.clean` must be TRUE or FALSE.")
   if(!is.character(search.path.keep))
     stop("Argument `search.path.keep` must be character()")
-  if(any(is.na(auto.accept)))
-    stop("Argument `auto.accept` contains NAs but should not")
+  auto.accept.valid <- character()
   if(is.character(auto.accept)) {
-    auto.accept <- unique(tolower(auto.accept))
-    if(!all(auto.accept %in% c("new", "deleted", "error", "failed")))
-      stop(
-        "Argument `auto.accept` must be FALSE or contain only values in ",
-        "c(\"new\", \"removed\", \"corrupted\", \"failed\")"
-      )
-  }
+    if(length(auto.accept)) {
+      auto.accept.valid <-
+        tolower(levels(new("unitizerBrowseMapping")@review.type))
+
+      if(any(is.na(auto.accept)))
+        stop("Argument `auto.accept` contains NAs but should not")
+      auto.accept <- unique(tolower(auto.accept))
+      if(!all(auto.accept %in% auto.accept.valid))
+        stop(
+          "Argument `auto.accept` must contain only values in ",
+          deparse(tolower(auto.accept.valid))
+        )
+    }
+  } else stop("Argument `auto.accept` must be character")
   if(length(auto.accept) && (!interactive.mode))
     stop("Argument `auto.accept` must be empty in non-interactive mode")
   if(is.null(test.file))
@@ -237,15 +243,7 @@ unitize_core <- function(
 
   # Decide what to keep / override / etc.
 
-  if(length(auto.accept)) {
-    # Apply auto-accepts, if any
-
-    if(
-      !all(
-        auto.accept %in%
-        tolower(levels(unitizer.browse@mapping@review.type))
-      )
-    ) stop("Logic Error: invalid auto.accept values; contact maintainer.")
+  if(length(auto.accept)) {  # Apply auto-accepts, if any
     for(auto.val in auto.accept) {
       auto.type <- which(
         tolower(unitizer.browse@mapping@review.type) == auto.val

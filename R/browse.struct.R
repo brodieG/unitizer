@@ -228,7 +228,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     hist.con="ANY",            # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
     mode="character",
     review="logical",          # whether to force-show review menu or not
-    inspect.all="logical"      # whether to force inspection of all elements, whether ignored/passed or not
+    inspect.all="logical",     # whether to force inspection of all elements, whether ignored/passed or not
+    navigating="logical"       # whether user has triggered at least one navigation command
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -237,7 +238,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     hist.con=NULL,
     mode="unitize",
     review=FALSE,
-    inspect.all=FALSE
+    inspect.all=FALSE,
+    navigating=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -247,6 +249,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@review` must be logical(1L) and not NA.")
     if(length(object@inspect.all) != 1L || is.na(object@inspect.all))
       return("Slot `@inspect.all` must be logical(1L) and not NA.")
+    if(length(object@navigating) != 1L || is.na(object@navigating))
+      return("Slot `@navigating` must be logical(1L) and not NA.")
     TRUE
   }
 )

@@ -412,7 +412,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # based on what happens to the subsequent non-ignored test.
 
     if(!x@inspect.all) {
-      if(x@mapping@ignored[[curr.id]] || ignore.passed) {
+      if(
+        x@mapping@ignored[[curr.id]] || ignore.passed ||
+        (x@mapping@reviewed[[curr.id]] && !x@navigating)  # reviewed items are skipped unless we're actively navigating to support `auto.accept`
+      ) {
         x@last.id <- curr.id
         return(x)
       }

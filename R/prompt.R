@@ -147,6 +147,7 @@ navigate_prompt <- function(
       else TRUE
     )
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
+    x@navigating <- TRUE
     return(x)
   } else if (identical(prompt.val, "R")) {
     return(review_prompt(x, browse.env2))
@@ -251,6 +252,7 @@ review_prompt <- function(x, nav.env) {
   # then cause desired test to be reviewed
 
   x@last.id <- as.integer(nav.id) - 1L
+  x@navigating <- TRUE
   return(x)
 }
 
