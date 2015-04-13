@@ -321,6 +321,12 @@ testthat_translate_name <- function(
       "from `testthat` file name, please review `file.name`, `name.pattern`, ",
       "and `name.replace`"
     )
+  if(basename(base.new) != base.new)
+    stop(
+      "File name creating process produced sub-directories; make sure ",
+      "`name.pattern` and `name.replace` are such that the resulting file ",
+      "names do not contain sub-directories"
+    )
   file.path(target.dir, base.new)
 }
 
