@@ -119,14 +119,25 @@
 #' @return character the contents of the translated file (saved to
 #'   \code{target.dir} if that parameter is not \code{NULL})
 
-testthat_to_unitizer <- function(
+testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  keep.testthat.call=FALSE, force=FALSE, ...
+  eval.env=NULL, keep.testthat.call=FALSE, prompt="always", ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
   if(!file_test("-f", file.name))
     stop("Argument `file.name` does not point to a readable file")
+  valid.prompt <- c("always", "overwrite", "never")
+  if(
+    !is.character(prompt) || length(prompt) != 1L || is.na(prompt) ||
+    !prompt %in% valid.prompt
+  )
+    stop(
+      "Argument prompt must be character(1L), not NA, and in ",
+      deparse(valid.prompt)
+    )
+  if(!is.null(eval.env) && !is.environment(eval.env))
+    stop("Argument `eval.env` must be an environment or NULL")
 
   is_testthat_attached()
 
