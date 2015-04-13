@@ -5,7 +5,8 @@
 \title{Runs The Basic Stuff}
 \usage{
 unitize_core(test.file, store.id, interactive.mode, env.clean,
-  search.path.clean, search.path.keep, force.update)
+  search.path.clean, search.path.keep, force.update = FALSE,
+  auto.accept = character(0L))
 }
 \description{
 Used by both \code{\link{unitize}} and \code{\link{review}}

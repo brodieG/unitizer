@@ -10,7 +10,7 @@ unitize(test.file, store.id = NULL, interactive.mode = interactive(),
   env.clean = TRUE,
   search.path.clean = getOption("unitizer.search.path.clean"),
   search.path.keep = c("tools:rstudio", "package:unitizer"),
-  force.update = FALSE)
+  force.update = FALSE, auto.accept = character(0L))
 
 review(x, env.clean = TRUE,
   search.path.clean = getOption("unitizer.search.path.clean"),
@@ -21,7 +21,7 @@ unitize_dir(test.dir, test.file.regex = "^[^.].*\\\\.[Rr]$",
   interactive.mode = interactive(), env.clean = TRUE,
   search.path.clean = getOption("unitizer.search.path.clean"),
   search.path.keep = c("tools:rstudio", "package:unitizer"),
-  force.update = FALSE)
+  force.update = FALSE, auto.accept = character(0L))
 }
 \arguments{
 \item{test.file}{path to the file containing tests, if supplied path does not
@@ -53,6 +53,13 @@ to keep attached; has no effect if \code{search.path.clean} is FALSE}
 
 \item{force.update}{logical(1L) if TRUE will give the option to re-store a
 unitizer after re-evaluating all the tests even if all tests passed.}
+
+\item{auto.accept}{character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
+YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
+prompting, use values in \code{c("new", "failed", "deleted", "error")} to
+specify which type(s) of test you wish to auto accept (i.e. same as typing
+\code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
+off (default)}
 
 \item{x}{for \code{review} only, either a \code{unitizer} or something that,
 when passed to \code{\link{get_unitizer}}, will retrieve a unitizer (i.e.
