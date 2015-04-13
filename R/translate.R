@@ -335,7 +335,56 @@ testthat_translate_file <- function(
   }
   return(translated)
 }
-#' @rdname testthat_to_unitizer
+#' @export
+#' @rdname testthat_translate_file
+
+testthat_translate_dir <- function(
+  dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
+  filter="^test.*\\.[rR]", eval.env=NULL, keep.testthat.call=FALSE,
+  prompt="always", ...
+) {
+  # Validate
+
+  chr.1.args <- list(
+    dir.name=dir.name, target.dir=target.dir, filter=filter, prompt=prompt
+  )
+  for(i in names(chr.1.args))
+    if(
+      !is.character(chr.1.args[[i]]) || length(chr.1.args[[i]]) != 1L ||
+      is.na(chr.1.args[[i]])
+    )
+      stop("Argument `", i, "` must be character(1L) and not NA")
+
+  if(!file_test("-d", dir.name))
+    stop("Argument `", dir.name, "` is not a directory name")
+
+  if(!is.null(eval.env) && !is.environment(eval.env))
+    stop("Argument `eval.env` must be an environment or NULL")
+
+  env <- new.env(parent=if(is.null(eval.env)) parent.frame() else eval.env)
+
+  # Get file names
+
+  file.list <- sort(dir(dir.name))
+  files.helper <- normalizePath(grep("^helper.*[rR]$", file.list, value=TRUE))
+  files.test <- normalizePath(grep(filter, file.list, value=TRUE))
+
+  # Load helper files
+
+  if(inherits(try(for(i in files.helper) sys.source(i, env)), "try-error"))
+    stop("Error pre-loading helper files; see previous errors")
+
+  # Translate files
+
+  env.par <- new.env(parent=env)
+
+  for(i in files.test)
+    testthat_translate_file(
+      i, target.dir, eval.env=env.par, keep.testthat.call, prompt, ...
+    )
+
+}
+#' @rdname testthat_translate_file
 #' @export
 
 testthat_translate_name <- function(
@@ -388,8 +437,6 @@ testthat_translate_name <- function(
     )
   file.path(target.dir, base.new)
 }
-
-
 #' Pull out parameter from call
 #'
 #' @param target.params parameters required in the matched call
