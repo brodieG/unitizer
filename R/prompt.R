@@ -255,4 +255,48 @@ review_prompt <- function(x, nav.env) {
   x@navigating <- TRUE
   return(x)
 }
+#' A Simple Prompting Function
+#'
+#' @param message character ask the user a question
+#' @param values character valid responses
+#' @param prompt see \code{\link{readline}}
+#' @param attempts how many times to try before erroring
+#' @return one of \code{values} as selected by user
+
+simple_prompt <- function(
+  message, values=c("Y", "N"), prompt="unitizer> ", attempts=3L,
+  case.sensitive=FALSE
+) {
+  if(!interactive()) stop("This function is only available in interactive mode")
+  if(!is.character(message)) stop("Argument `message` must be character")
+  if(!is.character(values) || length(values) < 1L || any(is.na(values)))
+    stop("Argument `values` must be character with no NAs")
+  if(!is.character(prompt) || length(prompt) != 1L || is.na(prompt))
+    stop("Argument `prompt` must be character(1L) and not NA")
+  if(
+    !is.numeric(attempts) || length(attempts) != 1L || is.na(attempts) ||
+    attempts < 1
+  )
+    stop("Argument `attempts` must be numeric(1L), not NA, and one or greater")
+
+  attempts <- attempts.left <- as.integer(attempts)
+  val.tran <- if(!case.sensitive) tolower(values)
+
+  word_cat(message)
+
+  while(attempts.left > 0L) {
+    x <- readline(prompt)
+    if(!case.sensitive) x <- tolower(x)
+    if(!(res.ind <- match(x, val.tran, nomatch=0L))) {
+      word_cat(
+        paste(
+          "Invalid input, please select one of",
+          paste0(deparse(values, width=500), collapse="")
+      ) )
+    } else return(values[[res.ind]])
+    attempts.left <- attempts.left - 1L
+  }
+  stop("Gave up trying to collect user input after ", attempts, " attempts.")
+}
+
 
