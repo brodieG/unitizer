@@ -4,14 +4,39 @@
 #' \code{unitizer} test file and test store. Expressions tested against
 #' expectations are extracted, evaluated, and used as the tests.
 #'
-#' Workflow is:
+#' @section Disclaimers:
+#'
+#' If you already have an extensive test suite in \code{testthat} and you do not
+#' intend to modify your tests or code very much there is little benefit (and
+#' likely some drawbacks) to migrating your tests to \code{unitizer}.  Please
+#' see the introduction vignette for a (biased) view of the pros and cons of
+#' \code{unitizer} relative to \code{testthat}.
+#'
+#' These translation functions are provided for your convenience.  Keep
+#' in mind that the \code{unitizer} author does not use them very much since
+#' he seldom needs to migrate \code{testthat} tests.  As a result, they have not
+#' been tested as thoroughly as the rest of \code{unitizer}.  Make sure you
+#' \code{\link{review}} the resulting \code{unitizer}s to make sure they contain
+#' what you expect.  This is particularly important if your \code{testthat}
+#' test files are not meant to be run stand-alone with just \code{test_file} (
+#' see "Differences That May Cause Problems").
+#'
+#' @section Workflow:
+#'
 #' \enumerate{
-#'   \item Run your \code{testthat} test with \code{test_file} or some such to
-#'     ensure they are still passing
+#'   \item Start a fresh R session
+#'   \item Run your \code{testthat} tests with \code{test_file} to
+#'     ensure they are still passing.  If you cannot use \code{test_file}
+#'     because your tests require prior set-up, or are runnable only via
+#'     \code{test_check} because they directly access the namespace of your
+#'     package, see "Differences That May Cause Problems" below
 #'   \item Run \code{testthat_to_unitizer}
 #'   \item [optional] use \code{\link{review}} to review the resulting unitizer
 #'   \item [optional] manually clean up the test file
 #' }
+#'
+#' @section What We Do:
+#'
 #' Conversion works by identifying calls to exported \code{testthat} functions
 #' that have an \code{object} argument.  Generally speaking this includes
 #' functions of the form \code{expect_*}.
@@ -39,9 +64,24 @@
 #' you to try the default settings first as those should work well in most
 #' cases.
 #'
-#' @note In order for the conversion to succeed \code{testthat} must be installed
-#' on your system.  We do not rely on \code{NAMESPACE} imports to avoid an
-#' import dependency on \code{testthat} that is only required for this
+#' @section \code{unitizer} Differences That May Cause Problems:
+#'
+#' \code{unitize} by default runs each \code{unitizer} test file in a clean
+#' environment with a clean search path.  This means that each test file
+#' must load all packages, data, etc. that it relies on, including the package
+#' you are testing.  If your tests only work properly with the search path as
+#' you set it up just before running the tests, or if you need access to the
+#' global environment,
+#'
+#' ... NEED TO RATIONALIZE THIS
+#'
+#' In these cases you can use \code{\link{unitize_tt}},
+#' which is just a wrapper around \code{unitize} with parameters set for
+#' behavior closer to what you would get with \code{test_file}.
+#'
+#' @note In order for the conversion to succeed \code{testthat} must be
+#' installed on your system.  We do not rely on \code{NAMESPACE} imports to
+#' avoid an import dependency on \code{testthat} that is only required for this
 #' ancillary function, especially since none of the \code{testthat} functions
 #' are called directly.  We use the functions for matching arguments.
 #'
@@ -65,9 +105,17 @@
 #'   \code{\link{sub}}); in addition we will add ".R" and ".unitizer" as the
 #'   extensions for the new files so do not include extensions in your
 #'   \code{replace} parameter
-#' @param force TRUE or FALSE, FALSE by default, which will stop translation if
-#'   files already exist in the target location for the translation; set to TRUE
-#'   if you wish to overwrite existing files
+#' @param prompt character(1L): \itemize{
+#'     \item "always" to always prompt before writing new files
+#'     \item "overwrite" only prompt if existing file is about to be overwritten
+#'     \item "never" never prompt
+#'   }
+#' @param eval.env parent environment for tests, use if your \code{testthat}
+#'   tests relied on having direct access to package environment as is the case
+#'   with tests run with \code{testthat::test_check} (in which case, pass
+#'   \code{getNamespace("my_package_name")}); if you use this setting remember
+#'   to set the \code{env.clean} parameter to \code{\link{unitize}} to the
+#'   same environment any time you run \code{unitize} in the future
 #' @return character the contents of the translated file (saved to
 #'   \code{target.dir} if that parameter is not \code{NULL})
 
