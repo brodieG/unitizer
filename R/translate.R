@@ -32,25 +32,48 @@
 #' \code{unitizer} equivalent.  Other \code{testthat} calls are left unchanged
 #' and their return values used as part of the \code{unitizer} tests.
 #'
-#' In order for the conversion to succeed \code{testthat} must be installed
+#' The \code{unitizer} files will be created in a sibling folder to the folder
+#' containing the \code{testthat} files.  The names of the new files will be
+#' based on the old files.  See params \code{target.dir}, \code{name.new},
+#' \code{name.pattern}, and \code{name.replace} for more details.  We encourage
+#' you to try the default settings first as those should work well in most
+#' cases.
+#'
+#' @note In order for the conversion to succeed \code{testthat} must be installed
 #' on your system.  We do not rely on \code{NAMESPACE} imports to avoid an
 #' import dependency on \code{testthat} that is only required for this
 #' ancillary function, especially since none of the \code{testthat} functions
 #' are called directly.  We use the functions for matching arguments.
 #'
 #' @export
+#' @aliases testthat_translate_name
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
 #'   test store in, if NULL will not store the result (note return value is
 #'   still useful)
 #' @param keep.testthat.call whether to preserve the \code{testthat} call that
 #'   was converted, as a comment (does not apply to \code{test_that} calls)
+#' @param ... params to pass on to \code{testthat_translate_name}
+#' @param name.new character(1L) the base name for the \code{unitizer} files;
+#'   do not include an extension as we will add it (".R" for the testfile,
+#'   ".unitizer" for the data directory); set to NULL to generate the name
+#'   from the \code{testthat} file name
+#' @param name.pattern character(1L) a regular expression intended to match
+#'   the \code{testthat} test file name (see \code{name.replace})
+#' @param if \code{name.pattern} matches, then the new file name will be
+#'   constructed with this (used as \code{replace} parameter to
+#'   \code{\link{sub}}); in addition we will add ".R" and ".unitizer" as the
+#'   extensions for the new files so do not include extensions in your
+#'   \code{replace} parameter
+#' @param force TRUE or FALSE, FALSE by default, which will stop translation if
+#'   files already exist in the target location for the translation; set to TRUE
+#'   if you wish to overwrite existing files
 #' @return character the contents of the translated file (saved to
 #'   \code{target.dir} if that parameter is not \code{NULL})
 
 testthat_to_unitizer <- function(
-  file.name, target.dir = file.path(dirname(file.name), "..", "unitizer"),
-  keep.testthat.call = FALSE
+  file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
+  keep.testthat.call=FALSE, force=FALSE, ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
@@ -211,13 +234,96 @@ testthat_to_unitizer <- function(
   # Parse and translate
 
   parsed <- parse_tests(file.name)
-
   translated <- testthat_extract_all(parsed)
+
   if(!is.null(target.dir)) {
-    stop("Running/storing Not implemented yet")
+    # Create unitizer
+
+    untz.base <- testthat_translate_name(file.name, target.dir, ...)
+    untz.test <- paste0(untz.base, ".R")
+    untz.store <- paste0(untz.base, ".unitizer")
+
+    if(!force) {
+      if(file.exists(untz.store) || file.exists(untz.test))
+        stop(
+          "Unable to proceed, one of `", untz.test, "` or `", untz.store,
+          "` already exists (see `force` to override"
+        )
+    }
+    # Create file / directories as needed
+
+    if(file.exists(target.dir) && ! file_test("-d", target.dir)) {
+      stop("Argument `target.dir` must be a directory")
+    }
+    if(!file.exists(target.dir)) {
+      if(
+        inherits(
+          try(dir.create(target.dir, recursive=TRUE)), "try-error"
+        )
+      )
+        stop(
+          "Unable to create test directory `", dirname(untz.test),
+          "`; see prior errors."
+        )
+    }
+    if(inherits(try(file.create(untz.test)), "try-error"))
+      stop("Unable to create test file `", untz.test, "`; see prior errors.")
+
+    write.test <- try(cat(translated, file=untz.test, sep="\n"))
+    if(inherits(write.test, "try-error"))
+      stop("Unable to write test file; see previous error")
+    unitize(test.file=untz.test, store.id=untz.store, auto.accept="new")
   }
   return(translated)
 }
+#' @rdname testthat_to_unitizer
+#' @export
+
+testthat_translate_name <- function(
+  file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
+  name.new=NULL, name.pattern="^(?:test\\W*)?(.*)(?:\\.[rR])$",
+  name.replace="\\1"
+) {
+  # Check args
+
+  args <- as.list(environment())
+  for(i in names(args)) {
+    if(identical(i, "name.new")) next
+    arg <- args[[i]]
+    if(!is.character(arg) || length(arg) != 1L || is.na(arg))
+      stop("Argument `", i, "` must be character(1L) and not NA")
+  }
+  if(
+    !is.null(name.new) && !(
+      is.character(name.new) || length(name.new) != 1L || is.na(name.new)
+    )
+  )
+    stop("Argument `name.new` must be NULL, or character(1L) and not NA")
+
+  # Special cases
+
+  if(is.null(target.dir)) return(NULL)
+  if(!is.null(name.new)) {
+    if(basename(name.new) != name.new)
+      stop(
+        "Argument `name.new` should be a file name without any directories ",
+        "specified; you may specify those with `target.dir`"
+      )
+    return(file.path(target.dir, name.new))
+  }
+
+  # Transform name
+
+  base.new <- sub(name.pattern, name.replace, basename(file.name))
+  if(!nchar(base.new))
+    stop(
+      "Produced zero char name when attempting to make `unitizer` file name ",
+      "from `testthat` file name, please review `file.name`, `name.pattern`, ",
+      "and `name.replace`"
+    )
+  file.path(target.dir, base.new)
+}
+
 
 #' Pull out parameter from call
 #'
