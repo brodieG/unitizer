@@ -36,5 +36,18 @@ unitizer_sect("translate simple", {
   testthat_to_unitizer("blahbalh")  # not real file, should fail
   testthat_to_unitizer("unitizer/helper/translate1.R", NULL)
   testthat_to_unitizer("unitizer/helper/translate2.R", NULL)
-  testthat_to_unitizer("unitizer/helper/translate2.R", NULL, TRUE) # keep testthat call
+  testthat_to_unitizer(
+    "unitizer/helper/translate2.R", NULL, keep.testthat.call=TRUE
+  ) # keep testthat call
+})
+
+unitizer_sect("Convert File Names", {
+  f1 <- "tests/testthat/test-one.R"
+  unitizer:::testthat_translate_name(f1)
+  unitizer:::testthat_translate_name(f1, name.pattern="^.{6}(.*)")
+  unitizer:::testthat_translate_name(f1, name.replace="hello")
+  unitizer:::testthat_translate_name(f1, name.new="boom")
+  unitizer:::testthat_translate_name(f1, list(), name.new="boom")
+  unitizer:::testthat_translate_name(f1, name.new=file.path("hello", "there"))  # shouldn't be able to use subdirs
+  unitizer:::testthat_translate_name(f1, name.replace=file.path("hello", "there")) # shouldn't be able to use subdirs
 })
