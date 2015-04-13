@@ -57,7 +57,7 @@ unitize_core <- function(
   } else stop("Argument `auto.accept` must be character")
   if(length(auto.accept) && (!interactive.mode))
     stop("Argument `auto.accept` must be empty in non-interactive mode")
-  if(is.null(test.file))
+  if(length(auto.accept) && is.null(test.file))
     stop("Argument `test.file` must be specified when using `auto.accept`")
 
   # Retrieve or create unitizer environment (note that the search path trimming)
