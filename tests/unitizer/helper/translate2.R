@@ -1,5 +1,6 @@
 # for translate unitizer tests
 
+set.seed(1)
 context("testthat to unitizer")
 
 # random non-sectioned
