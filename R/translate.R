@@ -124,7 +124,7 @@
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  eval.env=NULL, keep.testthat.call=FALSE, prompt="always", ...
+  eval.env=parent.frame(), keep.testthat.call=FALSE, prompt="always", ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
@@ -357,7 +357,10 @@ testthat_translate_file <- function(
     write.test <- try(cat(translated, file=untz.test, sep="\n"))
     if(inherits(write.test, "try-error"))
       stop("Unable to write test file; see previous error")
-    unitize(test.file=untz.test, store.id=untz.store, auto.accept="new")
+    unitize(  # run for side effects of creating store
+      test.file=untz.test, store.id=untz.store, auto.accept="new",
+      env.clean=if(is.null(eval.env)) TRUE else eval.env
+    )
   }
   return(translated)
 }
