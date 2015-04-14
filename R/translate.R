@@ -395,23 +395,43 @@ testthat_translate_dir <- function(
   # Get file names
 
   file.list <- sort(dir(dir.name))
-  files.helper <- normalizePath(grep("^helper.*[rR]$", file.list, value=TRUE))
-  files.test <- normalizePath(grep(filter, file.list, value=TRUE))
-
-  # Load helper files
-
-  if(inherits(try(for(i in files.helper) sys.source(i, env)), "try-error"))
-    stop("Error pre-loading helper files; see previous errors")
-
-  # Translate files
-
-  env.par <- new.env(parent=env)
-
-  for(i in files.test)
-    testthat_translate_file(
-      i, target.dir, eval.env=env.par, keep.testthat.call, prompt, ...
+  files.helper <- normalizePath(
+    file.path(dir.name, grep("^helper.*[rR]$", file.list, value=TRUE))
+  )
+  files.test <- normalizePath(
+    file.path(dir.name, grep(filter, file.list, value=TRUE))
+  )
+  res <- vector("list", length(files.test))
+  if(length(files.test)) {
+    # Checks
+    if(file.exists(target.dir) && !file_test("-d", target.dir))
+      stop("`target.dir` (", target.dir, ") exists but is not a directory")
+    if(
+      file.exists(target.dir) && !force &&
+      length(dir(all.files=TRUE, include.dirs=TRUE, no..=TRUE))
     )
+      stop(
+        "`target.dir` contains files so we cannot proceed; manually clear ",
+        "or set `force` to TRUE.  This is a safety feature to ensure files are ",
+        "not accidentally overwritten."
+      )
 
+    # Load helper files
+
+    if(inherits(try(for(i in files.helper) sys.source(i, env)), "try-error"))
+      stop("Error pre-loading helper files; see previous errors")
+
+    # Translate files
+
+    env.par <- new.env(parent=env)
+
+    for(i in seq_along(files.test))
+      res[[i]] <- testthat_translate_file(
+        files.test[[i]], target.dir, eval.env=env.par, keep.testthat.call,
+        prompt="never", ...
+      )
+  }
+  invisible(res)
 }
 #' @rdname testthat_translate_file
 #' @export
