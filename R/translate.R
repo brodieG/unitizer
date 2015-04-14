@@ -421,8 +421,7 @@ testthat_translate_dir <- function(
 
     # Load helper files
 
-    if(inherits(try(for(i in files.helper) sys.source(i, env)), "try-error"))
-      stop("Error pre-loading helper files; see previous errors")
+    source_many(files.helper, env)  # env updated by reference
 
     # Translate files
 
