@@ -110,6 +110,9 @@
 #'     \item "overwrite" only prompt if existing file is about to be overwritten
 #'     \item "never" never prompt
 #'   }
+#' @param force logical(1L) whether to allow writing to a \code{target.dir} that
+#'   contains files (implies \code{prompt="never"} when
+#'   \code{testthat_translate_dir}) runs \code{testthat_translate_file})
 #' @param eval.env parent environment for tests, use if your \code{testthat}
 #'   tests relied on having direct access to package environment as is the case
 #'   with tests run with \code{testthat::test_check} (in which case, pass
@@ -302,29 +305,52 @@ testthat_translate_file <- function(
     untz.test <- paste0(untz.base, ".R")
     untz.store <- paste0(untz.base, ".unitizer")
 
-    if(!force) {
-      if(file.exists(untz.store) || file.exists(untz.test))
-        stop(
-          "Unable to proceed, one of `", untz.test, "` or `", untz.store,
-          "` already exists (see `force` to override"
-        )
-    }
-    # Create file / directories as needed
+    # prompt if needed to create directories
 
     if(file.exists(target.dir) && ! file_test("-d", target.dir)) {
       stop("Argument `target.dir` must be a directory")
     }
     if(!file.exists(target.dir)) {
+      if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
+        u.inp <- simple_prompt(
+          paste0("Create directory ", target.dir," for `unitizer` tests?")
+        )
+        if(!identical(u.inp, "Y"))
+          stop("Unable to proceed without creating target directory")
+      }
       if(
         inherits(
           try(dir.create(target.dir, recursive=TRUE)), "try-error"
         )
       )
         stop(
-          "Unable to create test directory `", dirname(untz.test),
+          "Unable to create test directory `", normalizePath(target.dir),
           "`; see prior errors."
         )
     }
+    # prompt if file already exists
+
+    if(!identical(prompt, "never")) {
+      if(file.exists(untz.store) || file.exists(untz.test)) {
+
+        u.inp <- simple_prompt(
+          paste0(
+            "Overwrite files: ",
+            paste(
+              if(file.exists(untz.store)) normalizePath(untz.store),
+              if(file.exists(untz.test)) normalizePath(untz.test),
+              sep=", "
+        ) ) )
+        if(!identical(u.inp, "Y"))
+          stop(
+            "Unable to proceed without user approval as one of `",
+            untz.test, "` or `", untz.store,
+            "` already exists."
+          )
+      }
+    }
+    # Create files, run tests ...
+
     if(inherits(try(file.create(untz.test)), "try-error"))
       stop("Unable to create test file `", untz.test, "`; see prior errors.")
 
@@ -341,12 +367,12 @@ testthat_translate_file <- function(
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
   filter="^test.*\\.[rR]", eval.env=NULL, keep.testthat.call=FALSE,
-  prompt="always", ...
+  force=FALSE, ...
 ) {
   # Validate
 
   chr.1.args <- list(
-    dir.name=dir.name, target.dir=target.dir, filter=filter, prompt=prompt
+    dir.name=dir.name, target.dir=target.dir, filter=filter
   )
   for(i in names(chr.1.args))
     if(
@@ -354,6 +380,9 @@ testthat_translate_dir <- function(
       is.na(chr.1.args[[i]])
     )
       stop("Argument `", i, "` must be character(1L) and not NA")
+
+  if(!isTRUE(force) && !identical(force, FALSE))
+    stop("Argument `prompt` must be TRUE or FALSE")
 
   if(!file_test("-d", dir.name))
     stop("Argument `", dir.name, "` is not a directory name")
