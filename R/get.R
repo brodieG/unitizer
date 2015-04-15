@@ -406,25 +406,42 @@ pre_load <- function(dir.name, env.par=.GlobalEnv) {
   file.list <- dir(dir.name)
 
   source_many(file.list, env)
+  env
 }
 #' Run \code{sys.source} on a list of files
+#'
+#' Sorts them before sourcing on the paths as specified in \code{files}
 #'
 #' @keywords internal
 #' @param files character()
 #' @param env an environment
-#' @return an environment
+#' @param allow.side.effects checks for changes to \code{options} or working
+#'   directory, and fails if there are any (though note that original values
+#'   are not restored); should probably add this check to main \code{unitizer}?
+#' @return NULL, parameter \code{env} is modified by reference (note this
+#'   happens even if we hit an error before getting through all the files)
 
-source_many <- function(files, env) {
+source_many <- function(files, env, allow.side.effects=FALSE) {
   if(!is.character(files)) stop("Argument `files` must be character")
   if(!is.environment(env)) stop("Argument `env` must be an environment")
 
-  file.norm <- try(normalizePath(files, must.work=TRUE))
+  file.norm <- try(normalizePath(sort(files), mustWork=TRUE))
   if(inherits(file.norm, "try-error"))
     stop("Unable to normalize file paths; see previous error")
 
-  if(inherits(try(for(i in files) sys.source(i, env)), "try-error"))
-    stop(
-      "Error sourcing file `", i, ", see above for details"
-    )
-  env
+  base.opts <- options()
+  base.wd <- getwd()
+
+  for(i in files) {
+    fail <- inherits(try(sys.source(i, env)), "try-error")
+    if(!identical(base.opts, new.opts <- options()))
+      stop("Options changed by sourcing file `", i, "`, unable to proceed")
+    if(!identical(base.wd, getwd()))
+      stop(
+        "Working directory changed by sourcing file `", i,
+        "`, unable to proceed (was: '", base.wd, "')"
+      )
+    if(fail) stop("Error sourcing file `", i, "`, see above for details")
+  }
+  NULL
 }
