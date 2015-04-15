@@ -34,10 +34,10 @@ unitizer_sect("translate simple", {
   # NOTE: paths relative to R CMD check set-up
 
   testthat_translate_file("blahbalh")  # not real file, should fail
-  testthat_translate_file("unitizer/helper/translate1.R", NULL)
-  testthat_translate_file("unitizer/helper/translate2.R", NULL)
+  testthat_translate_file("unitizer/translate_extra/translate1.R", NULL)
+  testthat_translate_file("unitizer/translate_extra/translate2.R", NULL)
   testthat_translate_file(
-    "unitizer/helper/translate2.R", NULL, keep.testthat.call=TRUE
+    "unitizer/translate_extra/translate2.R", NULL, keep.testthat.call=TRUE
   ) # keep testthat call
 })
 
