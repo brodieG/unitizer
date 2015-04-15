@@ -419,11 +419,17 @@ testthat_translate_dir <- function(
         "not accidentally overwritten."
       )
 
-    # Load helper files
+    dir.create(target.dir, recursive=TRUE)
 
-    source_many(files.helper, env)  # env updated by reference
+    # Load helper files and copy them to new location
 
-    # Translate files
+    if(length(files.helper)) {
+      dir.create(file.path(target.dir, "helper"))
+      source_many(files.helper, env)  # env updated by reference
+    }
+    # Translate files, need to unitize one by one mostly because we wrote the
+    # `testthat_translate_file` function first, but would probably be better
+    # if we separate the file translation and unitizing
 
     env.par <- new.env(parent=env)
 
