@@ -15,11 +15,16 @@
 #' Also, since unfortunately we're relying on side-effects for some features, and
 #' \code{on.exit} call for safe operation, it is difficult to truly modularize.
 #'
+#' @param par.frame environment to use as parent frame, should contain pre
+#'   loaded stuff if any, note that this environment is destructively modified
+#'   by changing the parent environment, so do not re-use it (this environment
+#'   should never be accessed outside of \code{unitizer} so this should be okay)
 #' @keywords internal
 
 unitize_core <- function(
   test.file, store.id, interactive.mode, env.clean,
-  search.path.clean, search.path.keep, force.update=FALSE, auto.accept=character(0L)
+  search.path.clean, search.path.keep, force.update=FALSE,
+  auto.accept=character(0L), par.frame=new.env()
 ) {
   # -  Setup / Load ------------------------------------------------------------
 
@@ -27,6 +32,39 @@ unitize_core <- function(
   quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
   non.interactive <- getOption("unitizer.non.interactive", FALSE)  # need to rationalize this with `interactive.mode` param
   reset_packenv()                                                  # reset global vars used for search path manip
+
+  if(!is.logical(interactive.mode) || length(interactive.mode) != 1L || is.na(interactive.mode))
+    stop("Argument `interactive.mode` must be TRUE or FALSE")
+  if(!is.logical(force.update) || length(force.update) != 1L || is.na(force.update))
+    stop("Argument `force.update` must be TRUE or FALSE")
+
+  if(is.null(test.file) && is.null(store.id))
+    stop(
+      "Logic Error: `test.file` and `store.id` cannot both be NULL; contact ",
+      " maintainer."
+    )
+  if(!is.null(test.file)) {   # unitize
+    if(
+      !is.character(test.file) || length(test.file) != 1L ||
+      !file_test("-f", test.file)
+    )
+      stop("Argument `test.file` must be a valid path to a file")
+    u.name <- basename(test.file)
+  } else {
+    if(is.character(store.id) && length(store.id) == 1L) {
+      u.name <- store.id
+    } else {
+      u.name <- if(is(x, "unitizer")) x@id else x
+      u.name <- try(as.character(u.name), silent=TRUE)
+      if(inherits(u.name, "try-error")) u.name <- "<unknown>"
+  } }
+  if(is.null(store.id)) {
+    store.id <- if(!grepl("\\.[rR]$", test.file)) {
+      paste0(test.file, ".unitizer")
+    } else {
+      sub("\\.[rR]$", ".unitizer", test.file)
+  } }
+  print(H1(paste0("unitizer for: ", u.name, collapse="")))
 
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
@@ -59,13 +97,19 @@ unitize_core <- function(
     stop("Argument `auto.accept` must be empty in non-interactive mode")
   if(length(auto.accept) && is.null(test.file))
     stop("Argument `test.file` must be specified when using `auto.accept`")
+  if(!is.environment(par.frame))
+    stop(
+      "Logic Error: `par.frame` should be an environment; this is an ",
+      "internal error, contact maintainer."
+    )
 
   # Retrieve or create unitizer environment (note that the search path trimming)
   # happens later.  Also note that pack.env$zero.env can still be tracking the
   # top package under .GlobalEnv
 
   over_print("Loading unitizer data...")
-  par.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
+  gpar.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
+  parent.env(par.frame) <- gpar.frame
 
   if(is(store.id, "unitizer")) {
     unitizer <- upgrade(store.id, par.frame)   # note zero.env is set-up further down
