@@ -424,7 +424,8 @@ testthat_translate_dir <- function(
     # Load helper files and copy them to new location
 
     if(length(files.helper)) {
-      dir.create(file.path(target.dir, "helper"))
+      dir.create(help.dir <- file.path(target.dir, "helper"))
+      file.copy(files.helper, help.dir)
       source_many(files.helper, env)  # env updated by reference
     }
     # Translate files, need to unitize one by one mostly because we wrote the
