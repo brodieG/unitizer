@@ -462,10 +462,10 @@ testthat_translate_dir <- function(
 
   if(length(unparseable))
     warning(
-      "Unable to parse the following files, so they are not unitized.  This ",
-      "likely happed because the original `testthat` file used a language ",
-      "construct that does not survive the parse - deparse cycle:\n",
-      paste0("- ", basename(unparseable), collapse="\n")
+      "Unable to parse the following file(s), so they are not unitized:\n",
+      paste0("  * ", basename(unparseable), collapse="\n"),
+      "\nThis likely happed because the original `testthat` file(s) used a ",
+      "language construct that does not survive the parse - deparse cycle"
     )
   invisible(res)
 }
