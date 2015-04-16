@@ -151,7 +151,7 @@ testthat_translate_file <- function(
 
 testthat_transcribe_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  keep.testthat.call=FALSE, prompt="always", ...
+  keep.testthat.call=TRUE, prompt="always", ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
@@ -379,7 +379,7 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", eval.env=NULL, keep.testthat.call=FALSE,
+  filter="^test.*\\.[rR]", eval.env=NULL, keep.testthat.call=TRUE,
   force=FALSE, ...
 ) {
   # Validate
