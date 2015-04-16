@@ -15,7 +15,7 @@
 #' Also, since unfortunately we're relying on side-effects for some features, and
 #' \code{on.exit} call for safe operation, it is difficult to truly modularize.
 #'
-#' @param par.frame environment to use as parent frame, should contain pre
+#' @param preload.frame environment to use as parent frame, should contain pre
 #'   loaded stuff if any, note that this environment is destructively modified
 #'   by changing the parent environment, so do not re-use it (this environment
 #'   should never be accessed outside of \code{unitizer} so this should be okay)
@@ -24,7 +24,7 @@
 unitize_core <- function(
   test.file, store.id, interactive.mode, par.env,
   search.path.clean, search.path.keep, force.update=FALSE,
-  auto.accept=character(0L), par.frame=new.env()
+  auto.accept=character(0L), preload.frame=new.env()
 ) {
   # -  Setup / Load ------------------------------------------------------------
 
@@ -97,9 +97,9 @@ unitize_core <- function(
     stop("Argument `auto.accept` must be empty in non-interactive mode")
   if(length(auto.accept) && is.null(test.file))
     stop("Argument `test.file` must be specified when using `auto.accept`")
-  if(!is.environment(par.frame))
+  if(!is.environment(preload.frame))
     stop(
-      "Logic Error: `par.frame` should be an environment; this is an ",
+      "Logic Error: `preload.frame` should be an environment; this is an ",
       "internal error, contact maintainer."
     )
 
@@ -109,13 +109,13 @@ unitize_core <- function(
 
   over_print("Loading unitizer data...")
   gpar.frame <- if(is.null(par.env)) pack.env$zero.env.par else par.env
-  parent.env(par.frame) <- gpar.frame
+  parent.env(preload.frame) <- gpar.frame
 
   if(is(store.id, "unitizer")) {
-    unitizer <- upgrade(store.id, par.frame)   # note zero.env is set-up further down
+    unitizer <- upgrade(store.id, preload.frame)   # note zero.env is set-up further down
     store.id <- unitizer@id
   } else {
-    unitizer <- try(load_unitizer(store.id, par.frame))
+    unitizer <- try(load_unitizer(store.id, preload.frame))
     if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
   }
   if(!is(unitizer, "unitizer")) stop("Logic Error: expected a `unitizer` object; contact maintainer.")
@@ -155,7 +155,7 @@ unitize_core <- function(
   # Setup the new unitizer
 
   unitizer@id <- store.id
-  parent.env(unitizer@zero.env) <- par.frame
+  parent.env(unitizer@zero.env) <- preload.frame
   assign("quit", unitizer_quit, unitizer@zero.env)
   assign("q", unitizer_quit, unitizer@zero.env)
 

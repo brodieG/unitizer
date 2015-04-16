@@ -100,7 +100,7 @@ unitize <- function(
     unitize_core(
       test.file, store.id, interactive.mode, par.env, search.path.clean,
       search.path.keep, force.update=force.update, auto.accept=auto.accept,
-      par.frame=pre_load(pre.load)
+      preload.frame=pre_load(pre.load)
   ) )
 }
 #' @rdname unitize
@@ -198,7 +198,7 @@ unitize_dir <- function(
       interactive.mode=interactive.mode, par.env=par.env,
       search.path.clean=search.path.clean,
       search.path.keep=search.path.keep, force.update=force.update,
-      auto.accept=auto.accept, par.frame=pre.load.env
+      auto.accept=auto.accept, preload.frame=pre.load.env
     )
   }
   invisible(res)
