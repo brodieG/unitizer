@@ -60,19 +60,26 @@ local( {
   my.unitizer2 <- my.unitizer2 + exps2                          # now add back items to compare
   unitizer.prepped <- unitizer:::browsePrep(my.unitizer2, mode="unitize")
 
+  # NOTE: for some reason, changes in between revisions d9619db and a46e941
+  # should have caused the tests to fail, but didn't.  We did not notice
+  # failures until we ran tests quite a bit later at ca9f540364.  Not sure why
+  # this happened.  The failures were due to the order of tests changing because
+  # we moved ignored tests to be in the same sub-section as the subsequent non-
+  # ignored tests
+
   test_that("unitizerBrowse correctly processes unitizer for display", {
     # force all tests to be reviewed so they will be shown
     unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
     unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
     expect_equal(
-      c("= <untitled> ===============================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:Y\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:Y\n", "= Section 2 ================================================\n", "     8. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:Y\n", "    *9. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "     7. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "    10. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:Y\n", "    11. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "= Removed Items ============================================\n", "    12. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:Y\n", "    13. \"I too will be removed\" .  .  .  .  .  .   Removed:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:Y\n"),
-      as.character(unitizer.prepped, 60)
+      as.character(unitizer.prepped, 60),
+      c("= <untitled> ===============================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:Y\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:Y\n", "= Section 2 ================================================\n", "     9. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:Y\n", "    *7. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "     8. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "    10. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:Y\n", "    11. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "= Removed Items ============================================\n", "    12. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:Y\n", "    13. \"I too will be removed\" .  .  .  .  .  .   Removed:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:Y\n")
     )
     # Alternating tests
     unitizer.prepped@mapping@reviewed <- as.logical(seq(length(unitizer.prepped@mapping@reviewed)) %% 2)
     expect_equal(
-      c("= <untitled> ===============================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:-\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:-\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:-\n", "= Section 2 ================================================\n", "     8. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:-\n", "    *9. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "     7. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "    10. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:-\n", "    11. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "= Removed Items ============================================\n", "    12. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:-\n", "    13. \"I too will be removed\" .  .  .  .  .  .   Removed:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:-\n"),
-      as.character(unitizer.prepped, 60)
+      as.character(unitizer.prepped, 60),
+      c("= <untitled> ===============================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:-\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:-\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:-\n", "= Section 2 ================================================\n", "     9. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:Y\n", "    *7. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "     8. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:-\n", "    10. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:-\n", "    11. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "= Removed Items ============================================\n", "    12. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:-\n", "    13. \"I too will be removed\" .  .  .  .  .  .   Removed:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:-\n")
     )
   } )
   test_that("processInput generates Correct Item Structure", {
@@ -93,8 +100,8 @@ local( {
     unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
     # Assume user accepted all tests
     expect_equal(
-      list(quote(runif(20)), quote(var <- 200), quote(matrix(1:9, 3)), quote(sample(20)), quote(1 + 20), quote(var1 <- list(1, 2, 3)), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5))))),
-      lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call")
+      lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call"),
+      list(quote(runif(20)), quote(var <- 200), quote(matrix(1:9, 3)), quote(var1 <- list(1, 2, 3)), quote(sample(20)), quote(1 + 20), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))))
     )
     # Assume user accepted all but 1, 4, 6 and 11, note it isn't completely obvious
     # what should be kept since an N for anything but a new test will result in
@@ -102,8 +109,8 @@ local( {
     unitizer.prepped@mapping@review.val[] <- "N"
     unitizer.prepped@mapping@review.val[c(2, 6, 8, 12)] <- "Y"
     expect_equal(
-      list(quote(library(stats)), quote(runif(20)), quote(1 + 1), quote(sample(20)), quote(1 + 20), quote("I too will be removed"), quote("I three will be removed")),
-      lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call")
+      lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call"),
+      list(quote(library(stats)), quote(runif(20)), quote(1 + 1), quote(sample(20)), quote("I too will be removed"), quote("I three will be removed"))
     )
   } )
   test_that("unitizerBrowse subsetting works", {
@@ -111,12 +118,12 @@ local( {
     # subsetting
 
     expect_equal(
-      c("matrix(1:9, 3)", "1 + 20", "matrix(1:9, ncol = 3)"),
-      unitizer:::deparseCalls(unitizer:::extractItems(unitizer.prepped[c(4, 8, 10)]))
+      unitizer:::deparseCalls(unitizer:::extractItems(unitizer.prepped[c(4, 8, 10)])),
+      c("matrix(1:9, 3)", "sample(20)", "matrix(1:9, ncol = 3)")
     )
     expect_equal(
-      c("runif(20)", "var <- 200", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))"),
-      unitizer:::deparseCalls(unitizer:::extractItems(unitizer.prepped[c(2, 3, 11)]))
+      unitizer:::deparseCalls(unitizer:::extractItems(unitizer.prepped[c(2, 3, 11)])),
+      c("runif(20)", "var <- 200", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))")
     )
   })
   test_that("Reference section mapping works", {
@@ -159,8 +166,8 @@ local( {
     item.ids <- vapply(unitizer:::as.list(items), slot, 1L, "id")
     item.df <- data.frame(item.calls, item.types, item.ids, stringsAsFactors=FALSE)
     expect_identical(
-      structure(list(item.calls = c("library(stats)", "1 + 1", "runif(20)", "stop(\"woohoo\")", "var <- 200", "matrix(1:9, 3)", "1 + 20", "var1 <- list(1, 2, 3)", "sample(20)", "matrix(1:9, ncol = 3)", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))", "\"I'll be removed\"", "\"I too will be removed\"", "\"I three will be removed\""), item.types = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), item.ids = c(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 5L, 6L, 7L)), .Names = c("item.calls", "item.types", "item.ids"), row.names = c(1L, 5L, 2L, 6L, 3L, 4L, 8L, 9L, 7L, 10L, 11L, 12L, 13L, 14L), class = "data.frame"),
-      item.df[order(item.types, item.ids),]
+      item.df[order(item.types, item.ids),],
+      structure(list(item.calls = c("library(stats)", "1 + 1", "runif(20)", "stop(\"woohoo\")", "var <- 200", "matrix(1:9, 3)", "1 + 20", "var1 <- list(1, 2, 3)", "sample(20)", "matrix(1:9, ncol = 3)", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))", "\"I'll be removed\"", "\"I too will be removed\"", "\"I three will be removed\""), item.types = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), item.ids = c(1L, 2L, 3L, 4L, 5L, 6L,  7L, 8L, 9L, 10L, 11L, 5L, 6L, 7L)), .Names = c("item.calls", "item.types", "item.ids"), row.names = c(1L, 5L, 2L, 6L, 3L, 4L, 9L, 7L, 8L, 10L, 11L, 12L, 13L, 14L), class = "data.frame")
     )
   } )
 } )
