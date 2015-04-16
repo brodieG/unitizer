@@ -1,8 +1,8 @@
 #' Convert a \code{testthat} Test File to a \code{unitizer}
 #'
 #' Converts a \bold{copy} of an existing \code{testthat} test file to a
-#' \code{unitizer} test file and test store. Expressions tested against
-#' expectations are extracted, evaluated, and used as the tests.
+#' \code{unitizer} test file and test store, or a directory of such files to
+#' a corresponding \code{unitizer} director.
 #'
 #' @section Disclaimers:
 #'
@@ -12,14 +12,16 @@
 #' see the introduction vignette for a (biased) view of the pros and cons of
 #' \code{unitizer} relative to \code{testthat}.
 #'
-#' These translation functions are provided for your convenience.  Keep
-#' in mind that the \code{unitizer} author does not use them very much since
-#' he seldom needs to migrate \code{testthat} tests.  As a result, they have not
-#' been tested as thoroughly as the rest of \code{unitizer}.  Make sure you
-#' \code{\link{review}} the resulting \code{unitizer}s to make sure they contain
-#' what you expect.  This is particularly important if your \code{testthat}
-#' test files are not meant to be run stand-alone with just \code{test_file} (
-#' see "Differences That May Cause Problems").
+#' These translation functions are provided for your convenience.  The
+#' \code{unitizer} author does not use them very much since he seldom needs to
+#' migrate \code{testthat} tests.  As a result, they have not been tested as
+#' thoroughly as the rest of \code{unitizer}.  Additionally, the translation is
+#' designed to work for the most common \code{testthat} use cases.  Make sure
+#' you \code{\link{review}} the resulting \code{unitizer}s to make sure they
+#' contain what you expect before you start relying on them.  This is
+#' particularly important if your \code{testthat} test files are not meant to
+#' be run stand-alone with just \code{test_file} (see "Differences That May
+#' Cause Problems").
 #'
 #' @section Workflow:
 #'
@@ -30,29 +32,45 @@
 #'     because your tests require prior set-up, or are runnable only via
 #'     \code{test_check} because they directly access the namespace of your
 #'     package, see "Differences That May Cause Problems" below
-#'   \item Run \code{testthat_to_unitizer}
-#'   \item [optional] use \code{\link{review}} to review the resulting unitizer
-#'   \item [optional] manually clean up the test file
+#'   \item Run \code{testthat_file_translate} or \code{testthat_dir_translate}
+#'   \item [optional] use \code{\link{review}} to review the resulting
+#'      unitizer(s)
 #' }
 #'
-#' @section What We Do:
+#' @section How the Conversion Works:
 #'
-#' Conversion works by identifying calls to exported \code{testthat} functions
+#' We start by identifying calls to exported \code{testthat} functions
 #' that have an \code{object} argument.  Generally speaking this includes
-#' functions of the form \code{expect_*}.
+#' functions of the form \code{expect_*} (e.g. \code{expect_equal}).  We then
+#' extract the \code{object} parameter and replace the original \code{expect_*}
+#' statement with just the \code{object} parameter.  For example
+#' \preformatted{
+#' expect_equal(my_fun(25), 1:10)
+#' }
+#' becomes
+#' \preformatted{
+#' my_fun(25)
+#' }
+#' \code{unitizer} will then evaluate and store the results of such expressions.
+#' Since in theory we just checked our \code{testthat} tests were working,
+#' presumably the re-evaluated expressions will produce the same values.  Please
+#' note that the translation process does not actually check this is true (see
+#' "Differences That May Cause Problems") so \code{review}ing the results is a
+#' good idea.
 #'
-#' Only top level calls, or calls that are nested within the top level of the
-#' \code{test_that} \code{code} parameter are converted.  For example, if
-#' you nest a \code{expect_true} within anything other than \code{test_that},
-#' including just plain parentheses, that call will not be processed.  We match
-#' the functions to convert based on symbols only; if you assign a
-#' \code{testthat} function to another symbol, or another function to a
-#' \code{testthat} symbol the conversion will not know the difference.
-#' Additionally we expect that the arguments to the \code{testthat} functions
-#' will be the test expressions themselves (as opposed to variables containing
-#' test expressions or the like).
+#' \code{test_that} calls are converted to \code{\link{unitizer_sect}} calls,
+#' and the contents thereof are processed as described above.
 #'
-#' Calls to \code{test_that} are replaced with calls to \code{unitizer_sect}.
+#' Only top level calls are converted.  For example, code like
+#' \code{for(i in 1:10) expect_equal(my_fun(i), seq(i))} or even
+#' \code{(expect_equal(my_fun(10), 1:10))} will not be converted since
+#' \code{expect_equal} is nested inside a \code{for} and \code{(} respectively.
+#' You will need to manually edit these calls.
+#'
+#' We identify calls to extract based purely on the function symbols (i.e. we
+#' do not check whether \code{expect_equal} actually resolves to
+#' \code{testthat::expect_equal} in the context of the test file).
+#'
 #' Calls to \code{context} are commented out since there currently is no
 #' \code{unitizer} equivalent.  Other \code{testthat} calls are left unchanged
 #' and their return values used as part of the \code{unitizer} tests.
@@ -64,20 +82,32 @@
 #' you to try the default settings first as those should work well in most
 #' cases.
 #'
+#' When using \code{testthat_translate_dir}, any files that match
+#' \code{"^helper.*[rR]$"} are copied over to a '/helper' subdirectory
+#' in \code{"target.dir"}, and are pre-loaded by default before the tests are
+#' \code{unitize}d.  We provide this feature for compatibility, but recommend
+#' avoiding it (see below).
+#'
 #' @section \code{unitizer} Differences That May Cause Problems:
 #'
 #' \code{unitize} by default runs each \code{unitizer} test file in a clean
 #' environment with a clean search path.  This means that each test file
 #' must load all packages, data, etc. that it relies on, including the package
-#' you are testing.  If your tests only work properly with the search path as
-#' you set it up just before running the tests, or if you need access to the
-#' global environment,
+#' you are testing.  This approach minimizes the possibility that change in
+#' test behavior is caused by something other than regressions you introduce
+#' (e.g., the state of your workspace).
 #'
-#' ... NEED TO RATIONALIZE THIS
+#' If typically you run your tests during development with \code{test_file} odds
+#' are the translation will work just fine.  On the other hand, if you rely
+#' exclusively on \code{test_check} you may need to make some adjustments
+#' when you translate, use \code{eval.env=getNamespace("pkgName")}, and
+#' subsequently anytime you \code{unitize} or \code{unitize_dir}:
+#' \itemize{
+#'   \item use \code{clean.env=getNamespace("pkgName")}
+#'   \item and \code{search.path.clean=FALSE}
+#' }
 #'
-#' In these cases you can use \code{\link{unitize_tt}},
-#' which is just a wrapper around \code{unitize} with parameters set for
-#' behavior closer to what you would get with \code{test_file}.
+#' The second step is also necessary with translations of \code{test_dir}
 #'
 #' @note In order for the conversion to succeed \code{testthat} must be
 #' installed on your system.  We do not rely on \code{NAMESPACE} imports to
@@ -86,7 +116,7 @@
 #' are called directly.  We use the functions for matching arguments.
 #'
 #' @export
-#' @aliases testthat_translate_name
+#' @aliases testthat_translate_name, testthat_translate_dir
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
 #'   test store in; for \code{testthat_translate_file} only: if NULL will return
@@ -114,17 +144,14 @@
 #' @param force logical(1L) whether to allow writing to a \code{target.dir} that
 #'   contains files (implies \code{prompt="never"} when
 #'   \code{testthat_translate_dir}) runs \code{testthat_translate_file})
-#' @param eval.env parent environment for tests, use if your \code{testthat}
-#'   tests relied on having direct access to package environment as is the case
-#'   with tests run with \code{testthat::test_check} (in which case, pass
-#'   \code{getNamespace("my_package_name")}); if you use this setting remember
-#'   to set the \code{env.clean} parameter to \code{\link{unitize}} to the
-#'   same environment any time you run \code{unitize} in the future
+#' @param eval.env parent environment for tests; for
+#'   \code{testthat_translate_file} only, can be NULL in which case will run
+#'   \code{unitize} with \code{env.clean==TRUE} (see details)
 #' @return a file path or a character vector (see \code{target.dir})
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  eval.env=parent.frame(), keep.testthat.call=FALSE, prompt="always", ...
+  eval.env=NULL, keep.testthat.call=FALSE, prompt="always", ...
 ) {
   if(!is.null(eval.env) && !is.environment(eval.env))
     stop("Argument `eval.env` must be an environment or NULL")
@@ -375,11 +402,10 @@ testthat_transcribe_file <- function(
   return(translated)
 }
 #' @export
-#' @rdname testthat_translate_file
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", eval.env=NULL, keep.testthat.call=TRUE,
+  filter="^test.*\\.[rR]", eval.env=.GlobalEnv, keep.testthat.call=TRUE,
   force=FALSE, ...
 ) {
   # Validate
@@ -403,7 +429,9 @@ testthat_translate_dir <- function(
   if(!is.null(eval.env) && !is.environment(eval.env))
     stop("Argument `eval.env` must be an environment or NULL")
 
-  env <- new.env(parent=if(is.null(eval.env)) parent.frame() else eval.env)
+  # note, parent env below doesn't matter since we're going to change it
+
+  env <- new.env(parent=if(is.null(eval.env)) baseenv() else eval.env)
 
   # Get file names
 
@@ -457,7 +485,10 @@ testthat_translate_dir <- function(
         unparseable[[length(unparseable) + 1L]] <- untz.file
       } else {
         # run for side effects of creating store
-        unitize(test.file=untz.file, auto.accept="new", env.clean=env.par)
+        unitize(
+          test.file=untz.file, auto.accept="new", env.clean=env.par,
+          search.path.clean=FALSE
+        )
   } } }
 
   if(length(unparseable))
