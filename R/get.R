@@ -405,7 +405,7 @@ pre_load <- function(source, env.par=.GlobalEnv) {
   if(!is.environment(env.par)) stop("Argument `env.par` must be an environment")
 
   env <- new.env(parent=env.par)
-  file.list <- dir(source)
+  file.list <- sort(dir(source, full.names=TRUE))
 
   source_many(file.list, env)
   env
