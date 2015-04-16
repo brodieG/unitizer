@@ -40,7 +40,7 @@
 #' @param interactive.mode logical(1L) whether to run in interactive mode (
 #'   request user input when needed) or not (error if user input is required,
 #'   e.g. if all tests do not pass).
-#' @param env.clean TRUE or environment, if TRUE tests are run in a clean
+#' @param par.env NULL or environment, if NULL tests are run in a clean
 #'   environment, if an environment they are run with that environment as the
 #'   parent environment.
 #' @param search.path.clean logical(1L) if TRUE all items on the search path
@@ -76,7 +76,7 @@
 #' @param pre.load a directory or a list of objects, if a directory will be
 #'   converted to a list of objects by sequentially \code{\link{sys.source}}ing
 #'   the files therein into an environment that has for parent
-#'   \code{.GlobalEnv}, or \code{env.clean} if it is specified.  The objects in
+#'   \code{.GlobalEnv}, or \code{par.env} if it is specified.  The objects in
 #'   you create/pass will be visible to the tests, but you will not be able to
 #'   list them with \code{ls}, etc.
 #' @return the \code{unitizer} object updated as per user instructions,
@@ -85,7 +85,7 @@
 
 unitize <- function(
   test.file, store.id=NULL,
-  interactive.mode=interactive(), env.clean=TRUE,
+  interactive.mode=interactive(), par.env=NULL,
   search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer"),
   force.update=FALSE, auto.accept=character(0L),
@@ -98,7 +98,7 @@ unitize <- function(
   }
   invisible(
     unitize_core(
-      test.file, store.id, interactive.mode, env.clean, search.path.clean,
+      test.file, store.id, interactive.mode, par.env, search.path.clean,
       search.path.keep, force.update=force.update, auto.accept=auto.accept,
       par.frame=pre_load(pre.load)
   ) )
@@ -107,12 +107,12 @@ unitize <- function(
 #' @export
 
 review <- function(
-  x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
+  x, par.env=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer")
 ) {
   invisible(
     unitize_core(
-      test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
+      test.file=NULL, store.id=x, interactive.mode=TRUE, par.env=par.env,
       search.path.clean=search.path.clean, search.path.keep=search.path.keep
   ) )
 }
@@ -122,7 +122,7 @@ review <- function(
 unitize_dir <- function(
   test.dir, test.file.regex="^[^.].*\\.[Rr]$",
   unitizer.ids=function(x) sub("(\\.[Rr])?$", ".unitizer", x),
-  interactive.mode=interactive(), env.clean=TRUE,
+  interactive.mode=interactive(), par.env=NULL,
   search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer"),
   force.update=FALSE, auto.accept=character(0L),
@@ -181,7 +181,7 @@ unitize_dir <- function(
   }
   # Pre load stuff into our environment
 
-  par.env <- if(is.environment(env.clean)) env.clean else .GlobalEnv
+  par.env <- if(is.environment(par.env)) par.env else .GlobalEnv
   pre.load.env <- if(is.list(pre.load)) {
     list2env(pre.load, par.env)
   } else {
@@ -195,7 +195,7 @@ unitize_dir <- function(
   for(i in seq_along(test.files)) {
     res[[i]] <- unitize_core(
       test.file=test.files[[i]], store.id=unitizer.ids[[i]],
-      interactive.mode=interactive.mode, env.clean=env.clean,
+      interactive.mode=interactive.mode, par.env=par.env,
       search.path.clean=search.path.clean,
       search.path.keep=search.path.keep, force.update=force.update,
       auto.accept=auto.accept, par.frame=pre.load.env

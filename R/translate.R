@@ -97,23 +97,26 @@
 #' test behavior is caused by something other than regressions you introduce
 #' (e.g., the state of your workspace).
 #'
-#' If typically you run your tests during development with \code{test_file} odds
+#' If you run your tests during development with \code{test_file} odds
 #' are the translation will work just fine.  On the other hand, if you rely
-#' exclusively on \code{test_check} you may need to make some adjustments
-#' when you translate, use \code{eval.env=getNamespace("pkgName")}, and
+#' exclusively on \code{test_check} you may need to use
+#' \code{par.env=getNamespace("pkgName")} when you translate, and
 #' subsequently anytime you \code{unitize} or \code{unitize_dir}:
 #' \itemize{
 #'   \item use \code{clean.env=getNamespace("pkgName")}
 #'   \item and \code{search.path.clean=FALSE}
 #' }
-#'
-#' The second step is also necessary with translations of \code{test_dir}
+#' The second step is also necessary with translations of tests that were
+#' run with \code{test_dir} and relied on helper files to load libraries.  Also,
+#' note that by default \code{testthat_translate_dir} uses \code{.GlobalEnv} as
+#' the parent environment for test evaluation, so you may need to
 #'
 #' @note In order for the conversion to succeed \code{testthat} must be
 #' installed on your system.  We do not rely on \code{NAMESPACE} imports to
-#' avoid an import dependency on \code{testthat} that is only required for this
-#' ancillary function, especially since none of the \code{testthat} functions
-#' are called directly.  We use the functions for matching arguments.
+#' avoid an import dependency on \code{testthat} that is only required for these
+#' ancillary functions, especially since none of the \code{testthat} functions
+#' are called.  We use the functions as the \code{definition} argument of
+#' \code{match.call} to find the \code{object} argument.
 #'
 #' @export
 #' @aliases testthat_translate_name, testthat_translate_dir
@@ -144,17 +147,16 @@
 #' @param force logical(1L) whether to allow writing to a \code{target.dir} that
 #'   contains files (implies \code{prompt="never"} when
 #'   \code{testthat_translate_dir}) runs \code{testthat_translate_file})
-#' @param eval.env parent environment for tests; for
-#'   \code{testthat_translate_file} only, can be NULL in which case will run
-#'   \code{unitize} with \code{env.clean==TRUE} (see details)
+#' @param par.env parent environment for tests (see same argument for
+#'   \code{unitize})
 #' @return a file path or a character vector (see \code{target.dir})
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  eval.env=NULL, keep.testthat.call=FALSE, prompt="always", ...
+  par.env=NULL, keep.testthat.call=FALSE, prompt="always", ...
 ) {
-  if(!is.null(eval.env) && !is.environment(eval.env))
-    stop("Argument `eval.env` must be an environment or NULL")
+  if(!is.null(par.env) && !is.environment(par.env))
+    stop("Argument `par.env` must be an environment or NULL")
 
   untz.file <- testthat_transcribe_file(
     file.name, target.dir, keep.testthat.call, prompt, ...
@@ -162,7 +164,7 @@ testthat_translate_file <- function(
   if(!is.null(target.dir)) {
     unitize(  # run for side effects of creating store
       test.file=untz.file, auto.accept="new",
-      env.clean=if(is.null(eval.env)) TRUE else eval.env
+      par.env=if(is.null(par.env)) TRUE else par.env
     )
   }
   return(untz.file)
@@ -405,7 +407,7 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", eval.env=.GlobalEnv, keep.testthat.call=TRUE,
+  filter="^test.*\\.[rR]", par.env=NULL, keep.testthat.call=TRUE,
   force=FALSE, ...
 ) {
   # Validate
@@ -426,12 +428,12 @@ testthat_translate_dir <- function(
   if(!file_test("-d", dir.name))
     stop("Argument `", dir.name, "` is not a directory name")
 
-  if(!is.null(eval.env) && !is.environment(eval.env))
-    stop("Argument `eval.env` must be an environment or NULL")
+  if(!is.null(par.env) && !is.environment(par.env))
+    stop("Argument `par.env` must be an environment or NULL")
 
   # note, parent env below doesn't matter since we're going to change it
 
-  env <- new.env(parent=if(is.null(eval.env)) baseenv() else eval.env)
+  env <- new.env(parent=if(is.null(par.env)) baseenv() else par.env)
 
   # Get file names
 
@@ -483,13 +485,16 @@ testthat_translate_dir <- function(
       res[[i]] <- untz.file
       if(inherits(try(parse(untz.file)), "try-error")) {
         unparseable[[length(unparseable) + 1L]] <- untz.file
-      } else {
-        # run for side effects of creating store
-        unitize(
-          test.file=untz.file, auto.accept="new", env.clean=env.par,
-          search.path.clean=FALSE
-        )
-  } } }
+        unlink(untz.file)
+    } }
+    # Run for side effects
+
+    unitize_dir(
+      test.dir=untz.file, auto.accept="new",
+      par.env=env.par, search.path.clean=FALSE
+    )
+
+  }
 
   if(length(unparseable))
     warning(

@@ -22,7 +22,7 @@
 #' @keywords internal
 
 unitize_core <- function(
-  test.file, store.id, interactive.mode, env.clean,
+  test.file, store.id, interactive.mode, par.env,
   search.path.clean, search.path.keep, force.update=FALSE,
   auto.accept=character(0L), par.frame=new.env()
 ) {
@@ -68,8 +68,8 @@ unitize_core <- function(
 
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
-  if(!isTRUE(env.clean) && !is.environment(env.clean))
-    stop("Argument `env.clean` must be TRUE or an environment.")
+  if(!is.null(par.env) && !is.environment(par.env))
+    stop("Argument `par.env` must be NULL or an environment.")
   if(
     !is.logical(search.path.clean) || length(search.path.clean) != 1L ||
     is.na(search.path.clean)
@@ -108,7 +108,7 @@ unitize_core <- function(
   # top package under .GlobalEnv
 
   over_print("Loading unitizer data...")
-  gpar.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
+  gpar.frame <- if(is.null(par.env)) pack.env$zero.env.par else par.env
   parent.env(par.frame) <- gpar.frame
 
   if(is(store.id, "unitizer")) {
@@ -170,7 +170,7 @@ unitize_core <- function(
   # Clean up search path
 
   search.path.setup <- search.path.trim <- FALSE
-  if((isTRUE(env.clean) || isTRUE(search.path.clean)) && !tracingState()) {
+  if((is.null(par.env) || isTRUE(search.path.clean)) && !tracingState()) {
     warning(
       "Tracing is disabled, but must be enabled to run in a clean environment ",
       "or with a clean search path.  If you want these features re-enable tracing ",
@@ -178,12 +178,12 @@ unitize_core <- function(
       "Running on existing search path with `.GlobalEnv` as parent.",
       immediate.=TRUE
     )
-    env.clean <- .GlobalEnv
+    par.env <- .GlobalEnv
     search.path.clean <- FALSE
-  } else if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
+  } else if(is.null(par.env) || isTRUE(search.path.clean)) {
     over_print("Search Path Setup...")
     if(!isTRUE(search.path.setup <- search_path_setup())) {
-      if(isTRUE(env.clean))
+      if(is.null(par.env))
         warning(
           "Unable to run in clean environment, running in .GlobalEnv",
           immediate.=TRUE
@@ -231,7 +231,7 @@ unitize_core <- function(
 
     # Make sure our tracing didn't get messed up in some way
 
-    if((isTRUE(search.path.clean) || isTRUE(env.clean)) && !search_path_check()) {
+    if((isTRUE(search.path.clean) || is.null(par.env)) && !search_path_check()) {
       search_path_restore()
       search.path.restored <- TRUE
     }
