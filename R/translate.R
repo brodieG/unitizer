@@ -89,8 +89,9 @@
 #' @aliases testthat_translate_name
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
-#'   test store in, if NULL will not store the result (note return value is
-#'   still useful)
+#'   test store in; for \code{testthat_translate_file} only: if NULL will return
+#'   as a character vector what the contents of the translated file would have
+#'   been instead of writing the file
 #' @param keep.testthat.call whether to preserve the \code{testthat} call that
 #'   was converted, as a comment (does not apply to \code{test_that} calls)
 #' @param ... params to pass on to \code{testthat_translate_name}
@@ -119,12 +120,38 @@
 #'   \code{getNamespace("my_package_name")}); if you use this setting remember
 #'   to set the \code{env.clean} parameter to \code{\link{unitize}} to the
 #'   same environment any time you run \code{unitize} in the future
-#' @return character the contents of the translated file (saved to
-#'   \code{target.dir} if that parameter is not \code{NULL})
+#' @return a file path or a character vector (see \code{target.dir})
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
   eval.env=parent.frame(), keep.testthat.call=FALSE, prompt="always", ...
+) {
+  if(!is.null(eval.env) && !is.environment(eval.env))
+    stop("Argument `eval.env` must be an environment or NULL")
+
+  untz.file <- testthat_transcribe_file(
+    file.name, target.dir, keep.testthat.call, prompt, ...
+  )
+  if(!is.null(target.dir)) {
+    unitize(  # run for side effects of creating store
+      test.file=untz.file, auto.accept="new",
+      env.clean=if(is.null(eval.env)) TRUE else eval.env
+    )
+  }
+  return(untz.file)
+}
+#' Transcribes a \code{testtaht} File Into \code{unitizer} Format
+#'
+#' Internal use only, required so we can ensure the parse succeeded because of
+#' possible parse-deparse issues independent of running \code{unitize}, since
+#' \code{unitize} cannot be run inside a \code{tryCatch} block.
+#'
+#' @keywords internal
+#' @inheritParms testthat_translate_file
+
+testthat_transcribe_file <- function(
+  file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
+  keep.testthat.call=FALSE, prompt="always", ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
@@ -139,9 +166,6 @@ testthat_translate_file <- function(
       "Argument prompt must be character(1L), not NA, and in ",
       deparse(valid.prompt)
     )
-  if(!is.null(eval.env) && !is.environment(eval.env))
-    stop("Argument `eval.env` must be an environment or NULL")
-
   is_testthat_attached()
 
   # Get function list to extract
@@ -303,7 +327,6 @@ testthat_translate_file <- function(
 
     untz.base <- testthat_translate_name(file.name, target.dir, ...)
     untz.test <- paste0(untz.base, ".R")
-    untz.store <- paste0(untz.base, ".unitizer")
 
     # prompt if needed to create directories
 
@@ -330,37 +353,24 @@ testthat_translate_file <- function(
     }
     # prompt if file already exists
 
-    if(!identical(prompt, "never")) {
-      if(file.exists(untz.store) || file.exists(untz.test)) {
-
-        u.inp <- simple_prompt(
-          paste0(
-            "Overwrite files: ",
-            paste(
-              if(file.exists(untz.store)) normalizePath(untz.store),
-              if(file.exists(untz.test)) normalizePath(untz.test),
-              sep=", "
-        ) ) )
-        if(!identical(u.inp, "Y"))
-          stop(
-            "Unable to proceed without user approval as one of `",
-            untz.test, "` or `", untz.store,
-            "` already exists."
-          )
-      }
+    if(!identical(prompt, "never") && file.exists(untz.test)) {
+      u.inp <- simple_prompt(
+        paste0("Overwrite file '", normalizePath(untz.test), "'?")
+      )
+      if(!identical(u.inp, "Y"))
+        stop(
+          "Unable to proceed without user approval as one of `",
+          untz.test, "` or `", untz.store,
+          "` already exists."
+        )
     }
     # Create files, run tests ...
 
     if(inherits(try(file.create(untz.test)), "try-error"))
-      stop("Unable to create test file `", untz.test, "`; see prior errors.")
+      stop("Unable to create test file '", untz.test, "'; see prior errors.")
 
-    write.test <- try(cat(translated, file=untz.test, sep="\n"))
-    if(inherits(write.test, "try-error"))
-      stop("Unable to write test file; see previous error")
-    unitize(  # run for side effects of creating store
-      test.file=untz.test, store.id=untz.store, auto.accept="new",
-      env.clean=if(is.null(eval.env)) TRUE else eval.env
-    )
+    try(cat(translated, file=untz.test, sep="\n"))
+    return(untz.test)
   }
   return(translated)
 }
@@ -404,7 +414,7 @@ testthat_translate_dir <- function(
   files.test <- normalizePath(
     file.path(dir.name, grep(filter, file.list, value=TRUE))
   )
-  res <- vector("list", length(files.test))
+  res <- character(length(files.test))
   if(length(files.test)) {
     # Checks
     if(file.exists(target.dir) && !file_test("-d", target.dir))
@@ -414,9 +424,9 @@ testthat_translate_dir <- function(
       length(dir(all.files=TRUE, include.dirs=TRUE, no..=TRUE))
     )
       stop(
-        "`target.dir` contains files so we cannot proceed; manually clear ",
-        "or set `force` to TRUE.  This is a safety feature to ensure files are ",
-        "not accidentally overwritten."
+        "`target.dir` '", normalizePath(target.dir) ,"' contains files so we ",
+        "cannot proceed; manually clear or set `force` to TRUE.  This is a ",
+        "safety feature to ensure files are not accidentally overwritten."
       )
 
     dir.create(target.dir, recursive=TRUE)
@@ -433,13 +443,30 @@ testthat_translate_dir <- function(
     # if we separate the file translation and unitizing
 
     env.par <- new.env(parent=env)
+    unparseable <- character()
 
-    for(i in seq_along(files.test))
-      res[[i]] <- testthat_translate_file(
-        files.test[[i]], target.dir, eval.env=env.par, keep.testthat.call,
-        prompt="never", ...
+    for(i in seq_along(files.test)) {
+      # Attempt to parse to make sure parse -> deparse translation didn't go
+      # awry
+
+      untz.file <- testthat_transcribe_file(
+        files.test[[i]], target.dir, keep.testthat.call, prompt="never", ...
       )
-  }
+      res[[i]] <- untz.file
+      if(inherits(try(parse(untz.file)), "try-error")) {
+        unparseable[[length(unparseable) + 1L]] <- untz.file
+      } else {
+        # run for side effects of creating store
+        unitize(test.file=untz.file, auto.accept="new", env.clean=env.par)
+  } } }
+
+  if(length(unparseable))
+    warning(
+      "Unable to parse the following files, so they are not unitized.  This ",
+      "likely happed because the original `testthat` file used a language ",
+      "construct that does not survive the parse - deparse cycle:\n",
+      paste0("- ", basename(unparseable), collapse="\n")
+    )
   invisible(res)
 }
 #' @rdname testthat_translate_file

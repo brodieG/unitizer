@@ -8,8 +8,8 @@ res1 <- testthat_translate_file(test.file, target.dir, prompt="overwrite")  # ha
 
 test_that("translate a file", {
   expect_equal(
-    res1,
-    c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "rev(10:1)", "unitizer_sect(\"simple tests\", {\n    # first internal\n    fun0(a)\n    # internal comment\n    fun1(a, b, c, d, e, f)\n    # \"external\" comment\n    fun1(a)\n})", "# a test for errors", "unitizer_sect(\"errors\", {\n    # Making up sections\n    stop(\"hello\")\n    warning(\"yoyo\")\n})")
+    readLines(res1),
+    c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "rev(10:1)", "unitizer_sect(\"simple tests\", {", "    # first internal", "    fun0(a)", "    # internal comment", "    fun1(a, b, c, d, e, f)", "    # \"external\" comment", "    fun1(a)", "})", "# a test for errors", "unitizer_sect(\"errors\", {", "    # Making up sections", "    stop(\"hello\")", "    warning(\"yoyo\")", "})")
   )
   # Can't do this twice in a row without prompting in non-interactive mode
 
@@ -38,8 +38,8 @@ res2 <- testthat_translate_dir(test.dir, target.dir)  # has to be outside of `te
 
 test_that("translate a dir", {
   expect_equal(
-    res2,
-    list(c("# for translate unitizer tests", "# blah blah", "fun0(a)", "fun1(a)", "# a test for errors", "stop(\"hello\")", "random_function()"), c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "rev(10:1)", "unitizer_sect(\"simple tests\", {\n    # first internal\n    fun0(a)\n    # internal comment\n    fun1(a, b, c, d, e, f)\n    # \"external\" comment\n    fun1(a)\n})", "# a test for errors", "unitizer_sect(\"errors\", {\n    # Making up sections\n    stop(\"hello\")\n    warning(\"yoyo\")\n})"))
+    lapply(res2, readLines),
+    list(c("# for translate unitizer tests", "# blah blah", "fun0(a)", "fun1(a)", "# a test for errors", "stop(\"hello\")", "random_function()"), c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "rev(10:1)", "unitizer_sect(\"simple tests\", {", "    # first internal", "    fun0(a)", "    # internal comment", "    fun1(a, b, c, d, e, f)", "    # \"external\" comment", "    fun1(a)", "})", "# a test for errors", "unitizer_sect(\"errors\", {",  "    # Making up sections", "    stop(\"hello\")", "    warning(\"yoyo\")", "})"))
   )
   untz <- get_unitizer(file.path(target.dir, "translate2.unitizer"))
 
@@ -53,6 +53,12 @@ test_that("translate a dir", {
   expect_equal(
     lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value),
     list(NULL, 1:10, 42, 24, 24, NULL, "yoyo")
+  )
+  # Can't do it again since there are files there
+
+  expect_error(
+    testthat_translate_dir(test.dir, target.dir),
+    "contains files so we cannot proceed"
   )
 })
 
