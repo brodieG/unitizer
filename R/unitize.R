@@ -100,7 +100,7 @@ unitize <- function(
     unitize_core(
       test.file, store.id, interactive.mode, par.env, search.path.clean,
       search.path.keep, force.update=force.update, auto.accept=auto.accept,
-      preload.frame=pre_load(pre.load)
+      pre.load.frame=pre_load(pre.load)
   ) )
 }
 #' @rdname unitize
@@ -128,6 +128,58 @@ unitize_dir <- function(
   force.update=FALSE, auto.accept=character(0L),
   pre.load=file.path(test.dir, "helper")
 ) {
+  args <- as.list(environment())
+  if(
+      !is.list(pre.load) && (
+        !is.character(pre.load) || length(pre.load) != 1L || is.na(pre.load)
+    )
+  ) {
+    stop("Argument `pre.load` must be a list or character(1L) and not NA.")
+  }
+  # Pre load stuff into our environment
+
+  new.par <- if(is.environment(par.env)) par.env else .GlobalEnv
+  pre.load.env <- if(is.list(pre.load)) {
+    list2env(pre.load, new.par)
+  } else {
+    pre_load(pre.load, new.par)
+  }
+  do.call(
+    .unitize_dir,
+    c(args[names(args) != "pre.load"], pre.load.frame=pre.load.env)
+  )
+}
+
+#' Internal Version of \code{unitizer_dir}
+#'
+#' Only purpose is to expose the \code{pre.load.frame} argument, since we do not
+#' want to allow the user to pass an environment because we modify the
+#' environment parent and they could do something stupid like pass a namespace
+#' or some such
+#'
+#' @param pre.load.frame see \code{\link{unitizer_core}}
+#' @inheritParams unitize_dir
+#' @keyword internal
+
+.unitize_dir <- function(
+  test.dir, test.file.regex="^[^.].*\\.[Rr]$",
+  unitizer.ids=function(x) sub("(\\.[Rr])?$", ".unitizer", x),
+  interactive.mode=interactive(), par.env=NULL,
+  search.path.clean=getOption("unitizer.search.path.clean"),
+  search.path.keep=c("tools:rstudio", "package:unitizer"),
+  force.update=FALSE, auto.accept=character(0L),
+  pre.load.frame
+) {
+  # sanity check
+
+  if(
+    !identical(
+      head(formals(.unitize_dir), -1L),
+      head(formals(unitize_dir), -1L)
+    )
+  )
+    stop("Logic Error: definition mismatch for unitize_dir; contact maintainer")
+
   # Basic validations
 
   if(
@@ -141,12 +193,11 @@ unitize_dir <- function(
   )
     stop("Argument `test.file.regex` must be character(1L) and not NA.")
 
-  if(
-    !is.list(pre.load) && (
-      !is.character(pre.load) || length(pre.load) != 1L || is.na(pre.load)
+  if(!is.environment(pre.load.frame))
+    stop(
+      "Logic Error: `pre.load.frame` should have been an environment; ",
+      "contact maintainer"
     )
-  )
-    stop("Argument `pre.load` must be a list or character(1L) and not NA.")
 
   # Get the file names and corresponding unitizers
 
@@ -179,14 +230,6 @@ unitize_dir <- function(
       " instead of a character vector or list as expected."
     )
   }
-  # Pre load stuff into our environment
-
-  par.env <- if(is.environment(par.env)) par.env else .GlobalEnv
-  pre.load.env <- if(is.list(pre.load)) {
-    list2env(pre.load, par.env)
-  } else {
-    pre_load(pre.load, par.env)
-  }
   # Now unitize; note we cannot try-catch as that would mess with the unitizer
   # evaluation system, so failure just kills the whole thing
 
@@ -198,8 +241,11 @@ unitize_dir <- function(
       interactive.mode=interactive.mode, par.env=par.env,
       search.path.clean=search.path.clean,
       search.path.keep=search.path.keep, force.update=force.update,
-      auto.accept=auto.accept, preload.frame=pre.load.env
+      auto.accept=auto.accept, pre.load.frame=pre.load.frame
     )
   }
   invisible(res)
 }
+
+
+
