@@ -15,10 +15,10 @@
 #' These translation functions are provided for your convenience.  The
 #' \code{unitizer} author does not use them very much since he seldom needs to
 #' migrate \code{testthat} tests.  As a result, they have not been tested as
-#' thoroughly as the rest of \code{unitizer}.  Additionally, the translation is
-#' designed to work for the most common \code{testthat} use cases.  Make sure
-#' you \code{\link{review}} the resulting \code{unitizer}s to make sure they
-#' contain what you expect before you start relying on them.  This is
+#' thoroughly as the rest of \code{unitizer}.  Translation is designed to work
+#' for the most common \code{testthat} use cases, but may not for yours.  Make
+#' sure you \code{\link{review}} the resulting \code{unitizer}s to make sure
+#' they contain what you expect before you start relying on them.  This is
 #' particularly important if your \code{testthat} test files are not meant to
 #' be run stand-alone with just \code{test_file} (see "Differences That May
 #' Cause Problems").
@@ -91,25 +91,22 @@
 #' @section \code{unitizer} Differences That May Cause Problems:
 #'
 #' \code{unitize} by default runs each \code{unitizer} test file in a clean
-#' environment with a clean search path.  This means that each test file
-#' must load all packages, data, etc. that it relies on, including the package
-#' you are testing.  This approach minimizes the possibility that change in
-#' test behavior is caused by something other than regressions you introduce
-#' (e.g., the state of your workspace).
+#' environment with a clean search path.  This means that if you load libraries
+#' before you run your tests you will have to set
+#' \code{search.path.clean=FALSE}, even if you are loading the libraries in the
+#' helper files.  Note we generally discourage the use of helper files because
+#' \code{unitizer} does not track changes in objects that are produced by them,
+#' so they could become a source of difficult-to-track-down regressions.
 #'
 #' If you run your tests during development with \code{test_file} odds
 #' are the translation will work just fine.  On the other hand, if you rely
 #' exclusively on \code{test_check} you may need to use
-#' \code{par.env=getNamespace("pkgName")} when you translate, and
-#' subsequently anytime you \code{unitize} or \code{unitize_dir}:
-#' \itemize{
-#'   \item use \code{clean.env=getNamespace("pkgName")}
-#'   \item and \code{search.path.clean=FALSE}
-#' }
-#' The second step is also necessary with translations of tests that were
-#' run with \code{test_dir} and relied on helper files to load libraries.  Also,
-#' note that by default \code{testthat_translate_dir} uses \code{.GlobalEnv} as
-#' the parent environment for test evaluation, so you may need to
+#' \code{par.env=getNamespace("pkgName")} when you translate.
+#'
+#' If your tests were translated with parameters \code{par.env} and/or
+#' \code{search.path.clean} changed from their default values, you will have
+#' to use the same values for those parameters in future \code{unitize} or
+#' \code{unitize_dir} runs.
 #'
 #' @note In order for the conversion to succeed \code{testthat} must be
 #' installed on your system.  We do not rely on \code{NAMESPACE} imports to
@@ -119,6 +116,7 @@
 #' \code{match.call} to find the \code{object} argument.
 #'
 #' @export
+#' @seealso \code{\link{unitize}}
 #' @aliases testthat_translate_name, testthat_translate_dir
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
@@ -148,12 +146,15 @@
 #'   contains files (implies \code{prompt="never"} when
 #'   \code{testthat_translate_dir}) runs \code{testthat_translate_file})
 #' @param par.env parent environment for tests (see same argument for
-#'   \code{unitize})
+#'   \code{\link{unitize}})
+#' @param search.path.clean whether to unload search path to bare minimum before
+#'   \code{unitize}ing tests (see same argument for \code{\link{unitize}})
 #' @return a file path or a character vector (see \code{target.dir})
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  par.env=NULL, keep.testthat.call=FALSE, prompt="always", ...
+  par.env=NULL, search.path.clean=TRUE, keep.testthat.call=FALSE,
+  prompt="always", ...
 ) {
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be an environment or NULL")
@@ -162,10 +163,7 @@ testthat_translate_file <- function(
     file.name, target.dir, keep.testthat.call, prompt, ...
   )
   if(!is.null(target.dir)) {
-    unitize(  # run for side effects of creating store
-      test.file=untz.file, auto.accept="new",
-      par.env=if(is.null(par.env)) TRUE else par.env
-    )
+    unitize(test.file=untz.file, auto.accept="new", par.env=par.env)
   }
   return(untz.file)
 }
@@ -407,8 +405,8 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", par.env=NULL, keep.testthat.call=TRUE,
-  force=FALSE, ...
+  filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=FALSE,
+  keep.testthat.call=TRUE, force=FALSE, ...
 ) {
   # Validate
 
@@ -472,7 +470,6 @@ testthat_translate_dir <- function(
     # `testthat_translate_file` function first, but would probably be better
     # if we separate the file translation and unitizing
 
-    env.par <- new.env(parent=env)
     unparseable <- character()
 
     for(i in seq_along(files.test)) {
@@ -485,17 +482,26 @@ testthat_translate_dir <- function(
       res[[i]] <- untz.file
       if(inherits(try(parse(untz.file)), "try-error")) {
         unparseable[[length(unparseable) + 1L]] <- untz.file
-        unlink(untz.file)
     } }
-    # Run for side effects
+    # Temporarily exclude failing files so we can just unitize the directory
 
-    unitize_dir(
-      test.dir=untz.file, auto.accept="new",
-      par.env=env.par, search.path.clean=FALSE
+    tmp.dir <- tempfile()
+    dir.create(tmp.dir)
+    file.copy(unparseable, tmp.dir)
+    unlink(unparseable)
+
+    # Unitize all files in directory
+
+    .unitize_dir(
+      test.dir=target.dir, auto.accept="new", par.env=par.env,
+      search.path.clean=search.path.clean, pre.load.frame=env
     )
+    # Copy files back so that user can review why they failed to parse
 
+    old.unparseable <- dir(tmp.dir, full.names=TRUE)
+    file.copy(old.unparseable, target.dir)
+    unlink(old.unparseable)
   }
-
   if(length(unparseable))
     warning(
       "Unable to parse the following file(s), so they are not unitized:\n",
