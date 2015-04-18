@@ -447,6 +447,7 @@ testthat_translate_dir <- function(
   filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=FALSE,
   keep.testthat.call=TRUE, force=FALSE, ...
 ) {
+  is_testthat_attached()
   # Validate
 
   chr.1.args <- list(
