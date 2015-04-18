@@ -107,7 +107,7 @@ unitize <- function(
 #' @export
 
 review <- function(
-  x, par.env=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
+  x, par.env=NULL, search.path.clean=getOption("unitizer.search.path.clean"),
   search.path.keep=c("tools:rstudio", "package:unitizer")
 ) {
   invisible(
