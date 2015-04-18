@@ -159,7 +159,7 @@ unitize_dir <- function(
 #'
 #' @param pre.load.frame see \code{\link{unitizer_core}}
 #' @inheritParams unitize_dir
-#' @keyword internal
+#' @keywords internal
 
 .unitize_dir <- function(
   test.dir, test.file.regex="^[^.].*\\.[Rr]$",

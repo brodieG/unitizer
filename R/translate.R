@@ -2,7 +2,7 @@
 #'
 #' Converts a \bold{copy} of an existing \code{testthat} test file to a
 #' \code{unitizer} test file and test store, or a directory of such files to
-#' a corresponding \code{unitizer} director.
+#' a corresponding \code{unitizer} directory.  See examples.
 #'
 #' @section Disclaimers:
 #'
@@ -47,21 +47,16 @@
 #' functions of the form \code{expect_*} (e.g. \code{expect_equal}).  We then
 #' extract the \code{object} parameter and replace the original \code{expect_*}
 #' statement with just the \code{object} parameter.  For example
-#' \preformatted{
-#' expect_equal(my_fun(25), 1:10)
-#' }
+#' \preformatted{expect_equal(my_fun(25), 1:10)}
 #' becomes
-#' \preformatted{
-#' my_fun(25)
-#' }
+#' \preformatted{my_fun(25)}
 #' Not all \code{expect_*} functions are substituted.  For example,
 #' \code{expect_is} and \code{expect_that} are left unchanged because the tests
 #' for those functions do not or might not actually test the values of
-#' \code{object}.  For example, \code{expect_is} tests the \bold{class} of an
-#' object.  Note however that it is perfectly fine to \code{unitize} an
-#' \code{expect_*} call unsubstituted.  \code{unitizer} captures conditions,
-#' values, etc., so if an \code{expect_*} test starts failing, it will be
-#' detected.
+#' \code{object}.  For example, \code{expect_is} tests the \bold{class} of
+#' \code{object}.  It is perfectly fine to \code{unitize} an \code{expect_*}
+#' call unsubstituted.  \code{unitizer} captures conditions, values, etc., so if
+#' an \code{expect_*} test starts failing, it will be detected.
 #'
 #' \code{unitizer} will then evaluate and store the results of such expressions.
 #' Since in theory we just checked our \code{testthat} tests were working,
@@ -71,21 +66,21 @@
 #' good idea.
 #'
 #' \code{test_that} calls are converted to \code{\link{unitizer_sect}} calls,
-#' and the contents thereof are processed as described above.
+#' and the contents thereof are processed as described above.  Calls to
+#' \code{context} are commented out since there currently is no \code{unitizer}
+#' equivalent.  Other \code{testthat} calls are left unchanged and their return
+#' values used as part of the \code{unitizer} tests.
 #'
 #' Only top level calls are converted.  For example, code like
 #' \code{for(i in 1:10) expect_equal(my_fun(i), seq(i))} or even
 #' \code{(expect_equal(my_fun(10), 1:10))} will not be converted since
 #' \code{expect_equal} is nested inside a \code{for} and \code{(} respectively.
-#' You will need to manually edit these calls.
+#' You will need to manually edit these calls (or just let them remain as is,
+#' which is not an issue).
 #'
 #' We identify calls to extract based purely on the function symbols (i.e. we
 #' do not check whether \code{expect_equal} actually resolves to
 #' \code{testthat::expect_equal} in the context of the test file).
-#'
-#' Calls to \code{context} are commented out since there currently is no
-#' \code{unitizer} equivalent.  Other \code{testthat} calls are left unchanged
-#' and their return values used as part of the \code{unitizer} tests.
 #'
 #' The \code{unitizer} files will be created in a sibling folder to the folder
 #' containing the \code{testthat} files.  The names of the new files will be
@@ -144,15 +139,15 @@
 #'   as a character vector what the contents of the translated file would have
 #'   been instead of writing the file
 #' @param keep.testthat.call whether to preserve the \code{testthat} call that
-#'   was converted, as a comment (does not apply to \code{test_that} calls)
+#'   was converted, as a comment
 #' @param ... params to pass on to \code{testthat_translate_name}
 #' @param name.new character(1L) the base name for the \code{unitizer} files;
 #'   do not include an extension as we will add it (".R" for the testfile,
 #'   ".unitizer" for the data directory); set to NULL to generate the name
 #'   from the \code{testthat} file name
 #' @param name.pattern character(1L) a regular expression intended to match
-#'   the \code{testthat} test file name (see \code{name.replace})
-#' @param if \code{name.pattern} matches, then the new file name will be
+#'   the \code{testthat} test file name (see \code{name.replace}) if
+#'   \code{name.pattern} matches, then the new file name will be
 #'   constructed with this (used as \code{replace} parameter to
 #'   \code{\link{sub}}); in addition we will add ".R" and ".unitizer" as the
 #'   extensions for the new files so do not include extensions in your
@@ -164,12 +159,35 @@
 #'   }
 #' @param force logical(1L) whether to allow writing to a \code{target.dir} that
 #'   contains files (implies \code{prompt="never"} when
-#'   \code{testthat_translate_dir}) runs \code{testthat_translate_file})
+#'   \code{testthat_translate_dir} runs \code{testthat_translate_file})
 #' @param par.env parent environment for tests (see same argument for
 #'   \code{\link{unitize}})
 #' @param search.path.clean whether to unload search path to bare minimum before
 #'   \code{unitize}ing tests (see same argument for \code{\link{unitize}})
 #' @return a file path or a character vector (see \code{target.dir})
+#' @examples
+#' \dontrun{
+#' library(testthat)  # required
+#' testthat_translate_file("tests/testthat/test-random.R")
+#'
+#' # Translate `dplyr` tests (assumes `dplyr` source is in './dplyr'):
+#'
+#' testthat_translate_dir(
+#'   "dplyr/tests/testthat", par.env=getNamespace("dplyr"),
+#'   search.path.clean=FALSE
+#' )
+#' # Make sure translation worked (checking one file here)
+#' # *NOTE*: folder we are looking at has changed
+#'
+#' review("dplyr/tests/unitizer/summarise.unitizer")
+#'
+#' # Now we can unitize any time we change our code
+#'
+#' unitize_dir(
+#'   "dplyr/tests/unitizer", par.env=getNamespace("dplyr"),
+#'   search.path.clean=FALSE
+#' )
+#' }
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
@@ -194,7 +212,7 @@ testthat_translate_file <- function(
 #' \code{unitize} cannot be run inside a \code{tryCatch} block.
 #'
 #' @keywords internal
-#' @inheritParms testthat_translate_file
+#' @inheritParams testthat_translate_file
 
 testthat_transcribe_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
@@ -421,6 +439,7 @@ testthat_transcribe_file <- function(
   }
   return(translated)
 }
+#' @rdname testthat_translate_file
 #' @export
 
 testthat_translate_dir <- function(
