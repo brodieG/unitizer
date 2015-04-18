@@ -124,4 +124,24 @@ local({
       "tests/unitizer/zzz\\.unitizer$"
     )
   } )
+  test_that("source many", {
+    dir.base <- "helper/source"
+    files <- paste0("f", 1:3, ".R")
+
+    env <- new.env()
+    expect_error(
+      unitizer:::source_many(file.path(dir.base, files), env),
+      "Error sourcing file"
+    )
+    expect_equal(
+      as.list(env),
+      structure(list(a = 22, b = 32, c = 200, e = 50), .Names = c("a",  "b", "c", "e"))
+    )
+    env <- new.env()
+    unitizer:::source_many(file.path(dir.base, files[1:2]), env)
+    expect_equal(
+      structure(list(a = 22, b = 32, c = 200), .Names = c("a", "b",  "c")),
+      as.list(env)
+    )
+  })
 } )

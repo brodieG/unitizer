@@ -48,6 +48,7 @@ Collate:
     'parse.R'
     'rename.R'
     'repairenvs.R'
+    'translate.R'
     'unitize.R'
     'unitize.core.R'
     'unitizer-package.r'

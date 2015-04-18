@@ -7,21 +7,22 @@
 \title{Unitize an R Test Script}
 \usage{
 unitize(test.file, store.id = NULL, interactive.mode = interactive(),
-  env.clean = TRUE,
+  par.env = NULL,
   search.path.clean = getOption("unitizer.search.path.clean"),
   search.path.keep = c("tools:rstudio", "package:unitizer"),
-  force.update = FALSE)
+  force.update = FALSE, auto.accept = character(0L), pre.load = list())
 
-review(x, env.clean = TRUE,
+review(x, par.env = NULL,
   search.path.clean = getOption("unitizer.search.path.clean"),
   search.path.keep = c("tools:rstudio", "package:unitizer"))
 
 unitize_dir(test.dir, test.file.regex = "^[^.].*\\\\.[Rr]$",
   unitizer.ids = function(x) sub("(\\\\.[Rr])?$", ".unitizer", x),
-  interactive.mode = interactive(), env.clean = TRUE,
+  interactive.mode = interactive(), par.env = NULL,
   search.path.clean = getOption("unitizer.search.path.clean"),
   search.path.keep = c("tools:rstudio", "package:unitizer"),
-  force.update = FALSE)
+  force.update = FALSE, auto.accept = character(0L),
+  pre.load = file.path(test.dir, "helper"))
 }
 \arguments{
 \item{test.file}{path to the file containing tests, if supplied path does not
@@ -35,24 +36,42 @@ name as the testfile, except ending in \code{.unitizer} instead of
 default option, you can create custom \code{unitizer} stores as well
 (see vignette and \code{\link{get_unitizer}}).}
 
-\item{interactive.mode}{logical(1L) whether to run in interactive mode}
+\item{interactive.mode}{logical(1L) whether to run in interactive mode (
+request user input when needed) or not (error if user input is required,
+e.g. if all tests do not pass).}
 
-\item{env.clean}{TRUE or environment, if TRUE tests are run in a clean
+\item{par.env}{NULL or environment, if NULL tests are run in a clean
 environment, if an environment they are run with that environment as the
 parent environment.}
 
-\item{search.path.clean}{logical(1L) if TRUE all items on the search path that
-are not part of a clean R session are detached prior to running tests.  Note
-namespaces for detached packages remain loaded.  Additionally, the search
-path is restored to its initial state upon exiting \code{unitizer} so any
-packages added/removed, or objects attached/detached from search path are
-restored to original state.  See "Reproducible Tests" vignette for details.}
+\item{search.path.clean}{logical(1L) if TRUE all items on the search path
+that are not part of a clean R session are detached prior to running tests.
+Namespaces for detached packages remain loaded, so re-attaching those
+packages during tests with \code{library} should carry little overhead.
+The search path is restored to its initial state upon exiting
+\code{unitizer} so any packages added/removed, or objects attached/detached
+from search path are restored to original state.  See "Reproducible Tests"
+vignette for details.}
 
 \item{search.path.keep}{character any additional items on the search path
 to keep attached; has no effect if \code{search.path.clean} is FALSE}
 
 \item{force.update}{logical(1L) if TRUE will give the option to re-store a
 unitizer after re-evaluating all the tests even if all tests passed.}
+
+\item{auto.accept}{character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
+YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
+prompting, use values in \code{c("new", "failed", "deleted", "error")} to
+specify which type(s) of test you wish to auto accept (i.e. same as typing
+\code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
+off (default)}
+
+\item{pre.load}{a directory or a list of objects, if a directory will be
+converted to a list of objects by sequentially \code{\link{sys.source}}ing
+the files therein into an environment that has for parent
+\code{.GlobalEnv}, or \code{par.env} if it is specified.  The objects in
+you create/pass will be visible to the tests, but you will not be able to
+list them with \code{ls}, etc.}
 
 \item{x}{for \code{review} only, either a \code{unitizer} or something that,
 when passed to \code{\link{get_unitizer}}, will retrieve a unitizer (i.e.
@@ -87,8 +106,8 @@ storing them along with their resuls.
 \code{unitize_dir} creates tests from all the R files in the specified
 directory (analogous to \code{testthat::test_dir}).
 
-\code{review} allows you to review existing \code{unitizer} or modify it
-by dropping tests from it.  This is useful if you ever have second thoughts
+\code{review} allows you to review existing \code{unitizer}s and modify them
+by dropping tests from them.  This is useful if you ever have second thoughts
 about previously accepted tests and wish to inspect them.
 
 \code{unitizer} stores are identified by \code{unitizer} ids, which by

@@ -221,24 +221,31 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           )
         }
         word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
-        user.input <- navigate_prompt(
-          y, curr.id=max(y@mapping@item.id) + 1L,
-          text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
-          valid.opts=valid.opts
-        )
-        if(is(user.input, "unitizerBrowse")) {
-          y <- user.input
-          next
-        } else if (identical(user.input, "Q") || identical(user.input, "N")) {
-          message("unitizer store unchanged")
-          return(FALSE)
-        } else if (identical(user.input, "Y")) {
-          if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
+        if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
+          if(y@navigating)
+            stop("Logic Error: should only get here in `auto.accept` mode, contact maintainer")
+          message("Auto-accepting changes...")
+          break
+        } else {
+          user.input <- navigate_prompt(
+            y, curr.id=max(y@mapping@item.id) + 1L,
+            text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
+            valid.opts=valid.opts
+          )
+          if(is(user.input, "unitizerBrowse")) {
+            y <- user.input
+            next
+          } else if (identical(user.input, "Q") || identical(user.input, "N")) {
             message("unitizer store unchanged")
             return(FALSE)
-          } else break
+          } else if (identical(user.input, "Y")) {
+            if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
+              message("unitizer store unchanged")
+              return(FALSE)
+            } else break
+          }
+          stop("Logic Error; unexpected user input, contact maintainer.")
         }
-        stop("Logic Error; unexpected user input, contact maintainer.")
     } }
     # Create the new unitizer
 
@@ -306,18 +313,28 @@ setMethod("reviewNext", c("unitizerBrowse"),
     ignore.passed <- !identical(x@mode, "review") &&
       is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
       !x@inspect.all
+
     ignore.sec <- all(
-      (
+      (       # ignored and no errors
         x@mapping@ignored[x@mapping@sec.id == curr.sec] &
         !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
-      ) | (
+      ) | (   # passed and not in review mode
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
         !identical(x@mode, "review")
-    ) ) && !x@inspect.all
+      ) | (   # auto.accept
+        x@mapping@reviewed[x@mapping@sec.id == curr.sec] &
+        !x@navigating
+      )
+    ) && !x@inspect.all
+
     ignore.sub.sec <- (
       all(
-        x@mapping@ignored[cur.sub.sec.items] &
-        !x@mapping@new.conditions[cur.sub.sec.items]
+        (
+          x@mapping@ignored[cur.sub.sec.items] &
+          !x@mapping@new.conditions[cur.sub.sec.items]
+        ) | (
+          x@mapping@reviewed[cur.sub.sec.items] & !x@navigating
+        )
       ) || ignore.passed
     ) && !x@inspect.all
     multi.sect <- length(
@@ -412,11 +429,19 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # based on what happens to the subsequent non-ignored test.
 
     if(!x@inspect.all) {
-      if(x@mapping@ignored[[curr.id]] || ignore.passed) {
+      if(
+        x@mapping@ignored[[curr.id]] || ignore.passed ||
+        (x@mapping@reviewed[[curr.id]] && !x@navigating)  # reviewed items are skipped unless we're actively navigating to support `auto.accept`
+      ) {
         x@last.id <- curr.id
         return(x)
       }
     }
+    # If we get past this point, then we will need some sort of human input, so
+    # we mark the browse object
+
+    x@human <- TRUE
+
     # Create evaluation environment; these are really two nested environments,
     # with the parent environment containing the unitizerItem values and the child
     # environment containing the actual unitizer items.  This is so that when

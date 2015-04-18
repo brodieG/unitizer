@@ -15,11 +15,16 @@
 #' Also, since unfortunately we're relying on side-effects for some features, and
 #' \code{on.exit} call for safe operation, it is difficult to truly modularize.
 #'
+#' @param pre.load.frame environment to use as parent frame, should contain pre
+#'   loaded stuff if any, note that this environment is destructively modified
+#'   by changing the parent environment, so do not re-use it (this environment
+#'   should never be accessed outside of \code{unitizer} so this should be okay)
 #' @keywords internal
 
 unitize_core <- function(
-  test.file, store.id, interactive.mode, env.clean,
-  search.path.clean, search.path.keep, force.update
+  test.file, store.id, interactive.mode, par.env,
+  search.path.clean, search.path.keep, force.update=FALSE,
+  auto.accept=character(0L), pre.load.frame=new.env()
 ) {
   # -  Setup / Load ------------------------------------------------------------
 
@@ -28,12 +33,43 @@ unitize_core <- function(
   non.interactive <- getOption("unitizer.non.interactive", FALSE)  # need to rationalize this with `interactive.mode` param
   reset_packenv()                                                  # reset global vars used for search path manip
 
+  if(!is.logical(interactive.mode) || length(interactive.mode) != 1L || is.na(interactive.mode))
+    stop("Argument `interactive.mode` must be TRUE or FALSE")
+  if(!is.logical(force.update) || length(force.update) != 1L || is.na(force.update))
+    stop("Argument `force.update` must be TRUE or FALSE")
+
+  if(is.null(test.file) && is.null(store.id))
+    stop(
+      "Logic Error: `test.file` and `store.id` cannot both be NULL; contact ",
+      " maintainer."
+    )
+  if(!is.null(test.file)) {   # unitize
+    if(
+      !is.character(test.file) || length(test.file) != 1L ||
+      !file_test("-f", test.file)
+    )
+      stop("Argument `test.file` must be a valid path to a file")
+    u.name <- basename(test.file)
+  } else {
+    if(is.character(store.id) && length(store.id) == 1L) {
+      u.name <- store.id
+    } else {
+      u.name <- if(is(x, "unitizer")) x@id else x
+      u.name <- try(as.character(u.name), silent=TRUE)
+      if(inherits(u.name, "try-error")) u.name <- "<unknown>"
+  } }
+  if(is.null(store.id)) {
+    store.id <- if(!grepl("\\.[rR]$", test.file)) {
+      paste0(test.file, ".unitizer")
+    } else {
+      sub("\\.[rR]$", ".unitizer", test.file)
+  } }
+  print(H1(paste0("unitizer for: ", u.name, collapse="")))
+
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
-  if(!is.logical(non.interactive) || length(non.interactive) != 1L)
-    stop("Logic Error: unitizer option `unitizer.non.interactive` is miss-specified")
-  if(!isTRUE(env.clean) && !is.environment(env.clean))
-    stop("Argument `env.clean` must be TRUE or an environment.")
+  if(!is.null(par.env) && !is.environment(par.env))
+    stop("Argument `par.env` must be NULL or an environment.")
   if(
     !is.logical(search.path.clean) || length(search.path.clean) != 1L ||
     is.na(search.path.clean)
@@ -41,19 +77,45 @@ unitize_core <- function(
     stop("Argument `search.path.clean` must be TRUE or FALSE.")
   if(!is.character(search.path.keep))
     stop("Argument `search.path.keep` must be character()")
+  auto.accept.valid <- character()
+  if(is.character(auto.accept)) {
+    if(length(auto.accept)) {
+      auto.accept.valid <-
+        tolower(levels(new("unitizerBrowseMapping")@review.type))
+
+      if(any(is.na(auto.accept)))
+        stop("Argument `auto.accept` contains NAs but should not")
+      auto.accept <- unique(tolower(auto.accept))
+      if(!all(auto.accept %in% auto.accept.valid))
+        stop(
+          "Argument `auto.accept` must contain only values in ",
+          deparse(tolower(auto.accept.valid))
+        )
+    }
+  } else stop("Argument `auto.accept` must be character")
+  if(length(auto.accept) && (!interactive.mode))
+    stop("Argument `auto.accept` must be empty in non-interactive mode")
+  if(length(auto.accept) && is.null(test.file))
+    stop("Argument `test.file` must be specified when using `auto.accept`")
+  if(!is.environment(pre.load.frame))
+    stop(
+      "Logic Error: `pre.load.frame` should be an environment; this is an ",
+      "internal error, contact maintainer."
+    )
 
   # Retrieve or create unitizer environment (note that the search path trimming)
   # happens later.  Also note that pack.env$zero.env can still be tracking the
   # top package under .GlobalEnv
 
   over_print("Loading unitizer data...")
-  par.frame <- if(isTRUE(env.clean)) pack.env$zero.env.par else env.clean
+  gpar.frame <- if(is.null(par.env)) pack.env$zero.env.par else par.env
+  parent.env(pre.load.frame) <- gpar.frame
 
   if(is(store.id, "unitizer")) {
-    unitizer <- upgrade(store.id, par.frame)   # note zero.env is set-up further down
+    unitizer <- upgrade(store.id, pre.load.frame)   # note zero.env is set-up further down
     store.id <- unitizer@id
   } else {
-    unitizer <- try(load_unitizer(store.id, par.frame))
+    unitizer <- try(load_unitizer(store.id, pre.load.frame))
     if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
   }
   if(!is(unitizer, "unitizer")) stop("Logic Error: expected a `unitizer` object; contact maintainer.")
@@ -93,7 +155,7 @@ unitize_core <- function(
   # Setup the new unitizer
 
   unitizer@id <- store.id
-  parent.env(unitizer@zero.env) <- par.frame
+  parent.env(unitizer@zero.env) <- pre.load.frame
   assign("quit", unitizer_quit, unitizer@zero.env)
   assign("q", unitizer_quit, unitizer@zero.env)
 
@@ -108,7 +170,7 @@ unitize_core <- function(
   # Clean up search path
 
   search.path.setup <- search.path.trim <- FALSE
-  if((isTRUE(env.clean) || isTRUE(search.path.clean)) && !tracingState()) {
+  if((is.null(par.env) || isTRUE(search.path.clean)) && !tracingState()) {
     warning(
       "Tracing is disabled, but must be enabled to run in a clean environment ",
       "or with a clean search path.  If you want these features re-enable tracing ",
@@ -116,12 +178,12 @@ unitize_core <- function(
       "Running on existing search path with `.GlobalEnv` as parent.",
       immediate.=TRUE
     )
-    env.clean <- .GlobalEnv
+    par.env <- .GlobalEnv
     search.path.clean <- FALSE
-  } else if(isTRUE(env.clean) || isTRUE(search.path.clean)) {
+  } else if(is.null(par.env) || isTRUE(search.path.clean)) {
     over_print("Search Path Setup...")
     if(!isTRUE(search.path.setup <- search_path_setup())) {
-      if(isTRUE(env.clean))
+      if(is.null(par.env))
         warning(
           "Unable to run in clean environment, running in .GlobalEnv",
           immediate.=TRUE
@@ -151,19 +213,7 @@ unitize_core <- function(
   search.path.restored <- FALSE
   if(!is.null(test.file)) {
     over_print("Parsing tests...")
-    tests.parsed <- NULL
-    if(interactive.mode) {
-      if(inherits(try(tests.parsed <- parse_with_comments(test.file)), "try-error")) {
-        warning(
-          "Unable to parse `test.file`; see prior error for details.  ",
-          "Proceeding without comment parsing", immediate.=TRUE
-        )
-    } }
-    if(
-      is.null(tests.parsed) &&
-      inherits(try(tests.parsed <- parse(test.file)), "try-error")
-    )
-      stop("Could not parse `test.file`; see prior error for details.")
+    tests.parsed <- parse_tests(test.file, comments=interactive.mode)
 
     if(!length(tests.parsed)) {
       over_print("")
@@ -181,7 +231,7 @@ unitize_core <- function(
 
     # Make sure our tracing didn't get messed up in some way
 
-    if((isTRUE(search.path.clean) || isTRUE(env.clean)) && !search_path_check()) {
+    if((isTRUE(search.path.clean) || is.null(par.env)) && !search_path_check()) {
       search_path_restore()
       search.path.restored <- TRUE
     }
@@ -190,7 +240,7 @@ unitize_core <- function(
     unitizer.summary <- summary(unitizer)
     cat("\n")
 
-    if(!interactive.mode || non.interactive) {
+    if(!interactive.mode) {
       if(!passed(unitizer.summary)) {  # Passed tests are first column
         delta.show <- unitizer@tests.status != "Pass" & !ignored(unitizer@items.new)
         message(
@@ -233,11 +283,22 @@ unitize_core <- function(
   } else {
     unitizer.browse <- browsePrep(unitizer, mode="unitize")
   }
-  # Interactively decide what to keep / override / etc.
-
   tot.time <- (proc.time() - start.time)[["elapsed"]]
+
+  # Decide what to keep / override / etc.
+
+  if(length(auto.accept)) {  # Apply auto-accepts, if any
+    for(auto.val in auto.accept) {
+      auto.type <- which(
+        tolower(unitizer.browse@mapping@review.type) == auto.val
+      )
+      unitizer.browse@mapping@review.val[auto.type] <- "Y"
+      unitizer.browse@mapping@reviewed[auto.type] <- TRUE
+  } }
+  # Now manual accepts
+
   unitizer <- browseUnitizer(
-    unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time,
+    unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time && !length(auto.accept),
     force.update=force.update
   )
   # -  Finalize ------------------------------------------------------------------

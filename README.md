@@ -2,7 +2,18 @@
 
 [![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png)](https://travis-ci.org/brodieG/unitizer)
 
-## Motivation
+## Quick Start
+
+### Installation
+
+Currently `unitizer` is only available on github, but we plan on submitting to CRAN soon.
+
+```
+library(devtools)
+install_github("brodieg/unitizer")
+```
+
+### Usage
 
 To use `unitizer`:
 
@@ -13,9 +24,9 @@ To use `unitizer`:
 
 Informal tests are R expressions you would normally type in the command line to test that your code is working as expected.  There is no need for special syntax, functions, or anything other than the R expression itself.
 
-## Details, Installation, Etc.
+## Details
 
-We strongly recommend you review the **[introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html)** for more details.  This page is an excerpt of that vignette.  There is also a **[vignette index](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)** if you really want to get into the nitty gritty.
+We strongly recommend you review the **[introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html)** for more details.  There is also a **[vignette index](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)** if you really want to get into the nitty gritty.
 
 ## Acknowledgments
 

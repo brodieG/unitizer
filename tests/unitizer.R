@@ -2,5 +2,6 @@
 
 library(unitizer)
 
-unitize("noninteractive/tests2.R")
-unitize("noninteractive/sectionsRCMDCHECK.R")
+unitize("unitizer/tests2.R")
+unitize("unitizer/sectionsRCMDCHECK.R")
+unitize("unitizer/testthat.R")
