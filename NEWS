@@ -1,3 +1,15 @@
+unitizer 0.9.0
+--------------------------------------------------------------------------------
+
+Improvements / Changes:
+
+* Added `testthat` -> `unitizer` translation utilities
+* Can now pre-load objects before `unitize`ing
+    * not recommended, but provided for compatibility
+    * `unitize_dir` by default auto-preloads files in subdir 'helper'
+* Renamed arg `env.clean` to `par.env` (technically API breaking, but since no
+  one is using this package yet...)
+
 unitizer 0.8.0
 --------------------------------------------------------------------------------
 
