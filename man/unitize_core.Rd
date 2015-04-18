@@ -4,9 +4,15 @@
 \alias{unitize_core}
 \title{Runs The Basic Stuff}
 \usage{
-unitize_core(test.file, store.id, interactive.mode, env.clean,
-  search.path.clean, search.path.keep, force.update = FALSE,
-  auto.accept = character(0L))
+unitize_core(test.file, store.id, interactive.mode, par.env, search.path.clean,
+  search.path.keep, force.update = FALSE, auto.accept = character(0L),
+  pre.load.frame = new.env())
+}
+\arguments{
+\item{pre.load.frame}{environment to use as parent frame, should contain pre
+loaded stuff if any, note that this environment is destructively modified
+by changing the parent environment, so do not re-use it (this environment
+should never be accessed outside of \code{unitizer} so this should be okay)}
 }
 \description{
 Used by both \code{\link{unitize}} and \code{\link{review}}

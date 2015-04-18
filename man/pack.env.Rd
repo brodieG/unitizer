@@ -6,7 +6,7 @@
 \alias{pack.env}
 \alias{zero.env.par}
 \title{Objects used to Track What Environment to Use as Parent to Zero Env}
-\format{\preformatted{<environment: 0x7fdaaeb15178> 
+\format{\preformatted{<environment: 0x7fd26fe3a8e0> 
 }}
 \usage{
 pack.env
