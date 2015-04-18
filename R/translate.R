@@ -23,6 +23,9 @@
 #' be run stand-alone with just \code{test_file} (see "Differences That May
 #' Cause Problems").
 #'
+#' Note you can also \code{unitize} your \code{testthat} files \bold{without}
+#' translating them (see notes).
+#'
 #' @section Workflow:
 #'
 #' \enumerate{
@@ -51,6 +54,15 @@
 #' \preformatted{
 #' my_fun(25)
 #' }
+#' Not all \code{expect_*} functions are substituted.  For example,
+#' \code{expect_is} and \code{expect_that} are left unchanged because the tests
+#' for those functions do not or might not actually test the values of
+#' \code{object}.  For example, \code{expect_is} tests the \bold{class} of an
+#' object.  Note however that it is perfectly fine to \code{unitize} an
+#' \code{expect_*} call unsubstituted.  \code{unitizer} captures conditions,
+#' values, etc., so if an \code{expect_*} test starts failing, it will be
+#' detected.
+#'
 #' \code{unitizer} will then evaluate and store the results of such expressions.
 #' Since in theory we just checked our \code{testthat} tests were working,
 #' presumably the re-evaluated expressions will produce the same values.  Please
@@ -115,6 +127,14 @@
 #' are called.  We use the functions as the \code{definition} argument of
 #' \code{match.call} to find the \code{object} argument.
 #'
+#' @note Translation of \code{testthat} is not striclty necessary; you can just
+#' copy them to a new location and \code{unitize} them.  \code{unitizer} will
+#' just capture the results of the \code{expect_*} functions and will alert
+#' you if those change.  You can then just review the tests that change.
+#' While this may seem pointless, one benefit is that you are dropped into
+#' the environment of the test that failed, so you can inspect variables, etc.
+#' without further ado.
+#'
 #' @export
 #' @seealso \code{\link{unitize}}
 #' @aliases testthat_translate_name, testthat_translate_dir
@@ -153,7 +173,7 @@
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  par.env=NULL, search.path.clean=TRUE, keep.testthat.call=FALSE,
+  par.env=NULL, search.path.clean=TRUE, keep.testthat.call=TRUE,
   prompt="always", ...
 ) {
   if(!is.null(par.env) && !is.environment(par.env))
@@ -205,9 +225,8 @@ testthat_transcribe_file <- function(
   fun.list <- obj.list[obj.funs]
   fun.names <- obj.names[obj.funs]
 
-  funs.to.extract <- sapply(
-    fun.list,
-    function(x) is.function(x) && "object" %in% names(formals(x))
+  funs.to.extract <- vapply(
+    fun.list, testthat_translatable_fun, FALSE
   ) & ! fun.names %in% funs.special
 
   # These should probably be defined at top level in package...
@@ -320,7 +339,8 @@ testthat_transcribe_file <- function(
             ) )
           ) {
             res.extract <- testthat_match_call(
-              res.pre$call, fun.list[funs.to.extract][[fun.id]], "object"
+              res.pre$call, fun.list[funs.to.extract][[fun.id]],
+              c("object") # should probably also check for `expected` or `regexp`, but current logic doesn't allow...
             )
             result <- c(
               result,
@@ -560,6 +580,33 @@ testthat_translate_name <- function(
       "names do not contain sub-directories"
     )
   file.path(target.dir, base.new)
+}
+#' Determine if a Function Meets Translatable Profile
+#'
+#' @keywords internal
+
+testthat_translatable_fun <- function(x) {
+  # Look at non default formals
+
+  if(!is.function(x)) return(FALSE)
+  frms <- formals(x)
+  frms.missing <- logical(length(frms))
+  for(i in seq_along(frms)) {
+    frm <- frms[[i]]  # required for `missing`
+    if(missing(frm)) frms.missing[[i]] <- TRUE
+  }
+  # Get names of non defaults
+
+  val.names <- names(frms)[names(frms) != "..." & frms.missing]
+
+  # Determine whether we want to convert
+
+  if(!"object" %in% val.names) return(FALSE)
+  if(length(val.names) == 1L) return(TRUE)
+  val.names.extra <- val.names[val.names != "object"]
+  if(any(c("expected", "regexp") %in% val.names.extra))
+    return(TRUE)
+  return(FALSE)
 }
 #' Pull out parameter from call
 #'

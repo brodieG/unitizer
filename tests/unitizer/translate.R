@@ -37,7 +37,7 @@ unitizer_sect("translate simple", {
   testthat_translate_file("unitizer/translate_extra/translate1.R", NULL)
   testthat_translate_file("unitizer/translate_extra/translate2.R", NULL)
   testthat_translate_file(
-    "unitizer/translate_extra/translate2.R", NULL, keep.testthat.call=TRUE
+    "unitizer/translate_extra/translate2.R", NULL, keep.testthat.call=FALSE
   ) # keep testthat call
 })
 
@@ -50,4 +50,12 @@ unitizer_sect("Convert File Names", {
   unitizer:::testthat_translate_name(f1, list(), name.new="boom")
   unitizer:::testthat_translate_name(f1, name.new=file.path("hello", "there"))  # shouldn't be able to use subdirs
   unitizer:::testthat_translate_name(f1, name.replace=file.path("hello", "there")) # shouldn't be able to use subdirs
+})
+
+unitizer_sect("Translatable Funs", {
+  unitizer:::testthat_translatable_fun(expect_true)
+  unitizer:::testthat_translatable_fun(expect_equal)
+  unitizer:::testthat_translatable_fun(expect_that)
+  unitizer:::testthat_translatable_fun(expect_null)
+  unitizer:::testthat_translatable_fun(expect_is)
 })
