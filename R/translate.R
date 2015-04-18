@@ -471,6 +471,7 @@ testthat_translate_dir <- function(
     # if we separate the file translation and unitizing
 
     unparseable <- character()
+    unparseable.src <- character()
 
     for(i in seq_along(files.test)) {
       # Attempt to parse to make sure parse -> deparse translation didn't go
@@ -482,12 +483,10 @@ testthat_translate_dir <- function(
       res[[i]] <- untz.file
       if(inherits(try(parse(untz.file)), "try-error")) {
         unparseable[[length(unparseable) + 1L]] <- untz.file
+        unparseable.src[[length(unparseable.src) + 1L]] <- files.test[[i]]
     } }
     # Temporarily exclude failing files so we can just unitize the directory
 
-    tmp.dir <- tempfile()
-    dir.create(tmp.dir)
-    file.copy(unparseable, tmp.dir)
     unlink(unparseable)
 
     # Unitize all files in directory
@@ -496,18 +495,16 @@ testthat_translate_dir <- function(
       test.dir=target.dir, auto.accept="new", par.env=par.env,
       search.path.clean=search.path.clean, pre.load.frame=env
     )
-    # Copy files back so that user can review why they failed to parse
-
-    old.unparseable <- dir(tmp.dir, full.names=TRUE)
-    file.copy(old.unparseable, target.dir)
-    unlink(old.unparseable)
   }
   if(length(unparseable))
     warning(
-      "Unable to parse the following file(s), so they are not unitized:\n",
-      paste0("  * ", basename(unparseable), collapse="\n"),
-      "\nThis likely happed because the original `testthat` file(s) used a ",
-      "language construct that does not survive the parse - deparse cycle"
+      "Unable to parse the translated versions of the following file(s), ",
+      "so they are not unitized:\n",
+      paste0("  * ", basename(unparseable.src), collapse="\n"),
+      "\nThis likely happed because they contain language constructs that do ",
+      " not survive the parse - deparse cycle.  You can re-run the translation ",
+      "with `testthat_translate_file` and look at the resulting translated ",
+      "file.  Additionally, the parse error should be part of the output above."
     )
   invisible(res)
 }
