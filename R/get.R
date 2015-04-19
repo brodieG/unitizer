@@ -145,15 +145,16 @@ get_unitizer.default <- function(store.id) {
 #' This is implemented as an S3 generic to allow third parties to define
 #' inference methods for other types of \code{store.id}, but the documentation
 #' here is for the \code{"character"} method which is what \code{unitizer} uses
-#' by default.  Note a \code{NULL} as \code{store.id} dispatches
+#' by default.
 #'
 #' If \code{name} is a directory that appears to be an R package (contains
 #' DESCRIPTION, an R folder, a tests folder), will look for candidate files in
 #' \code{file.path(name, "tests", "unitizer")}, starting with files with the
 #' same name as the package (ending in ".R" or ".unitizer" if \code{type} is
-#' \code{"f"} or \code{"d"} respectively), or if there is only one file, that
+#' \code{"f"} or \code{"u"} respectively), or if there is only one file, that
 #' file, or if there are multiple candidate files and in interactive mode
-#' prompting user for a selection.
+#' prompting user for a selection.  If \code{type} is \code{"d"}, then will
+#' just provide the \code{'tests/unitizer`} directory.
 #'
 #' If \code{name} is not a directory, will try to find a file by that name, and
 #' if that fails, will try to partially match a file by that name.  Partial
@@ -170,8 +171,8 @@ get_unitizer.default <- function(store.id) {
 #'   \code{store.id} objects
 #' @param store.id character(1L) file or directory name, the file name portion (i.e
 #'   after the last slash) may be partially specified
-#' @param type character(1L) in \code{c("f", "d")}, \code{"f"} for test file,
-#'   and \code{"d"} for test data directory
+#' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test file,
+#'   \code{"d"} for a directory, \code{"u"} for a \code{unitizer} directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
 #'   ambiguities
 #' @param ... arguments to pass on to other methods
@@ -197,18 +198,28 @@ infer_unitizer_location.character <- function(
 ) {
   if(!is.character(store.id) || length(store.id) != 1L || is.na(store.id))
     stop("Argument `store.id` must be character(1L) and not NA")
-  if(!is.character(type) || length(type) != 1L || !isTRUE(type %in% c("f", "d")))
-    stop("Argument `type` must be one of `c(\"f\", \"d\")`")
+  if(
+    !is.character(type) || length(type) != 1L ||
+    !isTRUE(type %in% c("f", "u", "d"))
+  )
+    stop("Argument `type` must be one of `c(\"f\", \"u\", \"d\")`")
   if(!isTRUE(interactive.mode) && !identical(interactive.mode, FALSE))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
+
+  # BEWARE, you can't just change `text.ext` here without reviewing how it is
+  # used
 
   if(type == "f") {
     test.fun <- function(x) file_test("-f", x)
     test.ext <- ".R"
     list.fun <- list.files
-  } else {
+  } else if(type == "u") {
     test.fun <- is_unitizer_dir
     test.ext <- ".unitizer"
+    list.fun <- list.dirs
+  } else if(type == "d") {
+    test.fun <- function(x) file_test("-d", x)
+    test.ext <- ""
     list.fun <- list.dirs
   }
   # Check for exact match first and return that if found
@@ -248,7 +259,7 @@ infer_unitizer_location.character <- function(
   # Resolve potential ambiguities by trying to find file / directory
 
   candidate.files <- grep(
-    paste0("^", file.store.id, ".*\\", test.ext, "$"),
+    paste0("^", file.store.id, if(nchar(test.ext)) ".*\\", test.ext, "$"),
     basename(list.fun(dir.store.id.proc, recursive=FALSE)),
     value=TRUE
   )
@@ -273,8 +284,9 @@ infer_unitizer_location.character <- function(
         "\""
       )
     } else ""
-
-    pick_one(candidate.files, paste0("Select file", dir.disp, ":\n"))
+    pick <- pick_one(candidate.files, paste0("Select file", dir.disp, ":\n"))
+    message("Selected file: ", candidate.files[[pick]])
+    pick
   } else if (cand.len == 1L) {
     1L
   } else if (cand.len == 0L) {

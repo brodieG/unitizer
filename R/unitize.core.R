@@ -21,11 +21,113 @@
 #'   should never be accessed outside of \code{unitizer} so this should be okay)
 #' @keywords internal
 
-unitize_core <- function(
-  test.file, store.id, interactive.mode, par.env,
-  search.path.clean, search.path.keep, force.update=FALSE,
-  auto.accept=character(0L), pre.load.frame=new.env()
+# break up into several pieces
+# - validate
+# - load
+# - parse
+# - eval
+# - browse
+# - store?
+#
+# Pieces should be separate:
+# * The eval piece should be separate so that failures on anything else can be
+#   managed with `try-catch`.
+# * The validate piece also so it only has to be run once.
+#
+# Use the same logic to `unitize` one file vs many; basically, one file is just
+# a degenerate version of dir.
+#
+# Do we want to load all the unitzers at once? Potentially end up using a lot
+# of memory if we do it this way.  But if we don't it will be difficult to do
+# this in a way that survives the failure of a single unitizer.  Maybe we need
+# a "one-at-a-time" mode for large unitizers.
+#
+# What structure allows us to split up eval, and browse, but also re-eval from
+# browse as needed?  Can browse call `eval`, or do we keep getting deeper and
+# deeper into this two step recursion?  Maybe best way to handle is some
+# restart with instructions on what to re-run?  So all this would be
+# coordinated from the wrapper function?  Do we even need a restart?  We can
+# just return early with instructions.
+#
+# Browse should be able to write to disk as otherwise failure elsewhere could
+# lead to a lot of lost work
+
+unitize_eval <- function(
+  test.files, store.ids, interactive.mode, par.env,
+  search.path.clean, search.path.keep, force.update,
+  auto.accept, pre.load
 ) {
+
+
+  # Now unitize; repeat loop is so that we can re-evaluate one or all unitizers
+  # if the users requests it; note that when we browse we always want the option
+  # to review any unitizer (though maybe those that pass are in their own
+  # section to avoid confusion?)
+
+  # unitize -----\
+  # unitize_dir --\
+  #                - convert to lists for file and unitizers - forward arguments?
+  # review -------/
+  # review_dir---/
+
+#   eval.which <- seq_along(test.files)  # first pass eval all the unitizers (duh)
+
+#   while(length(eval.which)) {
+#     unitizers[eval.which] <- unitize_eval(
+#       test.files=test.files[eval.which],
+#       store.ids=unitizer.ids[eval.which],
+#       interactive.mode=interactive.mode,                  # <- Need for upgrade? don't think so, should fail if not in interactive mode
+#       par.env=par.env,
+#       search.path.clean=search.path.clean,
+#       search.path.keep=search.path.keep,
+#       # force.update=force.update,
+#       # auto.accept=auto.accept,
+#       pre.load.frame=pre.load.frame
+#     )
+#     summary(unitizers)
+#     need.review <- need_review(unitizers)
+#     if(!interactive.mode && any(need.review))
+#       stop("X out of Y `unitizers` need review")
+#     if(!any(need.review)) {
+#       warning("INTERNAL NOTE: need to handle `force` argument")
+#       break;
+#     }
+#     # `eval.which` tells us what unitizes we need to re-eval if we made changes
+#     # to our source code, but more than that would be good to be able to book-
+#     # mark a particular test?  Becomes complicated because that might mean there
+#     # are a bunch of unreviewed tests, etc.
+
+#     eval.which <- unitize_browse(
+#       unitizers=unitizers[need.review],  # make sure file path is included in \code{unitizer} so browse can update file
+#       force.update=force.update,
+#       auto.accept=auto.accept            # need to think about how auto-accept is done here; maybe should even be done in eval mode or as separate function
+#     )
+
+#   }
+
+#     # Possible return values:
+#     # - integer vector, to use as `eval.which`
+#     # - TRUE, if done?
+
+#     invisible(res)
+
+
+#   }
+# }
+
+  # if(
+  #     !is.list(pre.load) && (
+  #       !is.character(pre.load) || length(pre.load) != 1L || is.na(pre.load)
+  #   )
+  # ) {
+  #   stop("Argument `pre.load` must be a list or character(1L) and not NA.")
+  # }
+  # # Pre load stuff into our environment
+
+  # new.par <- if(is.environment(par.env)) par.env else .GlobalEnv
+  # pre.load.env <- pre_load(pre.load)
+
+
   # -  Setup / Load ------------------------------------------------------------
 
   start.time <- proc.time()
@@ -118,7 +220,8 @@ unitize_core <- function(
     unitizer <- try(load_unitizer(store.id, pre.load.frame))
     if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
   }
-  if(!is(unitizer, "unitizer")) stop("Logic Error: expected a `unitizer` object; contact maintainer.")
+  if(!is(unitizer, "unitizer"))
+    stop("Logic Error: expected a `unitizer` object; contact maintainer.")
 
   # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
   # or other potential issues; of course this isn't foolproof if someone is using
@@ -315,3 +418,10 @@ unitize_core <- function(
   on.exit(NULL)
   invisible(unitizer)
 }
+
+unitize_browse <- function(unitizers, ) {
+
+}
+
+
+

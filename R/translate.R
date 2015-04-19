@@ -504,7 +504,6 @@ testthat_translate_dir <- function(
     if(length(files.helper)) {
       dir.create(help.dir <- file.path(target.dir, "helper"))
       file.copy(files.helper, help.dir)
-      source_many(files.helper, env)  # env updated by reference
     }
     # Translate files, need to unitize one by one mostly because we wrote the
     # `testthat_translate_file` function first, but would probably be better
@@ -525,15 +524,15 @@ testthat_translate_dir <- function(
         unparseable[[length(unparseable) + 1L]] <- untz.file
         unparseable.src[[length(unparseable.src) + 1L]] <- files.test[[i]]
     } }
-    # Temporarily exclude failing files so we can just unitize the directory
+    # Exclude failing files so we can just unitize the directory
 
     unlink(unparseable)
 
     # Unitize all files in directory
 
-    .unitize_dir(
+    unitize_dir(
       test.dir=target.dir, auto.accept="new", par.env=par.env,
-      search.path.clean=search.path.clean, pre.load.frame=env
+      search.path.clean=search.path.clean
     )
   }
   if(length(unparseable))
