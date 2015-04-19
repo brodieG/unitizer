@@ -36,9 +36,9 @@ load_unitizer <- function(store.id, par.frame) {
         stop(
           "Logic Error: failed attempting to store upgraded `unitizer`; contact ",
           " maintainer."
-      )
-    }
-    message("Unitizer store updated to version ", unitizer@version)
+        )
+      }
+      message("Unitizer store updated to version ", unitizer@version)
   } }
   unitizer
 }
