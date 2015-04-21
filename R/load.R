@@ -23,11 +23,12 @@ load_unitizer <- function(store.id, par.frame) {
 
   if(identical(unitizer, FALSE)) {
     unitizer <- new("unitizer", id=store.id, zero.env=new.env(parent=par.frame))
-  } else if(!is(unitizer, "unitizer")){
+  } else if(!is(unitizer, "unitizer")) {
     if(!identical(class(store.id), "character"))
       stop("Logic Error: `get_unitizer.", class(store.id)[[1]], "` did not return a unitizer")
     stop("Logic Error: `get_unitizer` did not return a unitizer; contact maintainer.")
-  } else  {
+  } else {
+    parent.env(unitizer@zero.env) <- par.frame
     ver <- unitizer@version
     unitizer <- upgrade(unitizer, par.frame=par.frame)
     if(!identical(ver, unitizer@version)) { # there was an upgrade, so store new file
