@@ -92,4 +92,8 @@ local({
       as.character(xx, width=30L)
     )
   })
+  test_that("substr_const", {
+    expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L), c("ab  ", "abcd", "abc "))
+    expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L, justify="right"), c("  ab", "abcd", " abc"))
+  })
 })

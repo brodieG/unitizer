@@ -135,9 +135,6 @@ obj_screen_chr <- function(
     paste0(pad, c(pre, obj.chr, post))
   )
 }
-
-
-
 #' Deparse, But Make It Look Like It Would On Prompt
 #'
 #' @keywords internal
@@ -511,5 +508,16 @@ change_first <- function(x, fun) {
     ifelse(nchar(x) == 1L, fun(x), x)
   )
 }
+#' Substring To a Length, but end In Consonant
+#'
+#' @keywords internal
+#' @param x character vector to substring
+#' @param stop integer max number of characters
+#' @param justify character(1L) passed on to format
 
-
+substr_cons <- function(x, stop, justify="left") {
+  if(!is.character(x)) stop("Argument `x` must be ")
+  y <- substr(x, 1, stop)
+  z <- sub("[^bcdfghjklmnpqrstvwxz]*$", "", x)
+  format(z, width=stop, justify=justify)
+}
