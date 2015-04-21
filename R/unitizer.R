@@ -128,15 +128,27 @@ setClass(
   }
 )
 setClass(
-  "unitizerSummary", list(data="matrix", dels="integer"),
+  "unitizerSummary", list(data="matrix", dels="integer", totals="integer"),
   validity=function(object) {
+    val.names <- c("New", "Pass", "Fail", "Error")
     if(
       !is.integer(object@data) ||
-      !all(colnames(object@data) %in% c("New", "Pass", "Fail", "Error"))
+      !all(colnames(object@data) %in% val.names)
     )
-      return("Slot `data` must be an integer matrix with colnames %in% c(\"New\", \"Pass\", \"Fail\", \"Error\")")
+      return(
+        paste0(
+          "Slot `data` must be an integer matrix with colnames %in% ",
+          deparse(val.names)
+      ) )
     if(length(object@dels) != 1L)
       return("Slot `dels` must be integer length one")
+    if(!identical(names(object@totals), c(val.names, "Deleted")))
+      return(
+        paste0(
+          "Slot `totals` must be integer with names ",
+          deparse(c(val.names, "Deleted"))
+      ) )
+    TRUE
 } )
 # - Methods -------------------------------------------------------------------
 
@@ -214,12 +226,17 @@ setMethod("length", "unitizer",
 } )
 #' Summarize Results
 #'
-#' @return a list with the data that can be assigned to sections in vector/matrix
-#'   form, and the section less stuff (Deletes) as a scalar
+#' Also prints to screen, but only if \code{level == 1L}
+#'
+#' @param object the object to summarize
+#' @param silent whether to suppress display of summary object
+#' @return a unitizerSummary object
 #' @keywords internal
 
 setMethod("summary", "unitizer",
-  function(object, ...) {
+  function(object, silent=FALSE, ...) {
+    if(!isTRUE(silent) || !identical(silent, FALSE))
+      stop("Argument `silent` must be TRUE or FALSE")
     ignore <- ignored(object@items.new)
     status <- object@tests.status[!ignore]
     sections <- vapply(
@@ -227,25 +244,32 @@ setMethod("summary", "unitizer",
       function(idx) object@sections[[idx]]@title,
       character(1L)
     )
-    sections.levels <- unique(sections[order(object@section.parent[object@section.map[!ignore]])])
+    sections.levels <- unique(
+      sections[order(object@section.parent[object@section.map[!ignore]])]
+    )
     sum.mx <- tapply(
       rep(1L, length(status)),
       list(factor(sections, levels=sections.levels), status), sum
     )  # this should be a matrix with the summary data.
     sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
-    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
-    sum.mx <- rbind(sum.mx, "**Total**"=apply(sum.mx, 2, sum))
+    total <- apply(sum.mx, 2, sum)
 
-    if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
+    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
+    sum.mx <- rbind(sum.mx, "**Total**"=total)
+
+    if(sum(sum.mx[, "Error"]) == 0L)
+      sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
 
     sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
-    deletes <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
+    deletes <- length(
+      Filter(is.na, object@items.ref.map[!ignored(object@items.ref)])
+    )
     main.dat <- if(nrow(sum.mx) == 2L) {
       `rownames<-`(sum.mx[2L, , drop=F], "")
     } else sum.mx
 
-    obj <- new("unitizerSummary", data=main.dat, dels=deletes)
-    show(obj)
+    obj <- new("unitizerSummary", data=main.dat, dels=deletes, totals=totals)
+    if(!silent) show(obj)
     obj
 } )
 
