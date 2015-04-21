@@ -102,6 +102,13 @@ upgrade_internal <- function(object) {
   if(object@version < "0.5.3") {
     for(i in seq(len=length(object@items.ref))) object@items.ref[[i]]@id <- i
   }
+  # - 0.9.0 --------------------------------------------------------------------
+
+  # Add new slots
+
+  if(object@version < "0.9.0") {
+    object <- addSlot(object, "test.file.loc", NA_character_)  # not sure this is completely necessary since we're just using the prototype value
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always

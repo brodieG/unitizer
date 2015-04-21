@@ -62,9 +62,10 @@ setClass(
   "unitizer",
   representation(
     id="ANY",
-    version="ANY",               # should really be 'package_version', but want to avoid setOldClass
-    zero.env="environment",                          # keep functions and stuff here
+    version="ANY",                # should really be 'package_version', but want to avoid setOldClass
+    zero.env="environment",       # keep functions and stuff here
     base.env="environment",
+    test.file.loc="character",    # location of teset file that produced `unitizer`
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -98,7 +99,8 @@ setClass(
   prototype(
     version=packageVersion("unitizer"),
     tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
-    zero.env=baseenv()
+    zero.env=baseenv(),
+    test.file.loc=NA_character_
   ),
   validity=function(object) {
     if(length(object@items.ref)) {
@@ -107,6 +109,8 @@ setClass(
         return("Non sequential ids in reference items.")
       if(length(ids) != length(object@section.ref.map))
         return("Reference section mapping error")
+      if(!identical(length(test.file.loc), 1L))
+        return("slot `test.file.loc` must be length 1L")
 
       # Randomly test a subset of the items for validity (testing all becomes
       # too time consuming)

@@ -7,10 +7,11 @@
 #'   method; by default should be the path to a unitizer; if \code{`\link{get_unitizer}`}
 #'   returns \code{`FALSE`} then this will create a new unitizer
 #' @param par.frame the environment to use as the parent frame for the \code{`unitizer`}
+#' @param test.file the R file associated with the store id
 #' @return a \code{`unitizer`} object, or anything, in which case the calling
 #'   code should exit
 
-load_unitizer <- function(store.id, par.frame) {
+load_unitizer <- function(store.id, par.frame, test.file) {
 
   if(inherits(try(unitizer <- get_unitizer(store.id)), "try-error")) {
     stop(
@@ -41,6 +42,7 @@ load_unitizer <- function(store.id, par.frame) {
       }
       message("Unitizer store updated to version ", unitizer@version)
   } }
+  unitizer@test.file.loc <- test.file
   unitizer
 }
 #' @keywords internal
