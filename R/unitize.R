@@ -88,7 +88,7 @@ unitize <- function(
   interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
   search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=getOption("unitizer.search.path.keep")
+  search.path.keep=getOption("unitizer.search.path.keep"),
   force.update=FALSE,
   auto.accept=character(0L),
   pre.load=list()
@@ -97,9 +97,9 @@ unitize <- function(
     unitize_core(
       infer_unitizer_location(test.file), list(store.id),
       interactive.mode=interactive.mode, par.env=par.env,
-      search.path.clean=search.path.clean
-      search.path.keep=search.path.keep
-      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load
+      search.path.clean=search.path.clean,
+      search.path.keep=search.path.keep,
+      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
       mode="unitize"
   ) )
 }
@@ -178,9 +178,9 @@ unitize_dir <- function(
   unitize_core(
     test.files=test.files, store.ids=store.ids,
     interactive.mode=interactive.mode, par.env=par.env,
-    search.path.clean=search.path.clean
-    search.path.keep=search.path.keep
-    force.update=force.update, auto.accept=auto.accept, pre.load=pre.load
+    search.path.clean=search.path.clean,
+    search.path.keep=search.path.keep,
+    force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
     mode="unitize"
   )
 }

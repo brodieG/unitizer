@@ -15,11 +15,11 @@
 #' Also, since unfortunately we're relying on side-effects for some features, and
 #' \code{on.exit} call for safe operation, it is difficult to truly modularize.
 #'
-#' @param pre.load.frame environment to use as parent frame, should contain pre
-#'   loaded stuff if any, note that this environment is destructively modified
-#'   by changing the parent environment, so do not re-use it (this environment
-#'   should never be accessed outside of \code{unitizer} so this should be okay)
 #' @keywords internal
+#' @inheritParams unitize
+#' @param mode character(1L) one of "review" or "unitize"
+#' @param test.files character location of test files
+#' @param store.ids list of store ids, same length as \code{test.files}
 
 # break up into several pieces
 # - validate
@@ -52,124 +52,47 @@
 # Browse should be able to write to disk as otherwise failure elsewhere could
 # lead to a lot of lost work
 
-unitize_eval <- function(
+unitize_core <- function(
   test.files, store.ids, interactive.mode, par.env,
   search.path.clean, search.path.keep, force.update,
-  auto.accept, pre.load
+  auto.accept, pre.load, mode
 ) {
+  # - Validation / Setup -------------------------------------------------------
 
-
-  # Now unitize; repeat loop is so that we can re-evaluate one or all unitizers
-  # if the users requests it; note that when we browse we always want the option
-  # to review any unitizer (though maybe those that pass are in their own
-  # section to avoid confusion?)
-
-  # unitize -----\
-  # unitize_dir --\
-  #                - convert to lists for file and unitizers - forward arguments?
-  # review -------/
-  # review_dir---/
-
-#   eval.which <- seq_along(test.files)  # first pass eval all the unitizers (duh)
-
-#   while(length(eval.which)) {
-#     unitizers[eval.which] <- unitize_eval(
-#       test.files=test.files[eval.which],
-#       store.ids=unitizer.ids[eval.which],
-#       interactive.mode=interactive.mode,                  # <- Need for upgrade? don't think so, should fail if not in interactive mode
-#       par.env=par.env,
-#       search.path.clean=search.path.clean,
-#       search.path.keep=search.path.keep,
-#       # force.update=force.update,
-#       # auto.accept=auto.accept,
-#       pre.load.frame=pre.load.frame
-#     )
-#     summary(unitizers)
-#     need.review <- need_review(unitizers)
-#     if(!interactive.mode && any(need.review))
-#       stop("X out of Y `unitizers` need review")
-#     if(!any(need.review)) {
-#       warning("INTERNAL NOTE: need to handle `force` argument")
-#       break;
-#     }
-#     # `eval.which` tells us what unitizes we need to re-eval if we made changes
-#     # to our source code, but more than that would be good to be able to book-
-#     # mark a particular test?  Becomes complicated because that might mean there
-#     # are a bunch of unreviewed tests, etc.
-
-#     eval.which <- unitize_browse(
-#       unitizers=unitizers[need.review],  # make sure file path is included in \code{unitizer} so browse can update file
-#       force.update=force.update,
-#       auto.accept=auto.accept            # need to think about how auto-accept is done here; maybe should even be done in eval mode or as separate function
-#     )
-
-#   }
-
-#     # Possible return values:
-#     # - integer vector, to use as `eval.which`
-#     # - TRUE, if done?
-
-#     invisible(res)
-
-
-#   }
-# }
-
-  # if(
-  #     !is.list(pre.load) && (
-  #       !is.character(pre.load) || length(pre.load) != 1L || is.na(pre.load)
-  #   )
-  # ) {
-  #   stop("Argument `pre.load` must be a list or character(1L) and not NA.")
-  # }
-  # # Pre load stuff into our environment
-
-  # new.par <- if(is.environment(par.env)) par.env else .GlobalEnv
-  # pre.load.env <- pre_load(pre.load)
-
-
-  # -  Setup / Load ------------------------------------------------------------
-
-  start.time <- proc.time()
-  quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
-  non.interactive <- getOption("unitizer.non.interactive", FALSE)  # need to rationalize this with `interactive.mode` param
-  reset_packenv()                                                  # reset global vars used for search path manip
-
-  if(!is.logical(interactive.mode) || length(interactive.mode) != 1L || is.na(interactive.mode))
-    stop("Argument `interactive.mode` must be TRUE or FALSE")
-  if(!is.logical(force.update) || length(force.update) != 1L || is.na(force.update))
-    stop("Argument `force.update` must be TRUE or FALSE")
-
-  if(is.null(test.file) && is.null(store.id))
+  if(
+    !is.character(mode) || length(mode) != 1L ||
+    !mode %in% c("unitize", "review")
+  )
+    stop("Logic Error: incorrect value for `mode`; contact maintainer")
+  if(mode == "review" && !all(is.na(test.files)))
     stop(
-      "Logic Error: `test.file` and `store.id` cannot both be NULL; contact ",
-      " maintainer."
+      "Logic Error: `test.files` must be NA in review mode; contact maintainer"
     )
-  if(!is.null(test.file)) {   # unitize
-    if(
-      !is.character(test.file) || length(test.file) != 1L ||
-      !file_test("-f", test.file)
+  if(
+    mode == "unitize" &&
+    (
+      !is.character(test.files) || any(is.na(test.files)) ||
+      !all(file_test("-f", test.files))
     )
-      stop("Argument `test.file` must be a valid path to a file")
-    u.name <- basename(test.file)
-  } else {
-    if(is.character(store.id) && length(store.id) == 1L) {
-      u.name <- store.id
-    } else {
-      u.name <- if(is(x, "unitizer")) x@id else x
-      u.name <- try(as.character(u.name), silent=TRUE)
-      if(inherits(u.name, "try-error")) u.name <- "<unknown>"
-  } }
-  if(is.null(store.id)) {
-    store.id <- if(!grepl("\\.[rR]$", test.file)) {
-      paste0(test.file, ".unitizer")
-    } else {
-      sub("\\.[rR]$", ".unitizer", test.file)
-  } }
-  print(H1(paste0("unitizer for: ", u.name, collapse="")))
-
-  if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
-    stop("Logic Error: unitizer option `unitizer.prompt.b4.quit.time` is miss-specified")
+  )
+    stop(
+      "Logic Error: `test.files` must all point to valid files in unitize ",
+      "mode; contact maintainer"
+    )
+  if(length(test.files) != length(store.ids))
+    stop(
+      "Logic Error: mismatch in test file an store lengths; contact maintainer"
+    )
+  if(
+    !is.logical(interactive.mode) || length(interactive.mode) != 1L ||
+    is.na(interactive.mode)
+  )
+    stop("Argument `interactive.mode` must be TRUE or FALSE")
+  if(
+    !is.logical(force.update) || length(force.update) != 1L ||
+    is.na(force.update)
+  )
+    stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be NULL or an environment.")
   if(
@@ -199,35 +122,321 @@ unitize_eval <- function(
     stop("Argument `auto.accept` must be empty in non-interactive mode")
   if(length(auto.accept) && is.null(test.file))
     stop("Argument `test.file` must be specified when using `auto.accept`")
-  if(!is.environment(pre.load.frame))
-    stop(
-      "Logic Error: `pre.load.frame` should be an environment; this is an ",
-      "internal error, contact maintainer."
-    )
 
-  # Retrieve or create unitizer environment (note that the search path trimming)
-  # happens later.  Also note that pack.env$zero.env can still be tracking the
-  # top package under .GlobalEnv
+  pre.load.frame <- try(pre_load(pre.load))
+  if(inherits(pre.load.frame, "try-error"))
+    stop("Argument `pre.load` could not be interpreted; see previous errors")
+
+  start.time <- proc.time()
+  quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
+  if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
+    stop(
+      "Logic Error: unitizer option `unitizer.prompt.b4.quit.time` ",
+      "is miss-specified"
+    )
+  # reset global vars used for search path manip
+
+  reset_packenv()
+
+  # - Parse / Load -------------------------------------------------------------
+
+  # Parse, and use `eval.which` to determine which tests to evaluate
+
+  if(mode == "unitize") {
+    over_print("Parsing tests...")
+    tests.parsed <- lapply(
+      test.files,
+      function(x) {
+        over_print(paste("Parsing", x))
+        parse_tests(x, comments=interactive.mode)
+    } )
+    eval.which <- seq_along(test.files)  # first pass eval all the unitizers (duh)
+  } else {
+    eval.which <- integer()
+  }
+  # Clean up search path
+
+  search.path.setup <- search.path.trim <- FALSE
+  if((is.null(par.env) || isTRUE(search.path.clean)) && !tracingState()) {
+    warning(
+      "Tracing is disabled, but must be enabled to run in a clean environment ",
+      "or with a clean search path.  If you want these features re-enable ",
+      "tracing with `tracingState(TRUE)`.  See \"Reproducible Tests\" ",
+      "vignette for details.  Running on existing search path with ",
+      "`.GlobalEnv` as parent.",
+      immediate.=TRUE
+    )
+    par.env <- .GlobalEnv
+    search.path.clean <- FALSE
+  } else if(is.null(par.env) || isTRUE(search.path.clean)) {
+    over_print("Search Path Setup...")
+    if(!isTRUE(search.path.setup <- search_path_setup())) {
+      if(is.null(par.env))
+        warning(
+          "Unable to run in clean environment, running in .GlobalEnv",
+          immediate.=TRUE
+        )
+      if(isTRUE(search.path.clean))
+        warning(
+          "Unable to run with clean search path; using existing.",
+          immediate.=TRUE
+        )
+    } else {
+      on.exit(search_path_unsetup(), add=TRUE)
+    }
+  }
+  if(isTRUE(search.path.clean)) {
+    if(isTRUE(search.path.trim <- search_path_trim(keep=search.path.keep))) {
+      on.exit(search_path_restore(), add=TRUE) # this also runs search_path_unsetup()
+    }
+    on.exit(search_path_unsetup(), add=TRUE)
+  }
+  # Load / create all the unitizers
+
+  # Retrieve or create unitizer environment
 
   over_print("Loading unitizer data...")
   gpar.frame <- if(is.null(par.env)) pack.env$zero.env.par else par.env
   parent.env(pre.load.frame) <- gpar.frame
 
-  if(is(store.id, "unitizer")) {
-    unitizer <- upgrade(store.id, pre.load.frame)   # note zero.env is set-up further down
-    store.id <- unitizer@id
-  } else {
-    unitizer <- try(load_unitizer(store.id, pre.load.frame))
-    if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
+  util.frame <- new.env(parent.frame=pre.load.frame)
+  assign("quit", unitizer_quit, util.frame)
+  assign("q", unitizer_quit, util.frame)
+
+  stop("Make Sure unitizer location is recorded")
+  unitizers <- lapply(
+    seq_along(store.ids),
+    function(i) {
+      if(is(store.ids[[i]], "unitizer")) {
+        unitizer <- upgrade(store.ids[[i]], util.frame)   # note zero.env is set-up further down
+        store.ids[[i]] <- unitizer@id
+      } else {
+        unitizer <- try(load_unitizer(store.ids[[i]], util.frame, test.files[[i]]))
+        if(inherits(unitizer, "try-error"))
+          stop("Unable to load `unitizer`; see prior errors.")
+      }
+      if(!is(unitizer, "unitizer"))
+        stop("Logic Error: expected a `unitizer` object; contact maintainer.")
+      unitizer
+    }
+  )
+  # - Evaluate / Browse --------------------------------------------------------
+
+  # Now evaluate
+
+  wd <- getwd()                              # in case user changes it through tests
+
+  check_call_stack()  # Make sure nothing untoward will happen if a test triggers an error
+
+  while(length(eval.which) || mode == "review") {
+
+    search.path.restored <- FALSE
+
+    # Evaluate and display `unitizer` status
+
+    unitizers <- unitize_eval(
+      tests.parsed=tests.parsed, unitizers=unitizers, eval.which=eval.which
+    )
+    tot.time <- (proc.time() - start.time)[["elapsed"]]
+
+    # Make sure our tracing didn't get messed up in some way
+    stop("need to handle this")
+
+    # if((isTRUE(search.path.clean) || is.null(par.env)) && !search_path_check()) {
+    #   search_path_restore()
+    #   search.path.restored <- TRUE
+    # }
+    # Handle non-interactive mode
+
+    summaries <- lapply(unitizers, summary, silent=TRUE)  # we do this in eval as well, so a bit repetitive, but cleaner this way
+    passing <- vapply(summaries, passed, logical(1L))
+
+    if(!interactive.mode) {
+      if(!all(passing)) {  # Passed tests are first column
+        for(i in which(!passing)) {
+          delta.show <-
+            unitizer@tests.status != "Pass" & !ignored(unitizer@items.new)
+          message(
+            paste0(
+              "* "
+              format(paste0(unitizer@tests.status[delta.show], ": ")),
+              unitizer@items.new.calls.deparse[delta.show],
+              collapse="\n"
+            ),
+            "in test file '", unitizers[[i]]@test.file.loc, "'\n",
+        ) }
+        stop(
+          "Newly generated tests do not match unitizer (",
+          paste(
+            c(colnames(unitizer.summary@data), "Deleted"),
+            c(tail(unitizer.summary@data, 1L), unitizer.summary@dels),
+            sep=": ", collapse=", "
+          ),
+          "); see above for more info, or run in interactive mode"
+        )
+      }
+      break
+    } else {
+      # `eval.which` tells us what unitizes we need to re-eval if we made changes
+      # to our source code, but more than that would be good to be able to book-
+      # mark a particular test?  Becomes complicated because that might mean there
+      # are a bunch of unreviewed tests, etc.
+
+      eval.which <- unitize_browse(
+        unitizers=unitizers,               # make sure file path is included in \code{unitizer} so browse can update file
+        mode=mode,
+        force.update=force.update,
+        auto.accept=auto.accept            # need to think about how auto-accept is done here; maybe should even be done in eval mode or as separate function
+        prompt.on.quit=tot.time > quit.time
+      )
+  } }
+  # - Finalize -----------------------------------------------------------------
+
+  message("Passed Tests")
+  on.exit(NULL)
+  if(search.path.trim) search_path_restore()        # runs _unsetup() as well
+  else if (search.path.setup) search_path_unsetup()
+}
+#' Evaluate User Tests
+#'
+#' @param tests.parsed a list of expressions
+#' @param unitizers a list of \code{unitizer} objects of same length as \code{tests.parsed}
+#' @param which integer which of \code{unitizer}s to actually eval, all get
+#'   summary status displayed to screen
+#' @return a list of unitizers
+#' @keywords internal
+
+unitize_eval <- function(tests.parsed, unitizers, eval.which) {
+  on.exit(                                   # In case interrupted or some such
+    message(
+      "Unexpectedly exited before storing `unitizer`; tests were not saved or ",
+      "changed."
+    )
+  )
+  test.len <- length(tests.parsed)
+  if(
+    !identical(test.len, length(unitizers)) || !is.integer(eval.which) ||
+    any(is.na(eval.which) || any(eval.which < 1L)  || any(eval.which > test.len)
+  )
+    stop(
+      "Logic Error: parse data and unitizer length mismatch; contact ",
+      "maintainer."
+    )
+  # Loop through all unitizers, evaluating each
+
+  res <- vector("list", test.len)
+
+  # Char template setup
+
+  scr.width <- getOption("width")
+  test.files.trim <- col.names <- fmt <- NA_character_
+  if(test.len > 1L) {
+    test.files <- vapply(unitizers, slot, "test.file.loc", character(1L))
+    test.files.trim <- file.path(
+      str_reduce_unique(dirname(test.files)),
+      basename(test.files)
+    )
+    tpl.summ <- summary(unitizers[[1L]], silent=TRUE)
+    col.names.tmp <- names(tpl.summ@totals)
+    col.names <- paste0(col.names.tmp, collapse=" ")
+    max.file.chars <- max(15L, src.width - nchar(colnames) - 2L)
+    num.width <- max(nchar(col.names.tmp))
+    fmt <- paste0(
+      "%", max.file.chars, "s ",
+      paste0(
+        rep(paste0(" %", num.width, "s"), length(col.names.tmp)), collapse=""
+      ), "\n"
+    )
   }
-  if(!is(unitizer, "unitizer"))
-    stop("Logic Error: expected a `unitizer` object; contact maintainer.")
+  # Run through unitizers
 
-  # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
-  # or other potential issues; of course this isn't foolproof if someone is using
-  # a variation on those functions, but also not the end of the world if it isn't
-  # caught.
+  for(i in seq.int(test.len)) {
+    test.dat <- tests.parsed[[i]]
+    unitizer <- unitizers[[i]]
 
+    # Evaluate the parsed calls
+
+    if(i %in% eval.which) {
+      tests <- new("unitizerTests") + test.dat
+      res[[i]] <- unitizer + tests
+    } else {
+      res[[i]] <- unitizer
+    }
+    # Result summary
+
+    unitizer.summary <- summary(unitizer, silent=TRUE)
+    if(identical(test.len, 1L)) {
+      show(unitizer.summary)
+    } else {
+      if(identical(i, 1L))
+        cat(rep(" ", max.file.chars + 2L), col.names, "\n", sep="")
+      cat(sprintf(fmt, c(test.files.trim, unitizer.summary@totals)))
+    }
+  }
+  on.exit()
+  res
+}
+#' Run User Interaction And \code{unitizer} Storage
+#'
+#' @inheritParams unitize_core
+#' @param unitizers list of \code{unitizer} objects
+#' @param prompt.on.quit logical(1L) wh
+#' @param force.update whether to store unitizer
+#'
+
+unitize_browse <- function(
+  unitizers, mode, force.update, auto.accept, prompt.on.quit
+) {
+
+
+  print(H1(paste0("unitizer for: ", u.name, collapse="")))
+
+
+  unitizer.browse <- browsePrep(unitizer, mode="review")
+
+
+
+  # Decide what to keep / override / etc.
+
+  if(length(auto.accept)) {  # Apply auto-accepts, if any
+    for(auto.val in auto.accept) {
+      auto.type <- which(
+        tolower(unitizer.browse@mapping@review.type) == auto.val
+      )
+      unitizer.browse@mapping@review.val[auto.type] <- "Y"
+      unitizer.browse@mapping@reviewed[auto.type] <- TRUE
+  } }
+  # Now manual accepts
+  print(H1(paste0("unitizer for: ", u.name, collapse="")))
+
+  unitizer <- browseUnitizer(
+    unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time && !length(auto.accept),
+    force.update=force.update
+  )
+  # -  Finalize ------------------------------------------------------------------
+
+  # Restore search path
+
+  if(!search.path.restored) {
+    if(search.path.trim) search_path_restore()          # runs _unsetup() as well
+    else if (search.path.setup) search_path_unsetup()
+  }
+  # Finalize
+
+  store_unitizer(unitizer, store.id, wd)
+  on.exit(NULL)
+  invisible(unitizer)
+}
+#' Check Not Running in Undesirable Environments
+#'
+#' Make sure not running inside withCallingHandlers / withRestarts / tryCatch
+#' or other potential issues; of course this isn't foolproof if someone is using
+#' a variation on those functions, but also not the end of the world if it isn't
+#' caught
+#'
+#' @keywords internal
+
+check_call_stack <- function() {
   call.stack <- sys.calls()
   if(
     any(
@@ -254,173 +463,6 @@ unitize_eval <- function(
       "defined outside of `unitize`.  If you did not define this restart contact ",
       "maintainer."
     )
-
-  # Setup the new unitizer
-
-  unitizer@id <- store.id
-  parent.env(unitizer@zero.env) <- pre.load.frame
-  assign("quit", unitizer_quit, unitizer@zero.env)
-  assign("q", unitizer_quit, unitizer@zero.env)
-
-  wd <- getwd()                              # in case user changes it through tests
-  on.exit(                                   # In case interrupted or some such
-    message(
-      "Unexpectedly exited before storing `unitizer`; ",
-      "tests were not saved or changed."
-    ),
-    add=TRUE
-  )
-  # Clean up search path
-
-  search.path.setup <- search.path.trim <- FALSE
-  if((is.null(par.env) || isTRUE(search.path.clean)) && !tracingState()) {
-    warning(
-      "Tracing is disabled, but must be enabled to run in a clean environment ",
-      "or with a clean search path.  If you want these features re-enable tracing ",
-      "with `tracingState(TRUE)`.  See \"Reproducible Tests\" vignette for details.  ",
-      "Running on existing search path with `.GlobalEnv` as parent.",
-      immediate.=TRUE
-    )
-    par.env <- .GlobalEnv
-    search.path.clean <- FALSE
-  } else if(is.null(par.env) || isTRUE(search.path.clean)) {
-    over_print("Search Path Setup...")
-    if(!isTRUE(search.path.setup <- search_path_setup())) {
-      if(is.null(par.env))
-        warning(
-          "Unable to run in clean environment, running in .GlobalEnv",
-          immediate.=TRUE
-        )
-      if(isTRUE(search.path.clean))
-        warning(
-          "Unable to run with clean search path; using existing.",
-          immediate.=TRUE
-        )
-    } else {
-      on.exit(search_path_unsetup(), add=TRUE)
-    }
-  }
-
-  if(isTRUE(search.path.clean)) {
-    if(isTRUE(search.path.trim <- search_path_trim(keep=search.path.keep))) {
-      on.exit(search_path_restore(), add=TRUE) # note this also runs search_path_unsetup()
-    }
-    on.exit(search_path_unsetup(), add=TRUE)
-  }
-
-  # -  Parse / Eval ------------------------------------------------------------
-
-  # Parse and evaluate test file, but only if we're in `unitize` mode, as implied
-  # by the `test.file`
-
-  search.path.restored <- FALSE
-  if(!is.null(test.file)) {
-    over_print("Parsing tests...")
-    tests.parsed <- parse_tests(test.file, comments=interactive.mode)
-
-    if(!length(tests.parsed)) {
-      over_print("")
-      message("No tests in ", test.file, "; nothing to do here.")
-      on.exit(NULL)
-      if(search.path.trim) search_path_restore()        # runs _unsetup() as well
-      else if (search.path.setup) search_path_unsetup()
-
-      return(invisible(unitizer))
-    }
-    # Evaluate the parsed calls
-
-    tests <- new("unitizerTests") + tests.parsed
-    unitizer <- unitizer + tests
-
-    # Make sure our tracing didn't get messed up in some way
-
-    if((isTRUE(search.path.clean) || is.null(par.env)) && !search_path_check()) {
-      search_path_restore()
-      search.path.restored <- TRUE
-    }
-    # Summary view of deltas and changes
-
-    unitizer.summary <- summary(unitizer)
-    cat("\n")
-
-    if(!interactive.mode) {
-      if(!passed(unitizer.summary)) {  # Passed tests are first column
-        delta.show <- unitizer@tests.status != "Pass" & !ignored(unitizer@items.new)
-        message(
-          paste0(
-            format(paste0(unitizer@tests.status[delta.show], ": ")),
-            unitizer@items.new.calls.deparse[delta.show],
-            collapse="\n"
-          ),
-          "\n"
-        )
-        stop(
-          "Newly generated tests do not match unitizer (",
-          paste(
-            c(colnames(unitizer.summary@data), "Deleted"),
-            c(tail(unitizer.summary@data, 1L), unitizer.summary@dels),
-            sep=": ", collapse=", "
-          ),
-          "); see above for more info, or run in interactive mode"
-        )
-      }
-      message("Passed Tests")
-      on.exit(NULL)
-      if(!search.path.restored) {
-        if(search.path.trim) search_path_restore()        # runs _unsetup() as well
-        else if (search.path.setup) search_path_unsetup()
-      }
-      return(invisible(unitizer))
-    }
-  }
-  cat("\r")
-
-  # -  Browse ------------------------------------------------------------------
-
-  # Group tests by section and outcome for review; note that the `unitizer.browse`
-  # object carries info about what mode it is in and that is used by subsequent
-  # functions
-
-  if(is.null(test.file)) {
-    unitizer.browse <- browsePrep(unitizer, mode="review")
-  } else {
-    unitizer.browse <- browsePrep(unitizer, mode="unitize")
-  }
-  tot.time <- (proc.time() - start.time)[["elapsed"]]
-
-  # Decide what to keep / override / etc.
-
-  if(length(auto.accept)) {  # Apply auto-accepts, if any
-    for(auto.val in auto.accept) {
-      auto.type <- which(
-        tolower(unitizer.browse@mapping@review.type) == auto.val
-      )
-      unitizer.browse@mapping@review.val[auto.type] <- "Y"
-      unitizer.browse@mapping@reviewed[auto.type] <- TRUE
-  } }
-  # Now manual accepts
-
-  unitizer <- browseUnitizer(
-    unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time && !length(auto.accept),
-    force.update=force.update
-  )
-  # -  Finalize ------------------------------------------------------------------
-
-  # Restore search path
-
-  if(!search.path.restored) {
-    if(search.path.trim) search_path_restore()          # runs _unsetup() as well
-    else if (search.path.setup) search_path_unsetup()
-  }
-  # Finalize
-
-  store_unitizer(unitizer, store.id, wd)
-  on.exit(NULL)
-  invisible(unitizer)
-}
-
-unitize_browse <- function(unitizers, ) {
-
 }
 
 
