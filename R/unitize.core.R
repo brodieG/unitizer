@@ -64,10 +64,14 @@ unitize_core <- function(
     !mode %in% c("unitize", "review")
   )
     stop("Logic Error: incorrect value for `mode`; contact maintainer")
-  if(mode == "review" && !all(is.na(test.files)))
-    stop(
-      "Logic Error: `test.files` must be NA in review mode; contact maintainer"
-    )
+  if(mode == "review") {
+    if(!all(is.na(test.files)))
+      stop(
+        "Logic Error: `test.files` must be NA in review; contact maintainer"
+      )
+    if(length(auto.accept))
+      stop("Logic Error: auto-accepts not allowed in review mode")
+  }
   if(
     mode == "unitize" &&
     (
