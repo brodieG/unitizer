@@ -143,16 +143,44 @@ obj_screen_chr <- function(
 #' @param ctd 1 length character vector for what to use to indicate string truncated
 #' @param disambig logical 1L whether to disambiguate strings that end up
 #'   the same after truncation (not currently implemented)
+#' @param from what side to truncate from
 
-strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE) {
+strtrunc <- function(
+  x, nchar.max=getOption("width"), ctd="...", disambig=FALSE,
+  from="right"
+) {
   if(!identical(disambig, FALSE)) stop("Parameter `disambig` not implemented")
   if(!is.character(x)) stop("Argument `x` must be character")
-  if(!is.character(ctd) || !identical(length(ctd), 1L)) stop("Argument `ctd` must be 1 length character")
-  if(!is.numeric(nchar.max) || !identical(length(nchar.max), 1L)) stop("Argument `nchar.max` must be 1 length numeric")
-
+  if(!is.character(ctd) || !identical(length(ctd), 1L))
+    stop("Argument `ctd` must be 1 length character")
+  if(!is.numeric(nchar.max) || !identical(length(nchar.max), 1L))
+    stop("Argument `nchar.max` must be 1 length numeric")
+  if(
+    !is.character(from) || length(from) != 1L || is.na(from) ||
+    !from %in% c("left", "right")
+  )
+    stop(
+      "Argument `from` must be character(1L) %in% c(\"left\", \"right\") ",
+      "and not NA"
+    )
   len.target <- nchar.max - nchar(ctd)
-  if(len.target < 1L) stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
-  ifelse(nchar(x) <= nchar.max, x, paste0(substr(x, 1, len.target), ctd))
+  if(len.target < 1L)
+    stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
+  chars <- nchar(x)
+  pre <- post <- ""
+  if(identical(from, "right")) {
+    start <- 1L
+    stop <- len.target
+    post <- ctd
+  } else {
+    start <- chars - len.target + 1L
+    stop <- chars
+    pre <- ctd
+  }
+  ifelse(
+    nchar(x) <= nchar.max,
+    x, paste0(pre, substr(x, start, stop), post)
+  )
 }
 #' Wrap Text At Fixed Column Width
 #'

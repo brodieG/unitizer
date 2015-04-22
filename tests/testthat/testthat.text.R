@@ -109,5 +109,10 @@ local({
     )
     expect_equal(unitizer:::str_reduce_unique(str2, from="right"), res2)
   })
+  test_that("strtrunc", {
+    str1 <- c(paste0(letters, collapse=""), paste0(LETTERS, collapse=""))
+    expect_equal(unitizer:::strtrunc(str1, 10L), c("abcdefg...", "ABCDEFG..."))
+    expect_equal(unitizer:::strtrunc(str1, 10L, from="left"), c("...tuvwxyz", "...TUVWXYZ"))
+  })
 
 })
