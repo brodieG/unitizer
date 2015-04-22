@@ -330,28 +330,6 @@ unitize_eval <- function(tests.parsed, unitizers, eval.which) {
 
   res <- vector("list", test.len)
 
-  # Char template setup
-
-  scr.width <- getOption("width")
-  test.files.trim <- col.names <- fmt <- NA_character_
-  if(test.len > 1L) {
-    test.files <- vapply(unitizers, slot, "test.file.loc", character(1L))
-    test.files.trim <- file.path(
-      str_reduce_unique(dirname(test.files)),
-      basename(test.files)
-    )
-    tpl.summ <- summary(unitizers[[1L]], silent=TRUE)
-    col.names.tmp <- names(tpl.summ@totals)
-    col.names <- paste0(col.names.tmp, collapse=" ")
-    max.file.chars <- max(15L, src.width - nchar(colnames) - 2L)
-    num.width <- max(nchar(col.names.tmp))
-    fmt <- paste0(
-      "%", max.file.chars, "s ",
-      paste0(
-        rep(paste0(" %", num.width, "s"), length(col.names.tmp)), collapse=""
-      ), "\n"
-    )
-  }
   # Run through unitizers
 
   for(i in seq.int(test.len)) {
@@ -366,16 +344,7 @@ unitize_eval <- function(tests.parsed, unitizers, eval.which) {
     } else {
       res[[i]] <- unitizer
     }
-    # Result summary
-
-    unitizer.summary <- summary(unitizer, silent=TRUE)
-    if(identical(test.len, 1L)) {
-      show(unitizer.summary)
-    } else {
-      if(identical(i, 1L))
-        cat(rep(" ", max.file.chars + 2L), col.names, "\n", sep="")
-      cat(sprintf(fmt, c(test.files.trim, unitizer.summary@totals)))
-    }
+    over_print(paste0("Completed: ", unitizer@test.file.loc, "\n"))
   }
   on.exit()
   res
@@ -391,32 +360,81 @@ unitize_eval <- function(tests.parsed, unitizers, eval.which) {
 unitize_browse <- function(
   unitizers, mode, force.update, auto.accept, prompt.on.quit
 ) {
-
-
-  print(H1(paste0("unitizer for: ", u.name, collapse="")))
-
-
-  unitizer.browse <- browsePrep(unitizer, mode="review")
-
-
+  over_print("Prepping Unitizers...")
+  untz.browsers <- lapply(unitizers, browsePrep, mode=mode)
 
   # Decide what to keep / override / etc.
+  # Apply auto-accepts, if any (shouldn't be any in "review mode")
 
-  if(length(auto.accept)) {  # Apply auto-accepts, if any
-    for(auto.val in auto.accept) {
-      auto.type <- which(
-        tolower(unitizer.browse@mapping@review.type) == auto.val
-      )
-      unitizer.browse@mapping@review.val[auto.type] <- "Y"
-      unitizer.browse@mapping@reviewed[auto.type] <- TRUE
-  } }
+  # NOTE: are there issues with auto-accepts when we run this function more
+  # than once, where previous choices are over-written by the auto-accepts?
+  # maybe auto-accepts only get applied first time around?
+
+  warning("Sort out iterative auto-accept issue", immediate.=TRUE)
+
+  test.len <- length(untizers)
+  to.review <- integer(test.len)
+  auto.accepted <- 0L
+
+  if(length(auto.accept)) {
+    over_print("Applying auto-accepts...")
+    for(i in seq_along(untz.browsers)) {
+      untz.browser <- untz.browsers[[i]]
+      for(auto.val in auto.accept) {
+        auto.type <- which(
+          tolower(untz.browser@mapping@review.type) == auto.val
+        )
+        untz.browser@mapping@review.val[auto.type] <- "Y"
+        untz.browser@mapping@reviewed[auto.type] <- TRUE
+        auto.accepted <- auto.accepted + length(auto.type)
+    } }
+    to.review[[i]] <- sum(
+      !untz.browser@mapping@reviewed & !untz.browser@mapping@ignored
+    )
+  }
+  # Do we need to allow user review tests
+
+  if(identical(mode, "review") || sum(to.review)) {
+    # Ask user what unitizer to review
+
+    # How do we handle prompt on quit now, since we have a bit of a dichotomy
+    # with the single test version requiring management within the single
+    # unitizer browse menu, and the multi-version not?  Actually, not TRUE,
+    # since we don't want to just drop all user selectins without a prompt?
+    # Or is that not a problem since any time a user has some user selections
+    # they will get prompted anyway?
+
+    # unitizer <- browseUnitizer(
+    #   unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time && !length(auto.accept),
+    #   force.update=force.update
+    # )
+    for(i in seq.int(test.len)) {
+
+    }
+
+  }
+  # Force update stuff if needed; need to know what has already been stored
+
+  if(!to.review && !auto.accepted) {
+    message("All tests passed")
+  } else if (!to.review) {
+    message("All tests passed or auto-accepted")
+  } else {
+
+  }
+
+
+
+
+  print(H1(paste0("unitizer for: ", getName(unitizer), collapse="")))
+
+
+
+
+
   # Now manual accepts
   print(H1(paste0("unitizer for: ", u.name, collapse="")))
 
-  unitizer <- browseUnitizer(
-    unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time && !length(auto.accept),
-    force.update=force.update
-  )
   # -  Finalize ------------------------------------------------------------------
 
   # Restore search path
@@ -468,6 +486,4 @@ check_call_stack <- function() {
       "maintainer."
     )
 }
-
-
 

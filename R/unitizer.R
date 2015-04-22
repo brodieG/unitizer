@@ -154,6 +154,13 @@ setClass(
       ) )
     TRUE
 } )
+setClass(
+  "unitizerObjectList", contains="unitizerList",
+  validity=function(object) {
+    if(!all(vapply(object@.items, is, logical(1L), "unitizer")))
+      return("slot `.items` may only contain \"unitizer\" objects")
+    TRUE
+} )
 # - Methods -------------------------------------------------------------------
 
 #' Display Unitizer Summary
@@ -276,6 +283,48 @@ setMethod("summary", "unitizer",
     if(!silent) show(obj)
     obj
 } )
+
+setMethod("summary", "unitizerObjectList",
+  function(object, silent=FALSE, ...) {
+    warning("set this up properly")
+    scr.width <- getOption("width")
+    test.files.trim <- col.names <- fmt <- test.nums <- NA_character_
+    if(test.len > 1L) {
+      test.nums <- paste0(" ", format(seq.int(test.len)))
+      test.files <- vapply(unitizers, slot, "test.file.loc", character(1L))
+      test.files.trim <- file.path(
+        str_reduce_unique(dirname(test.files)),
+        basename(test.files)
+      )
+      tpl.summ <- summary(unitizers[[1L]], silent=TRUE)
+      col.names.tmp <- names(tpl.summ@totals)
+      col.names <- paste0(col.names.tmp, collapse=" ")
+      non.file.chars <- nchar(colnames) + max(nchar(test.nums)) + 2L
+      max.file.chars <- max(15L, scr.width - non.file.chars)
+      pre.sum.chars <- max.file.chars + 2L + max(nchar(test.nums))
+      header <- c(rep(" ", pre.sum.chars), col.names)
+      num.width <- max(nchar(col.names.tmp))
+      fmt <- paste0(
+        "%s. %", max.file.chars, "s ",
+        paste0(
+          rep(paste0(" %", num.width, "s"), length(col.names.tmp)), collapse=""
+        ), "\n"
+      )
+    }
+    unitizer.summary <- summary(unitizer, silent=TRUE)
+    if(identical(test.len, 1L)) {
+      show(unitizer.summary)
+    } else {
+      if(identical(i, 1L))        # header
+        cat(header, "\n", sep="")
+      test.num <- if(!passed(unitizer.summary)) {
+        sub(" (\d+)", "*\\1", test.nums[[i]])
+      } else test.nums[[i]]
+      cat(sprintf(fmt, c(test.num, test.files.trim, unitizer.summary@totals)))
+    }
+
+} )
+
 
 setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
 
@@ -436,3 +485,25 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     e1 <- e1 + do.call(new, c(list("unitizerItemTestsErrors"), test.error.tpl))
     e1
 } )
+
+setGeneric("getName", function(object, ...) standardGeneric("getName"))
+#' Create A Human Readable Name for a \code{unitizer}
+#'
+#' @param object a unitizer
+#' @return character(1L) a descriptive name
+
+setMethod("getName", "unitizer",
+  function(object, ...) {
+    if(!is.na(object@test.file.loc)) {   # unitize
+      u.name <- basename(test.file)
+    } else {
+      if(is.character(object@id) && length(object@id) == 1L) {
+        u.name <- object@id
+      } else {
+        u.name <- try(as.character(object@id), silent=TRUE)
+        if(inherits(u.name, "try-error")) u.name <- "<unknown>"
+    } }
+    u.name
+  }
+)
+
