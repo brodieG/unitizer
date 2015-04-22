@@ -521,3 +521,37 @@ substr_cons <- function(x, stop, justify="left") {
   z <- sub("[^bcdfghjklmnpqrstvwxz]*$", "", x)
   format(z, width=stop, justify=justify)
 }
+#' Remove Common Characters From Values in a Vector
+#'
+#' @keywords internal
+#' @param x character the vector to make more unique
+#' @param from the direction to remove common elements from
+
+str_reduce_unique <- function(x, from="left") {
+  if(
+    !is.character(from) || length(from) != 1L || is.na(from) ||
+    !from %in% c("left", "right")
+  )
+    stop(
+      "Argument `from` must be character(1L) %in% c(\"left\", \"right\") ",
+      "and not NA"
+    )
+  if(!is.character(x) || any(is.na(x)))
+    stop("Argument `x` must be character and may not contain NAs")
+  char.list <- strsplit(x, "")
+  if(identical(from, "right")) char.list <- lapply(char.list, rev)
+  min.len <- min(vapply(char.list, length, 1L))
+  char.mx <- vapply(char.list, `[`, character(min.len), 1:min.len)
+  first.diff <- min(
+    which(apply(char.mx, 1, function(x) length(unique(x))) > 1L)
+  )
+  char.mx.trim <- char.mx[first.diff:nrow(char.mx), ]
+  trim.list <- split(char.mx.trim, col(char.mx.trim))
+  res <- character(length(x))
+  for(i in seq_along(x)) {
+    res.tmp <- c(trim.list[[i]], tail(char.list[[i]], -min.len))
+    if(identical(from, "right")) res.tmp <- rev(res.tmp)
+    res[[i]] <- paste0(res.tmp, collapse="")
+  }
+  res
+}

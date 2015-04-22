@@ -96,4 +96,18 @@ local({
     expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L), c("ab  ", "abcd", "abc "))
     expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L, justify="right"), c("  ab", "abcd", " abc"))
   })
+  test_that("str_reduce_unique", {
+    str1 <- c("abcdef", "abcdefgh", "abcql")
+    res1 <- c("def", "defgh", "ql")
+    expect_equal(unitizer:::str_reduce_unique(str1), res1)
+    expect_equal(unitizer:::str_reduce_unique(str1, from="right"), str1)
+    str2 <- vapply(
+      strsplit(str1, ""), function(x) paste0(rev(x), collapse=""), ""
+    )
+    res2 <- vapply(
+      strsplit(res1, ""), function(x) paste0(rev(x), collapse=""), ""
+    )
+    expect_equal(unitizer:::str_reduce_unique(str2, from="right"), res2)
+  })
+
 })
