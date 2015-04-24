@@ -208,22 +208,25 @@ unitize_core <- function(
   assign("q", unitizer_quit, util.frame)
 
   stop("Make Sure unitizer location is recorded")
-  unitizers <- lapply(
-    seq_along(store.ids),
-    function(i) {
-      if(is(store.ids[[i]], "unitizer")) {
-        unitizer <- upgrade(store.ids[[i]], util.frame)   # note zero.env is set-up further down
-        store.ids[[i]] <- unitizer@id
-      } else {
-        unitizer <- try(load_unitizer(store.ids[[i]], util.frame, test.files[[i]]))
-        if(inherits(unitizer, "try-error"))
-          stop("Unable to load `unitizer`; see prior errors.")
-      }
-      if(!is(unitizer, "unitizer"))
-        stop("Logic Error: expected a `unitizer` object; contact maintainer.")
-      unitizer
-    }
-  )
+  unitizers <- new(
+    "unitizerObjectList",
+    .items=lapply(
+      seq_along(store.ids),
+      function(i) {
+        if(is(store.ids[[i]], "unitizer")) {
+          unitizer <- upgrade(store.ids[[i]], util.frame)
+          store.ids[[i]] <- unitizer@id
+        } else {
+          unitizer <- try(
+            load_unitizer(store.ids[[i]], util.frame, test.files[[i]])
+          )
+          if(inherits(unitizer, "try-error"))
+            stop("Unable to load `unitizer`; see prior errors.")
+        }
+        if(!is(unitizer, "unitizer"))
+          stop("Logic Error: expected a `unitizer` object; contact maintainer.")
+        unitizer
+  } ) )
   # - Evaluate / Browse --------------------------------------------------------
 
   # Now evaluate
@@ -361,7 +364,7 @@ unitize_browse <- function(
   unitizers, mode, force.update, auto.accept, prompt.on.quit
 ) {
   over_print("Prepping Unitizers...")
-  untz.browsers <- lapply(unitizers, browsePrep, mode=mode)
+  untz.browsers <- lapply(as.list(unitizers), browsePrep, mode=mode)
 
   # Decide what to keep / override / etc.
   # Apply auto-accepts, if any (shouldn't be any in "review mode")

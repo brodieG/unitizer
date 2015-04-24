@@ -285,44 +285,44 @@ setMethod("summary", "unitizer",
 } )
 
 setMethod("summary", "unitizerObjectList",
-  function(object, silent=FALSE, ...) {
+  function(object, ...) {
     warning("set this up properly")
     scr.width <- getOption("width")
     test.files.trim <- col.names <- fmt <- test.nums <- NA_character_
-    if(test.len > 1L) {
-      test.nums <- paste0(" ", format(seq.int(test.len)))
-      test.files <- vapply(unitizers, slot, "test.file.loc", character(1L))
-      test.files.trim <- file.path(
-        str_reduce_unique(dirname(test.files)),
-        basename(test.files)
-      )
-      tpl.summ <- summary(unitizers[[1L]], silent=TRUE)
-      col.names.tmp <- names(tpl.summ@totals)
-      col.names <- paste0(col.names.tmp, collapse=" ")
-      non.file.chars <- nchar(colnames) + max(nchar(test.nums)) + 2L
-      max.file.chars <- max(15L, scr.width - non.file.chars)
-      pre.sum.chars <- max.file.chars + 2L + max(nchar(test.nums))
-      header <- c(rep(" ", pre.sum.chars), col.names)
-      num.width <- max(nchar(col.names.tmp))
-      fmt <- paste0(
-        "%s. %", max.file.chars, "s ",
-        paste0(
-          rep(paste0(" %", num.width, "s"), length(col.names.tmp)), collapse=""
-        ), "\n"
-      )
-    }
-    unitizer.summary <- summary(unitizer, silent=TRUE)
-    if(identical(test.len, 1L)) {
-      show(unitizer.summary)
-    } else {
-      if(identical(i, 1L))        # header
-        cat(header, "\n", sep="")
-      test.num <- if(!passed(unitizer.summary)) {
+
+    # Text templates, etc.
+
+    test.nums <- paste0(" ", format(seq.int(test.len)))
+    test.files <- vapply(unitizers, slot, "test.file.loc", character(1L))
+    test.files.trim <- file.path(
+      str_reduce_unique(dirname(test.files)),
+      basename(test.files)
+    )
+    tpl.summ <- summary(unitizers[[1L]], silent=TRUE)
+    col.names.tmp <- names(tpl.summ@totals)
+    col.names <- paste0(col.names.tmp, collapse=" ")
+    non.file.chars <- nchar(colnames) + max(nchar(test.nums)) + 2L
+    max.file.chars <- max(15L, scr.width - non.file.chars)
+    pre.sum.chars <- max.file.chars + 2L + max(nchar(test.nums))
+    header <- c(rep(" ", pre.sum.chars), col.names)
+    num.width <- max(nchar(col.names.tmp))
+    fmt <- paste0(
+      "%s. %", max.file.chars, "s ",
+      paste0(
+        rep(paste0(" %", num.width, "s"), length(col.names.tmp)), collapse=""
+      ), "\n"
+    )
+    # Now get summaries and loop through them
+
+    summaries <- lapply(as.list(object), summary, silent=TRUE)
+
+    cat(header, "\n", sep="")
+    for(i in seq_along(summaries)) {
+      test.num <- if(!passed(summaries[[i]])) {
         sub(" (\d+)", "*\\1", test.nums[[i]])
       } else test.nums[[i]]
-      cat(sprintf(fmt, c(test.num, test.files.trim, unitizer.summary@totals)))
+      cat(sprintf(fmt, c(test.num, test.files.trim, summaries[[i]]@totals)))
     }
-
 } )
 
 
