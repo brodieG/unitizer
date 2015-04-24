@@ -237,15 +237,11 @@ unitize_core <- function(
 
   while(length(eval.which) || mode == "review") {
 
-    search.path.restored <- FALSE
-
     # Evaluate and display `unitizer` status
 
     unitizers <- unitize_eval(
       tests.parsed=tests.parsed, unitizers=unitizers, eval.which=eval.which
     )
-    tot.time <- (proc.time() - start.time)[["elapsed"]]
-
     # Make sure our tracing didn't get messed up in some way
     stop("need to handle this")
 
@@ -255,48 +251,21 @@ unitize_core <- function(
     # }
     # Handle non-interactive mode
 
-    summaries <- lapply(unitizers, summary, silent=TRUE)  # we do this in eval as well, so a bit repetitive, but cleaner this way
-    passing <- vapply(summaries, passed, logical(1L))
 
-    if(!interactive.mode) {
-      if(!all(passing)) {  # Passed tests are first column
-        for(i in which(!passing)) {
-          delta.show <-
-            unitizer@tests.status != "Pass" & !ignored(unitizer@items.new)
-          message(
-            paste0(
-              "* "
-              format(paste0(unitizer@tests.status[delta.show], ": ")),
-              unitizer@items.new.calls.deparse[delta.show],
-              collapse="\n"
-            ),
-            "in test file '", unitizers[[i]]@test.file.loc, "'\n",
-        ) }
-        stop(
-          "Newly generated tests do not match unitizer (",
-          paste(
-            c(colnames(unitizer.summary@data), "Deleted"),
-            c(tail(unitizer.summary@data, 1L), unitizer.summary@dels),
-            sep=": ", collapse=", "
-          ),
-          "); see above for more info, or run in interactive mode"
-        )
-      }
-      break
-    } else {
-      # `eval.which` tells us what unitizes we need to re-eval if we made changes
-      # to our source code, but more than that would be good to be able to book-
-      # mark a particular test?  Becomes complicated because that might mean there
-      # are a bunch of unreviewed tests, etc.
+    # `eval.which` tells us what unitizes we need to re-eval if we made changes
+    # to our source code, but more than that would be good to be able to book-
+    # mark a particular test?  Becomes complicated because that might mean there
+    # are a bunch of unreviewed tests, etc.
 
-      eval.which <- unitize_browse(
-        unitizers=unitizers,               # make sure file path is included in \code{unitizer} so browse can update file
-        mode=mode,
-        force.update=force.update,
-        auto.accept=auto.accept            # need to think about how auto-accept is done here; maybe should even be done in eval mode or as separate function
-        prompt.on.quit=tot.time > quit.time
-      )
-  } }
+    eval.which <- unitize_browse(
+      unitizers=unitizers,               # make sure file path is included in \code{unitizer} so browse can update file
+      mode=mode,
+      interactive.mode=interactive.mode,
+      force.update=force.update,
+      auto.accept=auto.accept            # need to think about how auto-accept is done here; maybe should even be done in eval mode or as separate function
+      prompt.on.quit=tot.time > quit.time
+    )
+  }
   # - Finalize -----------------------------------------------------------------
 
   message("Passed Tests")
@@ -320,7 +289,6 @@ unitize_eval <- function(tests.parsed, unitizers, eval.which) {
       "changed."
     )
   )
-  test.len <- length(tests.parsed)
   if(
     !identical(test.len, length(unitizers)) || !is.integer(eval.which) ||
     any(is.na(eval.which) || any(eval.which < 1L)  || any(eval.which > test.len)
@@ -363,6 +331,14 @@ unitize_eval <- function(tests.parsed, unitizers, eval.which) {
 unitize_browse <- function(
   unitizers, mode, force.update, auto.accept, prompt.on.quit
 ) {
+  # - Prep ---------------------------------------------------------------------
+
+  eval.which <- integer()  # default is to not re-eval anything
+
+  if(!length(unitizers)) {
+    message("No tests to review")
+    return(eval.which)
+  }
   over_print("Prepping Unitizers...")
   untz.browsers <- lapply(as.list(unitizers), browsePrep, mode=mode)
 
@@ -382,49 +358,119 @@ unitize_browse <- function(
   if(length(auto.accept)) {
     over_print("Applying auto-accepts...")
     for(i in seq_along(untz.browsers)) {
-      untz.browser <- untz.browsers[[i]]
+      untz.browsers[[i]] <- untz.browsers[[i]]
       for(auto.val in auto.accept) {
         auto.type <- which(
-          tolower(untz.browser@mapping@review.type) == auto.val
+          tolower(untz.browsers[[i]]@mapping@review.type) == auto.val
         )
-        untz.browser@mapping@review.val[auto.type] <- "Y"
-        untz.browser@mapping@reviewed[auto.type] <- TRUE
+        untz.browsers[[i]]@mapping@review.val[auto.type] <- "Y"
+        untz.browsers[[i]]@mapping@reviewed[auto.type] <- TRUE
         auto.accepted <- auto.accepted + length(auto.type)
     } }
     to.review[[i]] <- sum(
-      !untz.browser@mapping@reviewed & !untz.browser@mapping@ignored
+      !untz.browsers[[i]]@mapping@reviewed & !untz.browsers[[i]]@mapping@ignored
     )
   }
-  # Do we need to allow user review tests
+  # List the result
 
-  if(identical(mode, "review") || sum(to.review)) {
-    # Ask user what unitizer to review
+  summaries <- summary(unitizers, silent=TRUE)
 
-    # How do we handle prompt on quit now, since we have a bit of a dichotomy
-    # with the single test version requiring management within the single
-    # unitizer browse menu, and the multi-version not?  Actually, not TRUE,
-    # since we don't want to just drop all user selectins without a prompt?
-    # Or is that not a problem since any time a user has some user selections
-    # they will get prompted anyway?
+  # - Non-interactive ----------------------------------------------------------
 
-    # unitizer <- browseUnitizer(
-    #   unitizer, unitizer.browse, prompt.on.quit=tot.time > quit.time && !length(auto.accept),
-    #   force.update=force.update
-    # )
-    for(i in seq.int(test.len)) {
+  # Browse, or fail depending on interactive mode
+
+  if(!interactive.mode) {
+    if(!sum(to.review)) {
+      for(i in which(to.review > 0L)) {
+        untz <- unitizers[[i]]
+        delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
+        message(
+          paste0(
+            "* "
+            format(paste0(untz@tests.status[delta.show], ": ")),
+            untz@items.new.calls.deparse[delta.show],
+            collapse="\n"
+          ),
+          "in test file '", untz@test.file.loc, "'\n",
+      ) }
+      stop(
+        "Newly generated tests do not match unitizer (",
+        paste(
+          names(summaries@totals), summaries@totals, sep=": ", collapse=", "
+        ),
+        "); see above for more info, or run in interactive mode"
+      )
+    }
+  } else {
+  # - Interactive --------------------------------------------------------------
+
+    if(test.len > 1L) show(summaries)
+    if(identical(mode, "review") || sum(to.review)) {
+      # We have fairly different treatment for a single test versus multi-test
+      # review, so the logic gets a little convoluted (keep eye out for)
+      # `test.len > 1L`, but this obviates the need for multiple different calls
+      # to `browseUnitizers`
+
+      prompt <- paste0(
+        "Type number of unitizer to review, or 'A' to review all that require ",
+        "review (those with '*' ahead of their number)"
+      )
+      reviewed <- logical(test.len)
+      repeat {
+        if(test.len > 1L) {
+          pick <- try(
+            simple_prompt(prompt, c("A", "Q", seq.int(test.len)), attempts=10L)
+          )
+          if(inherits(pick, "try-error")) {
+            message(
+              "Error occurred while waiting for unitizer selection, aborting"
+            )
+            break
+          } else if(identical(pick, "Q")) {
+            stop("INTERNAL: need to handle unreviewed unitizers?")
+          } else if(identical(pick, "A")) {
+            stop("Need Review-all mode")
+          } else {
+            pick.num <- as.integer(pick)
+            if(!pick.num %in% seq.int(test.len))
+              stop(
+                "Logic Error: invalid unitizer selected somehow; contact ",
+                "maintainer."
+              )
+        } }
+        # `browseUnitizer` returns `unitizer`, along with
+
+        stop("update unitizer to return Re-eval requests")
+
+        browse.res <- browseUnitizer(
+          unitizers[[pick.num]], untz.browsers[[pick.num]],
+          force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
+        )
+        unitizers[[pick.num]] <- browse.res$unitizer # can't be Fd creating a new class for return val
+        reviewed[[pick.num]] <- TRUE
+
+        if(!is.null(browse.res$reeval)) {
+          eval.which <- if(identical(browse.res$reeval, "R")) {
+            pick.num
+          } else if(identical(browse.res$reeval, "RR")) {
+            seq.int(test.len)
+          } else stop("Logic Error: invalid re-eval value; contact maintainer.")
+          break
+        }
+        if(identical(test.len, 1L)) break else show(summaries)
+      }
+    }
+    # Force update stuff if needed; need to know what has already been stored
+
+    if(!to.review && !auto.accepted) {
+      message("All tests passed")
+    } else if (!to.review) {
+      message("All tests passed or auto-accepted")
+    } else {
 
     }
-
   }
-  # Force update stuff if needed; need to know what has already been stored
 
-  if(!to.review && !auto.accepted) {
-    message("All tests passed")
-  } else if (!to.review) {
-    message("All tests passed or auto-accepted")
-  } else {
-
-  }
 
 
 
