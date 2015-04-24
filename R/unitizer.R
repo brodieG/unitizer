@@ -66,6 +66,7 @@ setClass(
     zero.env="environment",       # keep functions and stuff here
     base.env="environment",
     test.file.loc="character",    # location of teset file that produced `unitizer`
+    eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -75,15 +76,15 @@ setClass(
     # NEED TO CLEAN THIS UP; SHOULD IT BE HANDLED BY METHODS? REALLY ANNOYING
     # TO GET FAILED TESTS VS NEW TESTS VS. WHATEVER
 
-    tests.fail="logical",                     # really need tests.fail?
-    tests.error="logical",                     # really need tests.error? redundant with tests.result
+    tests.fail="logical",                  # really need tests.fail?
+    tests.error="logical",                 # really need tests.error? redundant with tests.result
     tests.new="logical",
     tests.status="factor",                 # pass/fail/error/new
     tests.result="matrix",
     tests.errorDetails="unitizerItemsTestsErrors",
-    tests.conditions.new="logical",          # Whether the test produced new conditions, used to check whether we need to display conditions on ignored tests
+    tests.conditions.new="logical",        # Whether the test produced new conditions, used to check whether we need to display conditions on ignored tests
 
-    items.ref="unitizerItems",                         # Should all be same length
+    items.ref="unitizerItems",             # Should all be same length
     items.ref.calls.deparse="character",
     items.ref.map="integer",
 
@@ -94,13 +95,14 @@ setClass(
     sections.ref="list",
     section.ref.map="integer",   # Note, all section references for ref objects are parent sections since when we browse we don't track nested sections
 
-    changes="unitizerChanges"                  # Summary of user changes
+    changes="unitizerChanges"              # Summary of user changes
   ),
   prototype(
     version=packageVersion("unitizer"),
     tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
     zero.env=baseenv(),
-    test.file.loc=NA_character_
+    test.file.loc=NA_character_,
+    eval.time=0
   ),
   validity=function(object) {
     if(length(object@items.ref)) {
@@ -111,6 +113,10 @@ setClass(
         return("Reference section mapping error")
       if(!identical(length(test.file.loc), 1L))
         return("slot `test.file.loc` must be length 1L")
+      if(
+        !identical(length(eval.time), 1L) || is.na(eval.time) || eval.time < 0L
+      )
+        return("slot `eval.time` must be length 1L, positive, and not NA")
 
       # Randomly test a subset of the items for validity (testing all becomes
       # too time consuming)
@@ -123,9 +129,9 @@ setClass(
       if(any(is.chr <- vapply(item.check, is.character, logical(1L))))
         return(
           paste0(
-            "Invalid reference item at index[", samp[which(is.chr)[[1L]]], "]: ",
-            item.check[[which(is.chr)[[1L]]]], " (note we randomly pick up to ",
-            "three reference tests to check validity)."
+            "Invalid reference item at index[", samp[which(is.chr)[[1L]]],
+            "]: ", item.check[[which(is.chr)[[1L]]]], " (note we randomly ",
+            "pick up to three reference tests to check validity)."
         ) )
     }
     TRUE
@@ -164,7 +170,7 @@ setClass(
 } )
 setClass(
   "unitizerObjectListSummary", contains="unitizerList",
-  slots=c(test.files="character")
+  slots=c(test.files="character", totals="integer")
   validity=function(object) {
     if(!all(vapply(object@.items, is, logical(1L), "unitizerSummary")))
       return("slot `.items` may only contain \"unitizer\" objects")
@@ -301,10 +307,17 @@ setMethod("summary", "unitizerObjectList",
 
     obj.list <- as.list(object)
     summaries <- lapply(obj.list, summary, silent=TRUE)
-    test.files <- vapply(as.list(object), slot, character(1L), "test.file.loc")
+    test.files <- vapply(obj.list, slot, character(1L), "test.file.loc")
+
+    if(length(summaries)) {  # get aggregate results across all summaries
+      totals <- rowSums(
+        vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
+      )
+    } else totals <- integer()
 
     res <- new(
-      "unitizerObjectListSummary", .items=summaries, test.files=test.files
+      "unitizerObjectListSummary", .items=summaries, test.files=test.files,
+      totals=totals
     )
     if(!silent) show(res)
     res

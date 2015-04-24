@@ -52,6 +52,8 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
 
 setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer",
   function(e1, e2) {
+    start.time <- proc.time()
+
     if(length(e1@sections))
       stop(
         "Logic Error: you are attempting to add more than one set ",
@@ -113,8 +115,8 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
       i <- i + 1L
     }
-
     over_print("")
+    e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
     e1
 } )
 #' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
