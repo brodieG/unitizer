@@ -284,9 +284,21 @@ infer_unitizer_location.character <- function(
         "\""
       )
     } else ""
-    pick <- pick_one(candidate.files, paste0("Select file", dir.disp, ":\n"))
-    message("Selected file: ", candidate.files[[pick]])
-    pick
+    # Select one:
+
+    valid <- seq_along(candidate.files)
+    cat(paste0("Possible matching files", dir.disp, ":\n"))
+    cat(paste0("  ", format(valid), ": ", candidate.files), sep="\n")
+
+    pick.chr <- try(simple_prompt("Input file number", c("Q", valid)))
+    if(inherits(pick.chr, "try-error") || identical(pick.chr, "Q")) {
+      message("No file selected")
+      0L
+    } else {
+      pick <- as.integer(pick.chr)
+      message("Selected file: ", candidate.files[[pick]])
+      pick
+    }
   } else if (cand.len == 1L) {
     1L
   } else if (cand.len == 0L) {
@@ -304,36 +316,6 @@ infer_unitizer_location.character <- function(
   # Return
 
   file.path(dir.store.id.proc, candidate.files[[selection]])
-}
-#' Utility Fun to Poll User Input
-#'
-#' @keywords internal
-#' @param x a character vector
-#' @return integer(1L) selected item or 0L if invalid user input
-
-pick_one <- function(x, prompt="Select Item Number:\n") {
-  if(!is.character(x)) stop("Argument `x` must be character")
-  if(!length(x)) return(0L)
-
-  valid <- seq_along(x)
-
-  cat(prompt)
-  cat(paste0("  ", format(valid), ": ", x), sep="\n")
-
-  fail.count <- 0
-  while(!(choice <- readline("unitizer> ")) %in% c(valid, "Q")) {
-    if(fail.count < 3) {
-      message(
-        "Pick a number in ", paste0(range(valid), collapse=":"), " or Q to quit"
-      )
-      fail.count <- fail.count + 1
-    } else {
-      message("Too many attempts; quitting.")
-      choice <- 0L
-      break
-    }
-  }
-  if(identical(choice, "Q")) 0L else as.integer(choice)
 }
 #' Check Whether a Directory Likey Contains An R Package
 #'

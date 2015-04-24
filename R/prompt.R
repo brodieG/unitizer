@@ -264,7 +264,7 @@ review_prompt <- function(x, nav.env) {
 #' @return one of \code{values} as selected by user
 
 simple_prompt <- function(
-  message, values=c("Y", "N"), prompt="unitizer> ", attempts=3L,
+  message, values=c("Y", "N"), prompt="unitizer> ", attempts=5L,
   case.sensitive=FALSE
 ) {
   if(!interactive()) stop("This function is only available in interactive mode")
@@ -290,8 +290,7 @@ simple_prompt <- function(
     if(!(res.ind <- match(x, val.tran, nomatch=0L))) {
       word_cat(
         paste(
-          "Invalid input, please select one of",
-          paste0(deparse(values, width=500), collapse="")
+          "Invalid input, please select one of: ", paste(values, collapse=", ")
       ) )
     } else return(values[[res.ind]])
     attempts.left <- attempts.left - 1L
