@@ -132,7 +132,8 @@ setClass(
   }
 )
 setClass(
-  "unitizerSummary", list(data="matrix", dels="integer", totals="integer"),
+  "unitizerSummary",
+  slots=c(data="matrix", dels="integer", totals="integer"),
   validity=function(object) {
     val.names <- c("New", "Pass", "Fail", "Error")
     if(
@@ -159,6 +160,16 @@ setClass(
   validity=function(object) {
     if(!all(vapply(object@.items, is, logical(1L), "unitizer")))
       return("slot `.items` may only contain \"unitizer\" objects")
+    TRUE
+} )
+setClass(
+  "unitizerObjectListSummary", contains="unitizerList",
+  slots=c(test.files="character")
+  validity=function(object) {
+    if(!all(vapply(object@.items, is, logical(1L), "unitizerSummary")))
+      return("slot `.items` may only contain \"unitizer\" objects")
+    if(length(object@.items) != length(object@test.files))
+      return("slot `items` and slot `test.files` must be same length")
     TRUE
 } )
 # - Methods -------------------------------------------------------------------
@@ -285,20 +296,33 @@ setMethod("summary", "unitizer",
 } )
 
 setMethod("summary", "unitizerObjectList",
-  function(object, ...) {
-    warning("set this up properly")
+  function(object, silent=FALSE, ...) {
+    # Now get summaries and loop through them
+
+    obj.list <- as.list(object)
+    summaries <- lapply(obj.list, summary, silent=TRUE)
+    test.files <- vapply(as.list(object), slot, character(1L), "test.file.loc")
+
+    res <- new(
+      "unitizerObjectListSummary", .items=summaries, test.files=test.files
+    )
+    if(!silent) show(res)
+    res
+} )
+
+setMethod("show", "unitizerObjectListSummary",
+  function(object) {
+    test.len <- length(object)
+    if(!test.len) return(invisible(NULL))
     scr.width <- getOption("width")
     test.files.trim <- col.names <- fmt <- test.nums <- NA_character_
 
-    # Text templates, etc.
-
     test.nums <- paste0(" ", format(seq.int(test.len)))
-    test.files <- vapply(unitizers, slot, "test.file.loc", character(1L))
     test.files.trim <- file.path(
-      str_reduce_unique(dirname(test.files)),
-      basename(test.files)
+      str_reduce_unique(dirname(object@test.files)),
+      basename(object@test.files)
     )
-    tpl.summ <- summary(unitizers[[1L]], silent=TRUE)
+    tpl.summ <- object[[1L]]
     col.names.tmp <- names(tpl.summ@totals)
     col.names <- paste0(col.names.tmp, collapse=" ")
     non.file.chars <- nchar(colnames) + max(nchar(test.nums)) + 2L
@@ -312,19 +336,14 @@ setMethod("summary", "unitizerObjectList",
         rep(paste0(" %", num.width, "s"), length(col.names.tmp)), collapse=""
       ), "\n"
     )
-    # Now get summaries and loop through them
-
-    summaries <- lapply(as.list(object), summary, silent=TRUE)
-
     cat(header, "\n", sep="")
-    for(i in seq_along(summaries)) {
-      test.num <- if(!passed(summaries[[i]])) {
+    for(i in seq_along(object)) {
+      test.num <- if(!passed(object[[i]])) {
         sub(" (\d+)", "*\\1", test.nums[[i]])
       } else test.nums[[i]]
-      cat(sprintf(fmt, c(test.num, test.files.trim, summaries[[i]]@totals)))
+      cat(sprintf(fmt, c(test.num, test.files.trim, object[[i]]@totals)))
     }
 } )
-
 
 setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
 
