@@ -205,7 +205,9 @@ setMethod("show", "unitizerSummary",
     colnames(sum.mx) <- cols.padded
     mat.print <- capture.output(print(`rownames<-`(sum.mx, NULL)))
     if(length(mat.print) < 2L) {
-      warning("Summary matrix has no data so it cannot be displayed", immediate.=TRUE)
+      warning(
+        "Summary matrix has no data so it cannot be displayed", immediate.=TRUE
+      )
     }
     dat.width <- nchar(sub("^\\[.*\\] ", " ", mat.print[[2]]))
     max.row.name.width <- max(
@@ -248,8 +250,15 @@ setMethod("initialize", "unitizer",
 
 setMethod("length", "unitizer",
   function(x) {
-    len.vec <- unique(c(length(x@items.new), length(x@items.new.map), length(x@items.new.calls.deparse)))
-    if(length(len.vec) != 1L) stop("Inconsistent sub-object length; should not happen; contact package maintainer.")
+    len.vec <- unique(
+      c(
+        length(x@items.new), length(x@items.new.map),
+        length(x@items.new.calls.deparse)
+    ) )
+    if(length(len.vec) != 1L)
+      stop(
+        "Inconsistent sub-object length; should not happen; contact maintainer."
+      )
     len.vec
 } )
 #' Summarize Results
@@ -358,7 +367,9 @@ setMethod("show", "unitizerObjectListSummary",
     }
 } )
 
-setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
+setGeneric(
+  "registerItem", function(e1, e2, ...) standardGeneric("registerItem")
+)
 
 #' Helper Methods for Adding Items to \code{\link{unitizer-class}} Object
 #'
@@ -369,7 +380,8 @@ setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem")
 setMethod("registerItem", c("unitizer", "unitizerItem"),
   function(e1, e2, ...) {
     item.new <- e2
-    if(identical(length(e1@items.new), 0L)) e1@items.new@base.env <- parent.env(item.new@env)
+    if(identical(length(e1@items.new), 0L))
+      e1@items.new@base.env <- parent.env(item.new@env)
     item.new@id <- length(e1@items.new) + 1L
     e1@items.new <- e1@items.new + item.new
     e1@items.new.calls.deparse <-
@@ -377,11 +389,19 @@ setMethod("registerItem", c("unitizer", "unitizerItem"),
     if(length(e1@items.new.map) > 0L) {
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
       items.already.matched <- e1@items.new.map[!is.na(e1@items.new.map)]
-      items.already.matched.vec <- if(!length(items.already.matched)) TRUE else -items.already.matched
-      item.map <- match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec])
-      e1@items.new.map <- c(e1@items.new.map, item.map <- idx.vec[items.already.matched.vec][item.map])
+      items.already.matched.vec <-
+        if(!length(items.already.matched)) TRUE else -items.already.matched
+      item.map <-
+        match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec])
+      e1@items.new.map <- c(
+        e1@items.new.map,
+        item.map <- idx.vec[items.already.matched.vec][item.map]
+      )
     } else {
-      e1@items.new.map <- c(e1@items.new.map, item.map <- match(call.dep, e1@items.ref.calls.deparse))
+      e1@items.new.map <- c(
+        e1@items.new.map,
+        item.map <- match(call.dep, e1@items.ref.calls.deparse)
+      )
     }
     e1
 } )
@@ -500,7 +520,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           e1@tests.fail <- append(e1@tests.fail, FALSE)
           e1@tests.error <- append(e1@tests.error, TRUE)
         } else {
-          stop("Logic Error: impossible test status; contact package maintainer.")
+          stop("Logic Error: impossible test status; contact maintainer.")
         }
       } else {
         e1@tests.fail <- append(e1@tests.fail, FALSE)
@@ -510,7 +530,10 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)  # so added irrespective of pass/fail
 
     if(length(e1@tests.status)) {
-      e1@tests.status <- unlist(list(e1@tests.status, factor(test.status, levels=levels(e1@tests.status))))
+      e1@tests.status <- unlist(
+        list(
+          e1@tests.status, factor(test.status, levels=levels(e1@tests.status))
+      ) )
     } else {
       e1@tests.status <- factor(test.status, levels=levels(e1@tests.status))
     }
