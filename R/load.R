@@ -1,8 +1,9 @@
-#' Retrieve Unitizer
+#' Store Retrieve Unitizer
 #'
 #' If this errors, calling function should abort
 #'
 #' @keywords internal
+#' @param unitizer a \code{\link{unitizer}} object
 #' @param store.id anything for which there is a defined \code{`\link{get_unitizer}`}
 #'   method; by default should be the path to a unitizer; if \code{`\link{get_unitizer}`}
 #'   returns \code{`FALSE`} then this will create a new unitizer
@@ -23,7 +24,10 @@ load_unitizer <- function(store.id, par.frame, test.file) {
   # top package under .GlobalEnv
 
   if(identical(unitizer, FALSE)) {
-    unitizer <- new("unitizer", id=store.id, zero.env=new.env(parent=par.frame))
+    unitizer <- new(
+      "unitizer", id=store.id, zero.env=new.env(parent=par.frame),
+      test.file.loc=test.file
+    )
   } else if(!is(unitizer, "unitizer")) {
     if(is.character(store.id) && !is.object(store.id)) {
       stop(
@@ -38,19 +42,21 @@ load_unitizer <- function(store.id, par.frame, test.file) {
         "Unable to retrieve `unitizer` for :",
         paste0(char.rep, collapse="\n"), "\n",
         "Please review any `get_unitizer` methods that may be defined for ",
-        "objects of class \"", class(store.id)[[1L]]), "\"."
+        "objects of class \"", class(store.id)[[1L]], "\"."
       )
     }
   } else {
     parent.env(unitizer@zero.env) <- par.frame
+    unitizer@id <- store.id
+    unitizer@test.file.loc <- test.file
     ver <- unitizer@version
     unitizer <- upgrade(unitizer, par.frame=par.frame)
     if(!identical(ver, unitizer@version)) { # there was an upgrade, so store new file
       success <- try(set_unitizer(store.id, unitizer))
       if(inherits(success, "try-error"))  {
         stop(
-          "Logic Error: failed attempting to store upgraded `unitizer`; contact ",
-          " maintainer."
+          "Logic Error: failed attempting to store upgraded `unitizer`; ",
+          "contact maintainer."
         )
       }
       message("Unitizer store updated to version ", unitizer@version)
@@ -61,12 +67,10 @@ load_unitizer <- function(store.id, par.frame, test.file) {
 #' @keywords internal
 #' @rdname load_unitizer
 
-store_unitizer <- function(unitizer, store.id, wd) {
-  if(!is(unitizer, "unitizer") || is.null(store.id)) return(invisible(TRUE))
+store_unitizer <- function(unitizer) {
+  if(!is(unitizer, "unitizer")) return(invisible(TRUE))
+  success <- try(set_unitizer(unitizer@id, unitizer))
 
-  if(!identical((new.wd <- getwd()), wd)) setwd(wd)  # Need to do this in case user code changed wd
-  success <- try(set_unitizer(store.id, unitizer))
-  setwd(new.wd)
   if(!inherits(success, "try-error")) {
     message("unitizer updated")
   } else {

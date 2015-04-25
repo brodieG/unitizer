@@ -34,6 +34,9 @@
 #'
 #' unitize("unitizer/cornertestcases.R", my.sql.store.id)
 #' }
+#' Make sure you also define an \code{as.character} method for your object to
+#' produce a human readable identifying string.
+#'
 #' For inspirations for the bodies of the _store functions look at the source
 #' code for \code{`unitizer:::get_unitizer.character`} and \code{`unitizer:::set_unitizer.character`}.
 #' Expectations for the functions are as follows.  \code{`get_unitizer`} must:
@@ -73,6 +76,8 @@ set_unitizer.character <- function(store.id, unitizer) {
   if(!is.character(store.id) || length(store.id) != 1L) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
+  if(is.object(store.id) || !is.null(attributes(store.id)))
+    stop("Argument `store.id` must be a bare character vector")
   if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
   new.file <- FALSE
   if(!file.exists(store.id)) {
@@ -98,15 +103,13 @@ get_unitizer.character <- function(store.id) {
   if(!is.character(store.id) || length(store.id) != 1L ) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
+  if(is.object(store.id) || !is.null(attributes(store.id)))
+    stop("Argument `store.id` must be a bare character vector")
   if(!file.exists(store.id)) return(FALSE)
-  if(!file_test("-d", store.id)) stop("Argument `store.id` must refer to a directory")
-  if(
-    !file.exists(paste0(store.id, "/data.rds")) ||
-    !file_test("-f", paste0(store.id, "/data.rds"))
-  ) {
+
+  if(is_unitizer_dir(store.id)) {
     stop(
-      "Argument `store.id` does not appear to refer to a directory containing",
-      "`unitizer` objects."
+      "Argument `store.id` does not appear to refer to `unitizer` directory"
     )
   }
   if(inherits(try(unitizer <- readRDS(paste0(store.id, "/data.rds"))), "try-error")) {

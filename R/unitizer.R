@@ -111,8 +111,30 @@ setClass(
         return("Non sequential ids in reference items.")
       if(length(ids) != length(object@section.ref.map))
         return("Reference section mapping error")
-      if(!identical(length(test.file.loc), 1L))
+
+      # Make sure not using relative paths for either
+
+      if(!identical(length(object@test.file.loc), 1L))
         return("slot `test.file.loc` must be length 1L")
+      if(!is.na(object@test.file.loc)) {
+        if(!file_test("-f", object@test.file.loc))
+          return("slot `test.file.loc` must point to a file")
+        if(
+          !identical(object@test.file.loc, normalizePath(object@test.file.loc))
+        )
+          return("slot `test.file.loc` must be a properly normalized path")
+      }
+      if(!is.object(object@id) && is.character(object@id)) { # default id format
+        if(
+          !file_test("-d", dirname(object@id)) ||
+          !identical(dirname(object@id), normalizePath(dirname(object@id)))
+        )
+          return(
+            paste0(
+              "slot `id` must be a properly normalized directory when using ",
+              "default `unitizer` stores."
+          ) )
+      }
       if(
         !identical(length(eval.time), 1L) || is.na(eval.time) || eval.time < 0L
       )

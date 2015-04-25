@@ -8,7 +8,7 @@
 #' @return an upgraded unitizer object
 
 setMethod("upgrade", "unitizer", valueClass="unitizer",
-  function(object, par.frame, ...) {
+  function(object, par.frame, test.file, ...) {
     # - Do We Need To Upgrade --------------------------------------------------
 
     if(inherits(try(validObject(object, complete=TRUE)), "try-error")) {
@@ -43,17 +43,22 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
         )
         if(identical(act, "Y")) {
           if(
-            inherits(try(object <- upgrade_internal(object)), "try-error") ||
-            inherits(try(validObject(object, complete=TRUE)), "try-error")
+            inherits(try(object <- upgrade_internal(object)), "try-error")
           ) {
             stop("Unable to upgrade. ", msg)
           }
-
+          object@test.file.loc <- test.file
+          if(inherits(try(validObject(object, complete=TRUE)), "try-error")){
+            stop("Upgrade produced invalid object. ", msg)
+          }
         } else {
           stop("Cannot proceed with out of date `unitizer`. ", msg)
         }
       } else {
-        stop("Logic Error: unitizer appears corrupted in some way; contact maintainer.")
+        stop(
+          "Logic Error: unitizer appears corrupted in some way; contact ",
+          "maintainer."
+        )
       }
     }
     object
