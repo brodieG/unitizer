@@ -25,9 +25,22 @@ load_unitizer <- function(store.id, par.frame, test.file) {
   if(identical(unitizer, FALSE)) {
     unitizer <- new("unitizer", id=store.id, zero.env=new.env(parent=par.frame))
   } else if(!is(unitizer, "unitizer")) {
-    if(!identical(class(store.id), "character"))
-      stop("Logic Error: `get_unitizer.", class(store.id)[[1]], "` did not return a unitizer")
-    stop("Logic Error: `get_unitizer` did not return a unitizer; contact maintainer.")
+    if(is.character(store.id) && !is.object(store.id)) {
+      stop(
+        "Logic Error: `get_unitizer` did not return a unitizer for '",
+        store.id, "', contact maintainer."
+      )
+    } else {
+      char.rep <- try(as.character(store.id), silent=TRUE)
+      if(inherits(char.rep, "try-error"))
+        char.rep <- "<untranslatble unitizer id>"
+      stop(
+        "Unable to retrieve `unitizer` for :",
+        paste0(char.rep, collapse="\n"), "\n",
+        "Please review any `get_unitizer` methods that may be defined for ",
+        "objects of class \"", class(store.id)[[1L]]), "\"."
+      )
+    }
   } else {
     parent.env(unitizer@zero.env) <- par.frame
     ver <- unitizer@version
