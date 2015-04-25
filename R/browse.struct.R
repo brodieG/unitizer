@@ -770,14 +770,33 @@ setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
 ) )
 #' Add a browsing sub-section to a browse section
 #'
-#' @param e1 a \code{`\link{unitizerBrowseSection-class}`}
-#' @param e2 a \code{`\link{unitizerBrowseSubSection-class}`}
-#' @return a \code{`\link{unitizerBrowseSection-class}`}
+#' @param e1 a \code{\link{unitizerBrowseSection-class}}
+#' @param e2 a \code{\link{unitizerBrowseSubSection-class}}
+#' @return a \code{\link{unitizerBrowseSection-class}}
 #' @keywords internal
 
 setMethod("+", c("unitizerBrowseSection", "unitizerBrowseSubSection"),
   valueClass="unitizerBrowseSection",
   function(e1, e2) {
     e1 <- append(e1, list(e2))
+  }
+)
+
+#' Return value for \code{\link{unitizerBrowseInternal,unitizer,unitizerBrowse-method}}
+#'
+#' @keywords internal
+
+setClass(
+  "unitizerBrowseResult",
+  slots=c(unitizer="unitizer", re.eval="integer", update="logical"),
+  validity=function(object) {
+    if(
+      !identical(length(object@re.eval), 1L) || is.na(object@re.eval) ||
+      !object@re.eval %in% 0L:2L
+    )
+      return("slot `re.eval` must be integer(1L) in 0:2")
+    if(!isTRUE(object@update) || !identical(object@update, FALSE))
+      return("slot `update` must be TRUE or FALSE")
+    TRUE
   }
 )

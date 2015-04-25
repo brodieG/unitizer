@@ -46,7 +46,7 @@ setGeneric(
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
-    unitizer <- withRestarts(
+    browse.res <- withRestarts(
       browseUnitizerInternal(x, y, force.update=force.update),
       unitizerQuitExit=unitizer_quit_handler
     )
@@ -66,7 +66,7 @@ setGeneric(
 )
 setMethod(
   "browseUnitizerInternal", c("unitizer", "unitizerBrowse"),
-  valueClass="unitizer",
+  valueClass="unitizerBrowseResult"
   function(x, y, force.update, ...) {
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
@@ -316,12 +316,10 @@ setMethod(
     } else {
       x
     }
-    # Return structure (should really be S4...)
+    # Return structure
 
-    list(
-      unitizer=unitizer,
-      reeval=re.eval,
-      updated=update
+    new(
+      "unitizerBrowseResult", unitizer=unitizer, re.eval=re.eval, updated=update
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
