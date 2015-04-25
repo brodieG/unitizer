@@ -75,25 +75,23 @@ setMethod(
     prompt.on.quit <-
       x@eval.time > getOption("unitizer.prompt.b4.quit.time", 10)
 
+    something.happened <- any(
+      y@mapping@review.type != "Passed" & !y@mapping@ignored
+    ) || (
+      any(!y@mapping@ignored) && identical(y@mode, "review")  # Not sure this is
+    )
+
     if(!length(y)) {
       message("No tests to review.")
-      return(TRUE)
-    } else if(length(y)) {
-      # Nothing happened at all, so quit without even option for prompting
-
-      if(
-        !(
-          something.happened <- any(
-            y@mapping@review.type != "Passed" & !y@mapping@ignored
-          ) || (
-            any(!y@mapping@ignored) && identical(y@mode, "review")  # Not sure this is
-        ) )
-      ) {
-        message("All tests passed.")
-        if(!force.update) {
-          message("unitizer store unchanged")
-          return(FALSE)
-      } }
+    } else if(!something.happened && !force.update) {
+      message("All tests passed, `unitizer` store unchanged.")
+    } else if(!something.happened && force.update) {
+      message(
+        "No changes to `untizer`, but re-saving anyway as we are in ",
+        "\"force.update\" mode"
+      )
+      update <- TRUE
+    } else {
       # set up local history
 
       savehistory()
@@ -564,8 +562,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
           browse.env1=browse.eval.env,
           browse.env2=new.env(parent=parent.env(base.env.pri)),
           valid.opts=valid.opts,
-          help=c(help.prompt, paste0(as.character(UL(help.opts)), collapse="\n"))
-        ),
+          help=c(
+            help.prompt, paste0(as.character(UL(help.opts)), collapse="\n")
+        ) ),
         "unitizerBrowse"
       )
     ) {
