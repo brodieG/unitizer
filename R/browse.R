@@ -42,14 +42,12 @@ setGeneric(
 #'   depending on whether we are using `unitize` or `review`.
 #' @param prompt.on.quit whether to prompt for review even if there are no
 #'   changes
-#' @param a unitizer if the unitizer was modified, FALSE otherwise
+#' @return a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
-  function(x, y, prompt.on.quit, force.update, ...) {
+  function(x, y, force.update, ...) {
     unitizer <- withRestarts(
-      browseUnitizerInternal(
-        x, y, prompt.on.quit=prompt.on.quit, force.update=force.update
-      ),
+      browseUnitizerInternal(x, y, force.update=force.update),
       unitizerQuitExit=unitizer_quit_handler
     )
     # Reset the parent env of zero env so we don't get all sorts of warnings
@@ -72,6 +70,10 @@ setMethod(
   function(x, y, force.update, ...) {
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
+
+    update <- FALSE
+    prompt.on.quit <-
+      x@eval.time > getOption("unitizer.prompt.b4.quit.time", 10)
 
     if(!length(y)) {
       message("No tests to review.")
@@ -121,6 +123,8 @@ setMethod(
 
       repeat {
         user.quit <- FALSE
+        re.eval <- 0L
+
         if(!user.quit) {
 
           # Now review each test, special handling required to ensure that the
@@ -154,9 +158,21 @@ setMethod(
                 # wtf? intended to be NULL??
               }
             },
-            earlyExit=function() user.quit <<- TRUE
-          )
-        }
+            earlyExit=function(mode="quit") {
+              if(
+                !is.character(mode) ||
+                !isTRUE(mode %in% c("quit", "reeval", "reevalall"))
+              )
+                stop(
+                  "Logic Error: unexpected early exit restart value; contact ",
+                  "maintainer"
+                )
+              user.quit <<- TRUE
+              if(identical(mode, "reeval")) {
+                re.eval <<- 1L
+              } else if (identical(mode, "reevalall")) {
+                re.eval <<- 2L
+        } } ) }
         # Get summary of changes
 
         keep <- !y@mapping@ignored
@@ -191,15 +207,17 @@ setMethod(
         ) } } }
         # Prompt for user input if necessary to finalize
 
-        if(length(x@changes) == 0L && !force.update) {
+        if(length(x@changes) == 0L && !force.update && !re.eval) {
           message(
             "You didn't accept any changes so there are no items to store."
           )
-          if(!prompt.on.quit && user.quit) {  # on quick unitizer runs just allow quitting without prompt if no changes
+          # on quick unitizer runs just allow quitting without prompt if no changes
+
+          if(!prompt.on.quit && user.quit) {
             message("unitizer store unchanged")
-            return(FALSE)
+            break
           }
-          valid.opts <- c(Y="[Y]es", B="[B]ack", R="[R]eview")
+          valid.opts <- c(Y="[Y]es", P="[P]revious"Ï, B="[B]rowse")
           nav.msg <- "Exit unitizer"
           nav.hlp <- paste0(
             "Pressing Y or Q will exit without saving the unitizer since ",
@@ -229,7 +247,7 @@ setMethod(
               "environments will be re-generated."
             )
           }
-          valid.opts <- c(Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview")
+          valid.opts <- c(Y="[Y]es", N="[N]o", P="[P]revious", B="[B]rowse")
           nav.msg <- "Update unitizer"
           nav.hlp <- paste0(
             "Pressing Y will replace the previous unitizer with a new one, ",
@@ -246,6 +264,7 @@ setMethod(
               "contact maintainer"
             )
           message("Auto-accepting changes...")
+          update <- TRUE
           break
         } else {
           user.input <- navigate_prompt(
@@ -258,38 +277,54 @@ setMethod(
             next
           } else if (identical(user.input, "Q") || identical(user.input, "N")) {
             message("unitizer store unchanged")
-            return(FALSE)
+            if(re.eval) message("Re-evaluation disabled")
+            re.eval <- 0L
+            break
           } else if (identical(user.input, "Y")) {
-            if(identical(nav.msg, "Exit unitizer")) {  # We don't actually want to over-write unitizer store in this case
+            # We don't actually want to over-write unitizer store in this case
+
+            if(identical(nav.msg, "Exit unitizer")) {
               message("unitizer store unchanged")
-              return(FALSE)
-            } else break
+            } else {
+              udpate <- TRUE
+            }
+            break
           }
           stop("Logic Error; unexpected user input, contact maintainer.")
         }
     } }
     # Create the new unitizer
 
-    items.ref <- processInput(y)
-    items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
+    unitizer <- if(update) {
+      items.ref <- processInput(y)
+      items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
-    zero.env <- new.env(parent=parent.env(x@zero.env))
-    unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
-    unitizer <- unitizer + items.ref
+      zero.env <- new.env(parent=parent.env(x@zero.env))
+      unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
+      unitizer <- unitizer + items.ref
 
-    # Extract and re-map sections of tests we're saving as reference
+      # Extract and re-map sections of tests we're saving as reference
 
-    if(identical(y@mode, "review")) {
-      # Need to re-use our reference sections so `refSections` works since we
-      # will not have created any sections by parsing/evaluating tests.  This
-      # is super hacky as we're partly using the stuff related to `items.new`,
-      # and could cause problems further down the road if we're not careful
+      if(identical(y@mode, "review")) {
+        # Need to re-use our reference sections so `refSections` works since we
+        # will not have created any sections by parsing/evaluating tests.  This
+        # is super hacky as we're partly using the stuff related to `items.new`,
+        # and could cause problems further down the road if we're not careful
 
-      x@sections <- x@sections.ref
-      x@section.map <- x@section.ref.map
+        x@sections <- x@sections.ref
+        x@section.map <- x@section.ref.map
+      }
+      refSections(unitizer, x)
+    } else {
+      x
     }
-    unitizer <- refSections(unitizer, x)
-    unitizer
+    # Return structure (should really be S4...)
+
+    list(
+      unitizer=unitizer,
+      reeval=re.eval,
+      updated=update
+    )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 #' Bring up Review of Next test
@@ -327,8 +362,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # Display Section Headers as Necessary
 
     valid.opts <- c(
-      Y="[Y]es", N="[N]o", B="[B]ack", R="[R]eview", YY="", YYY="", YYYY="",
-      NN="", NNN="", NNNNN=""
+      Y="[Y]es", N="[N]o", P="[P]revious", B="[B]rowse", YY="", YYY="", YYYY="",
+      NN="", NNN="", NNNNN="", R="[R]e-eval", RR=""
     )
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
@@ -505,8 +540,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         "at the prompt (without backticks):\n"
       )
     help.opts <- c(
-      "`B` to go Back to the previous test",
-      "`R` to see a listing of all previously reviewed tests",
+      "`P` to go to the previous test",
+      "`B` to see a listing of all tests",
       "`ls()` to see what objects are available to inspect",
       if(!is.null(item.new))
         "`.new` for the current value, or `.NEW` for the full test object",
@@ -514,9 +549,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
         "`.ref` for the reference value, or `.REF` for the full reference object",
       "`YY` or `NN` to apply same choice to all remaining unreviewed items in sub-section",
       "`YYY` or `NNN` to apply same choice to all remaining unreviewed items in section",
-      "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer"
+      "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer",
+      "`R` to re-evalute the `unitizer`; used typically after you re-`install` the package you are testing via the `unitizer` prompt",
+      "`RR` to re-evaluate all loaded `unitizers` (relevant for `unitize_dir`)"
     )
-    # navigate_prompt handles the B and R cases internally and modifies the
+    # navigate_prompt handles the P and B cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a function
     # because same logic is re-used elsewhere
 
@@ -533,7 +570,17 @@ setMethod("reviewNext", c("unitizerBrowse"),
       )
     ) {
       return(x.mod)
-    } else if (isTRUE(grepl("(Y|N)\\1{0,3}", x.mod))) { # Actual user input
+    } else if (isTRUE(grepl("^RR?$", x.mod))) {           # Re-eval
+      if(identical(nchar(x.mod), 1L)) {
+        message("This `unitizer` will be re-evaluated on exit")
+        invokeRestart("earlyExit", "reeval")
+      } else if(identical(nchar(x.mod), 1L)) {
+        message("All loaded `unitizer`s will be re-evaluated on exit")
+        invokeRestart("earlyExit", "reevalall")
+      }
+      stop("Logic Error: unknown re-eval mode; contact maintainer.")
+
+    } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
       act <- substr(x.mod, 1L, 1L)
       act.times <- nchar(x.mod)
       rev.ind <- if(act.times == 1L) {

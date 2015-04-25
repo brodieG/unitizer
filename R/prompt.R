@@ -135,7 +135,7 @@ navigate_prompt <- function(
     text, browse.env=browse.env1, help=help, valid.opts=valid.opts,
     hist.con=x@hist.con
   )
-  if(identical(prompt.val, "B")) {
+  if(identical(prompt.val, "P")) {
 
     # Go back to previous
     if(curr.id == 1L) {
@@ -149,7 +149,7 @@ navigate_prompt <- function(
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
     x@navigating <- TRUE
     return(x)
-  } else if (identical(prompt.val, "R")) {
+  } else if (identical(prompt.val, "B")) {
     return(review_prompt(x, browse.env2))
   }
   return(prompt.val)
