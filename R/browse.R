@@ -3,7 +3,9 @@
 #' @include browse.struct.R
 #' @include prompt.R
 
-setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer"))
+setGeneric(
+  "browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer")
+)
 
 #' Browse unitizer
 #'
@@ -15,10 +17,10 @@ setGeneric("browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer
 #'   \item tests that passed (these are omitted )
 #' }
 #' Because a lot of the logic for browsing these three types of situations is
-#' shared, that logic has been split off into \code{\link{reviewNext,unitizerBrowse-method}}.
-#' The key is that that function will return the items that are supposed to be
-#' stored in the unitizer.  These items will either be new or reference ones
-#' based on user decisions.
+#' shared, that logic has been split off into
+#' \code{\link{reviewNext,unitizerBrowse-method}}. The key is that that function
+#' will return the items that are supposed to be stored in the unitizer.  These
+#' items will either be new or reference ones based on user decisions.
 #'
 #' Unfortunately, in order to be able to use the same logic for tasks that are
 #' not quite the same, a bit of contortion was needed.  In particular, the
@@ -57,9 +59,14 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     unitizer
   }
 )
-setGeneric("browseUnitizerInternal", function(x, y, ...) standardGeneric("browseUnitizerInternal"))
-setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass="unitizer",
-  function(x, y, prompt.on.quit, force.update, ...) {
+setGeneric(
+  "browseUnitizerInternal",
+  function(x, y, ...) standardGeneric("browseUnitizerInternal")
+)
+setMethod(
+  "browseUnitizerInternal", c("unitizer", "unitizerBrowse"),
+  valueClass="unitizer",
+  function(x, y, force.update, ...) {
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
@@ -87,7 +94,10 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
       savehistory()
       hist.file <- tempfile()
       hist.con <- file(hist.file, "at")
-      cat("## <unitizer> (original history will be restored on exit)\n", file=hist.con)
+      cat(
+        "## <unitizer> (original history will be restored on exit)\n",
+        file=hist.con
+      )
       loadhistory(showConnections()[as.character(hist.con), "description"])
 
       # Revert history and trace on exit
@@ -131,8 +141,8 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
                     invokeRestart("earlyExit")
                   } else if(!is(y.tmp, "unitizerBrowse")) {
                     stop(
-                      "Logic Error: review should return `unitizerBrowse`; contact ",
-                      "maintainer."
+                      "Logic Error: review should return `unitizerBrowse`; "
+                      "contact maintainer."
                     )
                   } else y <- y.tmp
                 }
@@ -154,7 +164,8 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
           changes,
           function(x) c(sum(x), length(x))
         )
-        for(i in names(change.sum)) slot(x@changes, tolower(i)) <- change.sum[[i]]
+        for(i in names(change.sum))
+          slot(x@changes, tolower(i)) <- change.sum[[i]]
 
         if(
           length(x@changes) > 0L || (
@@ -199,7 +210,11 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
             update.w.changes <- " updated with all the changes you approved, "
             show(x@changes)
           } else {
-            if(!force.update) stop("Logic Error: should be in forced update mode; contact maintainer.")
+            if(!force.update)
+              stop(
+                "Logic Error: should be in forced update mode; contact ",
+                "maintainer."
+              )
             update.w.changes <- character()
             word_cat(
               "replace the existing unitizer with a reloaded version that",
@@ -223,7 +238,10 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
         word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
         if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
           if(y@navigating)
-            stop("Logic Error: should only get here in `auto.accept` mode, contact maintainer")
+            stop(
+              "Logic Error: should only get here in `auto.accept` mode, ",
+              "contact maintainer"
+            )
           message("Auto-accepting changes...")
           break
         } else {
@@ -268,7 +286,6 @@ setMethod("browseUnitizerInternal", c("unitizer", "unitizerBrowse"), valueClass=
       x@section.map <- x@section.ref.map
     }
     unitizer <- refSections(unitizer, x)
-
     unitizer
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
@@ -286,8 +303,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
   function(x, ...) {
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
-      last.reviewed.sec <- x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
-      last.reviewed.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
+      last.reviewed.sec <-
+        x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
+      last.reviewed.sub.sec <-
+        x@mapping@sub.sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
       furthest.reviewed <- if(length(which(x@mapping@reviewed)))
         max(which(x@mapping@reviewed)) else 0L
     } else {
@@ -297,7 +316,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     curr.sec <- x@mapping@sec.id[[which(x@mapping@item.id == curr.id)]]
     curr.sub.sec <- x@mapping@sub.sec.id[[which(x@mapping@item.id == curr.id)]]
-    cur.sub.sec.items <- x@mapping@sub.sec.id == curr.sub.sec & x@mapping@sec.id == curr.sec
+    cur.sub.sec.items <-
+      x@mapping@sub.sec.id == curr.sub.sec & x@mapping@sec.id == curr.sec
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
     id.rel <- x@mapping@item.id.rel[[which(x@mapping@item.id == curr.id)]]
 
@@ -539,8 +559,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
             c("Drop New", "Keep Ref", "Keep Ref", "Keep New", "Keep Ref")
           )
           rownames(help.mx) <- c("[Y]es", "[N]o")
-          colnames(help.mx) <- c("*New*", "*Failed*", "*Removed*", "*Passed*", "*Corrupted*")
-
+          colnames(help.mx) <- c(
+            "*New*", "*Failed*", "*Removed*", "*Passed*", "*Corrupted*"
+          )
           help.txt <- capture.output(print(as.data.frame(help.mx), quote=TRUE))
           help <- paste0(
             paste0(
@@ -571,7 +592,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     } else if (identical(x.mod, "Q")) {
       invokeRestart("earlyExit")
     } else {
-      stop("Logic Error: `unitizer_prompt` returned unexpected value; contact maintainer")
+      stop(
+        "Logic Error: `unitizer_prompt` returned unexpected value; ",
+        "contact maintainer"
+      )
     }
     x
   }
