@@ -72,17 +72,20 @@ unitize_core <- function(
     if(length(auto.accept))
       stop("Logic Error: auto-accepts not allowed in review mode")
   }
-  if(
-    mode == "unitize" &&
-    (
+  if(mode == "unitize") {
+    if(
       !is.character(test.files) || any(is.na(test.files)) ||
       !all(file_test("-f", test.files))
     )
-  )
-    stop(
-      "Logic Error: `test.files` must all point to valid files in unitize ",
-      "mode; contact maintainer"
-    )
+      stop(
+        "Logic Error: `test.files` must all point to valid files in unitize ",
+        "mode; contact maintainer"
+      )
+    norm.attempt <-
+      normalizePath(test.files <- normalizePath(test.files), mustWork=TRUE)
+    if(inherits(norm.attempt, "try-error"))
+      stop("Logic Error: unable to normalize test files; contact maintainer")
+  }
   if(length(test.files) != length(store.ids))
     stop(
       "Logic Error: mismatch in test file an store lengths; contact maintainer"
@@ -137,6 +140,53 @@ unitize_core <- function(
     stop(
       "Logic Error: unitizer option `unitizer.prompt.b4.quit.time` ",
       "is miss-specified"
+    )
+  # Create parent directories for untizer stores if needed, doing now so that
+  # we can later ensure that store ids are being specified on an absolute basis,
+  # and also so we can prompt the user now
+
+  dir.names <- vapply(
+    store.ids,
+    function(x)
+      if(is.character(x) && !is.object(x) && !file_test("-d", dirname(x))) {
+        dirname(x)
+      } else NA_character_
+    character(1L)
+  }
+  dir.names.clean <- Filter(Negate(is.na), unique(dir.names))
+  if(length(dir.names.clean)) {
+    dir.word <-
+      paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
+    word_cat(
+      "In order to proceed `unitizer` must create the following ", dir.word,
+      ":\n"
+    )
+    print(UL(dir.names.clean))
+    pick <- try(simple_prompt(paste0("Create ", dir.word, "?"))
+    if(inherits(pick, "try-error")) stop("Error gathering user input")
+    if(!identical(pick, "Y"))
+      stop("Cannot proceed without creating directories.")
+    if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
+      stop(
+        "Cannot proceed, failed to create the following directories:\n"
+        paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
+      )
+    }
+  }
+  # Ensure directory names are normalized
+
+  store.ids.to.norm <-
+    vapply(store.ids, is.character(x) && !is.object(x), logical(1L))
+  norm.attempt <- try(
+    store.ids[store.ids.to.norm] <- file.path(
+      normalizePath(dirname(store.ids[store.ids.to.norm]), mustWork=TRUE),
+      basename(store.ids[store.ids.to.norm])
+    )
+  )
+  if(inherits(norm.attempt, "try-error"))
+    stop(
+      "Logic Error: some `store.ids` could not be normalized; contact ",
+      "maintainer."
     )
   # reset global vars used for search path manip
 
