@@ -264,7 +264,7 @@ unitize_core <- function(
       seq_along(store.ids),
       function(i) {
         if(is(store.ids[[i]], "unitizer")) {
-          unitizer <- upgrade(store.ids[[i]], util.frame)
+          unitizer <- upgrade(store.ids[[i]], util.frame, test.files[[i]])
           store.ids[[i]] <- unitizer@id
         } else {
           unitizer <- try(
@@ -313,7 +313,6 @@ unitize_core <- function(
       interactive.mode=interactive.mode,
       force.update=force.update,
       auto.accept=auto.accept            # need to think about how auto-accept is done here; maybe should even be done in eval mode or as separate function
-      prompt.on.quit=tot.time > quit.time
     )
   }
   # - Finalize -----------------------------------------------------------------
@@ -525,26 +524,9 @@ unitize_browse <- function(
 
 
 
-  print(H1(paste0("unitizer for: ", getName(unitizer), collapse="")))
-
-
-
-
-
-  # Now manual accepts
-  print(H1(paste0("unitizer for: ", u.name, collapse="")))
 
   # -  Finalize ------------------------------------------------------------------
 
-  # Restore search path
-
-  if(!search.path.restored) {
-    if(search.path.trim) search_path_restore()          # runs _unsetup() as well
-    else if (search.path.setup) search_path_unsetup()
-  }
-  # Finalize
-
-  store_unitizer(unitizer, store.id, wd)
   on.exit(NULL)
   invisible(unitizer)
 }
