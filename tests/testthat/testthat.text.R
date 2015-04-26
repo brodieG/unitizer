@@ -108,6 +108,8 @@ local({
       strsplit(res1, ""), function(x) paste0(rev(x), collapse=""), ""
     )
     expect_equal(unitizer:::str_reduce_unique(str2, from="right"), res2)
+    expect_equal(unitizer:::str_reduce_unique("aaa"), "")
+    expect_equal(unitizer:::str_reduce_unique(rep("aaa", 5L)), rep("", 5L))
   })
   test_that("strtrunc", {
     str1 <- c(paste0(letters, collapse=""), paste0(LETTERS, collapse=""))

@@ -463,6 +463,8 @@ substr_cons <- function(x, stop, justify="left") {
 }
 #' Remove Common Characters From Values in a Vector
 #'
+#' Note that one length \code{x} is a degenerate case that returns "".
+#'
 #' @keywords internal
 #' @param x character the vector to make more unique
 #' @param from the direction to remove common elements from
@@ -478,6 +480,7 @@ str_reduce_unique <- function(x, from="left") {
     )
   if(!is.character(x) || any(is.na(x)))
     stop("Argument `x` must be character and may not contain NAs")
+  if(identical(length(unique(x)), 1L)) return(rep("", length(x)))  # degenerate case
   char.list <- strsplit(x, "")
   if(identical(from, "right")) char.list <- lapply(char.list, rev)
   min.len <- min(vapply(char.list, length, 1L))
