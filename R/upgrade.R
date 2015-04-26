@@ -113,6 +113,8 @@ upgrade_internal <- function(object) {
 
   if(object@version < "0.9.0") {
     object <- addSlot(object, "test.file.loc", NA_character_)  # not sure this is completely necessary since we're just using the prototype value
+    object <- addSlot(object, "eval", FALSE)                   # not sure this is completely necessary since we're just using the prototype value
+    object <- addSlot(object, "eval.time", 0)                  # not sure this is completely necessary since we're just using the prototype value
   }
   # - Keep at End---------------------------------------------------------------
 

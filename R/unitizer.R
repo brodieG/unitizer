@@ -66,6 +66,7 @@ setClass(
     zero.env="environment",       # keep functions and stuff here
     base.env="environment",
     test.file.loc="character",    # location of teset file that produced `unitizer`
+    eval="logical",                # internal used during browsing to determine a re-eval instruction by user
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
 
     items.new="unitizerItems",                         # Should all be same length
@@ -102,6 +103,7 @@ setClass(
     tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
     zero.env=baseenv(),
     test.file.loc=NA_character_,
+    eval=FALSE,
     eval.time=0
   ),
   validity=function(object) {
