@@ -368,7 +368,7 @@ setMethod("show", "unitizerObjectListSummary",
     tpl.summ <- object[[1L]]
     col.names.tmp <- names(tpl.summ@totals)
     col.names <- paste0(col.names.tmp, collapse=" ")
-    non.file.chars <- nchar(colnames) + max(nchar(test.nums)) + 2L
+    non.file.chars <- nchar(col.names) + max(nchar(test.nums)) + 2L
     max.file.chars <- max(15L, scr.width - non.file.chars)
     pre.sum.chars <- max.file.chars + 2L + max(nchar(test.nums))
     header <- c(rep(" ", pre.sum.chars), col.names)
@@ -384,9 +384,11 @@ setMethod("show", "unitizerObjectListSummary",
       test.num <- if(!passed(object[[i]])) {
         sub(" (\\d+)", "*\\1", test.nums[[i]])
       } else test.nums[[i]]
-      cat(sprintf(fmt, c(test.num, test.files.trim, object[[i]]@totals)))
-    }
-} )
+      cat(
+        do.call(
+          sprintf,
+          c(list(fmt, test.num, test.files.trim), as.list(object[[i]]@totals))
+) ) } } )
 setGeneric(
   "registerItem", function(e1, e2, ...) standardGeneric("registerItem")
 )
