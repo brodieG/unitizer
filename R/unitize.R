@@ -167,12 +167,13 @@ unitize_dir <- function(
         "Argument `store.ids` is a function, but caused an error when ",
         "attempting to use it to convert test file names to `unitizer` ids."
   ) } }
-  unitize_core(
-    test.files=test.files, store.ids=store.ids,
-    interactive.mode=interactive.mode, par.env=par.env,
-    search.path.clean=search.path.clean,
-    search.path.keep=search.path.keep,
-    force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
-    mode="unitize"
-  )
+  invisible(
+    unitize_core(
+      test.files=test.files, store.ids=store.ids,
+      interactive.mode=interactive.mode, par.env=par.env,
+      search.path.clean=search.path.clean,
+      search.path.keep=search.path.keep,
+      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
+      mode="unitize"
+  ) )
 }
