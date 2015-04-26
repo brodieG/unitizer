@@ -194,7 +194,7 @@ setClass(
 } )
 setClass(
   "unitizerObjectListSummary", contains="unitizerList",
-  slots=c(test.files="character", totals="integer")
+  slots=c(test.files="character", totals="integer"),
   validity=function(object) {
     if(!all(vapply(object@.items, is, logical(1L), "unitizerSummary")))
       return("slot `.items` may only contain \"unitizer\" objects")
@@ -385,12 +385,11 @@ setMethod("show", "unitizerObjectListSummary",
     cat(header, "\n", sep="")
     for(i in seq_along(object)) {
       test.num <- if(!passed(object[[i]])) {
-        sub(" (\d+)", "*\\1", test.nums[[i]])
+        sub(" (\\d+)", "*\\1", test.nums[[i]])
       } else test.nums[[i]]
       cat(sprintf(fmt, c(test.num, test.files.trim, object[[i]]@totals)))
     }
 } )
-
 setGeneric(
   "registerItem", function(e1, e2, ...) standardGeneric("registerItem")
 )
@@ -565,24 +564,32 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     e1
 } )
 
+setGeneric("getTarget", function(object, ...) standardGeneric("getTarget"))
 setGeneric("getName", function(object, ...) standardGeneric("getName"))
-#' Create A Human Readable Name for a \code{unitizer}
+
+#' Create A Human Readable Names for a \code{unitizer}
 #'
+#' @keywords internal
 #' @param object a unitizer
 #' @return character(1L) a descriptive name
 
+setMethod("getTarget", "unitizer",
+  function(object, ...) {
+    if(is.character(object@id) && length(object@id) == 1L) {
+      target <- object@id
+    } else {
+      target <- try(as.character(object@id), silent=TRUE)
+      if(inherits(target, "try-error"))
+        target <- "<untranslateable-unitizer-id>"
+    }
+    target
+} )
+#' @rdname getTarget,unitizer-method
+
 setMethod("getName", "unitizer",
   function(object, ...) {
-    if(!is.na(object@test.file.loc)) {   # unitize
-      u.name <- basename(test.file)
-    } else {
-      if(is.character(object@id) && length(object@id) == 1L) {
-        u.name <- object@id
-      } else {
-        u.name <- try(as.character(object@id), silent=TRUE)
-        if(inherits(u.name, "try-error")) u.name <- "<unknown>"
-    } }
-    u.name
-  }
-)
+    u.name <- if(!is.na(object@test.file.loc)) {
+      basename(test.file)
+    } else getTarget(object)
+} )
 
