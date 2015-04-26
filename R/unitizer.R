@@ -360,26 +360,29 @@ setMethod("show", "unitizerObjectListSummary",
     scr.width <- getOption("width")
     test.files.trim <- col.names <- fmt <- test.nums <- NA_character_
 
-    test.nums <- paste0(" ", format(seq.int(test.len)))
-    test.files.trim <- file.path(
-      str_reduce_unique(dirname(object@test.files)),
-      basename(object@test.files)
-    )
-    tpl.summ <- object[[1L]]
-    col.names.tmp <- names(tpl.summ@totals)
-    col.names <- paste0(col.names.tmp, collapse=" ")
-    non.file.chars <- nchar(col.names) + max(nchar(test.nums)) + 2L
-    max.file.chars <- max(15L, scr.width - non.file.chars)
+    test.nums <- paste0(" ", format(seq.int(test.len)), ".")
+    com.dir <- str_reduce_unique(dirname(object@test.files))
+
+    test.files.trim <- if(sum(nchar(com.dir))) {
+      file.path(com.dir, basename(object@test.files))
+    } else basename(object@test.files)
+
+    # Ignore any columns with zero totals other than pass/fail
+
+    keep.cols <- object@totals > 0L | seq_along(object@totals) < 3L
+
+    col.names <- names(object@totals[keep.cols])
+    col.count <- length(col.names)
+    num.width <- max(nchar(col.names))
+    non.file.chars <- num.width * col.count + max(nchar(test.nums)) + 2L
+    max.file.chars <-
+      min(max(15L, scr.width - non.file.chars), max(nchar(test.files.trim)))
     pre.sum.chars <- max.file.chars + 2L + max(nchar(test.nums))
-    header <- c(rep(" ", pre.sum.chars), col.names)
-    num.width <- max(nchar(col.names.tmp))
     fmt <- paste0(
-      "%s. %", max.file.chars, "s ",
-      paste0(
-        rep(paste0(" %", num.width, "s"), length(col.names.tmp)), collapse=""
-      ), "\n"
+      "%", max(nchar(test.nums)), "s %", max.file.chars, "s ",
+      paste0(rep(paste0(" %", num.width, "s"), col.count), collapse=""), "\n"
     )
-    cat(header, "\n", sep="")
+    cat(header <- do.call(sprintf, c(list(fmt, "", ""), as.list(col.names))))
     for(i in seq_along(object)) {
       test.num <- if(!passed(object[[i]])) {
         sub(" (\\d+)", "*\\1", test.nums[[i]])
@@ -387,8 +390,16 @@ setMethod("show", "unitizerObjectListSummary",
       cat(
         do.call(
           sprintf,
-          c(list(fmt, test.num, test.files.trim), as.list(object[[i]]@totals))
-) ) } } )
+          c(
+            list(fmt, test.num, test.files.trim[[i]]),
+            as.list(object[[i]]@totals[keep.cols])
+    ) ) ) }
+    cat(rep("-", nchar(header)), "\n", sep="")
+    cat(
+      do.call(sprintf, c(list(fmt, "", ""), as.list(object@totals[keep.cols])))
+    )
+    invisible(NULL)
+} )
 setGeneric(
   "registerItem", function(e1, e2, ...) standardGeneric("registerItem")
 )
