@@ -73,7 +73,9 @@ upgrade_internal <- function(object) {
   # Need to add tests.conditions.new slot
 
   if(object@version < "0.4.3") {
-    object <- addSlot(object, "tests.conditions.new", logical(length(object@items.new)))
+    object <- addSlot(
+      object, "tests.conditions.new", logical(length(object@items.new))
+    )
   }
   # - 0.5.2 --------------------------------------------------------------------
 
@@ -86,7 +88,9 @@ upgrade_internal <- function(object) {
     # Add the requisite reference section fields
 
     ref.len <- length(object@items.ref)
-    object <- addSlot(object, "sections.ref", list(new("unitizerSectionNA", length=ref.len)))
+    object <- addSlot(
+      object, "sections.ref", list(new("unitizerSectionNA", length=ref.len))
+    )
     object <- addSlot(object, "section.ref.map", rep(1L, ref.len))
 
     # Updated changes sub-object

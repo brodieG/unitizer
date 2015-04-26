@@ -46,13 +46,15 @@ load_unitizer <- function(store.id, par.frame, test.file=NA_character_) {
       )
     }
   } else {
+
     parent.env(unitizer@zero.env) <- par.frame
     unitizer@id <- store.id
     unitizer@test.file.loc <- test.file
     ver <- unitizer@version
-    unitizer <- upgrade(unitizer, par.frame=par.frame)
+    unitizer <- upgrade(unitizer, par.frame=par.frame, test.file)
     if(!identical(ver, unitizer@version)) { # there was an upgrade, so store new file
-      success <- try(set_unitizer(store.id, unitizer))
+      unitizer.par.env <-
+      success <- try(store_unitizer(unitizer))
       if(inherits(success, "try-error"))  {
         stop(
           "Logic Error: failed attempting to store upgraded `unitizer`; ",
@@ -69,6 +71,10 @@ load_unitizer <- function(store.id, par.frame, test.file=NA_character_) {
 
 store_unitizer <- function(unitizer) {
   if(!is(unitizer, "unitizer")) return(invisible(TRUE))
+
+  old.par.env <- parent.env(unitizer@zero.env)
+  on.exit(parent.env(unitizer@zero.env) <- old.par.env)
+  parent.env(unitizer@zero.env) <- baseenv()
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {

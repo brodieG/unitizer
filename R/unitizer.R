@@ -138,7 +138,8 @@ setClass(
           ) )
       }
       if(
-        !identical(length(eval.time), 1L) || is.na(eval.time) || eval.time < 0L
+        !identical(length(object@eval.time), 1L) || is.na(object@eval.time) ||
+        object@eval.time < 0L
       )
         return("slot `eval.time` must be length 1L, positive, and not NA")
 
@@ -177,7 +178,7 @@ setClass(
       ) )
     if(length(object@dels) != 1L)
       return("Slot `dels` must be integer length one")
-    if(!identical(names(object@totals), c(val.names, "Deleted")))
+    if(!all(names(object@totals) %in% c(val.names, "Deleted")))
       return(
         paste0(
           "Slot `totals` must be integer with names ",
@@ -296,7 +297,7 @@ setMethod("length", "unitizer",
 
 setMethod("summary", "unitizer",
   function(object, silent=FALSE, ...) {
-    if(!isTRUE(silent) || !identical(silent, FALSE))
+    if(!isTRUE(silent) && !identical(silent, FALSE))
       stop("Argument `silent` must be TRUE or FALSE")
     ignore <- ignored(object@items.new)
     status <- object@tests.status[!ignore]
@@ -315,8 +316,8 @@ setMethod("summary", "unitizer",
     sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
     total <- apply(sum.mx, 2, sum)
 
-    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
     sum.mx <- rbind(sum.mx, "**Total**"=total)
+    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
 
     if(sum(sum.mx[, "Error"]) == 0L)
       sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
@@ -328,8 +329,7 @@ setMethod("summary", "unitizer",
     main.dat <- if(nrow(sum.mx) == 2L) {
       `rownames<-`(sum.mx[2L, , drop=F], "")
     } else sum.mx
-
-    obj <- new("unitizerSummary", data=main.dat, dels=deletes, totals=totals)
+    obj <- new("unitizerSummary", data=main.dat, dels=deletes, totals=total)
     if(!silent) show(obj)
     obj
 } )
@@ -343,11 +343,8 @@ setMethod("summary", "unitizerObjectList",
     test.files <- vapply(obj.list, slot, character(1L), "test.file.loc")
 
     if(length(summaries)) {  # get aggregate results across all summaries
-      totals <- rowSums(
-        vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
-      )
+      totals <- Reduce(`+`, lapply(as.list(summaries), slot, "totals"))
     } else totals <- integer()
-
     res <- new(
       "unitizerObjectListSummary", .items=summaries, test.files=test.files,
       totals=totals
@@ -589,7 +586,7 @@ setMethod("getTarget", "unitizer",
 setMethod("getName", "unitizer",
   function(object, ...) {
     u.name <- if(!is.na(object@test.file.loc)) {
-      basename(test.file)
+      basename(object@test.file.loc)
     } else getTarget(object)
 } )
 

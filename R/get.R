@@ -107,7 +107,7 @@ get_unitizer.character <- function(store.id) {
     stop("Argument `store.id` must be a bare character vector")
   if(!file.exists(store.id)) return(FALSE)
 
-  if(is_unitizer_dir(store.id)) {
+  if(!is_unitizer_dir(store.id)) {
     stop(
       "Argument `store.id` does not appear to refer to `unitizer` directory"
     )

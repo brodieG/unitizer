@@ -788,15 +788,15 @@ setMethod("+", c("unitizerBrowseSection", "unitizerBrowseSubSection"),
 
 setClass(
   "unitizerBrowseResult",
-  slots=c(unitizer="unitizer", re.eval="integer", update="logical"),
+  slots=c(unitizer="unitizer", re.eval="integer", updated="logical"),
   validity=function(object) {
     if(
       !identical(length(object@re.eval), 1L) || is.na(object@re.eval) ||
       !object@re.eval %in% 0L:2L
     )
       return("slot `re.eval` must be integer(1L) in 0:2")
-    if(!isTRUE(object@update) || !identical(object@update, FALSE))
-      return("slot `update` must be TRUE or FALSE")
+    if(!isTRUE(object@updated) && !identical(object@updated, FALSE))
+      return("slot `updated` must be TRUE or FALSE")
     TRUE
   }
 )

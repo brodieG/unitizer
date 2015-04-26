@@ -174,16 +174,16 @@ unitize_core <- function(
       )
     }
   }
-  # Ensure directory names are normalized
+  # Ensure directory names are normalized, but only if dealing with char objects
 
-  store.ids.to.norm <-
-    vapply(store.ids, is.character(x) && !is.object(x), logical(1L))
-  norm.attempt <- try(
-    store.ids[store.ids.to.norm] <- file.path(
-      normalizePath(dirname(store.ids[store.ids.to.norm]), mustWork=TRUE),
-      basename(store.ids[store.ids.to.norm])
-    )
-  )
+  norm.attempt < try(
+    store.ids <- lapply(
+      store.ids,
+      function(x) {
+        if(is.character(x) && !is.object(x)) {
+          file.path(normalizePath(dirname(x), mustWork=TRUE), basename(x))
+        } else x
+  } ) )
   if(inherits(norm.attempt, "try-error"))
     stop(
       "Logic Error: some `store.ids` could not be normalized; contact ",
@@ -250,11 +250,10 @@ unitize_core <- function(
   gpar.frame <- if(is.null(par.env)) pack.env$zero.env.par else par.env
   parent.env(pre.load.frame) <- gpar.frame
 
-  util.frame <- new.env(parent.frame=pre.load.frame)
+  util.frame <- new.env(parent=pre.load.frame)
   assign("quit", unitizer_quit, util.frame)
   assign("q", unitizer_quit, util.frame)
 
-  stop("Make Sure unitizer location is recorded")
   unitizers <- new(
     "unitizerObjectList",
     .items=lapply(
@@ -323,10 +322,8 @@ unitize_eval <- function(tests.parsed, unitizers) {
       "changed."
     )
   )
-  if(
-    !identical(test.len, length(unitizers)) || !is.integer(eval.which) ||
-    any(is.na(eval.which) || any(eval.which < 1L) || any(eval.which > test.len))
-  )
+  test.len <- length(tests.parsed)
+  if(!identical(test.len, length(unitizers)))
     stop(
       "Logic Error: parse data and unitizer length mismatch; contact ",
       "maintainer."
@@ -345,7 +342,7 @@ unitize_eval <- function(tests.parsed, unitizers) {
       unitizers[[i]] <- unitizer
     }
     unitizers[[i]]@eval <- FALSE
-    over_print(paste0("Completed: ", unitizer@test.file.loc, "\n"))
+    if(test.len > 1L) over_print(paste0("Completed: ", unitizer@test.file.loc, "\n"))
   }
   on.exit()
   unitizers
@@ -359,7 +356,7 @@ unitize_eval <- function(tests.parsed, unitizers) {
 #'
 
 unitize_browse <- function(
-  unitizers, mode, force.update, auto.accept, prompt.on.quit
+  unitizers, mode, interactive.mode, force.update, auto.accept
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -377,9 +374,7 @@ unitize_browse <- function(
   # than once, where previous choices are over-written by the auto-accepts?
   # maybe auto-accepts only get applied first time around?
 
-  warning("Sort out iterative auto-accept issue", immediate.=TRUE)
-
-  test.len <- length(untizers)
+  test.len <- length(unitizers)
   to.review <- integer(test.len)
   auto.accepted <- 0L
 
@@ -398,12 +393,14 @@ unitize_browse <- function(
 
   summaries <- summary(unitizers, silent=TRUE)
   totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
-  to.review <- colSums(totals[-1L, ])  # First row will be passed
+  to.review <- colSums(totals[-1L, , drop=FALSE])  # First row will be passed
 
   # - Non-interactive ----------------------------------------------------------
 
   # Browse, or fail depending on interactive mode
 
+  reviewed <- updated <- logical(test.len)
+  over_print("")
   if(!interactive.mode) {
     if(!sum(to.review)) {
       for(i in which(to.review > 0L)) {
@@ -440,7 +437,6 @@ unitize_browse <- function(
         "Type number of unitizer to review, or 'A' to review all that require ",
         "review (those with '*' ahead of their number)"
       )
-      reviewed <- updated <- logical(test.len)
       repeat {
         if(test.len > 1L) {
           pick <- try(
@@ -462,11 +458,16 @@ unitize_browse <- function(
                 "Logic Error: invalid unitizer selected somehow; contact ",
                 "maintainer."
               )
-        } }
-        # `browseUnitizer` returns `unitizer`, along with
+          }
+        } else pick.num <- 1L
 
-        stop("update unitizer to return Re-eval requests")
-
+        print(
+          H1(
+            paste0(
+              "unitizer for: ", getName(unitizers[[pick.num]]), collapse=""
+        ) ) )
+        show(summaries[[pick.num]])
+        cat("\n")
         browse.res <- browseUnitizer(
           unitizers[[pick.num]], untz.browsers[[pick.num]],
           force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
@@ -482,14 +483,13 @@ unitize_browse <- function(
           pick.num
         } else if(identical(browse.res@re.eval, 2L)) {
           seq.int(test.len)
-        }
+        } else integer()
         if(length(eval.which)) {
-          for(i in seq_along(unitizers)) unitizers[[i]]@eval <- TRUE
+          for(i in seq_along(eval.which)) unitizers[[i]]@eval <- TRUE
           break
         }
-        break
-
-        if(identical(test.len, 1L)) break else show(summaries)
+        if(identical(test.len, 1L)) break
+        show(summaries)
       }
     }
     # Force update stuff if needed; need to know what has already been stored

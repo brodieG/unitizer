@@ -424,9 +424,8 @@ testthat_transcribe_file <- function(
       )
       if(!identical(u.inp, "Y"))
         stop(
-          "Unable to proceed without user approval as one of `",
-          untz.test, "` or `", untz.store,
-          "` already exists."
+          "Unable to proceed without user approval as `",
+          untz.test, "` already exists."
         )
     }
     # Create files, run tests ...

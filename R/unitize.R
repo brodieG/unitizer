@@ -56,7 +56,7 @@
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @param test.dir the directory to run the tests on
-#' @param test.file.regex a regular expression used to match which files in
+#' @param pattern a regular expression used to match which files in
 #'   \code{test.dir} to \code{unitize}
 #' @param unitizer.ids one of \itemize{
 #'   \item a function that converts test file names to \code{unitzer} ids; if
@@ -141,16 +141,10 @@ unitize_dir <- function(
   mode="unitize"
 ) {
   # Validations
-  if(
-    !is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir)
-  )
+  if(!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir))
     stop("Argument `test.dir` must be character(1L) and not NA.")
-  if(
-    !is.character(test.file.regex) || length(test.file.regex) != 1L ||
-    is.na(test.file.regex)
-  )
-    stop("Argument `test.file.regex` must be character(1L) and not NA.")
-
+  if(!is.character(pattern) || length(pattern) != 1L || is.na(pattern))
+    stop("Argument `pattern` must be character(1L) and not NA.")
   if(file.exists(test.dir) && !file_test("-d", test.dir))
     stop("Argument `test.dir` points to a file instead of a directory")
 
@@ -158,23 +152,21 @@ unitize_dir <- function(
 
   test.dir <- infer_unitizer_location(test.dir, type="d")
 
-  if(!file_test("-d", test.dir)) {
+  if(!file_test("-d", test.dir))
     stop("Argument `test.dir` must point to a direcctory")
-  }
+
   test.files <- list.files(
     path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
   )
   # And unitizers
 
-  if(is.function(unitizer.ids)) {
-    unitizer.ids <- try(lapply(test.files, unitizer.ids))
-    if(inherits(unitizer.ids, "try-error")) {
+  if(is.function(store.ids)) {
+    store.ids <- try(lapply(test.files, store.ids))
+    if(inherits(store.ids, "try-error")) {
       stop(
         "Argument `store.ids` is a function, but caused an error when ",
         "attempting to use it to convert test file names to `unitizer` ids."
-      )
-    }
-  }
+  ) } }
   unitize_core(
     test.files=test.files, store.ids=store.ids,
     interactive.mode=interactive.mode, par.env=par.env,

@@ -47,21 +47,16 @@ setGeneric(
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
 
-    print(H1(paste0("unitizer for: ", getName(x), collapse="")))
-
     browse.res <- withRestarts(
       browseUnitizerInternal(x, y, force.update=force.update),
       unitizerQuitExit=unitizer_quit_handler
     )
     # Need to store our `unitizer`
 
-    if(browse.res@update) {
-      old.par.env <- parent.env(browse.res@unitizer@zero.env)
-      parent.env(browse.res@unitizer@zero.env) <- baseenv()
+    if(browse.res@updated) {
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
         message("Unable to store '", getTarget(browse.res@unitizer, "'"))
-      parent.env(browse.res@unitizer@zero.env) <- old.par.env
     }
     browse.res
   }
