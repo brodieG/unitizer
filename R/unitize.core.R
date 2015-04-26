@@ -494,7 +494,7 @@ unitize_browse <- function(
     }
     # Force update stuff if needed; need to know what has already been stored
 
-    if(force.update & !as.logical(to.review) & !updated) {
+    if(any(force.update & !as.logical(to.review) & !updated)) {
       stop("Need to implement force for non-review tests")
     }
   }
