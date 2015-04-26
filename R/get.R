@@ -157,7 +157,7 @@ get_unitizer.default <- function(store.id) {
 #' \code{"f"} or \code{"u"} respectively), or if there is only one file, that
 #' file, or if there are multiple candidate files and in interactive mode
 #' prompting user for a selection.  If \code{type} is \code{"d"}, then will
-#' just provide the \code{'tests/unitizer`} directory.
+#' just provide the \code{"tests/unitizer"} directory.
 #'
 #' If \code{name} is not a directory, will try to find a file by that name, and
 #' if that fails, will try to partially match a file by that name.  Partial

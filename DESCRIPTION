@@ -26,6 +26,7 @@ Collate:
     'text.R'
     'conditions.R'
     'item.R'
+    'deparse.R'
     'item.sub.R'
     'section.R'
     'test.R'
