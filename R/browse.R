@@ -46,18 +46,24 @@ setGeneric(
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
+
+    print(H1(paste0("unitizer for: ", getName(x), collapse="")))
+
     browse.res <- withRestarts(
       browseUnitizerInternal(x, y, force.update=force.update),
       unitizerQuitExit=unitizer_quit_handler
     )
-    # Reset the parent env of zero env so we don't get all sorts of warnings
-    # related to trying to store a package environment when we save this
-    # unitizer
+    # Need to store our `unitizer`
 
-    if(is(unitizer, "unitizer")) {
-      parent.env(unitizer@zero.env) <- baseenv()
+    if(browse.res@update) {
+      old.par.env <- parent.env(browse.res@unitizer@zero.env)
+      parent.env(browse.res@unitizer@zero.env) <- baseenv()
+      attempt <- try(store_unitizer(browse.res@unitizer))
+      if(inherits(attempt, "try-error"))
+        message("Unable to store '", getTarget(browse.res@unitizer, "'"))
+      parent.env(browse.res@unitizer@zero.env) <- old.par.env
     }
-    unitizer
+    browse.res
   }
 )
 setGeneric(
@@ -66,7 +72,7 @@ setGeneric(
 )
 setMethod(
   "browseUnitizerInternal", c("unitizer", "unitizerBrowse"),
-  valueClass="unitizerBrowseResult"
+  valueClass="unitizerBrowseResult",
   function(x, y, force.update, ...) {
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
@@ -146,7 +152,7 @@ setMethod(
                     invokeRestart("earlyExit")
                   } else if(!is(y.tmp, "unitizerBrowse")) {
                     stop(
-                      "Logic Error: review should return `unitizerBrowse`; "
+                      "Logic Error: review should return `unitizerBrowse`; ",
                       "contact maintainer."
                     )
                   } else y <- y.tmp
@@ -215,7 +221,7 @@ setMethod(
             message("unitizer store unchanged")
             break
           }
-          valid.opts <- c(Y="[Y]es", P="[P]revious"Ï, B="[B]rowse")
+          valid.opts <- c(Y="[Y]es", P="[P]revious", B="[B]rowse")
           nav.msg <- "Exit unitizer"
           nav.hlp <- paste0(
             "Pressing Y or Q will exit without saving the unitizer since ",
@@ -359,7 +365,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     valid.opts <- c(
       Y="[Y]es", N="[N]o", P="[P]revious", B="[B]rowse", YY="", YYY="", YYYY="",
-      NN="", NNN="", NNNNN="", R="[R]e-eval", RR=""
+      NN="", NNN="", NNNNN="",
+      if(identical(x@mode, "unitize")) c(R="[R]e-eval", RR="")
     )
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
@@ -546,8 +553,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
       "`YY` or `NN` to apply same choice to all remaining unreviewed items in sub-section",
       "`YYY` or `NNN` to apply same choice to all remaining unreviewed items in section",
       "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer",
-      "`R` to re-evalute the `unitizer`; used typically after you re-`install` the package you are testing via the `unitizer` prompt",
-      "`RR` to re-evaluate all loaded `unitizers` (relevant for `unitize_dir`)"
+      if(identical(x@mode, "unitize"))
+        c(
+          "`R` to re-evalute the `unitizer`; used typically after you re-`install` the package you are testing via the `unitizer` prompt",
+          "`RR` to re-evaluate all loaded `unitizers` (relevant for `unitize_dir`)"
+        )
     )
     # navigate_prompt handles the P and B cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a function

@@ -12,7 +12,7 @@
 #' @return a \code{`unitizer`} object, or anything, in which case the calling
 #'   code should exit
 
-load_unitizer <- function(store.id, par.frame, test.file) {
+load_unitizer <- function(store.id, par.frame, test.file=NA_character_) {
 
   if(inherits(try(unitizer <- get_unitizer(store.id)), "try-error")) {
     stop(

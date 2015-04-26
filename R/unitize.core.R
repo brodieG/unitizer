@@ -147,12 +147,13 @@ unitize_core <- function(
 
   dir.names <- vapply(
     store.ids,
-    function(x)
+    function(x) {
       if(is.character(x) && !is.object(x) && !file_test("-d", dirname(x))) {
         dirname(x)
       } else NA_character_
+    },
     character(1L)
-  }
+  )
   dir.names.clean <- Filter(Negate(is.na), unique(dir.names))
   if(length(dir.names.clean)) {
     dir.word <-
@@ -162,13 +163,13 @@ unitize_core <- function(
       ":\n"
     )
     print(UL(dir.names.clean))
-    pick <- try(simple_prompt(paste0("Create ", dir.word, "?"))
+    pick <- try(simple_prompt(paste0("Create ", dir.word, "?")))
     if(inherits(pick, "try-error")) stop("Error gathering user input")
     if(!identical(pick, "Y"))
       stop("Cannot proceed without creating directories.")
     if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
       stop(
-        "Cannot proceed, failed to create the following directories:\n"
+        "Cannot proceed, failed to create the following directories:\n",
         paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
       )
     }
@@ -196,18 +197,14 @@ unitize_core <- function(
 
   # Parse, and use `eval.which` to determine which tests to evaluate
 
-  if(mode == "unitize") {
+  if(identical(mode, "unitize")) {
     over_print("Parsing tests...")
     tests.parsed <- lapply(
       test.files,
       function(x) {
         over_print(paste("Parsing", x))
         parse_tests(x, comments=interactive.mode)
-    } )
-    eval.which <- seq_along(test.files)  # first pass eval all the unitizers (duh)
-  } else {
-    eval.which <- integer()
-  }
+  } ) }
   # Clean up search path
 
   search.path.setup <- search.path.trim <- FALSE
@@ -275,52 +272,40 @@ unitize_core <- function(
         }
         if(!is(unitizer, "unitizer"))
           stop("Logic Error: expected a `unitizer` object; contact maintainer.")
+        unitizer@eval <- identical(mode, "unitize")
         unitizer
   } ) )
   # - Evaluate / Browse --------------------------------------------------------
 
-  # Now evaluate
-
-  wd <- getwd()                              # in case user changes it through tests
-
   check_call_stack()  # Make sure nothing untoward will happen if a test triggers an error
 
-  while(length(eval.which) || mode == "review") {
-
-    # Evaluate and display `unitizer` status
+  while(
+    any(vapply(as.list(unitizers), slot, logical(1L), "eval")) ||
+    mode == "review"
+  ) {
+    # Now evaluate, whether a `unitizer` is evaluated or not is a function of
+    # the slot @eval, set just above as they are loaded
 
     unitizers <- unitize_eval(
-      tests.parsed=tests.parsed, unitizers=unitizers, eval.which=eval.which
+      tests.parsed=tests.parsed, unitizers=unitizers
     )
-    # Make sure our tracing didn't get messed up in some way
-    stop("need to handle this")
+    # Gather user input, and store tests as required.  Any `unitizer`s that
+    # the user marked for re-evaluation will be re-evaluated in this loop
 
-    # if((isTRUE(search.path.clean) || is.null(par.env)) && !search_path_check()) {
-    #   search_path_restore()
-    #   search.path.restored <- TRUE
-    # }
-    # Handle non-interactive mode
-
-
-    # `eval.which` tells us what unitizes we need to re-eval if we made changes
-    # to our source code, but more than that would be good to be able to book-
-    # mark a particular test?  Becomes complicated because that might mean there
-    # are a bunch of unreviewed tests, etc.
-
-    eval.which <- unitize_browse(
-      unitizers=unitizers,               # make sure file path is included in \code{unitizer} so browse can update file
+    unitizers <- unitize_browse(
+      unitizers=unitizers,
       mode=mode,
       interactive.mode=interactive.mode,
       force.update=force.update,
-      auto.accept=auto.accept            # need to think about how auto-accept is done here; maybe should even be done in eval mode or as separate function
+      auto.accept=auto.accept
     )
   }
   # - Finalize -----------------------------------------------------------------
 
-  message("Passed Tests")
   on.exit(NULL)
   if(search.path.trim) search_path_restore()        # runs _unsetup() as well
   else if (search.path.setup) search_path_unsetup()
+  return(as.list(unitizers))
 }
 #' Evaluate User Tests
 #'
@@ -331,7 +316,7 @@ unitize_core <- function(
 #' @return a list of unitizers
 #' @keywords internal
 
-unitize_eval <- function(tests.parsed, unitizers, eval.which) {
+unitize_eval <- function(tests.parsed, unitizers) {
   on.exit(                                   # In case interrupted or some such
     message(
       "Unexpectedly exited before storing `unitizer`; tests were not saved or ",
@@ -340,34 +325,30 @@ unitize_eval <- function(tests.parsed, unitizers, eval.which) {
   )
   if(
     !identical(test.len, length(unitizers)) || !is.integer(eval.which) ||
-    any(is.na(eval.which) || any(eval.which < 1L)  || any(eval.which > test.len)
+    any(is.na(eval.which) || any(eval.which < 1L) || any(eval.which > test.len))
   )
     stop(
       "Logic Error: parse data and unitizer length mismatch; contact ",
       "maintainer."
     )
-  # Loop through all unitizers, evaluating each
-
-  res <- vector("list", test.len)
-
-  # Run through unitizers
+  # Loop through all unitizers, evaluating the ones that have been marked with
+  # the `eval` slot for evaluation, and resetting that slot to FALSE
 
   for(i in seq.int(test.len)) {
     test.dat <- tests.parsed[[i]]
     unitizer <- unitizers[[i]]
 
-    # Evaluate the parsed calls
-
-    if(i %in% eval.which) {
+    if(unitizer@eval) {
       tests <- new("unitizerTests") + test.dat
-      res[[i]] <- unitizer + tests
+      unitizers[[i]] <- unitizer + tests
     } else {
-      res[[i]] <- unitizer
+      unitizers[[i]] <- unitizer
     }
+    unitizers[[i]]@eval <- FALSE
     over_print(paste0("Completed: ", unitizer@test.file.loc, "\n"))
   }
   on.exit()
-  res
+  unitizers
 }
 #' Run User Interaction And \code{unitizer} Storage
 #'
@@ -382,11 +363,9 @@ unitize_browse <- function(
 ) {
   # - Prep ---------------------------------------------------------------------
 
-  eval.which <- integer()  # default is to not re-eval anything
-
   if(!length(unitizers)) {
     message("No tests to review")
-    return(eval.which)
+    return(unitizers)
   }
   over_print("Prepping Unitizers...")
   untz.browsers <- lapply(as.list(unitizers), browsePrep, mode=mode)
@@ -407,7 +386,6 @@ unitize_browse <- function(
   if(length(auto.accept)) {
     over_print("Applying auto-accepts...")
     for(i in seq_along(untz.browsers)) {
-      untz.browsers[[i]] <- untz.browsers[[i]]
       for(auto.val in auto.accept) {
         auto.type <- which(
           tolower(untz.browsers[[i]]@mapping@review.type) == auto.val
@@ -415,14 +393,12 @@ unitize_browse <- function(
         untz.browsers[[i]]@mapping@review.val[auto.type] <- "Y"
         untz.browsers[[i]]@mapping@reviewed[auto.type] <- TRUE
         auto.accepted <- auto.accepted + length(auto.type)
-    } }
-    to.review[[i]] <- sum(
-      !untz.browsers[[i]]@mapping@reviewed & !untz.browsers[[i]]@mapping@ignored
-    )
-  }
-  # List the result
+  } } }
+  # Get summaries
 
   summaries <- summary(unitizers, silent=TRUE)
+  totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
+  to.review <- colSums(totals[-1L, ])  # First row will be passed
 
   # - Non-interactive ----------------------------------------------------------
 
@@ -435,7 +411,7 @@ unitize_browse <- function(
         delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
         message(
           paste0(
-            "* "
+            "* ",
             format(paste0(untz@tests.status[delta.show], ": ")),
             untz@items.new.calls.deparse[delta.show],
             collapse="\n"
@@ -464,7 +440,7 @@ unitize_browse <- function(
         "Type number of unitizer to review, or 'A' to review all that require ",
         "review (those with '*' ahead of their number)"
       )
-      reviewed <- logical(test.len)
+      reviewed <- updated <- logical(test.len)
       repeat {
         if(test.len > 1L) {
           pick <- try(
@@ -495,40 +471,34 @@ unitize_browse <- function(
           unitizers[[pick.num]], untz.browsers[[pick.num]],
           force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
         )
-        unitizers[[pick.num]] <- browse.res$unitizer # can't be Fd creating a new class for return val
+        unitizers[[pick.num]] <- browse.res@unitizer
         reviewed[[pick.num]] <- TRUE
+        updated[[pick.num]] <- browse.res@updated
 
-        if(!is.null(browse.res$reeval)) {
-          eval.which <- if(identical(browse.res$reeval, "R")) {
-            pick.num
-          } else if(identical(browse.res$reeval, "RR")) {
-            seq.int(test.len)
-          } else stop("Logic Error: invalid re-eval value; contact maintainer.")
+        # Check to see if any need to be re-evaled, and if so, mark unitizers
+        # and return
+
+        eval.which <- if(identical(browse.res@re.eval, 1L)) {
+          pick.num
+        } else if(identical(browse.res@re.eval, 2L)) {
+          seq.int(test.len)
+        }
+        if(length(eval.which)) {
+          for(i in seq_along(unitizers)) unitizers[[i]]@eval <- TRUE
           break
         }
+        break
+
         if(identical(test.len, 1L)) break else show(summaries)
       }
     }
     # Force update stuff if needed; need to know what has already been stored
 
-    if(!to.review && !auto.accepted) {
-      message("All tests passed")
-    } else if (!to.review) {
-      message("All tests passed or auto-accepted")
-    } else {
-
+    if(force.update & !as.logical(to.review) & !updated) {
+      stop("Need to implement force for non-review tests")
     }
   }
-
-
-
-
-
-
-  # -  Finalize ------------------------------------------------------------------
-
-  on.exit(NULL)
-  invisible(unitizer)
+  unitizers
 }
 #' Check Not Running in Undesirable Environments
 #'
