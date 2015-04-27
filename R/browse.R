@@ -301,15 +301,17 @@ setMethod(
           break
         }
     } }
-    # Create the new unitizer
+    # Create the new unitizer; note we re-use the same zero and base envs as
+    # the original `unitizer` as otherwise we end up with incosistencies when
+    # we try to re-use the original `unitizer` without reloading in the context
+    # of `unitize_dir`
 
     items.ref <- processInput(y)
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
-    zero.env <- new.env(parent=parent.env(x@zero.env))
     unitizer <- new(
-      "unitizer", id=x@id, changes=x@changes, zero.env=zero.env,
-      test.file.loc=x@test.file.loc
+      "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
+      base.env=x@base.env, test.file.loc=x@test.file.loc
     )
     unitizer <- unitizer + items.ref
 

@@ -264,7 +264,14 @@ setMethod("initialize", "unitizer",
   function(.Object, ...) {
     .Object <- callNextMethod()
     .Object@tests.result <- tests_result_mat(0L)
-    .Object@base.env <- new.env(parent=.Object@zero.env)
+
+    # We re-use the potentially default `base.env` object instead of creating
+    # a new one to allow the user to pass a pre-defined `base.env` if desired;
+    # in theory this should be a base.env that already has for parent the
+    # `zero.env` because we're trying to recreate the same environment chain
+    # of a different unitizer for when we re-use a unitizer in unitize_dir
+
+    parent.env(.Object@base.env) <- .Object@zero.env
     parent.env(.Object@items.new@base.env) <- .Object@base.env
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
     .Object
