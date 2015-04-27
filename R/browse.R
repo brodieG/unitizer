@@ -216,7 +216,19 @@ setMethod(
                 "You have ", unreviewed, " unreviewed tests; press `B` to ",
                 "browse tests, `U` to go to first unreviewed test.\n\n", sep=""
           ) } }
+          valid.opts <- c(
+            Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
+            R="[R]e-evaluate", RR=""
+          )
+          if(update) {
+            word_msg(
+              "You are about to IRREVERSIBLY modify '", getTarget(x), "':",
+              sep=""
+          ) }
+          if(length(x@changes) > 0) show(x@changes)
+
           repeat {
+            # Can this be rationalized with the logic in `reviewNext`?
 
             actions <- character()
             if(update) {
@@ -247,21 +259,14 @@ setMethod(
                 "re-valuation request."
               )
             }
-            if(update) {
-              word_msg(
-                "You are about to IRREVERSIBLY modify '", getTarget(x), "':",
-                sep=""
-            ) }
-            if(length(x@changes) > 0) show(x@changes)
-
-            valid.opts <- c(
-              Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
-              R="[R]e-evaluate", RR=""
-            )
             if(!length(actions)) actions <- "exit unitizer"
             nav.msg <- cap_first(paste0(actions, collapse= " and "))
-            word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
-
+            word_cat(
+              nav.msg,
+              paste0("(",
+                paste0(valid.opts[nchar(valid.opts) > 0L], collapse=", "),
+                ")?"
+            ) )
             user.input <- navigate_prompt(
               y, curr.id=max(y@mapping@item.id) + 1L,
               text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -298,29 +303,31 @@ setMethod(
     } }
     # Create the new unitizer
 
-    unitizer <- if(update) {
-      items.ref <- processInput(y)
-      items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
+    items.ref <- processInput(y)
+    items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
-      zero.env <- new.env(parent=parent.env(x@zero.env))
-      unitizer <- new("unitizer", id=x@id, changes=x@changes, zero.env=zero.env)
-      unitizer <- unitizer + items.ref
+    zero.env <- new.env(parent=parent.env(x@zero.env))
+    unitizer <- new(
+      "unitizer", id=x@id, changes=x@changes, zero.env=zero.env,
+      test.file.loc=x@test.file.loc
+    )
+    unitizer <- unitizer + items.ref
 
-      # Extract and re-map sections of tests we're saving as reference
+    # Extract and re-map sections of tests we're saving as reference
 
-      if(identical(y@mode, "review")) {
-        # Need to re-use our reference sections so `refSections` works since we
-        # will not have created any sections by parsing/evaluating tests.  This
-        # is super hacky as we're partly using the stuff related to `items.new`,
-        # and could cause problems further down the road if we're not careful
+    if(!length(x@sections)) {
+      if(!identical(y@mode, "review"))
+        stop("Logic Error: should only get here in review mode")
+      # Need to re-use our reference sections so `refSections` works since we
+      # will not have created any sections by parsing/evaluating tests.  This
+      # is super hacky as we're partly using the stuff related to `items.new`,
+      # and could cause problems further down the road if we're not careful
 
-        x@sections <- x@sections.ref
-        x@section.map <- x@section.ref.map
-      }
-      refSections(unitizer, x)
-    } else {
-      x
+      x@sections <- x@sections.ref
+      x@section.map <- x@section.ref.map
     }
+    unitizer <- refSections(unitizer, x)
+
     # Return structure
 
     new(

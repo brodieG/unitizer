@@ -254,44 +254,29 @@ unitize_core <- function(
   assign("quit", unitizer_quit, util.frame)
   assign("q", unitizer_quit, util.frame)
 
-  unitizers <- new(
-    "unitizerObjectList",
-    .items=lapply(
-      seq_along(store.ids),
-      function(i) {
-        if(is(store.ids[[i]], "unitizer")) {
-          unitizer <- upgrade(store.ids[[i]], util.frame, test.files[[i]])
-          store.ids[[i]] <- unitizer@id
-        } else {
-          unitizer <- try(
-            load_unitizer(store.ids[[i]], util.frame, test.files[[i]])
-          )
-          if(inherits(unitizer, "try-error"))
-            stop("Unable to load `unitizer`; see prior errors.")
-        }
-        if(!is(unitizer, "unitizer"))
-          stop("Logic Error: expected a `unitizer` object; contact maintainer.")
-        unitizer@eval <- identical(mode, "unitize")
-        unitizer
-  } ) )
+  eval.which <- seq_along(store.ids)
+  unitizers <- new("unitizerObjectList")
+
   # - Evaluate / Browse --------------------------------------------------------
 
   check_call_stack()  # Make sure nothing untoward will happen if a test triggers an error
 
-  while(
-    any(vapply(as.list(unitizers), slot, logical(1L), "eval")) ||
-    mode == "review"
-  ) {
+  while(length(eval.which) || mode == "review") {
+    # Load unitizers
+
+    unitizers[eval.which] <- unitize_load(
+      store.ids[eval.which], test.files[eval.which], util.frame, mode
+    )
     # Now evaluate, whether a `unitizer` is evaluated or not is a function of
     # the slot @eval, set just above as they are loaded
 
-    unitizers <- unitize_eval(
-      tests.parsed=tests.parsed, unitizers=unitizers
+    unitizers[eval.which] <- unitize_eval(
+      tests.parsed=tests.parsed[eval.which], unitizers=unitizers[eval.which]
     )
     # Gather user input, and store tests as required.  Any `unitizer`s that
     # the user marked for re-evaluation will be re-evaluated in this loop
 
-    unitizers <- unitize_browse(
+    eval.which <- unitize_browse(
       unitizers=unitizers,
       mode=mode,
       interactive.mode=interactive.mode,
@@ -306,6 +291,33 @@ unitize_core <- function(
   else if (search.path.setup) search_path_unsetup()
   return(as.list(unitizers))
 }
+#' Load Unitizers
+#'
+#' @keywords internal
+
+unitize_load <- function(store.ids, test.files, frame, mode) {
+  unitizers <- new(
+    "unitizerObjectList",
+    .items=lapply(
+      seq_along(store.ids),
+      function(i) {
+        if(is(store.ids[[i]], "unitizer")) {
+          unitizer <- upgrade(store.ids[[i]], frame, test.files[[i]])
+          store.ids[[i]] <- unitizer@id
+        } else {
+          unitizer <- try(
+            load_unitizer(store.ids[[i]], frame, test.files[[i]])
+          )
+          if(inherits(unitizer, "try-error"))
+            stop("Unable to load `unitizer`; see prior errors.")
+        }
+        if(!is(unitizer, "unitizer"))
+          stop("Logic Error: expected a `unitizer` object; contact maintainer.")
+        unitizer@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
+        unitizer
+  } ) )
+}
+
 #' Evaluate User Tests
 #'
 #' @param tests.parsed a list of expressions
@@ -338,11 +350,13 @@ unitize_eval <- function(tests.parsed, unitizers) {
     if(unitizer@eval) {
       tests <- new("unitizerTests") + test.dat
       unitizers[[i]] <- unitizer + tests
+      if(test.len > 1L)
+        over_print(paste0("Evaluated: ", unitizer@test.file.loc, "\n"))
     } else {
+      stop("Logic Error: should never get here")
       unitizers[[i]] <- unitizer
     }
     unitizers[[i]]@eval <- FALSE
-    if(test.len > 1L) over_print(paste0("Completed: ", unitizer@test.file.loc, "\n"))
   }
   on.exit()
   unitizers
@@ -377,6 +391,7 @@ unitize_browse <- function(
   test.len <- length(unitizers)
   to.review <- integer(test.len)
   auto.accepted <- 0L
+  eval.which <- integer(0L)
 
   if(length(auto.accept)) {
     over_print("Applying auto-accepts...")
@@ -473,8 +488,6 @@ unitize_browse <- function(
           unitizers[[pick.num]], untz.browsers[[pick.num]],
           force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
         )
-        unitizers[[pick.num]] <- browse.res@unitizer
-        reviewed[[pick.num]] <- TRUE
         updated[[pick.num]] <- browse.res@updated
 
         # Check to see if any need to be re-evaled, and if so, mark unitizers
@@ -484,12 +497,8 @@ unitize_browse <- function(
           pick.num
         } else if(identical(browse.res@re.eval, 2L)) {
           seq.int(test.len)
-        } else integer()
-        if(length(eval.which)) {
-          for(i in seq_along(eval.which)) unitizers[[i]]@eval <- TRUE
-          break
         }
-        if(identical(test.len, 1L)) break
+        if(identical(test.len, 1L) || length(eval.which)) break
         show(summaries)
       }
     } else {
@@ -501,7 +510,7 @@ unitize_browse <- function(
       stop("Need to implement force for non-review tests")
     }
   }
-  unitizers
+  eval.which
 }
 #' Check Not Running in Undesirable Environments
 #'
