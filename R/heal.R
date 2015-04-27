@@ -8,7 +8,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 
 #' Fix Environment Ancestries
 #'
-#' This is an internal method and exposed so that this aspect of \code{`unitizer`}
+#' This is an internal method and exposed so that this aspect of \code{unitizer}
 #' is documented for package users (see Details).
 #'
 #' Environment healing is necessary because when we let the user pick and chose
@@ -20,7 +20,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' for each test, but at the same time, we don't want to store all the
 #' combinations of reference and new objects.
 #'
-#' We only store new objects in \code{`unitizer`}, with the lone exception of
+#' We only store new objects in \code{unitizer}, with the lone exception of
 #' objects associated to a test environment.  These will include any assignments
 #' that occur just prior to a test, as well as any objects created by the
 #' actual test.
@@ -52,7 +52,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' The main takeaway from all this is that reference tests don't really
 #' keep their evaluation environment.  Often this environment is similar
 #' to the new environment.  When there are difference between the two,
-#' the output of \code{`ls`} is customized to highlight
+#' the output of \code{ls} is customized to highlight
 #' which objects were actually available/unmodifed at the time of the
 #' reference test evaluation.  Object names will have the following
 #' symbols appended to explain the object status:
@@ -64,18 +64,18 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   \item **: object was not present during test evaluation, but exists
 #'      in current environment
 #' }
-#' @note Could be more robust by ensuring that items in \code{`x`} actually do
-#'   come from \code{`y`}. This is particularly important since when
-#'   we re-assemble the final list, we don't actually use `x` at all.  Signature
-#'   for this should probably ultimately change to be something like `unitizer`, `x`,
-#'   where x is just a data frame with column 1 the item index, and column 2
-#'   whether it originated from "new" or "ref"
+#' @note Could be more robust by ensuring that items in \code{x} actually do
+#'   come from \code{y}. This is particularly important since when
+#'   we re-assemble the final list, we don't actually use x at all.  Signature
+#'   for this should probably ultimately change to be something like
+#'   \code{c("unitizer", "x")} where x is just a data frame with column 1
+#'   the item index, and column 2 whether it originated from "new" or "ref"
 #'
-#' @seealso \code{`\link{updateLs,unitizerItem-method}`}
-#' @param x \code{`\link{unitizerItems-class}`} object
-#' @param y \code{`\link{unitizer-class}`} object \code{`x`} was generated from
+#' @seealso \code{\link{updateLs,unitizerItem-method}}
+#' @param x \code{\link{unitizerItems-class}} object
+#' @param y \code{\link{unitizer-class}} object \code{x} was generated from
 #' @param ... unused, here for inheriting methods
-#' @return \code{`unitizerItems-class`}
+#' @return \code{unitizerItems-class}
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems",
   function(x, y, ...) {
