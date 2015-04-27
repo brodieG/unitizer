@@ -154,19 +154,21 @@ setMethod(
                 # wtf? intended to be NULL??
               }
             },
-            earlyExit=function(mode="quit") {
+            # a bit lazy to use a restart here, but this simplifies the logic
+            # of being able to effectively have quit pathways from functions
+            # called by this function, as well as functions called by functions
+            # called by this function.
+
+            earlyExit=function(mode="quit", extra=NULL) {
               if(identical(mode, "quit")) {
                 user.quit <<- TRUE
+                if(is(extra, "unitizerBrowse"))
+                  y <<- extra
               } else stop(
                 "Logic Error: unexpected early exit restart value; contact ",
                 "maintainer"
               )
         } ) }
-        warning(
-          "Relying on `earlyExit` makes it impossible to return the status ",
-          "of re-eval", immediate. = TRUE
-        )
-        browser()
         # Get summary of changes
 
         keep <- !y@mapping@ignored
@@ -214,50 +216,52 @@ setMethod(
                 "You have ", unreviewed, " unreviewed tests; press `B` to ",
                 "browse tests, `U` to go to first unreviewed test.\n\n", sep=""
           ) } }
-          actions <- character()
-          if(update) {
-            actions <- c(actions, "update unitizer")
-            nav.hlp <- paste0(
-              "Pressing Y will replace the previous unitizer with a new one, ",
-              "pressing P or B will allow you to re-review your choices.  ",
-              "Pressing N or Q both quit without saving changes to the unitizer"
-            )
-          } else if(!length(x@changes)) {
-            nav.hlp <- paste0(
-              "Pressing Y will exit without saving the unitizer since you ",
-              "did not make any changes.  Pressing P or B will allow you to ",
-              "review any of the decisions you made previously, provided you ",
-              "actually had any to make."
-            )
-          }
-          if(y@re.eval) {
-            if(identical(y@re.eval, 1L)) {
-              actions <- c(actions, "re-evaluate unitizer")
-            } else if(identical(y@re.eval, 2L)) {
-              actions <- c(actions, "re-evaluate all loaded unitizers")
-            } else stop("Logic Error: unexpected re-eval value")
-            nav.hlp <- paste0(
-              nav.hlp,
-              "\n\nAdditionally, pressing Y will cause re-evaluation of ",
-              "unitizers as per your input; any other input will cancel ",
-              "re-valuation request."
-            )
-          }
-          if(update) {
-            word_msg(
-              "You are about to IRREVERSIBLY modify '", getTarget(x), "':",
-              sep=""
-          ) }
-          if(length(x@changes) > 0) show(x@changes)
-
-          valid.opts <- c(
-            Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
-            R="[R]e-evaluate"
-          )
-          nav.msg <- cap_first(paste0(actions, collapse= " and "))
-          word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
-
           repeat {
+
+            actions <- character()
+            if(update) {
+              actions <- c(actions, "update unitizer")
+              nav.hlp <- paste0(
+                "Pressing Y will replace the previous unitizer with a new one, ",
+                "pressing P or B will allow you to re-review your choices.  ",
+                "Pressing N or Q both quit without saving changes to the unitizer"
+              )
+            } else if(!length(x@changes)) {
+              nav.hlp <- paste0(
+                "Pressing Y will exit without saving the unitizer since you ",
+                "did not make any changes.  Pressing P or B will allow you to ",
+                "review any of the decisions you made previously, provided you ",
+                "actually had any to make."
+              )
+            }
+            if(y@re.eval) {
+              if(identical(y@re.eval, 1L)) {
+                actions <- c(actions, "re-evaluate unitizer")
+              } else if(identical(y@re.eval, 2L)) {
+                actions <- c(actions, "re-evaluate all loaded unitizers")
+              } else stop("Logic Error: unexpected re-eval value")
+              nav.hlp <- paste0(
+                nav.hlp,
+                "\n\nAdditionally, pressing Y will cause re-evaluation of ",
+                "unitizers as per your input; any other input will cancel ",
+                "re-valuation request."
+              )
+            }
+            if(update) {
+              word_msg(
+                "You are about to IRREVERSIBLY modify '", getTarget(x), "':",
+                sep=""
+            ) }
+            if(length(x@changes) > 0) show(x@changes)
+
+            valid.opts <- c(
+              Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
+              R="[R]e-evaluate", RR=""
+            )
+            if(!length(actions)) actions <- "exit unitizer"
+            nav.msg <- cap_first(paste0(actions, collapse= " and "))
+            word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
+
             user.input <- navigate_prompt(
               y, curr.id=max(y@mapping@item.id) + 1L,
               text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -626,7 +630,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
               prompt, new.env(parent=parent.env(base.env.pri)), help,
               valid.opts=c(Y="[Y]es", N="[N]o")
             )
-            if(identical(act.conf, "Q")) invokeRestart("earlyExit")
+            if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
             if(identical(act.conf, "N")) return(x)
           }
           indices
@@ -637,7 +641,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@mapping@review.val[rev.ind] <- act
         x@last.id <- max(rev.ind)
       } else if (identical(x.mod, "Q")) {
-        invokeRestart("earlyExit")
+        invokeRestart("earlyExit", extra=x)
       } else {
         stop(
           "Logic Error: `unitizer_prompt` returned unexpected value; ",
