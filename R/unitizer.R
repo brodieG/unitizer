@@ -360,11 +360,29 @@ setMethod("show", "unitizerObjectListSummary",
     scr.width <- getOption("width")
     test.files.trim <- col.names <- fmt <- test.nums <- NA_character_
 
-    test.nums <- paste0(" ", format(seq.int(test.len)), ".")
-    com.dir <- str_reduce_unique(dirname(object@test.files))
+    # Adjust paths so we need only show their common part, and then get the
+    # full name of the directory that they correspond to (as much as possible
+    # anyway)
 
-    test.files.trim <- if(sum(nchar(com.dir))) {
-      file.path(com.dir, basename(object@test.files))
+    test.nums <- paste0(" ", format(seq.int(test.len)), ".")
+    dirs <- dirname(object@test.files)
+    uniq.dir <- str_reduce_unique(dirs)
+    com.dir <- substr(dirs[[1L]], 1L, nchar(dirs[[1L]]) - nchar(uniq.dir[[1L]]))
+    full.dir <- dirs[[1L]]
+
+    repeat {
+      dir.tmp <- dirname(full.dir)
+      if(
+        nchar(dir.tmp) < nchar(com.dir) || !nchar(dir.tmp)
+        || identical(dir.tmp, ".")
+      ) break
+      full.dir <- dir.tmp
+    }
+    cat("\n")
+    word_cat("Summary of files in common directory '", full.dir, "':", sep="")
+
+    test.files.trim <- if(sum(nchar(uniq.dir))) {
+      file.path(uniq.dir, basename(object@test.files))
     } else basename(object@test.files)
 
     # Ignore any columns with zero totals other than pass/fail
