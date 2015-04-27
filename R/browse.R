@@ -40,8 +40,6 @@ setGeneric(
 #' @param y the derivative unitizerBrowse object of x; this needs to be passed
 #'   in as an argument because the logic for generating it is different
 #'   depending on whether we are using `unitize` or `review`.
-#' @param prompt.on.quit whether to prompt for review even if there are no
-#'   changes
 #' @return a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
@@ -73,8 +71,9 @@ setMethod(
     # an opportunity to adjust decisions before committing
 
     update <- FALSE
-    prompt.on.quit <-
+    slow.run <-
       x@eval.time > getOption("unitizer.prompt.b4.quit.time", 10)
+    re.eval <- 0L
 
     something.happened <- any(
       y@mapping@review.type != "Passed" & !y@mapping@ignored
@@ -122,7 +121,7 @@ setMethod(
 
       repeat {
         user.quit <- FALSE
-        re.eval <- 0L
+        re.eval.toggled <- FALSE
 
         if(!user.quit) {
 
@@ -158,20 +157,33 @@ setMethod(
               }
             },
             earlyExit=function(mode="quit") {
-              if(
-                !is.character(mode) ||
-                !isTRUE(mode %in% c("quit", "reeval", "reevalall"))
-              )
-                stop(
-                  "Logic Error: unexpected early exit restart value; contact ",
-                  "maintainer"
-                )
-              user.quit <<- TRUE
-              if(identical(mode, "reeval")) {
-                re.eval <<- 1L
+              if(identical(mode, "quit")) {
+                user.quit <<- TRUE
+              } else if(identical(mode, "reeval")) {
+                if(re.eval) {
+                  word_msg("Disabling re-evaluate")
+                } else {
+                  word_msg("Re-evaluate set")
+                  re.eval <<- 1L
+                }
+                re.eval.toggled <<- TRUE
               } else if (identical(mode, "reevalall")) {
-                re.eval <<- 2L
-        } } ) }
+                if(re.eval) {
+                  word_msg("Disabling re-evaluate")
+                } else {
+                  word_msg("Re-evaluate all set")
+                  re.eval <<- 2L
+                }
+                re.eval.toggled <<- TRUE
+              } else stop(
+                "Logic Error: unexpected early exit restart value; contact ",
+                "maintainer"
+              )
+        } ) }
+        if(re.eval.toggled) {
+          next
+          browser()
+        }
         # Get summary of changes
 
         keep <- !y@mapping@ignored
@@ -185,12 +197,28 @@ setMethod(
         for(i in names(change.sum))
           slot(x@changes, tolower(i)) <- change.sum[[i]]
 
-        if(
+        # Finalize depending on situation
+
+        if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
+          if(y@navigating || re.eval)
+            stop(
+              "Logic Error: should only get here in `auto.accept` mode, ",
+              "contact maintainer"
+            )
+          word_msg("Auto-accepting changes...")
+          update <- TRUE
+          break
+        } else if(
           length(x@changes) > 0L || (
-            something.happened && (prompt.on.quit || !user.quit)
-          )
+            something.happened && (slow.run || !user.quit)
+          ) || re.eval || force.update
         ) {
           print(H2("Finalize Unitizer"))
+
+          # default update status; this can be modified if we cancel on exit
+
+          update <- length(x@changes) || force.update
+
           # Make sure we did not skip anything we were supposed to review
 
           if(identical(y@mode, "unitize")) {
@@ -199,73 +227,52 @@ setMethod(
               !y@mapping@ignored
             )
             if(unreviewed) {
-              message(
-                "You have ", unreviewed, " unreviewed tests; press `R` to see ",
-                "which tests you have skipped, and then `U` to go to first ",
-                "unreviewed."
-        ) } } }
-        # Prompt for user input if necessary to finalize
-
-        if(length(x@changes) == 0L && !force.update && !re.eval) {
-          message(
-            "You didn't accept any changes so there are no items to store."
-          )
-          # on quick unitizer runs just allow quitting without prompt if no changes
-
-          if(!prompt.on.quit && user.quit) {
-            message("unitizer store unchanged")
-            break
-          }
-          valid.opts <- c(Y="[Y]es", P="[P]revious", B="[B]rowse")
-          nav.msg <- "Exit unitizer"
-          nav.hlp <- paste0(
-            "Pressing Y or Q will exit without saving the unitizer since ",
-            "you didn't make any changes.  Pressing B or R will allow you to ",
-            "review any of the decisions you made previously, provided you ",
-            "actually had any to make."
-          )
-        } else {
-          message("You are about to IRREVERSIBLY:")
-          if(length(x@changes) > 0) {
-            update.w.changes <- " updated with all the changes you approved, "
-            show(x@changes)
-          } else {
-            if(!force.update)
-              stop(
-                "Logic Error: should be in forced update mode; contact ",
-                "maintainer."
-              )
-            update.w.changes <- character()
-            word_cat(
-              "replace the existing unitizer with a reloaded version that",
-              "contains the same tests.  If you are seeing this message it is",
-              "because you chose to run in `force.update` mode.  Note that the",
-              "reloaded version of the `unitizer` will not be completely",
-              "identical to the currently stored one.  In particular sections",
-              "and comments will reflect the latest source file, and test",
-              "environments will be re-generated."
+              word_cat(
+                "You have ", unreviewed, " unreviewed tests; press `B` to ",
+                "browse tests, `U` to go to first unreviewed test.\n\n", sep=""
+          ) } }
+          actions <- character()
+          if(update) {
+            actions <- c(actions, "update unitizer")
+            nav.hlp <- paste0(
+              "Pressing Y will replace the previous unitizer with a new one, ",
+              "pressing P or B will allow you to re-review your choices.  ",
+              "Pressing N or Q both quit without saving changes to the unitizer"
+            )
+          } else if(!length(x@changes)) {
+            nav.hlp <- paste0(
+              "Pressing Y will exit without saving the unitizer since you ",
+              "did not make any changes.  Pressing P or B will allow you to ",
+              "review any of the decisions you made previously, provided you ",
+              "actually had any to make."
             )
           }
-          valid.opts <- c(Y="[Y]es", N="[N]o", P="[P]revious", B="[B]rowse")
-          nav.msg <- "Update unitizer"
-          nav.hlp <- paste0(
-            "Pressing Y will replace the previous unitizer with a new one, ",
-            update.w.changes, "pressing R or B will allow you to ",
-            "re-review your choices.  Pressing N or Q both quit without saving ",
-            "changes to the unitizer"
-          )
-        }
-        word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
-        if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
-          if(y@navigating)
-            stop(
-              "Logic Error: should only get here in `auto.accept` mode, ",
-              "contact maintainer"
+          if(re.eval) {
+            if(identical(re.eval, 1L)) {
+              actions <- c(actions, "re-evaluate unitizer")
+            } else if(identical(re.eval, 2L)) {
+              actions <- c(actions, "re-evaluate all loaded unitizers")
+            } else stop("Logic Error: unexpected re-eval value")
+            nav.hlp <- paste0(
+              nav.hlp,
+              "\n\nAdditionally, pressing Y will cause re-evaluation of ",
+              "unitizers as per your input; any other input will cancel ",
+              "re-valuation request."
             )
-          message("Auto-accepting changes...")
-          update <- TRUE
-          break
-        } else {
+          }
+          if(update) {
+            word_msg(
+              "You are about to IRREVERSIBLY modify '", getTarget(x), "':",
+              sep=""
+          ) }
+          if(length(x@changes) > 0) show(x@changes)
+
+          valid.opts <- c(
+            Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
+            R="[R]e-evaluate"
+          )
+          nav.msg <- cap_first(paste0(actions, collapse= " and "))
+          word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
           user.input <- navigate_prompt(
             y, curr.id=max(y@mapping@item.id) + 1L,
             text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -274,23 +281,31 @@ setMethod(
           if(is(user.input, "unitizerBrowse")) {
             y <- user.input
             next
+          } else if (
+            identical(user.input, "R") || identical(user.input, "RR")
+          ) {
+            if(re.eval) {
+              word_msg("Disabling re-evaluate mode")
+              re.eval <- 0L
+            } else if (identical(user.input, "R")) {
+              re.eval <- 1L
+            } else re.eval <- 2L
+            next
           } else if (identical(user.input, "Q") || identical(user.input, "N")) {
-            message("unitizer store unchanged")
-            if(re.eval) message("Re-evaluation disabled")
+            update <- FALSE
+            word_msg("Changes discarded; unitizer store unchanged.")
+            if(re.eval) word_msg("Re-evaluation disabled")
             re.eval <- 0L
             break
           } else if (identical(user.input, "Y")) {
-            # We don't actually want to over-write unitizer store in this case
-
-            if(identical(nav.msg, "Exit unitizer")) {
-              message("unitizer store unchanged")
-            } else {
-              udpate <- TRUE
-            }
             break
           }
           stop("Logic Error; unexpected user input, contact maintainer.")
+        } else {
+          word_msg("No changes recorded; exiting.")
+          break
         }
+        # Prompt for user input if necessary to finalize
     } }
     # Create the new unitizer
 
@@ -574,14 +589,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
       return(x.mod)
     } else if (isTRUE(grepl("^RR?$", x.mod))) {           # Re-eval
       if(identical(nchar(x.mod), 1L)) {
-        message("This `unitizer` will be re-evaluated on exit")
         invokeRestart("earlyExit", "reeval")
       } else if(identical(nchar(x.mod), 1L)) {
-        message("All loaded `unitizer`s will be re-evaluated on exit")
         invokeRestart("earlyExit", "reevalall")
       }
       stop("Logic Error: unknown re-eval mode; contact maintainer.")
-
     } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
       act <- substr(x.mod, 1L, 1L)
       act.times <- nchar(x.mod)
