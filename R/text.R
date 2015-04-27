@@ -339,6 +339,8 @@ word_cat <- function(
   vec <- unlist(strsplit(vec, "\n"))
   invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
+word_msg <- function(...) word_cat(..., file=stderr())
+
 #' Over-write a Line
 #'
 #' @keywords internal
