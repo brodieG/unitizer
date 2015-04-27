@@ -73,7 +73,6 @@ setMethod(
     update <- FALSE
     slow.run <-
       x@eval.time > getOption("unitizer.prompt.b4.quit.time", 10)
-    re.eval <- 0L
 
     something.happened <- any(
       y@mapping@review.type != "Passed" & !y@mapping@ignored
@@ -121,7 +120,6 @@ setMethod(
 
       repeat {
         user.quit <- FALSE
-        re.eval.toggled <- FALSE
 
         if(!user.quit) {
 
@@ -159,31 +157,16 @@ setMethod(
             earlyExit=function(mode="quit") {
               if(identical(mode, "quit")) {
                 user.quit <<- TRUE
-              } else if(identical(mode, "reeval")) {
-                if(re.eval) {
-                  word_msg("Disabling re-evaluate")
-                } else {
-                  word_msg("Re-evaluate set")
-                  re.eval <<- 1L
-                }
-                re.eval.toggled <<- TRUE
-              } else if (identical(mode, "reevalall")) {
-                if(re.eval) {
-                  word_msg("Disabling re-evaluate")
-                } else {
-                  word_msg("Re-evaluate all set")
-                  re.eval <<- 2L
-                }
-                re.eval.toggled <<- TRUE
               } else stop(
                 "Logic Error: unexpected early exit restart value; contact ",
                 "maintainer"
               )
         } ) }
-        if(re.eval.toggled) {
-          next
-          browser()
-        }
+        warning(
+          "Relying on `earlyExit` makes it impossible to return the status ",
+          "of re-eval", immediate. = TRUE
+        )
+        browser()
         # Get summary of changes
 
         keep <- !y@mapping@ignored
@@ -200,7 +183,7 @@ setMethod(
         # Finalize depending on situation
 
         if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
-          if(y@navigating || re.eval)
+          if(y@navigating || y@re.eval)
             stop(
               "Logic Error: should only get here in `auto.accept` mode, ",
               "contact maintainer"
@@ -211,7 +194,7 @@ setMethod(
         } else if(
           length(x@changes) > 0L || (
             something.happened && (slow.run || !user.quit)
-          ) || re.eval || force.update
+          ) || y@re.eval || force.update
         ) {
           print(H2("Finalize Unitizer"))
 
@@ -247,10 +230,10 @@ setMethod(
               "actually had any to make."
             )
           }
-          if(re.eval) {
-            if(identical(re.eval, 1L)) {
+          if(y@re.eval) {
+            if(identical(y@re.eval, 1L)) {
               actions <- c(actions, "re-evaluate unitizer")
-            } else if(identical(re.eval, 2L)) {
+            } else if(identical(y@re.eval, 2L)) {
               actions <- c(actions, "re-evaluate all loaded unitizers")
             } else stop("Logic Error: unexpected re-eval value")
             nav.hlp <- paste0(
@@ -273,39 +256,41 @@ setMethod(
           )
           nav.msg <- cap_first(paste0(actions, collapse= " and "))
           word_cat(nav.msg, paste0("(", paste0(valid.opts, collapse=", "), ")?"))
-          user.input <- navigate_prompt(
-            y, curr.id=max(y@mapping@item.id) + 1L,
-            text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
-            valid.opts=valid.opts
-          )
-          if(is(user.input, "unitizerBrowse")) {
-            y <- user.input
-            next
-          } else if (
-            identical(user.input, "R") || identical(user.input, "RR")
-          ) {
-            if(re.eval) {
-              word_msg("Disabling re-evaluate mode")
-              re.eval <- 0L
-            } else if (identical(user.input, "R")) {
-              re.eval <- 1L
-            } else re.eval <- 2L
-            next
-          } else if (identical(user.input, "Q") || identical(user.input, "N")) {
-            update <- FALSE
-            word_msg("Changes discarded; unitizer store unchanged.")
-            if(re.eval) word_msg("Re-evaluation disabled")
-            re.eval <- 0L
-            break
-          } else if (identical(user.input, "Y")) {
-            break
+
+          repeat {
+            user.input <- navigate_prompt(
+              y, curr.id=max(y@mapping@item.id) + 1L,
+              text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
+              valid.opts=valid.opts
+            )
+            if(is(user.input, "unitizerBrowse")) {
+              y <- user.input
+              loop.status <- "n"
+              break
+            } else if (isTRUE(grepl("^RR?$", user.input))) {      # Re-eval
+              y <- toggleReeval(y, user.input)
+              next
+            } else if (grepl("^[QN]$", user.input)) {
+              update <- FALSE
+              word_msg("Changes discarded; unitizer store unchanged.")
+              if(y@re.eval) word_msg("Re-evaluation disabled")
+              y@re.eval <- 0L
+              loop.status <- "b"
+              break
+            } else if (identical(user.input, "Y")) {
+              loop.status <- "b"
+              break
+            }
+            stop("Logic Error: unhandled user action")
           }
-          stop("Logic Error; unexpected user input, contact maintainer.")
+          switch(  # needed to handle multi level break
+            loop.status, b=break, n=next,
+            stop("Logic Error: invalid loop status, contact maintainer.")
+          )
         } else {
           word_msg("No changes recorded; exiting.")
           break
         }
-        # Prompt for user input if necessary to finalize
     } }
     # Create the new unitizer
 
@@ -335,7 +320,8 @@ setMethod(
     # Return structure
 
     new(
-      "unitizerBrowseResult", unitizer=unitizer, re.eval=re.eval, updated=update
+      "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
+      updated=update
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
@@ -573,94 +559,109 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # unitizerBrowse to be at the appropriate location; this is done as a function
     # because same logic is re-used elsewhere
 
-    if(
-      is(
-        x.mod <- navigate_prompt(
-          x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
-          browse.env1=browse.eval.env,
-          browse.env2=new.env(parent=parent.env(base.env.pri)),
-          valid.opts=valid.opts,
-          help=c(
-            help.prompt, paste0(as.character(UL(help.opts)), collapse="\n")
-        ) ),
-        "unitizerBrowse"
-      )
-    ) {
-      return(x.mod)
-    } else if (isTRUE(grepl("^RR?$", x.mod))) {           # Re-eval
-      if(identical(nchar(x.mod), 1L)) {
-        invokeRestart("earlyExit", "reeval")
-      } else if(identical(nchar(x.mod), 1L)) {
-        invokeRestart("earlyExit", "reevalall")
-      }
-      stop("Logic Error: unknown re-eval mode; contact maintainer.")
-    } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
-      act <- substr(x.mod, 1L, 1L)
-      act.times <- nchar(x.mod)
-      rev.ind <- if(act.times == 1L) {
-        curr.id
-      } else {
-        rev.ind.tmp <- if (act.times == 2L) {
-          cur.sub.sec.items                # all items in sub section
-        } else if (act.times == 3L) {
-          x@mapping@sec.id == curr.sec     # all items in sub-section
-        } else if (act.times == 4L) {
-          TRUE                             # all items
-        } else
-          stop("Logic Error: unexpected number of Y/N; contact maintainer.")
-
-        # exclude already reviewed items as well as ignored items as well as
-        # passed items (unless in review mode for last one)
-
-        indices <- which(
-          rev.ind.tmp & !x@mapping@reviewed & !x@mapping@ignored &
-          (x@mapping@review.type != "Passed" & !identical(x@mode, "review"))
+    repeat {   # repeat needed just for re-eval toggle
+      if(
+        is(
+          x.mod <- navigate_prompt(
+            x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
+            browse.env1=browse.eval.env,
+            browse.env2=new.env(parent=parent.env(base.env.pri)),
+            valid.opts=valid.opts,
+            help=c(
+              help.prompt, paste0(as.character(UL(help.opts)), collapse="\n")
+          ) ),
+          "unitizerBrowse"
         )
-        if(length(indices)) {
-          show(x[indices])
-          help.mx <- rbind(
-            c("Add New", "Keep New", "Drop Ref", "Drop New", "Keep New"),
-            c("Drop New", "Keep Ref", "Keep Ref", "Keep New", "Keep Ref")
-          )
-          rownames(help.mx) <- c("[Y]es", "[N]o")
-          colnames(help.mx) <- c(
-            "*New*", "*Failed*", "*Removed*", "*Passed*", "*Corrupted*"
-          )
-          help.txt <- capture.output(print(as.data.frame(help.mx), quote=TRUE))
-          help <- paste0(
-            paste0(
-              "The effect of 'Y' or 'N' depends on what type of test you ",
-              "are reviewing.  Consult the following table for details:\n\n"
-            ),
-            paste0(help.txt, collapse="\n")
-          )
-          prompt <- paste0(
-            "Choose '", act, "' for the ", length(indices),
-            " test", if(length(indices) > 1L) "s", " shown above"
-          )
-          cat(prompt, " ([Y]es, [N]o)?\n", sep="")
-          act.conf <- unitizer_prompt(
-            prompt, new.env(parent=parent.env(base.env.pri)), help,
-            valid.opts=c(Y="[Y]es", N="[N]o")
-          )
-          if(identical(act.conf, "Q")) invokeRestart("earlyExit")
-          if(identical(act.conf, "N")) return(x)
-        }
-        indices
-      }
-      if(!any(rev.ind)) stop("Logic Error: no tests to accept/reject")
+      ) {
+        return(x.mod)
+      } else if (isTRUE(grepl("^RR?$", x.mod))) {           # Re-eval
+        x <- toggleReeval(x, x.mod)
+        next
+      } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
+        act <- substr(x.mod, 1L, 1L)
+        act.times <- nchar(x.mod)
+        rev.ind <- if(act.times == 1L) {
+          curr.id
+        } else {
+          rev.ind.tmp <- if (act.times == 2L) {
+            cur.sub.sec.items                # all items in sub section
+          } else if (act.times == 3L) {
+            x@mapping@sec.id == curr.sec     # all items in sub-section
+          } else if (act.times == 4L) {
+            TRUE                             # all items
+          } else
+            stop("Logic Error: unexpected number of Y/N; contact maintainer.")
 
-      x@mapping@reviewed[rev.ind] <- TRUE
-      x@mapping@review.val[rev.ind] <- act
-      x@last.id <- max(rev.ind)
-    } else if (identical(x.mod, "Q")) {
-      invokeRestart("earlyExit")
-    } else {
-      stop(
-        "Logic Error: `unitizer_prompt` returned unexpected value; ",
-        "contact maintainer"
-      )
+          # exclude already reviewed items as well as ignored items as well as
+          # passed items (unless in review mode for last one)
+
+          indices <- which(
+            rev.ind.tmp & !x@mapping@reviewed & !x@mapping@ignored &
+            (x@mapping@review.type != "Passed" & !identical(x@mode, "review"))
+          )
+          if(length(indices)) {
+            show(x[indices])
+            help.mx <- rbind(
+              c("Add New", "Keep New", "Drop Ref", "Drop New", "Keep New"),
+              c("Drop New", "Keep Ref", "Keep Ref", "Keep New", "Keep Ref")
+            )
+            rownames(help.mx) <- c("[Y]es", "[N]o")
+            colnames(help.mx) <- c(
+              "*New*", "*Failed*", "*Removed*", "*Passed*", "*Corrupted*"
+            )
+            help.txt <- capture.output(print(as.data.frame(help.mx), quote=TRUE))
+            help <- paste0(
+              paste0(
+                "The effect of 'Y' or 'N' depends on what type of test you ",
+                "are reviewing.  Consult the following table for details:\n\n"
+              ),
+              paste0(help.txt, collapse="\n")
+            )
+            prompt <- paste0(
+              "Choose '", act, "' for the ", length(indices),
+              " test", if(length(indices) > 1L) "s", " shown above"
+            )
+            cat(prompt, " ([Y]es, [N]o)?\n", sep="")
+            act.conf <- unitizer_prompt(
+              prompt, new.env(parent=parent.env(base.env.pri)), help,
+              valid.opts=c(Y="[Y]es", N="[N]o")
+            )
+            if(identical(act.conf, "Q")) invokeRestart("earlyExit")
+            if(identical(act.conf, "N")) return(x)
+          }
+          indices
+        }
+        if(!any(rev.ind)) stop("Logic Error: no tests to accept/reject")
+
+        x@mapping@reviewed[rev.ind] <- TRUE
+        x@mapping@review.val[rev.ind] <- act
+        x@last.id <- max(rev.ind)
+      } else if (identical(x.mod, "Q")) {
+        invokeRestart("earlyExit")
+      } else {
+        stop(
+          "Logic Error: `unitizer_prompt` returned unexpected value; ",
+          "contact maintainer"
+        )
+      }
+      break
     }
     x
   }
 )
+#' Re-eval toggling, only b/c we need to do it in a couple of places'
+#' @keywords internal
+
+setGeneric("toggleReeval", function(x, ...) standardGeneric("toggleReeval"))
+setMethod("toggleReeval", "unitizerBrowse",
+  function(x, y, ...) {
+    re.status <- if(x@re.eval) "OFF" else "ON"
+    re.mode <- switch(
+      nchar(y), "this `unitizer`", "all loaded `unitizer`s"
+    )
+    word_msg("Toggling re-eval mode", re.status, "for", re.mode)
+    x@re.eval <- if(x@re.eval) 0L else nchar(y)
+    x
+})
+
+

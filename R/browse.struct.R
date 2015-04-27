@@ -230,7 +230,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     review="logical",          # whether to force-show review menu or not
     inspect.all="logical",     # whether to force inspection of all elements, whether ignored/passed or not
     navigating="logical",      # whether user has triggered at least one navigation command
-    human="logical"            # whether user has had any interaction at all
+    human="logical",           # whether user has had any interaction at all
+    re.eval="integer"          # so navigate prompt can communciate back re-eval status
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -241,7 +242,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     review=FALSE,
     inspect.all=FALSE,
     navigating=FALSE,
-    human=FALSE
+    human=FALSE,
+    re.eval=0L
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -253,6 +255,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@inspect.all` must be logical(1L) and not NA.")
     if(length(object@navigating) != 1L || is.na(object@navigating))
       return("Slot `@navigating` must be logical(1L) and not NA.")
+    if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
+      return("Slot `@re.eval` must be integer(1L) and in 0:2")
     TRUE
   }
 )
