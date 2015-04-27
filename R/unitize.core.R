@@ -402,7 +402,7 @@ unitize_browse <- function(
   reviewed <- updated <- logical(test.len)
   over_print("")
   if(!interactive.mode) {
-    if(!sum(to.review)) {
+    if(sum(to.review)) {
       for(i in which(to.review > 0L)) {
         untz <- unitizers[[i]]
         delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
@@ -437,6 +437,7 @@ unitize_browse <- function(
         "Type number of unitizer to review, or 'A' to review all that require ",
         "review (those with '*' ahead of their number)"
       )
+      warning("haven't implemented 'A'", immediate.=TRUE)
       repeat {
         if(test.len > 1L) {
           pick <- try(
@@ -491,6 +492,8 @@ unitize_browse <- function(
         if(identical(test.len, 1L)) break
         show(summaries)
       }
+    } else {
+      message("All tests passed; nothing to review.")
     }
     # Force update stuff if needed; need to know what has already been stored
 
