@@ -56,6 +56,14 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
       if(inherits(attempt, "try-error"))
         message("Unable to store '", getTarget(browse.res@unitizer, "'"))
     }
+    # Note how we don't actually return the result unitizer, but rather the
+    # original one since that one will be re-used  in `unitize_browse` if it
+    # isn't re-evaled, and the one stored here isn't in correct format for that
+    # anymore.  Also note that `x` is actually modified since we mess with the
+    # environments in `browseUnitizerInternal`
+
+    x@updated <- browse.res@updated
+    browse.res@unitizer <- x
     browse.res
   }
 )

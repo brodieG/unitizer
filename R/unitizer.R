@@ -66,8 +66,9 @@ setClass(
     zero.env="environment",       # keep functions and stuff here
     base.env="environment",
     test.file.loc="character",    # location of teset file that produced `unitizer`
-    eval="logical",                # internal used during browsing to determine a re-eval instruction by user
+    eval="logical",               # internal used during browsing to determine a re-eval instruction by user
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
+    updated="logical",            # whether this unitizer has been queued for update
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -104,7 +105,8 @@ setClass(
     zero.env=baseenv(),
     test.file.loc=NA_character_,
     eval=FALSE,
-    eval.time=0
+    eval.time=0,
+    updated=FALSE
   ),
   validity=function(object) {
     if(length(object@items.ref)) {
@@ -126,23 +128,6 @@ setClass(
         )
           return("slot `test.file.loc` must be a properly normalized path")
       }
-      if(!is.object(object@id) && is.character(object@id)) { # default id format
-        if(
-          !file_test("-d", dirname(object@id)) ||
-          !identical(dirname(object@id), normalizePath(dirname(object@id)))
-        )
-          return(
-            paste0(
-              "slot `id` must be a properly normalized directory when using ",
-              "default `unitizer` stores."
-          ) )
-      }
-      if(
-        !identical(length(object@eval.time), 1L) || is.na(object@eval.time) ||
-        object@eval.time < 0L
-      )
-        return("slot `eval.time` must be length 1L, positive, and not NA")
-
       # Randomly test a subset of the items for validity (testing all becomes
       # too time consuming)
 
@@ -159,6 +144,24 @@ setClass(
             "pick up to three reference tests to check validity)."
         ) )
     }
+    if(!is.object(object@id) && is.character(object@id)) { # default id format
+      if(
+        !file_test("-d", dirname(object@id)) ||
+        !identical(dirname(object@id), normalizePath(dirname(object@id)))
+      )
+        return(
+          paste0(
+            "slot `id` must be a properly normalized directory when using ",
+            "default `unitizer` stores."
+        ) )
+    }
+    if(
+      !identical(length(object@eval.time), 1L) || is.na(object@eval.time) ||
+      object@eval.time < 0L
+    )
+      return("slot `eval.time` must be length 1L, positive, and not NA")
+    if(!isTRUE(object@updated) && !identical(FALSE, object@updated))
+      return("slot `updated` must be TRUE or FALSE")
     TRUE
   }
 )
@@ -195,12 +198,14 @@ setClass(
 } )
 setClass(
   "unitizerObjectListSummary", contains="unitizerList",
-  slots=c(test.files="character", totals="integer"),
+  slots=c(test.files="character", totals="integer", updated="logical"),
   validity=function(object) {
     if(!all(vapply(object@.items, is, logical(1L), "unitizerSummary")))
       return("slot `.items` may only contain \"unitizer\" objects")
     if(length(object@.items) != length(object@test.files))
       return("slot `items` and slot `test.files` must be same length")
+    if(length(object@.items) != length(object@updated))
+      return("slot `items` and slot `updated` must be same length")
     TRUE
 } )
 # - Methods -------------------------------------------------------------------
@@ -348,13 +353,14 @@ setMethod("summary", "unitizerObjectList",
     obj.list <- as.list(object)
     summaries <- lapply(obj.list, summary, silent=TRUE)
     test.files <- vapply(obj.list, slot, character(1L), "test.file.loc")
+    updated <- vapply(obj.list, slot, logical(1L), "updated")
 
     if(length(summaries)) {  # get aggregate results across all summaries
       totals <- Reduce(`+`, lapply(as.list(summaries), slot, "totals"))
     } else totals <- integer()
     res <- new(
       "unitizerObjectListSummary", .items=summaries, test.files=test.files,
-      totals=totals
+      totals=totals, updated=updated
     )
     if(!silent) show(res)
     res
@@ -409,16 +415,18 @@ setMethod("show", "unitizerObjectListSummary",
     )
     cat(header <- do.call(sprintf, c(list(fmt, "", ""), as.list(col.names))))
     for(i in seq_along(object)) {
-      test.num <- if(!passed(object[[i]])) {
-        sub(" (\\d+)", "*\\1", test.nums[[i]])
+      tot.txt <- object[[i]]@totals[keep.cols]
+      if(object@updated[[i]]) {
+        tot.txt <- rep("?", length(keep.cols))
+        test.num <- sub(" (\\d+)", "$\\1", test.nums[[i]])
+      } else if(!passed(object[[i]])) {
+        test.num <- sub(" (\\d+)", "*\\1", test.nums[[i]])
       } else test.nums[[i]]
       cat(
         do.call(
           sprintf,
-          c(
-            list(fmt, test.num, test.files.trim[[i]]),
-            as.list(object[[i]]@totals[keep.cols])
-    ) ) ) }
+          c(list(fmt, test.num, test.files.trim[[i]]), as.list(tot.txt))
+    ) ) }
     cat(rep("-", nchar(header)), "\n", sep="")
     cat(
       do.call(sprintf, c(list(fmt, "", ""), as.list(object@totals[keep.cols])))

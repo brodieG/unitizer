@@ -261,7 +261,9 @@ unitize_core <- function(
 
   check_call_stack()  # Make sure nothing untoward will happen if a test triggers an error
 
-  while(length(eval.which) || mode == "review") {
+  while(
+    length(eval.which) || mode == "review"
+  ) {
     # Load unitizers
 
     unitizers[eval.which] <- unitize_load(
@@ -270,19 +272,19 @@ unitize_core <- function(
     # Now evaluate, whether a `unitizer` is evaluated or not is a function of
     # the slot @eval, set just above as they are loaded
 
-    unitizers[eval.which] <- unitize_eval(
-      tests.parsed=tests.parsed[eval.which], unitizers=unitizers[eval.which]
-    )
+    unitizers <- unitize_eval(tests.parsed=tests.parsed, unitizers=unitizers)
+
     # Gather user input, and store tests as required.  Any `unitizer`s that
     # the user marked for re-evaluation will be re-evaluated in this loop
 
-    eval.which <- unitize_browse(
+    unitizers <- unitize_browse(
       unitizers=unitizers,
       mode=mode,
       interactive.mode=interactive.mode,
       force.update=force.update,
       auto.accept=auto.accept
     )
+    eval.which <- vapply(as.list(unitizers), slot, logical(1L), "eval")
   }
   # - Finalize -----------------------------------------------------------------
 
@@ -489,6 +491,7 @@ unitize_browse <- function(
           force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
         )
         updated[[pick.num]] <- browse.res@updated
+        unitizers[[pick.num]] <- browse.res@unitizer
 
         # Check to see if any need to be re-evaled, and if so, mark unitizers
         # and return
@@ -498,8 +501,9 @@ unitize_browse <- function(
         } else if(identical(browse.res@re.eval, 2L)) {
           seq.int(test.len)
         }
+        for(i in eval.which) unitizers[[i]]@eval <- TRUE
         if(identical(test.len, 1L) || length(eval.which)) break
-        show(summaries)
+        summaries <- summary(unitizers)
       }
     } else {
       message("All tests passed; nothing to review.")
@@ -510,7 +514,7 @@ unitize_browse <- function(
       stop("Need to implement force for non-review tests")
     }
   }
-  eval.which
+  unitizers
 }
 #' Check Not Running in Undesirable Environments
 #'
