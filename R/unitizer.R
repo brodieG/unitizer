@@ -421,7 +421,7 @@ setMethod("show", "unitizerObjectListSummary",
         test.num <- sub(" (\\d+)", "$\\1", test.nums[[i]])
       } else if(!passed(object[[i]])) {
         test.num <- sub(" (\\d+)", "*\\1", test.nums[[i]])
-      } else test.nums[[i]]
+      } else test.num <- test.nums[[i]]
       cat(
         do.call(
           sprintf,

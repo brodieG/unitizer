@@ -355,7 +355,6 @@ unitize_eval <- function(tests.parsed, unitizers) {
       if(test.len > 1L)
         over_print(paste0("Evaluated: ", unitizer@test.file.loc, "\n"))
     } else {
-      stop("Logic Error: should never get here")
       unitizers[[i]] <- unitizer
     }
     unitizers[[i]]@eval <- FALSE
@@ -458,8 +457,9 @@ unitize_browse <- function(
       repeat {
         if(test.len > 1L) {
           pick <- try(
-            simple_prompt(prompt, c("A", "Q", seq.int(test.len)), attempts=10L)
-          )
+            simple_prompt(
+              prompt, c("A", "Q", "R", seq.int(test.len)), attempts=10L
+          ) )
           if(inherits(pick, "try-error")) {
             message(
               "Error occurred while waiting for unitizer selection, aborting"
@@ -469,6 +469,11 @@ unitize_browse <- function(
             stop("INTERNAL: need to handle unreviewed unitizers?")
           } else if(identical(pick, "A")) {
             stop("Need Review-all mode")
+          } else if(identical(pick, "R")) {
+            eval.which <- which(
+              vapply(as.list(unitizers), slot, logical(1L), "updated")
+            )
+            pick.num <- 0L
           } else {
             pick.num <- as.integer(pick)
             if(!pick.num %in% seq.int(test.len))
@@ -479,28 +484,30 @@ unitize_browse <- function(
           }
         } else pick.num <- 1L
 
-        print(
-          H1(
-            paste0(
-              "unitizer for: ", getName(unitizers[[pick.num]]), collapse=""
-        ) ) )
-        show(summaries[[pick.num]])
-        cat("\n")
-        browse.res <- browseUnitizer(
-          unitizers[[pick.num]], untz.browsers[[pick.num]],
-          force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
-        )
-        updated[[pick.num]] <- browse.res@updated
-        unitizers[[pick.num]] <- browse.res@unitizer
+        if(pick.num) {
+          print(
+            H1(
+              paste0(
+                "unitizer for: ", getName(unitizers[[pick.num]]), collapse=""
+          ) ) )
+          show(summaries[[pick.num]])
+          cat("\n")
+          browse.res <- browseUnitizer(
+            unitizers[[pick.num]], untz.browsers[[pick.num]],
+            force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
+          )
+          updated[[pick.num]] <- browse.res@updated
+          unitizers[[pick.num]] <- browse.res@unitizer
 
-        # Check to see if any need to be re-evaled, and if so, mark unitizers
-        # and return
+          # Check to see if any need to be re-evaled, and if so, mark unitizers
+          # and return
 
-        eval.which <- if(identical(browse.res@re.eval, 1L)) {
-          pick.num
-        } else if(identical(browse.res@re.eval, 2L)) {
-          seq.int(test.len)
-        }
+          eval.which <- if(identical(browse.res@re.eval, 1L)) {
+            pick.num
+          } else if(identical(browse.res@re.eval, 2L)) {
+            seq.int(test.len)
+        } }
+
         for(i in eval.which) unitizers[[i]]@eval <- TRUE
         if(identical(test.len, 1L) || length(eval.which)) break
         summaries <- summary(unitizers)
