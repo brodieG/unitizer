@@ -99,28 +99,6 @@ setMethod(
       )
       update <- TRUE
     } else {
-      # set up local history
-
-      savehistory()
-      hist.file <- tempfile()
-      hist.con <- file(hist.file, "at")
-      cat(
-        "## <unitizer> (original history will be restored on exit)\n",
-        file=hist.con
-      )
-      loadhistory(showConnections()[as.character(hist.con), "description"])
-
-      # Revert history and trace on exit
-
-      #curr.trace <- .Traceback
-      on.exit( {
-        close(hist.con);
-        file.remove(hist.file);
-        loadhistory();
-        #assign(".Traceback", curr.trace, envir=getNamespace("base"))
-      } )
-      y@hist.con <- hist.con  # User expression to this file for use in history
-
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
 

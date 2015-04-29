@@ -163,17 +163,17 @@ unitize_core <- function(
       ":\n"
     )
     print(UL(dir.names.clean))
-    pick <- try(simple_prompt(paste0("Create ", dir.word, "?")))
-    if(inherits(pick, "try-error")) stop("Error gathering user input")
+    prompt <- paste0("Create ", dir.word)
+    word_cat(prompt, "?", sep="")
+
+    pick <- unitizer_prompt(prompt, valid.opts=c(Y="[Y]es", N="[N]o"))
     if(!identical(pick, "Y"))
       stop("Cannot proceed without creating directories.")
     if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
       stop(
         "Cannot proceed, failed to create the following directories:\n",
         paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
-      )
-    }
-  }
+  ) } }
   # Ensure directory names are normalized, but only if dealing with char objects
 
   norm.attempt < try(
@@ -380,8 +380,12 @@ unitize_browse <- function(
     return(unitizers)
   }
   over_print("Prepping Unitizers...")
-  untz.browsers <- lapply(as.list(unitizers), browsePrep, mode=mode)
+  hist.obj <- history_capt()
+  on.exit(history_release(hist.obj))
 
+  untz.browsers <- lapply(
+    as.list(unitizers), browsePrep, mode=mode, hist.con=hist.obj$con
+  )
   # Decide what to keep / override / etc.
   # Apply auto-accepts, if any (shouldn't be any in "review mode")
 
@@ -460,16 +464,13 @@ unitize_browse <- function(
 
         if(test.len > 1L) {
           pick.num <- integer()
-          pick <- try(
-            simple_prompt(
-              prompt, c("A", "Q", "R", seq.int(test.len)), attempts=10L
-          ) )
-          if(inherits(pick, "try-error")) {
-            word_msg(
-              "Error occurred while waiting for unitizer selection, aborting"
-            )
-            break
-          } else if(identical(pick, "Q")) {
+          pick <- unitizer_prompt(
+            "Pick a `unitizer` or an option",
+            valid.opts=c(A="[A]ll", "[R]e-eval"),
+            exit.condition=exit_fun, valid.vals=seq.int(test.len),
+            hist.con=hist.obj$con
+          )
+          if(identical(pick, "Q")) {
             if(
               Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
               getOption("unitizer.prompt.b4.quit.time", 10)
@@ -484,12 +485,13 @@ unitize_browse <- function(
             eval.which <- which(updated)
           } else {
             pick.num <- as.integer(pick)
-            if(!pick.num %in% seq.int(test.len))
-              stop(
-                "Logic Error: invalid unitizer selected somehow; contact ",
-                "maintainer."
+            if(!pick.num %in% seq.int(test.len)) {
+              word_msg(
+                "Input not a valid `unitizer`; choose in ",
+                deparse(seq.int(test.len))
               )
-          }
+              next
+          } }
         } else pick.num <- 1L
 
         for(i in pick.num) {
@@ -575,4 +577,25 @@ check_call_stack <- function() {
       "maintainer."
     )
 }
+#' History Management Funs
+#'
+#'
 
+history_capt <- function() {
+  # set up local history
+
+  savehistory()
+  hist.file <- tempfile()
+  hist.con <- file(hist.file, "at")
+  cat(
+    "## <unitizer> (original history will be restored on exit)\n",
+    file=hist.con
+  )
+  loadhistory(showConnections()[as.character(hist.con), "description"])
+  list(con=hist.con, file=hist.file)
+}
+history_release <- function(hist.obj) {
+  close(hist.obj$con)
+  file.remove(hist.obj$file)
+  loadhistory()
+}
