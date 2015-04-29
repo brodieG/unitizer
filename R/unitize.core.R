@@ -383,8 +383,20 @@ unitize_browse <- function(
   hist.obj <- history_capt()
   on.exit(history_release(hist.obj))
 
-  untz.browsers <- lapply(
-    as.list(unitizers), browsePrep, mode=mode, hist.con=hist.obj$con
+  # Get summaries
+
+  test.len <- length(unitizers)
+  summaries <- summary(unitizers, silent=TRUE)
+  totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
+  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
+
+  # Determine implied review mode (all tests passed in a particular `unitizer`,
+  # but user may still pick it to review)
+
+  review.mode <- ifelse(!to.review & test.len > 1L, "review", mode)
+  untz.browsers <- mapply(
+    browsePrep, as.list(unitizers), review.mode,
+    MoreArgs=list(hist.con=hist.obj$con), SIMPLIFY=FALSE
   )
   # Decide what to keep / override / etc.
   # Apply auto-accepts, if any (shouldn't be any in "review mode")
@@ -393,7 +405,6 @@ unitize_browse <- function(
   # than once, where previous choices are over-written by the auto-accepts?
   # maybe auto-accepts only get applied first time around?
 
-  test.len <- length(unitizers)
   auto.accepted <- 0L
 
   if(length(auto.accept)) {
@@ -407,11 +418,6 @@ unitize_browse <- function(
         untz.browsers[[i]]@mapping@reviewed[auto.type] <- TRUE
         auto.accepted <- auto.accepted + length(auto.type)
   } } }
-  # Get summaries
-
-  summaries <- summary(unitizers, silent=TRUE)
-  totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
-  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
 
   # - Non-interactive ----------------------------------------------------------
 
@@ -504,7 +510,7 @@ unitize_browse <- function(
           cat("\n")
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]],
-            force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
+            force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers
           )
           updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer
