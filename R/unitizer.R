@@ -413,13 +413,17 @@ setMethod("show", "unitizerObjectListSummary",
       "%", max(nchar(test.nums)), "s %", max.file.chars, "s ",
       paste0(rep(paste0(" %", num.width, "s"), col.count), collapse=""), "\n"
     )
+    review.req <- !vapply(as.list(object), passed, logical(1L))
+
+    # Display
+
     cat(header <- do.call(sprintf, c(list(fmt, "", ""), as.list(col.names))))
     for(i in seq_along(object)) {
       tot.txt <- object[[i]]@totals[keep.cols]
       if(object@updated[[i]]) {
         tot.txt <- rep("?", length(keep.cols))
         test.num <- sub(" (\\d+)", "$\\1", test.nums[[i]])
-      } else if(!passed(object[[i]])) {
+      } else if(review.req[[i]]) {
         test.num <- sub(" (\\d+)", "*\\1", test.nums[[i]])
       } else test.num <- test.nums[[i]]
       cat(
@@ -427,10 +431,24 @@ setMethod("show", "unitizerObjectListSummary",
           sprintf,
           c(list(fmt, test.num, test.files.trim[[i]]), as.list(tot.txt))
     ) ) }
+    # Totals
+
     cat(rep("-", nchar(header)), "\n", sep="")
+    full.tot.txt <- if(any(object@updated)) {
+      rep("?", length(keep.cols))
+    } else object@totals[keep.cols]
     cat(
-      do.call(sprintf, c(list(fmt, "", ""), as.list(object@totals[keep.cols])))
+      do.call(sprintf, c(list(fmt, "", ""), as.list(full.tot.txt)))
     )
+    # Legends
+
+    if(any(review.req || object@updated)) word_cat("Legend:")
+    if(any(review.req)) word_cat("* `unitizer` requires review")
+    if(any(object@updated))
+      word_cat(
+        "$ `unitizer` has been updated and needs to be re-evaluted to",
+        "re-compute summary"
+      )
     invisible(NULL)
 } )
 setGeneric(

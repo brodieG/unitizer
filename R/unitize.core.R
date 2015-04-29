@@ -284,7 +284,7 @@ unitize_core <- function(
       force.update=force.update,
       auto.accept=auto.accept
     )
-    eval.which <- vapply(as.list(unitizers), slot, logical(1L), "eval")
+    eval.which <- which(vapply(as.list(unitizers), slot, logical(1L), "eval"))
   }
   # - Finalize -----------------------------------------------------------------
 
@@ -390,9 +390,7 @@ unitize_browse <- function(
   # maybe auto-accepts only get applied first time around?
 
   test.len <- length(unitizers)
-  to.review <- integer(test.len)
   auto.accepted <- 0L
-  eval.which <- integer(0L)
 
   if(length(auto.accept)) {
     over_print("Applying auto-accepts...")
@@ -409,7 +407,7 @@ unitize_browse <- function(
 
   summaries <- summary(unitizers, silent=TRUE)
   totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
-  to.review <- colSums(totals[-1L, , drop=FALSE])  # First row will be passed
+  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
 
   # - Non-interactive ----------------------------------------------------------
 
@@ -418,8 +416,8 @@ unitize_browse <- function(
   reviewed <- updated <- logical(test.len)
   over_print("")
   if(!interactive.mode) {
-    if(sum(to.review)) {
-      for(i in which(to.review > 0L)) {
+    if(any(to.review)) {
+      for(i in which(to.review)) {
         untz <- unitizers[[i]]
         delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
         message(
@@ -443,37 +441,47 @@ unitize_browse <- function(
   # - Interactive --------------------------------------------------------------
 
     if(test.len > 1L) show(summaries)
-    if(identical(mode, "review") || sum(to.review)) {
+    if(identical(mode, "review") || any(to.review)) {
       # We have fairly different treatment for a single test versus multi-test
       # review, so the logic gets a little convoluted (keep eye out for)
       # `test.len > 1L`, but this obviates the need for multiple different calls
       # to `browseUnitizers`
 
       prompt <- paste0(
-        "Type number of unitizer to review, or 'A' to review all that require ",
-        "review (those with '*' ahead of their number)"
+        "\nType number of unitizer to review",
+        if(any(to.review))
+          ", 'A' to review all that require review",
+        if(any(updated))
+          ", 'R' to re-evaluate all updated"
       )
-      warning("haven't implemented 'A'", immediate.=TRUE)
       repeat {
+        eval.which <- integer(0L)
+        updated <- vapply(as.list(unitizers), slot, logical(1L), "updated")
+
         if(test.len > 1L) {
+          pick.num <- integer()
           pick <- try(
             simple_prompt(
               prompt, c("A", "Q", "R", seq.int(test.len)), attempts=10L
           ) )
           if(inherits(pick, "try-error")) {
-            message(
+            word_msg(
               "Error occurred while waiting for unitizer selection, aborting"
             )
             break
           } else if(identical(pick, "Q")) {
-            stop("INTERNAL: need to handle unreviewed unitizers?")
+            if(
+              Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
+              getOption("unitizer.prompt.b4.quit.time", 10)
+            ) {
+              ui <- try(simple_prompt("Are you sure you want to quit?"))
+              if(identical(ui, "N")) next
+            }
+            break
           } else if(identical(pick, "A")) {
-            stop("Need Review-all mode")
+            pick.num <- which(to.review & !updated)
           } else if(identical(pick, "R")) {
-            eval.which <- which(
-              vapply(as.list(unitizers), slot, logical(1L), "updated")
-            )
-            pick.num <- 0L
+            eval.which <- which(updated)
           } else {
             pick.num <- as.integer(pick)
             if(!pick.num %in% seq.int(test.len))
@@ -484,40 +492,47 @@ unitize_browse <- function(
           }
         } else pick.num <- 1L
 
-        if(pick.num) {
+        for(i in pick.num) {
           print(
             H1(
               paste0(
-                "unitizer for: ", getName(unitizers[[pick.num]]), collapse=""
+                "unitizer for: ", getName(unitizers[[i]]), collapse=""
           ) ) )
-          show(summaries[[pick.num]])
+          show(summaries[[i]])
           cat("\n")
           browse.res <- browseUnitizer(
-            unitizers[[pick.num]], untz.browsers[[pick.num]],
+            unitizers[[i]], untz.browsers[[i]],
             force.update=force.update  # annoyingly we need to force update here as well as for the unreviewed unitizers
           )
-          updated[[pick.num]] <- browse.res@updated
-          unitizers[[pick.num]] <- browse.res@unitizer
+          updated[[i]] <- browse.res@updated
+          unitizers[[i]] <- browse.res@unitizer
 
           # Check to see if any need to be re-evaled, and if so, mark unitizers
           # and return
 
-          eval.which <- if(identical(browse.res@re.eval, 1L)) {
-            pick.num
-          } else if(identical(browse.res@re.eval, 2L)) {
-            seq.int(test.len)
-        } }
-
-        for(i in eval.which) unitizers[[i]]@eval <- TRUE
+          eval.which <- unique(
+            c(
+              eval.which,
+              if(identical(browse.res@re.eval, 1L)) {
+                i
+              } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
+          ) )
+        }
         if(identical(test.len, 1L) || length(eval.which)) break
         summaries <- summary(unitizers)
       }
     } else {
       message("All tests passed; nothing to review.")
     }
+    # Set eval status before return
+
+    if(length(eval.which)) {
+      for(i in eval.which) unitizers[[i]]@eval <- TRUE
+    } else for(i in seq_along(unitizers))  unitizers[[i]]@eval <- FALSE  # this one may not be necessary
+
     # Force update stuff if needed; need to know what has already been stored
 
-    if(any(force.update & !as.logical(to.review) & !updated)) {
+    if(any(force.update & !to.review & !updated)) {
       stop("Need to implement force for non-review tests")
     }
   }

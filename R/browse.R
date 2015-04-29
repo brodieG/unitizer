@@ -233,9 +233,10 @@ setMethod(
               "You are about to IRREVERSIBLY modify '", getTarget(x), "' by:",
               sep=""
           ) }
-          if(length(x@changes) > 0) show(x@changes)
-          cat("\n")
-
+          if(length(x@changes) > 0) {
+            show(x@changes)
+            cat("\n")
+          }
           repeat {
             # Can this be rationalized with the logic in `reviewNext`?
 
