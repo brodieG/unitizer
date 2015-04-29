@@ -230,10 +230,11 @@ setMethod(
           )
           if(update) {
             word_msg(
-              "You are about to IRREVERSIBLY modify '", getTarget(x), "':",
+              "You are about to IRREVERSIBLY modify '", getTarget(x), "' by:",
               sep=""
           ) }
           if(length(x@changes) > 0) show(x@changes)
+          cat("\n")
 
           repeat {
             # Can this be rationalized with the logic in `reviewNext`?
@@ -263,8 +264,7 @@ setMethod(
               nav.hlp <- paste0(
                 nav.hlp,
                 "\n\nAdditionally, pressing Y will cause re-evaluation of ",
-                "unitizers as per your input; any other input will cancel ",
-                "re-valuation request."
+                "unitizers as per your input"
               )
             }
             if(!length(actions)) actions <- "exit unitizer"
@@ -597,7 +597,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         return(x.mod)
       } else if (isTRUE(grepl("^RR?$", x.mod))) {           # Re-eval
         x <- toggleReeval(x, x.mod)
-        next
+        Sys.sleep(0.3)  # so people can see the toggle message
+        invokeRestart("earlyExit", extra=x)
       } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
         act <- substr(x.mod, 1L, 1L)
         act.times <- nchar(x.mod)
