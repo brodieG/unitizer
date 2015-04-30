@@ -91,3 +91,26 @@ path_clean <- function(path) {
   path.norm <- paste0(dirname(path), "/", basename(path))
   sub("/+", "/", path.norm)
 }
+#' Create a Store ID from a Test File Name
+#'
+#' @param x character(1L) file name ending in .r or .R
+#' @param return store id name, or NULL if \code{x} doesn't meet expectations
+#' @export
+#' @examples
+#' filename_to_storeid(file.path("tests", "unitizer", "foo.R"))
+#' filename_to_storeid(file.path("tests", "unitizer", "boo.r"))
+#' filename_to_storeid(file.path("tests", "unitizer", "boo"))  # does not end in [rR]
+
+filename_to_storeid <- function(x) {
+  if(is.character(x) && length(x) == 1L){
+    if((y <- sub("\\.[rR]$", ".unitizer", x)) != x) return(y)
+    warning(
+      "Unable to translate file name '", x, "' to store id; please provide ",
+      "explicit store id"
+    )
+  } else
+    warning(
+      "Unable to generate store id from non `character(1L)` file \"name\""
+    )
+  NULL
+}

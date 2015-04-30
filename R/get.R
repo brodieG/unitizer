@@ -216,15 +216,20 @@ infer_unitizer_location.character <- function(
     test.fun <- function(x) file_test("-f", x)
     test.ext <- ".R"
     list.fun <- list.files
+    type.name <- "test file"
   } else if(type == "u") {
     test.fun <- is_unitizer_dir
     test.ext <- ".unitizer"
     list.fun <- list.dirs
+    type.name <- "unitizer"
   } else if(type == "d") {
     test.fun <- function(x) file_test("-d", x)
     test.ext <- ""
     list.fun <- list.dirs
+    type.name <- "test directory"
   }
+  inf_msg <- function(name) word_msg("Inferred", type.name, "location:", name)
+
   # Check for exact match first and return that if found
 
   if(test.fun(store.id)) return(store.id)
@@ -249,7 +254,10 @@ infer_unitizer_location.character <- function(
       fp <- file.path(
         test.base, paste0(file.store.id, basename(dir.store.id), test.ext)
     ) )
-    if(found.file) return(fp)
+    if(found.file) {
+      inf_msg(found.file)
+      return(fp)
+    }
     dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
   } else {
     dir.store.id.proc <- dir.store.id
@@ -257,8 +265,10 @@ infer_unitizer_location.character <- function(
   # Check request is coherent already and if so return
 
   f.path <- file.path(dir.store.id.proc, file.store.id)
-  if(test.fun(f.path)) return(f.path)
-
+  if(test.fun(f.path)) {
+    inf_msg(f.path)
+    return(f.path)
+  }
   # Resolve potential ambiguities by trying to find file / directory
 
   candidate.files <- grep(
@@ -293,12 +303,21 @@ infer_unitizer_location.character <- function(
     cat(paste0("Possible matching files", dir.disp, ":\n"))
     cat(paste0("  ", format(valid), ": ", candidate.files), sep="\n")
 
-    pick.chr <- try(simple_prompt("Input file number", c("Q", valid)))
-    if(inherits(pick.chr, "try-error") || identical(pick.chr, "Q")) {
+    hist.file <- tempfile()       # throwaway connection to avoid cluttering history
+    hist.con <- fopen(hist.file)
+    hist.obj <- list(file=hist.file, hist.con)
+
+    pick <- unitizer_prompt(
+      "Pick a matching file",
+      valid.opts=c("Type a number"),
+      exit.condition=exit_fun, valid.vals=valid,
+      hist.con=NULL
+    )
+    if(identical(pick.chr, "Q")) {
       message("No file selected")
       0L
     } else {
-      pick <- as.integer(pick.chr)
+      pick <- as.integer(pick)
       message("Selected file: ", candidate.files[[pick]])
       pick
     }
@@ -318,7 +337,9 @@ infer_unitizer_location.character <- function(
     )
   # Return
 
-  file.path(dir.store.id.proc, candidate.files[[selection]])
+  file.final <- file.path(dir.store.id.proc, candidate.files[[selection]])
+  if(cand.len == 1L) inf_msg(file.final)
+  file.final
 }
 #' Check Whether a Directory Likey Contains An R Package
 #'
