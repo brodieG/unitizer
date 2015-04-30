@@ -84,3 +84,42 @@ deparse_peek <- function(expr, len, width=500L) {
 #' @return character(1L)
 
 deparse_call <- function(expr) paste0(deparse(expr), collapse="")
+
+#' Special Deparse
+#'
+#' Required to deal with language objects that contain non-language objects
+#' that have attributes.
+#'
+#' Not completely fool proof since you can probably created an object that nests
+#' call and non-call stuff repeatedly that would confuse this thing.
+#'
+#' @keywords internal
+
+deparse_mixed <- function(expr, width.cutoff = 500L, control = "all", ...) {
+
+  rec_lang <- function(expr) {
+    if(!is.language(expr)) stop("Logic Error: expecting language object")
+    if(length(expr) > 1L) {
+      for(i in seq_along(expr)) {
+        if(!is.language(expr[[i]])) {
+          expr[[i]] <-
+            parse(
+              text=deparse(expr[[i]], width.cutoff, control, ...),
+              keep.source=FALSE
+            )[[1L]]
+        } else expr[[i]] <- Recall(expr[[i]])
+    } }
+    expr
+  }
+  rec_norm <- function(expr) {
+    if(is.recursive(expr) && !is.environment(expr)) {
+      for(i in seq_along(expr)) {
+        if(is.language(expr[[i]])) {
+          expr[[i]] <- rec_lang(expr[[i]])
+        } else {
+          expr[[i]] <- Recall(expr[[i]])
+    } } }
+    expr
+  }
+  deparse(rec_norm(expr), width.cutoff=width.cutoff, control=control, ...)
+}
