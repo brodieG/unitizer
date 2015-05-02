@@ -77,13 +77,15 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' @param ... unused, here for inheriting methods
 #' @return \code{unitizerItems-class}
 
-setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems",
+setMethod("healEnvs", c("unitizerItems", "unitizer"),
+  valueClass="unitizerItems",
   function(x, y, ...) {
 
     # Now need to reconstruct all the parenthood relationships between items,
     # start by figuring out the indices of all the new and reference items
 
-    if(!is.environment(x@base.env)) stop("Slot `@base.env` must be defined for Argument `x`")
+    if(!is.environment(x@base.env))
+      stop("Slot `@base.env` must be defined for Argument `x`")
 
     items.new.select <- itemsType(x) == "new" & !ignored(x)
     items.ref.select <- itemsType(x) == "reference" & !ignored(x)
@@ -126,8 +128,11 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
         for(j in (gaps[[i]] + 1L):-1L) {
           interim.env <- y@items.new[[items.new.idx[[i.org]] + j]]@env  # assumes continuous ids in items.new
           interim.names <- ls(envir=interim.env, all.names=T)
-          lapply(interim.names, function(z) assign(z, get(z, interim.env), x[items.new.select][[i.org]]@env))
-        }
+          lapply(
+            interim.names,
+            function(z)
+              assign(z, get(z, interim.env), x[items.new.select][[i.org]]@env)
+        ) }
         # no need to run updateLs() as that is done on addition to unitizer
         if(identical(x[items.new.select][[i.org]]@env, item.env)) {
           # This should only happen when an ignored test just before an actual
@@ -138,9 +143,10 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
           # relied on this so we don't want to outright forbid it out of lazyness...
 
           warning(
-            "Logic Problem: would have assigned circular environment reference ",
-            "but over-rode that; this message should only show up in `unitizer` ",
-            "development tests, if you see it please contact maintainer."
+            "Logic Problem: would have assigned circular environment ",
+            "reference but over-rode that; this message should only show up ",
+            "in `unitizer` development tests, if you see it please contact ",
+            " maintainer."
           )
         } else {
           parent.env(x[items.new.select][[i.org]]@env) <- item.env
@@ -161,7 +167,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     # for details on the logic here
 
     ref.order <- order(items.ref.idx)
-    tail.env <- if(length(items.new.idx)) y@items.new[[max(items.new.idx)]]@env else x@base.env
+    tail.env <- if(length(items.new.idx)) {
+      y@items.new[[max(items.new.idx)]]@env
+    } else x@base.env
     env.list <- list()
     slot.in <- integer(length(items.ref.idx))  # Note that `slot.in` values can be repeated
     repair <- FALSE
@@ -248,8 +256,10 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
       any(!items.new.idx %in% new.ig.assign) ||
       any(!items.ref.idx %in% ref.ig.assign)
     )
-      stop("Logic Error: error re-assigning ignored items to actual tests; contact maintainer")
-
+      stop(
+        "Logic Error: error re-assigning ignored items to actual tests; ",
+        "contact maintainer"
+      )
     # For each selected test, add back the ignored ones; for new ones this is
     # easy because we know they are all in the right order already in y@items.new
 
@@ -283,7 +293,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"), valueClass="unitizerItems"
     ) ) ]
     # The LSes for reference items are not meaningful so should be invalidated
 
-    items.final[ignored(items.final)] <- invalidateLs(items.final[ignored(items.final)])
+    items.final[ignored(items.final)] <-
+      invalidateLs(items.final[ignored(items.final)])
 
     # If environments need repairing, do so now (note this means ignored items
     # will get their own env?? Need to check / fix)
@@ -330,29 +341,44 @@ setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 
 setMethod("updateLs", "unitizerItem",
   function(x, base.env, new.par.env=NULL,  ...) {
-    if(!is.null(new.par.env) && !is.environment(new.par.env)) stop("Argument `new.par.env` should be an environment or NULL.")
-    if(!is.environment(base.env)) stop("Argument `base.env` should be an environment.")
+    if(!is.null(new.par.env) && !is.environment(new.par.env))
+      stop("Argument `new.par.env` should be an environment or NULL.")
+    if(!is.environment(base.env))
+      stop("Argument `base.env` should be an environment.")
     if(!x@reference) {    # should only happen with new items
       new.ls <- sort(run_ls(env=x@env, stop.env=base.env, all.names=TRUE))
       fin.ls <- if(length(new.ls))
       cbind(names=new.ls, status="") else
       matrix(character(), ncol=2, dimnames=list(NULL, c("names", "status")))
     } else {
-      if(!is.environment(new.par.env)) stop("Argument `new.par.env` should be an environment when in reference mode.")
+      if(!is.environment(new.par.env))
+        stop(
+          "Argument `new.par.env` should be an environment when in ",
+          "reference mode."
+        )
 
       ref.env.store <- new.env(parent=emptyenv())
       new.env.store <- new.env(parent=emptyenv())
 
-      item.ls <- try(run_ls(env=x@env, stop.env=base.env, all.names=TRUE, store.env=ref.env.store))
+      item.ls <- try(
+        run_ls(
+          env=x@env, stop.env=base.env, all.names=TRUE, store.env=ref.env.store
+      ) )
       if(inherits(item.ls, "try-error")) return(FALSE)
 
-      run_ls(env=new.par.env, stop.env=base.env, all.names=TRUE, store.env=new.env.store)
+      run_ls(
+        env=new.par.env, stop.env=base.env, all.names=TRUE,
+        store.env=new.env.store
+      )
 
       # Since reference test keeps any objects defined in its own environment,
       # we can cheat for comparison purposes by putting those objects in the
       # "new" environment so they look like they exist there
 
-      lapply(ls(envir=x@env, all.names=TRUE), function(y) assign(y, get(y, x@env), new.env.store))
+      lapply(
+        ls(envir=x@env, all.names=TRUE),
+        function(y) assign(y, get(y, x@env), new.env.store)
+      )
       ref.ls <- ls(envir=ref.env.store, all.names=TRUE)
       if(nrow(x@ls)) {
         org.ls <- x@ls$names
@@ -375,8 +401,13 @@ setMethod("updateLs", "unitizerItem",
         length(
           ls.match <-
             names(org.ref)[
-              !is.na(org.ref &
-              (ref.new.match <- ref.new[match(names(org.ref), names(ref.new))])) &
+              !is.na(
+                org.ref &
+                (
+                  ref.new.match <-
+                  ref.new[match(names(org.ref), names(ref.new))]
+                )
+              ) &
               ref.new.match
       ] ) ) fin.ls <- cbind(ls.match, "")
 
@@ -388,8 +419,10 @@ setMethod("updateLs", "unitizerItem",
       }
       # Disappeared objects, and new objects
 
-      if(length(setdiff(org.ls, new.ls))) fin.ls <- rbind(fin.ls, cbind(setdiff(org.ls, new.ls), "*"))
-      if(length(setdiff(new.ls, org.ls))) fin.ls <- rbind(fin.ls, cbind(setdiff(new.ls, org.ls), "**"))
+      if(length(setdiff(org.ls, new.ls)))
+        fin.ls <- rbind(fin.ls, cbind(setdiff(org.ls, new.ls), "*"))
+      if(length(setdiff(new.ls, org.ls)))
+        fin.ls <- rbind(fin.ls, cbind(setdiff(new.ls, org.ls), "**"))
     }
     # Update item and return
 
