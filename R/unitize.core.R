@@ -452,7 +452,7 @@ unitize_browse <- function(
           pick.num <- integer()
           pick <- unitizer_prompt(
             "Pick a `unitizer` or an option",
-            valid.opts=c(A="[A]ll", "[R]e-eval"),
+            valid.opts=c(A="[A]ll", R="[R]e-eval"),
             exit.condition=exit_fun, valid.vals=seq.int(test.len),
             hist.con=hist.obj$con
           )
