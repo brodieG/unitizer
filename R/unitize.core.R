@@ -592,25 +592,3 @@ check_call_stack <- function() {
       "maintainer."
     )
 }
-#' History Management Funs
-#'
-#'
-
-history_capt <- function() {
-  # set up local history
-
-  savehistory()
-  hist.file <- tempfile()
-  hist.con <- file(hist.file, "at")
-  cat(
-    "## <unitizer> (original history will be restored on exit)\n",
-    file=hist.con
-  )
-  loadhistory(showConnections()[as.character(hist.con), "description"])
-  list(con=hist.con, file=hist.file)
-}
-history_release <- function(hist.obj) {
-  close(hist.obj$con)
-  file.remove(hist.obj$file)
-  loadhistory()
-}
