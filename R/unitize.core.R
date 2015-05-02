@@ -21,37 +21,6 @@
 #' @param test.files character location of test files
 #' @param store.ids list of store ids, same length as \code{test.files}
 
-# break up into several pieces
-# - validate
-# - load
-# - parse
-# - eval
-# - browse
-# - store?
-#
-# Pieces should be separate:
-# * The eval piece should be separate so that failures on anything else can be
-#   managed with `try-catch`.
-# * The validate piece also so it only has to be run once.
-#
-# Use the same logic to `unitize` one file vs many; basically, one file is just
-# a degenerate version of dir.
-#
-# Do we want to load all the unitzers at once? Potentially end up using a lot
-# of memory if we do it this way.  But if we don't it will be difficult to do
-# this in a way that survives the failure of a single unitizer.  Maybe we need
-# a "one-at-a-time" mode for large unitizers.
-#
-# What structure allows us to split up eval, and browse, but also re-eval from
-# browse as needed?  Can browse call `eval`, or do we keep getting deeper and
-# deeper into this two step recursion?  Maybe best way to handle is some
-# restart with instructions on what to re-run?  So all this would be
-# coordinated from the wrapper function?  Do we even need a restart?  We can
-# just return early with instructions.
-#
-# Browse should be able to write to disk as otherwise failure elsewhere could
-# lead to a lot of lost work
-
 unitize_core <- function(
   test.files, store.ids, interactive.mode, par.env,
   search.path.clean, search.path.keep, force.update,
