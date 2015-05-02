@@ -230,10 +230,6 @@ infer_unitizer_location.character <- function(
   }
   inf_msg <- function(name) word_msg("Inferred", type.name, "location:", name)
 
-  # Check for exact match first and return that if found
-
-  if(test.fun(store.id)) return(store.id)
-
   # Is a directory, check if a package and pick tests/unitizer as the directory
 
   if(!file_test("-d", store.id)) {
@@ -244,8 +240,15 @@ infer_unitizer_location.character <- function(
     file.store.id <- ""
   }
   dir.store.id <- normalizePath(dir.store.id)
+  at.package.dir <- file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))
 
-  if(file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))) {
+  # Check for exact match first and return that if found, unless we are in dir
+  # mode and the directory is a package directory
+
+  if(!(identical(type, "d") && at.package.dir) && test.fun(store.id))
+    return(store.id)
+
+  if(at.package.dir) {
     test.base <- file.path(dir.store.id, "tests", "unitizer")
     if(!file_test("-d", test.base))
       stop("Unable to infer path since \"tests/unitizer\" directory is missing")
@@ -303,17 +306,13 @@ infer_unitizer_location.character <- function(
     cat(paste0("Possible matching files", dir.disp, ":\n"))
     cat(paste0("  ", format(valid), ": ", candidate.files), sep="\n")
 
-    hist.file <- tempfile()       # throwaway connection to avoid cluttering history
-    hist.con <- fopen(hist.file)
-    hist.obj <- list(file=hist.file, hist.con)
-
     pick <- unitizer_prompt(
       "Pick a matching file",
       valid.opts=c("Type a number"),
       exit.condition=exit_fun, valid.vals=valid,
       hist.con=NULL
     )
-    if(identical(pick.chr, "Q")) {
+    if(identical(pick, "Q")) {
       message("No file selected")
       0L
     } else {
