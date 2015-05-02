@@ -177,6 +177,9 @@ unitize_dir <- function(
   test.files <- list.files(
     path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
   )
+  if(!length(test.files))
+    stop("No files to test in '", test.dir, "'")
+
   # And unitizers
 
   if(is.function(store.ids)) {

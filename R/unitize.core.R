@@ -59,6 +59,8 @@ unitize_core <- function(
     stop(
       "Logic Error: mismatch in test file an store lengths; contact maintainer"
     )
+  if(!length(test.files))
+    stop("Logic Error: expected at least one test file; contact maintainer.")
   if(
     !is.logical(interactive.mode) || length(interactive.mode) != 1L ||
     is.na(interactive.mode)
