@@ -444,17 +444,32 @@ unitize_browse <- function(
         if(any(updated))
           ", 'R' to re-evaluate all updated"
       )
+      help.opts <- c(
+        paste0(deparse(seq.int(test.len)), ": `unitizer` number to review"),
+        if(any(to.review)) "A: Review all `unitzers` that require review (*)",
+        "AA: Review all tests",
+        if(any(updated)) "R: Re-evaluate all updated `unitizer`s ($)",
+        "RR: Re-evaluate all tests",
+        "Q: quit"
+      )
+      help <- c(
+        "Available options:", paste0(as.character(UL(help.opts)), collapse="\n")
+      )
       repeat {
         eval.which <- integer(0L)
         updated <- vapply(as.list(unitizers), slot, logical(1L), "updated")
 
         if(test.len > 1L) {
           pick.num <- integer()
+          word_cat(prompt)
           pick <- unitizer_prompt(
             "Pick a `unitizer` or an option",
-            valid.opts=c(A="[A]ll", R="[R]e-eval"),
+            valid.opts=c(
+              A=if(any(to.review)) "[A]ll", R=if(any(updated)) "[R]e-eval",
+              AA="", RR=""
+            ),
             exit.condition=exit_fun, valid.vals=seq.int(test.len),
-            hist.con=hist.obj$con
+            hist.con=hist.obj$con, help=help
           )
           if(identical(pick, "Q")) {
             if(
@@ -467,8 +482,12 @@ unitize_browse <- function(
             break
           } else if(identical(pick, "A")) {
             pick.num <- which(to.review & !updated)
+          } else if(identical(pick, "AA")) {
+            pick.num <- seq.int(test.len)
           } else if(identical(pick, "R")) {
             eval.which <- which(updated)
+          } else if(identical(pick, "RR")) {
+            eval.which <- seq.int(test.len)
           } else {
             pick.num <- as.integer(pick)
             if(!pick.num %in% seq.int(test.len)) {
