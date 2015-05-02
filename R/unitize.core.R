@@ -129,12 +129,15 @@ unitize_core <- function(
     stop("Argument `auto.accept` must be empty in non-interactive mode")
   if(length(auto.accept) && is.null(test.file))
     stop("Argument `test.file` must be specified when using `auto.accept`")
-
-  pre.load.frame <- try(pre_load(pre.load))
-  if(inherits(pre.load.frame, "try-error"))
-    stop("Argument `pre.load` could not be interpreted; see previous errors")
-
-  start.time <- proc.time()
+  if(
+    !is.null(pre.load) && !identical(pre.load, FALSE) && !is.list(pre.load) &&
+    !is.character(pre.load) && length(pre.load) != 1L
+  )
+    stop("Argument `pre.load` must be NULL, FALSE, a list, or character(1L)")
+  if(is.null(pre.load)) {
+     pre.load  <- if(length(test.files))
+      file.path(dirname(test.files[[1L]]), "helper") else list()
+  }
   quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop(
@@ -246,14 +249,20 @@ unitize_core <- function(
 
   # Retrieve or create unitizer environment
 
-  over_print("Loading unitizer data...")
   gpar.frame <- if(is.null(par.env)) pack.env$zero.env.par else par.env
-  parent.env(pre.load.frame) <- gpar.frame
+
+  # Handle pre-load data
+
+  over_print("Preloads...")
+  pre.load.frame <- try(pre_load(pre.load, gpar.frame))
+  if(inherits(pre.load.frame, "try-error") || !is.environment(pre.load.frame))
+    stop("Argument `pre.load` could not be interpreted")
 
   util.frame <- new.env(parent=pre.load.frame)
   assign("quit", unitizer_quit, util.frame)
   assign("q", unitizer_quit, util.frame)
 
+  over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
   unitizers <- new("unitizerObjectList")
 
