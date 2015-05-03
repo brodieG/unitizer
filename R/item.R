@@ -113,7 +113,8 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   if(
     is.call(.Object@call) &&
     !inherits(
-      try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE), "try-error"
+      try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE),
+      "try-error"
     ) &&
     any(vapply(funs.ignore, identical_fun, logical(1L), fun))
   ) {

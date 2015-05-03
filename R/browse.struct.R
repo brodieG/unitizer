@@ -14,9 +14,14 @@ NULL
 
 setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
 setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
-  function(x, mode, hist.con, ...) {
+  function(x, mode, hist.con=NULL, ...) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
+    if(is.null(hist.con)) {
+      tmp.file <- tempfile()
+      hist.con <- file("tmp.file", "at")
+      on.exit({close(hist.con); unlink(tmp.file)})
+    }
     if(!inherits(hist.con, "connection"))
       stop("Argument `hist.con` must be a connection.")
     unitizer.browse <- new("unitizerBrowse", mode=mode, hist.con=hist.con)

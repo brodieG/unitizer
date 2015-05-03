@@ -6,8 +6,8 @@ local({
   test_that("Error Cases", {
     expect_error(get_unitizer(1), "No method defined")
     expect_error(get_unitizer(letters), "Argument `store.id`")
-    expect_error(get_unitizer("../interactive"), "a directory containing`unitizer` objects")
-    expect_error(get_unitizer("testthat.get.R"), "Argument `store.id` must refer to a directory")
+    expect_error(get_unitizer("../interactive"), "does not appear to refer to a `unitizer` directory")
+    expect_error(get_unitizer("testthat.get.R"), "does not appear to refer to a `unitizer` directory")
     expect_error(set_unitizer(1), "No method defined")
     expect_error(set_unitizer(letters), "Argument `store.id` must be a 1 length character vector")
     expect_error(set_unitizer("a"), "argument \"unitizer\" is missing, with no default")
@@ -35,12 +35,10 @@ local({
     expect_true(is(unitizer:::load_unitizer(tmp.sub.dir, par.frame), "unitizer"))
     expect_true(is(untz <- unitizer:::load_unitizer(tmp.sub.dir2, par.frame), "unitizer"))  # empty folder, but this should still create unitizer
     expect_identical(parent.env(untz@zero.env), par.frame)
-    untz@id <- "bananas"
+    untz@eval.time <- 33  # something that won't get rest on load so we can check our re-load
 
-    wd <- getwd()
-    expect_true(unitizer:::store_unitizer(untz, tmp.sub.dir2, wd))
-    expect_identical(getwd(), wd)
-    expect_equal(unitizer:::load_unitizer(tmp.sub.dir2, par.frame)@id, "bananas")
+    expect_true(unitizer:::store_unitizer(untz))
+    expect_equal(unitizer:::load_unitizer(tmp.sub.dir2, par.frame)@eval.time, 33)
   } )
   file.remove(paste0(tmp.sub.dir, "/data.rds"))
   file.remove(tmp.sub.dir)
@@ -98,7 +96,8 @@ local({
     # Package dir
 
     expect_match(infer(base.dir), "tests/unitizer/infer\\.R$")
-    expect_match(infer(base.dir, type="d"), "tests/unitizer/infer\\.unitizer$")
+    expect_match(infer(base.dir, type="d"), "tests/unitizer$")
+    expect_match(infer(base.dir, type="u"), "tests/unitizer/infer\\.unitizer$")
 
     expect_warning(
       inf.dir <- infer(file.path(base.dir, "*")), "5 possible targets"
@@ -106,7 +105,7 @@ local({
     expect_equal(file.path(base.dir, "*"), inf.dir)
     expect_match(infer(file.path(base.dir, "z")), "tests/unitizer/zzz\\.R$")
     expect_match(
-      infer(file.path(base.dir, "z"), type="d"),
+      infer(file.path(base.dir, "z"), type="u"),
       "tests/unitizer/zzz\\.unitizer$"
     )
     # Normal dir
@@ -116,11 +115,11 @@ local({
     expect_equal(base.dir2, inf.dir2)
     expect_warning(infer(file.path(base.dir2, "a")), "2 possible targets")
     expect_warning(
-      infer(file.path(base.dir2, "a"), type="d"), "2 possible targets"
+      infer(file.path(base.dir2, "a"), type="u"), "2 possible targets"
     )
     expect_match(infer(file.path(base.dir2, "z")), "tests/unitizer/zzz\\.R$")
     expect_match(
-      infer(file.path(base.dir2, "z"), type="d"),
+      infer(file.path(base.dir2, "z"), type="u"),
       "tests/unitizer/zzz\\.unitizer$"
     )
   } )

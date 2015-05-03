@@ -393,6 +393,7 @@ unitize_browse <- function(
   # maybe auto-accepts only get applied first time around?
 
   auto.accepted <- 0L
+  eval.which <- integer(0L)
 
   if(length(auto.accept)) {
     over_print("Applying auto-accepts...")

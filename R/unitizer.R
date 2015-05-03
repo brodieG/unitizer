@@ -145,15 +145,17 @@ setClass(
         ) )
     }
     if(!is.object(object@id) && is.character(object@id)) { # default id format
-      if(
-        !file_test("-d", dirname(object@id)) ||
-        !identical(dirname(object@id), normalizePath(dirname(object@id)))
-      )
-        return(
-          paste0(
-            "slot `id` must be a properly normalized directory when using ",
-            "default `unitizer` stores."
-        ) )
+      # # No guarantees store id actually exists, so not enforcing this check
+      # if(
+      #   !file_test("-d", dirname(object@id)) ||
+      #   !identical(dirname(object@id), normalizePath(dirname(object@id)))
+      # ) {
+      #   return(
+      #     paste0(
+      #       "slot `id` must be a properly normalized directory when using ",
+      #       "default `unitizer` stores."
+      #   ) )
+      # }
     }
     if(
       !identical(length(object@eval.time), 1L) || is.na(object@eval.time) ||

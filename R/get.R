@@ -109,7 +109,7 @@ get_unitizer.character <- function(store.id) {
 
   if(!is_unitizer_dir(store.id)) {
     stop(
-      "Argument `store.id` does not appear to refer to `unitizer` directory"
+      "Argument `store.id` does not appear to refer to a `unitizer` directory"
     )
   }
   if(inherits(try(unitizer <- readRDS(paste0(store.id, "/data.rds"))), "try-error")) {
@@ -224,7 +224,7 @@ infer_unitizer_location.character <- function(
     type.name <- "unitizer"
   } else if(type == "d") {
     test.fun <- function(x) file_test("-d", x)
-    test.ext <- ""
+    test.ext <- NULL
     list.fun <- list.dirs
     type.name <- "test directory"
   }
@@ -238,10 +238,11 @@ infer_unitizer_location.character <- function(
     file.store.id <- basename(store.id)
   } else {
     dir.store.id <- store.id
-    file.store.id <- ""
+    file.store.id <- NULL
   }
   dir.store.id <- normalizePath(dir.store.id)
-  at.package.dir <- file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))
+  at.package.dir <-
+    file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))
 
   # Check for exact match first and return that if found, unless we are in dir
   # mode and the directory is a package directory
@@ -255,11 +256,13 @@ infer_unitizer_location.character <- function(
       stop("Unable to infer path since \"tests/unitizer\" directory is missing")
 
     found.file <- test.fun(
-      fp <- file.path(
-        test.base, paste0(file.store.id, basename(dir.store.id), test.ext)
-    ) )
+      fp <- do.call(
+        file.path,
+        as.list(
+          c(test.base, paste0(file.store.id, basename(dir.store.id), test.ext))
+    ) ) )
     if(found.file) {
-      inf_msg(found.file)
+      inf_msg(fp)
       return(fp)
     }
     dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
@@ -268,7 +271,7 @@ infer_unitizer_location.character <- function(
   }
   # Check request is coherent already and if so return
 
-  f.path <- file.path(dir.store.id.proc, file.store.id)
+  f.path <- do.call(file.path, as.list(c(dir.store.id.proc, file.store.id)))
   if(test.fun(f.path)) {
     inf_msg(f.path)
     return(f.path)
@@ -276,7 +279,7 @@ infer_unitizer_location.character <- function(
   # Resolve potential ambiguities by trying to find file / directory
 
   candidate.files <- grep(
-    paste0("^", file.store.id, if(nchar(test.ext)) ".*\\", test.ext, "$"),
+    paste0("^", file.store.id, if(!is.null(test.ext)) ".*\\", test.ext, "$"),
     basename(list.fun(dir.store.id.proc, recursive=FALSE)),
     value=TRUE
   )

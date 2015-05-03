@@ -23,13 +23,22 @@ load_unitizer <- function(store.id, par.frame, test.file=NA_character_) {
   # happens later.  Also note that pack.env$zero.env can still be tracking the
   # top package under .GlobalEnv
 
+  store.id.proc <-  if(
+    is_default_unitizer_id(store.id) &&
+    !inherits(  # maybe this should just throw an error
+      normed <- try(normalizePath(store.id, mustWork=TRUE), silent=TRUE),
+      "try-error"
+    )
+  ) {
+    normed
+  } else store.id
   if(identical(unitizer, FALSE)) {
     unitizer <- new(
-      "unitizer", id=store.id, zero.env=new.env(parent=par.frame),
+      "unitizer", id=store.id.proc, zero.env=new.env(parent=par.frame),
       test.file.loc=test.file
     )
   } else if(!is(unitizer, "unitizer")) {
-    if(is.character(store.id) && !is.object(store.id)) {
+    if(is_default_unitizer_id(store.id)) {
       stop(
         "Logic Error: `get_unitizer` did not return a unitizer for '",
         store.id, "', contact maintainer."
@@ -46,9 +55,8 @@ load_unitizer <- function(store.id, par.frame, test.file=NA_character_) {
       )
     }
   } else {
-
     parent.env(unitizer@zero.env) <- par.frame
-    unitizer@id <- store.id
+    unitizer@id <- store.id.proc
     unitizer@test.file.loc <- test.file
     ver <- unitizer@version
     unitizer <- upgrade(unitizer, par.frame=par.frame, test.file)
@@ -84,3 +92,10 @@ store_unitizer <- function(unitizer) {
   }
   return(invisible(TRUE))
 }
+
+#' Check Whether Provided Store ID Is in Default Form
+#'
+#' @keywords internal
+
+is_default_unitizer_id <- function(x)
+  is.character(x) && !is.object(x) && identical(length(x), 1L) && !is.na(x)

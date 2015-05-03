@@ -2,6 +2,7 @@ library(unitizer)
 library(testthat)
 
 local( {
+  zero.env <- parent.env(.GlobalEnv)
   obj.item <- new("unitizerItem", call=quote(1 + 1), env=new.env())
   obj.item@data@value <- 2
   obj.item@data@output <- c("two", "dos", "due")
@@ -53,9 +54,9 @@ local( {
       lm(x ~ y, data.frame(x=1:10, y=c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))
     } )
   )
-  my.unitizer <- new("unitizer", id=1, zero.env=new.env())
+  my.unitizer <- new("unitizer", id=1, zero.env=zero.env)
   my.unitizer <- my.unitizer + exps1
-  my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
+  my.unitizer2 <- new("unitizer", id=2, zero.env=zero.env)
   my.unitizer2 <- my.unitizer2 + my.unitizer@items.new          # make previous items into reference items
   my.unitizer2 <- my.unitizer2 + exps2                          # now add back items to compare
   unitizer.prepped <- unitizer:::browsePrep(my.unitizer2, mode="unitize")
@@ -131,7 +132,7 @@ local( {
     # Copy over just two sections
 
     my.unitizer3 <-
-      new("unitizer", id=3, zero.env=new.env()) +
+      new("unitizer", id=3, zero.env=zero.env) +
       my.unitizer2@items.new[-(2:6)]  # Exclude section two tests
     my.unitizer3 <- unitizer:::refSections(my.unitizer3, my.unitizer2)  # sections should copy over
 
@@ -150,7 +151,7 @@ local( {
     )
     # Now try to re-establish sections with removed tests
 
-    my.unitizer4 <- new("unitizer", id=4, zero.env=new.env()) + items.processed
+    my.unitizer4 <- new("unitizer", id=4, zero.env=zero.env) + items.processed
     my.unitizer4 <- unitizer:::refSections(my.unitizer4, my.unitizer2)  # sections should copy over
 
     expect_true(is(my.unitizer4@sections.ref[[4L]], "unitizerSectionNA"))

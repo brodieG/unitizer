@@ -13,8 +13,8 @@ local( {
   test_that("Output as expected", {
     expect_equal(
       capture.output(show(my.changes)),
-      c("- Replace 1 out of 10 failed tests", "- Add 1 out of 5 new tests",
-        "- Remove 2 out of 4 removed tests", "- Replace 3 out of 8 tests with errors")
+      c("- Replacing 1 out of 10 failed tests", "- Adding 1 out of 5 new tests",
+        "- Removing 2 out of 4 removed tests", "- Replacing 3 out of 8 tests with errors")
     )
   } )
   test_that("Length Works", {
