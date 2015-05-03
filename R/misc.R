@@ -137,3 +137,65 @@ history_release <- function(hist.obj) {
   loadhistory()
 }
 
+#' Simplify a Path As Much as Possible to Working Directory
+#'
+#' @param wd NULL or character(1L) resolving to a directory, if NULL will be
+#'   resolved to either \code{getwd} or what \code{getwd} was at the beginning
+#'   of a \code{unitizer} run
+#' @param only.if.shorter logical(1L) whether to relativize only if the
+#'   resulting \code{path} is shorter than the input
+#' @keywords internal
+
+relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
+  if(!is.character(path) || any(is.na(path)))
+    stop("Argument `path` must be character and may not contain NAs")
+  if(!isTRUE(only.if.shorter) && !identical(only.if.shorter))
+    stop("Argument `only.if.shorter` must be TRUE or FALSE")
+  if(
+    !is.null(wd) && !is.character(wd) && !identical(length(wd), 1L) &&
+    !file_test("-d", wd)
+  )
+    stop("Argument `wd` must be NULL or a reference of to a directory")
+  if(is.null(wd)) {
+    wd <- if(
+      inherits(try(pack.env, silent=TRUE), "try-error") ||
+      !is.character(pack.env$wd) || !identical(length(pack.env$wd), 1L) ||
+      !file.exists(pack.env$wd)
+    ) getwd() else pack.env$wd
+  }
+  wd <- try(normalizePath(wd, mustWork=TRUE), silent=TRUE)
+  res <- if(
+    !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
+    identical(length(.Platform$file.sep), 1L) &&
+    file.exists(path)
+  ) {
+    path.pieces <- lapply(
+      strsplit(path, .Platform$file.sep, fixed=TRUE), Filter, f=nchar
+    )
+    wd.pieces <- Filter(
+      nchar, unlist(strsplit(wd, .Platform$file.sep, fixed=TRUE))
+    )
+    # /a/b/c/d/e
+    # /a/b/c/F/G
+    vapply(
+      path.pieces,
+      function(x) {
+        up.to <- min(length(x), length(wd.pieces))
+        if(!up.to) return(x)
+        first.diff <-
+          min(up.to + 1L, which(x[1:up.to] != wd.pieces[1:up.to])) - 1L
+        path <- if(identical(first.diff, 0L)) {
+          x
+        } else {
+          end <- min(up.to, first.diff)
+          c(rep("..", length(wd.pieces) - end), x[-(1:end)])
+        }
+        do.call(file.path, as.list(path))
+      },
+      character(1L)
+    )
+  } else path
+  if(only.if.shorter) {
+    ifelse(nchar(res) < nchar(path), res, path)
+  } else res
+}

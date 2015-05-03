@@ -208,7 +208,8 @@ setMethod(
           )
           if(update) {
             word_msg(
-              "You are about to IRREVERSIBLY modify '", getTarget(x), "' by:",
+              "You will IRREVERSIBLY modify '",
+              relativize_path(getTarget(x)), "' by:",
               sep=""
           ) }
           if(length(x@changes) > 0) {
