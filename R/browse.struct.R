@@ -229,15 +229,17 @@ setClass("unitizerBrowseMapping",
 setClass("unitizerBrowse", contains="unitizerList",
   slots=c(
     mapping="unitizerBrowseMapping",
-    last.id="integer",         # used so that `reviewNext` knows what to show next
-    last.reviewed="integer",   # used so that `reviewNext` knows what headers to display
-    hist.con="ANY",            # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
+    last.id="integer",          # used so that `reviewNext` knows what to show next
+    last.reviewed="integer",    # used so that `reviewNext` knows what headers to display
+    hist.con="ANY",             # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
     mode="character",
-    review="logical",          # whether to force-show review menu or not
-    inspect.all="logical",     # whether to force inspection of all elements, whether ignored/passed or not
-    navigating="logical",      # whether user has triggered at least one navigation command
-    human="logical",           # whether user has had any interaction at all
-    re.eval="integer"          # so navigate prompt can communciate back re-eval status
+    review="logical",           # whether to force-show review menu or not
+    inspect.all="logical",      # whether to force inspection of all elements, whether ignored/passed or not
+    navigating="logical",       # whether user has triggered at least one navigation command
+    human="logical",            # whether user has had any interaction at all
+    re.eval="integer",          # so navigate prompt can communciate back re-eval status
+    interactive="logical",      # whether to browse in interactie mode
+    interactive.error="logical" # whether in non-interactive mode but required input
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -249,7 +251,9 @@ setClass("unitizerBrowse", contains="unitizerList",
     inspect.all=FALSE,
     navigating=FALSE,
     human=FALSE,
-    re.eval=0L
+    re.eval=0L,
+    interactive=FALSE,
+    interactive.error=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -798,7 +802,10 @@ setMethod("+", c("unitizerBrowseSection", "unitizerBrowseSubSection"),
 
 setClass(
   "unitizerBrowseResult",
-  slots=c(unitizer="unitizer", re.eval="integer", updated="logical"),
+  slots=c(
+    unitizer="unitizer", re.eval="integer", updated="logical",
+    interactive.error="logical"
+  ),
   validity=function(object) {
     if(
       !identical(length(object@re.eval), 1L) || is.na(object@re.eval) ||
@@ -807,6 +814,11 @@ setClass(
       return("slot `re.eval` must be integer(1L) in 0:2")
     if(!isTRUE(object@updated) && !identical(object@updated, FALSE))
       return("slot `updated` must be TRUE or FALSE")
+    if(
+      !isTRUE(object@interactive.error) &&
+      !identical(object@interactive.error, FALSE)
+    )
+      return("slot `interactive.error` must be TRUE or FALSE")
     TRUE
   }
 )

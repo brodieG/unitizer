@@ -45,6 +45,12 @@ setGeneric(
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
 
+    if(identical(y@mode, "review") && !isTRUE(y@interactive))
+      stop(
+        "Logic Error: attempt to enter `unitizer` in review mode in ",
+        "non-interactive state, which should not be possible, contact ",
+        "maintainer."
+      )
     browse.res <- withRestarts(
       browseUnitizerInternal(x, y, force.update=force.update),
       unitizerQuitExit=unitizer_quit_handler
@@ -170,7 +176,13 @@ setMethod(
 
         # Finalize depending on situation
 
-        if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
+        if(y@interactive.error) {
+          word_msg(
+            "Unable to resolve `unitizer` without user input, but we are in ",
+            "non-interactive mode"
+          )
+          break
+        } else if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
           if(y@navigating || y@re.eval)
             stop(
               "Logic Error: should only get here in `auto.accept` mode, ",
@@ -322,7 +334,7 @@ setMethod(
 
     new(
       "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
-      updated=update
+      updated=update, interactive.error=y@interactive.error
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
@@ -498,6 +510,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # If we get past this point, then we will need some sort of human input, so
     # we mark the browse object
 
+    if(!x@interactive) {   # can't proceed in non-interactive
+      x@interactive.error <- TRUE
+      invokeRestart("earlyExit", extra=x)
+    }
     x@human <- TRUE
 
     # Create evaluation environment; these are really two nested environments,
