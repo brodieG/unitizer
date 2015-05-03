@@ -178,7 +178,7 @@ setMethod(
 
         if(y@interactive.error) {
           word_msg(
-            "Unable to resolve `unitizer` without user input, but we are in ",
+            "Unable to resolve `unitizer` without user input, but we are in",
             "non-interactive mode"
           )
           break

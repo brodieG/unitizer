@@ -14,7 +14,7 @@ NULL
 
 setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
 setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
-  function(x, mode, hist.con=NULL, ...) {
+  function(x, mode, hist.con=NULL, interactive=FALSE, ...) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
     if(is.null(hist.con)) {
@@ -24,8 +24,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     }
     if(!inherits(hist.con, "connection"))
       stop("Argument `hist.con` must be a connection.")
-    unitizer.browse <- new("unitizerBrowse", mode=mode, hist.con=hist.con)
-
+    unitizer.browse <- new(
+      "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive
+    )
     # - Unitize ----------------------------------------------------------------
 
     # At some point need to rationalize this to a simpler instantiator for the
