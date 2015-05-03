@@ -106,7 +106,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         next
       }
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
-      over_print(paste0("Running: ", deparse(item@call)[[1L]]))
+      over_print(deparse(item@call)[[1L]], append=TRUE)
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
       # ignored items share environment with subsequent items

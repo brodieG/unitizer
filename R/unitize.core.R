@@ -322,6 +322,11 @@ unitize_eval <- function(tests.parsed, unitizers) {
       "Logic Error: parse data and unitizer length mismatch; contact ",
       "maintainer."
     )
+  # Set up display stuff
+
+  num.digits <- as.integer(ceiling(log10(test.len + 1L)))
+  tpl <- paste0("%", num.digits, "d/", test.len)
+
   # Loop through all unitizers, evaluating the ones that have been marked with
   # the `eval` slot for evaluation, and resetting that slot to FALSE
 
@@ -331,9 +336,11 @@ unitize_eval <- function(tests.parsed, unitizers) {
 
     if(unitizer@eval) {
       tests <- new("unitizerTests") + test.dat
-      unitizers[[i]] <- unitizer + tests
       if(test.len > 1L)
-        over_print(paste0("Evaluated: ", unitizer@test.file.loc, "\n"))
+        over_print(
+          paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": ")
+        )
+      unitizers[[i]] <- unitizer + tests
     } else {
       unitizers[[i]] <- unitizer
     }

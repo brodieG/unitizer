@@ -347,24 +347,33 @@ word_msg <- function(...) word_cat(..., file=stderr())
 #' @param x character(1L)
 #' @param min.width integer(1L) minimum character width to print to
 #' @param max.width integer(1L) max width to print to
+#' @param append to last non-append \code{x} value
 #' @return NULL used only for side effect of cating ot screen
 
-over_print <- function(x, min.width=30L, max.width=getOption("width")) {
-  if(!is.character(x) || length(x) != 1L)
-    stop("Argument `x` must be character(1L)")
-  if(!is.integer(min.width) || length(min.width) != 1L)
-    stop("Argument `min.width` must be integer(1L)")
-  if(!is.integer(max.width) || length(max.width) != 1L)
-    stop("Argument `max.width` must be integer(1L)")
+over_print <- (
+  function() {
+    prev.val <- ""
+    function(x, append=FALSE, min.width=30L, max.width=getOption("width")) {
+      if(!is.character(x) || length(x) != 1L || is.na(x))
+        stop("Argument `x` must be character(1L) and not NA")
+      if(!is.integer(min.width) || length(min.width) != 1L)
+        stop("Argument `min.width` must be integer(1L)")
+      if(!is.integer(max.width) || length(max.width) != 1L)
+        stop("Argument `max.width` must be integer(1L)")
+      if(!isTRUE(append) && !identical(append, FALSE))
+        stop("Argument `append` must be TRUE or FALSE")
 
-  writeLines(
-    c(
-      "\r", rep(" ", max(min.width, max.width)), "\r",
-      substr(x, 1, max(min.width, max.width))
-    ), sep=""
-  )
-  NULL
-}
+      cat(
+        c(
+          "\r", rep(" ", max(min.width, max.width)), "\r",
+          substr(paste0(if(append) prev.val, x), 1L, max(min.width, max.width))
+        ),
+        sep=""
+      )
+      prev.val <<- if(append) prev.val else x
+      invisible(NULL)
+} } ) ()
+
 #' Produces 1 Line Description of Value
 #'
 #' @keywords internal
