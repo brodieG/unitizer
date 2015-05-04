@@ -412,7 +412,7 @@ unitize_browse <- function(
   }
   # Browse, or fail depending on interactive mode
 
-  reviewed <- updated <- int.error <- logical(test.len)
+  reviewed <- int.error <- logical(test.len)
   over_print("")
 
   # - Interactive --------------------------------------------------------------
@@ -430,26 +430,26 @@ unitize_browse <- function(
     # need to add some hacks to handle that outcome since by design originally
     # the browse stuff was never meant to handle non-interactive use...
 
-    prompt <- paste0(
-      "\nType number of unitizer to review",
-      if(any(to.review))
-        ", 'A' to review all that require review",
-      if(any(updated))
-        ", 'R' to re-evaluate all updated"
-    )
-    help.opts <- c(
-      paste0(deparse(seq.int(test.len)), ": `unitizer` number to review"),
-      if(any(to.review)) "A: Review all `unitzers` that require review (*)",
-      "AA: Review all tests",
-      if(any(updated)) "R: Re-evaluate all updated `unitizer`s ($)",
-      "RR: Re-evaluate all tests",
-      "Q: quit"
-    )
-    help <- c(
-      "Available options:", paste0(as.character(UL(help.opts)), collapse="\n")
-    )
     first.time <- TRUE
     repeat {
+      prompt <- paste0(
+        "\nType number of unitizer to review",
+        if(any(to.review))
+          ", 'A' to review all that require review",
+        if(any(summaries@updated))
+          ", 'R' to re-evaluate all updated"
+      )
+      help.opts <- c(
+        paste0(deparse(seq.int(test.len)), ": `unitizer` number to review"),
+        if(any(to.review)) "A: Review all `unitzers` that require review (*)",
+        "AA: Review all tests",
+        if(any(summaries@updated)) "R: Re-evaluate all updated `unitizer`s ($)",
+        "RR: Re-evaluate all tests",
+        "Q: quit"
+      )
+      help <- c(
+        "Available options:", paste0(as.character(UL(help.opts)), collapse="\n")
+      )
       if(!first.time) {
         if(!interactive.mode)
           stop(
@@ -459,9 +459,7 @@ unitize_browse <- function(
         show(summaries)
       }
       first.time <- FALSE
-
       eval.which <- integer(0L)
-      updated <- vapply(as.list(unitizers), slot, logical(1L), "updated")
 
       if(test.len > 1L) {
         pick.num <- integer()
@@ -470,7 +468,8 @@ unitize_browse <- function(
           unitizer_prompt(
             "Pick a `unitizer` or an option",
             valid.opts=c(
-              A=if(any(to.review)) "[A]ll", R=if(any(updated)) "[R]e-eval",
+              A=if(any(to.review)) "[A]ll",
+              R=if(any(summaries@updated)) "[R]e-eval",
               AA="", RR=""
             ),
             exit.condition=exit_fun, valid.vals=seq.int(test.len),
@@ -491,11 +490,11 @@ unitize_browse <- function(
           }
           break
         } else if(identical(pick, "A")) {
-          pick.num <- which(to.review & !updated)
+          pick.num <- which(to.review & !summaries@updated)
         } else if(identical(pick, "AA")) {
           pick.num <- seq.int(test.len)
         } else if(identical(pick, "R")) {
-          eval.which <- which(updated)
+          eval.which <- which(summaries@updated)
         } else if(identical(pick, "RR")) {
           eval.which <- seq.int(test.len)
         } else {
@@ -521,7 +520,7 @@ unitize_browse <- function(
           unitizers[[i]], untz.browsers[[i]],
           force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers
         )
-        updated[[i]] <- browse.res@updated
+        summaries@updated[[i]] <- browse.res@updated
         unitizers[[i]] <- browse.res@unitizer
         int.error[[i]] <- browse.res@interactive.error
 
@@ -584,7 +583,7 @@ unitize_browse <- function(
 
   # Force update stuff if needed; need to know what has already been stored
 
-  if(any(force.update & !to.review & !updated)) {
+  if(any(force.update & !to.review & !summaries@updated)) {
     stop("INTERNAL: Need to implement force for non-review tests")
   }
   unitizers

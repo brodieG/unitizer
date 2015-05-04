@@ -120,6 +120,9 @@ upgrade_internal <- function(object) {
     object <- addSlot(object, "eval", FALSE)                   # not sure this is completely necessary since we're just using the prototype value
     object <- addSlot(object, "eval.time", 0)                  # not sure this is completely necessary since we're just using the prototype value
     object <- addSlot(object, "updated", FALSE)                # not sure this is completely necessary since we're just using the prototype value
+    for(i in seq_along(object@items.ref))
+      object@items.ref[[i]] <-
+        addSlot(object@items.ref[[i]], "section.name", "<unknown>")
   }
   # - Keep at End---------------------------------------------------------------
 

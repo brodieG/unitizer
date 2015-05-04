@@ -6,6 +6,8 @@
 
 NULL
 
+.unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
+
 #' Contains All The Data for Our Tests!
 #'
 #' Generally is populated through the \code{+} methods, with the exception of
@@ -68,7 +70,7 @@ setClass(
     test.file.loc="character",    # location of teset file that produced `unitizer`
     eval="logical",               # internal used during browsing to determine a re-eval instruction by user
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
-    updated="logical",            # whether this unitizer has been queued for update
+    updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -101,7 +103,7 @@ setClass(
   ),
   prototype(
     version=packageVersion("unitizer"),
-    tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
+    tests.status=factor(levels=.unitizer.tests.levels),
     zero.env=baseenv(),
     test.file.loc=NA_character_,
     eval=FALSE,
@@ -171,10 +173,9 @@ setClass(
   "unitizerSummary",
   slots=c(data="matrix", dels="integer", totals="integer"),
   validity=function(object) {
-    val.names <- c("New", "Pass", "Fail", "Error")
     if(
       !is.integer(object@data) ||
-      !all(colnames(object@data) %in% val.names)
+      !all(colnames(object@data) %in% .unitizer.tests.levels)
     )
       return(
         paste0(
@@ -183,11 +184,11 @@ setClass(
       ) )
     if(length(object@dels) != 1L)
       return("Slot `dels` must be integer length one")
-    if(!all(names(object@totals) %in% c(val.names, "Deleted")))
+    if(!all(names(object@totals) %in% .unitizer.tests.levels))
       return(
         paste0(
           "Slot `totals` must be integer with names ",
-          deparse(c(val.names, "Deleted"))
+          deparse(c(val.names))
       ) )
     TRUE
 } )
@@ -225,35 +226,9 @@ setClass(
 setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
-    cols.padded <- paste0(
-      vapply(
-        max(vapply(colnames(sum.mx), nchar, integer(1L))) -
-          vapply(colnames(sum.mx), nchar, integer(1L)),
-        function(x) paste0(rep(" ", x + 1L), collapse=""),
-        character(1L)
-      ),
-      colnames(sum.mx)
-    )
-    colnames(sum.mx) <- cols.padded
-    mat.print <- capture.output(print(`rownames<-`(sum.mx, NULL)))
-    if(length(mat.print) < 2L) {
-      warning(
-        "Summary matrix has no data so it cannot be displayed", immediate.=TRUE
-      )
-    }
-    dat.width <- nchar(sub("^\\[.*\\] ", " ", mat.print[[2]]))
-    max.row.name.width <- max(
-      getOption("width") - dat.width - 15L,
-      15L
-    )
-    rownames(sum.mx) <- strtrunc(rownames(sum.mx), max.row.name.width)
-    print(sum.mx)
-    if(object@dels)
-      word_cat(
-        "\nAdditionally,", object@dels, "test",
-        if(object@dels > 1) "were" else "was", "deleted"
-      )
-    NULL
+    rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
+    cat(summ_matrix_to_text(sum.mx), sep="\n")
+    invisible(NULL)
 } )
 
 #' Determine if a \code{unitizer} Passed Based On Summary
@@ -264,9 +239,8 @@ setMethod("show", "unitizerSummary",
 
 setGeneric("passed", function(object, ...) standardGeneric("passed"))
 setMethod("passed", "unitizerSummary",
-  function(object, ...) {
-    !as.logical(sum(tail(object@data, 1L)[, -1L]) + object@dels)
-} )
+  function(object, ...) !as.logical(sum(object@totals[-1L]))
+)
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
     .Object <- callNextMethod()
@@ -314,36 +288,31 @@ setMethod("summary", "unitizer",
     if(!isTRUE(silent) && !identical(silent, FALSE))
       stop("Argument `silent` must be TRUE or FALSE")
     ignore <- ignored(object@items.new)
-    status <- object@tests.status[!ignore]
+    deleted <- which(!ignored(object@items.ref) & is.na(object@items.ref.map))
+    status <- factor(
+      c(
+        as.character(object@tests.status[!ignore]),
+        rep("Deleted", length(deleted))
+      ),
+      levels=levels(object@tests.status)
+    )
+    sec.ids <- object@section.parent[
+      c(object@section.map[!ignore], object@section.ref.map[deleted])
+    ]
     sections <- vapply(
-      object@section.parent[object@section.map[!ignore]],
-      function(idx) object@sections[[idx]]@title,
-      character(1L)
+      sec.ids, function(idx) object@sections[[idx]]@title, character(1L)
     )
-    sections.levels <- unique(
-      sections[order(object@section.parent[object@section.map[!ignore]])]
-    )
+    sections.levels <- unique(sections[order(sec.ids)])
+
     sum.mx <- tapply(
       rep(1L, length(status)),
       list(factor(sections, levels=sections.levels), status), sum
     )  # this should be a matrix with the summary data.
-    sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
+    sum.mx[is.na(sum.mx)] <- 0L
     total <- apply(sum.mx, 2, sum)
 
-    sum.mx <- rbind(sum.mx, "**Total**"=total)
-    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
-
-    if(sum(sum.mx[, "Error"]) == 0L)
-      sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
-
-    sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
-    deletes <- length(
-      Filter(is.na, object@items.ref.map[!ignored(object@items.ref)])
-    )
-    main.dat <- if(nrow(sum.mx) == 2L) {
-      `rownames<-`(sum.mx[2L, , drop=F], "")
-    } else sum.mx
-    obj <- new("unitizerSummary", data=main.dat, dels=deletes, totals=total)
+    obj <-
+      new("unitizerSummary", data=sum.mx, dels=length(deleted), totals=total)
     if(!silent) show(obj)
     obj
 } )
@@ -379,7 +348,6 @@ setMethod("show", "unitizerObjectListSummary",
     # full name of the directory that they correspond to (as much as possible
     # anyway)
 
-    test.nums <- paste0(" ", format(seq.int(test.len)), ".")
     dirs <- dirname(object@test.files)
     uniq.dir <- str_reduce_unique(dirs)
     com.dir <- substr(dirs[[1L]], 1L, nchar(dirs[[1L]]) - nchar(uniq.dir[[1L]]))
@@ -393,55 +361,38 @@ setMethod("show", "unitizerObjectListSummary",
       ) break
       full.dir <- dir.tmp
     }
-    cat("\n")
-    word_cat("Summary of files in common directory '", full.dir, "':", sep="")
-
     test.files.trim <- if(sum(nchar(uniq.dir))) {
       file.path(uniq.dir, basename(object@test.files))
     } else basename(object@test.files)
 
     # Ignore any columns with zero totals other than pass/fail
 
-    keep.cols <- object@totals > 0L | seq_along(object@totals) < 3L
-
-    col.names <- names(object@totals[keep.cols])
-    col.count <- length(col.names)
-    num.width <- max(nchar(col.names))
-    non.file.chars <- num.width * col.count + max(nchar(test.nums)) + 2L
-    max.file.chars <-
-      min(max(15L, scr.width - non.file.chars), max(nchar(test.files.trim)))
-    pre.sum.chars <- max.file.chars + 2L + max(nchar(test.nums))
-    fmt <- paste0(
-      "%", max(nchar(test.nums)), "s %", max.file.chars, "s ",
-      paste0(rep(paste0(" %", num.width, "s"), col.count), collapse=""), "\n"
-    )
     review.req <- !vapply(as.list(object), passed, logical(1L))
 
     # Display
 
-    cat(header <- do.call(sprintf, c(list(fmt, "", ""), as.list(col.names))))
-    for(i in seq_along(object)) {
-      tot.txt <- object[[i]]@totals[keep.cols]
-      if(object@updated[[i]]) {
-        tot.txt <- rep("?", length(keep.cols))
-        test.num <- sub(" (\\d+)", "$\\1", test.nums[[i]])
-      } else if(review.req[[i]]) {
-        test.num <- sub(" (\\d+)", "*\\1", test.nums[[i]])
-      } else test.num <- test.nums[[i]]
-      cat(
-        do.call(
-          sprintf,
-          c(list(fmt, test.num, test.files.trim[[i]]), as.list(tot.txt))
-    ) ) }
-    # Totals
+    totals <- t(vapply(as.list(object), slot, object[[1L]]@totals, "totals"))
+    totals[object@updated, ] <- NA_integer_
+    rownames(totals) <- test.files.trim
+    disp <- summ_matrix_to_text(totals, from="left")
 
-    cat(rep("-", nchar(header)), "\n", sep="")
-    full.tot.txt <- if(any(object@updated)) {
-      rep("?", length(keep.cols))
-    } else object@totals[keep.cols]
-    cat(
-      do.call(sprintf, c(list(fmt, "", ""), as.list(full.tot.txt)))
+    # Post processing
+
+    for(j in seq_along(disp)) {
+      i <- j - 1L
+      if(!i) next else if(i > nrow(totals)) break
+      disp[[j]] <- if(object@updated[[i]]) {
+        sub("^ +(\\d+\\.)", "$\\1", disp[[j]])
+      } else if(review.req[[i]]) {
+        sub("^ +(\\d+\\.)", "*\\1", disp[[j]])
+      } else disp[[j]]
+    }
+    cat("\n")
+    word_cat(
+      "Summary of files in common directory '", relativize_path(full.dir),
+      "':", sep=""
     )
+    cat(disp, sep="\n")
     # Legends
 
     if(any(review.req || object@updated)) word_cat("Legend:")
@@ -449,7 +400,7 @@ setMethod("show", "unitizerObjectListSummary",
     if(any(object@updated))
       word_cat(
         "$ `unitizer` has been updated and needs to be re-evaluted to",
-        "re-compute summary"
+        "recompute summary"
       )
     invisible(NULL)
 } )

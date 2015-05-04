@@ -509,3 +509,69 @@ str_reduce_unique <- function(x, from="left") {
   }
   res
 }
+
+#' Convert A Matrix of Test Outcomes for Display
+#'
+#' Used by \code{show} methods for both \code{unitizerSummary} and
+#' \code{unitizerSummaryList}
+#'
+#' @keywords internal
+
+summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
+  # Ignore any columns with zero totals other than pass/fail
+
+  if(
+    !is.integer(width) || !identical(length(width), 1L) || is.na(width) ||
+    width < 1L
+  )
+    stop("Argument `width` should be integer(1L) and strictly positive")
+  totals <- colSums(mx)
+  keep.cols <- colSums(mx, na.rm=TRUE) > 0L | seq_along(totals) < 3L
+  mx.keep <- mx[, keep.cols, drop=FALSE]
+  totals.keep <- totals[keep.cols]
+
+  col.names <- names(totals.keep)
+  col.count <- length(col.names)
+  num.width <- max(nchar(col.names), nchar(as.character(totals.keep)))
+
+  test.nums <- paste0(" ", format(seq.int(nrow(mx.keep))), ".")
+  rns <- rownames(mx.keep)
+
+  scr.width <- width
+  non.file.chars <-
+    (num.width + 1L) * col.count + max(nchar(test.nums)) + 2L
+  max.rns.chars <-
+    min(max(12L, scr.width - non.file.chars), max(nchar(rns)))
+
+  fmt <- paste0(
+    "%", max(nchar(test.nums)), "s %", max.rns.chars, "s ",
+    paste0(rep(paste0(" %", num.width, "s"), col.count), collapse="")
+  )
+  rns.trim <- strtrunc(rns, max.rns.chars, from=from)
+  # Display
+
+  res <- do.call(sprintf, c(list(fmt, "", ""), as.list(col.names)))
+  mx.keep.chr <- mx.keep
+  mx.keep.chr[] <- as.character(mx.keep)
+  mx.keep.chr[is.na(mx.keep)] <- "?"
+  mx.keep.chr[!mx.keep] <- "-"
+
+  for(i in seq.int(nrow(mx.keep.chr))) {
+    res <- c(
+      res,
+      do.call(
+        sprintf,
+        c(list(fmt, test.nums[[i]], rns.trim[[i]]), as.list(mx.keep.chr[i, ]))
+  ) ) }
+  # totals.keep
+
+  res <- c(res, paste0(rep("=", nchar(res[[1L]])), collapse=""))
+  tot.chr <- as.character(totals.keep)
+  tot.chr[is.na(totals.keep)] <- "?"
+  tot.chr[!totals.keep] <- "-"
+  res <- c(
+    res,
+    do.call(sprintf, c(list(fmt, "", ""), as.list(tot.chr)))
+  )
+  res
+}

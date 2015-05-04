@@ -106,6 +106,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         next
       }
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
+      item@section.name <- e1@sections[[item@section.id]]@title    # record name for attempting to match deleted tests to section
       over_print(deparse(item@call)[[1L]], append=TRUE)
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
@@ -115,6 +116,22 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
       i <- i + 1L
     }
+    # Attempt to map deleted reference tests to new sections, though we only
+    # map to parent sections, and match purely based on section names
+
+    deleted <- which(is.na(e1@items.ref.map))
+    if(length(deleted)) {
+      sec.titles <- vapply(e1@sections, slot, character(1L), "title")
+      sec.parents <- unique(e1@section.parent)
+      par.titles <- sec.titles[sec.parents]
+
+      for(i in deleted) {
+        sec.match <- Filter(
+          Negate(is.na), match(e1@items.ref[[i]]@section.name, par.titles)
+        )
+        if(identical(length(sec.match), 1L))
+          e1@section.ref.map[[i]] <- sec.parents[[sec.match]]
+    } }
     over_print("")
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
     e1
