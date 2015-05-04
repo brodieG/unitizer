@@ -129,8 +129,11 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         sec.match <- Filter(
           Negate(is.na), match(e1@items.ref[[i]]@section.name, par.titles)
         )
-        if(identical(length(sec.match), 1L))
+        if(identical(length(sec.match), 1L)) {
           e1@section.ref.map[[i]] <- sec.parents[[sec.match]]
+        } else {
+          e1@section.ref.map[[i]] <- NA_integer_
+        }
     } }
     over_print("")
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]

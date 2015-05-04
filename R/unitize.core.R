@@ -515,7 +515,6 @@ unitize_browse <- function(
               "unitizer for: ", getName(unitizers[[i]]), collapse=""
         ) ) )
         show(summaries[[i]])
-        cat("\n")
         browse.res <- browseUnitizer(
           unitizers[[i]], untz.browsers[[i]],
           force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers

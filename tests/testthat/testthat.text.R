@@ -95,6 +95,7 @@ local({
   test_that("substr_const", {
     expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L), c("ab  ", "abcd", "abc "))
     expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L, justify="right"), c("  ab", "abcd", " abc"))
+    expect_equal(unitizer:::substr_cons(c("NEW", "PASS", "FAIL", "DELETED", "Error"), 4L), c("NEW ", "PASS", "FAIL", "DEL ", "Err "))
   })
   test_that("str_reduce_unique", {
     str1 <- c("abcdef", "abcdefgh", "abcql")

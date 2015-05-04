@@ -72,12 +72,21 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
       } } }
       # Add sub-sections
 
-      for(i in unique(x@section.parent)) {                           # Loop through parent sections
-        sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
+      rem.count.all <- 0L
+
+      for(i in sort(unique(x@section.parent))) {          # Loop through parent sections
+        sect.par <- which(x@section.parent == i)
+        sect.map <- x@section.map %in% sect.par           # all items in parent section
+        sect.map.ref <- which(
+          is.na(x@items.ref.map) & !ignored(x@items.ref) &
+          x@section.ref.map == i
+        )
+        rem.item.count <- length(sect.map.ref)
+        rem.count.all <- rem.count.all + rem.item.count
+
         if(
-          sum(
-            vapply(x@sections[which(x@section.parent == i)], length, integer(1L))
-          ) == 0L
+          !sum(vapply(x@sections[sect.par], length, integer(1L))) &&
+          !rem.item.count
         ) next
         browse.sect <- new(
           "unitizerBrowseSection", section.id=i,
@@ -116,18 +125,32 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           new.conditions=rep(F, sum(x@tests.status == "Pass" & sect.map)),
           tests.result=x@tests.result[x@tests.status == "Pass" & sect.map, , drop=FALSE]
         )
+        # Removed tests are a little funky b/c they are not part of the main
+        # data array
+
+        browse.sect <- browse.sect + new(
+          "unitizerBrowseSubSectionRemoved",
+          items.ref=x@items.ref[sect.map.ref],
+          new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
+          tests.result=tests_result_mat(rem.item.count)
+        )
+        # Add entire section
+
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
       }
-      if(length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {  # Removed tests
+      # Removed tests that couldn't be mapped
+      rem.unmapped <- !ignored(x@items.ref) & is.na(x@section.ref.map) &
+        is.na(x@items.ref.map)
+      if(length(which(rem.unmapped))) {
         browse.sect <- new(
           "unitizerBrowseSection", section.id=0L,
-          section.title="Removed Items"
+          section.title=paste0(if(rem.count.all) "Other ", "Removed Items")
         )
-        rem.item.count <- length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))
+        rem.item.count <- length(which(rem.unmapped))
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionRemoved",
-          items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)],
+          items.ref=x@items.ref[rem.unmapped],
           new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
           tests.result=tests_result_mat(rem.item.count)
         )

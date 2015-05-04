@@ -416,6 +416,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # conditions
 
     if(!identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect) {
+      cat("\n")
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate

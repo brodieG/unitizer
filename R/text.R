@@ -469,7 +469,7 @@ change_first <- function(x, fun) {
 substr_cons <- function(x, stop, justify="left") {
   if(!is.character(x)) stop("Argument `x` must be ")
   y <- substr(x, 1, stop)
-  z <- sub("[^bcdfghjklmnpqrstvwxz]*$", "", x)
+  z <- sub("[^bcdfghjklmnpqrstvwxz]*$", "", y, ignore.case=TRUE)
   format(z, width=stop, justify=justify)
 }
 #' Remove Common Characters From Values in a Vector
@@ -530,7 +530,7 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
   mx.keep <- mx[, keep.cols, drop=FALSE]
   totals.keep <- totals[keep.cols]
 
-  col.names <- names(totals.keep)
+  col.names <- substr_cons(names(totals.keep), 4L, justify="right")
   col.count <- length(col.names)
   num.width <- max(nchar(col.names), nchar(as.character(totals.keep)))
 

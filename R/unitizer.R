@@ -96,8 +96,16 @@ setClass(
     section.map="integer",
     section.parent="integer",    # same length as sections, for each section links to parent, where parent is the outermost section a section is nested within
 
+    # Note, all section references for ref objects are parent sections since
+    # when we browse we don't track nested sections.  Usage of @section.ref.map
+    # is a bit overloaded; we first try to re-assign any reference sections to
+    # new sections if possible, and if not assign them NA; subsequently, before
+    # we store the updated `unitizer`, we transfer all the newly generated
+    # section info for the new reference tests here, so need to be careful about
+    # how we interpret this.  We should clean this up at some point
+
     sections.ref="list",
-    section.ref.map="integer",   # Note, all section references for ref objects are parent sections since when we browse we don't track nested sections
+    section.ref.map="integer",
 
     changes="unitizerChanges"              # Summary of user changes
   ),
@@ -300,7 +308,10 @@ setMethod("summary", "unitizer",
       c(object@section.map[!ignore], object@section.ref.map[deleted])
     ]
     sections <- vapply(
-      sec.ids, function(idx) object@sections[[idx]]@title, character(1L)
+      sec.ids,
+      function(idx)
+        if(is.na(idx)) "<unknown>" else object@sections[[idx]]@title,
+      character(1L)
     )
     sections.levels <- unique(sections[order(sec.ids)])
 
