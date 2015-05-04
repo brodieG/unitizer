@@ -542,7 +542,8 @@ setClass("unitizerBrowseSubSection",
     items.ref="unitizerItemsOrNULL",
     title="character",
     prompt="character",
-    detail="character",
+    detail.s="character",
+    detail.p="character",
     actions="character",
     show.out="logical",
     show.msg="logical",
@@ -576,8 +577,15 @@ setClass("unitizerBrowseSubSection",
       return("Argument `show.fail` must be a 1 length logical or a \"unitizerItemsTestsErrors\" object")
     } else if (!is.character(object@prompt) || length(object@prompt) != 1L) {
       return("Argument `prompt` must be a 1 length character")
-    } else if (!is.character(object@detail) || length(object@detail) != 1L) {
-      return("Argument `prompt` must be a 1 length character")
+    } else if (!is.character(object@detail.s) || length(object@detail.s) != 1L) {
+      return("Argument `detail.s` must be a 1 length character")
+    } else if (
+      !is.character(object@detail.p) || length(object@detail.p) != 1L ||
+      is.na(object@detail.p) || !isTRUE(grepl("%s", object@detail.p))
+    ) {
+      return(
+        "Argument `detail.p` must be character(1L), non-NA, and contain '%s'"
+      )
     } else if (
       length(object@new.conditions) !=
       max(length(object@items.ref), length(object@items.new))
@@ -769,8 +777,13 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
     prompt="Overwrite with new test",
-    detail=paste0(
-      "Reference test does not match new test from test script."
+    detail.s=paste0(
+      "The following test failed because the new evaluation does not match ",
+      "the reference value from the store."
+    ),
+    detail.p=paste0(
+      "The following %s test failed because the new evaluations do not match ",
+      "the reference values from the store."
     ),
     actions=c(Y="A", N="B")
 ) )
@@ -778,17 +791,26 @@ setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
   prototype=list(
     title="New",
     prompt="Add new test to store",
-    detail="Test script contains tests not present in unitizer.",
+    detail.s="The following test is new.",
+    detail.p="The following %s tests are new.",
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
-setClass("unitizerBrowseSubSectionCorrupted", contains="unitizerBrowseSubSection",
+setClass("unitizerBrowseSubSectionCorrupted",
+  contains="unitizerBrowseSubSection",
   prototype=list(
     title="Corrupted",
-    prompt="Overwrite with new value",
-    detail=paste0(
-      "Reference tests cannot be compared to new tests because errors occurred ",
-      "while attempting comparison. Please review the error and contemplate using ",
-      "a different comparison function with `unitizer_sect`."
+    prompt="Overwrite with new test result",
+    detail.s=paste0(
+      "The test outcome for the following test cannot be assessed because ",
+      "errors occurred while attempting comparison. Please review the errors ",
+      "and contemplate using a different comparison function with ",
+      "`unitizer_sect`."
+    ),
+    detail.p=paste0(
+      "The test outcome for the following %s tests cannot be assessed because ",
+      "errors occurred while attempting comparison. Please review the errors ",
+      "and contemplate using a different comparison function with ",
+      "`unitizer_sect`."
     ),
     actions=c(Y="A", N="B")
 ) )
@@ -796,14 +818,22 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Removed",
     prompt="Remove test from store",
-    detail="The following test exists in unitizer but not in the new test script.",
+    detail.s=paste0(
+      "The following test exists in the unitizer store but not in the new ",
+      "test script."
+    ),
+    detail.p=paste0(
+      "The following %s tests exist in the unitizer store but not in the new ",
+      "test script."
+    ),
     actions=c(Y="C", N="B")
 ) )
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
     prompt="Drop test from store",
-    detail="The following tests passed.",
+    detail.s="The following test passed.",
+    detail.p="The following %s tests passed.",
     actions=c(Y="C", N="A"), show.out=TRUE
 ) )
 #' Add a browsing sub-section to a browse section

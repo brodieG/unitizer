@@ -426,17 +426,22 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) && !ignore.sub.sec
     ) {
       print(H3(curr.sub.sec.obj@title))
+      rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
+
+      if(rev.count > 1L) {
+        word_cat(sprintf(curr.sub.sec.obj@detail.p, rev.count))
+      } else word_cat(curr.sub.sec.obj@detail.s)
+      cat("\n")
       word_cat(
-        curr.sub.sec.obj@detail,
-        if(!all(x@mapping@ignored[cur.sub.sec.items]) || x@inspect.all) {
+        if(rev.count || x@inspect.all) {
           paste0(
-            " ", curr.sub.sec.obj@prompt, " ",
+            curr.sub.sec.obj@prompt, " ",
             "(",
             paste0(
               c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
               collapse=", "
             ),
-            ")?\n\n"
+            ")?\n"
         ) }
       )
     }
