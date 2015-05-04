@@ -210,7 +210,7 @@ review_prompt <- function(x, nav.env) {
   word_cat(nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"))
   nav.id <- unitizer_prompt(
     text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit_fun,
-    valid.opts=nav.opts
+    valid.opts=nav.opts, valid.vals=x@mapping@item.id
   )
   if(identical(nav.id, "Q")) {
     return("Q")

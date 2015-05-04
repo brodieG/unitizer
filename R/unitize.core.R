@@ -50,9 +50,8 @@ unitize_core <- function(
         "Logic Error: `test.files` must all point to valid files in unitize ",
         "mode; contact maintainer"
       )
-    norm.attempt <-
-      normalizePath(test.files <- normalizePath(test.files), mustWork=TRUE)
-    if(inherits(norm.attempt, "try-error"))
+    test.files <- try(normalizePath(test.files), mustWork=TRUE)
+    if(inherits(test.files, "try-error"))
       stop("Logic Error: unable to normalize test files; contact maintainer")
   }
   if(length(test.files) != length(store.ids))
@@ -148,7 +147,7 @@ unitize_core <- function(
   ) } }
   # Ensure directory names are normalized, but only if dealing with char objects
 
-  norm.attempt < try(
+  norm.attempt <- try(
     store.ids <- lapply(
       store.ids,
       function(x) {
@@ -240,7 +239,7 @@ unitize_core <- function(
   check_call_stack()  # Make sure nothing untoward will happen if a test triggers an error
 
   while(
-    length(eval.which) || mode == "review"
+    length(eval.which) || mode == identical(mode, "review")
   ) {
     # Load unitizers
 
@@ -250,7 +249,8 @@ unitize_core <- function(
     # Now evaluate, whether a `unitizer` is evaluated or not is a function of
     # the slot @eval, set just above as they are loaded
 
-    unitizers <- unitize_eval(tests.parsed=tests.parsed, unitizers=unitizers)
+    if(identical(mode, "unitize"))
+      unitizers <- unitize_eval(tests.parsed=tests.parsed, unitizers=unitizers)
 
     # Gather user input, and store tests as required.  Any `unitizer`s that
     # the user marked for re-evaluation will be re-evaluated in this loop
@@ -263,6 +263,7 @@ unitize_core <- function(
       auto.accept=auto.accept
     )
     eval.which <- which(vapply(as.list(unitizers), slot, logical(1L), "eval"))
+    if(identical(mode, "review")) break
   }
   # - Finalize -----------------------------------------------------------------
 
@@ -514,7 +515,9 @@ unitize_browse <- function(
             paste0(
               "unitizer for: ", getName(unitizers[[i]]), collapse=""
         ) ) )
-        show(summaries[[i]])
+        if(identical(mode, "unitize")) {
+          show(summaries[[i]])
+        }
         browse.res <- browseUnitizer(
           unitizers[[i]], untz.browsers[[i]],
           force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers

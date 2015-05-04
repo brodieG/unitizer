@@ -782,8 +782,8 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "the reference value from the store."
     ),
     detail.p=paste0(
-      "The following %s test failed because the new evaluations do not match ",
-      "the reference values from the store."
+      "The %s tests in this section failed because the new evaluations do not ",
+      "match the reference values from the store."
     ),
     actions=c(Y="A", N="B")
 ) )
@@ -792,7 +792,7 @@ setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
     title="New",
     prompt="Add new test to store",
     detail.s="The following test is new.",
-    detail.p="The following %s tests are new.",
+    detail.p="The %s tests in this section are new.",
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
 setClass("unitizerBrowseSubSectionCorrupted",
@@ -807,9 +807,9 @@ setClass("unitizerBrowseSubSectionCorrupted",
       "`unitizer_sect`."
     ),
     detail.p=paste0(
-      "The test outcome for the following %s tests cannot be assessed because ",
-      "errors occurred while attempting comparison. Please review the errors ",
-      "and contemplate using a different comparison function with ",
+      "The test outcome for the %s tests in this secton cannot be assessed ",
+      "because errors occurred while attempting comparison. Please review the ",
+      "errors and contemplate using a different comparison function with ",
       "`unitizer_sect`."
     ),
     actions=c(Y="A", N="B")
@@ -823,18 +823,18 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
       "test script."
     ),
     detail.p=paste0(
-      "The following %s tests exist in the unitizer store but not in the new ",
-      "test script."
+      "The %s tests in this section exist in the unitizer store but not in the ",
+      "new test script."
     ),
     actions=c(Y="C", N="B")
 ) )
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Drop test from store",
+    prompt="Keep test in store",
     detail.s="The following test passed.",
-    detail.p="The following %s tests passed.",
-    actions=c(Y="C", N="A"), show.out=TRUE
+    detail.p="The %s tests in this section passed.",
+    actions=c(Y="A", N="C"), show.out=TRUE
 ) )
 #' Add a browsing sub-section to a browse section
 #'
