@@ -183,27 +183,28 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
             Filter(Negate(is.na), tail(y@items.ref.map, -items.ref.idx[[i]]))
         )
       ) {
-        # Nothing younger, so put at end and set up so that next one goes behind this one
-        # need to look for non-kept items as well as otherwise could slot something in
-        # too far down the ancestry.
+        # Nothing younger, so put at end and set up so that next one goes behind
+        # this one need to look for non-kept items as well as otherwise could
+        # slot something in too far down the ancestry.
         item.env <- tail.env
         slot.in[[i]] <- max(slot.in, items.new.idx) + 1L
-      } else if (  # Nothing younger or older, note that diretly matching env doesn't count
+      } else if (
+        # Nothing younger or older, note that diretly matching env doesn't count
         !length(
           matching.new.older <- (
             m.n.older.tmp <- sort(
               Filter(Negate(is.na), head(y@items.ref.map, items.ref.idx[[i]] - 1L))
           ) )[m.n.older.tmp %in% items.new.idx]
       ) ) {
-        # also, in this case must look at kept envs only since parent has to be a kept
-        # env
+        # also, in this case must look at kept envs only since parent has to be
+        # a kept env
         item.env <- y@items.new@base.env
         slot.in[[i]] <- min(slot.in)
       } else {     # Something younger, and older
-        # in this case, we must find the closest older kept new env, and use that as a
-        # parent.  Old approach used to use the a kept ref env that is between this
-        # new env and the ref env we are working with, but this became unmanageable in
-        # term of computing the ls diffs.
+        # in this case, we must find the closest older kept new env, and use
+        # that as a parent.  Old approach used to use the a kept ref env that is
+        # between this new env and the ref env we are working with, but this
+        # became unmanageable in term of computing the ls diffs.
         item.env <- y@items.new[[tail(matching.new.older, 1L)]]@env
         slot.in[[i]] <- tail(matching.new.older, 1L)
       }
