@@ -27,3 +27,26 @@ is.open_con <- function(x, file=NULL) {
   if(!isOpen(x)) return("must be an open connection")
   return(TRUE)
 }
+#' Confirm Object is In \code{package_version} form
+#' @keywords internal
+
+is.package_version <- function(x)
+  inherits(x, "package_version") && inherits(x, "numeric_version") &&
+  is.list(x) && identical(length(x), 1L)
+
+#' Test for plain characterness
+#'
+#' Used primarily for assessing whether a store id should use default mechanism
+#' or should be coerced to character
+#'
+#' @keyword internal
+
+is.chr1plain <- function(x)
+  !is.object(x) && is.character(x) && identical(length(x), 1L)
+
+
+#' Check Whether Provided Store ID Is in Default Form
+#'
+#' @keywords internal
+
+is.default_unitizer_id <- function(x) is.chr1plain(x) && !is.na(x)

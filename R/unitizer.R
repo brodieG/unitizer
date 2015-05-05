@@ -203,10 +203,17 @@ setClass(
 setClass(
   "unitizerObjectList", contains="unitizerList",
   validity=function(object) {
-    if(!all(vapply(object@.items, is, logical(1L), "unitizer")))
-      return("slot `.items` may only contain \"unitizer\" objects")
+    if(
+      !all(
+        vapply(
+          object@.items,
+          function(x) is(x, "unitizer") || identical(x, FALSE),
+          logical(1L))
+    ) )
+      return("slot `.items` may only contain \"unitizer\" objects or FALSE")
     TRUE
-} )
+  }
+)
 setClass(
   "unitizerObjectListSummary", contains="unitizerList",
   slots=c(test.files="character", totals="integer", updated="logical"),
@@ -600,21 +607,23 @@ setGeneric("getName", function(object, ...) standardGeneric("getName"))
 
 setMethod("getTarget", "unitizer",
   function(object, ...) {
-    if(is.character(object@id) && length(object@id) == 1L) {
-      target <- object@id
-    } else {
-      target <- try(as.character(object@id), silent=TRUE)
-      if(inherits(target, "try-error"))
-        target <- "<untranslateable-unitizer-id>"
+    id <- try(object@id, silent=TRUE)
+    target <- if(inherits(id, "try-error")) {
+      return("<unknown store id>")
     }
-    target
+    relativize_path(as.store_id_chr(target))
 } )
 #' @rdname getTarget,unitizer-method
 
 setMethod("getName", "unitizer",
   function(object, ...) {
-    u.name <- if(!is.na(object@test.file.loc)) {
-      basename(object@test.file.loc)
-    } else getTarget(object)
+    f.name <- try(object@test.file.loc, silent=TRUE)
+    if(
+      inherits(f.name, "try-error") ||
+      !is.chr1plain(f.name) || is.na(f.name)
+    ) {
+      return(getTarget(object))
+    }
+    relativize_path(f.name)
 } )
 

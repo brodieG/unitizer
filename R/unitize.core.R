@@ -50,7 +50,7 @@ unitize_core <- function(
         "Logic Error: `test.files` must all point to valid files in unitize ",
         "mode; contact maintainer"
       )
-    test.files <- try(normalizePath(test.files), mustWork=TRUE)
+    test.files <- try(normalizePath(test.files, mustWork=TRUE))
     if(inherits(test.files, "try-error"))
       stop("Logic Error: unable to normalize test files; contact maintainer")
   }
@@ -231,7 +231,7 @@ unitize_core <- function(
   assign("q", unitizer_quit, util.frame)
 
   over_print("Loading unitizer data...")
-  eval.which <- seq_along(store.ids)
+  eval.which <- valid <- seq_along(store.ids)
   unitizers <- new("unitizerObjectList")
 
   # - Evaluate / Browse --------------------------------------------------------
@@ -239,30 +239,40 @@ unitize_core <- function(
   check_call_stack()  # Make sure nothing untoward will happen if a test triggers an error
 
   while(
-    length(eval.which) || mode == identical(mode, "review")
+    (length(eval.which) || mode == identical(mode, "review")) && length(valid)
   ) {
+    active <- eval.which & valid # kind of implied in `eval.which` after first loop
+
     # Load unitizers
 
-    unitizers[eval.which] <- unitize_load(
-      store.ids[eval.which], test.files[eval.which], util.frame, mode
+    unitizers[active] <- load_unitizers(
+      store.ids[active], test.files[active], par.frame=util.frame,
+      interactive.mode=interactive.mode, mode=mode
     )
+    valid <- vapply(as.list(unitizers), is, logical(1L), "unitizer")
+
     # Now evaluate, whether a `unitizer` is evaluated or not is a function of
     # the slot @eval, set just above as they are loaded
 
     if(identical(mode, "unitize"))
-      unitizers <- unitize_eval(tests.parsed=tests.parsed, unitizers=unitizers)
+      unitizers[valid] <- unitize_eval(
+        tests.parsed=tests.parsed[valid], unitizers=unitizers[valid]
+      )
 
     # Gather user input, and store tests as required.  Any `unitizer`s that
     # the user marked for re-evaluation will be re-evaluated in this loop
 
-    unitizers <- unitize_browse(
-      unitizers=unitizers,
+    unitizers[valid] <- unitize_browse(
+      unitizers=unitizers[valid],
       mode=mode,
       interactive.mode=interactive.mode,
       force.update=force.update,
       auto.accept=auto.accept
     )
-    eval.which <- which(vapply(as.list(unitizers), slot, logical(1L), "eval"))
+    eval.which.valid <- which(
+      vapply(as.list(unitizers[valid]), slot, logical(1L), "eval")
+    )
+    eval.which <- which(valid)[eval.which.valid]
     if(identical(mode, "review")) break
   }
   # - Finalize -----------------------------------------------------------------
