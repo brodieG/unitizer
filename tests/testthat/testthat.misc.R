@@ -184,10 +184,19 @@ test_that("relativize_path", {
   wd <- file.path(base, "infer")
   p1 <- file.path(wd, "R")
   p2 <- file.path(base, "unitizerdummypkg1")
+
   expect_equal(unitizer:::relativize_path(p1, wd), "R")
   expect_equal(unitizer:::relativize_path(p2, wd), "../unitizerdummypkg1")
   expect_equal(
     unitizer:::relativize_path(c(p1, p2), wd),
     c("R", "../unitizerdummypkg1")
+  )
+  expect_equal(
+    unitizer:::relativize_path(c(p1, p2), wd),
+    c("R", "../unitizerdummypkg1")
+  )
+  expect_equal(
+    unitizer:::relativize_path(c(p1, p2, file.path("notarealpath", "foo")), wd),
+    c("R", "../unitizerdummypkg1", file.path("notarealpath", "foo"))
   )
 } )

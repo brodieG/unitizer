@@ -166,18 +166,20 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   wd <- try(normalizePath(wd, mustWork=TRUE), silent=TRUE)
   res <- if(
     !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
-    identical(length(.Platform$file.sep), 1L) &&
-    file.exists(path)
+    identical(length(.Platform$file.sep), 1L)
   ) {
+    norm <- normalizePath(path, mustWork=FALSE)
+    to.norm <- file.exists(norm)
+
     path.pieces <- lapply(
-      strsplit(path, .Platform$file.sep, fixed=TRUE), Filter, f=nchar
+      strsplit(norm[to.norm], .Platform$file.sep, fixed=TRUE), Filter, f=nchar
     )
     wd.pieces <- Filter(
       nchar, unlist(strsplit(wd, .Platform$file.sep, fixed=TRUE))
     )
     # /a/b/c/d/e
     # /a/b/c/F/G
-    vapply(
+    reled <- vapply(
       path.pieces,
       function(x) {
         up.to <- min(length(x), length(wd.pieces))
@@ -194,6 +196,8 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
       },
       character(1L)
     )
+    norm[to.norm] <- reled
+    norm
   } else path
   if(only.if.shorter) {
     ifelse(nchar(res) < nchar(path), res, path)
