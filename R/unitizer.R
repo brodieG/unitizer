@@ -608,10 +608,10 @@ setGeneric("getName", function(object, ...) standardGeneric("getName"))
 setMethod("getTarget", "unitizer",
   function(object, ...) {
     id <- try(object@id, silent=TRUE)
-    target <- if(inherits(id, "try-error")) {
+    if(inherits(id, "try-error")) {
       return("<unknown store id>")
     }
-    relativize_path(as.store_id_chr(target))
+    relativize_path(as.store_id_chr(id))
 } )
 #' @rdname getTarget,unitizer-method
 

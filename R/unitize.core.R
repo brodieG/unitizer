@@ -231,7 +231,8 @@ unitize_core <- function(
   assign("q", unitizer_quit, util.frame)
 
   over_print("Loading unitizer data...")
-  eval.which <- valid <- seq_along(store.ids)
+  eval.which <- seq_along(store.ids)
+  valid <- rep(TRUE, length(eval.which))
   unitizers <- new("unitizerObjectList")
 
   # - Evaluate / Browse --------------------------------------------------------
@@ -241,7 +242,7 @@ unitize_core <- function(
   while(
     (length(eval.which) || mode == identical(mode, "review")) && length(valid)
   ) {
-    active <- eval.which & valid # kind of implied in `eval.which` after first loop
+    active <- intersect(eval.which, which(valid)) # kind of implied in `eval.which` after first loop
 
     # Load unitizers
 

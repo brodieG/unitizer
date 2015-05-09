@@ -220,6 +220,7 @@ setClass("unitizerBrowseMapping",
     sub.sec.id="integer",
     reviewed="logical",
     review.val="character",
+    review.def="character",
     review.type="factor",
     tests.result="matrix",
     ignored="logical",
@@ -468,14 +469,16 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
 setClass("unitizerBrowseSection", contains="unitizerList",
   slots=c(
     section.id="integer",
-    section.title="character"
+    section.title="character",
+    review.val="character"
 ) )
 
 #' Add Sections to Our Main Browse Object
 #'
 #' Primarily we're contructing the \code{`@@mapping`} slot which will then allow
-#' us to carry out requisite computations later.  See \code{`\link{unitizerBrowseMapping-class}`}
-#' for details on what each of the slots in \code{`mapping`} does.
+#' us to carry out requisite computations later.  See
+#' \code{`\link{unitizerBrowseMapping-class}`} for details on what each of the
+#' slots in \code{`mapping`} does.
 #'
 #' Also, some more discussion of this issue in the docs for \code{`\link{unitizer-class}`}.
 #'
@@ -489,6 +492,7 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
     max.item <- length(e1@mapping@item.id)
     max.sub.sec <- if(max.item) max(e1@mapping@sub.sec.id) else 0L
     sec.item.list <- as.list(extractItems(e2))
+    action.default <- vapply(as.list(e2), slot, character(1L), "action.default")
 
     mapping.new <- new("unitizerBrowseMapping",
       item.id=(max.item + 1L):(max.item + sum(item.count)),
@@ -499,7 +503,8 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
       sub.sec.id=rep(
         seq_along(item.count), item.count
       ),
-      review.val=rep("N", sum(item.count)),       # Default Action is No so that when we quit early, only reviewed stuff is kept
+      review.val=rep(action.default, item.count),
+      review.def=rep(action.default, item.count),
       reviewed=rep(FALSE, sum(item.count)),
       review.type=factor(
         rep(test.types, item.count),
@@ -545,13 +550,16 @@ setClass("unitizerBrowseSubSection",
     detail.s="character",
     detail.p="character",
     actions="character",
+    action.default="character",
     show.out="logical",
     show.msg="logical",
     show.fail="unitizerItemsTestsErrorsOrLogical",
     new.conditions="logical",
     tests.result="matrix"
   ),
-  prototype=list(show.msg=FALSE, show.fail=FALSE, show.out=FALSE),
+  prototype=list(
+    show.msg=FALSE, show.fail=FALSE, show.out=FALSE, action.default="N"
+  ),
   validity=function(object) {
     if(
       !is.null(object@items.ref) && !is.null(object@items.new) &&
@@ -602,6 +610,11 @@ setClass("unitizerBrowseSubSection",
           "Argument `tests.result` must be logical matrix with colnames equal ",
           "to slot names for `unitizerItemData`"
       ) )
+    } else if(
+      !identical(length(object@action.default), 1L) ||
+      !length(which(object@action.default %in% c("Y", "N")))
+    ) {
+      return("Argument `action.default` must be \"Y\" or \"N\"")
     }
     TRUE
   }
@@ -807,7 +820,7 @@ setClass("unitizerBrowseSubSectionCorrupted",
       "`unitizer_sect`."
     ),
     detail.p=paste0(
-      "The test outcome for the %s tests in this secton cannot be assessed ",
+      "The test outcome for the %s tests in this section cannot be assessed ",
       "because errors occurred while attempting comparison. Please review the ",
       "errors and contemplate using a different comparison function with ",
       "`unitizer_sect`."
@@ -834,7 +847,9 @@ setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
     prompt="Keep test in store",
     detail.s="The following test passed.",
     detail.p="The %s tests in this section passed.",
-    actions=c(Y="A", N="C"), show.out=TRUE
+    actions=c(Y="A", N="C"),
+    action.default="Y",
+    show.out=TRUE
 ) )
 #' Add a browsing sub-section to a browse section
 #'

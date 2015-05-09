@@ -60,7 +60,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     if(browse.res@updated) {
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
-        message("Unable to store '", getTarget(browse.res@unitizer, "'"))
+        word_msg("Unable to store '", getTarget(browse.res@unitizer, "'"))
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it
@@ -165,7 +165,8 @@ setMethod(
 
         keep <- !y@mapping@ignored
         changes <- split(
-          y@mapping@review.val[keep] == "Y", y@mapping@review.type[keep]
+          y@mapping@review.val[keep] != y@mapping@review.def[keep],
+          y@mapping@review.type[keep]
         )
         change.sum <- lapply(
           changes,
@@ -220,9 +221,7 @@ setMethod(
           )
           if(update) {
             word_msg(
-              "You will IRREVERSIBLY modify '",
-              relativize_path(getTarget(x)), "' by:",
-              sep=""
+              "You will IRREVERSIBLY modify '", getTarget(x), "' by:", sep=""
           ) }
           if(length(x@changes) > 0) {
             show(x@changes)
