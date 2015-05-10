@@ -116,10 +116,14 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
       i <- i + 1L
     }
-    # Attempt to map deleted reference tests to new sections, though we only
-    # map to parent sections, and match purely based on section names
+    # Map reference tests to sections.  Tests that match directly are assigned
+    # to the corresponding new section.  For deleted reference tests to new
+    # sections, though we only map to parent sections, and match purely based on
+    # section names
 
+    e1@section.ref.map <- e1@section.map[e1@items.ref.map]
     deleted <- which(is.na(e1@items.ref.map))
+
     if(length(deleted)) {
       sec.titles <- vapply(e1@sections, slot, character(1L), "title")
       sec.parents <- unique(e1@section.parent)
