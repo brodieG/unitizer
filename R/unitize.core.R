@@ -283,33 +283,6 @@ unitize_core <- function(
   else if (search.path.setup) search_path_unsetup()
   return(as.list(unitizers))
 }
-#' Load Unitizers
-#'
-#' @keywords internal
-
-unitize_load <- function(store.ids, test.files, frame, mode) {
-  unitizers <- new(
-    "unitizerObjectList",
-    .items=lapply(
-      seq_along(store.ids),
-      function(i) {
-        if(is(store.ids[[i]], "unitizer")) {
-          unitizer <- upgrade(store.ids[[i]], frame, test.files[[i]])
-          store.ids[[i]] <- unitizer@id
-        } else {
-          unitizer <- try(
-            load_unitizer(store.ids[[i]], frame, test.files[[i]])
-          )
-          if(inherits(unitizer, "try-error"))
-            stop("Unable to load unitizer; see prior errors.")
-        }
-        if(!is(unitizer, "unitizer"))
-          stop("Logic Error: expected a unitizer object; contact maintainer.")
-        unitizer@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
-        unitizer
-  } ) )
-}
-
 #' Evaluate User Tests
 #'
 #' @param tests.parsed a list of expressions
