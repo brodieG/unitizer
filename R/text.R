@@ -565,7 +565,7 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
   ) ) }
   # totals.keep
 
-  res <- c(res, paste0(rep("=", nchar(res[[1L]])), collapse=""))
+  res <- c(res, paste0(rep(".", nchar(res[[1L]])), collapse=""))
   tot.chr <- as.character(totals.keep)
   tot.chr[is.na(totals.keep)] <- "?"
   tot.chr[!totals.keep] <- "-"
