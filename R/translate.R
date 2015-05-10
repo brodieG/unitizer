@@ -404,7 +404,7 @@ testthat_transcribe_file <- function(
     if(!file.exists(target.dir)) {
       if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
         u.inp <- simple_prompt(
-          paste0("Create directory ", target.dir," for `unitizer` tests?")
+          paste0("Create directory ", target.dir," for unitizer tests?")
         )
         if(!identical(u.inp, "Y"))
           stop("Unable to proceed without creating target directory")
@@ -590,7 +590,7 @@ testthat_translate_name <- function(
   base.new <- sub(name.pattern, name.replace, basename(file.name))
   if(!nchar(base.new))
     stop(
-      "Produced zero char name when attempting to make `unitizer` file name ",
+      "Produced zero char name when attempting to make unitizer file name ",
       "from `testthat` file name, please review `file.name`, `name.pattern`, ",
       "and `name.replace`"
     )

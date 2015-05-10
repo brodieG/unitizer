@@ -7,11 +7,11 @@
 #' @param store.id anything for which there is a defined \code{`\link{get_unitizer}`}
 #'   method; by default should be the path to a unitizer; if \code{`\link{get_unitizer}`}
 #'   returns \code{`FALSE`} then this will create a new unitizer
-#' @param par.frame the environment to use as the parent frame for the \code{`unitizer`}
+#' @param par.frame the environment to use as the parent frame for the \code{unitizer}
 #' @param test.file the R file associated with the store id
 #' @param force.upgrade whether to allow upgrades in non-interactive mode, for
 #'   testing purposes
-#' @return a \code{`unitizer`} object, or anything, in which case the calling
+#' @return a \code{unitizer} object, or anything, in which case the calling
 #'   code should exit
 
 load_unitizers <- function(
@@ -75,13 +75,13 @@ load_unitizers <- function(
     function(x) {
       if(!is(x, "unitizer")) {
         if(!is.chr1plain(x) || nchar(x) < 1L)
-          return("unknown `unitizer` load failure")
+          return("unknown unitizer load failure")
         return(x)
       }
       attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
       if(inherits(attempt, "try-error")) {
         msg <- conditionMessage(attr(attempt, "condition"))
-        if(nchar(msg)) msg else "`unitizer` validity check failed"
+        if(nchar(msg)) msg else "unitizer validity check failed"
       } else ""
     },
     character(1L)
@@ -115,7 +115,7 @@ load_unitizers <- function(
   if(length(toup.idx)) {
     many <- length(toup.idx) > 1L
     word_cat(
-      "\nThe following `unitizer`", if(many) "s",
+      "\nThe following unitizer", if(many) "s",
       if(force.upgrade) " will" else " must", " be upgraded to version '",
       as.character(curr.version), "':",
       sep=""
@@ -131,10 +131,10 @@ load_unitizers <- function(
       sep="\n"
     )
     if(!interactive.mode && !force.upgrade)
-      stop("Cannot upgrade `unitizer`s in non-interactive mode")
+      stop("Cannot upgrade unitizers in non-interactive mode")
 
     pick <- if(interactive.mode) {
-      word_msg("`unitizer` upgrades are IRREVERSIBLE.  Proceed?")
+      word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
       unitizer_prompt(
         "Upgrade unitizer stores?", hist.con=NULL,
         valid.opts=c(Y="[Y]es", N="[N]o")
@@ -160,9 +160,9 @@ load_unitizers <- function(
       toup.fail.idx <- toup.idx[!upgrade.success]
       valid[toup.fail.idx] <- upgraded[!upgrade.success]
     } else {
-      word_msg("`unitizer`(s) listed above will not be tested")
+      word_msg("unitizer(s) listed above will not be tested")
       toup.fail.idx <- toup.idx
-      valid[toup.fail.idx] <- "User elected not to upgrade `unitizer`s"
+      valid[toup.fail.idx] <- "User elected not to upgrade unitizers"
     }
   }
   # Cleanup the unitizers
@@ -179,7 +179,7 @@ load_unitizers <- function(
 
   if(length(invalid.idx)) {
     word_msg(
-      "\nThe following `unitizer`", if(length(invalid.idx) > 1L) "s",
+      "\nThe following unitizer", if(length(invalid.idx) > 1L) "s",
       " could not be loaded:", sep=""
     )
     cat(
@@ -191,7 +191,7 @@ load_unitizers <- function(
   }
   if(length(toup.fail.idx)) {
     word_msg(
-      "\nThe following `unitizer`", if(length(toup.fail.idx) > 1L) "s",
+      "\nThe following unitizer", if(length(toup.fail.idx) > 1L) "s",
       " could not be upgraded to version '", as.character(curr.version), "':",
       sep=""
     )
@@ -207,7 +207,7 @@ load_unitizers <- function(
     )
   }
   if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))
-    word_cat("No valid `unitizer`", if(length(store.ids) > 1L) "s", "to load")
+    word_cat("No valid unitizer", if(length(store.ids) > 1L) "s", "to load")
   new("unitizerObjectList", .items=unitizers)
 }
 
@@ -225,7 +225,7 @@ store_unitizer <- function(unitizer) {
   if(!inherits(success, "try-error")) {
     message("unitizer updated")
   } else {
-    stop("Error attempting to save `unitizer`, see previous messages.")
+    stop("Error attempting to save unitizer, see previous messages.")
   }
   return(invisible(TRUE))
 }
@@ -282,7 +282,7 @@ best_store_name <- function(store.id, test.file) {
   if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
     if(is.na(test.file)) return("<untranslateable-unitizer-id>")
     return(
-      paste0("`unitizer` for test file '", relativize_path(test.file), "'")
+      paste0("unitizer for test file '", relativize_path(test.file), "'")
     )
   }
   chr.store
@@ -296,6 +296,6 @@ best_file_name <- function(store.id, test.file) {
   if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
     return("<unknown-test-file>")
   }
-  paste0("Test file for `unitizer` '", chr.store, "'")
+  paste0("Test file for unitizer '", chr.store, "'")
 }
 

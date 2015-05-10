@@ -47,7 +47,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
 
     if(identical(y@mode, "review") && !isTRUE(y@interactive))
       stop(
-        "Logic Error: attempt to enter `unitizer` in review mode in ",
+        "Logic Error: attempt to enter unitizer in review mode in ",
         "non-interactive state, which should not be possible, contact ",
         "maintainer."
       )
@@ -97,10 +97,10 @@ setMethod(
     if(!length(y)) {
       message("No tests to review.")
     } else if(!something.happened && !force.update) {
-      message("All tests passed, `unitizer` store unchanged.")
+      message("All tests passed, unitizer store unchanged.")
     } else if(!something.happened && force.update) {
       message(
-        "No changes to `untizer`, but re-saving anyway as we are in ",
+        "No changes to unitizer, but re-saving anyway as we are in ",
         "\"force.update\" mode"
       )
       update <- TRUE
@@ -179,7 +179,7 @@ setMethod(
 
         if(y@interactive.error) {
           word_msg(
-            "Unable to resolve `unitizer` without user input, but we are in",
+            "Unable to resolve unitizer without user input, but we are in",
             "non-interactive mode"
           )
           break
@@ -573,7 +573,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer",
       if(identical(x@mode, "unitize"))
         c(
-          "`R` to re-evalute the `unitizer`; used typically after you re-`install` the package you are testing via the `unitizer` prompt",
+          "`R` to re-evalute the unitizer; used typically after you re-`install` the package you are testing via the unitizer prompt",
           "`RR` to re-evaluate all loaded `unitizers` (relevant for `unitize_dir`)"
         )
     )
@@ -680,7 +680,7 @@ setMethod("toggleReeval", "unitizerBrowse",
   function(x, y, ...) {
     re.status <- if(x@re.eval) "OFF" else "ON"
     re.mode <- switch(
-      nchar(y), "this `unitizer`", "all loaded `unitizer`s"
+      nchar(y), "this unitizer", "all loaded unitizers"
     )
     word_msg("Toggling re-eval mode", re.status, "for", re.mode)
     x@re.eval <- if(x@re.eval) 0L else nchar(y)

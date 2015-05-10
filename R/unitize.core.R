@@ -130,7 +130,7 @@ unitize_core <- function(
     dir.word <-
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
     word_cat(
-      "In order to proceed `unitizer` must create the following ", dir.word,
+      "In order to proceed unitizer must create the following ", dir.word,
       ":\n"
     )
     print(UL(dir.names.clean))
@@ -252,7 +252,7 @@ unitize_core <- function(
     )
     valid <- vapply(as.list(unitizers), is, logical(1L), "unitizer")
 
-    # Now evaluate, whether a `unitizer` is evaluated or not is a function of
+    # Now evaluate, whether a unitizer is evaluated or not is a function of
     # the slot @eval, set just above as they are loaded
 
     if(identical(mode, "unitize"))
@@ -260,7 +260,7 @@ unitize_core <- function(
         tests.parsed=tests.parsed[valid], unitizers=unitizers[valid]
       )
 
-    # Gather user input, and store tests as required.  Any `unitizer`s that
+    # Gather user input, and store tests as required.  Any unitizers that
     # the user marked for re-evaluation will be re-evaluated in this loop
 
     unitizers[valid] <- unitize_browse(
@@ -301,10 +301,10 @@ unitize_load <- function(store.ids, test.files, frame, mode) {
             load_unitizer(store.ids[[i]], frame, test.files[[i]])
           )
           if(inherits(unitizer, "try-error"))
-            stop("Unable to load `unitizer`; see prior errors.")
+            stop("Unable to load unitizer; see prior errors.")
         }
         if(!is(unitizer, "unitizer"))
-          stop("Logic Error: expected a `unitizer` object; contact maintainer.")
+          stop("Logic Error: expected a unitizer object; contact maintainer.")
         unitizer@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
         unitizer
   } ) )
@@ -322,7 +322,7 @@ unitize_load <- function(store.ids, test.files, frame, mode) {
 unitize_eval <- function(tests.parsed, unitizers) {
   on.exit(                                   # In case interrupted or some such
     message(
-      "Unexpectedly exited before storing `unitizer`; tests were not saved or ",
+      "Unexpectedly exited before storing unitizer; tests were not saved or ",
       "changed."
     )
   )
@@ -387,7 +387,7 @@ unitize_browse <- function(
   totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
   to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
 
-  # Determine implied review mode (all tests passed in a particular `unitizer`,
+  # Determine implied review mode (all tests passed in a particular unitizer,
   # but user may still pick it to review)
 
   review.mode <- ifelse(!to.review & test.len > 1L, "review", mode)
@@ -452,10 +452,10 @@ unitize_browse <- function(
           ", 'R' to re-evaluate all updated"
       )
       help.opts <- c(
-        paste0(deparse(seq.int(test.len)), ": `unitizer` number to review"),
+        paste0(deparse(seq.int(test.len)), ": unitizer number to review"),
         if(any(to.review)) "A: Review all `unitzers` that require review (*)",
         "AA: Review all tests",
-        if(any(summaries@updated)) "R: Re-evaluate all updated `unitizer`s ($)",
+        if(any(summaries@updated)) "R: Re-evaluate all updated unitizers ($)",
         "RR: Re-evaluate all tests",
         "Q: quit"
       )
@@ -478,7 +478,7 @@ unitize_browse <- function(
         pick <- if(interactive.mode) {
           word_cat(prompt)
           unitizer_prompt(
-            "Pick a `unitizer` or an option",
+            "Pick a unitizer or an option",
             valid.opts=c(
               A=if(any(to.review)) "[A]ll",
               R=if(any(summaries@updated)) "[R]e-eval",
@@ -513,7 +513,7 @@ unitize_browse <- function(
           pick.num <- as.integer(pick)
           if(!pick.num %in% seq.int(test.len)) {
             word_msg(
-              "Input not a valid `unitizer`; choose in ",
+              "Input not a valid unitizer; choose in ",
               deparse(seq.int(test.len))
             )
             next
@@ -624,7 +624,7 @@ check_call_stack <- function() {
   ) warning(
     "It appears you are running unitizer inside an error handling function such ",
     "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
-    "discouraged as it may cause unpredictable behavior from `unitizer` in the ",
+    "discouraged as it may cause unpredictable behavior from unitizer in the ",
     "event tests produce conditions / errors.  We strongly recommend you re-run ",
     "your tests outside of such handling functions.", immediate.=TRUE
   )
@@ -632,8 +632,8 @@ check_call_stack <- function() {
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
   if("unitizerQuitExit" %in% restart.names)
     stop(
-      "`unitizerQuitExit` restart is already defined; `unitizer` relies on this ",
-      "restart to restore state prior to exit, so `unitizer` will not run if it is ",
+      "`unitizerQuitExit` restart is already defined; unitizer relies on this ",
+      "restart to restore state prior to exit, so unitizer will not run if it is ",
       "defined outside of `unitize`.  If you did not define this restart contact ",
       "maintainer."
     )

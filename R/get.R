@@ -1,9 +1,9 @@
 #' Set and Retrieve Store Contents
 #'
 #' These functions are not used directly; rather, they are used by
-#' \code{`\link{unitize}`} to get and set the \code{`unitizer`} objects.
+#' \code{`\link{unitize}`} to get and set the \code{unitizer} objects.
 #' You should only need to understand these functions if you are
-#' looking to implement a special storage mechanism for the \code{`unitizer`}
+#' looking to implement a special storage mechanism for the \code{unitizer}
 #' objects.
 #'
 #' By default, only a character method is defined, which will interpret
@@ -13,7 +13,7 @@
 #' e.g SQL database, ftp server, etc) with the understanding that the
 #' getting method may only accept one argument, the \code{`store.id`}, and
 #' the setting method only two arguments, the \code{`store.id`} and the
-#' \code{`unitizer`}.
+#' \code{unitizer}.
 #'
 #' S3 dispatch will be on \code{`store.id`}, and \code{`store.id`} may
 #' be any R object that identifies the unitizer.  For example, a potential
@@ -78,7 +78,7 @@ set_unitizer.character <- function(store.id, unitizer) {
   }
   if(is.object(store.id) || !is.null(attributes(store.id)))
     stop("Argument `store.id` must be a bare character vector")
-  if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
+  if(!is(unitizer, "unitizer")) stop("Argument unitizer must be a unitizer")
   new.file <- FALSE
   if(!file.exists(store.id)) {
     if(!isTRUE(dir.create(store.id)))
@@ -109,30 +109,30 @@ get_unitizer.character <- function(store.id) {
 
   if(!is_unitizer_dir(store.id)) {
     stop(
-      "Argument `store.id` does not appear to refer to a `unitizer` directory"
+      "Argument `store.id` does not appear to refer to a unitizer directory"
     )
   }
   if(inherits(try(unitizer <- readRDS(paste0(store.id, "/data.rds"))), "try-error")) {
     stop("Failed loading unitizer; see prior error messages for details")
   }
-  if(!is(unitizer, "unitizer")) stop("Retrieved object is not a `unitizer` store")
+  if(!is(unitizer, "unitizer")) stop("Retrieved object is not a unitizer store")
   # if(!identical(path_clean(store.id), path_clean(unitizer@id))) {
   #   stop(
   #     "This check needs to be modified to not make any assumptions about ",
-  #     "`unitizer` structure since we don't know it is conforming yet"
+  #     "unitizer structure since we don't know it is conforming yet"
   #   )
   #   if(is.character(unitizer@id) & length(unitizer@id) == 1L) {
   #     # The following warning occurred more often than not as a result of changes
   #     # in working directory, so just quashing for now; could use `normalizePath`
   #     # instead...
   #     # warning(
-  #     #   "ID in retrieved `unitizer` (", unitizer@id, ") doesn't match `store.id`; this may ",
+  #     #   "ID in retrieved unitizer (", unitizer@id, ") doesn't match `store.id`; this may ",
   #     #   "be happening because you moved the store relative to the script that created it",
   #     #   immediate. = TRUE
   #     # )
   #   } else {
   #     stop(
-  #       "Logic Error: ID in retrieved `unitizer` is not a 1 length character vector as expected ",
+  #       "Logic Error: ID in retrieved unitizer is not a 1 length character vector as expected ",
   #       "(typeof: ", typeof(unitizer@id), ", length: ", length(unitizer@id),"); contact maintainer."
   #   )
   # } }
