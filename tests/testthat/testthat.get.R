@@ -23,6 +23,8 @@ local({
   tmp.dir <- tempdir()
   tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
   tmp.sub.dir2 <- paste0(tmp.dir, "/get.test.dir2")
+  tmp.sub.dir3 <- paste0(tmp.dir, "/load.dirs")
+  dir.create(tmp.dir)
 
   test_that("Set works as expected", {
     dir.create(tmp.sub.dir)
@@ -30,20 +32,52 @@ local({
     expect_equal(readRDS(paste0(tmp.sub.dir, "/data.rds")), toy.stor)
   } )
   test_that("load/store_unitizer", {
+
+    # Several different stores in different states (i.e. requiring upgrade,
+    # not unitizers, etc.)
+
+    dir.create(tmp.sub.dir3)
+    make.path <- lapply(file.path(tmp.sub.dir3, dir("helper/load/")), dir.create)
+    if(!all(unlist(make.path))) stop("Failed making paths")
+    file.copy(
+      list.files("helper/load", full.names=TRUE),
+      tmp.sub.dir3, recursive=TRUE
+    )
     par.frame <- new.env()
+    store.ids <- as.list(list.files(tmp.sub.dir3, full.names=TRUE))
 
-    expect_true(is(unitizer:::load_unitizer(tmp.sub.dir, par.frame), "unitizer"))
-    expect_true(is(untz <- unitizer:::load_unitizer(tmp.sub.dir2, par.frame), "unitizer"))  # empty folder, but this should still create unitizer
-    expect_identical(parent.env(untz@zero.env), par.frame)
-    untz@eval.time <- 33  # something that won't get rest on load so we can check our re-load
+    expect_error(
+      unitizer:::load_unitizers(
+        store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+        interactive.mode=FALSE, mode="unitize", force.upgrade=FALSE
+      ),
+      "Cannot upgrade .* in non-interactive"
+    )
+    untzs <- unitizer:::load_unitizers(
+      store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+      interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
+    )
+    untzs.classes <- vapply(unitizer:::as.list(untzs), class, character(1L))
+    expect_equal(
+      untzs.classes,
+      c("logical", "logical", "unitizer", "unitizer", "unitizer")
+    )
+    untzs2 <- unitizer:::load_unitizers(
+      list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+      mode="unitize", force.upgrade=FALSE
+    )
+    expect_true(is(untzs2[[1L]], "unitizer"))
+    expect_identical(parent.env(untzs2[[1L]]@zero.env), par.frame)
+    untzs2[[1L]]@eval.time <- 33  # something that won't get rest on load so we can check our re-load
 
-    expect_true(unitizer:::store_unitizer(untz))
-    expect_equal(unitizer:::load_unitizer(tmp.sub.dir2, par.frame)@eval.time, 33)
+    expect_true(unitizer:::store_unitizer(untzs2[[1L]]))
+    untzs2.1 <- unitizer:::load_unitizers(
+      list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+      mode="unitize", force.upgrade=FALSE
+    )
+    expect_equal(untzs2.1[[1L]]@eval.time, 33)
   } )
-  file.remove(paste0(tmp.sub.dir, "/data.rds"))
-  file.remove(tmp.sub.dir)
-  file.remove(paste0(tmp.sub.dir2, "/data.rds"))
-  file.remove(tmp.sub.dir2)
+  unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE)
   print("random print to flush warnings")
 
   test_that("is_package", {

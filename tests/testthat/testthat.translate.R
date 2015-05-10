@@ -1,6 +1,5 @@
 
 library("unitizer")
-
 test.file <- "helper/translate/testthat/test-translate2.R"
 target.dir.base <- tempfile()
 target.dir <- file.path(target.dir.base, "helper/translate/unitizer")
@@ -29,10 +28,9 @@ test_that("translate a file", {
     list(NULL, 1:10, NULL, NULL, NULL, NULL, "yoyo")
   )
 })
-unlink(target.dir.base, recursive=TRUE)
+unlink(target.dir, recursive=TRUE)
 
 test.dir <- "helper/translate/testthat/"
-target.dir.base <- tempfile()
 target.dir <- file.path(target.dir.base, "helper/translate/unitizer")
 res2 <- testthat_translate_dir(test.dir, target.dir)  # has to be outside of `testthat`
 
@@ -62,4 +60,4 @@ test_that("translate a dir", {
   )
 })
 
-unlink(target.dir.base, recursive=TRUE)
+unlink(target.dir, recursive=TRUE)
