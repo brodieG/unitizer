@@ -1,9 +1,9 @@
 #' Set and Retrieve Store Contents
 #'
 #' These functions are not used directly; rather, they are used by
-#' \code{`\link{unitize}`} to get and set the \code{`unitizer`} objects.
+#' \code{`\link{unitize}`} to get and set the \code{unitizer} objects.
 #' You should only need to understand these functions if you are
-#' looking to implement a special storage mechanism for the \code{`unitizer`}
+#' looking to implement a special storage mechanism for the \code{unitizer}
 #' objects.
 #'
 #' By default, only a character method is defined, which will interpret
@@ -13,7 +13,7 @@
 #' e.g SQL database, ftp server, etc) with the understanding that the
 #' getting method may only accept one argument, the \code{`store.id`}, and
 #' the setting method only two arguments, the \code{`store.id`} and the
-#' \code{`unitizer`}.
+#' \code{unitizer}.
 #'
 #' S3 dispatch will be on \code{`store.id`}, and \code{`store.id`} may
 #' be any R object that identifies the unitizer.  For example, a potential
@@ -34,6 +34,9 @@
 #'
 #' unitize("unitizer/cornertestcases.R", my.sql.store.id)
 #' }
+#' Make sure you also define an \code{as.character} method for your object to
+#' produce a human readable identifying string.
+#'
 #' For inspirations for the bodies of the _store functions look at the source
 #' code for \code{`unitizer:::get_unitizer.character`} and \code{`unitizer:::set_unitizer.character`}.
 #' Expectations for the functions are as follows.  \code{`get_unitizer`} must:
@@ -73,7 +76,9 @@ set_unitizer.character <- function(store.id, unitizer) {
   if(!is.character(store.id) || length(store.id) != 1L) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
-  if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
+  if(is.object(store.id) || !is.null(attributes(store.id)))
+    stop("Argument `store.id` must be a bare character vector")
+  if(!is(unitizer, "unitizer")) stop("Argument unitizer must be a unitizer")
   new.file <- FALSE
   if(!file.exists(store.id)) {
     if(!isTRUE(dir.create(store.id)))
@@ -98,36 +103,39 @@ get_unitizer.character <- function(store.id) {
   if(!is.character(store.id) || length(store.id) != 1L ) {
     stop("Argument `store.id` must be a 1 length character vector")
   }
+  if(is.object(store.id) || !is.null(attributes(store.id)))
+    stop("Argument `store.id` must be a bare character vector")
   if(!file.exists(store.id)) return(FALSE)
-  if(!file_test("-d", store.id)) stop("Argument `store.id` must refer to a directory")
-  if(
-    !file.exists(paste0(store.id, "/data.rds")) ||
-    !file_test("-f", paste0(store.id, "/data.rds"))
-  ) {
+
+  if(!is_unitizer_dir(store.id)) {
     stop(
-      "Argument `store.id` does not appear to refer to a directory containing",
-      "`unitizer` objects."
+      "Argument `store.id` does not appear to refer to a unitizer directory"
     )
   }
   if(inherits(try(unitizer <- readRDS(paste0(store.id, "/data.rds"))), "try-error")) {
     stop("Failed loading unitizer; see prior error messages for details")
   }
-  if(!is(unitizer, "unitizer")) stop("Retrieved object is not a `unitizer` store")
-  if(!identical(path_clean(store.id), path_clean(unitizer@id))) {
-    if(is.character(unitizer@id) & length(unitizer@id) == 1L) {
-      # The following warning occurred more often than not as a result of changes
-      # in working directory, so just quashing for now; could use `normalizePath`
-      # instead...
-      # warning(
-      #   "ID in retrieved `unitizer` (", unitizer@id, ") doesn't match `store.id`; this may ",
-      #   "be happening because you moved the store relative to the script that created it",
-      #   immediate. = TRUE
-      # )
-    } else {
-      stop(
-        "Logic Error: ID in retrieved `unitizer` is not a 1 length character vector as expected ",
-        "(typeof: ", typeof(unitizer@id), ", length: ", length(unitizer@id),"); contact maintainer."
-  ) } }
+  if(!is(unitizer, "unitizer")) stop("Retrieved object is not a unitizer store")
+  # if(!identical(path_clean(store.id), path_clean(unitizer@id))) {
+  #   stop(
+  #     "This check needs to be modified to not make any assumptions about ",
+  #     "unitizer structure since we don't know it is conforming yet"
+  #   )
+  #   if(is.character(unitizer@id) & length(unitizer@id) == 1L) {
+  #     # The following warning occurred more often than not as a result of changes
+  #     # in working directory, so just quashing for now; could use `normalizePath`
+  #     # instead...
+  #     # warning(
+  #     #   "ID in retrieved unitizer (", unitizer@id, ") doesn't match `store.id`; this may ",
+  #     #   "be happening because you moved the store relative to the script that created it",
+  #     #   immediate. = TRUE
+  #     # )
+  #   } else {
+  #     stop(
+  #       "Logic Error: ID in retrieved unitizer is not a 1 length character vector as expected ",
+  #       "(typeof: ", typeof(unitizer@id), ", length: ", length(unitizer@id),"); contact maintainer."
+  #   )
+  # } }
   unitizer
 }
 #' @export
@@ -145,15 +153,16 @@ get_unitizer.default <- function(store.id) {
 #' This is implemented as an S3 generic to allow third parties to define
 #' inference methods for other types of \code{store.id}, but the documentation
 #' here is for the \code{"character"} method which is what \code{unitizer} uses
-#' by default.  Note a \code{NULL} as \code{store.id} dispatches
+#' by default.
 #'
 #' If \code{name} is a directory that appears to be an R package (contains
 #' DESCRIPTION, an R folder, a tests folder), will look for candidate files in
 #' \code{file.path(name, "tests", "unitizer")}, starting with files with the
 #' same name as the package (ending in ".R" or ".unitizer" if \code{type} is
-#' \code{"f"} or \code{"d"} respectively), or if there is only one file, that
+#' \code{"f"} or \code{"u"} respectively), or if there is only one file, that
 #' file, or if there are multiple candidate files and in interactive mode
-#' prompting user for a selection.
+#' prompting user for a selection.  If \code{type} is \code{"d"}, then will
+#' just provide the \code{"tests/unitizer"} directory.
 #'
 #' If \code{name} is not a directory, will try to find a file by that name, and
 #' if that fails, will try to partially match a file by that name.  Partial
@@ -170,8 +179,8 @@ get_unitizer.default <- function(store.id) {
 #'   \code{store.id} objects
 #' @param store.id character(1L) file or directory name, the file name portion (i.e
 #'   after the last slash) may be partially specified
-#' @param type character(1L) in \code{c("f", "d")}, \code{"f"} for test file,
-#'   and \code{"d"} for test data directory
+#' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test file,
+#'   \code{"d"} for a directory, \code{"u"} for a \code{unitizer} directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
 #'   ambiguities
 #' @param ... arguments to pass on to other methods
@@ -197,23 +206,35 @@ infer_unitizer_location.character <- function(
 ) {
   if(!is.character(store.id) || length(store.id) != 1L || is.na(store.id))
     stop("Argument `store.id` must be character(1L) and not NA")
-  if(!is.character(type) || length(type) != 1L || !isTRUE(type %in% c("f", "d")))
-    stop("Argument `type` must be one of `c(\"f\", \"d\")`")
+  if(
+    !is.character(type) || length(type) != 1L ||
+    !isTRUE(type %in% c("f", "u", "d"))
+  )
+    stop("Argument `type` must be one of `c(\"f\", \"u\", \"d\")`")
   if(!isTRUE(interactive.mode) && !identical(interactive.mode, FALSE))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
+
+  # BEWARE, you can't just change `text.ext` here without reviewing how it is
+  # used
 
   if(type == "f") {
     test.fun <- function(x) file_test("-f", x)
     test.ext <- ".R"
     list.fun <- list.files
-  } else {
+    type.name <- "test file"
+  } else if(type == "u") {
     test.fun <- is_unitizer_dir
     test.ext <- ".unitizer"
     list.fun <- list.dirs
+    type.name <- "unitizer"
+  } else if(type == "d") {
+    test.fun <- function(x) file_test("-d", x)
+    test.ext <- NULL
+    list.fun <- list.dirs
+    type.name <- "test directory"
   }
-  # Check for exact match first and return that if found
-
-  if(test.fun(store.id)) return(store.id)
+  inf_msg <- function(name)
+    word_msg("Inferred", type.name, "location:", relativize_path(name))
 
   # Is a directory, check if a package and pick tests/unitizer as the directory
 
@@ -222,33 +243,48 @@ infer_unitizer_location.character <- function(
     file.store.id <- basename(store.id)
   } else {
     dir.store.id <- store.id
-    file.store.id <- ""
+    file.store.id <- NULL
   }
   dir.store.id <- normalizePath(dir.store.id)
+  at.package.dir <-
+    file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))
 
-  if(file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))) {
+  # Check for exact match first and return that if found, unless we are in dir
+  # mode and the directory is a package directory
+
+  if(!(identical(type, "d") && at.package.dir) && test.fun(store.id))
+    return(store.id)
+
+  if(at.package.dir) {
     test.base <- file.path(dir.store.id, "tests", "unitizer")
     if(!file_test("-d", test.base))
       stop("Unable to infer path since \"tests/unitizer\" directory is missing")
 
     found.file <- test.fun(
-      fp <- file.path(
-        test.base, paste0(file.store.id, basename(dir.store.id), test.ext)
-    ) )
-    if(found.file) return(fp)
+      fp <- do.call(
+        file.path,
+        as.list(
+          c(test.base, paste0(file.store.id, basename(dir.store.id), test.ext))
+    ) ) )
+    if(found.file) {
+      inf_msg(fp)
+      return(fp)
+    }
     dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
   } else {
     dir.store.id.proc <- dir.store.id
   }
   # Check request is coherent already and if so return
 
-  f.path <- file.path(dir.store.id.proc, file.store.id)
-  if(test.fun(f.path)) return(f.path)
-
+  f.path <- do.call(file.path, as.list(c(dir.store.id.proc, file.store.id)))
+  if(test.fun(f.path)) {
+    inf_msg(f.path)
+    return(f.path)
+  }
   # Resolve potential ambiguities by trying to find file / directory
 
   candidate.files <- grep(
-    paste0("^", file.store.id, ".*\\", test.ext, "$"),
+    paste0("^", file.store.id, if(!is.null(test.ext)) ".*\\", test.ext, "$"),
     basename(list.fun(dir.store.id.proc, recursive=FALSE)),
     value=TRUE
   )
@@ -273,8 +309,26 @@ infer_unitizer_location.character <- function(
         "\""
       )
     } else ""
+    # Select one:
 
-    pick_one(candidate.files, paste0("Select file", dir.disp, ":\n"))
+    valid <- seq_along(candidate.files)
+    cat(paste0("Possible matching files", dir.disp, ":\n"))
+    cat(paste0("  ", format(valid), ": ", candidate.files), sep="\n")
+
+    pick <- unitizer_prompt(
+      "Pick a matching file",
+      valid.opts=c("Type a number"),
+      exit.condition=exit_fun, valid.vals=valid,
+      hist.con=NULL
+    )
+    if(identical(pick, "Q")) {
+      message("No file selected")
+      0L
+    } else {
+      pick <- as.integer(pick)
+      message("Selected file: ", candidate.files[[pick]])
+      pick
+    }
   } else if (cand.len == 1L) {
     1L
   } else if (cand.len == 0L) {
@@ -291,37 +345,9 @@ infer_unitizer_location.character <- function(
     )
   # Return
 
-  file.path(dir.store.id.proc, candidate.files[[selection]])
-}
-#' Utility Fun to Poll User Input
-#'
-#' @keywords internal
-#' @param x a character vector
-#' @return integer(1L) selected item or 0L if invalid user input
-
-pick_one <- function(x, prompt="Select Item Number:\n") {
-  if(!is.character(x)) stop("Argument `x` must be character")
-  if(!length(x)) return(0L)
-
-  valid <- seq_along(x)
-
-  cat(prompt)
-  cat(paste0("  ", format(valid), ": ", x), sep="\n")
-
-  fail.count <- 0
-  while(!(choice <- readline("unitizer> ")) %in% c(valid, "Q")) {
-    if(fail.count < 3) {
-      message(
-        "Pick a number in ", paste0(range(valid), collapse=":"), " or Q to quit"
-      )
-      fail.count <- fail.count + 1
-    } else {
-      message("Too many attempts; quitting.")
-      choice <- 0L
-      break
-    }
-  }
-  if(identical(choice, "Q")) 0L else as.integer(choice)
+  file.final <- file.path(dir.store.id.proc, candidate.files[[selection]])
+  if(cand.len == 1L) inf_msg(file.final)
+  file.final
 }
 #' Check Whether a Directory Likey Contains An R Package
 #'

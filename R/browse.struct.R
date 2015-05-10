@@ -14,12 +14,19 @@ NULL
 
 setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
 setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
-  function(x, mode, ...) {
+  function(x, mode, hist.con=NULL, interactive=FALSE, ...) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
-
-    unitizer.browse <- new("unitizerBrowse", mode=mode)
-
+    if(is.null(hist.con)) {
+      tmp.file <- tempfile()
+      hist.con <- file("tmp.file", "at")
+      on.exit({close(hist.con); unlink(tmp.file)})
+    }
+    if(!inherits(hist.con, "connection"))
+      stop("Argument `hist.con` must be a connection.")
+    unitizer.browse <- new(
+      "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive
+    )
     # - Unitize ----------------------------------------------------------------
 
     # At some point need to rationalize this to a simpler instantiator for the
@@ -65,12 +72,21 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
       } } }
       # Add sub-sections
 
-      for(i in unique(x@section.parent)) {                           # Loop through parent sections
-        sect.map <- x@section.map %in% which(x@section.parent == i)  # all items in parent section
+      rem.count.all <- 0L
+
+      for(i in sort(unique(x@section.parent))) {          # Loop through parent sections
+        sect.par <- which(x@section.parent == i)
+        sect.map <- x@section.map %in% sect.par           # all items in parent section
+        sect.map.ref <- which(
+          is.na(x@items.ref.map) & !ignored(x@items.ref) &
+          x@section.ref.map == i
+        )
+        rem.item.count <- length(sect.map.ref)
+        rem.count.all <- rem.count.all + rem.item.count
+
         if(
-          sum(
-            vapply(x@sections[which(x@section.parent == i)], length, integer(1L))
-          ) == 0L
+          !sum(vapply(x@sections[sect.par], length, integer(1L))) &&
+          !rem.item.count
         ) next
         browse.sect <- new(
           "unitizerBrowseSection", section.id=i,
@@ -109,18 +125,32 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           new.conditions=rep(F, sum(x@tests.status == "Pass" & sect.map)),
           tests.result=x@tests.result[x@tests.status == "Pass" & sect.map, , drop=FALSE]
         )
+        # Removed tests are a little funky b/c they are not part of the main
+        # data array
+
+        browse.sect <- browse.sect + new(
+          "unitizerBrowseSubSectionRemoved",
+          items.ref=x@items.ref[sect.map.ref],
+          new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
+          tests.result=tests_result_mat(rem.item.count)
+        )
+        # Add entire section
+
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
       }
-      if(length(which(!ignored(x@items.ref[is.na(x@items.ref.map)])))) {  # Removed tests
+      # Removed tests that couldn't be mapped
+      rem.unmapped <- !ignored(x@items.ref) & is.na(x@section.ref.map) &
+        is.na(x@items.ref.map)
+      if(length(which(rem.unmapped))) {
         browse.sect <- new(
           "unitizerBrowseSection", section.id=0L,
-          section.title="Removed Items"
+          section.title=paste0(if(rem.count.all) "Other ", "Removed Items")
         )
-        rem.item.count <- length(which(is.na(x@items.ref.map) & !ignored(x@items.ref)))
+        rem.item.count <- length(which(rem.unmapped))
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionRemoved",
-          items.ref=x@items.ref[is.na(x@items.ref.map) & !ignored(x@items.ref)],
+          items.ref=x@items.ref[rem.unmapped],
           new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
           tests.result=tests_result_mat(rem.item.count)
         )
@@ -190,6 +220,7 @@ setClass("unitizerBrowseMapping",
     sub.sec.id="integer",
     reviewed="logical",
     review.val="character",
+    review.def="character",
     review.type="factor",
     tests.result="matrix",
     ignored="logical",
@@ -223,14 +254,17 @@ setClass("unitizerBrowseMapping",
 setClass("unitizerBrowse", contains="unitizerList",
   slots=c(
     mapping="unitizerBrowseMapping",
-    last.id="integer",         # used so that `reviewNext` knows what to show next
-    last.reviewed="integer",   # used so that `reviewNext` knows what headers to display
-    hist.con="ANY",            # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
+    last.id="integer",          # used so that `reviewNext` knows what to show next
+    last.reviewed="integer",    # used so that `reviewNext` knows what headers to display
+    hist.con="ANY",             # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
     mode="character",
-    review="logical",          # whether to force-show review menu or not
-    inspect.all="logical",     # whether to force inspection of all elements, whether ignored/passed or not
-    navigating="logical",      # whether user has triggered at least one navigation command
-    human="logical"            # whether user has had any interaction at all
+    review="logical",           # whether to force-show review menu or not
+    inspect.all="logical",      # whether to force inspection of all elements, whether ignored/passed or not
+    navigating="logical",       # whether user has triggered at least one navigation command
+    human="logical",            # whether user has had any interaction at all
+    re.eval="integer",          # so navigate prompt can communciate back re-eval status
+    interactive="logical",      # whether to browse in interactie mode
+    interactive.error="logical" # whether in non-interactive mode but required input
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -241,7 +275,10 @@ setClass("unitizerBrowse", contains="unitizerList",
     review=FALSE,
     inspect.all=FALSE,
     navigating=FALSE,
-    human=FALSE
+    human=FALSE,
+    re.eval=0L,
+    interactive=FALSE,
+    interactive.error=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -253,6 +290,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@inspect.all` must be logical(1L) and not NA.")
     if(length(object@navigating) != 1L || is.na(object@navigating))
       return("Slot `@navigating` must be logical(1L) and not NA.")
+    if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
+      return("Slot `@re.eval` must be integer(1L) and in 0:2")
     TRUE
   }
 )
@@ -430,14 +469,16 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
 setClass("unitizerBrowseSection", contains="unitizerList",
   slots=c(
     section.id="integer",
-    section.title="character"
+    section.title="character",
+    review.val="character"
 ) )
 
 #' Add Sections to Our Main Browse Object
 #'
 #' Primarily we're contructing the \code{`@@mapping`} slot which will then allow
-#' us to carry out requisite computations later.  See \code{`\link{unitizerBrowseMapping-class}`}
-#' for details on what each of the slots in \code{`mapping`} does.
+#' us to carry out requisite computations later.  See
+#' \code{`\link{unitizerBrowseMapping-class}`} for details on what each of the
+#' slots in \code{`mapping`} does.
 #'
 #' Also, some more discussion of this issue in the docs for \code{`\link{unitizer-class}`}.
 #'
@@ -451,6 +492,7 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
     max.item <- length(e1@mapping@item.id)
     max.sub.sec <- if(max.item) max(e1@mapping@sub.sec.id) else 0L
     sec.item.list <- as.list(extractItems(e2))
+    action.default <- vapply(as.list(e2), slot, character(1L), "action.default")
 
     mapping.new <- new("unitizerBrowseMapping",
       item.id=(max.item + 1L):(max.item + sum(item.count)),
@@ -461,7 +503,8 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
       sub.sec.id=rep(
         seq_along(item.count), item.count
       ),
-      review.val=rep("N", sum(item.count)),       # Default Action is No so that when we quit early, only reviewed stuff is kept
+      review.val=rep(action.default, item.count),
+      review.def=rep(action.default, item.count),
       reviewed=rep(FALSE, sum(item.count)),
       review.type=factor(
         rep(test.types, item.count),
@@ -504,15 +547,19 @@ setClass("unitizerBrowseSubSection",
     items.ref="unitizerItemsOrNULL",
     title="character",
     prompt="character",
-    detail="character",
+    detail.s="character",
+    detail.p="character",
     actions="character",
+    action.default="character",
     show.out="logical",
     show.msg="logical",
     show.fail="unitizerItemsTestsErrorsOrLogical",
     new.conditions="logical",
     tests.result="matrix"
   ),
-  prototype=list(show.msg=FALSE, show.fail=FALSE, show.out=FALSE),
+  prototype=list(
+    show.msg=FALSE, show.fail=FALSE, show.out=FALSE, action.default="N"
+  ),
   validity=function(object) {
     if(
       !is.null(object@items.ref) && !is.null(object@items.new) &&
@@ -538,8 +585,15 @@ setClass("unitizerBrowseSubSection",
       return("Argument `show.fail` must be a 1 length logical or a \"unitizerItemsTestsErrors\" object")
     } else if (!is.character(object@prompt) || length(object@prompt) != 1L) {
       return("Argument `prompt` must be a 1 length character")
-    } else if (!is.character(object@detail) || length(object@detail) != 1L) {
-      return("Argument `prompt` must be a 1 length character")
+    } else if (!is.character(object@detail.s) || length(object@detail.s) != 1L) {
+      return("Argument `detail.s` must be a 1 length character")
+    } else if (
+      !is.character(object@detail.p) || length(object@detail.p) != 1L ||
+      is.na(object@detail.p) || !isTRUE(grepl("%s", object@detail.p))
+    ) {
+      return(
+        "Argument `detail.p` must be character(1L), non-NA, and contain '%s'"
+      )
     } else if (
       length(object@new.conditions) !=
       max(length(object@items.ref), length(object@items.new))
@@ -556,6 +610,11 @@ setClass("unitizerBrowseSubSection",
           "Argument `tests.result` must be logical matrix with colnames equal ",
           "to slot names for `unitizerItemData`"
       ) )
+    } else if(
+      !identical(length(object@action.default), 1L) ||
+      !length(which(object@action.default %in% c("Y", "N")))
+    ) {
+      return("Argument `action.default` must be \"Y\" or \"N\"")
     }
     TRUE
   }
@@ -731,8 +790,13 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
     prompt="Overwrite with new test",
-    detail=paste0(
-      "Reference test does not match new test from test script."
+    detail.s=paste0(
+      "The following test failed because the new evaluation does not match ",
+      "the reference value from the store."
+    ),
+    detail.p=paste0(
+      "The %s tests in this section failed because the new evaluations do not ",
+      "match the reference values from the store."
     ),
     actions=c(Y="A", N="B")
 ) )
@@ -740,17 +804,26 @@ setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
   prototype=list(
     title="New",
     prompt="Add new test to store",
-    detail="Test script contains tests not present in unitizer.",
+    detail.s="The following test is new.",
+    detail.p="The %s tests in this section are new.",
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
-setClass("unitizerBrowseSubSectionCorrupted", contains="unitizerBrowseSubSection",
+setClass("unitizerBrowseSubSectionCorrupted",
+  contains="unitizerBrowseSubSection",
   prototype=list(
     title="Corrupted",
-    prompt="Overwrite with new value",
-    detail=paste0(
-      "Reference tests cannot be compared to new tests because errors occurred ",
-      "while attempting comparison. Please review the error and contemplate using ",
-      "a different comparison function with `unitizer_sect`."
+    prompt="Overwrite with new test result",
+    detail.s=paste0(
+      "The test outcome for the following test cannot be assessed because ",
+      "errors occurred while attempting comparison. Please review the errors ",
+      "and contemplate using a different comparison function with ",
+      "`unitizer_sect`."
+    ),
+    detail.p=paste0(
+      "The test outcome for the %s tests in this section cannot be assessed ",
+      "because errors occurred while attempting comparison. Please review the ",
+      "errors and contemplate using a different comparison function with ",
+      "`unitizer_sect`."
     ),
     actions=c(Y="A", N="B")
 ) )
@@ -758,26 +831,63 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Removed",
     prompt="Remove test from store",
-    detail="The following test exists in unitizer but not in the new test script.",
+    detail.s=paste0(
+      "The following test exists in the unitizer store but not in the new ",
+      "test script."
+    ),
+    detail.p=paste0(
+      "The %s tests in this section exist in the unitizer store but not in the ",
+      "new test script."
+    ),
     actions=c(Y="C", N="B")
 ) )
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Drop test from store",
-    detail="The following tests passed.",
-    actions=c(Y="C", N="A"), show.out=TRUE
+    prompt="Keep test in store",
+    detail.s="The following test passed.",
+    detail.p="The %s tests in this section passed.",
+    actions=c(Y="A", N="C"),
+    action.default="Y",
+    show.out=TRUE
 ) )
 #' Add a browsing sub-section to a browse section
 #'
-#' @param e1 a \code{`\link{unitizerBrowseSection-class}`}
-#' @param e2 a \code{`\link{unitizerBrowseSubSection-class}`}
-#' @return a \code{`\link{unitizerBrowseSection-class}`}
+#' @param e1 a \code{\link{unitizerBrowseSection-class}}
+#' @param e2 a \code{\link{unitizerBrowseSubSection-class}}
+#' @return a \code{\link{unitizerBrowseSection-class}}
 #' @keywords internal
 
 setMethod("+", c("unitizerBrowseSection", "unitizerBrowseSubSection"),
   valueClass="unitizerBrowseSection",
   function(e1, e2) {
     e1 <- append(e1, list(e2))
+  }
+)
+
+#' Return value for \code{\link{unitizerBrowseInternal,unitizer,unitizerBrowse-method}}
+#'
+#' @keywords internal
+
+setClass(
+  "unitizerBrowseResult",
+  slots=c(
+    unitizer="unitizer", re.eval="integer", updated="logical",
+    interactive.error="logical"
+  ),
+  validity=function(object) {
+    if(
+      !identical(length(object@re.eval), 1L) || is.na(object@re.eval) ||
+      !object@re.eval %in% 0L:2L
+    )
+      return("slot `re.eval` must be integer(1L) in 0:2")
+    if(!isTRUE(object@updated) && !identical(object@updated, FALSE))
+      return("slot `updated` must be TRUE or FALSE")
+    if(
+      !isTRUE(object@interactive.error) &&
+      !identical(object@interactive.error, FALSE)
+    )
+      return("slot `interactive.error` must be TRUE or FALSE")
+    TRUE
   }
 )

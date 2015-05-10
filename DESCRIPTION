@@ -4,7 +4,7 @@ Description: Simplifies regression tests by comparing objects produced by test
     code with earlier versions of those same objects.  If objects are unchanged
     the tests pass, otherwise you can optionally review failing tests or new
     tests through the provided interactive interface.
-Version: 0.8.1
+Version: 0.9.0
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
@@ -26,6 +26,7 @@ Collate:
     'text.R'
     'conditions.R'
     'item.R'
+    'deparse.R'
     'item.sub.R'
     'section.R'
     'test.R'

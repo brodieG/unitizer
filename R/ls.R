@@ -12,7 +12,8 @@ NULL
 #' environment.
 #'
 #' @keywords internal
-#' @return list of object names, or a list with environments containing the objects
+#' @return list of object names, or a list with environments containing the
+#'   objects
 
 unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
    all.names = FALSE, pattern
@@ -20,8 +21,8 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
   if(!missing(pos) || !missing(name) || !missing(envir))
     stop(
       "You are using an overloaded version of `ls` that does not allow ",
-      "using the `name`, `pos`, or `envir` arguments to `ls`; you can use standard ",
-      "`ls` with `base::ls`."
+      "using the `name`, `pos`, or `envir` arguments to `ls`; you can use ",
+      "standard `ls` with `base::ls`."
     )
   new.item <- try(get(".NEW", parent.env(envir)), silent=T)
   ref.item <- try(get(".REF", parent.env(envir)), silent=T)
@@ -31,16 +32,21 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
   new.inv <- ref.inv <- FALSE
 
   if(inherits(new.item, "try-error") && inherits(ref.item, "try-error")) {
-    stop("Logic error: could not find `unitizerItem` objects to list contents of; contact Maintainer")
+    stop(
+      "Logic error: could not find `unitizerItem` objects to list contents ",
+      "of; contact Maintainer"
+    )
   }
   if (!inherits(new.item, "try-error")) {
-    if(nrow(new.item@ls)) ls.lst[["new"]] <- paste0(new.item@ls$names, new.item@ls$status)
+    if(nrow(new.item@ls))
+      ls.lst[["new"]] <- paste0(new.item@ls$names, new.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".new", ".NEW"))
     mods <- c(mods, Filter(nchar, unique(new.item@ls$status)))
     new.inv <- isTRUE(attr(new.item@ls, "invalid"))
   }
   if (!inherits(ref.item, "try-error")) {
-    if(nrow(ref.item@ls)) ls.lst[["ref"]] <- paste0(ref.item@ls$names, ref.item@ls$status)
+    if(nrow(ref.item@ls))
+      ls.lst[["ref"]] <- paste0(ref.item@ls$names, ref.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".ref", ".REF"))
     mods <- c(mods, Filter(nchar, unique(ref.item@ls$status)))
     ref.inv <- isTRUE(attr(ref.item@ls, "invalid"))
@@ -50,9 +56,9 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
       "The ls output for ",
       paste(c("`.new`", "`.ref`")[c(new.inv, ref.inv)], sep=", "),
       " is invalid.  This may be because you had corrupted environment chains ",
-      "that had to be repaired. Re-generating the `unitizer` with `unitize(..., ",
-      "force.update=TRUE)` should fix the problem.  If it persists, please ",
-      "contact maintainer."
+      "that had to be repaired. Re-generating the `unitizer` with ",
+      "`unitize(..., force.update=TRUE)` should fix the problem.  If it ",
+      "persists, please contact maintainer."
     )
   }
   structure(ls.lst[order(names(ls.lst))], class="unitizer_ls", mods=mods)
@@ -74,20 +80,21 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   env.list <- list()
   i <- 0L
   attempt <- try(
-    while(!identical(env, stop.env)) {     # Get list of environments that are relevant
+    while(!identical(env, stop.env)) {  # Get list of environments that are relevant
       env.list <- c(env.list, env)
       env <- parent.env(env)
       if((i <- i + 1L) > 20000)
         stop(
-          "Logic error: not finding `stop.env` after 20000 iterations; contact ",
-          " package maintainer if this is an error."
+          "Logic error: not finding `stop.env` after 20000 iterations; ",
+          "contact package maintainer if this is an error."
         )
   } )
   if(inherits(attempt, "try-error"))
     stop("Specified `stop.env` does not appear to be in parent environments.")
 
   for(i in rev(seq_along(env.list))) {   # Reverse, so when we copy objects the "youngest" overwrite the "eldest"
-    ls.res <- c(ls.res, ls(envir=env.list[[i]], all.names=all.names, pattern=pattern))
+    ls.res <-
+      c(ls.res, ls(envir=env.list[[i]], all.names=all.names, pattern=pattern))
     if(!is.null(store.env)) {
       for(j in seq_along(ls.res))
         assign(ls.res[[j]], get(ls.res[[j]], envir=env.list[[i]]), store.env)
@@ -118,11 +125,15 @@ print.unitizer_ls <- function(x, ...) {
     "*"="  *:  existed during test evaluation, but doesn't anymore",
     "**"="  **: didn't exist during test evaluation"
   )
-  if(all(c("new", "ref") %in% names(x.copy))) extra <- c(extra, "Use `ref(.)` to access objects in ref test env")
+  if(all(c("new", "ref") %in% names(x.copy)))
+    extra <- c(extra, "Use `ref(.)` to access objects in ref test env")
   if(length(attr(x.copy, "mods"))) {
     extra <- c(extra, explain[attr(x.copy, "mods")])
   }
-  if("tests" %in% names(x.copy)) extra <- c(extra, "`.new` / `.ref` for test value, `.NEW` / `.REF` for details.")
+  if("tests" %in% names(x.copy))
+    extra <- c(
+      extra, "`.new` / `.ref` for test value, `.NEW` / `.REF` for details."
+    )
   if(length(extra)) cat(extra, sep="\n")
   invisible(val)
 }

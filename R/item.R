@@ -68,7 +68,8 @@ setClass(
     comment="characterOrNULL",
     trace="list",
     data="unitizerItemData",
-    section.id="integer"
+    section.id="integer",
+    section.name="character"
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L,
@@ -94,6 +95,8 @@ setMethod("isValid", "unitizerItem",
     ) {
       return("Slot `@section.id` must be integer(1L) >= 1L")
     }
+    if(!identical(length(object@section.name), 1L))
+      return("Slot `@section.name` must be character(1L)")
     TRUE
 } )
 setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
@@ -113,7 +116,8 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   if(
     is.call(.Object@call) &&
     !inherits(
-      try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE), "try-error"
+      try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE),
+      "try-error"
     ) &&
     any(vapply(funs.ignore, identical_fun, logical(1L), fun))
   ) {

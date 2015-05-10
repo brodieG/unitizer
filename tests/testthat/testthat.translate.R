@@ -1,6 +1,5 @@
 
 library("unitizer")
-
 test.file <- "helper/translate/testthat/test-translate2.R"
 target.dir.base <- tempfile()
 target.dir <- file.path(target.dir.base, "helper/translate/unitizer")
@@ -9,7 +8,7 @@ res1 <- testthat_translate_file(test.file, target.dir, prompt="overwrite")  # ha
 test_that("translate a file", {
   expect_equal(
     readLines(res1),
-    c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "rev(10:1)", "unitizer_sect(\"simple tests\", {", "    # first internal", "    fun0(a)", "    # internal comment", "    fun1(a, b, c, d, e, f)", "    # \"external\" comment", "    fun1(a)", "})", "# a test for errors", "unitizer_sect(\"errors\", {", "    # Making up sections", "    stop(\"hello\")", "    warning(\"yoyo\")", "})")
+    c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "# expect_equal(rev(10:1), 1:10)", "rev(10:1)", "# test_that(\"simple tests\", {", "#     expect_equal(fun0(a), 1:10)", "#     expect_equal(fun1(a, b, c, d, e, f), runif(20))", "#     expect_true(fun1(a))", "# })", "unitizer_sect(\"simple tests\", {", "    # first internal", "    # expect_equal(fun0(a), 1:10)", "    fun0(a)", "    # internal comment", "    # expect_equal(fun1(a, b, c, d, e, f), runif(20))", "    fun1(a, b, c, d, e, f)", "    # \"external\" comment", "    # expect_true(fun1(a))", "    fun1(a)", "})", "# a test for errors", "# test_that(\"errors\", {", "#     expect_error(stop(\"hello\"))", "#     expect_warning(warning(\"yoyo\"))", "# })", "unitizer_sect(\"errors\", {", "    # Making up sections", "    # expect_error(stop(\"hello\"))", "    stop(\"hello\")", "    # expect_warning(warning(\"yoyo\"))", "    warning(\"yoyo\")", "})")
   )
   # Can't do this twice in a row without prompting in non-interactive mode
 
@@ -29,10 +28,9 @@ test_that("translate a file", {
     list(NULL, 1:10, NULL, NULL, NULL, NULL, "yoyo")
   )
 })
-unlink(target.dir.base, recursive=TRUE)
+unlink(target.dir, recursive=TRUE)
 
 test.dir <- "helper/translate/testthat/"
-target.dir.base <- tempfile()
 target.dir <- file.path(target.dir.base, "helper/translate/unitizer")
 res2 <- testthat_translate_dir(test.dir, target.dir)  # has to be outside of `testthat`
 
@@ -62,4 +60,4 @@ test_that("translate a dir", {
   )
 })
 
-unlink(target.dir.base, recursive=TRUE)
+unlink(target.dir, recursive=TRUE)

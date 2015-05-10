@@ -7,6 +7,7 @@
   options(unitizer.prompt.b4.quit.time=10)    # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   options(unitizer.search.path.clean=TRUE)    # Whether to run in clean search path by default
   options(unitizer.max.capture.chars=200000)  # Maximum number of characters we allow capture of per test
+  options(unitizer.search.path.keep=c("tools:rstudio", "package:unitizer"))
 }
 .onUnload <- function(libpath) {
   options(unitizer.show.output=NULL)

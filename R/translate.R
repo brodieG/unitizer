@@ -201,7 +201,9 @@ testthat_translate_file <- function(
     file.name, target.dir, keep.testthat.call, prompt, ...
   )
   if(!is.null(target.dir)) {
-    unitize(test.file=untz.file, auto.accept="new", par.env=par.env)
+    unitize(
+      test.file=untz.file, auto.accept="new", par.env=par.env
+    )
   }
   return(untz.file)
 }
@@ -401,7 +403,7 @@ testthat_transcribe_file <- function(
     if(!file.exists(target.dir)) {
       if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
         u.inp <- simple_prompt(
-          paste0("Create directory ", target.dir," for `unitizer` tests?")
+          paste0("Create directory ", target.dir," for unitizer tests?")
         )
         if(!identical(u.inp, "Y"))
           stop("Unable to proceed without creating target directory")
@@ -424,9 +426,8 @@ testthat_transcribe_file <- function(
       )
       if(!identical(u.inp, "Y"))
         stop(
-          "Unable to proceed without user approval as one of `",
-          untz.test, "` or `", untz.store,
-          "` already exists."
+          "Unable to proceed without user approval as `",
+          untz.test, "` already exists."
         )
     }
     # Create files, run tests ...
@@ -444,7 +445,7 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=FALSE,
+  filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=TRUE,
   keep.testthat.call=TRUE, force=FALSE, ...
 ) {
   is_testthat_attached()
@@ -504,7 +505,6 @@ testthat_translate_dir <- function(
     if(length(files.helper)) {
       dir.create(help.dir <- file.path(target.dir, "helper"))
       file.copy(files.helper, help.dir)
-      source_many(files.helper, env)  # env updated by reference
     }
     # Translate files, need to unitize one by one mostly because we wrote the
     # `testthat_translate_file` function first, but would probably be better
@@ -525,15 +525,15 @@ testthat_translate_dir <- function(
         unparseable[[length(unparseable) + 1L]] <- untz.file
         unparseable.src[[length(unparseable.src) + 1L]] <- files.test[[i]]
     } }
-    # Temporarily exclude failing files so we can just unitize the directory
+    # Exclude failing files so we can just unitize the directory
 
     unlink(unparseable)
 
     # Unitize all files in directory
 
-    .unitize_dir(
+    unitize_dir(
       test.dir=target.dir, auto.accept="new", par.env=par.env,
-      search.path.clean=search.path.clean, pre.load.frame=env
+      search.path.clean=search.path.clean
     )
   }
   if(length(unparseable))
@@ -589,7 +589,7 @@ testthat_translate_name <- function(
   base.new <- sub(name.pattern, name.replace, basename(file.name))
   if(!nchar(base.new))
     stop(
-      "Produced zero char name when attempting to make `unitizer` file name ",
+      "Produced zero char name when attempting to make unitizer file name ",
       "from `testthat` file name, please review `file.name`, `name.pattern`, ",
       "and `name.replace`"
     )

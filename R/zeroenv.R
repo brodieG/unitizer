@@ -62,6 +62,8 @@ reset_packenv <- function() {
   pack.env$lib.copy <- base::library
   pack.env$history <- new("searchHistList")
   pack.env$search.init <- character()   # Initial search path b4 any modifications
+  pack.env$opts <- options()
+  pack.env$wd <- getwd()
 
   pack.env
 }

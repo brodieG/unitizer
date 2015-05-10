@@ -52,6 +52,8 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
 
 setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer",
   function(e1, e2) {
+    start.time <- proc.time()
+
     if(length(e1@sections))
       stop(
         "Logic Error: you are attempting to add more than one set ",
@@ -104,7 +106,8 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         next
       }
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
-      over_print(paste0("Running: ", deparse(item@call)[[1L]]))
+      item@section.name <- e1@sections[[item@section.id]]@title    # record name for attempting to match deleted tests to section
+      over_print(deparse(item@call)[[1L]], append=TRUE)
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
       # ignored items share environment with subsequent items
@@ -113,8 +116,32 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
       i <- i + 1L
     }
+    # Map reference tests to sections.  Tests that match directly are assigned
+    # to the corresponding new section.  For deleted reference tests to new
+    # sections, though we only map to parent sections, and match purely based on
+    # section names
 
+    e1@section.ref.map <- e1@section.map[e1@items.ref.map]
+    e1@sections.ref <- e1@sections
+    deleted <- which(is.na(e1@items.ref.map))
+
+    if(length(deleted)) {
+      sec.titles <- vapply(e1@sections, slot, character(1L), "title")
+      sec.parents <- unique(e1@section.parent)
+      par.titles <- sec.titles[sec.parents]
+
+      for(i in deleted) {
+        sec.match <- Filter(
+          Negate(is.na), match(e1@items.ref[[i]]@section.name, par.titles)
+        )
+        if(identical(length(sec.match), 1L)) {
+          e1@section.ref.map[[i]] <- sec.parents[[sec.match]]
+        } else {
+          e1@section.ref.map[[i]] <- NA_integer_
+        }
+    } }
     over_print("")
+    e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
     e1
 } )
 #' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
