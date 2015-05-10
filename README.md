@@ -1,6 +1,6 @@
 # unitizeR - Easy R Unit Tests
 
-[![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png)](https://travis-ci.org/brodieG/unitizer)
+[![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png?branch=master)](https://travis-ci.org/brodieG/unitizer)
 
 ## Quick Start
 
@@ -17,16 +17,14 @@ install_github("brodieg/unitizer")
 
 To use `unitizer`:
 
-* Save your "informal" tests to an R file
+* Write up test expressions for your functions as you would when informally testing them on the command line, and save them to a file (e.g. "my_file_name.R")
 * Run `unitize("my_file_name.R")`
 
-`unitize` will step through the tests in an interactive environment for you to review and accept as unit tests.  Subsequently, any time you make changes to your project you can re-run `unitize`.  You will be alerted if any tests produce results different than when they were first added to the `unitizer`.  In other words, you will be alerted to any regressions you introduce.
-
-Informal tests are R expressions you would normally type in the command line to test that your code is working as expected.  There is no need for special syntax, functions, or anything other than the R expression itself.
+`unitize` will step through the tests in an interactive environment for you to review and accept as unit tests.  Subsequently, any time you make changes to your project you can re-run `unitize`.  `unitizer` will detect any changes to the results of your expressions so you will be alerted to any regressions you introduce.  `unitizer` is compatible with `R CMD check` and travis.
 
 ## Details
 
-We strongly recommend you review the **[introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html)** for more details.  There is also a **[vignette index](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)** if you really want to get into the nitty gritty.
+We strongly recommend you review the **[introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html)** for more details, including comparsions to other unit testing frameworks.  There is also a demo (`demo("unitizer")`) so you can explore the interactive interface, and many more vignettes with additional details (**[vignette index](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)**).
 
 ## Acknowledgments
 
