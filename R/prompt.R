@@ -57,7 +57,7 @@ unitizer_prompt <- function(
 ) {
   if(!interactive())
     stop(
-      "Logic Error: attempting to use interactive `unitizer` environment in ",
+      "Logic Error: attempting to use interactive unitizer environment in ",
       "non-interactive session."
     )
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))

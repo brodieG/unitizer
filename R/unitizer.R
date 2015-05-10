@@ -400,9 +400,9 @@ setMethod("show", "unitizerObjectListSummary",
       i <- j - 1L
       if(!i) next else if(i > nrow(totals)) break
       disp[[j]] <- if(object@updated[[i]]) {
-        sub("^ +(\\d+\\.)", "$\\1", disp[[j]])
+        sub("^(\\s*) (\\d+\\.)", "\\1$\\2", disp[[j]])
       } else if(review.req[[i]]) {
-        sub("^ +(\\d+\\.)", "*\\1", disp[[j]])
+        sub("^(\\s*) (\\d+\\.)", "\\1*\\2", disp[[j]])
       } else disp[[j]]
     }
     cat("\n")
