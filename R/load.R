@@ -9,11 +9,13 @@
 #'   returns \code{`FALSE`} then this will create a new unitizer
 #' @param par.frame the environment to use as the parent frame for the \code{`unitizer`}
 #' @param test.file the R file associated with the store id
+#' @param force.upgrade whether to allow upgrades in non-interactive mode, for
+#'   testing purposes
 #' @return a \code{`unitizer`} object, or anything, in which case the calling
 #'   code should exit
 
 load_unitizers <- function(
-  store.ids, test.files, par.frame, interactive.mode, mode
+  store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE
 ) {
   if(!is.character(test.files))
     stop("Argument `test.files` must be character")
@@ -28,34 +30,42 @@ load_unitizers <- function(
 
   # Get names for display
 
-  chr.ids <- vapply(store.ids, as.store_id_chr, character(1L))
-  chr.files <- ifelse(
-    is.na(test.files), paste0("test file for ", chr.ids),
-    relativize_path(test.files)
+  chr.ids <- vapply(
+    seq(store.ids),
+    function(x) best_store_name(store.ids[[x]], test.files[[x]]),
+    character(1L)
+  )
+  chr.files <- vapply(
+    seq(store.ids),
+    function(x) best_file_name(store.ids[[x]], test.files[[x]]),
+    character(1L)
   )
   # Get RDSs and run basic checks; `valid` will contain character strings
   # describing failures, or 0 length string if succeeded
 
   unitizers <- lapply(
-    store.ids,
+    seq(store.ids),
     function(x) {
-      if(is(x, "unitizer")) {
-        return(x)
+      if(is(store.ids[[x]], "unitizer")) {
+        return(store.ids[[x]])
       }
-      x <- try(get_unitizer(x))
-      if(inherits(x, "try-error"))
+      store.ids[[x]] <- try(get_unitizer(store.ids[[x]]), silent=TRUE)
+      if(inherits(store.ids[[x]], "try-error"))
         return(
           paste0(
-            c("`get_unitizer` error: ", conditionMessage(attr(x, "condition"))),
+            c(
+              "`get_unitizer` error: ",
+              conditionMessage(attr(store.ids[[x]], "condition"))
+            ),
             collapse=""
         ) )
-      if(is(x, "unitizer")) return(x)
-      if(identical(x, FALSE)) {
+      if(is(store.ids[[x]], "unitizer")) return(store.ids[[x]])
+      if(identical(store.ids[[x]], FALSE)) {
         return(
           new(
-            "unitizer", id=norm_store_id(x),
+            "unitizer", id=norm_store_id(store.ids[[x]]),
             zero.env=new.env(parent=par.frame),
-            test.file.loc=norm_file(test.file)
+            test.file.loc=norm_file(test.files[[x]])
       ) ) }
       return(
         "`get_unitizer` returned something other than a `unitizer` or FALSE"
@@ -70,7 +80,8 @@ load_unitizers <- function(
       }
       attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
       if(inherits(attempt, "try-error")) {
-        conditionMessage(attr(attempt, "condition"))
+        msg <- conditionMessage(attr(attempt, "condition"))
+        if(nchar(msg)) msg else "`unitizer` validity check failed"
       } else ""
     },
     character(1L)
@@ -78,14 +89,17 @@ load_unitizers <- function(
   null.version <- package_version("0.0.0")
   curr.version <- packageVersion("unitizer")
 
-  # unitizers without a `version` slot or slot in incorrect form not  eligible
+  # unitizers without a `version` slot or slot in incorrect form not eligible
   # for upgrade
 
   versions  <- lapply(
     unitizers,
     function(x)
-      if(!is(x, "unitizer") || !is.package_version(x@version)) null.version else
-      x@version
+      if(
+        !is(x, "unitizer") ||
+        inherits(x.ver <- try(x@version, silent=TRUE), "try-error") ||
+        !is.package_version(x.ver)
+      ) null.version else x@version
   )
   version.out.of.date <- vapply(
     versions, function(x) !identical(x, null.version) && curr.version > x,
@@ -93,7 +107,7 @@ load_unitizers <- function(
   )
   valid.idx <- which(!nchar(valid))
   invalid.idx <- which(nchar(valid) & !version.out.of.date)
-  toup.idx <- which(!nchar(valid) & version.out.of.date)
+  toup.idx <- which(nchar(valid) & version.out.of.date)
   toup.fail.idx <- integer(0L)
 
   # Attempt to resolve failures by upgrading if relevant
@@ -101,29 +115,54 @@ load_unitizers <- function(
   if(length(toup.idx)) {
     many <- length(toup.idx) > 1L
     word_cat(
-      "\nThe following `unitizer`", if(many) "s", " must be upgraded",
-      if(!interactive.mode)
-        paste0(
-          ", but that can only be done in interactive mode, so we will ",
-          "proceed without testing them"
-        ),
-      ":",
+      "\nThe following `unitizer`", if(many) "s",
+      if(force.upgrade) " will" else " must", " be upgraded to version '",
+      as.character(curr.version), "':",
       sep=""
     )
-    cat(as.character(UL(chr.files[toup.idx])), sep="\n")
-    word_msg("`unitizer` upgrades are IRREVERSIBLE.  Proceed?")
-    pick <- unitizer_prompt("Upgrade unitizer stores?", hist.con=NULL)
+    cat(
+      as.character(
+        UL(
+          paste0(
+            chr.ids[toup.idx], " (at '",
+            vapply(versions[toup.idx], as.character, character(1L))
+            , "')"
+      ) ) ),
+      sep="\n"
+    )
+    if(!interactive.mode && !force.upgrade)
+      stop("Cannot upgrade `unitizer`s in non-interactive mode")
+
+    pick <- if(interactive.mode) {
+      word_msg("`unitizer` upgrades are IRREVERSIBLE.  Proceed?")
+      unitizer_prompt(
+        "Upgrade unitizer stores?", hist.con=NULL,
+        valid.opts=c(Y="[Y]es", N="[N]o")
+      )
+    } else "Y"
+
     if(identical(pick, "Y")) {
       upgraded <- lapply(unitizers[toup.idx], upgrade)
       upgrade.success <- vapply(upgraded, is, logical(1L), "unitizer")
+
+      for(i in which(upgrade.success)) {
+        store.attempt <- try(store_unitizer(upgraded[[i]]), silent=TRUE)
+        if(inherits(store.attempt, "try-error")) {
+          upgraded[[i]] <- paste0(
+            "Unable to store upgraded unitizer: ",
+            conditionMessage(attr(store.attempt, "condition"))
+          )
+          upgrade.success[[i]] <- FALSE
+        }
+      }
       unitizers[toup.idx[upgrade.success]] <- upgraded[upgrade.success]
       valid.idx <- c(valid.idx, toup.idx[upgrade.success])
-
       toup.fail.idx <- toup.idx[!upgrade.success]
+      valid[toup.fail.idx] <- upgraded[!upgrade.success]
     } else {
       word_msg("`unitizer`(s) listed above will not be tested")
       toup.fail.idx <- toup.idx
-      valid[toup.fail.idx] <- "`unitizer` upgrade failed"
+      valid[toup.fail.idx] <- "User elected not to upgrade `unitizer`s"
     }
   }
   # Cleanup the unitizers
@@ -145,7 +184,7 @@ load_unitizers <- function(
     )
     cat(
       as.character(
-        UL(paste0(chr.files[invalid.idx], ": ",  valid[valid.idx]))
+        UL(paste0(chr.ids[invalid.idx], ": ",  valid[invalid.idx]))
       ),
       sep="\n", file=stderr()
     )
@@ -227,10 +266,36 @@ as.store_id_chr <- function(x) {
     return(relativize_path(x))
   }
   target <- try(as.character(x), silent=TRUE)
-  if(inherits(target, "try-error")) {
-    return("<untranslateable-unitizer-id>")
-  }
+  if(inherits(target, "try-error")) return(FALSE)
   target
 }
+#' Get Most Intuitive Name for Store
+#'
+#' Based on data from \code{store.id} and \code{test.file}
+#'
+#' @param store.id a \code{unitizer} store id
+#' @param test.file the location of the R test file
+#' @return character(1L)
 
+best_store_name <- function(store.id, test.file) {
+  stopifnot(is.chr1plain(test.file))
+  if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
+    if(is.na(test.file)) return("<untranslateable-unitizer-id>")
+    return(
+      paste0("`unitizer` for test file '", relativize_path(test.file), "'")
+    )
+  }
+  chr.store
+}
+#' @keywords internal
+#' @rdname best_store_name
+
+best_file_name <- function(store.id, test.file) {
+  stopifnot(is.chr1plain(test.file))
+  if(!is.na(test.file)) return(relativize_path(test.file))
+  if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
+    return("<unknown-test-file>")
+  }
+  paste0("Test file for `unitizer` '", chr.store, "'")
+}
 
