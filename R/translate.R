@@ -202,8 +202,7 @@ testthat_translate_file <- function(
   )
   if(!is.null(target.dir)) {
     unitize(
-      test.file=untz.file, auto.accept="new", par.env=par.env,
-      interactive.mode=FALSE
+      test.file=untz.file, auto.accept="new", par.env=par.env
     )
   }
   return(untz.file)
@@ -446,7 +445,7 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=FALSE,
+  filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=TRUE,
   keep.testthat.call=TRUE, force=FALSE, ...
 ) {
   is_testthat_attached()
@@ -534,7 +533,7 @@ testthat_translate_dir <- function(
 
     unitize_dir(
       test.dir=target.dir, auto.accept="new", par.env=par.env,
-      search.path.clean=search.path.clean, interactive.mode=FALSE
+      search.path.clean=search.path.clean
     )
   }
   if(length(unparseable))
