@@ -122,6 +122,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     # section names
 
     e1@section.ref.map <- e1@section.map[e1@items.ref.map]
+    e1@sections.ref <- e1@sections
     deleted <- which(is.na(e1@items.ref.map))
 
     if(length(deleted)) {
