@@ -207,7 +207,9 @@ load_unitizers <- function(
     )
   }
   if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))
-    word_cat("No valid unitizer", if(length(store.ids) > 1L) "s", "to load")
+    word_cat(
+      "No valid unitizer", if(length(store.ids) > 1L) "s", " to load", sep=""
+    )
   new("unitizerObjectList", .items=unitizers)
 }
 
