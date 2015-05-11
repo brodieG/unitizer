@@ -202,7 +202,8 @@ testthat_translate_file <- function(
   )
   if(!is.null(target.dir)) {
     unitize(
-      test.file=untz.file, auto.accept="new", par.env=par.env
+      test.file=untz.file, auto.accept="new", par.env=par.env,
+      interactive.mode=FALSE
     )
   }
   return(untz.file)
@@ -533,7 +534,7 @@ testthat_translate_dir <- function(
 
     unitize_dir(
       test.dir=target.dir, auto.accept="new", par.env=par.env,
-      search.path.clean=search.path.clean
+      search.path.clean=search.path.clean, interactive.mode=FALSE
     )
   }
   if(length(unparseable))

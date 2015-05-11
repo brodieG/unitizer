@@ -174,7 +174,7 @@ unitize_core <- function(
       test.files,
       function(x) {
         over_print(paste("Parsing", x))
-        parse_tests(x, comments=interactive.mode)
+        parse_tests(x, comments=TRUE)
   } ) }
   # Clean up search path
 
