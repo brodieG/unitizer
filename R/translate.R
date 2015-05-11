@@ -403,9 +403,11 @@ testthat_transcribe_file <- function(
     }
     if(!file.exists(target.dir)) {
       if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
-        u.inp <- simple_prompt(
-          paste0("Create directory ", target.dir," for unitizer tests?")
-        )
+        u.inp <- if(interactive()) {
+          simple_prompt(
+            paste0("Create directory ", target.dir," for unitizer tests?")
+          )
+        } else "N"
         if(!identical(u.inp, "Y"))
           stop("Unable to proceed without creating target directory")
       }
@@ -422,9 +424,11 @@ testthat_transcribe_file <- function(
     # prompt if file already exists
 
     if(!identical(prompt, "never") && file.exists(untz.test)) {
-      u.inp <- simple_prompt(
-        paste0("Overwrite file '", normalizePath(untz.test), "'?")
-      )
+      u.inp <- if(interactive()) {
+        simple_prompt(
+          paste0("Overwrite file '", normalizePath(untz.test), "'?")
+        )
+      } else "N"
       if(!identical(u.inp, "Y"))
         stop(
           "Unable to proceed without user approval as `",

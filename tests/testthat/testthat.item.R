@@ -309,9 +309,9 @@ local( {
     # this should break because the NULL forces `b` to be stored in a different
     # environment to `a`.
 
-    expect_equal(
+    expect_match(
       x@items.new[[4]]@data@message[[1]],
-      "Error in a() : could not find function \"b\"\n"
+      "Error in a() : could not find function \"b\"\n", fixed=TRUE
     )
   } )
 

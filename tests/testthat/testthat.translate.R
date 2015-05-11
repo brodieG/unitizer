@@ -1,4 +1,4 @@
-
+library("testthat")
 library("unitizer")
 test.file <- "helper/translate/testthat/test-translate2.R"
 target.dir.base <- tempfile()
@@ -14,7 +14,7 @@ test_that("translate a file", {
 
   if(!interactive()) {
     expect_error(
-      testthat_translate_file(test.file, target.dir),
+      testthat_translate_file(test.file, target.dir, prompt="always"),
       "Unable to proceed"
     )
   }
