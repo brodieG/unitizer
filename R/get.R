@@ -78,7 +78,7 @@ set_unitizer.character <- function(store.id, unitizer) {
   }
   if(is.object(store.id) || !is.null(attributes(store.id)))
     stop("Argument `store.id` must be a bare character vector")
-  if(!is(unitizer, "unitizer")) stop("Argument unitizer must be a unitizer")
+  if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
   new.file <- FALSE
   if(!file.exists(store.id)) {
     if(!isTRUE(dir.create(store.id)))

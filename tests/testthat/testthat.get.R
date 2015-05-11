@@ -6,8 +6,8 @@ local({
   test_that("Error Cases", {
     expect_error(get_unitizer(1), "No method defined")
     expect_error(get_unitizer(letters), "Argument `store.id`")
-    expect_error(get_unitizer("../interactive"), "does not appear to refer to a `unitizer` directory")
-    expect_error(get_unitizer("testthat.get.R"), "does not appear to refer to a `unitizer` directory")
+    expect_error(get_unitizer("../interactive"), "does not appear to refer to a unitizer directory")
+    expect_error(get_unitizer("testthat.get.R"), "does not appear to refer to a unitizer directory")
     expect_error(set_unitizer(1), "No method defined")
     expect_error(set_unitizer(letters), "Argument `store.id` must be a 1 length character vector")
     expect_error(set_unitizer("a"), "argument \"unitizer\" is missing, with no default")
