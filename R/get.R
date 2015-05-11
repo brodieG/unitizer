@@ -462,13 +462,13 @@ source_many <- function(files, env, allow.side.effects=FALSE) {
 
   for(i in files) {
     fail <- inherits(try(sys.source(i, env)), "try-error")
-    if(!identical(base.opts, new.opts <- options()))
-      stop("Options changed by sourcing file `", i, "`, unable to proceed")
-    if(!identical(base.wd, getwd()))
-      stop(
-        "Working directory changed by sourcing file `", i,
-        "`, unable to proceed (was: '", base.wd, "')"
-      )
+    # if(!identical(base.opts, new.opts <- options()))
+    #   stop("Options changed by sourcing file `", i, "`, unable to proceed")
+    # if(!identical(base.wd, getwd()))
+    #   stop(
+    #     "Working directory changed by sourcing file `", i,
+    #     "`, unable to proceed (was: '", base.wd, "')"
+    #   )
     if(fail) stop("Error sourcing file `", i, "`, see above for details")
   }
   NULL
