@@ -193,6 +193,7 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
 
     sections.ref.ids <- vapply(as.list(x@items.ref), slot, 1L, "section.id")
     sections.unique <- Filter(Negate(is.na), sort(unique(sections.ref.ids)))
+    if(!length(sections.unique)) return(x)
     if(!all(sections.unique %in% seq_along(y@sections))) {
       stop(
         "Logic Error: reference tests referencing non-existing sections in ", "
