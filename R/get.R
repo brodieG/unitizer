@@ -332,7 +332,7 @@ infer_unitizer_location.character <- function(
   } else if (cand.len == 1L) {
     1L
   } else if (cand.len == 0L) {
-    warning("No possible matching files", immediate.=TRUE)
+    warning("No possible matching files for ", store.id, immediate.=TRUE)
     return(store.id)
   }
   if(!selection && interactive.mode) {

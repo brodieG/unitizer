@@ -134,12 +134,15 @@
 #' @seealso \code{\link{unitize}}
 #' @aliases testthat_translate_name, testthat_translate_dir
 #' @param file.name a path to the \code{testthat} test file to convert
+#' @param dir.name a path to the \code{testthat} directory to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
 #'   test store in; for \code{testthat_translate_file} only: if NULL will return
 #'   as a character vector what the contents of the translated file would have
 #'   been instead of writing the file
 #' @param keep.testthat.call whether to preserve the \code{testthat} call that
 #'   was converted, as a comment
+#' @param filter regular expression to select what files in a director are
+#'   translated
 #' @param ... params to pass on to \code{testthat_translate_name}
 #' @param name.new character(1L) the base name for the \code{unitizer} files;
 #'   do not include an extension as we will add it (".R" for the testfile,
@@ -151,7 +154,10 @@
 #'   constructed with this (used as \code{replace} parameter to
 #'   \code{\link{sub}}); in addition we will add ".R" and ".unitizer" as the
 #'   extensions for the new files so do not include extensions in your
-#'   \code{replace} parameter
+#'   \code{name.replace} parameter
+#' @param name.replace character(1L) the replacement token, typically would
+#'   include a \code{"\\1"} token that is filled in by the match group from
+#'   \code{name.pattern}
 #' @param prompt character(1L): \itemize{
 #'     \item "always" to always prompt before writing new files
 #'     \item "overwrite" only prompt if existing file is about to be overwritten

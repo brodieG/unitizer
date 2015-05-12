@@ -857,8 +857,7 @@ setMethod("+", c("unitizerBrowseSection", "unitizerBrowseSubSection"),
     e1 <- append(e1, list(e2))
   }
 )
-
-#' Return value for \code{\link{unitizerBrowseInternal,unitizer,unitizerBrowse-method}}
+#' Return value for \code{browseUnitizerInternal}
 #'
 #' @keywords internal
 

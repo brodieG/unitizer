@@ -334,11 +334,10 @@ unitize_eval <- function(tests.parsed, unitizers) {
 }
 #' Run User Interaction And \code{unitizer} Storage
 #'
+#' @keywords internal
 #' @inheritParams unitize_core
 #' @param unitizers list of \code{unitizer} objects
-#' @param prompt.on.quit logical(1L) wh
 #' @param force.update whether to store unitizer
-#'
 
 unitize_browse <- function(
   unitizers, mode, interactive.mode, force.update, auto.accept

@@ -3,7 +3,7 @@
 #' If this errors, calling function should abort
 #'
 #' @keywords internal
-#' @param unitizer a \code{\link{unitizer}} object
+#' @param unitizer a \code{\link{unitizer-class}} object
 #' @param store.id anything for which there is a defined \code{`\link{get_unitizer}`}
 #'   method; by default should be the path to a unitizer; if \code{`\link{get_unitizer}`}
 #'   returns \code{`FALSE`} then this will create a new unitizer
@@ -146,6 +146,9 @@ load_unitizers <- function(
       upgrade.success <- vapply(upgraded, is, logical(1L), "unitizer")
 
       for(i in which(upgrade.success)) {
+        upgraded[[i]]@id <- norm_store_id(store.ids[[i]])
+        upgraded[[i]]@test.file.loc <- norm_file(test.files[[i]])
+
         store.attempt <- try(store_unitizer(upgraded[[i]]), silent=TRUE)
         if(inherits(store.attempt, "try-error")) {
           upgraded[[i]] <- paste0(
@@ -168,9 +171,9 @@ load_unitizers <- function(
   # Cleanup the unitizers
 
   for(i in valid.idx) {
-    parent.env(unitizers[[i]]@zero.env) <- par.frame
     unitizers[[i]]@id <- norm_store_id(store.ids[[i]])
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
+    parent.env(unitizers[[i]]@zero.env) <- par.frame
     unitizers[[i]]@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
   }
   unitizers[!seq(unitizers) %in% valid.idx] <- FALSE
@@ -214,7 +217,7 @@ load_unitizers <- function(
 }
 
 #' @keywords internal
-#' @rdname load_unitizer
+#' @rdname load_unitizers
 
 store_unitizer <- function(unitizer) {
   if(!is(unitizer, "unitizer")) return(invisible(TRUE))
@@ -249,7 +252,7 @@ norm_store_id <- function(x) if(is.default_unitizer_id(x)) norm_file(x) else x
 norm_file <- function(x) {
   if(
     !inherits(  # maybe this should just throw an error
-      normed <- try(normalizePath(store.id, mustWork=TRUE), silent=TRUE),
+      normed <- try(normalizePath(x, mustWork=TRUE), silent=TRUE),
       "try-error"
     )
   ) normed else x

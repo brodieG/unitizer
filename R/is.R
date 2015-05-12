@@ -39,7 +39,7 @@ is.package_version <- function(x)
 #' Used primarily for assessing whether a store id should use default mechanism
 #' or should be coerced to character
 #'
-#' @keyword internal
+#' @keywords internal
 
 is.chr1plain <- function(x)
   !is.object(x) && is.character(x) && identical(length(x), 1L)

@@ -94,7 +94,7 @@ path_clean <- function(path) {
 #' Create a Store ID from a Test File Name
 #'
 #' @param x character(1L) file name ending in .r or .R
-#' @param return store id name, or NULL if \code{x} doesn't meet expectations
+#' @return store id name, or NULL if \code{x} doesn't meet expectations
 #' @export
 #' @examples
 #' filename_to_storeid(file.path("tests", "unitizer", "foo.R"))
