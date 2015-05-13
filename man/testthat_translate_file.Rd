@@ -198,15 +198,15 @@ avoiding it (see below).
 \code{unitize} by default runs each \code{unitizer} test file in a clean
 environment with a clean search path.  This means that if you load libraries
 before you run your tests you will have to set
-\code{search.path.clean=FALSE}, even if you are loading the libraries in the
-helper files.  Note we generally discourage the use of helper files because
-\code{unitizer} does not track changes in objects that are produced by them,
-so they could become a source of difficult-to-track-down regressions.
+\code{search.path.clean=FALSE} for them to be loaded in your tests.  One
+exception is if you load the libraries in helper files, in which case they
+will be available to your tests, and unloaded upon completion.
 
 If you run your tests during development with \code{test_file} odds
 are the translation will work just fine.  On the other hand, if you rely
 exclusively on \code{test_check} you may need to use
-\code{par.env=getNamespace("pkgName")} when you translate.
+\code{par.env=getNamespace("pkgName")} when you translate to make sure your
+tests have access to the internal namespace functions.
 
 If your tests were translated with parameters \code{par.env} and/or
 \code{search.path.clean} changed from their default values, you will have

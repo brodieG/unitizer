@@ -28,13 +28,13 @@ unitize_dir(test.dir, store.ids = filename_to_storeid,
 match an actual system path, \code{unitizer} will try to infer a possible
 path (see \code{\link{infer_unitizer_location}})}
 
-\item{store.id}{a folder containing the \code{unitizer} object.  If the
-folder does not exist, it will be created.  Alternatively, can be NULL, in
-which case if your test file ends in \code{.[rR]}, will select a folder at
-the same location as the test file  with the same name as the testfile,
-except ending in \code{.unitizer} instead of \code{[.rR]}.  You can also
-pass any object that has a defined \code{\link{get_unitizer}} method, or
-an actual \code{unitizer} object if you are using \code{review}}
+\item{store.id}{if NULL (default), \code{unitizer} will select a directory
+based on the \code{test.file} name by replacing \code{.[rR]} with
+\code{.unitizer}.  You can also specify a directory name, or pass any
+object that has a defined \code{\link{get_unitizer}} method which allows
+you to specify non-standard \code{unitizer} storage mechanisms (see
+\code{\link{get_unitizer}}).  Finally, you can pass an actual
+\code{unitizer} object if you are using \code{review}}
 
 \item{interactive.mode}{logical(1L) whether to run in interactive mode (
 request user input when needed) or not (error if user input is required,
@@ -92,7 +92,7 @@ related to those objects changing between \code{unitizer} runs}
 \item{test.dir}{the directory to run the tests on}
 
 \item{store.ids}{one of \itemize{
-  \item a function that converts test file names to \code{unitzer} ids; if
+  \item a function that converts test file names to \code{unitizer} ids; if
     \code{unitize}ing multiple files will be \code{lapply}ed over each file
   \item a character vector with \code{unitizer} ids, must be the same
     length as the number of test files being reviewed (see \code{store.id})
@@ -101,7 +101,7 @@ related to those objects changing between \code{unitizer} runs}
     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 }}
 
-\item{pattern}{a regular expression used to match which files in
+\item{pattern}{a regular expression used to match what subset of files in
 \code{test.dir} to \code{unitize}}
 }
 \value{
@@ -134,6 +134,6 @@ implementing S3 methods for \code{\link{get_unitizer}} and
 See \code{unitizer} vignettes and demo for details and examples.
 }
 \seealso{
-\code{\link{get_unitizer}}
+\code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}}
 }
 
