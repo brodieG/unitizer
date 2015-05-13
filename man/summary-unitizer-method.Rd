@@ -5,14 +5,18 @@
 \alias{summary,unitizer-method}
 \title{Summarize Results}
 \usage{
-\S4method{summary}{unitizer}(object, ...)
+\S4method{summary}{unitizer}(object, silent = FALSE, ...)
+}
+\arguments{
+\item{object}{the object to summarize}
+
+\item{silent}{whether to suppress display of summary object}
 }
 \value{
-a list with the data that can be assigned to sections in vector/matrix
-  form, and the section less stuff (Deletes) as a scalar
+a unitizerSummary object
 }
 \description{
-Summarize Results
+Also prints to screen, but only if \code{level == 1L}
 }
 \keyword{internal}
 

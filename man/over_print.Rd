@@ -4,10 +4,13 @@
 \alias{over_print}
 \title{Over-write a Line}
 \usage{
-over_print(x, min.width = 30L, max.width = getOption("width"))
+over_print(x, append = FALSE, min.width = 30L,
+  max.width = getOption("width"))
 }
 \arguments{
 \item{x}{character(1L)}
+
+\item{append}{to last non-append \code{x} value}
 
 \item{min.width}{integer(1L) minimum character width to print to}
 

@@ -13,8 +13,7 @@ testthat_translate_file(file.name, target.dir = file.path(dirname(file.name),
 
 testthat_translate_dir(dir.name, target.dir = file.path(dir.name, "..",
   "unitizer"), filter = "^test.*\\\\.[rR]", par.env = NULL,
-  search.path.clean = FALSE, keep.testthat.call = TRUE, force = FALSE,
-  ...)
+  search.path.clean = TRUE, keep.testthat.call = TRUE, force = FALSE, ...)
 
 testthat_translate_name(file.name, target.dir = file.path(dirname(file.name),
   "..", "unitizer"), name.new = NULL,
@@ -46,6 +45,11 @@ was converted, as a comment}
 
 \item{...}{params to pass on to \code{testthat_translate_name}}
 
+\item{dir.name}{a path to the \code{testthat} directory to convert}
+
+\item{filter}{regular expression to select what files in a director are
+translated}
+
 \item{force}{logical(1L) whether to allow writing to a \code{target.dir} that
 contains files (implies \code{prompt="never"} when
 \code{testthat_translate_dir} runs \code{testthat_translate_file})}
@@ -61,7 +65,11 @@ the \code{testthat} test file name (see \code{name.replace}) if
 constructed with this (used as \code{replace} parameter to
 \code{\link{sub}}); in addition we will add ".R" and ".unitizer" as the
 extensions for the new files so do not include extensions in your
-\code{replace} parameter}
+\code{name.replace} parameter}
+
+\item{name.replace}{character(1L) the replacement token, typically would
+include a \code{"\\1"} token that is filled in by the match group from
+\code{name.pattern}}
 }
 \value{
 a file path or a character vector (see \code{target.dir})
