@@ -29,16 +29,16 @@ test_that("Package shimming working", {
   expect_identical(unitizer:::search_path_unsetup(), TRUE) # undo shimming
   expect_true(unitizer:::search_path_setup())              # now re-shim should work
 
-  expect_identical(search.path.init, pack.env$search.init)
-  expect_identical(length(pack.env$history), 0L)
+  expect_identical(search.path.init, .unitizer.pack.env$search.init)
+  expect_identical(length(.unitizer.pack.env$history), 0L)
 
   # Add one package
 
   library(unitizerdummypkg1)
 
-  expect_identical(length(pack.env$history), 1L)
+  expect_identical(length(.unitizer.pack.env$history), 1L)
   expect_identical(
-    pack.env$history[[1L]],
+    .unitizer.pack.env$history[[1L]],
     new("searchHist", name="unitizerdummypkg1", type="package", mode="add", pos=2L, extra=NULL)
   )
   expect_identical(setdiff(search(), search.path.init), "package:unitizerdummypkg1")
@@ -46,15 +46,15 @@ test_that("Package shimming working", {
   # But only once
 
   library(unitizerdummypkg1)
-  expect_identical(length(pack.env$history), 1L)
+  expect_identical(length(.unitizer.pack.env$history), 1L)
 
   # Another pack, but different location
 
   library(unitizerdummypkg2, pos=3L)
 
-  expect_identical(length(pack.env$history), 2L)
+  expect_identical(length(.unitizer.pack.env$history), 2L)
   expect_identical(
-    pack.env$history[[2L]],
+    .unitizer.pack.env$history[[2L]],
     new("searchHist", name="unitizerdummypkg2", type="package", mode="add", pos=3L, extra=NULL)
   )
   expect_identical(
@@ -70,9 +70,9 @@ test_that("Package shimming working", {
   rem.obj <- as.environment(3L)  # Capture object we're about to detach
   detach(3L)
   expect_identical(setdiff(search(), search.path.init), "package:unitizerdummypkg1")  # detached pkg2
-  expect_identical(length(pack.env$history), 3L)  # but history should grow
+  expect_identical(length(.unitizer.pack.env$history), 3L)  # but history should grow
   expect_identical(
-    pack.env$history[[3L]],
+    .unitizer.pack.env$history[[3L]],
     new(
       "searchHist", name="unitizerdummypkg2", type="package", mode="remove",
       pos=3L, extra=rem.obj
@@ -83,9 +83,9 @@ test_that("Package shimming working", {
   detach("package:unitizerdummypkg1", unload=TRUE)
 
   expect_identical(search(), search.path.init)
-  expect_identical(length(pack.env$history), 4L)
+  expect_identical(length(.unitizer.pack.env$history), 4L)
   expect_identical(
-    pack.env$history[[4L]],
+    .unitizer.pack.env$history[[4L]],
     new(
       "searchHist", name="unitizerdummypkg1", type="package", mode="remove",
       pos=2L, extra=rem.obj
@@ -111,7 +111,7 @@ test_that("Search Path Trim / Restore", {
   expect_true(unitizer:::search_path_trim())
   testthat::expect_identical(  # note testthat no longer on search path
     length(search.path.init),
-    length(search()) + length(pack.env$history)
+    length(search()) + length(.unitizer.pack.env$history)
   )
   testthat::expect_true(unitizer:::search_path_restore())
   expect_identical(search(), search.path.init)
@@ -139,22 +139,22 @@ test_that("Search Path Trim / Restore And Add Stuff / Environment Tests", {
 
   # Make sure namespaces are working as expected
 
-  testthat::expect_error(evalq(dummy_fun1(), pack.env$zero.env.par))
-  testthat::expect_error(evalq(dummy_fun2(), pack.env$zero.env.par))
+  testthat::expect_error(evalq(dummy_fun1(), .unitizer.pack.env$zero.env.par))
+  testthat::expect_error(evalq(dummy_fun2(), .unitizer.pack.env$zero.env.par))
   library(unitizerdummypkg1)
-  testthat::expect_identical(evalq(dummy_fun1(), pack.env$zero.env.par), NULL)
+  testthat::expect_identical(evalq(dummy_fun1(), .unitizer.pack.env$zero.env.par), NULL)
   testthat::expect_identical(evalq(dummy_fun1(), .GlobalEnv), NULL)
 
   # Confirm we can't see global env
 
-  testthat::expect_error(evalq(.unitizer.tests.x, pack.env$zero.env.par))
+  testthat::expect_error(evalq(.unitizer.tests.x, .unitizer.pack.env$zero.env.par))
   testthat::expect_identical(evalq(.unitizer.tests.x, .GlobalEnv), 42)
   rm(.unitizer.tests.x, envir=.GlobalEnv)
 
   # Add another package in weird position
 
   library(unitizerdummypkg2, pos=6L)
-  testthat::expect_identical(evalq(dummy_fun2(), pack.env$zero.env.par), NULL)
+  testthat::expect_identical(evalq(dummy_fun2(), .unitizer.pack.env$zero.env.par), NULL)
   testthat::expect_identical(evalq(dummy_fun2(), .GlobalEnv), NULL)
 
   # restore
@@ -211,31 +211,31 @@ test_that("require / attach / detach", {
   testthat::expect_identical(evalq(.unitizer.tests.x1, .GlobalEnv), 42)
   testthat::expect_identical(evalq(.unitizer.tests.x2, .GlobalEnv), c("the", "answer"))
 
-  testthat::expect_error(evalq(.unitizer.tests.x1, pack.env$zero.env.par))  # original a/b should be removed by trim
-  testthat::expect_error(evalq(.unitizer.tests.x2, pack.env$zero.env.par))
+  testthat::expect_error(evalq(.unitizer.tests.x1, .unitizer.pack.env$zero.env.par))  # original a/b should be removed by trim
+  testthat::expect_error(evalq(.unitizer.tests.x2, .unitizer.pack.env$zero.env.par))
 
   a1 <- data.frame(.unitizer.tests.x1=2:3)
   attach(a1, name="a")
 
   testthat::expect_identical(evalq(.unitizer.tests.x1, .GlobalEnv), 42)
-  testthat::expect_identical(evalq(.unitizer.tests.x1, pack.env$zero.env.par), 2:3)
+  testthat::expect_identical(evalq(.unitizer.tests.x1, .unitizer.pack.env$zero.env.par), 2:3)
 
   b2 <- data.frame(.unitizer.tests.x1=999L, .unitizer.tests.x2="boo", stringsAsFactors=FALSE)
   attach(b2, name="a", pos=3L)  # Note purposefully writing to "a"
 
-  testthat::expect_identical(evalq(.unitizer.tests.x1, pack.env$zero.env.par), 2:3)
+  testthat::expect_identical(evalq(.unitizer.tests.x1, .unitizer.pack.env$zero.env.par), 2:3)
   testthat::expect_identical(evalq(.unitizer.tests.x2, .GlobalEnv), c("the", "answer"))
-  testthat::expect_identical(evalq(.unitizer.tests.x2, pack.env$zero.env.par), "boo")
+  testthat::expect_identical(evalq(.unitizer.tests.x2, .unitizer.pack.env$zero.env.par), "boo")
 
   detach("a")  # should detach first "a"
 
-  testthat::expect_identical(evalq(.unitizer.tests.x1, pack.env$zero.env.par), 999L)
-  testthat::expect_identical(evalq(.unitizer.tests.x2, pack.env$zero.env.par), "boo")
+  testthat::expect_identical(evalq(.unitizer.tests.x1, .unitizer.pack.env$zero.env.par), 999L)
+  testthat::expect_identical(evalq(.unitizer.tests.x2, .unitizer.pack.env$zero.env.par), "boo")
 
   detach("a")  # should detach second "a"
 
-  testthat::expect_error(evalq(.unitizer.tests.x1, pack.env$zero.env.par))  # original a/b should be removed by trim
-  testthat::expect_error(evalq(.unitizer.tests.x2, pack.env$zero.env.par))
+  testthat::expect_error(evalq(.unitizer.tests.x1, .unitizer.pack.env$zero.env.par))  # original a/b should be removed by trim
+  testthat::expect_error(evalq(.unitizer.tests.x2, .unitizer.pack.env$zero.env.par))
 
   # More package detach testing
 

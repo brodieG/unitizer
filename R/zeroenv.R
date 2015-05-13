@@ -36,7 +36,7 @@ setClass("searchHistList", contains="unitizerList",
     TRUE
 } )
 
-#' Objects used to Track What Environment to Use as Parent to Zero Env
+#' Objects used to Track Global Settings and the Like
 #'
 #' Note \code{`"package:unitizer"`} is not actually detached but is included in
 #' the list so that it is replaced in the same position on the search path
@@ -45,10 +45,9 @@ setClass("searchHistList", contains="unitizerList",
 #'
 #' Probably should be an RC object instead of an environment.
 #'
-#' @aliases zero.env.par objects.attached
 #' @keywords internal
 
-pack.env <- new.env()
+.unitizer.pack.env <- new.env()
 
 #' Clears out Global State
 #'
@@ -58,12 +57,14 @@ pack.env <- new.env()
 #' @keywords internal
 
 reset_packenv <- function() {
-  pack.env$zero.env.par <- new.env(parent=.GlobalEnv)
-  pack.env$lib.copy <- base::library
-  pack.env$history <- new("searchHistList")
-  pack.env$search.init <- character()   # Initial search path b4 any modifications
-  pack.env$opts <- options()
-  pack.env$wd <- getwd()
+  .unitizer.pack.env$zero.env.par <- new.env(parent=.GlobalEnv)
+  .unitizer.pack.env$lib.copy <- base::library
+  .unitizer.pack.env$history <- new("searchHistList")
+  .unitizer.pack.env$search.init <- character()   # Initial search path b4 any modifications
+  .unitizer.pack.env$opts0 <- options()           # options before anything is done
+  .unitizer.pack.env$opts <- NULL                 # options after helper
+  .unitizer.pack.env$wd0 <- getwd()
+  .unitizer.pack.env$wd <- NULL
 
   pack.env
 }
@@ -77,7 +78,7 @@ reset_packenv <- function() {
 #' @return character the search path
 
 unitizer_search_path_backup <- function() {
-  pack.env$search.init
+  .unitizer.pack.env$search.init
 }
 
 #' Default List of Packages To Keep on Search Path
@@ -288,11 +289,11 @@ search_path_setup <- function() {
   }
   # Track initial values
 
-  pack.env$search.init <- search()
+  .unitizer.pack.env$search.init <- search()
 
   # Setup zero env parent
 
-  parent.env(pack.env$zero.env.par) <- as.environment(2L)
+  parent.env(.unitizer.pack.env$zero.env.par) <- as.environment(2L)
 
   return(TRUE)
 }
@@ -364,7 +365,7 @@ search_path_unsetup <- function() {
 #' @keywords internal
 
 search_path_check <- function(verbose=FALSE) {
-  hist <- pack.env$history
+  hist <- .unitizer.pack.env$history
   names <- vapply(as.list(hist), slot, "", "name")
   types <- vapply(as.list(hist), slot, "", "type")
   modes <- vapply(as.list(hist), slot, "", "mode")
@@ -372,7 +373,7 @@ search_path_check <- function(verbose=FALSE) {
 
   names <- ifelse(types == "package", paste0("package:", names), names)
 
-  search.init <- pack.env$search.init
+  search.init <- .unitizer.pack.env$search.init
 
   for(i in seq_along(hist)) {
     if(modes[[i]] == "add") {
@@ -519,13 +520,13 @@ search_path_restore <- function() {
   reattach <- base::attach   # quash a NOTE (as per above, we don't think this is against the spirit of the note)
   relib <- base::library     # as above
 
-  for(i in rev(seq_along(pack.env$history))) {
-    hist <- pack.env$history[[i]]
+  for(i in rev(seq_along(.unitizer.pack.env$history))) {
+    hist <- .unitizer.pack.env$history[[i]]
     res <- try({
       if(hist@mode == "add") {  # Need to remove
         if(                     # Keep namespace
           hist@type == "object" ||
-          (hist@type == "package" && hist@name %in% pack.env$search.init)
+          (hist@type == "package" && hist@name %in% .unitizer.pack.env$search.init)
         ) {
           detach(pos=hist@pos, character.only=TRUE)
         } else detach(pos=hist@pos, unload=TRUE, character.only=TRUE)

@@ -217,12 +217,14 @@ unitize_core <- function(
 
   # Retrieve or create unitizer environment
 
-  gpar.frame <- if(is.null(par.env)) pack.env$zero.env.par else par.env
+  gpar.frame <- if(is.null(par.env)) .unitizer.pack.env$zero.env.par else par.env
 
   # Handle pre-load data
 
   over_print("Preloads...")
   pre.load.frame <- try(pre_load(pre.load, gpar.frame))
+  .unitizer.pack.env$opts <- options()
+
   if(inherits(pre.load.frame, "try-error") || !is.environment(pre.load.frame))
     stop("Argument `pre.load` could not be interpreted")
 
