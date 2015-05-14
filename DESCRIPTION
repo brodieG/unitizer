@@ -47,6 +47,7 @@ Collate:
     'ls.R'
     'misc.R'
     'onload.R'
+    'options.R'
     'parse.R'
     'rename.R'
     'repairenvs.R'
