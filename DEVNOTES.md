@@ -42,19 +42,11 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 * should we keep objects that user creates while browsing across tests?
   probably, but we don't right now.
-* accept all (hidden?) option
-  * Right now comes up most when removing tests and wanting them all deleted
-    w/o having to review every single one
-* Deleted tests getting attributed to `Total` while showing a column of zeros is
-  confusing; maybe should be it's own line
 * Current behavior of automatically storing new non-tests and discarding
   reference non tests can be potentially confusing to someone examining the
   environment and not realizing the object they are looking at is not the same
   that was used in the evaluation of the reference test; need to think about
   now to handle this (throw warning whenever such objects are accessed?)
-* Sometimes we want to replace a test with a variation on it, with the expectation
-  that the result is unchanged; how do we provide a mechanism for the user to
-  do this?  Some system to browse all the tests and extract the objects there-in?
 * Should ESC be treated the same way as `Q`?  Right now causes an unexpected exit
   with loss of all work.
 * Adding a browser inside `browse` source code, and then Q from browser() env
@@ -70,9 +62,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * And how to make it clear that tests are ordered first by test outcome, and as
   a result a display order will not be the same as the order in the file?
   Document clearly?
-* removed tests coming last?  Trying to match them back to a section is too
-  onerous, and besides, likely wouldn't have them in the same spot anyway.
-
 
 ## Internal
 
@@ -105,9 +94,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Conditions
 
-* Implement getCond() to supplement getConds()?  Or maybe add note to
-  print.getConds() that makes it clear how to get the full message for a given
-  condition?
 * not sure that condition comparison function should automatically loop
   through lists. this complicates the function substantially, though it
   does have the advantage of allowing the user to handle the cases were
@@ -148,62 +134,60 @@ possible dispatch to contend with.  We also haven't been super consistent, as
 in some cases we do not use S4 methods.  Need to rationalize all of this at
 some point.
 
-## Handling Passed Tests
+## Side Effects
 
-Need to do this in order to implement a review capability for unitizers that
-have been stored.
+Rationalizing side effects.
 
-* Modify as.character.unitizerBrowse so we have the option of reviewing all
-  tests, not just those that have been reviewed
-* create a unitizerBrowseSubSectionPass
-* Need to preserve reference sections, this is the single most important part.
-  Looks like we need to, in the browse process, keep track of the section that
-  each item was in.
-* Main issue seems to be whether we can re-use browserPrep, which seems
-  challenging since we would have completely different logic depending on
-  whether it is being called from `unitize` or from `review`.
-* Actually browserPrep is not the main issue.  The main issue is whether we can
-  use `browse`, as that's where the PITA stuff happens.  This means we have to
-  pull out the `browsePrep` stuff from `browse` and move it to `unitize` so we
-  can have a different `browsePrep`for tests that we're reviewing.
-* Do we need a new `unitizer` class? `unitizer`, which is for the live review
-  of new and old tests, and `unitizerStore` which is the version that gets
-  stored?  This resolves the problem with browserPrep.
-* Or alternatively, do we spoof a version of a normal unitizer?  Move all the
-  tests back to `items.new`, and then add a flag to `browserPrep`, this seems
-  most promising, we just need to preserve all the data.  Maybe we don't actually
-  move stuff to items.ref until we reload the unitizer, insted of doing so just
-  before we save it.  But this may require too much re-org of existing structure
-  (healenvs, etc.).
+Major types:
 
-Strategy for recovering sections
+* search path changes (library / attach / etc)
+* options
+* working directory changes
 
-* parent sections are tracked in the unitizerBrowse objects
-* these are available in processInput
-    * can attach section to each item
-* then +,unitizer,unitizerItems-method will need to:
-    * pull out section ids
-    * copy sections from the new test section to reference
-    * handle situations where sections were not recorded, gracefully
+Types that are treated differently
 
-Potential issue: tracking sections from older reference tests
+* history
+* reference objects             # can't do anything yet (hashing in future?)
+* evaluation environment        # is this changeable?  Not really
+* search path keep?
 
-* Not really an issue so long as we re-assign the section always in processInput
-* Main problem is for tests that are deleted from new source file but kept by
-  user; these should just be assigned an NA section, which can be re-labeled as
-  removed/missing tests when browsing, though might need some explanation
+General modes:
 
-We want to re-use browse infrastructure as much as possible
+* Vanilla: do nothing
+* before preloads
+* after preloads
+* after each
 
-* A version of browsePrep that handles items.ref instead of the just run tests
-* Add all the passed tests to the existing version of browsePrep
-* reviewNext needs a mode to suppress the passed tests, vs one that doesn't
-* One problem here is that when re-loading a store, we're dealing with stuff in
-  ref, whereas with passed tests we're dealing with stuff in new.  Does that mean
-  that we need to move the reference stuff to new?  Probably, but not really
-  desirable given all the dependencies involved with building up `items.new`
-* Actually, re ^^, looks like we can just do this by passing hte ref items as
-  new to the browser sub-section.
+Actions
+
+* nothing
+* reset
+* warn / nothing
+* warn / reset
+* stop
+
+
+        lib    opt     wd     hist
+b4 pre    x      -      -        -
+af pre    -      -      -        x
+af tst    x      x      x        x
+
+Each needs to be controlled separately, so main question is do we do it as an
+argument to `unitize_core`, or do we do it as global options?
+
+Not as arguments (plural), as we're completely swamping out the function if we
+do that.  Problem with global opts is that then we have to validate at each
+access.
+
+So maybe we do as an argument, but as a structured object, such as
+
+unitizerSideEffects
+  @history
+    @warn  yes / no / fail / NA            (NA for history)
+    @reset named logical: b4pre, b4test
+  @wd
+  @search.path
+  @options
 
 # Scenarios to test
 
