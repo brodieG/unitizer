@@ -5,7 +5,7 @@
 \alias{upgrade,unitizer-method}
 \title{Alter Older unitizer Versions So They Pass Validation in Latest Version}
 \usage{
-\S4method{upgrade}{unitizer}(object, par.frame, ...)
+\S4method{upgrade}{unitizer}(object, ...)
 }
 \arguments{
 \item{object}{an unitizer object}

@@ -6,6 +6,8 @@
 
 NULL
 
+.unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
+
 #' Contains All The Data for Our Tests!
 #'
 #' Generally is populated through the \code{+} methods, with the exception of
@@ -62,9 +64,13 @@ setClass(
   "unitizer",
   representation(
     id="ANY",
-    version="ANY",               # should really be 'package_version', but want to avoid setOldClass
-    zero.env="environment",                          # keep functions and stuff here
+    version="ANY",                # should really be 'package_version', but want to avoid setOldClass
+    zero.env="environment",       # keep functions and stuff here
     base.env="environment",
+    test.file.loc="character",    # location of teset file that produced `unitizer`
+    eval="logical",               # internal used during browsing to determine a re-eval instruction by user
+    eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
+    updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -74,15 +80,15 @@ setClass(
     # NEED TO CLEAN THIS UP; SHOULD IT BE HANDLED BY METHODS? REALLY ANNOYING
     # TO GET FAILED TESTS VS NEW TESTS VS. WHATEVER
 
-    tests.fail="logical",                     # really need tests.fail?
-    tests.error="logical",                     # really need tests.error? redundant with tests.result
+    tests.fail="logical",                  # really need tests.fail?
+    tests.error="logical",                 # really need tests.error? redundant with tests.result
     tests.new="logical",
     tests.status="factor",                 # pass/fail/error/new
     tests.result="matrix",
     tests.errorDetails="unitizerItemsTestsErrors",
-    tests.conditions.new="logical",          # Whether the test produced new conditions, used to check whether we need to display conditions on ignored tests
+    tests.conditions.new="logical",        # Whether the test produced new conditions, used to check whether we need to display conditions on ignored tests
 
-    items.ref="unitizerItems",                         # Should all be same length
+    items.ref="unitizerItems",             # Should all be same length
     items.ref.calls.deparse="character",
     items.ref.map="integer",
 
@@ -90,15 +96,27 @@ setClass(
     section.map="integer",
     section.parent="integer",    # same length as sections, for each section links to parent, where parent is the outermost section a section is nested within
 
-    sections.ref="list",
-    section.ref.map="integer",   # Note, all section references for ref objects are parent sections since when we browse we don't track nested sections
+    # Note, all section references for ref objects are parent sections since
+    # when we browse we don't track nested sections.  Usage of @section.ref.map
+    # is a bit overloaded; we first try to re-assign any reference sections to
+    # new sections if possible, and if not assign them NA; subsequently, before
+    # we store the updated `unitizer`, we transfer all the newly generated
+    # section info for the new reference tests here, so need to be careful about
+    # how we interpret this.  We should clean this up at some point
 
-    changes="unitizerChanges"                  # Summary of user changes
+    sections.ref="list",
+    section.ref.map="integer",
+
+    changes="unitizerChanges"              # Summary of user changes
   ),
   prototype(
     version=packageVersion("unitizer"),
-    tests.status=factor(levels=c("Pass", "Fail", "Error", "New", "Deleted")),
-    zero.env=baseenv()
+    tests.status=factor(levels=.unitizer.tests.levels),
+    zero.env=baseenv(),
+    test.file.loc=NA_character_,
+    eval=FALSE,
+    eval.time=0,
+    updated=FALSE
   ),
   validity=function(object) {
     if(length(object@items.ref)) {
@@ -108,6 +126,18 @@ setClass(
       if(length(ids) != length(object@section.ref.map))
         return("Reference section mapping error")
 
+      # Make sure not using relative paths for either
+
+      if(!identical(length(object@test.file.loc), 1L))
+        return("slot `test.file.loc` must be length 1L")
+      if(!is.na(object@test.file.loc)) {
+        if(!file_test("-f", object@test.file.loc))
+          return("slot `test.file.loc` must point to a file")
+        if(
+          !identical(object@test.file.loc, normalizePath(object@test.file.loc))
+        )
+          return("slot `test.file.loc` must be a properly normalized path")
+      }
       # Randomly test a subset of the items for validity (testing all becomes
       # too time consuming)
 
@@ -119,24 +149,82 @@ setClass(
       if(any(is.chr <- vapply(item.check, is.character, logical(1L))))
         return(
           paste0(
-            "Invalid reference item at index[", samp[which(is.chr)[[1L]]], "]: ",
-            item.check[[which(is.chr)[[1L]]]], " (note we randomly pick up to ",
-            "three reference tests to check validity)."
+            "Invalid reference item at index[", samp[which(is.chr)[[1L]]],
+            "]: ", item.check[[which(is.chr)[[1L]]]], " (note we randomly ",
+            "pick up to three reference tests to check validity)."
         ) )
     }
+    if(!is.object(object@id) && is.character(object@id)) { # default id format
+      # # No guarantees store id actually exists, so not enforcing this check
+      # if(
+      #   !file_test("-d", dirname(object@id)) ||
+      #   !identical(dirname(object@id), normalizePath(dirname(object@id)))
+      # ) {
+      #   return(
+      #     paste0(
+      #       "slot `id` must be a properly normalized directory when using ",
+      #       "default `unitizer` stores."
+      #   ) )
+      # }
+    }
+    if(
+      !identical(length(object@eval.time), 1L) || is.na(object@eval.time) ||
+      object@eval.time < 0L
+    )
+      return("slot `eval.time` must be length 1L, positive, and not NA")
+    if(!isTRUE(object@updated) && !identical(FALSE, object@updated))
+      return("slot `updated` must be TRUE or FALSE")
     TRUE
   }
 )
 setClass(
-  "unitizerSummary", list(data="matrix", dels="integer"),
+  "unitizerSummary",
+  slots=c(data="matrix", dels="integer", totals="integer"),
   validity=function(object) {
     if(
       !is.integer(object@data) ||
-      !all(colnames(object@data) %in% c("New", "Pass", "Fail", "Error"))
+      !all(colnames(object@data) %in% .unitizer.tests.levels)
     )
-      return("Slot `data` must be an integer matrix with colnames %in% c(\"New\", \"Pass\", \"Fail\", \"Error\")")
+      return(
+        paste0(
+          "Slot `data` must be an integer matrix with colnames %in% ",
+          deparse(val.names)
+      ) )
     if(length(object@dels) != 1L)
       return("Slot `dels` must be integer length one")
+    if(!all(names(object@totals) %in% .unitizer.tests.levels))
+      return(
+        paste0(
+          "Slot `totals` must be integer with names ",
+          deparse(c(val.names))
+      ) )
+    TRUE
+} )
+setClass(
+  "unitizerObjectList", contains="unitizerList",
+  validity=function(object) {
+    if(
+      !all(
+        vapply(
+          object@.items,
+          function(x) is(x, "unitizer") || identical(x, FALSE),
+          logical(1L))
+    ) )
+      return("slot `.items` may only contain \"unitizer\" objects or FALSE")
+    TRUE
+  }
+)
+setClass(
+  "unitizerObjectListSummary", contains="unitizerList",
+  slots=c(test.files="character", totals="integer", updated="logical"),
+  validity=function(object) {
+    if(!all(vapply(object@.items, is, logical(1L), "unitizerSummary")))
+      return("slot `.items` may only contain \"unitizer\" objects")
+    if(length(object@.items) != length(object@test.files))
+      return("slot `items` and slot `test.files` must be same length")
+    if(length(object@.items) != length(object@updated))
+      return("slot `items` and slot `updated` must be same length")
+    TRUE
 } )
 # - Methods -------------------------------------------------------------------
 
@@ -153,33 +241,9 @@ setClass(
 setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
-    cols.padded <- paste0(
-      vapply(
-        max(vapply(colnames(sum.mx), nchar, integer(1L))) -
-          vapply(colnames(sum.mx), nchar, integer(1L)),
-        function(x) paste0(rep(" ", x + 1L), collapse=""),
-        character(1L)
-      ),
-      colnames(sum.mx)
-    )
-    colnames(sum.mx) <- cols.padded
-    mat.print <- capture.output(print(`rownames<-`(sum.mx, NULL)))
-    if(length(mat.print) < 2L) {
-      warning("Summary matrix has no data so it cannot be displayed", immediate.=TRUE)
-    }
-    dat.width <- nchar(sub("^\\[.*\\] ", " ", mat.print[[2]]))
-    max.row.name.width <- max(
-      getOption("width") - dat.width - 15L,
-      15L
-    )
-    rownames(sum.mx) <- strtrunc(rownames(sum.mx), max.row.name.width)
-    print(sum.mx)
-    if(object@dels)
-      word_cat(
-        "\nAdditionally,", object@dels, "test",
-        if(object@dels > 1) "were" else "was", "deleted"
-      )
-    NULL
+    rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
+    cat(summ_matrix_to_text(sum.mx), sep="\n")
+    invisible(NULL)
 } )
 
 #' Determine if a \code{unitizer} Passed Based On Summary
@@ -190,14 +254,20 @@ setMethod("show", "unitizerSummary",
 
 setGeneric("passed", function(object, ...) standardGeneric("passed"))
 setMethod("passed", "unitizerSummary",
-  function(object, ...) {
-    !as.logical(sum(tail(object@data, 1L)[, -1L]) + object@dels)
-} )
+  function(object, ...) !as.logical(sum(object@totals[-1L]))
+)
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
     .Object <- callNextMethod()
     .Object@tests.result <- tests_result_mat(0L)
-    .Object@base.env <- new.env(parent=.Object@zero.env)
+
+    # We re-use the potentially default `base.env` object instead of creating
+    # a new one to allow the user to pass a pre-defined `base.env` if desired;
+    # in theory this should be a base.env that already has for parent the
+    # `zero.env` because we're trying to recreate the same environment chain
+    # of a different unitizer for when we re-use a unitizer in unitize_dir
+
+    parent.env(.Object@base.env) <- .Object@zero.env
     parent.env(.Object@items.new@base.env) <- .Object@base.env
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
     .Object
@@ -208,48 +278,159 @@ setMethod("initialize", "unitizer",
 
 setMethod("length", "unitizer",
   function(x) {
-    len.vec <- unique(c(length(x@items.new), length(x@items.new.map), length(x@items.new.calls.deparse)))
-    if(length(len.vec) != 1L) stop("Inconsistent sub-object length; should not happen; contact package maintainer.")
+    len.vec <- unique(
+      c(
+        length(x@items.new), length(x@items.new.map),
+        length(x@items.new.calls.deparse)
+    ) )
+    if(length(len.vec) != 1L)
+      stop(
+        "Inconsistent sub-object length; should not happen; contact maintainer."
+      )
     len.vec
 } )
 #' Summarize Results
 #'
-#' @return a list with the data that can be assigned to sections in vector/matrix
-#'   form, and the section less stuff (Deletes) as a scalar
+#' Also prints to screen, but only if \code{level == 1L}
+#'
+#' @param object the object to summarize
+#' @param silent whether to suppress display of summary object
+#' @return a unitizerSummary object
 #' @keywords internal
 
 setMethod("summary", "unitizer",
-  function(object, ...) {
+  function(object, silent=FALSE, ...) {
+    if(!isTRUE(silent) && !identical(silent, FALSE))
+      stop("Argument `silent` must be TRUE or FALSE")
     ignore <- ignored(object@items.new)
-    status <- object@tests.status[!ignore]
+    deleted <- which(!ignored(object@items.ref) & is.na(object@items.ref.map))
+    status <- factor(
+      c(
+        as.character(object@tests.status[!ignore]),
+        rep("Deleted", length(deleted))
+      ),
+      levels=levels(object@tests.status)
+    )
+    sec.ids <- object@section.parent[
+      c(object@section.map[!ignore], object@section.ref.map[deleted])
+    ]
     sections <- vapply(
-      object@section.parent[object@section.map[!ignore]],
-      function(idx) object@sections[[idx]]@title,
+      sec.ids,
+      function(idx)
+        if(is.na(idx)) "<unknown>" else object@sections[[idx]]@title,
       character(1L)
     )
-    sections.levels <- unique(sections[order(object@section.parent[object@section.map[!ignore]])])
+    sections.levels <- unique(sections[order(sec.ids)])
+
     sum.mx <- tapply(
       rep(1L, length(status)),
       list(factor(sections, levels=sections.levels), status), sum
     )  # this should be a matrix with the summary data.
-    sum.mx[] <- ifelse(is.na(sum.mx), 0L, sum.mx)
-    sum.mx <- sum.mx[, colnames(sum.mx) != "Deleted", drop=FALSE]  # Pull out deleted since we don't actually what section they belong to since sections determined by items.new only
-    sum.mx <- rbind(sum.mx, "**Total**"=apply(sum.mx, 2, sum))
+    sum.mx[is.na(sum.mx)] <- 0L
+    total <- apply(sum.mx, 2, sum)
 
-    if(sum(sum.mx[, "Error"]) == 0L) sum.mx <- sum.mx[, colnames(sum.mx) != "Error"]
-
-    sum.mx <- sum.mx[as.logical(apply(sum.mx, 1, sum, na.rm=TRUE)),]  # Remove sections with no tests
-    deletes <- length(Filter(is.na, object@items.ref.map[!ignored(object@items.ref)]))
-    main.dat <- if(nrow(sum.mx) == 2L) {
-      `rownames<-`(sum.mx[2L, , drop=F], "")
-    } else sum.mx
-
-    obj <- new("unitizerSummary", data=main.dat, dels=deletes)
-    show(obj)
+    obj <-
+      new("unitizerSummary", data=sum.mx, dels=length(deleted), totals=total)
+    if(!silent) show(obj)
     obj
 } )
+#' Summary method
+#'
+#' @keywords internal
 
-setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem"))
+setMethod("summary", "unitizerObjectList",
+  function(object, silent=FALSE, ...) {
+    # Now get summaries and loop through them
+
+    obj.list <- as.list(object)
+    summaries <- lapply(obj.list, summary, silent=TRUE)
+    test.files <- vapply(obj.list, slot, character(1L), "test.file.loc")
+    updated <- vapply(obj.list, slot, logical(1L), "updated")
+
+    if(length(summaries)) {  # get aggregate results across all summaries
+      totals <- Reduce(`+`, lapply(as.list(summaries), slot, "totals"))
+    } else totals <- integer()
+    res <- new(
+      "unitizerObjectListSummary", .items=summaries, test.files=test.files,
+      totals=totals, updated=updated
+    )
+    if(!silent) show(res)
+    res
+} )
+#' Display method
+#'
+#' @keywords internal
+
+setMethod("show", "unitizerObjectListSummary",
+  function(object) {
+    test.len <- length(object)
+    if(!test.len) return(invisible(NULL))
+    scr.width <- getOption("width")
+    test.files.trim <- col.names <- fmt <- test.nums <- NA_character_
+
+    # Adjust paths so we need only show their common part, and then get the
+    # full name of the directory that they correspond to (as much as possible
+    # anyway)
+
+    dirs <- dirname(object@test.files)
+    uniq.dir <- str_reduce_unique(dirs)
+    com.dir <- substr(dirs[[1L]], 1L, nchar(dirs[[1L]]) - nchar(uniq.dir[[1L]]))
+    full.dir <- dirs[[1L]]
+
+    repeat {
+      dir.tmp <- dirname(full.dir)
+      if(
+        nchar(dir.tmp) < nchar(com.dir) || !nchar(dir.tmp)
+        || identical(dir.tmp, ".")
+      ) break
+      full.dir <- dir.tmp
+    }
+    test.files.trim <- if(sum(nchar(uniq.dir))) {
+      file.path(uniq.dir, basename(object@test.files))
+    } else basename(object@test.files)
+
+    # Ignore any columns with zero totals other than pass/fail
+
+    review.req <- !vapply(as.list(object), passed, logical(1L))
+
+    # Display
+
+    totals <- t(vapply(as.list(object), slot, object[[1L]]@totals, "totals"))
+    totals[object@updated, ] <- NA_integer_
+    rownames(totals) <- test.files.trim
+    disp <- summ_matrix_to_text(totals, from="left")
+
+    # Post processing
+
+    for(j in seq_along(disp)) {
+      i <- j - 1L
+      if(!i) next else if(i > nrow(totals)) break
+      disp[[j]] <- if(object@updated[[i]]) {
+        sub("^(\\s*) (\\d+\\.)", "\\1$\\2", disp[[j]])
+      } else if(review.req[[i]]) {
+        sub("^(\\s*) (\\d+\\.)", "\\1*\\2", disp[[j]])
+      } else disp[[j]]
+    }
+    cat("\n")
+    word_cat(
+      "Summary of files in common directory '", relativize_path(full.dir),
+      "':", sep=""
+    )
+    cat(disp, sep="\n")
+    # Legends
+
+    if(any(review.req || object@updated)) word_cat("Legend:")
+    if(any(review.req)) word_cat("* `unitizer` requires review")
+    if(any(object@updated))
+      word_cat(
+        "$ `unitizer` has been updated and needs to be re-evaluted to",
+        "recompute summary"
+      )
+    invisible(NULL)
+} )
+setGeneric(
+  "registerItem", function(e1, e2, ...) standardGeneric("registerItem")
+)
 
 #' Helper Methods for Adding Items to \code{\link{unitizer-class}} Object
 #'
@@ -260,7 +441,8 @@ setGeneric("registerItem", function(e1, e2, ...) standardGeneric("registerItem")
 setMethod("registerItem", c("unitizer", "unitizerItem"),
   function(e1, e2, ...) {
     item.new <- e2
-    if(identical(length(e1@items.new), 0L)) e1@items.new@base.env <- parent.env(item.new@env)
+    if(identical(length(e1@items.new), 0L))
+      e1@items.new@base.env <- parent.env(item.new@env)
     item.new@id <- length(e1@items.new) + 1L
     e1@items.new <- e1@items.new + item.new
     e1@items.new.calls.deparse <-
@@ -268,11 +450,19 @@ setMethod("registerItem", c("unitizer", "unitizerItem"),
     if(length(e1@items.new.map) > 0L) {
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
       items.already.matched <- e1@items.new.map[!is.na(e1@items.new.map)]
-      items.already.matched.vec <- if(!length(items.already.matched)) TRUE else -items.already.matched
-      item.map <- match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec])
-      e1@items.new.map <- c(e1@items.new.map, item.map <- idx.vec[items.already.matched.vec][item.map])
+      items.already.matched.vec <-
+        if(!length(items.already.matched)) TRUE else -items.already.matched
+      item.map <-
+        match(call.dep, e1@items.ref.calls.deparse[items.already.matched.vec])
+      e1@items.new.map <- c(
+        e1@items.new.map,
+        item.map <- idx.vec[items.already.matched.vec][item.map]
+      )
     } else {
-      e1@items.new.map <- c(e1@items.new.map, item.map <- match(call.dep, e1@items.ref.calls.deparse))
+      e1@items.new.map <- c(
+        e1@items.new.map,
+        item.map <- match(call.dep, e1@items.ref.calls.deparse)
+      )
     }
     e1
 } )
@@ -391,7 +581,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           e1@tests.fail <- append(e1@tests.fail, FALSE)
           e1@tests.error <- append(e1@tests.error, TRUE)
         } else {
-          stop("Logic Error: impossible test status; contact package maintainer.")
+          stop("Logic Error: impossible test status; contact maintainer.")
         }
       } else {
         e1@tests.fail <- append(e1@tests.fail, FALSE)
@@ -401,10 +591,45 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)  # so added irrespective of pass/fail
 
     if(length(e1@tests.status)) {
-      e1@tests.status <- unlist(list(e1@tests.status, factor(test.status, levels=levels(e1@tests.status))))
+      e1@tests.status <- unlist(
+        list(
+          e1@tests.status, factor(test.status, levels=levels(e1@tests.status))
+      ) )
     } else {
       e1@tests.status <- factor(test.status, levels=levels(e1@tests.status))
     }
     e1 <- e1 + do.call(new, c(list("unitizerItemTestsErrors"), test.error.tpl))
     e1
 } )
+
+setGeneric("getTarget", function(object, ...) standardGeneric("getTarget"))
+setGeneric("getName", function(object, ...) standardGeneric("getName"))
+
+#' Create A Human Readable Names for a \code{unitizer}
+#'
+#' @keywords internal
+#' @param object a unitizer
+#' @return character(1L) a descriptive name
+
+setMethod("getTarget", "unitizer",
+  function(object, ...) {
+    id <- try(object@id, silent=TRUE)
+    if(inherits(id, "try-error")) {
+      return("<unknown store id>")
+    }
+    relativize_path(as.store_id_chr(id))
+} )
+#' @rdname getTarget,unitizer-method
+
+setMethod("getName", "unitizer",
+  function(object, ...) {
+    f.name <- try(object@test.file.loc, silent=TRUE)
+    if(
+      inherits(f.name, "try-error") ||
+      !is.chr1plain(f.name) || is.na(f.name)
+    ) {
+      return(getTarget(object))
+    }
+    relativize_path(f.name)
+} )
+

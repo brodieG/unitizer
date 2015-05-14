@@ -15,7 +15,12 @@ NULL
 repair_environments <- function(x) {
   save <- FALSE
   if(!is(x, "unitizer")) {
-    unitizer <- try(load_unitizer(x, baseenv()))
+    unitizer <- try(
+      load_unitizers(
+        list(x), test.files=NA_character_, par.frame=baseenv(),
+        interactive.mode=interactive()
+      )
+    )
     if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
     save <- TRUE
   } else {
@@ -23,7 +28,11 @@ repair_environments <- function(x) {
   }
   unitizer <- repairEnvs(unitizer)
   if(save) {
-    store_unitizer(unitizer, x, getwd())
+    if(inherits(try(store_unitizer(unitizer)), "try-error"))
+      warning(
+        "Unable to store repaired unitizer, though we are still returning the ",
+        "repaired unitizer."
+      )
   }
   unitizer
 }

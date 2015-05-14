@@ -68,7 +68,7 @@ Comparisons will be evaluated in the environment of the test.  By default
 the global environment, so functions defined there will not be automatically
 available.  You can either specify the function in the test file before the
 section that uses it, or change the base environment tests are evaluated in with
-\code{unitize(..., env.clean)}, or make sure that the package that
+\code{unitize(..., par.env)}, or make sure that the package that
 contains your function is loaded within the test script.
 }
 

@@ -19,8 +19,8 @@ after the last slash) may be partially specified}
 
 \item{...}{arguments to pass on to other methods}
 
-\item{type}{character(1L) in \code{c("f", "d")}, \code{"f"} for test file,
-and \code{"d"} for test data directory}
+\item{type}{character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test file,
+\code{"d"} for a directory, \code{"u"} for a \code{unitizer} directory}
 
 \item{interactive.mode}{logical(1L) whether to allow user input to resolve
 ambiguities}
@@ -38,15 +38,16 @@ package or a directory.
 This is implemented as an S3 generic to allow third parties to define
 inference methods for other types of \code{store.id}, but the documentation
 here is for the \code{"character"} method which is what \code{unitizer} uses
-by default.  Note a \code{NULL} as \code{store.id} dispatches
+by default.
 
 If \code{name} is a directory that appears to be an R package (contains
 DESCRIPTION, an R folder, a tests folder), will look for candidate files in
 \code{file.path(name, "tests", "unitizer")}, starting with files with the
 same name as the package (ending in ".R" or ".unitizer" if \code{type} is
-\code{"f"} or \code{"d"} respectively), or if there is only one file, that
+\code{"f"} or \code{"u"} respectively), or if there is only one file, that
 file, or if there are multiple candidate files and in interactive mode
-prompting user for a selection.
+prompting user for a selection.  If \code{type} is \code{"d"}, then will
+just provide the \code{"tests/unitizer"} directory.
 
 If \code{name} is not a directory, will try to find a file by that name, and
 if that fails, will try to partially match a file by that name.  Partial

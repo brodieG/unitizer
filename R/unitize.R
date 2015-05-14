@@ -7,8 +7,8 @@
 #' \code{unitize_dir} creates tests from all the R files in the specified
 #' directory (analogous to \code{testthat::test_dir}).
 #'
-#' \code{review} allows you to review existing \code{unitizer} or modify it
-#' by dropping tests from it.  This is useful if you ever have second thoughts
+#' \code{review} allows you to review existing \code{unitizer}s and modify them
+#' by dropping tests from them.  This is useful if you ever have second thoughts
 #' about previously accepted tests and wish to inspect them.
 #'
 #' \code{unitizer} stores are identified by \code{unitizer} ids, which by
@@ -24,168 +24,174 @@
 #'
 #' @export
 #' @aliases unitize review unitize_dir
-#' @seealso \code{\link{get_unitizer}}
+#' @seealso \code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}}
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
 #'   path (see \code{\link{infer_unitizer_location}})
-#' @param store.id a folder to store the \code{unitizer} objects in; if NULL
-#'   will select a folder at the same location as the test file with the same
-#'   name as the testfile, except ending in \code{.unitizer} instead of
-#'   \code{.R}.  If this folder does not exist, it will be created.  This is the
-#'   default option, you can create custom \code{unitizer} stores as well
-#'   (see vignette and \code{\link{get_unitizer}}).
-#' @param x for \code{review} only, either a \code{unitizer} or something that,
-#'   when passed to \code{\link{get_unitizer}}, will retrieve a unitizer (i.e.
-#'   equivalent to what would get passed in \code{store.id}).
-#' @param interactive.mode logical(1L) whether to run in interactive mode
-#' @param env.clean TRUE or environment, if TRUE tests are run in a clean
+#' @param store.id if NULL (default), \code{unitizer} will select a directory
+#'   based on the \code{test.file} name by replacing \code{.[rR]} with
+#'   \code{.unitizer}.  You can also specify a directory name, or pass any
+#'   object that has a defined \code{\link{get_unitizer}} method which allows
+#'   you to specify non-standard \code{unitizer} storage mechanisms (see
+#'   \code{\link{get_unitizer}}).  Finally, you can pass an actual
+#'   \code{unitizer} object if you are using \code{review}
+##' @param interactive.mode logical(1L) whether to run in interactive mode (
+#'   request user input when needed) or not (error if user input is required,
+#'   e.g. if all tests do not pass).
+#' @param par.env NULL or environment, if NULL tests are run in a clean
 #'   environment, if an environment they are run with that environment as the
 #'   parent environment.
-#' @param search.path.clean logical(1L) if TRUE all items on the search path that
-#'   are not part of a clean R session are detached prior to running tests.  Note
-#'   namespaces for detached packages remain loaded.  Additionally, the search
-#'   path is restored to its initial state upon exiting \code{unitizer} so any
-#'   packages added/removed, or objects attached/detached from search path are
-#'   restored to original state.  See "Reproducible Tests" vignette for details.
+#' @param search.path.clean logical(1L) if TRUE all items on the search path
+#'   that are not part of a clean R session are detached prior to running tests.
+#'   Namespaces for detached packages remain loaded, so re-attaching those
+#'   packages during tests with \code{library} should carry little overhead.
+#'   The search path is restored to its initial state upon exiting
+#'   \code{unitizer} so any packages added/removed, or objects attached/detached
+#'   from search path are restored to original state.  See "Reproducible Tests"
+#'   vignette for details.
 #' @param search.path.keep character any additional items on the search path
 #'   to keep attached; has no effect if \code{search.path.clean} is FALSE
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @param test.dir the directory to run the tests on
-#' @param test.file.regex a regular expression used to match which files in
+#' @param pattern a regular expression used to match what subset of files in
 #'   \code{test.dir} to \code{unitize}
-#' @param unitizer.ids one of \itemize{
-#'   \item a vectorized function that converts test file names to
-#'     \code{unitzer} ids (see default value for example)
+#' @param store.ids one of \itemize{
+#'   \item a function that converts test file names to \code{unitizer} ids; if
+#'     \code{unitize}ing multiple files will be \code{lapply}ed over each file
 #'   \item a character vector with \code{unitizer} ids, must be the same
-#'     length as the number of test files being reviewed
+#'     length as the number of test files being reviewed (see \code{store.id})
 #'   \item a list of unitizer ids, must be the same length as the number of
 #'     test files being reviewed; useful when you implement special storage
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
+#' @param auto.accept character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
+#'   YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
+#'   prompting, use values in \code{c("new", "failed", "deleted", "error")} to
+#'   specify which type(s) of test you wish to auto accept (i.e. same as typing
+#'   \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
+#'   off (default)
+#' @param pre.load \code{NULL}, \code{FALSE}, a directory or a list of objects:
+#'   \itemize{
+#'     \item if \code{NULL}, looks for a 'helper' directory in same directory as
+#'       test file (or first test file if using \code{unitize_dir}) and
+#'       \code{\link{sys.source}}s the files therein into an environment that
+#'       has for parent \code{par.env}
+#'     \item if a directory, then the same as \code{NULL}, except it uses files
+#'       in the specified directory
+#'     \item if a list transforms the list into an environment that has for
+#'       parent \code{par.env}
+#'     \item if \code{FALSE} does nothing
+#'   }
+#'   The environment generated by this process will be a parent to the
+#'   environments the tests are run in.  The primary purpose of this file is to
+#'   run \code{library} calls that are shared by multiple \code{unitizer} files.
+#'   Any packages you load in these files will be unloaded upon completion of
+#'   the \code{unitize} process unless you modify the \code{search.path.clean}
+#'   setting. You can also pre-load objects shared amongst tests, but you should
+#'   use this feature sparingly because these objects are not recorded in the
+#'   \code{unitizer}s and don't show up in \code{ls} calls from the
+#'   \code{unitizer} prompt, which makes it difficult to troubleshoot problems
+#'   related to those objects changing between \code{unitizer} runs
 #' @return the \code{unitizer} object updated as per user instructions,
 #'   invisibly, or for \code{unitize_dir}, a list of the \code{unitizer}
 #'   objects generated by each test file, invisibly
 
 unitize <- function(
   test.file, store.id=NULL,
-  interactive.mode=interactive(), env.clean=TRUE,
+  interactive.mode=interactive(),
+  par.env=getOption("unitizer.par.env"),
   search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=c("tools:rstudio", "package:unitizer"),
-  force.update=FALSE
+  search.path.keep=getOption("unitizer.search.path.keep"),
+  force.update=FALSE,
+  auto.accept=character(0L),
+  pre.load=NULL
 ) {
   test.file.inf <- infer_unitizer_location(test.file)
-  if(!identical(test.file.inf, test.file)) {
-    message("Selected file: ", test.file.inf)
-    test.file <- test.file.inf
-  }
-  if(!is.character(test.file) || length(test.file) != 1L || !file_test("-f", test.file))
-    stop("Argument `test.file` must be a valid path to a file")
-  if(!is.logical(interactive.mode) || length(interactive.mode) != 1L || is.na(interactive.mode))
-    stop("Argument `interactive.mode` must be TRUE or FALSE")
-  if(!is.logical(force.update) || length(force.update) != 1L || is.na(force.update))
-    stop("Argument `force.update` must be TRUE or FALSE")
-  if(is.null(store.id)) {
-    store.id <- if(!grepl("\\.[rR]$", test.file)) {
-      paste0(test.file, ".unitizer")
-    } else {
-      sub("\\.[rR]$", ".unitizer", test.file)
-  } }
-  print(H1(paste0("unitizer for: ", basename(test.file), collapse="")))
+  store.id.inf <- store.id
+  if(is.null(store.id)) store.id.inf <- filename_to_storeid(test.file.inf)
   invisible(
     unitize_core(
-      test.file, store.id, interactive.mode, env.clean, search.path.clean,
-      search.path.keep, force.update=force.update
+      test.file.inf, list(store.id.inf),
+      interactive.mode=interactive.mode, par.env=par.env,
+      search.path.clean=search.path.clean,
+      search.path.keep=search.path.keep,
+      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
+      mode="unitize"
   ) )
 }
 #' @rdname unitize
 #' @export
 
 review <- function(
-  x, env.clean=TRUE, search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=c("tools:rstudio", "package:unitizer")
+  store.id,
+  par.env=getOption("unitizer.par.env"),
+  search.path.clean=getOption("unitizer.search.path.clean"),
+  search.path.keep=getOption("unitizer.search.path.keep")
 ) {
-
-  if(is.character(x) && length(x) == 1L) {
-    u.name <- x <- infer_unitizer_location(x, type="d")
-  } else {
-    u.name <- if(is(x, "unitizer")) x@id else x
-    u.name <- try(as.character(u.name), silent=TRUE)
-    if(inherits(u.name, "try-error")) u.name <- "<unknown>"
-
-  }
-  print(H1(paste0("unitizer for: ", basename(u.name), collapse="")))
+  if(!interactive()) stop("`review` only available in interactive mode")
   invisible(
     unitize_core(
-      test.file=NULL, store.id=x, interactive.mode=TRUE, env.clean=env.clean,
-      search.path.clean=search.path.clean, search.path.keep=search.path.keep,
-      force.update=FALSE
-    )
-  )
+      test.files=NA_character_,
+      store.ids=list(infer_unitizer_location(store.id, type="u")),
+      interactive.mode=TRUE,
+      par.env=par.env, search.path.clean=search.path.clean,
+      search.path.keep=search.path.keep, force.update=FALSE,
+      auto.accept=character(0L), pre.load=list(), mode="review"
+  ) )
 }
 #' @rdname unitize
 #' @export
 
 unitize_dir <- function(
-  test.dir, test.file.regex="^[^.].*\\.[Rr]$",
-  unitizer.ids=function(x) sub("(\\.[Rr])?$", ".unitizer", x),
-  interactive.mode=interactive(), env.clean=TRUE,
+  test.dir,
+  store.ids=filename_to_storeid,
+  pattern="^[^.].*\\.[Rr]$",
+  interactive.mode=interactive(),
+  par.env=getOption("unitizer.par.env"),
   search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=c("tools:rstudio", "package:unitizer"),
-  force.update=FALSE
+  search.path.keep=getOption("unitizer.search.path.keep"),
+  force.update=FALSE,
+  auto.accept=character(0L),
+  pre.load=NULL
 ) {
-  # Basic validations
+  # Validations
+  if(!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir))
+    stop("Argument `test.dir` must be character(1L) and not NA.")
+  if(!is.character(pattern) || length(pattern) != 1L || is.na(pattern))
+    stop("Argument `pattern` must be character(1L) and not NA.")
+  if(file.exists(test.dir) && !file_test("-d", test.dir))
+    stop("Argument `test.dir` points to a file instead of a directory")
 
-  if(!is.character(test.dir) || length(test.dir) != 1L || !file_test("-d", test.dir))
-    stop("Argument `test.dir` must be character(1L).")
-  if(
-    !is.character(test.file.regex) || length(test.file.regex) != 1L ||
-    is.na(test.file.regex)
-  )
-    stop("Argument `test.file.regex` must be character(1L) and not NA.")
-  # Get the file names and corresponding unitizers
+  # Infer
+
+  test.dir <- infer_unitizer_location(test.dir, type="d")
+
+  if(!file_test("-d", test.dir))
+    stop("Argument `test.dir` must point to a direcctory")
 
   test.files <- list.files(
-    path=test.dir, pattern=test.file.regex, all.files=TRUE, full.names=TRUE,
-    no..=TRUE
+    path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
   )
-  if(is.function(unitizer.ids)) {
-    unitizer.ids <- try(unitizer.ids(test.files))
-    err.txt <- "produced"
-    if(inherits(unitizer.ids, "try-error")) {
+  if(!length(test.files))
+    stop("No files to test in '", test.dir, "'")
+
+  # And unitizers
+
+  if(is.function(store.ids)) {
+    store.ids <- try(lapply(test.files, store.ids))
+    if(inherits(store.ids, "try-error")) {
       stop(
-        "Argument `unitizer.ids` is a function, but caused an error when ",
+        "Argument `store.ids` is a function, but caused an error when ",
         "attempting to use it to convert test file names to `unitizer` ids."
-      )
-    }
-  } else {
-    err.txt <- "is"
-  }
-  if(!identical(length(unitizer.ids), length(test.files))) {
-    stop(
-      "Argument `unitizer.ids` ", err.txt, " an object with the same number of ",
-      "items (", length(unitizer.ids), ") as there are test files (",
-      length(test.files), ") in `test.dir`."
-    )
-  }
-  if(!is.character(unitizer.ids) && !is.list(unitizer.ids)) {
-    stop(
-      "Argument `unitizer.ids` ", err.txt, " an object of type ", typeof(unitizer.ids),
-      " instead of a character vector or list as expected."
-    )
-  }
-  # Now unitize; note we cannot try-catch as that would mess with the unitizer
-  # evaluation system, so failure just kills the whole thing
-
-  res <- vector(mode="list", length(test.files))
-
-  for(i in seq_along(test.files)) {
-    res[[i]] <- unitize(
-      test.file=test.files[[i]], store.id=unitizer.ids[[i]],
-      interactive.mode=interactive.mode, env.clean=env.clean,
+  ) } }
+  invisible(
+    unitize_core(
+      test.files=test.files, store.ids=store.ids,
+      interactive.mode=interactive.mode, par.env=par.env,
       search.path.clean=search.path.clean,
-      search.path.keep=search.path.keep, force.update=force.update
-    )
-  }
-  invisible(res)
+      search.path.keep=search.path.keep,
+      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
+      mode="unitize"
+  ) )
 }

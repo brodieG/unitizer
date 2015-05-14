@@ -29,8 +29,9 @@ local( {
     runif(20)
     print(\"woo\")  # and I?
     "
-  prs <- parse(text=txt)
-  dat <- getParseData(prs)
+  all <- unitizer:::parse_dat_get(text=txt)
+  prs <- all$expr
+  dat <- all$dat
   dat$parent <- pmax(0L, dat$parent)
   dat.split <- dat.split.2 <- par.ids.3 <- NULL
   if.text <- "if # IFFY\n(x > 3 # ifcond\n){ hello\n #whome to attach?\n} else #final\ngoodbye"
@@ -66,14 +67,14 @@ local( {
     )
   } )
   test_that("Ancestry Descend", {
-    x <- getParseData(parse(text="1 + 1; fun(x, fun(y + z))"))
+    x <- unitizer:::parse_dat_get(text="1 + 1; fun(x, fun(y + z))")$dat
     expect_equal(
       structure(c(7L, 6L, 34L, 2L, 3L, 5L, 12L, 11L, 15L, 14L, 30L, 31L, 1L, 4L, 10L, 13L, 20L, 19L, 27L, 25L, 18L, 23L, 22L, 26L, 21L, 24L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L), .Dim = c(26L, 2L), .Dimnames = list(NULL, c("children", "level"))),
       unitizer:::ancestry_descend(x$id, x$parent, 0)
     )
   })
   test_that("Clean up Parse Data", {
-    dat <- getParseData(parse(text="{function(x) NULL;; #comment\n}"))
+    dat <- unitizer:::parse_dat_get(text="{function(x) NULL;; #comment\n}")$dat
     dat <- transform(dat, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
 
     expect_equal(info="Ancestry Descend",
@@ -84,14 +85,14 @@ local( {
       c("expr", "'{'", "expr", "FUNCTION", "'('", "SYMBOL_FORMALS",  "')'", "NULL_CONST", "expr", "COMMENT", "'}'"),
       unitizer:::prsdat_fix_exprlist(dat, dat.anc)$token
     )
-    dat.1 <- getParseData(parse(text="{1 ; ; ;2;}"))
+    dat.1 <- unitizer:::parse_dat_get(text="{1 ; ; ;2;}")$dat
     dat.1 <- transform(dat.1, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
 
     expect_equal(info="Another `exprlist` test",
       list(c(0L, 18L, 3L, 18L, 12L, 18L, 18L), c("expr", "'{'", "NUM_CONST",  "expr", "NUM_CONST", "expr", "'}'")),
       unname(as.list(unitizer:::prsdat_fix_exprlist(dat.1, unitizer:::ancestry_descend(dat.1$id, dat.1$parent, 0L))[c("parent", "token")]))
     )
-    dat.2 <- getParseData(parse(text="{NULL; yowza; #comment\nhello\n}"))
+    dat.2 <- unitizer:::parse_dat_get(text="{NULL; yowza; #comment\nhello\n}")$dat
     dat.2 <- transform(dat.2, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
 
     expect_equal(info="Yet another `exprlist`",
@@ -100,11 +101,11 @@ local( {
     )
     expect_equal(info="`for` cleanup",
       structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),
-      as.list(unitizer:::prsdat_fix_for(getParseData(parse(text="for(i in x) {if(x) break else next}"))[-1L, ]))[c("id", "parent", "token")]
+      as.list(unitizer:::prsdat_fix_for(unitizer:::parse_dat_get(text="for(i in x) {if(x) break else next}")$dat[-1L, ]))[c("id", "parent", "token")]
     )
     expect_equal(info="`if` cleanup",
       list(c(1L, 2L, 13L, 5L, 7L, 6L, 8L, 9L, 10L, 26L, 15L, 16L, 18L, 21L, 24L, 29L, 31L, 33L), c("IF", "COMMENT", "expr", "SYMBOL", "expr", "GT", "NUM_CONST", "expr", "COMMENT", "expr", "'{'", "SYMBOL", "expr", "COMMENT", "'}'", "COMMENT", "SYMBOL", "expr")),
-      unname(as.list(unitizer:::prsdat_fix_if(getParseData(parse(text=if.text))[-1,])[c("id", "token")]))
+      unname(as.list(unitizer:::prsdat_fix_if(unitizer:::parse_dat_get(text=if.text)$dat[-1,])[c("id", "token")]))
     )
   } )
   test_that("Full Parse Works Properly", {
@@ -212,8 +213,7 @@ local( {
   } )
   test_that("exprlist excission with negative par ids", {
     txt <- "# For random tests\n\nunitizer_sect(\"blah\", {\n  identity(1);\n})\n";
-    prs.dat <- getParseData(parse(text=txt))
-    prs.dat <- getParseData(parse(text=txt))  # twice due to issue #41
+    prs.dat <- unitizer:::parse_dat_get(text=txt)$dat
 
     prs.dat <- transform(prs.dat, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
     ancestry <- with(prs.dat, unitizer:::ancestry_descend(id, parent, 0L))

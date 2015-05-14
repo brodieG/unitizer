@@ -5,22 +5,21 @@
 \alias{browseUnitizer,unitizer,unitizerBrowse-method}
 \title{Browse unitizer}
 \usage{
-\S4method{browseUnitizer}{unitizer,unitizerBrowse}(x, y, prompt.on.quit,
-  force.update, ...)
+\S4method{browseUnitizer}{unitizer,unitizerBrowse}(x, y, force.update, ...)
 }
 \arguments{
 \item{x}{the object to browse}
 
-\item{y}{the derivative unitizerBrowse object of x; this needs to be passed in
-as an argument because the logic for generating it is different depending on
-whether we are using `unitize` or `review`.}
-
-\item{prompt.on.quit}{whether to prompt for review even if there are no changes}
-
-\item{a}{unitizer if the unitizer was modified, FALSE otherwise}
+\item{y}{the derivative unitizerBrowse object of x; this needs to be passed
+in as an argument because the logic for generating it is different
+depending on whether we are using `unitize` or `review`.}
+}
+\value{
+a unitizer if the unitizer was modified, FALSE otherwise
 }
 \description{
-Here we are reviewing all the tests in the unitizer under three different lenses
+Here we are reviewing all the tests in the unitizer under three different
+lenses
 \enumerate{
   \item tests that don't match the stored reference tests
   \item tests that don't exist in the reference tests
@@ -28,10 +27,10 @@ Here we are reviewing all the tests in the unitizer under three different lenses
   \item tests that passed (these are omitted )
 }
 Because a lot of the logic for browsing these three types of situations is
-shared, that logic has been split off into \code{\link{reviewNext,unitizerBrowse-method}}.
-The key is that that function will return the items that are supposed to be
-stored in the unitizer.  These items will either be new or reference ones
-based on user decisions.
+shared, that logic has been split off into
+\code{\link{reviewNext,unitizerBrowse-method}}. The key is that that function
+will return the items that are supposed to be stored in the unitizer.  These
+items will either be new or reference ones based on user decisions.
 }
 \details{
 Unfortunately, in order to be able to use the same logic for tasks that are

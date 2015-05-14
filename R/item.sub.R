@@ -3,6 +3,7 @@
 #' @include conditions.R
 #' @include class_unions.R
 #' @include text.R
+#' @include deparse.R
 #' @include list.R
 #' @include item.R
 

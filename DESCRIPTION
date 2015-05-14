@@ -2,9 +2,10 @@ Package: unitizer
 Title: Easy R Unit Tests
 Description: Simplifies regression tests by comparing objects produced by test
     code with earlier versions of those same objects.  If objects are unchanged
-    the tests pass, otherwise you can optionally review failing tests or new
-    tests through the provided interactive interface.
-Version: 0.8.1
+    the tests pass, otherwise execution stops with error details.  If in
+    interactive mode, tests can be reviewed through the provided interactive
+    environment.
+Version: 0.9.0
 Author: Brodie Gaslam
 Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
 Depends:
@@ -26,6 +27,7 @@ Collate:
     'text.R'
     'conditions.R'
     'item.R'
+    'deparse.R'
     'item.sub.R'
     'section.R'
     'test.R'
@@ -48,6 +50,7 @@ Collate:
     'parse.R'
     'rename.R'
     'repairenvs.R'
+    'translate.R'
     'unitize.R'
     'unitize.core.R'
     'unitizer-package.r'

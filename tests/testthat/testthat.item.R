@@ -55,7 +55,7 @@ local( {
     expect_equal(my.unitizer2@items.new.map, c(1L, 2L, 3L, 4L, 5L, NA, NA, NA))
     expect_equal(my.unitizer2@items.ref.map, c(1L, 2L, 3L, 4L, 5L, NA))
     expect_equal(my.unitizer2@tests.fail, c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))
-    expect_equal(my.unitizer2@tests.status, structure(c(1L, 1L, 1L, 1L, 1L, 4L, 4L, 4L), .Label = c("Pass", "Fail", "Error", "New", "Deleted"), class = "factor"))
+    expect_equal(my.unitizer2@tests.status, structure(c(1L, 1L, 1L, 1L, 1L, 3L, 3L, 3L), .Label = c("Pass", "Fail", "New", "Deleted", "Error"), class = "factor"))
     expect_equal(my.unitizer2@section.map, c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L))
     expect_equal(unitizer:::ignored(my.unitizer2@items.new), c(F, T, T, F, T, F, T, F))
     expect_equal(unitizer:::ignored(my.unitizer2@items.ref), c(F, T, T, F, T, F))
@@ -309,9 +309,9 @@ local( {
     # this should break because the NULL forces `b` to be stored in a different
     # environment to `a`.
 
-    expect_equal(
+    expect_match(
       x@items.new[[4]]@data@message[[1]],
-      "Error in a() : could not find function \"b\"\n"
+      "Error in a() : could not find function \"b\"\n", fixed=TRUE
     )
   } )
 

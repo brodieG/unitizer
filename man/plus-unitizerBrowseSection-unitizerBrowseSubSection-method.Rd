@@ -8,12 +8,12 @@
 \S4method{+}{unitizerBrowseSection,unitizerBrowseSubSection}(e1, e2)
 }
 \arguments{
-\item{e1}{a \code{`\link{unitizerBrowseSection-class}`}}
+\item{e1}{a \code{\link{unitizerBrowseSection-class}}}
 
-\item{e2}{a \code{`\link{unitizerBrowseSubSection-class}`}}
+\item{e2}{a \code{\link{unitizerBrowseSubSection-class}}}
 }
 \value{
-a \code{`\link{unitizerBrowseSection-class}`}
+a \code{\link{unitizerBrowseSection-class}}
 }
 \description{
 Add a browsing sub-section to a browse section

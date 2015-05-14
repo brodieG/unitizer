@@ -135,77 +135,6 @@ obj_screen_chr <- function(
     paste0(pad, c(pre, obj.chr, post))
   )
 }
-
-
-
-#' Deparse, But Make It Look Like It Would On Prompt
-#'
-#' @keywords internal
-#' @param expr an expression or call
-#' @return character vector
-
-deparse_prompt <- function(expr) {
-  # if(!is.call(expr) || !is.expression(expr)) stop("Argument `expr` must be an expression ")
-  prompt <- getOption("prompt")
-  continue <- getOption("continue")
-  pad.len <- max(nchar(c(prompt, continue)))
-  expr.deparsed <- deparse(expr, width.cutoff=min(60L, (getOption("width") - pad.len)))
-  if(length(expr.deparsed) < 1L) {
-    stop("Logic Error: don't know what to do with zero length expr")
-  }
-  prompt.vec <- c(prompt, rep(continue, length(expr.deparsed) - 1L))
-  paste0(prompt.vec, expr.deparsed)
-}
-#' Remove any comment attributes
-#'
-#' Used by the internal deparse functions.  Really removes all attributes.
-#' Resorting to desperate measures due to the reference like behavior of
-#' expressions and messing with their attributes, most likely due to the
-#' srcref style environment attributes.
-#'
-#' @keywords internal
-
-uncomment <- function(lang) {
-  if(is.expression(lang))
-    stop("Logic Error: unexpected expression; contact maintainer") # should be a call or symbol or constant, not an expression
-  lang.new <- if(!(missing(lang) || is.null(lang)))
-   `attr<-`(lang, "comment", NULL) else lang
-  if(is.call(lang.new) && length(lang.new) > 1)
-    for(i in seq_along(lang.new)) {
-      lang.tmp <- lang.new[[i]]
-      if(!(missing(lang.tmp) || is.null(lang.tmp)))
-        lang.new[[i]] <- Recall(lang.tmp)
-    }
-  lang.new
-}
-
-#' Deparse, but only provide first X characters
-#'
-#' @keywords internal
-#' @param expr a language object
-#' @param len int a one length integer noting how many characters we want
-#' @param width passed on to
-
-deparse_peek <- function(expr, len, width=500L) {
-  if(!is.integer(len) || length(len) != 1L || len < 4L)
-    stop("Argument `len` must be an integer greater than four")
-  if(!is.integer(width) || length(width) != 1L || width < 1L)
-    stop("Argument `width` must be an integer greater than zero")
-  chr <- paste0(sub("\n", " ", deparse(uncomment(expr), width)), collapse="")
-  if(nchar(chr) > len) {
-    paste0(substr(chr, 1L, len -3L), "...")
-  } else {
-    chr
-  }
-}
-#' Used to generate character values to store in cached deparse list
-#'
-#' @keywords internal
-#' @param expr language to deparse
-#' @return character(1L)
-
-deparse_call <- function(expr) paste0(deparse(expr), collapse="")
-
 #' Print Only First X characters
 #'
 #' @keywords internal
@@ -214,16 +143,44 @@ deparse_call <- function(expr) paste0(deparse(expr), collapse="")
 #' @param ctd 1 length character vector for what to use to indicate string truncated
 #' @param disambig logical 1L whether to disambiguate strings that end up
 #'   the same after truncation (not currently implemented)
+#' @param from what side to truncate from
 
-strtrunc <- function(x, nchar.max=getOption("width"), ctd="...", disambig=FALSE) {
+strtrunc <- function(
+  x, nchar.max=getOption("width"), ctd="...", disambig=FALSE,
+  from="right"
+) {
   if(!identical(disambig, FALSE)) stop("Parameter `disambig` not implemented")
   if(!is.character(x)) stop("Argument `x` must be character")
-  if(!is.character(ctd) || !identical(length(ctd), 1L)) stop("Argument `ctd` must be 1 length character")
-  if(!is.numeric(nchar.max) || !identical(length(nchar.max), 1L)) stop("Argument `nchar.max` must be 1 length numeric")
-
+  if(!is.character(ctd) || !identical(length(ctd), 1L))
+    stop("Argument `ctd` must be 1 length character")
+  if(!is.numeric(nchar.max) || !identical(length(nchar.max), 1L))
+    stop("Argument `nchar.max` must be 1 length numeric")
+  if(
+    !is.character(from) || length(from) != 1L || is.na(from) ||
+    !from %in% c("left", "right")
+  )
+    stop(
+      "Argument `from` must be character(1L) %in% c(\"left\", \"right\") ",
+      "and not NA"
+    )
   len.target <- nchar.max - nchar(ctd)
-  if(len.target < 1L) stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
-  ifelse(nchar(x) <= nchar.max, x, paste0(substr(x, 1, len.target), ctd))
+  if(len.target < 1L)
+    stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
+  chars <- nchar(x)
+  pre <- post <- ""
+  if(identical(from, "right")) {
+    start <- 1L
+    stop <- len.target
+    post <- ctd
+  } else {
+    start <- chars - len.target + 1L
+    stop <- chars
+    pre <- ctd
+  }
+  ifelse(
+    nchar(x) <= nchar.max,
+    x, paste0(pre, substr(x, start, stop), post)
+  )
 }
 #' Wrap Text At Fixed Column Width
 #'
@@ -382,30 +339,41 @@ word_cat <- function(
   vec <- unlist(strsplit(vec, "\n"))
   invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
+word_msg <- function(...) word_cat(..., file=stderr())
+
 #' Over-write a Line
 #'
 #' @keywords internal
 #' @param x character(1L)
 #' @param min.width integer(1L) minimum character width to print to
 #' @param max.width integer(1L) max width to print to
+#' @param append to last non-append \code{x} value
 #' @return NULL used only for side effect of cating ot screen
 
-over_print <- function(x, min.width=30L, max.width=getOption("width")) {
-  if(!is.character(x) || length(x) != 1L)
-    stop("Argument `x` must be character(1L)")
-  if(!is.integer(min.width) || length(min.width) != 1L)
-    stop("Argument `min.width` must be integer(1L)")
-  if(!is.integer(max.width) || length(max.width) != 1L)
-    stop("Argument `max.width` must be integer(1L)")
+over_print <- (
+  function() {
+    prev.val <- ""
+    function(x, append=FALSE, min.width=30L, max.width=getOption("width")) {
+      if(!is.character(x) || length(x) != 1L || is.na(x))
+        stop("Argument `x` must be character(1L) and not NA")
+      if(!is.integer(min.width) || length(min.width) != 1L)
+        stop("Argument `min.width` must be integer(1L)")
+      if(!is.integer(max.width) || length(max.width) != 1L)
+        stop("Argument `max.width` must be integer(1L)")
+      if(!isTRUE(append) && !identical(append, FALSE))
+        stop("Argument `append` must be TRUE or FALSE")
 
-  writeLines(
-    c(
-      "\r", rep(" ", max(min.width, max.width)), "\r",
-      substr(x, 1, max(min.width, max.width))
-    ), sep=""
-  )
-  NULL
-}
+      cat(
+        c(
+          "\r", rep(" ", max(min.width, max.width)), "\r",
+          substr(paste0(if(append) prev.val, x), 1L, max(min.width, max.width))
+        ),
+        sep=""
+      )
+      prev.val <<- if(append) prev.val else x
+      invisible(NULL)
+} } ) ()
+
 #' Produces 1 Line Description of Value
 #'
 #' @keywords internal
@@ -474,26 +442,6 @@ valid_names <- function(x) {
     paste0("`", x, "`")
   )
 }
-
-#' Returns a Character Function Name From A Language Object
-#'
-#' Note this doesn't really try to check too hard whether the \code{`x`} is
-#' indeed a function.
-#'
-#' @keywords internal
-#' @param x a call or a symbol
-#' @return character 1 length if a function name, NA if an anonymous function, or
-#'   character(0L) if neither
-
-deparse_fun <- function(x) {
-  if(is.symbol(x)) {
-    as.character(x)
-  } else if (is.call(x)) {
-    NA_character_
-  } else {
-    character(0L)
-  }
-}
 #' Captalizes or Decapitalizes First Letter
 #'
 #' @keywords internal
@@ -511,5 +459,119 @@ change_first <- function(x, fun) {
     ifelse(nchar(x) == 1L, fun(x), x)
   )
 }
+#' Substring To a Length, but end In Consonant
+#'
+#' @keywords internal
+#' @param x character vector to substring
+#' @param stop integer max number of characters
+#' @param justify character(1L) passed on to format
 
+substr_cons <- function(x, stop, justify="left") {
+  if(!is.character(x)) stop("Argument `x` must be ")
+  y <- substr(x, 1, stop)
+  z <- sub("[^bcdfghjklmnpqrstvwxz]*$", "", y, ignore.case=TRUE)
+  format(z, width=stop, justify=justify)
+}
+#' Remove Common Characters From Values in a Vector
+#'
+#' Note that one length \code{x} is a degenerate case that returns "".
+#'
+#' @keywords internal
+#' @param x character the vector to make more unique
+#' @param from the direction to remove common elements from
 
+str_reduce_unique <- function(x, from="left") {
+  if(
+    !is.character(from) || length(from) != 1L || is.na(from) ||
+    !from %in% c("left", "right")
+  )
+    stop(
+      "Argument `from` must be character(1L) %in% c(\"left\", \"right\") ",
+      "and not NA"
+    )
+  if(!is.character(x) || any(is.na(x)))
+    stop("Argument `x` must be character and may not contain NAs")
+  if(identical(length(unique(x)), 1L)) return(rep("", length(x)))  # degenerate case
+  char.list <- strsplit(x, "")
+  if(identical(from, "right")) char.list <- lapply(char.list, rev)
+  min.len <- min(vapply(char.list, length, 1L))
+  char.mx <- vapply(char.list, `[`, character(min.len), 1:min.len)
+  first.diff <- min(
+    which(apply(char.mx, 1, function(x) length(unique(x))) > 1L)
+  )
+  char.mx.trim <- char.mx[first.diff:nrow(char.mx), ]
+  trim.list <- split(char.mx.trim, col(char.mx.trim))
+  res <- character(length(x))
+  for(i in seq_along(x)) {
+    res.tmp <- c(trim.list[[i]], tail(char.list[[i]], -min.len))
+    if(identical(from, "right")) res.tmp <- rev(res.tmp)
+    res[[i]] <- paste0(res.tmp, collapse="")
+  }
+  res
+}
+
+#' Convert A Matrix of Test Outcomes for Display
+#'
+#' Used by \code{show} methods for both \code{unitizerSummary} and
+#' \code{unitizerSummaryList}
+#'
+#' @keywords internal
+
+summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
+  # Ignore any columns with zero totals other than pass/fail
+
+  if(
+    !is.integer(width) || !identical(length(width), 1L) || is.na(width) ||
+    width < 1L
+  )
+    stop("Argument `width` should be integer(1L) and strictly positive")
+  totals <- colSums(mx)
+  keep.cols <- colSums(mx, na.rm=TRUE) > 0L | seq_along(totals) < 3L
+  mx.keep <- mx[, keep.cols, drop=FALSE]
+  totals.keep <- totals[keep.cols]
+
+  col.names <- substr_cons(names(totals.keep), 4L, justify="right")
+  col.count <- length(col.names)
+  num.width <- max(nchar(col.names), nchar(as.character(totals.keep)))
+
+  test.nums <- paste0(" ", format(seq.int(nrow(mx.keep))), ".")
+  rns <- rownames(mx.keep)
+
+  scr.width <- width
+  non.file.chars <-
+    (num.width + 1L) * col.count + max(nchar(test.nums)) + 2L
+  max.rns.chars <-
+    min(max(12L, scr.width - non.file.chars), max(nchar(rns)))
+
+  fmt <- paste0(
+    "%", max(nchar(test.nums)), "s %", max.rns.chars, "s ",
+    paste0(rep(paste0(" %", num.width, "s"), col.count), collapse="")
+  )
+  rns.trim <- strtrunc(rns, max.rns.chars, from=from)
+  # Display
+
+  res <- do.call(sprintf, c(list(fmt, "", ""), as.list(col.names)))
+  mx.keep.chr <- mx.keep
+  mx.keep.chr[] <- as.character(mx.keep)
+  mx.keep.chr[is.na(mx.keep)] <- "?"
+  mx.keep.chr[!mx.keep] <- "-"
+
+  for(i in seq.int(nrow(mx.keep.chr))) {
+    res <- c(
+      res,
+      do.call(
+        sprintf,
+        c(list(fmt, test.nums[[i]], rns.trim[[i]]), as.list(mx.keep.chr[i, ]))
+  ) ) }
+  # totals.keep
+
+  res <- c(res, paste0(rep(".", nchar(res[[1L]])), collapse=""))
+  tot.chr <- as.character(totals.keep)
+  tot.chr[is.na(totals.keep)] <- "?"
+  tot.chr[!totals.keep] <- "-"
+  res <- c(
+    res,
+    do.call(sprintf, c(list(fmt, "", ""), as.list(tot.chr)))
+  )
+  res
+}

@@ -8,7 +8,8 @@ unitizer_ls(name, pos = -1L, envir = parent.frame(), all.names = FALSE,
   pattern)
 }
 \value{
-list of object names, or a list with environments containing the objects
+list of object names, or a list with environments containing the
+  objects
 }
 \description{
 Much like `ls`, except that it is designed to crawl up the \code{`.new`} and

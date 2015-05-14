@@ -7,46 +7,51 @@
 \title{Unitize an R Test Script}
 \usage{
 unitize(test.file, store.id = NULL, interactive.mode = interactive(),
-  env.clean = TRUE,
+  par.env = getOption("unitizer.par.env"),
   search.path.clean = getOption("unitizer.search.path.clean"),
-  search.path.keep = c("tools:rstudio", "package:unitizer"),
-  force.update = FALSE)
+  search.path.keep = getOption("unitizer.search.path.keep"),
+  force.update = FALSE, auto.accept = character(0L), pre.load = NULL)
 
-review(x, env.clean = TRUE,
+review(store.id, par.env = getOption("unitizer.par.env"),
   search.path.clean = getOption("unitizer.search.path.clean"),
-  search.path.keep = c("tools:rstudio", "package:unitizer"))
+  search.path.keep = getOption("unitizer.search.path.keep"))
 
-unitize_dir(test.dir, test.file.regex = "^[^.].*\\\\.[Rr]$",
-  unitizer.ids = function(x) sub("(\\\\.[Rr])?$", ".unitizer", x),
-  interactive.mode = interactive(), env.clean = TRUE,
+unitize_dir(test.dir, store.ids = filename_to_storeid,
+  pattern = "^[^.].*\\\\.[Rr]$", interactive.mode = interactive(),
+  par.env = getOption("unitizer.par.env"),
   search.path.clean = getOption("unitizer.search.path.clean"),
-  search.path.keep = c("tools:rstudio", "package:unitizer"),
-  force.update = FALSE)
+  search.path.keep = getOption("unitizer.search.path.keep"),
+  force.update = FALSE, auto.accept = character(0L), pre.load = NULL)
 }
 \arguments{
 \item{test.file}{path to the file containing tests, if supplied path does not
 match an actual system path, \code{unitizer} will try to infer a possible
 path (see \code{\link{infer_unitizer_location}})}
 
-\item{store.id}{a folder to store the \code{unitizer} objects in; if NULL
-will select a folder at the same location as the test file with the same
-name as the testfile, except ending in \code{.unitizer} instead of
-\code{.R}.  If this folder does not exist, it will be created.  This is the
-default option, you can create custom \code{unitizer} stores as well
-(see vignette and \code{\link{get_unitizer}}).}
+\item{store.id}{if NULL (default), \code{unitizer} will select a directory
+based on the \code{test.file} name by replacing \code{.[rR]} with
+\code{.unitizer}.  You can also specify a directory name, or pass any
+object that has a defined \code{\link{get_unitizer}} method which allows
+you to specify non-standard \code{unitizer} storage mechanisms (see
+\code{\link{get_unitizer}}).  Finally, you can pass an actual
+\code{unitizer} object if you are using \code{review}}
 
-\item{interactive.mode}{logical(1L) whether to run in interactive mode}
+\item{interactive.mode}{logical(1L) whether to run in interactive mode (
+request user input when needed) or not (error if user input is required,
+e.g. if all tests do not pass).}
 
-\item{env.clean}{TRUE or environment, if TRUE tests are run in a clean
+\item{par.env}{NULL or environment, if NULL tests are run in a clean
 environment, if an environment they are run with that environment as the
 parent environment.}
 
-\item{search.path.clean}{logical(1L) if TRUE all items on the search path that
-are not part of a clean R session are detached prior to running tests.  Note
-namespaces for detached packages remain loaded.  Additionally, the search
-path is restored to its initial state upon exiting \code{unitizer} so any
-packages added/removed, or objects attached/detached from search path are
-restored to original state.  See "Reproducible Tests" vignette for details.}
+\item{search.path.clean}{logical(1L) if TRUE all items on the search path
+that are not part of a clean R session are detached prior to running tests.
+Namespaces for detached packages remain loaded, so re-attaching those
+packages during tests with \code{library} should carry little overhead.
+The search path is restored to its initial state upon exiting
+\code{unitizer} so any packages added/removed, or objects attached/detached
+from search path are restored to original state.  See "Reproducible Tests"
+vignette for details.}
 
 \item{search.path.keep}{character any additional items on the search path
 to keep attached; has no effect if \code{search.path.clean} is FALSE}
@@ -54,24 +59,50 @@ to keep attached; has no effect if \code{search.path.clean} is FALSE}
 \item{force.update}{logical(1L) if TRUE will give the option to re-store a
 unitizer after re-evaluating all the tests even if all tests passed.}
 
-\item{x}{for \code{review} only, either a \code{unitizer} or something that,
-when passed to \code{\link{get_unitizer}}, will retrieve a unitizer (i.e.
-equivalent to what would get passed in \code{store.id}).}
+\item{auto.accept}{character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
+YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
+prompting, use values in \code{c("new", "failed", "deleted", "error")} to
+specify which type(s) of test you wish to auto accept (i.e. same as typing
+\code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
+off (default)}
+
+\item{pre.load}{\code{NULL}, \code{FALSE}, a directory or a list of objects:
+\itemize{
+  \item if \code{NULL}, looks for a 'helper' directory in same directory as
+    test file (or first test file if using \code{unitize_dir}) and
+    \code{\link{sys.source}}s the files therein into an environment that
+    has for parent \code{par.env}
+  \item if a directory, then the same as \code{NULL}, except it uses files
+    in the specified directory
+  \item if a list transforms the list into an environment that has for
+    parent \code{par.env}
+  \item if \code{FALSE} does nothing
+}
+The environment generated by this process will be a parent to the
+environments the tests are run in.  The primary purpose of this file is to
+run \code{library} calls that are shared by multiple \code{unitizer} files.
+Any packages you load in these files will be unloaded upon completion of
+the \code{unitize} process unless you modify the \code{search.path.clean}
+setting. You can also pre-load objects shared amongst tests, but you should
+use this feature sparingly because these objects are not recorded in the
+\code{unitizer}s and don't show up in \code{ls} calls from the
+\code{unitizer} prompt, which makes it difficult to troubleshoot problems
+related to those objects changing between \code{unitizer} runs}
 
 \item{test.dir}{the directory to run the tests on}
 
-\item{test.file.regex}{a regular expression used to match which files in
-\code{test.dir} to \code{unitize}}
-
-\item{unitizer.ids}{one of \itemize{
-  \item a vectorized function that converts test file names to
-    \code{unitzer} ids (see default value for example)
+\item{store.ids}{one of \itemize{
+  \item a function that converts test file names to \code{unitizer} ids; if
+    \code{unitize}ing multiple files will be \code{lapply}ed over each file
   \item a character vector with \code{unitizer} ids, must be the same
-    length as the number of test files being reviewed
+    length as the number of test files being reviewed (see \code{store.id})
   \item a list of unitizer ids, must be the same length as the number of
     test files being reviewed; useful when you implement special storage
     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 }}
+
+\item{pattern}{a regular expression used to match what subset of files in
+\code{test.dir} to \code{unitize}}
 }
 \value{
 the \code{unitizer} object updated as per user instructions,
@@ -87,8 +118,8 @@ storing them along with their resuls.
 \code{unitize_dir} creates tests from all the R files in the specified
 directory (analogous to \code{testthat::test_dir}).
 
-\code{review} allows you to review existing \code{unitizer} or modify it
-by dropping tests from it.  This is useful if you ever have second thoughts
+\code{review} allows you to review existing \code{unitizer}s and modify them
+by dropping tests from them.  This is useful if you ever have second thoughts
 about previously accepted tests and wish to inspect them.
 
 \code{unitizer} stores are identified by \code{unitizer} ids, which by
@@ -103,6 +134,6 @@ implementing S3 methods for \code{\link{get_unitizer}} and
 See \code{unitizer} vignettes and demo for details and examples.
 }
 \seealso{
-\code{\link{get_unitizer}}
+\code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}}
 }
 

@@ -92,4 +92,30 @@ local({
       as.character(xx, width=30L)
     )
   })
+  test_that("substr_const", {
+    expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L), c("ab  ", "abcd", "abc "))
+    expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L, justify="right"), c("  ab", "abcd", " abc"))
+    expect_equal(unitizer:::substr_cons(c("NEW", "PASS", "FAIL", "DELETED", "Error"), 4L), c("NEW ", "PASS", "FAIL", "DEL ", "Err "))
+  })
+  test_that("str_reduce_unique", {
+    str1 <- c("abcdef", "abcdefgh", "abcql")
+    res1 <- c("def", "defgh", "ql")
+    expect_equal(unitizer:::str_reduce_unique(str1), res1)
+    expect_equal(unitizer:::str_reduce_unique(str1, from="right"), str1)
+    str2 <- vapply(
+      strsplit(str1, ""), function(x) paste0(rev(x), collapse=""), ""
+    )
+    res2 <- vapply(
+      strsplit(res1, ""), function(x) paste0(rev(x), collapse=""), ""
+    )
+    expect_equal(unitizer:::str_reduce_unique(str2, from="right"), res2)
+    expect_equal(unitizer:::str_reduce_unique("aaa"), "")
+    expect_equal(unitizer:::str_reduce_unique(rep("aaa", 5L)), rep("", 5L))
+  })
+  test_that("strtrunc", {
+    str1 <- c(paste0(letters, collapse=""), paste0(LETTERS, collapse=""))
+    expect_equal(unitizer:::strtrunc(str1, 10L), c("abcdefg...", "ABCDEFG..."))
+    expect_equal(unitizer:::strtrunc(str1, 10L, from="left"), c("...tuvwxyz", "...TUVWXYZ"))
+  })
+
 })

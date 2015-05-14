@@ -318,46 +318,22 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token",
 #' than an expression as an input (but even that didn't fix it!!!)
 #'
 #' @keywords internal
+#' @aliases parse_tests
 #' @seealso comments_assign, getParseData, parse
 #' @param file containing code to parse with comments
 #' @param text optional, text to parse if \code{`file`} is not specified
+#' @param comment logical(1L) whether to try to get comments
 #' @return an expression with comments retrieved from the parse attached
 #'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 
 parse_with_comments <- function(file, text=NULL) {
   # Looping to deal with issue #41
 
-  for(i in 1:2) {
-    if(!is.null(text)) {
-      if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
-      expr <- try(parse(text=text, keep.source=TRUE))
-    } else {
-      expr <- try(parse(file, keep.source=TRUE))
-    }
-    if(!length(expr)) return(expr)
-    parse.dat.raw <- getParseData(expr)
-    if(!nrow(parse.dat.raw))
-      stop("Logic Error: parse data mismatch; contact maintainer.")
-    parse.dat.check <- cbind(
-      parse.dat.raw[match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")],
-      setNames(parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child"))
-    )
-    if(
-      length(
-        with(parse.dat.check,
-          which(
-            line1.child < line1 |
-            (line1.child == line1) & col1.child < col1
-      ) ) )
-    ) {
-      # Parsing is not self consistent; some child items have for parents items
-      # that are lexically posterior
-      if(identical(i, 1L))  # Try again once to see if that fixes it
-        next
-      stop("Cannot retrieve self consistent parse data")
-    }
-    break  # Parsing worked as expected
-  }
+  res <- parse_dat_get(file, text)
+  parse.dat.raw <- res$dat
+  expr <- res$expr
+  if(!length(expr)) return(expr)
+
   # Now proceed with actual parsing
 
   expr <- comm_reset(expr)  # hack to deal with issues with expressions retaining previous assigned comments (need to examine this further)
@@ -380,6 +356,7 @@ parse_with_comments <- function(file, text=NULL) {
         "); contact maintainer."
     );
   }
+
   prsdat_recurse <- function(expr, parse.dat, top.level) {
     if(identical(parse.dat$token[[1L]], "FUNCTION")) parse.dat <- prsdat_fix_fun(parse.dat)
     if(identical(parse.dat$token[[1L]], "FOR")) parse.dat <- prsdat_fix_for(parse.dat)
@@ -474,6 +451,85 @@ parse_with_comments <- function(file, text=NULL) {
     expr
   }
   prsdat_recurse(expr, parse.dat, top.level=0L)
+}
+#' Handle the issues with needing to run parse twice due to weird getParseData
+#' output
+#'
+#' @keywords internal
+
+parse_dat_get <- function(file, text) {
+  parse.dat.raw <- NULL
+  for(i in 1:2) {
+    if(!is.null(text)) {
+      if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
+      expr <- try(parse(text=text, keep.source=TRUE))
+    } else {
+      expr <- try(parse(file, keep.source=TRUE))
+    }
+    if(inherits(expr, "try-error")) stop("parsing failed")
+    if(!length(expr)) break
+    parse.dat.raw <- getParseData(expr)
+    if(is.null(parse.dat.raw)) break
+
+    if(!nrow(parse.dat.raw))
+      stop("Logic Error: parse data mismatch; contact maintainer.")
+    parse.dat.check <- cbind(
+      parse.dat.raw[match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")],
+      setNames(parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child"))
+    )
+    if(
+      length(
+        with(parse.dat.check,
+          which(
+            line1.child < line1 |
+            (line1.child == line1) & col1.child < col1
+      ) ) )
+    ) {
+      # Parsing is not self consistent; some child items have for parents items
+      # that are lexically posterior
+      if(identical(i, 1L))  # Try again once to see if that fixes it
+        next
+      stop("Cannot retrieve self consistent parse data")
+    }
+    break  # Parsing worked as expected
+  }
+  list(expr=expr, dat=parse.dat.raw)
+}
+
+#' @rdname parse_with_comments
+#' @keywords internal
+
+parse_tests <- function(file, comments=TRUE, text=NULL) {
+
+  if(!isTRUE(comments) && !identical(comments, FALSE))
+    stop("Argument `comments` must be TRUE or FALSE")
+  if(!is.null(text) && !missing(file))
+    stop("If Argument `text` is specified, argument `file` must be missing")
+
+  parsed <- NULL
+  if(comments) {
+    parsed <- try(parse_with_comments(file, text))
+    if(inherits(parsed, "try-error")) {
+      if(
+        identical(
+          conditionMessage(attr(parsed, "condition")),
+          "parsing failed"
+        )
+      )
+        stop("Unable to parse test file; see previous messages")
+    } else {
+      return(parsed)
+  } }
+  # Either no comment mode, or couldn't extract in comment mode
+
+  if(inherits(parsed, "try-error"))
+    warning(
+      "Unable to recover comments in parse; attempting simple parse",
+      immediate.=TRUE
+    )
+  if(is.null(text)) {
+    parse(file, keep.source=FALSE)
+  } else parse(text=text, keep.source=FALSE)
 }
 # Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
