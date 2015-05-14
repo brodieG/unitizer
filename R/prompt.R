@@ -261,10 +261,13 @@ review_prompt <- function(x, nav.env) {
 }
 #' A Simple Prompting Function
 #'
+#' @keywords internal
 #' @param message character ask the user a question
 #' @param values character valid responses
 #' @param prompt see \code{\link{readline}}
 #' @param attempts how many times to try before erroring
+#' @param case.sensitive whether to care about case sensitivity when matching
+#'   user input
 #' @return one of \code{values} as selected by user
 
 simple_prompt <- function(

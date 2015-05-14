@@ -4,7 +4,8 @@
 \alias{strtrunc}
 \title{Print Only First X characters}
 \usage{
-strtrunc(x, nchar.max = getOption("width"), ctd = "...", disambig = FALSE)
+strtrunc(x, nchar.max = getOption("width"), ctd = "...", disambig = FALSE,
+  from = "right")
 }
 \arguments{
 \item{x}{string to reduce length}
@@ -15,6 +16,8 @@ strtrunc(x, nchar.max = getOption("width"), ctd = "...", disambig = FALSE)
 
 \item{disambig}{logical 1L whether to disambiguate strings that end up
 the same after truncation (not currently implemented)}
+
+\item{from}{what side to truncate from}
 }
 \description{
 Print Only First X characters

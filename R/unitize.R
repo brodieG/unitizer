@@ -24,21 +24,18 @@
 #'
 #' @export
 #' @aliases unitize review unitize_dir
-#' @seealso \code{\link{get_unitizer}}
+#' @seealso \code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}}
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
 #'   path (see \code{\link{infer_unitizer_location}})
-#' @param store.id a folder to store the \code{unitizer} objects in; if NULL
-#'   and your test file ends in \code{.[rR]}, will select a folder at the same
-#'   location as the test file with the same name as the testfile, except ending
-#'   in \code{.unitizer} instead of \code{[.rR]}.  If this folder does not
-#'   exist, it will be created.  This is the default option, you can create
-#'   custom \code{unitizer} stores as well (see vignette and
-#'   \code{\link{get_unitizer}}).
-#' @param x for \code{review} only, either a \code{unitizer} or something that,
-#'   when passed to \code{\link{get_unitizer}}, will retrieve a unitizer (i.e.
-#'   equivalent to what would get passed in \code{store.id}).
-#' @param interactive.mode logical(1L) whether to run in interactive mode (
+#' @param store.id if NULL (default), \code{unitizer} will select a directory
+#'   based on the \code{test.file} name by replacing \code{.[rR]} with
+#'   \code{.unitizer}.  You can also specify a directory name, or pass any
+#'   object that has a defined \code{\link{get_unitizer}} method which allows
+#'   you to specify non-standard \code{unitizer} storage mechanisms (see
+#'   \code{\link{get_unitizer}}).  Finally, you can pass an actual
+#'   \code{unitizer} object if you are using \code{review}
+##' @param interactive.mode logical(1L) whether to run in interactive mode (
 #'   request user input when needed) or not (error if user input is required,
 #'   e.g. if all tests do not pass).
 #' @param par.env NULL or environment, if NULL tests are run in a clean
@@ -57,13 +54,13 @@
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @param test.dir the directory to run the tests on
-#' @param pattern a regular expression used to match which files in
+#' @param pattern a regular expression used to match what subset of files in
 #'   \code{test.dir} to \code{unitize}
-#' @param unitizer.ids one of \itemize{
-#'   \item a function that converts test file names to \code{unitzer} ids; if
+#' @param store.ids one of \itemize{
+#'   \item a function that converts test file names to \code{unitizer} ids; if
 #'     \code{unitize}ing multiple files will be \code{lapply}ed over each file
 #'   \item a character vector with \code{unitizer} ids, must be the same
-#'     length as the number of test files being reviewed
+#'     length as the number of test files being reviewed (see \code{store.id})
 #'   \item a list of unitizer ids, must be the same length as the number of
 #'     test files being reviewed; useful when you implement special storage
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
@@ -156,8 +153,7 @@ unitize_dir <- function(
   search.path.keep=getOption("unitizer.search.path.keep"),
   force.update=FALSE,
   auto.accept=character(0L),
-  pre.load=NULL,
-  mode="unitize"
+  pre.load=NULL
 ) {
   # Validations
   if(!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir))

@@ -11,4 +11,5 @@ Would normally do this via NAMESPACE, but do not want to introduce an
 explicit dependency to \code{testthat} since it is only required for the
 conversion to \code{unitizer}
 }
+\keyword{internal}
 

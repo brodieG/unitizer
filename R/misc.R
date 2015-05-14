@@ -94,7 +94,7 @@ path_clean <- function(path) {
 #' Create a Store ID from a Test File Name
 #'
 #' @param x character(1L) file name ending in .r or .R
-#' @param return store id name, or NULL if \code{x} doesn't meet expectations
+#' @return store id name, or NULL if \code{x} doesn't meet expectations
 #' @export
 #' @examples
 #' filename_to_storeid(file.path("tests", "unitizer", "foo.R"))
@@ -121,20 +121,29 @@ filename_to_storeid <- function(x) {
 history_capt <- function() {
   # set up local history
 
-  savehistory()
+  hist.try <- try(savehistory(), silent=TRUE)
+  if(inherits(hist.try, "try-error"))
+    warning(conditionMessage(attr(hist.try, "condition")))
   hist.file <- tempfile()
   hist.con <- file(hist.file, "at")
   cat(
     "## <unitizer> (original history will be restored on exit)\n",
     file=hist.con
   )
-  loadhistory(showConnections()[as.character(hist.con), "description"])
+  hist.try <- try(
+    loadhistory(showConnections()[as.character(hist.con), "description"]),
+    silent=TRUE
+  )
+  if(inherits(hist.try, "try-error"))
+    warning(conditionMessage(attr(hist.try, "condition")))
   list(con=hist.con, file=hist.file)
 }
 history_release <- function(hist.obj) {
   close(hist.obj$con)
   file.remove(hist.obj$file)
-  loadhistory()
+  hist.try <- try(loadhistory(), silent=TRUE)
+  if(inherits(hist.try, "try-error"))
+    warning(conditionMessage(attr(hist.try, "condition")))
 }
 
 #' Simplify a Path As Much as Possible to Working Directory

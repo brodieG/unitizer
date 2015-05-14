@@ -4,8 +4,10 @@
 \alias{unitizer_prompt}
 \title{Handles The Actual User Interaction}
 \usage{
-unitizer_prompt(text, browse.env = globalenv(), help = character(),
-  valid.opts, hist.con = NULL, exit.condition = function(exp, env) FALSE)
+unitizer_prompt(text, browse.env = new.env(parent = if
+  (is.environment(pack.env$zero.env.par)) {     pack.env$zero.env.par } else
+  .GlobalEnv), help = character(), valid.opts, hist.con = NULL,
+  exit.condition = function(exp, env) FALSE, ...)
 }
 \arguments{
 \item{text}{the prompt text to display}
@@ -14,7 +16,7 @@ unitizer_prompt(text, browse.env = globalenv(), help = character(),
 this will contain interesting objects (use \code{ls()} to review)}
 
 \item{help}{a character vector with help suggestions: the first value in the
-vector is \code{`\link{word_cat}`} output, the rest normal \code{`cat`}}
+vector is \code{\link{word_cat}} output, the rest normal \code{cat}}
 
 \item{hist.con}{connection to save history to}
 
@@ -26,10 +28,12 @@ cause the prompt loop to exit; this function should accept two parameters:
 }
 The function can then decide to exit or not based on either the literal
 expression or evaluate the expression and decide based on the result.  This
-is implemented this way because \code{`eval_user_exp`} will print to screen
+is implemented this way because \code{eval_user_exp} will print to screen
 which may not be desirable.  Function should return a value which will then
-be returned by \code{`unitizer_prompt`}, unless this value is \code{`FALSE`}
-in which case \code{`unitizer_prompt`} will continue with normal evaluation.}
+be returned by \code{unitizer_prompt}, unless this value is \code{FALSE}
+in which case \code{unitizer_prompt} will continue with normal evaluation.}
+
+\item{...}{additional arguments for \code{exit.condition}}
 
 \item{valid}{opts the special letters user can type to get a special action,
 typically a character vector where the names are one letter (though they
@@ -42,14 +46,14 @@ mixed allowable user input
 \description{
 Will keep accepting user input until either:
 \itemize{
-  \item User types one of the names of \code{`valid.opts`}, typically "Y" or
+  \item User types one of the names of \code{valid.opts}, typically "Y" or
     "N", but will vary
   \item User types "Q"
   \item User inputs an expression that when evaluated and fed to
-    \code{`exit.condition`} returns TRUE
+    \code{exit.condition} returns TRUE
 }
 The set-up is intended to replicate something similar to what happens when
-code hits a \code{`browse()`} statement.  User expressions are evaluated
+code hits a \code{browse()} statement.  User expressions are evaluated
 and output to screen, and special expressions as described above cause the
 evaluation loop to terminate.
 }

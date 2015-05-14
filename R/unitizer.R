@@ -334,6 +334,9 @@ setMethod("summary", "unitizer",
     if(!silent) show(obj)
     obj
 } )
+#' Summary method
+#'
+#' @keywords internal
 
 setMethod("summary", "unitizerObjectList",
   function(object, silent=FALSE, ...) {
@@ -354,6 +357,9 @@ setMethod("summary", "unitizerObjectList",
     if(!silent) show(res)
     res
 } )
+#' Display method
+#'
+#' @keywords internal
 
 setMethod("show", "unitizerObjectListSummary",
   function(object) {

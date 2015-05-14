@@ -78,7 +78,7 @@ set_unitizer.character <- function(store.id, unitizer) {
   }
   if(is.object(store.id) || !is.null(attributes(store.id)))
     stop("Argument `store.id` must be a bare character vector")
-  if(!is(unitizer, "unitizer")) stop("Argument unitizer must be a unitizer")
+  if(!is(unitizer, "unitizer")) stop("Argument `unitizer` must be a unitizer")
   new.file <- FALSE
   if(!file.exists(store.id)) {
     if(!isTRUE(dir.create(store.id)))
@@ -332,7 +332,7 @@ infer_unitizer_location.character <- function(
   } else if (cand.len == 1L) {
     1L
   } else if (cand.len == 0L) {
-    warning("No possible matching files", immediate.=TRUE)
+    warning("No possible matching files for ", store.id, immediate.=TRUE)
     return(store.id)
   }
   if(!selection && interactive.mode) {
@@ -462,13 +462,13 @@ source_many <- function(files, env, allow.side.effects=FALSE) {
 
   for(i in files) {
     fail <- inherits(try(sys.source(i, env)), "try-error")
-    if(!identical(base.opts, new.opts <- options()))
-      stop("Options changed by sourcing file `", i, "`, unable to proceed")
-    if(!identical(base.wd, getwd()))
-      stop(
-        "Working directory changed by sourcing file `", i,
-        "`, unable to proceed (was: '", base.wd, "')"
-      )
+    # if(!identical(base.opts, new.opts <- options()))
+    #   stop("Options changed by sourcing file `", i, "`, unable to proceed")
+    # if(!identical(base.wd, getwd()))
+    #   stop(
+    #     "Working directory changed by sourcing file `", i,
+    #     "`, unable to proceed (was: '", base.wd, "')"
+    #   )
     if(fail) stop("Error sourcing file `", i, "`, see above for details")
   }
   NULL

@@ -5,7 +5,7 @@
 \title{A Simple Prompting Function}
 \usage{
 simple_prompt(message, values = c("Y", "N"), prompt = "unitizer> ",
-  attempts = 3L, case.sensitive = FALSE)
+  attempts = 5L, case.sensitive = FALSE)
 }
 \arguments{
 \item{message}{character ask the user a question}
@@ -15,6 +15,9 @@ simple_prompt(message, values = c("Y", "N"), prompt = "unitizer> ",
 \item{prompt}{see \code{\link{readline}}}
 
 \item{attempts}{how many times to try before erroring}
+
+\item{case.sensitive}{whether to care about case sensitivity when matching
+user input}
 }
 \value{
 one of \code{values} as selected by user
@@ -22,4 +25,5 @@ one of \code{values} as selected by user
 \description{
 A Simple Prompting Function
 }
+\keyword{internal}
 

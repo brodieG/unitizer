@@ -4,4 +4,4 @@ library(unitizer)
 
 unitize("unitizer/tests2.R")
 unitize("unitizer/sectionsRCMDCHECK.R")
-unitize("unitizer/testthat.R")
+unitize("unitizer/translate.R")

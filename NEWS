@@ -3,12 +3,22 @@ unitizer 0.9.0
 
 Improvements / Changes:
 
+* Complete restructure of internal test management to allow for much more robust
+  `unitize_dir` behavior (#51)
 * Added `testthat` -> `unitizer` translation utilities
-* Can now pre-load objects before `unitize`ing
-    * not recommended, but provided for compatibility
-    * `unitize_dir` by default auto-preloads files in subdir 'helper'
+  (see `?testthat_translate_file`)
+* Can now pre-load objects before unitizing; `unitize_dir` and `unitize` by
+  default auto-preload files in subdir 'helper'
 * Renamed arg `env.clean` to `par.env` (technically API breaking, but since no
   one is using this package yet...)
+* Many usability fixes (#48, #68, #82, #83), and improved text display
+* Improved path inference to better guess desired unitizer based on partiallly
+  specified file names (#72)
+
+Other
+
+* `unitize_dir` works with empty dirs (#78)
+* Better management of file locations and names (#35, #75)
 
 unitizer 0.8.1
 --------------------------------------------------------------------------------

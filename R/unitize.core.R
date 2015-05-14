@@ -95,8 +95,8 @@ unitize_core <- function(
         )
     }
   } else stop("Argument `auto.accept` must be character")
-  if(length(auto.accept) && is.null(test.file))
-    stop("Argument `test.file` must be specified when using `auto.accept`")
+  if(length(auto.accept) && !length(test.files))
+    stop("Argument `test.files` must be specified when using `auto.accept`")
   if(
     !is.null(pre.load) && !identical(pre.load, FALSE) && !is.list(pre.load) &&
     !is.character(pre.load) && length(pre.load) != 1L
@@ -174,7 +174,7 @@ unitize_core <- function(
       test.files,
       function(x) {
         over_print(paste("Parsing", x))
-        parse_tests(x, comments=interactive.mode)
+        parse_tests(x, comments=TRUE)
   } ) }
   # Clean up search path
 
@@ -334,11 +334,10 @@ unitize_eval <- function(tests.parsed, unitizers) {
 }
 #' Run User Interaction And \code{unitizer} Storage
 #'
+#' @keywords internal
 #' @inheritParams unitize_core
 #' @param unitizers list of \code{unitizer} objects
-#' @param prompt.on.quit logical(1L) wh
 #' @param force.update whether to store unitizer
-#'
 
 unitize_browse <- function(
   unitizers, mode, interactive.mode, force.update, auto.accept
@@ -350,6 +349,7 @@ unitize_browse <- function(
     return(unitizers)
   }
   over_print("Prepping Unitizers...")
+
   hist.obj <- history_capt()
   on.exit(history_release(hist.obj))
 
@@ -470,7 +470,8 @@ unitize_browse <- function(
             Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
             getOption("unitizer.prompt.b4.quit.time", 10)
           ) {
-            ui <- try(simple_prompt("Are you sure you want to quit?"))
+            word_cat("Are you sure you want to quit?")
+            ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
             if(identical(ui, "N")) next
           }
           break

@@ -23,9 +23,9 @@ get_unitizer(store.id)
 }
 \description{
 These functions are not used directly; rather, they are used by
-\code{`\link{unitize}`} to get and set the \code{`unitizer`} objects.
+\code{`\link{unitize}`} to get and set the \code{unitizer} objects.
 You should only need to understand these functions if you are
-looking to implement a special storage mechanism for the \code{`unitizer`}
+looking to implement a special storage mechanism for the \code{unitizer}
 objects.
 }
 \details{
@@ -36,7 +36,7 @@ You may write your own methods for special storage situations (
 e.g SQL database, ftp server, etc) with the understanding that the
 getting method may only accept one argument, the \code{`store.id`}, and
 the setting method only two arguments, the \code{`store.id`} and the
-\code{`unitizer`}.
+\code{unitizer}.
 
 S3 dispatch will be on \code{`store.id`}, and \code{`store.id`} may
 be any R object that identifies the unitizer.  For example, a potential
@@ -57,6 +57,9 @@ set_unitizer.sql_unitizer <- function(store.id, unitizer) { # FUNCTION BODY }
 
 unitize("unitizer/cornertestcases.R", my.sql.store.id)
 }
+Make sure you also define an \code{as.character} method for your object to
+produce a human readable identifying string.
+
 For inspirations for the bodies of the _store functions look at the source
 code for \code{`unitizer:::get_unitizer.character`} and \code{`unitizer:::set_unitizer.character`}.
 Expectations for the functions are as follows.  \code{`get_unitizer`} must:

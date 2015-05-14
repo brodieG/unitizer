@@ -100,15 +100,15 @@
 #' \code{unitize} by default runs each \code{unitizer} test file in a clean
 #' environment with a clean search path.  This means that if you load libraries
 #' before you run your tests you will have to set
-#' \code{search.path.clean=FALSE}, even if you are loading the libraries in the
-#' helper files.  Note we generally discourage the use of helper files because
-#' \code{unitizer} does not track changes in objects that are produced by them,
-#' so they could become a source of difficult-to-track-down regressions.
+#' \code{search.path.clean=FALSE} for them to be loaded in your tests.  One
+#' exception is if you load the libraries in helper files, in which case they
+#' will be available to your tests, and unloaded upon completion.
 #'
 #' If you run your tests during development with \code{test_file} odds
 #' are the translation will work just fine.  On the other hand, if you rely
 #' exclusively on \code{test_check} you may need to use
-#' \code{par.env=getNamespace("pkgName")} when you translate.
+#' \code{par.env=getNamespace("pkgName")} when you translate to make sure your
+#' tests have access to the internal namespace functions.
 #'
 #' If your tests were translated with parameters \code{par.env} and/or
 #' \code{search.path.clean} changed from their default values, you will have
@@ -134,12 +134,15 @@
 #' @seealso \code{\link{unitize}}
 #' @aliases testthat_translate_name, testthat_translate_dir
 #' @param file.name a path to the \code{testthat} test file to convert
+#' @param dir.name a path to the \code{testthat} directory to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
 #'   test store in; for \code{testthat_translate_file} only: if NULL will return
 #'   as a character vector what the contents of the translated file would have
 #'   been instead of writing the file
 #' @param keep.testthat.call whether to preserve the \code{testthat} call that
 #'   was converted, as a comment
+#' @param filter regular expression to select what files in a director are
+#'   translated
 #' @param ... params to pass on to \code{testthat_translate_name}
 #' @param name.new character(1L) the base name for the \code{unitizer} files;
 #'   do not include an extension as we will add it (".R" for the testfile,
@@ -151,7 +154,10 @@
 #'   constructed with this (used as \code{replace} parameter to
 #'   \code{\link{sub}}); in addition we will add ".R" and ".unitizer" as the
 #'   extensions for the new files so do not include extensions in your
-#'   \code{replace} parameter
+#'   \code{name.replace} parameter
+#' @param name.replace character(1L) the replacement token, typically would
+#'   include a \code{"\\1"} token that is filled in by the match group from
+#'   \code{name.pattern}
 #' @param prompt character(1L): \itemize{
 #'     \item "always" to always prompt before writing new files
 #'     \item "overwrite" only prompt if existing file is about to be overwritten
@@ -202,7 +208,8 @@ testthat_translate_file <- function(
   )
   if(!is.null(target.dir)) {
     unitize(
-      test.file=untz.file, auto.accept="new", par.env=par.env
+      test.file=untz.file, auto.accept="new", par.env=par.env,
+      interactive.mode=FALSE
     )
   }
   return(untz.file)
@@ -402,9 +409,11 @@ testthat_transcribe_file <- function(
     }
     if(!file.exists(target.dir)) {
       if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
-        u.inp <- simple_prompt(
-          paste0("Create directory ", target.dir," for unitizer tests?")
-        )
+        u.inp <- if(interactive()) {
+          simple_prompt(
+            paste0("Create directory ", target.dir," for unitizer tests?")
+          )
+        } else "N"
         if(!identical(u.inp, "Y"))
           stop("Unable to proceed without creating target directory")
       }
@@ -421,9 +430,11 @@ testthat_transcribe_file <- function(
     # prompt if file already exists
 
     if(!identical(prompt, "never") && file.exists(untz.test)) {
-      u.inp <- simple_prompt(
-        paste0("Overwrite file '", normalizePath(untz.test), "'?")
-      )
+      u.inp <- if(interactive()) {
+        simple_prompt(
+          paste0("Overwrite file '", normalizePath(untz.test), "'?")
+        )
+      } else "N"
       if(!identical(u.inp, "Y"))
         stop(
           "Unable to proceed without user approval as `",
@@ -533,7 +544,7 @@ testthat_translate_dir <- function(
 
     unitize_dir(
       test.dir=target.dir, auto.accept="new", par.env=par.env,
-      search.path.clean=search.path.clean
+      search.path.clean=search.path.clean, interactive.mode=FALSE
     )
   }
   if(length(unparseable))
@@ -662,6 +673,8 @@ testthat_match_call <- function(call, fun, target.params) {
 #' Would normally do this via NAMESPACE, but do not want to introduce an
 #' explicit dependency to \code{testthat} since it is only required for the
 #' conversion to \code{unitizer}
+#'
+#' @keywords internal
 
 is_testthat_attached <- function() {
   if(inherits(try(as.environment("package:testthat"), silent=TRUE), "try-error"))

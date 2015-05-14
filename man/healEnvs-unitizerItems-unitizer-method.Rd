@@ -8,17 +8,17 @@
 \S4method{healEnvs}{unitizerItems,unitizer}(x, y, ...)
 }
 \arguments{
-\item{x}{\code{`\link{unitizerItems-class}`} object}
+\item{x}{\code{\link{unitizerItems-class}} object}
 
-\item{y}{\code{`\link{unitizer-class}`} object \code{`x`} was generated from}
+\item{y}{\code{\link{unitizer-class}} object \code{x} was generated from}
 
 \item{...}{unused, here for inheriting methods}
 }
 \value{
-\code{`unitizerItems-class`}
+\code{unitizerItems-class}
 }
 \description{
-This is an internal method and exposed so that this aspect of \code{`unitizer`}
+This is an internal method and exposed so that this aspect of \code{unitizer}
 is documented for package users (see Details).
 }
 \details{
@@ -31,7 +31,7 @@ are attempting to create a self consistent set of nested parent environments
 for each test, but at the same time, we don't want to store all the
 combinations of reference and new objects.
 
-We only store new objects in \code{`unitizer`}, with the lone exception of
+We only store new objects in \code{unitizer}, with the lone exception of
 objects associated to a test environment.  These will include any assignments
 that occur just prior to a test, as well as any objects created by the
 actual test.
@@ -63,7 +63,7 @@ will be the last new test that is kept.
 The main takeaway from all this is that reference tests don't really
 keep their evaluation environment.  Often this environment is similar
 to the new environment.  When there are difference between the two,
-the output of \code{`ls`} is customized to highlight
+the output of \code{ls} is customized to highlight
 which objects were actually available/unmodifed at the time of the
 reference test evaluation.  Object names will have the following
 symbols appended to explain the object status:
@@ -77,14 +77,14 @@ symbols appended to explain the object status:
 }
 }
 \note{
-Could be more robust by ensuring that items in \code{`x`} actually do
-  come from \code{`y`}. This is particularly important since when
-  we re-assemble the final list, we don't actually use `x` at all.  Signature
-  for this should probably ultimately change to be something like `unitizer`, `x`,
-  where x is just a data frame with column 1 the item index, and column 2
-  whether it originated from "new" or "ref"
+Could be more robust by ensuring that items in \code{x} actually do
+  come from \code{y}. This is particularly important since when
+  we re-assemble the final list, we don't actually use x at all.  Signature
+  for this should probably ultimately change to be something like
+  \code{c("unitizer", "x")} where x is just a data frame with column 1
+  the item index, and column 2 whether it originated from "new" or "ref"
 }
 \seealso{
-\code{`\link{updateLs,unitizerItem-method}`}
+\code{\link{updateLs,unitizerItem-method}}
 }
 
