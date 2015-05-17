@@ -36,14 +36,23 @@ is.package_version <- function(x)
 
 #' Test for plain characterness
 #'
-#' Used primarily for assessing whether a store id should use default mechanism
-#' or should be coerced to character
+#' Test for common scalar cases that we run into ALL THE TIME!!!
 #'
+#' @rdname is.scalar
 #' @keywords internal
 
 is.chr1plain <- function(x)
   !is.object(x) && is.character(x) && identical(length(x), 1L)
 
+#' @rdname is.simpleobj
+#' @keywords internal
+
+is.chr1 <- function(x) is.character(x) && length(x) == 1L && !is.na(x)
+
+#' @rdname is.simpleobj
+#' @keywords internal
+
+is.TF <- function(x) isTRUE(x) || identical(x, FALSE)
 
 #' Check Whether Provided Store ID Is in Default Form
 #'

@@ -4,21 +4,100 @@ library(devtools)
 unitizer.dir <- system.file(package="unitizer")
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg2"))
+unitizer.dummy.list <- list(A=1, B=2, C=3)
 
 try(detach("package:unitizer", unload=TRUE))
 try(detach("package:unitizerdummypkg1", unload=TRUE))
 try(detach("package:unitizerdummypkg2", unload=TRUE))
+while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 
 library(unitizer)
 
-test_that("Detecting packages", {
-  expect_true(unitizer:::is.loaded_package("package:unitizer"))
-  expect_false(unitizer:::is.loaded_package("unitizer"))
-  expect_true(unitizer:::is.loaded_package("package:stats"))
-  expect_error(unitizer:::is.loaded_package(1))
-  expect_error(unitizer:::is.loaded_package(letters))
-  expect_false(unitizer:::is.loaded_package("Autoloads"))
-} )
+# test_that("Detecting packages", {
+#   expect_true(unitizer:::is.loaded_package("package:unitizer"))
+#   expect_false(unitizer:::is.loaded_package("unitizer"))
+#   expect_true(unitizer:::is.loaded_package("package:stats"))
+#   expect_error(unitizer:::is.loaded_package(1))
+#   expect_error(unitizer:::is.loaded_package(letters))
+#   expect_false(unitizer:::is.loaded_package("Autoloads"))
+# } )
+
+# test_that("Package Tracking", {
+  # Note, these are intended to be run without the shimming in place
+
+  untz.pack.env <- unitizer:::reset_packenv()
+  expect_is(untz.pack.env$search, "list")
+  expect_true(identical(length(untz.pack.env$search), 1L))
+  expect_equal(names(untz.pack.env$search[[1L]]), search())
+
+  library("unitizerdummypkg1")
+  expect_equal(
+    unitizer:::search_path_track("library", 2L),
+    c("package:unitizerdummypkg1"=1L)
+  )
+  expect_true(identical(length(untz.pack.env$search), 2L))
+  expect_equal(
+    untz.pack.env$search[[2L]][2L], c("package:unitizerdummypkg1"=1L)
+  )
+  library("unitizerdummypkg2", pos=4L)
+  expect_equal(
+    unitizer:::search_path_track("library", 4L),
+    c("package:unitizerdummypkg2"=1L)
+  )
+  expect_true(identical(length(untz.pack.env$search), 3L))
+  expect_equal(
+    untz.pack.env$search[[3L]][4L], c("package:unitizerdummypkg2"=1L)
+  )
+  attach(unitizer.dummy.list)
+  expect_equal(
+    unitizer:::search_path_track("attach", 2L),
+    c("unitizer.dummy.list"=1L)
+  )
+  attach(unitizer.dummy.list, pos=4L)
+  expect_equal(
+    unitizer:::search_path_track("attach", 4L),
+    c("unitizer.dummy.list"=2L)
+  )
+  expect_true(identical(length(untz.pack.env$search), 5L))
+  expect_equal(
+    untz.pack.env$search[[4L]][2L], c("unitizer.dummy.list"=1L)
+  )
+  expect_equal(
+    untz.pack.env$search[[5L]][4L], c("unitizer.dummy.list"=2L)
+  )
+  try(detach("package:unitizerdummypkg1"))
+
+  # Should be in detach mode
+
+  expect_warning(
+    res <- unitizer:::search_path_track("attach", 3L),
+    "Search path tracking and manipulation failed"
+  )
+  expect_false(res)  # Only
+
+  expect_equal(unitizer:::search_path_track("detach", 3L), c("package:unitizerdummypkg1"=1L))
+  expect_identical(untz.pack.env$search[[5L]][-3L], untz.pack.env$search[[6L]])
+
+  try(detach("package:unitizerdummypkg2", unload=TRUE))
+
+  library("unitizerdummypkg1")
+  library("unitizerdummypkg2")
+
+  # currently should cause an error, might need to lead to search path tracking
+  # suspension
+
+  expect_warning(
+    unitizer:::search_path_track("library", 2L),
+    "Search path tracking and manipulation failed"
+  )
+  test.objs <- c(
+    "unitizerdummypkg1", "unitizerdummypkg2", "unitizer.dummy.list",
+    "unitizer.dummy.list"
+  )
+  try(lapply(test.objs, detach))
+  unitizer:::reset_packenv()
+})
+
 test_that("Package shimming working", {
   search.path.init <- search()
 
@@ -291,6 +370,7 @@ test_that("Messing with path is detected", {
 })
 try(detach("package:unitizerdummypkg1", unload=TRUE))
 try(detach("package:unitizerdummypkg2", unload=TRUE))
+try(detach("unitizer.dummy.list"))
 remove.packages(c("unitizerdummypkg1", "unitizerdummypkg2"))
 
 message("COMPLETED zeroenv tests")

@@ -9,7 +9,11 @@
 #'
 #' \code{review} allows you to review existing \code{unitizer}s and modify them
 #' by dropping tests from them.  This is useful if you ever have second thoughts
-#' about previously accepted tests and wish to inspect them.
+#' about previously accepted tests and wish to inspect them.  Note though that
+#' in review mode the parent environment is always \code{.GlobalEnv} and global
+#' settings are not modified in any way, so it is entirely possible that tests
+#' will produce different values to those stored when you re-run them from
+#' the \code{unitizer} prompt in review mode.
 #'
 #' \code{unitizer} stores are identified by \code{unitizer} ids, which by
 #' default are character strings containing the location of the folder the
@@ -41,16 +45,25 @@
 #' @param par.env NULL or environment, if NULL tests are run in a clean
 #'   environment, if an environment they are run with that environment as the
 #'   parent environment.
-#' @param search.path.clean logical(1L) if TRUE all items on the search path
-#'   that are not part of a clean R session are detached prior to running tests.
-#'   Namespaces for detached packages remain loaded, so re-attaching those
-#'   packages during tests with \code{library} should carry little overhead.
-#'   The search path is restored to its initial state upon exiting
-#'   \code{unitizer} so any packages added/removed, or objects attached/detached
-#'   from search path are restored to original state.  See "Reproducible Tests"
-#'   vignette for details.
-#' @param search.path.keep character any additional items on the search path
-#'   to keep attached; has no effect if \code{search.path.clean} is FALSE
+#' @param reproducible.global.settings, TRUE, FALSE, or character containing
+#'   values in \code{c("search.path", "options", "working.directory")}.
+#'   Controls how global settings are managed during test evaluation and review.
+#'   Global settings such as the search path, global options, or the working
+#'   indirectly affect the result of R expressions.  If TRUE, this parameter
+#'    will cause \code{unitizer} to track the global settings throughout test
+#'   evaluation and ensure they are the same when reviewing tests as they were
+#'   during evaluation.  Additionally, when testing multiple \code{unitizers}
+#'    with \code{unitize_dir}, the global settings will be reset prior to
+#'   running each \code{unitizer} to what they were after the helper scripts are
+#'   first loaded (see \code{pre.load} parameter).  The search path will also be
+#'   initialized to the bare bones R search path to ensure it is consistent
+#'   across \code{unitizer} runs.  If FALSE, global settings will not be
+#'   affected by \code{unitizer} other than by whatever the tests themselves
+#'   do.  If character, then any of the global settings included will be tracked
+#'   and reset as described above. If any tracking / resetting is enabled,
+#'   \code{unitizer} will reset the  global settings upon exit to what they were
+#'   prior to running \code{unitizer}.  See "Reproducible Tests" vignette for
+#'   more details.
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @param test.dir the directory to run the tests on
@@ -101,8 +114,7 @@ unitize <- function(
   test.file, store.id=NULL,
   interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
-  search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=getOption("unitizer.search.path.keep"),
+  reproducible.global.settings=getOption("unitizer.global.settings")
   force.update=FALSE,
   auto.accept=character(0L),
   pre.load=NULL
@@ -114,8 +126,7 @@ unitize <- function(
     unitize_core(
       test.file.inf, list(store.id.inf),
       interactive.mode=interactive.mode, par.env=par.env,
-      search.path.clean=search.path.clean,
-      search.path.keep=search.path.keep,
+      reproducible.global.settings=reproducible.global.settings
       force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
       mode="unitize"
   ) )
@@ -123,20 +134,17 @@ unitize <- function(
 #' @rdname unitize
 #' @export
 
-review <- function(
-  store.id,
-  par.env=getOption("unitizer.par.env"),
-  search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=getOption("unitizer.search.path.keep")
-) {
+review <- function(store.id) {
+  warning("Need to handle global settings")
   if(!interactive()) stop("`review` only available in interactive mode")
   invisible(
     unitize_core(
       test.files=NA_character_,
       store.ids=list(infer_unitizer_location(store.id, type="u")),
       interactive.mode=TRUE,
-      par.env=par.env, search.path.clean=search.path.clean,
-      search.path.keep=search.path.keep, force.update=FALSE,
+      par.env=.GlobalEnv,
+      reproducible.global.settings=FALSE,
+      force.update=FALSE,
       auto.accept=character(0L), pre.load=list(), mode="review"
   ) )
 }
@@ -149,8 +157,7 @@ unitize_dir <- function(
   pattern="^[^.].*\\.[Rr]$",
   interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
-  search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=getOption("unitizer.search.path.keep"),
+  reproducible.global.settings=getOption("unitizer.global.settings"),
   force.update=FALSE,
   auto.accept=character(0L),
   pre.load=NULL
@@ -189,8 +196,7 @@ unitize_dir <- function(
     unitize_core(
       test.files=test.files, store.ids=store.ids,
       interactive.mode=interactive.mode, par.env=par.env,
-      search.path.clean=search.path.clean,
-      search.path.keep=search.path.keep,
+      reproducible.global.settings=reproducible.global.settings,
       force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
       mode="unitize"
   ) )

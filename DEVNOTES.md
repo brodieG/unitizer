@@ -184,10 +184,40 @@ So maybe we do as an argument, but as a structured object, such as
 unitizerSideEffects
   @history
     @warn  yes / no / fail / NA            (NA for history)
-    @reset named logical: b4pre, b4test
+    @reset named logical: b4pre, b4test, exit
+    @value NULL to use default, or a specific connection?
   @wd
+    @value NULL, to use default a specific working directory?
   @search.path
+    @value NULL, not an option?
   @options
+    @value NULL to use default, or a named list to use as options?
+  @seed
+    @warn
+    @reset
+    @extra?
+
+But this potentially makes it really annoying to modify the settings.
+
+```
+sideEff@wd@reset <- c(TRUE, FALSE, TRUE)
+unitizerSideEffects(history=unitizerHistory(reset=c(TRUE, FALSE, TRUE)))
+```
+
+gotta handle the `options(warn=1)` bit as well.
+
+Have two predefined defaults:
+* vanilla
+* default
+  * search path clean
+  * history shared across unitizers, but clean otherwise
+  * wd reset before tests
+  * options reset before tests
+
+One dissonance is that somethings are reset (e.g. options, etc) whereas others
+are set (seed, path), so some things need a mechanism to pass a value to set
+to, and others don't.
+
 
 # Scenarios to test
 

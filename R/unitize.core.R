@@ -23,9 +23,11 @@
 
 unitize_core <- function(
   test.files, store.ids, interactive.mode, par.env,
-  search.path.clean, search.path.keep, force.update,
+  reproducible.global.settings,
+  force.update,
   auto.accept, pre.load, mode
 ) {
+
   # - Validation / Setup -------------------------------------------------------
 
   if(
@@ -73,12 +75,14 @@ unitize_core <- function(
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be NULL or an environment.")
   if(
-    !is.logical(search.path.clean) || length(search.path.clean) != 1L ||
-    is.na(search.path.clean)
+    !is.TF(reproducible.global.settings) &&
+    !all(reproducible.global.settings %in% .unitizer.global.settings)
   )
-    stop("Argument `search.path.clean` must be TRUE or FALSE.")
-  if(!is.character(search.path.keep))
-    stop("Argument `search.path.keep` must be character()")
+    stop(
+      "Argument `reproducible.global.settings` must be TRUE, FALSE, or ",
+      "character with values in ",
+      deparse(.unitizer.global.settings.names, width=500L)
+    )
   auto.accept.valid <- character()
   if(is.character(auto.accept)) {
     if(length(auto.accept)) {
@@ -160,9 +164,12 @@ unitize_core <- function(
       "Logic Error: some `store.ids` could not be normalized; contact ",
       "maintainer."
     )
-  # reset global vars used for search path manip
+  # - Global Controls ----------------------------------------------------------
+
+  # reset global vars used for search path manip and other factors
 
   reset_packenv()
+  shim_funs(what)   # Need to specify what we're actually shimming
 
   # - Parse / Load -------------------------------------------------------------
 
@@ -224,6 +231,7 @@ unitize_core <- function(
   over_print("Preloads...")
   pre.load.frame <- try(pre_load(pre.load, gpar.frame))
   .unitizer.pack.env$opts <- options()
+  .unitizer.pack.env$wd <- getwd()
 
   if(inherits(pre.load.frame, "try-error") || !is.environment(pre.load.frame))
     stop("Argument `pre.load` could not be interpreted")
