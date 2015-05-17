@@ -69,7 +69,8 @@ setClass(
     trace="list",
     data="unitizerItemData",
     section.id="integer",
-    section.name="character"
+    section.name="character",
+    glob.indices="integer"
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L,

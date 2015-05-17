@@ -358,8 +358,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@mapping@sub.sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
       furthest.reviewed <- if(length(which(x@mapping@reviewed)))
         max(which(x@mapping@reviewed)) else 0L
+      last.id.rel <-
+        x@mapping@item.id.rel[[which(x@mapping@item.id == x@last.reviewed)]]
     } else {
-      last.reviewed.sec <- last.reviewed.sub.sec <- furthest.reviewed <- 0L
+      last.reviewed.sec <- last.reviewed.sub.sec <- furthest.reviewed <-
+        last.id.rel <- 0L
     }
     x@last.reviewed <- curr.id
 
@@ -459,6 +462,27 @@ setMethod("reviewNext", c("unitizerBrowse"),
       item.main <- item.new
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
     }
+    # Retrieve previous object so we can use the global settings data to figure
+    # out if we need to reset the global settings; this is not 100% perfect
+    # since we are setting up the environment as of test completion, but for
+    # the show stuff for errors we might want the status before the test; should
+    # really not matter in almost all circumstances
+
+    last.glob.set <- if(last.id.rel) {
+      last.item.new <- if(!is.null(curr.sub.sec.obj@items.new))
+        curr.sub.sec.obj@items.new[[last.id.rel]]
+      last.item.ref <- if(!is.null(curr.sub.sec.obj@items.ref))
+        curr.sub.sec.obj@items.ref[[last.id.rel]]
+
+      if(is.null(last.item.new)) {
+        last.item.ref@glob.indices
+      } else last.item.new@glob.indices
+    } else integer()
+
+    if(!identical(last.glob.set, item.main@glob.indices))
+      set_global_reproducible(
+        item.main@glob.indices[last.glob.set != item.main@glob.indices]
+      )
     # Show test to screen, but only if the entire section is not ignored, and
     # not passed tests and requesting that those not be shown
 

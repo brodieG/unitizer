@@ -81,13 +81,16 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     capt <- get_capture(capt.cons)
 
     if(aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
-      stop("Failed instantiating a unitizer section:\n", paste0(capt$message, "\n"))
+      stop(
+        "Failed instantiating a unitizer section:\n", paste0(capt$message, "\n")
+      )
 
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
       conditions=new("conditionList", .items=res$conditions),
       output=capt$output, message=capt$message, aborted=res$aborted,
-      env=test.env, comment=x.comments, trace=res$trace
+      env=test.env, comment=x.comments, trace=res$trace,
+      glob.indices=get_global_indices()
     )
 } )
 #' Utility function to evaluate user expressions

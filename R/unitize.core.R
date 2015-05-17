@@ -74,15 +74,22 @@ unitize_core <- function(
     stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be NULL or an environment.")
-  if(
-    !is.TF(reproducible.global.settings) &&
-    !all(reproducible.global.settings %in% .unitizer.global.settings)
-  )
+  if(isTRUE(reproducible.global.settings)) {
+    reproducible.global.settings <- .unitizer.global.settings.names
+  } else if (identical(reproducible.global.settings, FALSE)) {
+    reproducible.global.settings <- character(0L)
+  } else if (
+    is.character(reproducible.global.settings) &&
+    all(reproducible.global.settings %in% .unitizer.global.settings.names)
+  ) {
+    TRUE  # Don't need to change reproducible.global.settings
+  } else {
     stop(
       "Argument `reproducible.global.settings` must be TRUE, FALSE, or ",
       "character with values in ",
       deparse(.unitizer.global.settings.names, width=500L)
     )
+  }
   auto.accept.valid <- character()
   if(is.character(auto.accept)) {
     if(length(auto.accept)) {
@@ -169,8 +176,18 @@ unitize_core <- function(
   # reset global vars used for search path manip and other factors
 
   reset_packenv()
-  shim_funs(what)   # Need to specify what we're actually shimming
-
+  glob.set <- reproducible.global.settings  # will be using `reproducible.global.settings` later
+  if(is.null(par.env)) {
+    par.env <- .unitizer.pack.env$zero.env.par
+    .unitizer.pack.env$global.opts.status@par.env <- TRUE
+    glob.set <- unique(c("search.path", glob.set))
+  }
+  setup_shims(glob.set)
+  on.exit(add=TRUE,
+    {
+      reset_global_reproducible(reproducible.global.settings)
+      disable_global_reproducible()
+  } )
   # - Parse / Load -------------------------------------------------------------
 
   # Parse, and use `eval.which` to determine which tests to evaluate
@@ -183,43 +200,7 @@ unitize_core <- function(
         over_print(paste("Parsing", x))
         parse_tests(x, comments=TRUE)
   } ) }
-  # Clean up search path
 
-  search.path.setup <- search.path.trim <- FALSE
-  if((is.null(par.env) || isTRUE(search.path.clean)) && !tracingState()) {
-    warning(
-      "Tracing is disabled, but must be enabled to run in a clean environment ",
-      "or with a clean search path.  If you want these features re-enable ",
-      "tracing with `tracingState(TRUE)`.  See \"Reproducible Tests\" ",
-      "vignette for details.  Running on existing search path with ",
-      "`.GlobalEnv` as parent.",
-      immediate.=TRUE
-    )
-    par.env <- .GlobalEnv
-    search.path.clean <- FALSE
-  } else if(is.null(par.env) || isTRUE(search.path.clean)) {
-    over_print("Search Path Setup...")
-    if(!isTRUE(search.path.setup <- search_path_setup())) {
-      if(is.null(par.env))
-        warning(
-          "Unable to run in clean environment, running in .GlobalEnv",
-          immediate.=TRUE
-        )
-      if(isTRUE(search.path.clean))
-        warning(
-          "Unable to run with clean search path; using existing.",
-          immediate.=TRUE
-        )
-    } else {
-      on.exit(search_path_unsetup(), add=TRUE)
-    }
-  }
-  if(isTRUE(search.path.clean)) {
-    if(isTRUE(search.path.trim <- search_path_trim(keep=search.path.keep))) {
-      on.exit(search_path_restore(), add=TRUE) # this also runs search_path_unsetup()
-    }
-    on.exit(search_path_unsetup(), add=TRUE)
-  }
   # Load / create all the unitizers
 
   # Retrieve or create unitizer environment
@@ -230,11 +211,9 @@ unitize_core <- function(
 
   over_print("Preloads...")
   pre.load.frame <- try(pre_load(pre.load, gpar.frame))
-  .unitizer.pack.env$opts <- options()
-  .unitizer.pack.env$wd <- getwd()
-
   if(inherits(pre.load.frame, "try-error") || !is.environment(pre.load.frame))
     stop("Argument `pre.load` could not be interpreted")
+  set_init_indices()
 
   util.frame <- new.env(parent=pre.load.frame)
   assign("quit", unitizer_quit, util.frame)
@@ -267,7 +246,8 @@ unitize_core <- function(
 
     if(identical(mode, "unitize"))
       unitizers[valid] <- unitize_eval(
-        tests.parsed=tests.parsed[valid], unitizers=unitizers[valid]
+        tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
+        global.rep=reproducible.global.settings
       )
 
     # Gather user input, and store tests as required.  Any unitizers that
@@ -289,8 +269,9 @@ unitize_core <- function(
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
-  if(search.path.trim) search_path_restore()        # runs _unsetup() as well
-  else if (search.path.setup) search_path_unsetup()
+  reset_global_reproducible(reproducible.global.settings)
+  disable_global_reproducible()
+
   return(as.list(unitizers))
 }
 #' Evaluate User Tests
@@ -302,7 +283,7 @@ unitize_core <- function(
 #' @return a list of unitizers
 #' @keywords internal
 
-unitize_eval <- function(tests.parsed, unitizers) {
+unitize_eval <- function(tests.parsed, unitizers, global.rep) {
   on.exit(                                   # In case interrupted or some such
     message(
       "Unexpectedly exited before storing unitizer; tests were not saved or ",
@@ -328,6 +309,7 @@ unitize_eval <- function(tests.parsed, unitizers) {
     unitizer <- unitizers[[i]]
 
     if(unitizer@eval) {
+      reset_global_reproducible(mode="partial", which=global.rep)
       tests <- new("unitizerTests") + test.dat
       if(test.len > 1L)
         over_print(

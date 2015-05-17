@@ -29,61 +29,7 @@ setClass(
   }
 )
 
-setClass(
-  "unitizerGlobalOptsStatus",
-  slots=c(
-    search.path="logical",
-    wd="logical",
-    opts="logical",
-    par.env="logical"
-  ),
-  prototype=list(search.path=FALSE, wd=FALSE, opts=FALSE, par.env=FALSE),
-  validity=function(object) {
-    for(i in slotNames(object))
-      if(!is.TF(slot(object, i)))
-        return(paste0("slot `", i, "` must be TRUE or FALSE"))
-    TRUE
-  }
-)
-#' Objects used to Track Global Settings and the Like
-#'
-#' Note \code{`"package:unitizer"`} is not actually detached but is included in
-#' the list so that it is replaced in the same position on the search path
-#'
-#' Packages are stored as character values, other objects are stored directly.
-#'
-#' Probably should be an RC object instead of an environment.
-#'
-#' @keywords internal
 
-.unitizer.pack.env <- new.env()
-
-#' Clears out Global State
-#'
-#' Should be called by `unitize` each time
-#'
-#' @return the package environment we use as a global variable
-#' @keywords internal
-
-reset_packenv <- function() {
-  .unitizer.pack.env$zero.env.par <- new.env(parent=.GlobalEnv)
-  .unitizer.pack.env$search.init <- character()   # Initial search path b4 any modifications
-
-  .unitizer.pack.env$shim.list <- list()
-  .unitizer.pack.env$global.opts.status <- new("unitizerGlobalOptsStatus")
-
-  .unitizer.pack.env$opts <- list()               # options after helper
-  .unitizer.pack.env$wds <- list()
-
-  sp <- search()
-  sp.full <- setNames(ave(integer(length(sp)) + 1L, sp, FUN=cumsum), sp)
-  .unitizer.pack.env$search <- list(sp.full)
-  .unitizer.pack.env$search.curr <- sp.full
-  .unitizer.pack.env$search.objs <- list()        # populated by `detach`
-
-  .unitizer.pack.env
-}
-reset_packenv()
 #' Search Path Back-up
 #'
 #' Holds the state of the search path before `unitizer` to serve as a back-up
@@ -164,7 +110,7 @@ search_path_track <- function(mode, pos=NA_integer_) {
       a <- search()
       a.len <- length(a)
       b.full <-
-        .unitizer.pack.env$search[[length(.unitizer.pack.env$search)]]
+        .unitizer.pack.env$search.path[[length(.unitizer.pack.env$search.path)]]
       b <- names(b.full)
       b.len <- length(b)
       max.len <- max(a.len, b.len)
@@ -211,7 +157,7 @@ search_path_track <- function(mode, pos=NA_integer_) {
         }
         # Add an updated search path entry
 
-        .unitizer.pack.env$search[[length(.unitizer.pack.env$search) + 1L]] <-
+        .unitizer.pack.env$search.path[[length(.unitizer.pack.env$search.path) + 1L]] <-
           sp
         .unitizer.pack.env$search.curr <- sp
       }
@@ -244,9 +190,9 @@ search_path_track <- function(mode, pos=NA_integer_) {
 search_path_update <- function(id) {
   stopifnot(
     !is.integer(id), length(id) != 1L, is.na(id),
-    !id %in% seq(.unitizer.pack.env$search)
+    !id %in% seq(.unitizer.pack.env$search.path)
   )
-  search.target <- .unitizer.pack.env$search[[id]]
+  search.target <- .unitizer.pack.env$search.path[[id]]
   search.curr <- search.curr.tmp <- .unitizer.pack.env$search.curr
   if(!identical(search(), names(search.curr)))  # needs better handling
     stop("Logic Error: mismatch between actual search path and tracked path")
@@ -297,98 +243,13 @@ search_path_update <- function(id) {
   if(!identical(search(), names(search.target)))
     stop("Logic Error: path reorder failed")
   .unitizer.pack.env$search.curr <- search.target
+
+  if(.unitizer.pack.env$status@par.env)
+    parent.env(.unitizer.pack.env$zero.env.par) <- as.environment(2L)
+
   invisible(NULL)
 }
 
-
-#' Search Path Unsetup
-#'
-#' Undoes all the shimming we applied
-#'
-#' @keywords internal
-
-search_path_unsetup <- function() {
-  # Suppress std.err because of "Untracing function..." messages produced by trace
-
-  std.err <- tempfile()
-  std.err.con <- file(std.err, "w+b")
-  on.exit({
-    try(get_text_capture(std.err.con, std.err, type="message"))
-    release_sinks()
-    close(std.err.con)
-    unlink(std.err)
-    stop(
-      "Unexpectedly failed while attempting to restore search path.  You may ",
-      "need to exit R to restore search path and to untrace ",
-      "`library/attach/detach`; this should not happen so please report to ",
-      "maintainer."
-    )
-  } )
-  parent.env(.unitizer.pack.env$zero.env.par) <- .GlobalEnv
-  capt.con <- set_text_capture(std.err.con, "message")
-
-  unshim <- try({
-    untrace(library, where=.BaseNamespaceEnv)
-    untrace(attach, where=.BaseNamespaceEnv)
-    untrace(detach, where=.BaseNamespaceEnv)
-  })
-  unshim.out <- get_text_capture(capt.con, std.err, "message")
-  on.exit(NULL)
-  close(std.err.con)
-  unlink(std.err)
-
-  if(
-    !identical(
-      gsub("\\s", "", paste0(unshim.out, collapse="")),
-      gsub("\\s", "",
-        paste0(
-          "Untracing function \"library\" in package \"namespace:base\"",
-          "Untracing function \"attach\" in package \"namespace:base\"",
-          "Untracing function \"detach\" in package \"namespace:base\""
-      ) )
-    ) || inherits(unshim, "try-error")
-  ) {
-    cat(unshim.out, file=stderr(), sep="\n")
-  }
-  if(inherits(unshim, "try-error")) {
-    warning(
-      "Failed trying to unshim library/require/attach/detach, ",
-      "which means some of those functions are still modified for search path ",
-      "manipulation by `unitizer`.  Restarting R should restore the original ",
-      "functions.", .unitizer.search.fail.msg.extra
-    )
-    return(invisible(FALSE))
-  }
-  invisible(TRUE)
-}
-#' Check Whether our Search Path Setup Persists
-#'
-#' This is an internal check to make sure the shims on
-#' \code{library/require/attach/detach} are working correctly.
-#'
-#' @param verbose whether to output details of failures, purely for internal
-#'  debugging
-#' @keywords internal
-
-search_path_shim_check <- function(verbose=FALSE) {
-  if(
-    !identical(base::library, .unitizer.pack.env$shimmed.funs$library) ||
-    !identical(base::attach, .unitizer.pack.env$shimmed.funs$attach) ||
-    !identical(base::detach, .unitizer.pack.env$shimmed.funs$detach)
-  ) {
-    if(verbose)
-      warning(
-        "Shimmed functions library/attach/detach unexpectedly modified",
-        immediate.=TRUE
-      )
-    return(FALSE)
-  }
-  if(!tracingState()) {
-    if(verbose) warning("Tracing state disabled", immediate.=TRUE)
-    return(FALSE)
-  }
-  return(TRUE)
-}
 #' Restore Search Path to Bare Bones R Default
 #'
 #' \code{search_path_trim} attempts to recreate a clean environment by
