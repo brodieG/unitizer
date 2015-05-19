@@ -477,12 +477,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(is.null(last.item.new)) {
         last.item.ref@glob.indices
       } else last.item.new@glob.indices
-    } else integer()
+    } else new("unitizerGlobalIndices")
 
     if(!identical(last.glob.set, item.main@glob.indices))
-      set_global_reproducible(
-        item.main@glob.indices[last.glob.set != item.main@glob.indices]
-      )
+      .global$reset(item.main@glob.indices)
+
     # Show test to screen, but only if the entire section is not ignored, and
     # not passed tests and requesting that those not be shown
 

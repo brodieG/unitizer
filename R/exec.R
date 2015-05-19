@@ -90,7 +90,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       conditions=new("conditionList", .items=res$conditions),
       output=capt$output, message=capt$message, aborted=res$aborted,
       env=test.env, comment=x.comments, trace=res$trace,
-      glob.indices=get_global_indices()
+      glob.indices=.global$bookmark()
     )
 } )
 #' Utility function to evaluate user expressions

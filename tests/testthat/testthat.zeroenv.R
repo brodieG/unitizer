@@ -362,7 +362,6 @@ test_that("Messing with path is detected", {
   tracingState(TRUE)
   testthat::expect_warning(sp_rest <- unitizer:::search_path_restore())
   testthat::expect_false(sp_rest)
-  testthat::expect_identical(unitizer_search_path_backup(), search.path.init)
   tracingState(FALSE)
   detach("package:unitizerdummypkg2", unload=TRUE)  # re-synchronize so we can restore path
   tracingState(TRUE)

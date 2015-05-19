@@ -28,21 +28,6 @@ setClass(
     TRUE
   }
 )
-
-
-#' Search Path Back-up
-#'
-#' Holds the state of the search path before `unitizer` to serve as a back-up
-#' in case the search path manipulation functions are unable to restore the
-#' search path to its original value.
-#'
-#' @export
-#' @return character the search path
-
-unitizer_search_path_backup <- function() {
-  .unitizer.pack.env$search.init
-}
-
 #' Default List of Packages To Keep on Search Path
 #'
 #' @export
@@ -72,7 +57,7 @@ unitizer_search_path_backup <- function() {
 #' require by extension), detach, and attach functions.
 #'
 #' Any time any of those functions is called, \code{search_path_track} updates
-#' the journaling information kept in \code{.unitizer.pack.env} and makes sure
+#' the journaling information kept in \code{unitizer:::.global} and makes sure
 #' the parent to the \code{unitizer} environment is the one right below
 #' \code{.GlobalEnv}.  Additionally, any time \code{detach} is called, data
 #' about the detached object is kept for use when re-attaching.
@@ -109,8 +94,8 @@ search_path_track <- function(mode, pos=NA_integer_) {
 
       a <- search()
       a.len <- length(a)
-      b.full <-
-        .unitizer.pack.env$search.path[[length(.unitizer.pack.env$search.path)]]
+      track.len <- .global$tracking@search.path
+      b.full <- .global$tracking@search.path[[track.len]]
       b <- names(b.full)
       b.len <- length(b)
       max.len <- max(a.len, b.len)
@@ -157,15 +142,13 @@ search_path_track <- function(mode, pos=NA_integer_) {
         }
         # Add an updated search path entry
 
-        .unitizer.pack.env$search.path[[length(.unitizer.pack.env$search.path) + 1L]] <-
-          sp
-        .unitizer.pack.env$search.curr <- sp
+        .global$tracking$search.path[[track.len + 1L]] <- sp
       }
       # Keep unitizer rooted just below globalenv; do we need to worry about
       # there only being one environment in the search path?
 
-      if(.unitizer.pack.env$global.opts.status@par.env) {
-        parent.env(.unitizer.pack.env$zero.env.par) <- as.environment(2L)
+      if(.global$status@par.env) {
+        parent.env(.global$par.env) <- as.environment(2L)
       }
       res
   } )
@@ -175,7 +158,7 @@ search_path_track <- function(mode, pos=NA_integer_) {
       "vanilla mode: ", conditionMessage(attr(res, "cond"))
       immediate.=TRUE
     )
-    search_path_unsetup()
+    .global$disable("search.path")
     return(FALSE)
   }
   res
@@ -190,10 +173,12 @@ search_path_track <- function(mode, pos=NA_integer_) {
 search_path_update <- function(id) {
   stopifnot(
     !is.integer(id), length(id) != 1L, is.na(id),
-    !id %in% seq(.unitizer.pack.env$search.path)
+    !id %in% seq_along(.global$tracking$search.path)
   )
-  search.target <- .unitizer.pack.env$search.path[[id]]
-  search.curr <- search.curr.tmp <- .unitizer.pack.env$search.curr
+  search.target <- .global$tracking$search.path[[id]]
+  search.curr <-
+    .global$tracking$search.path[[.global$last.indices@search.path]]
+
   if(!identical(search(), names(search.curr)))  # needs better handling
     stop("Logic Error: mismatch between actual search path and tracked path")
 
@@ -221,7 +206,9 @@ search_path_update <- function(id) {
   for(i in sort(which(is.na(match(st.id, sc.id))))) {
     obj.name <- names(search.target)[[i]]
     obj.seq <- search.target[[i]]
-    obj <- try(.unitizer.pack.env$search.objs[[obj.name]][[obj.seq]])
+    obj <- try(
+      .global$tracking@search.path@detached.objects[[obj.name]][[obj.seq]]
+    )
     if(inherits(obj, "try-error") || !is(obj, "unitizerSearchData"))
       stop("Logic Error: failed retrieving previoulsy detached object data")
     reattach(i, name=obj@name, type=obj@type, data=obj@data, extra=obj@extra)
@@ -242,12 +229,10 @@ search_path_update <- function(id) {
   }
   if(!identical(search(), names(search.target)))
     stop("Logic Error: path reorder failed")
-  .unitizer.pack.env$search.curr <- search.target
+  .global$last.indices@search.path <- id
 
-  if(.unitizer.pack.env$status@par.env)
-    parent.env(.unitizer.pack.env$zero.env.par) <- as.environment(2L)
-
-  invisible(NULL)
+  if(.global$status@par.env) parent.env(.global$par.env) <- as.environment(2L)
+  invisible(TRUE)
 }
 
 #' Restore Search Path to Bare Bones R Default
@@ -331,83 +316,7 @@ search_path_trim <- function(keep=c("package:unitizer", "tools:rstudio")) {
   on.exit(NULL)   # clear clean-up b/c we succeeded
   invisible(TRUE)
 }
-#' Restore Search Path to State Before \code{`search_path_trim`}
-#'
-#' Undoes \code{`search_path_trim`}
-#'
-#' @seealso \code{`\link{search_path_trim}`}  \code{`\link{search}`}
-#' @keywords internal
-#' @return TRUE on success, FALSE on failure, invisibly
 
-search_path_restore <- function() {
-
-  search_path_unsetup()  # no matter what, untrace the functions
-
-  # Make sure everything is as we expect before we actually do anything
-
-  if(!search_path_check()) {
-    warning(
-      "Unexpected search path encountered, this likely occurred because you ",
-      "somehow bypassed in your test code the traced versions of ",
-      "`base::library/attach/detach` that `unitizer` provides. ",
-      "This will happen if you either `trace` or `untrace` any of `library`, ",
-      "`attach`, or `detach` from package `base`, or if you turn off tracing ",
-      "with `tracingState`. `unitizer` relies on the traced versions of those ",
-      "functions to track modifications to the search path.  If you did not do ",
-      "any of the above, but are still seeing this message, please contact ",
-      "maintainer. \n\nWe are unable to restore the search path to its ",
-      "original value (you can retrieve orginal value with ",
-      "`unitizer_search_path_backup()`).",
-      .unitizer.search.fail.msg, immediate.=TRUE
-    )
-    return(invisible(FALSE))
-  }
-  # Step back through history, undoing each step; not this means we need to
-  # potentially re-attach an object that was previously attached to the search
-  # path.  While we realize this is bad practice, the only reason we are doing
-  # this is because said object was already attached and we are restoring the
-  # search path to its previous state
-
-
-  for(i in rev(seq_along(.unitizer.pack.env$history))) {
-    hist <- .unitizer.pack.env$history[[i]]
-    res <- try({
-      if(hist@mode == "add") {  # Need to remove
-        if(                     # Keep namespace
-          hist@type == "object" ||
-          (
-            hist@type == "package" &&
-            hist@name %in% .unitizer.pack.env$search.init
-          )
-        ) {
-          detach(pos=hist@pos, character.only=TRUE)
-        } else detach(pos=hist@pos, unload=TRUE, character.only=TRUE)
-      } else if(hist@mode == "remove") { # Need to add back
-        if(hist@type == "package") {
-          suppressPackageStartupMessages(
-            relib(
-              hist@name, pos=hist@pos, quietly=TRUE, character.only=TRUE,
-              lib.loc=dirname(attr(hist@extra, "path")), warn.conflicts=FALSE
-          ) )
-        } else if (hist@type == "object") {
-          reattach(
-            hist@extra, pos=hist@pos, name=hist@name, warn.conflicts=FALSE
-          )
-        }
-      }
-    })
-    if(inherits(res, "try-error")) {
-      warning(
-        "Failed attempting to restore search path at step ",
-        switch(hist@mode, add="remove", remove="add", "<unknown>"),
-        " `", hist@name, "`.  Unable to fully restore search path.  ",
-        .unitizer.search.fail.msg, immediate.=TRUE
-      )
-      return(invisible(FALSE))
-    }
-  }
-  invisible(TRUE)
-}
 #' Check Whether a Package Is Loaded
 #'
 #' A package is considered loaded if it is in the search path and there is a
@@ -438,12 +347,12 @@ reattach <- function(pos, name, type, data, extra) {
 
   if(identical(type, "package")) {
     suppressPackageStartupMessages(
-      .library(
+      .unitizer.base.funs$library(
         name, pos=pos, quietly=TRUE, character.only=TRUE,
         lib.loc=extra, warn.conflicts=FALSE
     ) )
   } else {
-    .attach(data, pos=i, name=name, warn.conflicts=FALSE)
+    .unitizer.base.funs$attach(data, pos=i, name=name, warn.conflicts=FALSE)
   }
 }
 #' @keywords internal
@@ -464,7 +373,7 @@ move_on_path <- function(new.pos, old.pos) {
     type <- "object"
     extra <- NULL
   }
-  detach(old.pos)
+  .unitizer.base.funs$detach(old.pos)
   reattach(pos=new.pos, name=name, type=type, data=obj, extra=extra)
 }
 #' Get Index For SP Object
@@ -476,10 +385,10 @@ move_on_path <- function(new.pos, old.pos) {
 
 search_path_obj_nextid <- function(name) {
   stopifnot(is.chr1plain(name), !is.na(name))
-  sp.curr <- .unitizer.pack.env$search.curr
+  sp.curr <- .global$tracking@search.path[[.global$last.indices@search.path]]
   id.max <- max(
     sp.curr[names(sp.curr) == name],
-    length(.unitizer.pack.env$search.objs[[name]])
+    length(.global$tracking@search.path@detached.objects[[name]])
   )
   id.max + 1L
 }

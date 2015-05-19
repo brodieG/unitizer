@@ -175,19 +175,30 @@ unitize_core <- function(
 
   # reset global vars used for search path manip and other factors
 
-  reset_packenv()
+  .global <<- unitizerGlobal$new()
+
   glob.set <- reproducible.global.settings  # will be using `reproducible.global.settings` later
   if(is.null(par.env)) {
-    par.env <- .unitizer.pack.env$zero.env.par
-    .unitizer.pack.env$global.opts.status@par.env <- TRUE
+    par.env <- .global$par.env
+    .global$status@par.env <- TRUE
     glob.set <- unique(c("search.path", glob.set))
   }
   setup_shims(glob.set)
   on.exit(add=TRUE,
     {
-      reset_global_reproducible(reproducible.global.settings)
-      disable_global_reproducible()
+      .global$resetFull()
+      .global$disable()
   } )
+  # Retrieve or create unitizer environment
+
+  gpar.frame <-
+    if(is.null(par.env)) .global$par.env else par.env
+
+  # Trim search path if warranted
+
+  stop("Implement search path trimming")
+
+
   # - Parse / Load -------------------------------------------------------------
 
   # Parse, and use `eval.which` to determine which tests to evaluate
@@ -203,9 +214,6 @@ unitize_core <- function(
 
   # Load / create all the unitizers
 
-  # Retrieve or create unitizer environment
-
-  gpar.frame <- if(is.null(par.env)) .unitizer.pack.env$zero.env.par else par.env
 
   # Handle pre-load data
 
@@ -213,7 +221,8 @@ unitize_core <- function(
   pre.load.frame <- try(pre_load(pre.load, gpar.frame))
   if(inherits(pre.load.frame, "try-error") || !is.environment(pre.load.frame))
     stop("Argument `pre.load` could not be interpreted")
-  set_init_indices()
+
+  .global$bookmarkInit()
 
   util.frame <- new.env(parent=pre.load.frame)
   assign("quit", unitizer_quit, util.frame)
@@ -269,8 +278,8 @@ unitize_core <- function(
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
-  reset_global_reproducible(reproducible.global.settings)
-  disable_global_reproducible()
+  .global$resetFull()
+  .global$disable()
 
   return(as.list(unitizers))
 }
