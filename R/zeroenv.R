@@ -80,7 +80,7 @@ setClass(
 #' @keywords internal
 #' @rdname search_path
 
-search_path_track <- function(mode, pos=NA_integer_) {
+search_path_track <- function(mode, pos=NA_integer_, , .global=.global) {
   res <- try(
     {
       stopifnot(
@@ -170,7 +170,7 @@ search_path_track <- function(mode, pos=NA_integer_) {
 #'
 #' @param id integer(1L) what recorded state to revert to
 
-search_path_update <- function(id) {
+search_path_update <- function(id, .global=.global) {
   stopifnot(
     !is.integer(id), length(id) != 1L, is.na(id),
     !id %in% seq_along(.global$tracking$search.path)
