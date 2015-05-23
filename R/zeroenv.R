@@ -253,47 +253,47 @@ search_path_update <- function(id, .global=.global) {
 #' @keywords internal
 #' @rdname search_path
 
-search_path_trim <- function(keep=getOption("unitizer.search.path.keep")) {
+search_path_trim <- function(
+  keep=getOption("unitizer.search.path.keep"),
+  .global=.global
+) {
   stopifnot(is.character(keep), all(!is.na(keep)))
 
   # Make sure search path is compatible with what we're doing
 
   search.path.pre <- search()
+
   # Set-up on exit function to attempt to restore search path in case something
   # went wrong
 
   on.exit({
     warning(
-      "Unable to trim search path, so attempting to restore it.",
+      "Disabling reproducible search path and attempting to restore to ",
+      "initial state.",
       immediate.=TRUE
     )
-    search_path_restore()
+    index <- .global$indices.last
+    index@search.path <- 1L
+    attempt <- try(.global$reset(index))
+    if(inherits(attempt, "try-error")) {
+      warning(
+        "Unable to restore original search path; please consider restarting ",
+        "your R session to ensure "
+        immediate.=TRUE
+      )
+    }
+    .global$disable("search.path")
   })
-
   # detach each object, and record them for purposes of restoring them later
 
   packs.to.detach <- setdiff(search.path.pre, c(keep, .unitizer.base.packages))
 
   for(i in seq_along(packs.to.detach)) {
     pack <- packs.to.detach[[i]]
-    if(!is.character(pack) || length(pack) != 1L) {
-      stop(
-        "Logic Error: search path object was not character(1L); contact ",
-        "maintainer"
-      )
-    }
-    if(inherits(try(obj <- as.environment(pack)), "try-error")) {
-      stop(
-        "Logic Error: unable to convert search path element `", pack,
-        "` to environment; contact maintainer."
-      )
-    }
-    # Is it a package or an object?  Considered package if name starts with
-    # "package:" and the package shows up as a namespace env
+    if(!is.chr1(pack))
+      stop("Logic Error: invalid search path token; contact maintainer.")
 
-    is.pack <- is.loaded_package(pack)  # run before detaching
-
-    # Detach all but `unitizer`
+    # Detach packages
 
     if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
       warning(
