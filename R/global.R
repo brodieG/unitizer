@@ -230,7 +230,21 @@ unitizerGlobal <- setRefClass(
         status
       }
     },
-    check=function() {
+    checkState=function(which=.unitizer.global.settings.names) {
+      '
+      Verify that state actually is what we think it is
+      '
+      stopifnot(is.chr1(which), all(which %in% .unitizer.global.settings.names))
+      for(i in slotNames(status)) {
+        if(
+          !identical(
+            getTrackingValue(slot(tracking, i)),
+            slot(state.funs, i)()
+          )
+
+      }
+    },
+    checkShims=function() {
       '
       Verify that shimming is still working, and if not disable tracking
       '
