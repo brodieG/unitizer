@@ -100,7 +100,7 @@ setClass(
 #'   global settings, provided for testing purposes only since should normally
 #'   always refer to \code{unitizer:::.global}
 
-search_path_track <- function(mode, pos=NA_integer_, , .global=.global) {
+search_path_track <- function(mode, pos=NA_integer_, .global=.global) {
   res <- try(
     {
       stopifnot(
@@ -253,7 +253,9 @@ search_path_update <- function(id, .global=.global) {
 #' @keywords internal
 #' @rdname search_path
 
-search_path_trim <- function(keep=c("package:unitizer", "tools:rstudio")) {
+search_path_trim <- function(keep=getOption("unitizer.search.path.keep")) {
+  stopifnot(is.character(keep), all(!is.na(keep)))
+
   # Make sure search path is compatible with what we're doing
 
   search.path.pre <- search()

@@ -129,8 +129,6 @@ setMethod(
 )
 #' @rdname unitizerOpts-class
 
-#' @rdname unitizerOpts-class
-
 setMethod(
   "as.character", "unitizerOpts",
   function(x, ...) {
@@ -149,8 +147,15 @@ setMethod(
 )
 #' Set Option if Not Set
 #'
+#' Utility function used by .onLoad to set a global option if it is not set
+#' already.  This is equivalent to conditionally using \code{option} to set
+#' options that are not defined yet.
+#'
+#' @export
 #' @param x the name of the option to set
 #' @param value the value to set the option to
+#' @return the result of calling \code{option} if option is not set, or NULL
+#'   invisibly if it is already set
 
 setOptIfNot <- function(x, value) {
   if(!is.plainchr1(x) || is.na(x))
