@@ -34,7 +34,8 @@ setClass(
 
 .unitizer.base.packages <- c(
   "package:stats", "package:graphics", "package:grDevices", "package:utils",
-  "package:datasets", "package:methods", "Autoloads", "package:base", ".GlobalEnv"
+  "package:datasets", "package:methods", "Autoloads", "package:base",
+  ".GlobalEnv"
 )
 #' Error message shared across functions
 #'
@@ -49,12 +50,12 @@ setClass(
   "  Please contact maintainer to alert them of this warning."
 )
 
-#' Update Our View of What Search Path is
+#' Search Path Management Functions
 #'
 #' Set of functions used to track and set search path state.  Strategy is to
-#' keep track of every different search path state encountered from the first
-#' \code{\link{reset_packenv}} call, which is done by shimming the library (and
-#' require by extension), detach, and attach functions.
+#' keep track of every different search path state encountered, which is done by
+#' shimming the library (and require by extension), detach, and attach
+#' functions (see shim.R, global.R).
 #'
 #' Any time any of those functions is called, \code{search_path_track} updates
 #' the journaling information kept in \code{unitizer:::.global} and makes sure
@@ -77,8 +78,27 @@ setClass(
 #' that behavior should be extremely unlikely within the typical testing
 #' environment.
 #'
+#' \code{search_path_trim} attempts to recreate a clean environment by
+#' unloading all packages and objects that are not loaded by default in the
+#' default R configuration. This does not unload namespaces, but rather just
+#' detaches them from the namespace.  This function is intended to be called
+#' after journaling has been enabled.
+#'
+#' \code{`tools:rstudio`} is kept in search path as the default argument because
+#' it is not possible to cleanly unload and reload it because \code{`attach`}
+#' actually attaches a copy of it's argument, not the actual object, and that
+#' causes problems for that search path item.
+#'
 #' @keywords internal
 #' @rdname search_path
+#' @param keep character names of packages/objects to keep in search path;
+#'   note that base packages (see .unitizer.base.packages) that come typically
+#'   pre attached are always kept.  The \code{`keep`} packages are an addition
+#'   to those.
+#' @param id integer(1L) what recorded state to revert to
+#' @param .global reference object of class "unitizerGlobal" that holds the
+#'   global settings, provided for testing purposes only since should normally
+#'   always refer to \code{unitizer:::.global}
 
 search_path_track <- function(mode, pos=NA_integer_, , .global=.global) {
   res <- try(
@@ -163,12 +183,8 @@ search_path_track <- function(mode, pos=NA_integer_, , .global=.global) {
   }
   res
 }
-#' Update Search Path
-#'
-#' Changes search path to previously recorded states when interatively reviewing
-#' tests.
-#'
-#' @param id integer(1L) what recorded state to revert to
+#' @keywords internal
+#' @rdname search_path
 
 search_path_update <- function(id, .global=.global) {
   stopifnot(
@@ -234,28 +250,8 @@ search_path_update <- function(id, .global=.global) {
   if(.global$status@par.env) parent.env(.global$par.env) <- as.environment(2L)
   invisible(TRUE)
 }
-
-#' Restore Search Path to Bare Bones R Default
-#'
-#' \code{search_path_trim} attempts to recreate a clean environment by
-#' unloading all packages and objects that are not loaded by default in the
-#' default R  configuration.
-#'
-#' Note this does not unload namespaces, but rather just detaches them from
-#' the namespace
-#'
-#' \code{`tools:rstudio`} is kept in search path as the default argument because
-#' it isn't possible to cleanly unload and reload it because \code{`attach`}
-#' actually attaches a copy of it's argument, not the actual object, and that
-#' causes problems for that search path item.
-#'
-#' @seealso \code{`\link{search_path_restore}`}  \code{`\link{search}`}
 #' @keywords internal
-#' @param keep character names of packages/objects to keep in search path;
-#'   note that base packages (see .unitizer.base.packages) that come typically
-#'   pre attached are always kept.  The \code{`keep`} packages are an addition
-#'   to those.
-#' @return invisibly TRUE on success, FALSE on failure
+#' @rdname search_path
 
 search_path_trim <- function(keep=c("package:unitizer", "tools:rstudio")) {
   # Make sure search path is compatible with what we're doing
@@ -337,6 +333,8 @@ is.loaded_package <- function(pkg.name) {
 
 #' Path manipulation functions
 #'
+#' Reattaches a previously detached package to the search path
+#'
 #' @keywords internal
 
 reattach <- function(pos, name, type, data, extra) {
@@ -392,12 +390,3 @@ search_path_obj_nextid <- function(name) {
   )
   id.max + 1L
 }
-
-# Internal re-use to restore search path, need to do this to get:
-# * version of the functions that are not traced
-# * quash check NOTE, though we don't think what we do here is against the
-#   spirit of the note
-
-.attach <- base::attach       # quash a NOTE (as per above, we don't think this is against the spirit of the note)
-.library <- base::library     # as above
-
