@@ -52,31 +52,14 @@ setClass(
 
 #' Search Path Management Functions
 #'
-#' Set of functions used to track and set search path state.  Strategy is to
-#' keep track of every different search path state encountered, which is done by
-#' shimming the library (and require by extension), detach, and attach
-#' functions (see shim.R, global.R).
-#'
-#' Any time any of those functions is called, \code{search_path_track} updates
-#' the journaling information kept in \code{unitizer:::.global} and makes sure
-#' the parent to the \code{unitizer} environment is the one right below
-#' \code{.GlobalEnv}.  Additionally, any time \code{detach} is called, data
-#' about the detached object is kept for use when re-attaching.
+#' Set of functions used to manage search path state.  Strategy is to
+#' keep track of every different search path state encountered which is done
+#' with \code{.global}, and then allow restoring to previous states with these
+#' functions.
 #'
 #' While we believe the strategy used here is mostly robust, users can defeat
-#' it by messing with the tracing status of functions in tests or during
-#' review.  Rather than attempt to have a completely robust solution we will
-#' focus on detecting this type of thing happening and disable all search path
-#' manipulation in that event.  The following are checked: \itemize{
-#'   \item search path inconsistent with known recorded actions
-#'   \item \code{\link{tracingState}} turned off
-#'   \item functions \code{library}, \code{attach}, \code{detach} being changed
-#'     from their traced versions
-#' }
-#' The checks themselves are not fully foolproof either as a user could turn
-#' \code{tracingState} on and off within a single test expression, etc., but
-#' that behavior should be extremely unlikely within the typical testing
-#' environment.
+#' by changing search paths multiple times withing a single test, which we will
+#' not journal properly, though this is not likely to be a major issue.
 #'
 #' \code{search_path_trim} attempts to recreate a clean environment by
 #' unloading all packages and objects that are not loaded by default in the
@@ -99,90 +82,6 @@ setClass(
 #' @param .global reference object of class "unitizerGlobal" that holds the
 #'   global settings, provided for testing purposes only since should normally
 #'   always refer to \code{unitizer:::.global}
-
-search_path_track <- function(mode, pos=NA_integer_, .global=.global) {
-  res <- try(
-    {
-      stopifnot(
-        is.chr1plain(mode), !is.na(mode),
-        mode %in% c("library", "attach", "detach"),
-        is.integer(pos), length(pos) == 1L
-      )
-      if(is.na(pos)) pos <- 2L
-
-      # at most search path should have changed one element since last call
-
-      a <- search()
-      a.len <- length(a)
-      track.len <- .global$tracking@search.path
-      b.full <- .global$tracking@search.path[[track.len]]
-      b <- names(b.full)
-      b.len <- length(b)
-      max.len <- max(a.len, b.len)
-
-      # Make sure pos makes sense; note that infeasible `detach` `pos` values
-      # cause detach to fail so we don't really need to worry about them
-
-      if(!identical(mode, "detach")) {
-        pos <- if(pos >= a.len) {
-          a.len - 1L
-        } else if (pos < 2L) 2L else pos
-      } else {
-        if(!pos %in% seq_along(b)[-c(1L, length(b))])
-          stop("impossible pos value")
-      }
-      # Check things went okay
-
-      res <- integer(0L)
-
-      if(identical(a.len, b.len)) {
-        if(!identical(a, b))
-          stop("more than one item in search path changed")
-      } else if (abs(a.len - b.len) != 1L) {
-        stop("more than one item in search path changed")
-      } else if (a.len < b.len && !identical(mode, "detach")) {
-        stop("search path length may only decrease with detach")
-      } else {
-        # Try to figure out single change, though note this can be fooled if
-        # user moves around multiple objects of same name, though this should be
-        # a pretty rare occurrence; we could add a check for this by getting
-        # environment name?
-
-        sp <- b.full
-        sp <- if(a.len > b.len) {   # attach
-          if(!identical(a[-pos], b))
-            stop("search path not as expected")
-          res <- setNames(search_path_obj_nextid(a[[pos]]), a[[pos]])
-          append(sp, res, pos - 1L)
-        } else {              # detach
-          if(!identical(a, b[-pos]))
-            stop("search path not as expected")
-          res <- sp[pos]
-          sp[-pos]  # drop from search path
-        }
-        # Add an updated search path entry
-
-        .global$tracking$search.path[[track.len + 1L]] <- sp
-      }
-      # Keep unitizer rooted just below globalenv; do we need to worry about
-      # there only being one environment in the search path?
-
-      if(.global$status@par.env) {
-        parent.env(.global$par.env) <- as.environment(2L)
-      }
-      res
-  } )
-  if(inherits(res, "try-error")) {
-    warning(
-      "Search path tracking and manipulation failed so we are reverting to ",
-      "vanilla mode: ", conditionMessage(attr(res, "cond"))
-      immediate.=TRUE
-    )
-    .global$disable("search.path")
-    return(FALSE)
-  }
-  res
-}
 #' @keywords internal
 #' @rdname search_path
 
