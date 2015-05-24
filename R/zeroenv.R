@@ -94,39 +94,39 @@ search_path_update <- function(id, .global=.global) {
   search.curr <-
     .global$tracking$search.path[[.global$last.indices@search.path]]
 
-  if(!identical(search(), names(search.curr)))  # needs better handling
+  if(  # not entirely sure this check is needed
+    !identical(sapply(search(), as.environment, simplify=FALSE), search.curr)
+  )
     stop("Logic Error: mismatch between actual search path and tracked path")
 
-  st.id <- paste(names(search.target), search.target)
-  sc.id <- sc.id.tmp <- paste(names(search.curr), search.curr)
+  # Get uniquely identified objects on search path; this isn't completely
+  # perfect because some objects that are genuinely the same might be identified
+  # as different because R copied them during attach / detach
 
-  if(
-    !identical(length(unique(st.id)), length(st.id)) ||
-    !identical(length(unique(sc.id)), length(sc.id))
-  )
-    stop("Logic Error: corrupted search path tracking data")
+  st.id <- search_path_unique_id(search.target)
+  sc.id <- sc.id.tmp <- search_path_unique_id(search.current)
 
   # Drop the stuff that definitely needs to be dropped, from back so that
   # numbering doesn't get messed up
 
   to.detach <- which(is.na(match(sc.id, st.id)))
-  for(i in sort(to.detach, decreasing=TRUE)) {
-    warning("handlE trace stuff when updating path", immediate.=TRUE)
-    detach(pos=i)
-  }
+  for(i in sort(to.detach, decreasing=TRUE)) detach(pos=i)
+
   sc.id.tmp <- sc.id.tmp[to.detach]
+
   # Add the stuff that definitely needs to get added, but this time from the
   # front so the positions make sense
 
-  for(i in sort(which(is.na(match(st.id, sc.id))))) {
-    obj.name <- names(search.target)[[i]]
-    obj.seq <- search.target[[i]]
-    obj <- try(
-      .global$tracking@search.path@detached.objects[[obj.name]][[obj.seq]]
+  for(i in sort(which(is.na(match(st.id, sc.id.tmp))))) {
+
+    obj.name <- attr(search.target[[i]], "name")
+    if(is.null(obj.name)) obj.name <- ""
+    obj.type <- if(grepl("^package:.+", obj.name)) "package" else "object"
+
+    reattach(
+      i, name=obj.name, type=obj.type, data=search.target[[i]],
+      extra=attr(search.target[[i]], "path")
     )
-    if(inherits(obj, "try-error") || !is(obj, "unitizerSearchData"))
-      stop("Logic Error: failed retrieving previoulsy detached object data")
-    reattach(i, name=obj@name, type=obj@type, data=obj@data, extra=obj@extra)
     sc.id.tmp <- append(sc.id.tmp, st.id[[i]], i - 1L)
   }
   # Now see what needs to be swapped
@@ -162,27 +162,6 @@ search_path_trim <- function(
 
   search.path.pre <- search()
 
-  # Set-up on exit function to attempt to restore search path in case something
-  # went wrong
-
-  on.exit({
-    warning(
-      "Disabling reproducible search path and attempting to restore to ",
-      "initial state.",
-      immediate.=TRUE
-    )
-    index <- .global$indices.last
-    index@search.path <- 1L
-    attempt <- try(.global$reset(index))
-    if(inherits(attempt, "try-error")) {
-      warning(
-        "Unable to restore original search path; please consider restarting ",
-        "your R session to ensure "
-        immediate.=TRUE
-      )
-    }
-    .global$disable("search.path")
-  })
   # detach each object, and record them for purposes of restoring them later
 
   packs.to.detach <- setdiff(search.path.pre, c(keep, .unitizer.base.packages))
@@ -192,25 +171,8 @@ search_path_trim <- function(
     if(!is.chr1(pack))
       stop("Logic Error: invalid search path token; contact maintainer.")
 
-    # Detach packages
-
-    if(inherits(try(detach(pack, character.only=TRUE)), "try-error")) {
-      warning(
-        "Unable to detach `", pack, "` while attempting to create a clean ",
-        "search path.  ", .unitizer.search.fail.msg
-      )
-      return(invisible(FALSE))
+    detach(pack, character.only=TRUE)
   } }
-  # Make sure trimming worked
-
-  if(!search_path_check()) {
-    warning(
-      "Search path is inconsistent with expectations after we attempted to ",
-      "a clean search path.  ", .unitizer.search.fail.msg, immediate.=TRUE
-    )
-    return(invisible(FALSE))
-  }
-  on.exit(NULL)   # clear clean-up b/c we succeeded
   invisible(TRUE)
 }
 
@@ -275,19 +237,25 @@ move_on_path <- function(new.pos, old.pos) {
   .unitizer.base.funs$detach(old.pos)
   reattach(pos=new.pos, name=name, type=type, data=obj, extra=extra)
 }
-#' Get Index For SP Object
+#' Make Unique IDs For Search Path Object
 #'
-#' Allows us to keep track of how many times an object name shows up in our
-#' search path or in our search path object storage
+#' adds ".1", ".2" etc if there are non-unique values, but first occurence is
+#' not modified so we can match between a list with duplicates and one without.
 #'
 #' @keywords internal
 
-search_path_obj_nextid <- function(name) {
-  stopifnot(is.chr1plain(name), !is.na(name))
-  sp.curr <- .global$tracking@search.path[[.global$last.indices@search.path]]
-  id.max <- max(
-    sp.curr[names(sp.curr) == name],
-    length(.global$tracking@search.path@detached.objects[[name]])
+search_path_unique_id <- function(search.path.objs) {
+  stopifnot(
+    is.list(seach.path.objs),
+    all(vapply(search.path.obs, is.environment, logical(1L)))
   )
-  id.max + 1L
+  sp.id.base <- vapply(search.target, env_name, character(1L))
+  ave(
+    sp.id.base, sp.id.base,
+    FUN=function(x) {
+      if(length(x) == 1L) return(x)
+      c(head(x, 1L), paste0(tail(x, -1L), ".", 1:(length(x) - 1L)))
+    }
+  )
 }
+

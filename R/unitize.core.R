@@ -173,7 +173,7 @@ unitize_core <- function(
     )
   # - Global Controls ----------------------------------------------------------
 
-  # reset global vars used for search path manip and other factors
+  # Initialize new tracking object; this will also record starting state
 
   .global <<- unitizerGlobal$new()
 
@@ -183,7 +183,6 @@ unitize_core <- function(
     .global$status@par.env <- TRUE
     glob.set <- unique(c("search.path", glob.set))
   }
-  setup_shims(glob.set)
   on.exit(add=TRUE,
     {
       .global$resetFull()

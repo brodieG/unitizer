@@ -172,7 +172,9 @@ unitizerGlobal <- setRefClass(
       ...,
       par.env=new.env(parent=.GlobalEnv)
     ) {
-      callSuper(..., par.env=par.env)
+      obj <- callSuper(..., par.env=par.env)
+      state()
+      obj
     },
     enable=function(which=.unitizer.global.settings.names) {
       '
