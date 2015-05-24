@@ -17,13 +17,29 @@ NULL
 #' Structures For Tracking Global Options
 #'
 #' Immplemented as S4 classes just so we can ensure everything is guaranteed
-#' to have the right slots.  Almost certainly no the best way to do this
+#' to have the right slots.  This is done by defining a virtual class that has
+#' a validity function that checks the required slots exist.
+#'
+#' Not we don't use "ANY" slots here because that would allow partially
+#' specified sub classes (i.e. classes with slots that are "ANY"), which we
+#' do not want to allow.
 #'
 #' @rdname global_structures
 #' @keywords internal
 
 setClass(
-  "unitizerGlobalStatus",
+  "unitizerGlobalBase", contains="VIRTUAL",
+  validity=function(object)
+    if(!identical(slotNames(object), .unitizer.global.settings.names)) {
+      paste0(
+        "Invalid global object, slots must be ",
+        deparse(.unitizer.global.settings.names, width=500)
+      )
+    TRUE
+} )
+
+setClass(
+  "unitizerGlobalStatus", contains="unitizerGlobalBase"
   slots=c(
     search.path="logical",
     options="logical",
@@ -34,15 +50,8 @@ setClass(
     search.path=FALSE, working.directory=FALSE, options=FALSE, par.env=FALSE
   ),
   validity=function(object) {
-    sn <- slotNames(object)
-    if(!identical(sn, .unitizer.global.settings.names))
-      stop(
-        "Logic Error: all slots must be in `.unitizer.global.settings.names`; ",
-        "contact maintainer"
-      )
-    for(i in slotNames(object))
-      if(!is.TF(slot(object, i)))
-        return(paste0("slot `", i, "` must be TRUE or FALSE"))
+    for(i in slotNames(object)) if(!is.TF(slot(object, i)))
+      return(paste0("slot `", i, "` must be TRUE or FALSE"))
     TRUE
   }
 )
@@ -80,22 +89,13 @@ setClass(
 #' @keywords internal
 
 setClass(
-  "unitizerGlobalTracking",
+  "unitizerGlobalTracking", contains="unitizerGlobalBase",
   slots=c(
     search.path="unitizerGlobalSearch",
     options="list",
     working.directory="list",
     par.env="list"               # not used, but present for code simplicity
-  ),
-  validity=function(object) {
-    sn <- slotNames(object)
-    if(!identical(sn, .unitizer.global.settings.names))
-      stop(
-        "Logic Error: all slots must be in `.unitizer.global.settings.names`; ",
-        "contact maintainer"
-      )
-    TRUE
-  }
+  )
 )
 setGeneric(
   "getTrackingValue",
@@ -126,12 +126,9 @@ setClass(
   ),
   prototype=list(search.path=0L, options=0L, working.directory=0L, par.env=0L),
   validity=function(object){
-    sn <- slotNames(object)
-    if(!identical(sn, .unitizer.global.settings.names))
-      stop(
-        "Logic Error: all slots must be in `.unitizer.global.settings.names`; ",
-        "contact maintainer"
-      )
+    for(i in slotNames(object))
+      if(length(slot(object, i)) != 1L || slot(object, i) < 0L)
+        return(paste0("slot `", i, "` must be integer(1L) and positive"))
     TRUE
   }
 )
@@ -139,12 +136,17 @@ setClass(
 #' @keywords internal
 
 setClass(
-  "unitizerGlobalStatusCheckFuns",
+  "unitizerGlobalStateFuns", contains="unitizerGlobalBase",
   slots=c(
     search.path="function", options="function", working.directory="function",
     par.env="function"
   ),
-  prototype=list(search.path=)
+  prototype=list(
+    search.path=function() sapply(search(), as.environment, simplify=FALSE),
+    options=options,
+    working.directory=getwd,
+    par.env=function() parent.environment(.global$par.env)
+  )
 )
 #' Objects / Methods used to Track Global Settings and the Like
 #'
@@ -157,9 +159,10 @@ unitizerGlobal <- setRefClass(
   fields=list(
     par.env="environment",
 
-    shims="unitizerShims",
     status="unitizerGlobalStatus",
     tracking="unitizerGlobalTracking",
+
+    state.funs="unitizerGlobalStateFuns",
 
     indices.post.init="unitizerGlobalIndices",
     indices.last="unitizerGlobalIndices"
@@ -167,49 +170,19 @@ unitizerGlobal <- setRefClass(
   methods(
     initialize=function(
       ...,
-      par.env=new.env(parent=.GlobalEnv),
-      options=list(options()),
-      working.directory=list(getwd()),
-      search.path=list()
+      par.env=new.env(parent=.GlobalEnv)
     ) {
-      if(!length(search.path)) {
-        sp <- search()
-        search.path <- list(
-          setNames(ave(integer(length(sp)) + 1L, sp, FUN=cumsum), sp)
-        )
-      }
-      callSuper(
-        ..., par.env=par.env, options=options,
-        working.directory=working.directory, search.path=search.path
-    ) },
+      callSuper(..., par.env=par.env)
+    },
     enable=function(which=.unitizer.global.settings.names) {
+      '
+      Turn on global environment tracking
+      '
       stopifnot(
         is.character(which), all(which %in% .unitizer.global.settings.names)
       )
-      if(
-        any(
-          traced <- vapply(
-            .unitizer.base.funs, inherits, logical(1L), "functionWithTrace"
-        ) )
-      ) {
-        warning(
-          "Cannot enable reproducible global mode because ",
-          paste0("`", names(.unitizer.base.funs)[traced], "`", collapse=", "),
-          " functions are already traced."
-          immediate.=TRUE
-        )
-        return(invisible(FALSE))
-      }
-      one.shim <- FALSE # Track that at least one shim is set
-      for(i in which) {
-        res <- shim_funs(slot(shims, i))
-        if(is(res, "unitizerShimFunList")) {
-          slot(shims, i) <<- res
-          slot(status, i) <<- TRUE
-          one.shim <- TRUE
-        }
-      }
-      invisible(TRUE)
+      for(i in which) slot(status, i) <<- TRUE
+      status
     },
     disable=function(which=.unitizer.global.settings.names) {
       '
@@ -220,7 +193,6 @@ unitizerGlobal <- setRefClass(
         all(which %in% .unitizer.global.settings.names)
       )
         for(i in which) {
-          if(slot(status, i)) unshim_funs(slot(shims, i))
           slot(status, i) <<- FALSE
           if(identical(i, "search.path")) {
              status@par.env <<- FALSE
@@ -230,53 +202,23 @@ unitizerGlobal <- setRefClass(
         status
       }
     },
-    checkState=function(which=.unitizer.global.settings.names) {
+    state=function() {
       '
-      Verify that state actually is what we think it is
+      Record state for each of the globals we are tracking; one question here is
+      whether we want more sophisticated checking against existing settings to
+      avoid repeatedly storing the same thing.  For now we just check against
+      the last one
       '
-      stopifnot(is.chr1(which), all(which %in% .unitizer.global.settings.names))
-      for(i in slotNames(status)) {
-        if(
-          !identical(
-            getTrackingValue(slot(tracking, i)),
-            slot(state.funs, i)()
-          )
-
+      for(i in slotNames(tracking)) {
+        if(!slot(status, i)) next             # Don't record statuses that aren't being tracked
+        new.obj <- slot(state.funs, i)()      # Get state with pre-defined function
+        ref.obj <- slot(tracking, i)[[slot(indices.last, i)]]
+        if(!identical(new.obj, ref.obj)) {
+          slot(tracking, i) <<- append(slot(tracking, i), new.obj)
+          slot(indices.last, i) <<- length(slot(tracking, i))
+        }
       }
-    },
-    checkShims=function() {
-      '
-      Verify that shimming is still working, and if not disable tracking
-      '
-      if(!any(vapply(slotNames(status), slot(status, i), logical(1L))))
-        return(TRUE)
-      if(!tracingState()) {
-        warning(
-          "Tracing state off, so disabling reproducible modes", immediate.=TRUE
-        )
-        disable()
-      } else {
-        for(i in slotNames(shims)) {
-          if(slot(status, i)) {
-            shim.list <- slot(shims, i)
-            shim.status <- vapply(
-              as.list(shim.list),
-              function(funDat) identical(getFun(funDat@name), funDat@fun.ref),
-              logical(1L)
-            )
-            if(!all(shim.status)) {
-              warning(
-                "Shims compromised for ", shim.list@description, " so we are ",
-                "disabling reproducible mode for it"
-              )
-              unshim_funs(shim.list)
-              slot(status, i) <<- FALSE
-              if(identical(i, "search.path") && status@par.env) {
-                warning("Parent env reverted to .GlobalEnv", immediate.)
-                status@par.env <<- FALSE
-                  parent.env(.global$par.env) <- .GlobalEnv
-      } } } } }
-      return(invisible(TRUE))
+      indices.last
     },
     reset=function(to) {
       '
@@ -288,13 +230,13 @@ unitizerGlobal <- setRefClass(
       if(status@search.path && to@search.path)
         search_path_update(to@search.path)
       if(status@options && to@options)
-        .unitizer.base.funs$options(tracking@options[[to@options]])
+        options(tracking@options[[to@options]])
       if(status@working.directory && to@working.directory)
-        .unitizer.base.funs$setwd(
+        setwd(
           tracking@working.directory[[to@working.directory]]
         )
       indices.last <<- to
-      return(invisible(TRUE))
+      indices.last
     },
     resetPostInit=function() {
       '
@@ -312,25 +254,6 @@ unitizerGlobal <- setRefClass(
           "unitizerGlobalIndices", search.path=1L, options=1L,
           working.directory=1L
       ) )
-    },
-    bookmark=function() {
-      '
-      Mark current state as being interesting so we can easily restore to that
-      state
-      '
-      bookmark <- new("unitizerGlobalIndices")
-      for(i in slotNames(tracking))
-        slot(bookmark, i) <- length(slot(tracking, i))
-      indices.last <<- bookmark
-      bookmark
-    },
-    bookmarkInit=function() {
-      indices.post.init <<- bookmark()
-      indices.post.init
-    },
-    state=function(what) {
-      stopifnot(is.chr1(what), what %in% .unitizer.global.settings.names)
-
     }
 ) )
 .global <- unitizerGlobal$new() # symbol used to host the `unitizerGlobal` object
