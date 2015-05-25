@@ -2,18 +2,6 @@
 
 NULL
 
-#' Shim Search Path Modifying Functions
-#'
-#' We apply a lightweight shim that
-#'
-#' Here we shim by \code{`trace`}ing the \code{`libary/require/attach/detach`}
-#' functions and recording each run of those functions that modifies the
-#' search path with enough information to restore the search path later.
-#'
-#' See 'global.R' as much of the setup / management is done from there
-#'
-#' @keywords internal
-
 unitizerGlobal$methods(
   shimFuns=function(funs=.unitizer.base.funs.to.shim) {
     stopifnot(
@@ -36,9 +24,6 @@ unitizerGlobal$methods(
     }
     return(TRUE)
   },
-  #' @rdname shim_fun
-  #' @keywords internal
-
   shimFun=function(name) {
     stopifnot(is.function(getFun(name)))
 

@@ -158,12 +158,11 @@ setMethod(
 #'   invisibly if it is already set
 
 setOptIfNot <- function(x, value) {
-  if(!is.plainchr1(x) || is.na(x))
-    stop("Argument `x` must be chracter(1L) and not NA")
+  if(!is.chr1(x)) stop("Argument `x` must be chracter(1L) and not NA")
   if(!x %in% names(options())) {
-    opt.call <- list("options")
+    opt.call <- list(quote(options))
     opt.call[[x]] <- value
-    eval(as.call(opt.call, parent.frame()))
+    eval(as.call(opt.call), parent.frame())
   } else invisible(NULL)
 }
 

@@ -114,7 +114,7 @@ unitize <- function(
   test.file, store.id=NULL,
   interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
-  reproducible.global.settings=getOption("unitizer.global.settings")
+  reproducible.global.settings=getOption("unitizer.global.settings"),
   force.update=FALSE,
   auto.accept=character(0L),
   pre.load=NULL
@@ -126,7 +126,7 @@ unitize <- function(
     unitize_core(
       test.file.inf, list(store.id.inf),
       interactive.mode=interactive.mode, par.env=par.env,
-      reproducible.global.settings=reproducible.global.settings
+      reproducible.global.settings=reproducible.global.settings,
       force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
       mode="unitize"
   ) )

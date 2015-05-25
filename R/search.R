@@ -171,7 +171,7 @@ search_path_trim <- function(
       stop("Logic Error: invalid search path token; contact maintainer.")
 
     detach(pack, character.only=TRUE)
-  } }
+  }
   invisible(TRUE)
 }
 

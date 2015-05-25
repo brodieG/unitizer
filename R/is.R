@@ -38,8 +38,9 @@ is.package_version <- function(x)
 #'
 #' Test for common scalar cases that we run into ALL THE TIME!!!
 #'
-#' @rdname is.scalar
+#' @rdname is.simpleobj
 #' @keywords internal
+#' @param x object to test
 
 is.chr1plain <- function(x)
   !is.object(x) && is.character(x) && identical(length(x), 1L)

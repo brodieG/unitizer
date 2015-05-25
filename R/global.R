@@ -1,4 +1,4 @@
-#' @include shims.R
+#' @include is.R
 
 NULL
 
@@ -12,7 +12,7 @@ NULL
   options=base::options,
   search=base::search,
   getwd=base::getwd,
-  setwd=bsae::setwd
+  setwd=base::setwd
 )
 .unitizer.base.funs.to.shim <- c("library", "attach", "detach")
 
@@ -41,7 +41,7 @@ setClass(
 } )
 
 setClass(
-  "unitizerGlobalStatus", contains="unitizerGlobalBase"
+  "unitizerGlobalStatus", contains="unitizerGlobalBase",
   slots=c(
     search.path="logical",
     options="logical",
@@ -57,63 +57,17 @@ setClass(
     TRUE
   }
 )
-setMethod("any", "unitizerGlobalStatus",
-  function(..., na.rm=TRUE) {
-    x <- list(...)
-    if(!length(x)) stop("Must specify at least one `...` argument")
-    if(length(x) > 1L) warning("Only first `...` argument is checked")
-    vals <- vapply(slotNames(x), slot, logical(1L), object=x)
-    any(vals, na.rm)
-} )
-#' @rdname global_structures
-#' @keywords internal
-
-setClass(
-  "unitizerGlobalSearch",
-  contains="unitizerList",
-  slots=c(detached.objects="list", search.curr="integer"),
-  prototype=list(search.curr=0L),
-  validity=function(object) {
-    sc <- object@search.curr
-    if(
-      !length(sc) == 1L || is.na(sc) ||
-      !(sc >= 0L && sc <= length(object)
-    )
-      return(
-        paste0(
-          "slot `search.curr` must be a scalar positive integer no larger than",
-          " the number of items in `.items`"
-      ) )
-    TRUE
-  }
-)
 #' @rdname global_structures
 #' @keywords internal
 
 setClass(
   "unitizerGlobalTracking", contains="unitizerGlobalBase",
   slots=c(
-    search.path="unitizerGlobalSearch",
+    search.path="list",
     options="list",
     working.directory="list",
     par.env="list"               # not used, but present for code simplicity
   )
-)
-setGeneric(
-  "getTrackingValue",
-  function(x, index, ...) standardGeneric("getTrackingValue")
-)
-#' Pull out Tracking Value
-#'
-#' Necessary mostly because the search path tracking value is not exactly what
-#' you get by using \code{search}
-
-setMethod(
-  "getTrackingValue", c("list", "integer"), function(x, index, ...) x[[index]]
-)
-setMethod(
-  "getTrackingValue", c("unitizerGlobalSearch", "integer"),
-  function(x, index, ...) names(x[[index]])
 )
 #' @rdname global_structures
 #' @keywords internal
@@ -147,7 +101,7 @@ setClass(
     search.path=function() sapply(search(), as.environment, simplify=FALSE),
     options=options,
     working.directory=getwd,
-    par.env=function() parent.environment(.global$par.env)
+    par.env=function() NULL
   )
 )
 #' Objects / Methods used to Track Global Settings and the Like
@@ -170,10 +124,10 @@ unitizerGlobal <- setRefClass(
     indices.init="unitizerGlobalIndices",
     indices.last="unitizerGlobalIndices"
   ),
-  methods(
+  methods=list(
     initialize=function(
       ...,
-      par.env=new.env(parent=.GlobalEnv),
+      par.env=new.env(parent=.GlobalEnv)
     ) {
       obj <- callSuper(..., par.env=par.env)
       state()
@@ -206,7 +160,7 @@ unitizerGlobal <- setRefClass(
         if(identical(i, "par.env")) {
           unshimFuns()
           parent.env(par.env) <<- .GlobalEnv
-      } } }
+      } }
       status
     },
     state=function(mode="normal") {
@@ -221,13 +175,13 @@ unitizerGlobal <- setRefClass(
       for(i in slotNames(tracking)) {
         if(!slot(status, i)) next             # Don't record statuses that aren't being tracked
         new.obj <- slot(state.funs, i)()      # Get state with pre-defined function
-        ref.obj <- slot(tracking, i)[[slot(indices.last, i)]]
+        ref.obj <- if(slot(indices.last, i)) slot(tracking, i)[[slot(indices.last, i)]]
         if(!identical(new.obj, ref.obj)) {
-          slot(tracking, i) <<- append(slot(tracking, i), new.obj)
+          slot(tracking, i) <<- append(slot(tracking, i), list(new.obj))
           if(identical(mode, "init")) {
-            slot(indices.last, i) <<- length(slot(tracking, i))
-          } else {
             slot(indices.init, i) <<- length(slot(tracking, i))
+          } else {
+            slot(indices.last, i) <<- length(slot(tracking, i))
       } } }
       if(identical(mode, "init")) inidices.init else indices.last
     },
@@ -268,6 +222,6 @@ unitizerGlobal <- setRefClass(
 ) )
 
 .global <- new.env()
-.global$global <- unitizerGlobal$new() # used purely for traced functions that need access to global object
+# .global$global <- unitizerGlobal$new() # used purely for traced functions that need access to global object
 
 setClassUnion("unitizerGlobalOrNULL", c("unitizerGlobal", "NULL"))

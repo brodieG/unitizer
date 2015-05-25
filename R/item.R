@@ -3,6 +3,7 @@
 #' @include conditions.R
 #' @include class_unions.R
 #' @include list.R
+#' @include global.R
 
 NULL
 
