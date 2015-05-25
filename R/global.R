@@ -16,6 +16,18 @@ NULL
 )
 .unitizer.base.funs.to.shim <- c("library", "attach", "detach")
 
+
+#' Get Current Search Path as List of Environments
+#'
+#' Internal utility function
+#'
+#' @keywords internal
+
+search_as_envs <- function() {
+  sp <- search()
+  setNames(lapply(seq_along(sp), as.environment), sp)
+}
+
 #' Structures For Tracking Global Options
 #'
 #' Immplemented as S4 classes just so we can ensure everything is guaranteed
@@ -98,8 +110,7 @@ setClass(
     par.env="function"
   ),
   prototype=list(
-    search.path=function()
-      setNames(lapply(seq_along(search()), as.environment), search()),
+    search.path=search_as_envs,
     options=options,
     working.directory=getwd,
     par.env=function() NULL

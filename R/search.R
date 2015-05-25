@@ -94,9 +94,7 @@ search_path_update <- function(id, .global=.global) {
   search.curr <-
     .global$tracking$search.path[[.global$last.indices@search.path]]
 
-  if(  # not entirely sure this check is needed
-    !identical(sapply(search(), as.environment, simplify=FALSE), search.curr)
-  )
+  if(!identical(search_as_env(), search.curr))  # not entirely sure this check is needed
     stop("Logic Error: mismatch between actual search path and tracked path")
 
   # Get uniquely identified objects on search path; this isn't completely
