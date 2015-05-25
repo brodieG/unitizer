@@ -11,11 +11,13 @@
 #' @param test.file the R file associated with the store id
 #' @param force.upgrade whether to allow upgrades in non-interactive mode, for
 #'   testing purposes
+#' @param global the global tracking object
 #' @return a \code{unitizer} object, or anything, in which case the calling
 #'   code should exit
 
 load_unitizers <- function(
-  store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE
+  store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE,
+  global=global
 ) {
   if(!is.character(test.files))
     stop("Argument `test.files` must be character")
@@ -174,6 +176,7 @@ load_unitizers <- function(
     unitizers[[i]]@id <- norm_store_id(store.ids[[i]])
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
     parent.env(unitizers[[i]]@zero.env) <- par.frame
+    unitizers[[i]]@global <- global
     unitizers[[i]]@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
   }
   unitizers[!seq(unitizers) %in% valid.idx] <- FALSE
@@ -225,6 +228,7 @@ store_unitizer <- function(unitizer) {
   old.par.env <- parent.env(unitizer@zero.env)
   on.exit(parent.env(unitizer@zero.env) <- old.par.env)
   parent.env(unitizer@zero.env) <- baseenv()
+  unitizer@global <- NULL  # to avoid taking up a bunch of storage on large object
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {

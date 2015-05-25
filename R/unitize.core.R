@@ -123,6 +123,10 @@ unitize_core <- function(
       "Logic Error: unitizer option `unitizer.prompt.b4.quit.time` ",
       "is miss-specified"
     )
+  # Make sure nothing untoward will happen if a test triggers an error
+
+  check_call_stack()
+
   # Create parent directories for untizer stores if needed, doing now so that
   # we can later ensure that store ids are being specified on an absolute basis,
   # and also so we can prompt the user now
@@ -175,44 +179,36 @@ unitize_core <- function(
 
   # Initialize new tracking object; this will also record starting state
 
-  .global <<- unitizerGlobal$new()
+  global <- unitizerGlobal$new()
+  .global$global <- global          # so traced funs can access
 
-  glob.set <- reproducible.global.settings  # will be using `reproducible.global.settings` later
+  glob.set <- reproducible.global.settings
   if(is.null(par.env)) {
-    par.env <- .global$par.env
-    .global$status@par.env <- TRUE
-    glob.set <- unique(c("search.path", glob.set))
+    par.env <- global$par.env
+    glob.set <- unique(glob.set, "par.env")
   }
+  global$enable(glob.set)
+
   on.exit(add=TRUE,
     {
-      .global$resetFull()
-      .global$disable()
+      glob.clear <- try({
+        global$resetFull()
+        global$disable()
+      })
+      if(inherits(glob.clear, "try-error"))
+        word_msg(
+          "Failed restoring global settings to original state; you may want",
+          "to restart your R session to ensure all global settings are in a",
+          "reasonable state."
+        )
   } )
-  # Retrieve or create unitizer environment
-
-  gpar.frame <-
-    if(is.null(par.env)) .global$par.env else par.env
+  gpar.frame <- par.env
 
   # Trim search path if warranted
 
-  stop("Implement search path trimming")
-
+  if("search.path" %in% glob.set) search_path_trim()
 
   # - Parse / Load -------------------------------------------------------------
-
-  # Parse, and use `eval.which` to determine which tests to evaluate
-
-  if(identical(mode, "unitize")) {
-    over_print("Parsing tests...")
-    tests.parsed <- lapply(
-      test.files,
-      function(x) {
-        over_print(paste("Parsing", x))
-        parse_tests(x, comments=TRUE)
-  } ) }
-
-  # Load / create all the unitizers
-
 
   # Handle pre-load data
 
@@ -221,7 +217,7 @@ unitize_core <- function(
   if(inherits(pre.load.frame, "try-error") || !is.environment(pre.load.frame))
     stop("Argument `pre.load` could not be interpreted")
 
-  .global$bookmarkInit()
+  global$state("init")  # mark post pre-load state
 
   util.frame <- new.env(parent=pre.load.frame)
   assign("quit", unitizer_quit, util.frame)
@@ -234,18 +230,27 @@ unitize_core <- function(
 
   # - Evaluate / Browse --------------------------------------------------------
 
-  check_call_stack()  # Make sure nothing untoward will happen if a test triggers an error
+  # Parse, and use `eval.which` to determine which tests to evaluate
+
+  if(identical(mode, "unitize")) {
+    over_print("Parsing tests...")
+    tests.parsed <- lapply(
+      test.files,
+      function(x) {
+        over_print(paste("Parsing", x))
+        parse_tests(x, comments=TRUE)
+  } ) }
 
   while(
     (length(eval.which) || mode == identical(mode, "review")) && length(valid)
   ) {
     active <- intersect(eval.which, which(valid)) # kind of implied in `eval.which` after first loop
 
-    # Load unitizers
+    # Load / create all the unitizers
 
     unitizers[active] <- load_unitizers(
       store.ids[active], test.files[active], par.frame=util.frame,
-      interactive.mode=interactive.mode, mode=mode
+      interactive.mode=interactive.mode, mode=mode, global=global
     )
     valid <- vapply(as.list(unitizers), is, logical(1L), "unitizer")
 
@@ -255,7 +260,7 @@ unitize_core <- function(
     if(identical(mode, "unitize"))
       unitizers[valid] <- unitize_eval(
         tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
-        global.rep=reproducible.global.settings
+        global=global
       )
 
     # Gather user input, and store tests as required.  Any unitizers that
@@ -277,8 +282,8 @@ unitize_core <- function(
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
-  .global$resetFull()
-  .global$disable()
+  global$resetFull()
+  global$disable()
 
   return(as.list(unitizers))
 }
@@ -291,7 +296,7 @@ unitize_core <- function(
 #' @return a list of unitizers
 #' @keywords internal
 
-unitize_eval <- function(tests.parsed, unitizers, global.rep) {
+unitize_eval <- function(tests.parsed, unitizers, global) {
   on.exit(                                   # In case interrupted or some such
     message(
       "Unexpectedly exited before storing unitizer; tests were not saved or ",
@@ -317,7 +322,7 @@ unitize_eval <- function(tests.parsed, unitizers, global.rep) {
     unitizer <- unitizers[[i]]
 
     if(unitizer@eval) {
-      reset_global_reproducible(mode="partial", which=global.rep)
+      global$resetInit()  # reset global settings if active to just after pre-loads
       tests <- new("unitizerTests") + test.dat
       if(test.len > 1L)
         over_print(

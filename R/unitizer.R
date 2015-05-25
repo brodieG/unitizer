@@ -3,6 +3,7 @@
 #' @include section.R
 #' @include test.R
 #' @include change.R
+#' @include global.R
 
 NULL
 
@@ -71,6 +72,7 @@ setClass(
     eval="logical",               # internal used during browsing to determine a re-eval instruction by user
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
     updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
+    global="unitizerGlobalOrNULL",# Global object used to track state
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",

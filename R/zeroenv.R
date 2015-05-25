@@ -153,8 +153,7 @@ search_path_update <- function(id, .global=.global) {
 #' @rdname search_path
 
 search_path_trim <- function(
-  keep=getOption("unitizer.search.path.keep"),
-  .global=.global
+  keep=getOption("unitizer.search.path.keep")
 ) {
   stopifnot(is.character(keep), all(!is.na(keep)))
 

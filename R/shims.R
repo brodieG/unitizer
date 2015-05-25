@@ -64,6 +64,7 @@ unitizerGlobal$methods(
           {
             calls <- sys.calls()
             calls.len <- length(calls)
+            global <- asNamespace("unitizer")$.global$global
             if(
               calls.len >= 5L &&
               identical(calls[[calls.len - 3L]][[1L]], quote(.doTrace))
@@ -74,7 +75,7 @@ unitizerGlobal$methods(
               # return without allowing the function itself to start
 
               res <- eval(call, parent.frame(5L))
-
+              parent.env(global$par.env) <- as.environment(2L)
               return(res)
             } else {
               warning(
@@ -82,10 +83,7 @@ unitizerGlobal$methods(
                 "`par.env` to `.GlobalEnv` which disables clean workspace mode",
                 immediate.=TRUE
               )
-              unshim <- try({
-                untz <- asNamespace("unitizer")
-                untz$.global$disable("par.env")
-              })
+              unshim <- try(global$disable("par.env"))
               if(inherits(unshim, "try-error"))
                 stop(
                   "Logic Error: failed attempting to unshim `", name, "`; contact ",
@@ -127,7 +125,7 @@ unitizerGlobal$methods(
     for(i in names(shim.funs)) {
       if(identical(getFun(i), shim.funs[[i]]))  # if not identical, then someone else shimmed / unshimmed
         untrace(i, where=.BaseNamespaceEnv)
-      .global$shim.funs[[i]] <- NULL
+      shim.funs[[i]] <<- NULL
     }
   },
   checkShims=function() {

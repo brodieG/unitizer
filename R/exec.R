@@ -14,7 +14,7 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 #' @return a \code{\link{unitizerItem-class}} object
 
 setMethod("exec", "ANY", valueClass="unitizerItem",
-  function(x, test.env, capt.cons) {
+  function(x, test.env, capt.cons, global) {
     if(!is.environment(test.env)) stop("Argument `test.env` must be an environment.")
     if(!is.list(capt.cons)) stop("Argument `capt.cons` must be a list")
 
@@ -90,7 +90,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       conditions=new("conditionList", .items=res$conditions),
       output=capt$output, message=capt$message, aborted=res$aborted,
       env=test.env, comment=x.comments, trace=res$trace,
-      glob.indices=.global$bookmark()
+      glob.indices=global$state()
     )
 } )
 #' Utility function to evaluate user expressions

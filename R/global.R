@@ -167,7 +167,7 @@ unitizerGlobal <- setRefClass(
     state.funs="unitizerGlobalStateFuns",
     shim.funs="list",
 
-    indices.post.init="unitizerGlobalIndices",
+    indices.init="unitizerGlobalIndices",
     indices.last="unitizerGlobalIndices"
   ),
   methods(
@@ -186,7 +186,10 @@ unitizerGlobal <- setRefClass(
       stopifnot(
         is.character(which), all(which %in% .unitizer.global.settings.names)
       )
-      for(i in which) slot(status, i) <<- TRUE
+      for(i in which) {
+        slot(status, i) <<- TRUE
+        if(identical(i, "par.env")) parent.env(par.env) <<- as.environment(2L)
+      }
       status
     },
     disable=function(which=.unitizer.global.settings.names) {
@@ -206,28 +209,31 @@ unitizerGlobal <- setRefClass(
       } } }
       status
     },
-    state=function() {
+    state=function(mode="normal") {
       '
       Record state for each of the globals we are tracking; one question here is
       whether we want more sophisticated checking against existing settings to
       avoid repeatedly storing the same thing.  For now we just check against
       the last one
       '
+      stopifnot(is.chr1(mode), mode %in% c("normal", "init"))
+
       for(i in slotNames(tracking)) {
         if(!slot(status, i)) next             # Don't record statuses that aren't being tracked
         new.obj <- slot(state.funs, i)()      # Get state with pre-defined function
         ref.obj <- slot(tracking, i)[[slot(indices.last, i)]]
         if(!identical(new.obj, ref.obj)) {
           slot(tracking, i) <<- append(slot(tracking, i), new.obj)
-          slot(indices.last, i) <<- length(slot(tracking, i))
-        }
-      }
-      indices.last
+          if(identical(mode, "init")) {
+            slot(indices.last, i) <<- length(slot(tracking, i))
+          } else {
+            slot(indices.init, i) <<- length(slot(tracking, i))
+      } } }
+      if(identical(mode, "init")) inidices.init else indices.last
     },
     reset=function(to) {
       '
-      Reset global settings to a prior State, use 0L to set to the state just
-      following pre-loads
+      Reset global settings to a prior State
       '
       stopifnot(is(to, "unitizerGlobalIndices"))
 
@@ -242,11 +248,11 @@ unitizerGlobal <- setRefClass(
       indices.last <<- to
       indices.last
     },
-    resetPostInit=function() {
+    resetInit=function() {
       '
       Reset global settings to what they were right after initialization scripts
       '
-      reset(indices.post.init)
+      reset(indices.init)
 
     },
     resetFull=function() {
@@ -260,4 +266,8 @@ unitizerGlobal <- setRefClass(
       ) )
     }
 ) )
-.global <- unitizerGlobal$new() # symbol used to host the `unitizerGlobal` object
+
+.global <- new.env()
+.global$global <- unitizerGlobal$new() # used purely for traced functions that need access to global object
+
+setClassUnion("unitizerGlobalOrNULL", c("unitizerGlobal", "NULL"))

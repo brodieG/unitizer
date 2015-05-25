@@ -18,7 +18,8 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
     unitizer.browse <- new(
-      "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive
+      "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive,
+      global=x@global
     )
     # - Unitize ----------------------------------------------------------------
 
@@ -257,7 +258,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     human="logical",            # whether user has had any interaction at all
     re.eval="integer",          # so navigate prompt can communciate back re-eval status
     interactive="logical",      # whether to browse in interactie mode
-    interactive.error="logical" # whether in non-interactive mode but required input
+    interactive.error="logical",# whether in non-interactive mode but required input
+    global="unitizerGlobal"     # object for global settings
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
