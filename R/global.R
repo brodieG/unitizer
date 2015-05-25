@@ -14,6 +14,8 @@ NULL
   getwd=base::getwd,
   setwd=bsae::setwd
 )
+.unitizer.base.funs.to.shim <- c("library", "attach", "detach")
+
 #' Structures For Tracking Global Options
 #'
 #' Immplemented as S4 classes just so we can ensure everything is guaranteed
@@ -163,6 +165,7 @@ unitizerGlobal <- setRefClass(
     tracking="unitizerGlobalTracking",
 
     state.funs="unitizerGlobalStateFuns",
+    shim.funs="list",
 
     indices.post.init="unitizerGlobalIndices",
     indices.last="unitizerGlobalIndices"
@@ -170,7 +173,7 @@ unitizerGlobal <- setRefClass(
   methods(
     initialize=function(
       ...,
-      par.env=new.env(parent=.GlobalEnv)
+      par.env=new.env(parent=.GlobalEnv),
     ) {
       obj <- callSuper(..., par.env=par.env)
       state()
@@ -188,21 +191,20 @@ unitizerGlobal <- setRefClass(
     },
     disable=function(which=.unitizer.global.settings.names) {
       '
-      Turn off global environment tracking
+      Turn off global settings; for `par.env` also unshims the functions used
+      to enable tracking of topmost environment
       '
       stopifnot(
         is.character(which), all(!is.na(which)),
         all(which %in% .unitizer.global.settings.names)
       )
-        for(i in which) {
-          slot(status, i) <<- FALSE
-          if(identical(i, "search.path")) {
-             status@par.env <<- FALSE
-             parent.env(par.env) <<- .GlobalEnv
-          }
-        }
-        status
-      }
+      for(i in which) {
+        slot(status, i) <<- FALSE
+        if(identical(i, "par.env")) {
+          unshimFuns()
+          parent.env(par.env) <<- .GlobalEnv
+      } } }
+      status
     },
     state=function() {
       '
