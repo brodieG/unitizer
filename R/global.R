@@ -117,6 +117,7 @@ unitizerGlobal <- setRefClass(
     par.env="environment",
 
     status="unitizerGlobalStatus",
+    disabled="unitizerGlobalStatus",
     tracking="unitizerGlobalTracking",
 
     state.funs="unitizerGlobalStateFuns",
@@ -127,7 +128,7 @@ unitizerGlobal <- setRefClass(
   ),
   methods=list(
     initialize=function(
-      ...,
+      ..., disabled=FALSE,
       par.env=new.env(parent=.GlobalEnv)
     ) {
       obj <- callSuper(..., par.env=par.env)
@@ -142,6 +143,13 @@ unitizerGlobal <- setRefClass(
         is.character(which), all(which %in% .unitizer.global.settings.names)
       )
       for(i in which) {
+        if(slot(disabled, i)) {
+          warning(
+            "Reproducible setting for `", i, "` has already been disabled and ",
+            "cannot be re-enabled", immediate.=TRUE
+          )
+          next
+        }
         slot(status, i) <<- TRUE
         if(identical(i, "par.env")) parent.env(par.env) <<- as.environment(2L)
       }
@@ -158,6 +166,7 @@ unitizerGlobal <- setRefClass(
       )
       for(i in which) {
         slot(status, i) <<- FALSE
+        slot(disabled, i) <<- TRUE
         if(identical(i, "par.env")) {
           unshimFuns()
           parent.env(par.env) <<- .GlobalEnv
