@@ -98,7 +98,8 @@ setClass(
     par.env="function"
   ),
   prototype=list(
-    search.path=function() sapply(search(), as.environment, simplify=FALSE),
+    search.path=function()
+      setNames(lapply(seq_along(search()), as.environment), search()),
     options=options,
     working.directory=getwd,
     par.env=function() NULL
