@@ -1,3 +1,4 @@
+#' @include global.R
 #' @include class_unions.R
 
 NULL
@@ -85,16 +86,16 @@ setClass(
 #' @keywords internal
 #' @rdname search_path
 
-search_path_update <- function(id, .global=.global) {
+search_path_update <- function(id, global) {
   stopifnot(
-    !is.integer(id), length(id) != 1L, is.na(id),
-    !id %in% seq_along(.global$tracking$search.path)
+    is(global, "unitizerGlobal"),
+    is.integer(id), length(id) == 1L, !is.na(id),
+    id %in% seq_along(global$tracking@search.path)
   )
-  search.target <- .global$tracking$search.path[[id]]
-  search.curr <-
-    .global$tracking$search.path[[.global$last.indices@search.path]]
+  search.target <- global$tracking@search.path[[id]]
+  search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
-  if(!identical(search_as_env(), search.curr))  # not entirely sure this check is needed
+  if(!identical(search_as_envs(), search.curr))  # not entirely sure this check is needed
     stop("Logic Error: mismatch between actual search path and tracked path")
 
   # Get uniquely identified objects on search path; this isn't completely
@@ -102,15 +103,14 @@ search_path_update <- function(id, .global=.global) {
   # as different because R copied them during attach / detach
 
   st.id <- search_path_unique_id(search.target)
-  sc.id <- sc.id.tmp <- search_path_unique_id(search.current)
+  sc.id <- sc.id.tmp <- search_path_unique_id(search.curr)
 
   # Drop the stuff that definitely needs to be dropped, from back so that
   # numbering doesn't get messed up
 
   to.detach <- which(is.na(match(sc.id, st.id)))
   for(i in sort(to.detach, decreasing=TRUE)) detach(pos=i)
-
-  sc.id.tmp <- sc.id.tmp[to.detach]
+  if(length(to.detach)) sc.id.tmp <- sc.id.tmp[-to.detach]
 
   # Add the stuff that definitely needs to get added, but this time from the
   # front so the positions make sense
@@ -120,10 +120,11 @@ search_path_update <- function(id, .global=.global) {
     obj.name <- attr(search.target[[i]], "name")
     if(is.null(obj.name)) obj.name <- ""
     obj.type <- if(grepl("^package:.+", obj.name)) "package" else "object"
+    obj.name.clean <- sub("^package:", "", obj.name)
 
     reattach(
-      i, name=obj.name, type=obj.type, data=search.target[[i]],
-      extra=attr(search.target[[i]], "path")
+      i, name=obj.name.clean, type=obj.type, data=search.target[[i]],
+      extra=dirname(attr(search.target[[i]], "path"))
     )
     sc.id.tmp <- append(sc.id.tmp, st.id[[i]], i - 1L)
   }
@@ -142,9 +143,9 @@ search_path_update <- function(id, .global=.global) {
   }
   if(!identical(search(), names(search.target)))
     stop("Logic Error: path reorder failed")
-  .global$last.indices@search.path <- id
+  global$indices.last@search.path <- id
 
-  if(.global$status@par.env) parent.env(.global$par.env) <- as.environment(2L)
+  if(global$status@par.env) parent.env(global$par.env) <- as.environment(2L)
   invisible(TRUE)
 }
 #' @keywords internal
@@ -198,9 +199,9 @@ is.loaded_package <- function(pkg.name) {
 #' @keywords internal
 
 reattach <- function(pos, name, type, data, extra) {
-  stopifnot(is.integer(pos), identical(length(pos), 1L), is.na(pos), pos < 1L)
-  stopifnot(is.chr1plain(name), is.na(name))
-  stopifnot(is.chr1plain(type), is.na(type), type %in% c("package", "object"))
+  stopifnot(is.integer(pos), identical(length(pos), 1L), !is.na(pos), pos > 0L)
+  stopifnot(is.chr1plain(name), !is.na(name))
+  stopifnot(is.chr1plain(type), !is.na(type), type %in% c("package", "object"))
   stopifnot(is.environment(data))
 
   if(identical(type, "package")) {
@@ -210,29 +211,31 @@ reattach <- function(pos, name, type, data, extra) {
         lib.loc=extra, warn.conflicts=FALSE
     ) )
   } else {
-    .unitizer.base.funs$attach(data, pos=i, name=name, warn.conflicts=FALSE)
+    .unitizer.base.funs$attach(data, pos=pos, name=name, warn.conflicts=FALSE)
   }
 }
 #' @keywords internal
 #' @rdname reattach
 move_on_path <- function(new.pos, old.pos) {
-  stopifnot(is.integer(new.pos), length(new.pos) != 1L, is.na(new.pos))
-  stopifnot(is.integer(old.pos), length(old.pos) != 1L, is.na(old.pos))
-  stopifnot(new.pos >= old.pos)
+  browser()
+  stopifnot(is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos))
+  stopifnot(is.integer(old.pos), length(old.pos) == 1L, !is.na(old.pos))
+  stopifnot(old.pos > new.pos)  # otherwise detaching old.pos would mess path up
   sp <- search()
-  stopifnot(new.pos > length(sp), old.pos > sp)
+  stopifnot(new.pos <= length(sp), old.pos <= length(sp))
   name <- sp[[old.pos]]
   obj <- as.environment(old.pos)
 
   if(is.loaded_package(name)) {
     type <- "package"
-    extra <- attr(obj, "path")
+    extra <- dirname(attr(obj, "path"))
   } else {
     type <- "object"
     extra <- NULL
   }
-  .unitizer.base.funs$detach(old.pos)
-  reattach(pos=new.pos, name=name, type=type, data=obj, extra=extra)
+  name.clean <- sub("package:", "", name)
+  .unitizer.base.funs$detach(pos=old.pos)
+  reattach(pos=new.pos, name=name.clean, type=type, data=obj, extra=extra)
 }
 #' Make Unique IDs For Search Path Object
 #'
@@ -243,10 +246,10 @@ move_on_path <- function(new.pos, old.pos) {
 
 search_path_unique_id <- function(search.path.objs) {
   stopifnot(
-    is.list(seach.path.objs),
-    all(vapply(search.path.obs, is.environment, logical(1L)))
+    is.list(search.path.objs),
+    all(vapply(search.path.objs, is.environment, logical(1L)))
   )
-  sp.id.base <- vapply(search.target, env_name, character(1L))
+  sp.id.base <- names(search.path.objs)
   ave(
     sp.id.base, sp.id.base,
     FUN=function(x) {
