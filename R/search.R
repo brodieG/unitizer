@@ -217,10 +217,10 @@ reattach <- function(pos, name, type, data, extra) {
 #' @keywords internal
 #' @rdname reattach
 move_on_path <- function(new.pos, old.pos) {
-  browser()
   stopifnot(is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos))
   stopifnot(is.integer(old.pos), length(old.pos) == 1L, !is.na(old.pos))
   stopifnot(old.pos > new.pos)  # otherwise detaching old.pos would mess path up
+  stopifnot(new.pos > 1L)       # can't attach at 1L
   sp <- search()
   stopifnot(new.pos <= length(sp), old.pos <= length(sp))
   name <- sp[[old.pos]]
