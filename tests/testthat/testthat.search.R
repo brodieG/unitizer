@@ -5,6 +5,7 @@ unitizer.dir <- system.file(package="unitizer")
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg2"))
 unitizer.dummy.list <- list(A=1, B=2, C=3)
+unitizer.dummy.list.2 <- list(A=13, B=24, C=35)
 
 try(detach("package:unitizer", unload=TRUE))
 try(detach("package:unitizerdummypkg1", unload=TRUE))
@@ -47,11 +48,11 @@ library(unitizer)
 
 search.ref <- NULL # will be modified later
 search.init <- unitizer:::search_as_envs()
+untz.glob <- unitizer:::unitizerGlobal$new()
 
 test_that("Search Path Journaling Works", {
   # Note, these are intended to be run without the shimming in place
 
-  untz.glob <- unitizer:::unitizerGlobal$new()
   untz.glob$enable()
   expect_identical(
     untz.glob$status,
@@ -95,7 +96,7 @@ test_that("Search Path Journaling Works", {
   # Attach a list
 
   attach(unitizer.dummy.list)
-  st.3 <- untz.glob$state()
+  search.ref <<- st.3 <- untz.glob$state()
 
   expect_equal(
     environmentName(untz.glob$tracking@search.path[[st.3@search.path]][[2L]]),
@@ -156,11 +157,34 @@ test_that("Search Path Journaling Works", {
     untz.glob$tracking@search.path[[curr.sp.ind - 1L]][-5L]
   )
 })
-
-
-
 # Now, lets try to restore some stuff
 
-  # set to just after we added t
+test_that("Resetting search path", {
+  expect_identical(
+    as.list(as.environment("unitizer.dummy.list")),
+    unitizer.dummy.list.2
+  )
+  # set to just after we added the original dummy list
 
-  st.7 <- untz.glob$reset(st.3)
+  st.7 <- untz.glob$reset(search.ref)
+  expect_identical(
+    as.list(as.environment("unitizer.dummy.list")),
+    unitizer.dummy.list
+  )
+  # Confirm we actually set to expected path
+
+  expect_identical(
+    unitizer:::search_path_attrs(),
+    unitizer:::search_path_attrs(
+      untz.glob$tracking@search.path[[search.ref@search.path]]
+    )
+  )
+  # Reset to very beginning
+
+  untz.glob$resetFull()
+
+  expect_identical(
+    unitizer:::search_path_attrs(),
+    unitizer:::search_path_attrs(search.init)
+  )
+} )

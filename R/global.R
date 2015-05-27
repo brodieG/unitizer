@@ -220,6 +220,8 @@ unitizerGlobal <- setRefClass(
         setwd(
           tracking@working.directory[[to@working.directory]]
         )
+      if(status@par.env) parent.env(par.env) <<- as.environment(2L)
+
       indices.last <<- to
       indices.last
     },

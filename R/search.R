@@ -109,7 +109,7 @@ search_path_update <- function(id, global) {
   # numbering doesn't get messed up
 
   to.detach <- which(is.na(match(sc.id, st.id)))
-  for(i in sort(to.detach, decreasing=TRUE)) detach(pos=i)
+  for(i in sort(to.detach, decreasing=TRUE)) .unitizer.base.funs$detach(pos=i)
   if(length(to.detach)) sc.id.tmp <- sc.id.tmp[-to.detach]
 
   # Add the stuff that definitely needs to get added, but this time from the
@@ -122,30 +122,62 @@ search_path_update <- function(id, global) {
     obj.type <- if(grepl("^package:.+", obj.name)) "package" else "object"
     obj.name.clean <- sub("^package:", "", obj.name)
 
+    extra <- if(!is.null(attr(search.target[[i]], "path")))
+      dirname(attr(search.target[[i]], "path"))
+
     reattach(
       i, name=obj.name.clean, type=obj.type, data=search.target[[i]],
-      extra=dirname(attr(search.target[[i]], "path"))
+      extra=extra
     )
     sc.id.tmp <- append(sc.id.tmp, st.id[[i]], i - 1L)
   }
   # Now see what needs to be swapped
 
-  reord <- match(sc.id.tmp, st.id)
-  if(any(is.na(reord)) || !identical(length(reord), length(st.id)))
-    stop("Logic Error: incorrect path remapping; contact maintainer.")
   j <- 0
-  while(any(mismatch <- reord != seq_along(reord))) {
-    if((j <- j + 1) > length(st.id))
+  repeat {
+    reord <- match(sc.id.tmp, st.id)
+    if(any(is.na(reord)) || !identical(length(reord), length(st.id)))
+      stop("Logic Error: incorrect path remapping; contact maintainer.")
+
+    if(!any(mismatch <- reord != seq_along(reord))) break
+
+    if((j <- j + 1) > length(st.id) || length(which(mismatch)) < 2L)
       stop("Logic Error: unable to reorder search path; contact maintainer.")
+
     swap.id <- min(reord[mismatch])
     swap.pos <- which(reord == swap.id)
     move_on_path(new.pos=swap.id, old.pos=swap.pos)
+    sc.id.tmp <- search_path_unique_id(search_as_envs())
   }
   if(!identical(search(), names(search.target)))
-    stop("Logic Error: path reorder failed")
-  global$indices.last@search.path <- id
+    stop("Logic Error: path reorder failed; contact maintainer.")
 
-  if(global$status@par.env) parent.env(global$par.env) <- as.environment(2L)
+  # Replace all non packages with those in the target list since those may have
+  # been changed
+
+  tar.objs <- vapply(names(search.target), is.loaded_package, logical(1L))
+  cur.objs <- vapply(names(search_as_envs()), is.loaded_package, logical(1L))
+
+  if(!identical(tar.objs, cur.objs))
+    stop("Logic Error: search path object type mismatch; contact maintainer.")
+
+  if(!all(tar.objs)) {
+    for(i in which(!tar.objs)) {
+      if(i == 1L) next # global env doesn't count
+      .unitizer.base.funs$detach(pos=i, character.only=TRUE)
+      reattach(
+        i, names(search.target)[[i]], type="object", data=search.target[[i]]
+  ) } }
+
+  if(
+    !identical(
+      sapply(search_as_envs(), attributes, simplify=FALSE),
+      sapply(search.target, attributes, simplify=FALSE)
+    )
+  )
+    stop("Logic Error: path reorder failed at last step; contact maintainer.")
+
+  global$indices.last@search.path <- id
   invisible(TRUE)
 }
 #' @keywords internal
@@ -169,7 +201,7 @@ search_path_trim <- function(
     if(!is.chr1(pack))
       stop("Logic Error: invalid search path token; contact maintainer.")
 
-    detach(pack, character.only=TRUE)
+    .unitizer.base.funs$detach(pack, character.only=TRUE)
   }
   invisible(TRUE)
 }
@@ -198,7 +230,7 @@ is.loaded_package <- function(pkg.name) {
 #'
 #' @keywords internal
 
-reattach <- function(pos, name, type, data, extra) {
+reattach <- function(pos, name, type, data, extra=NULL) {
   stopifnot(is.integer(pos), identical(length(pos), 1L), !is.na(pos), pos > 0L)
   stopifnot(is.chr1plain(name), !is.na(name))
   stopifnot(is.chr1plain(type), !is.na(type), type %in% c("package", "object"))
@@ -257,5 +289,15 @@ search_path_unique_id <- function(search.path.objs) {
       c(head(x, 1L), paste0(tail(x, -1L), ".", 1:(length(x) - 1L)))
     }
   )
+}
+
+#' Generate An Identifier out of SP objects
+#'
+#' Not perfect, by any means, but necessary because we can't directly compare
+#' the search path environments as they change on detach / re-attach
+
+search_path_attrs <- function(x=NULL) {
+  if(is.null(x)) x <- search_as_envs()
+  sapply(x, attributes, simplify=FALSE)
 }
 
