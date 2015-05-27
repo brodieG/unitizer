@@ -95,9 +95,10 @@ search_path_update <- function(id, global) {
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
-  if(!identical(search_as_envs(), search.curr))  # not entirely sure this check is needed
+  if(!identical(search_path_attrs(), search_path_attrs(search.curr))) {
+    # not entirely sure this check is needed
     stop("Logic Error: mismatch between actual search path and tracked path")
-
+  }
   # Get uniquely identified objects on search path; this isn't completely
   # perfect because some objects that are genuinely the same might be identified
   # as different because R copied them during attach / detach
@@ -163,7 +164,7 @@ search_path_update <- function(id, global) {
 
   if(!all(tar.objs)) {
     for(i in which(!tar.objs)) {
-      if(i == 1L) next # global env doesn't count
+      if(i == 1L) next # global env doesn't count since
       .unitizer.base.funs$detach(pos=i, character.only=TRUE)
       reattach(
         i, names(search.target)[[i]], type="object", data=search.target[[i]]
@@ -177,7 +178,6 @@ search_path_update <- function(id, global) {
   )
     stop("Logic Error: path reorder failed at last step; contact maintainer.")
 
-  global$indices.last@search.path <- id
   invisible(TRUE)
 }
 #' @keywords internal
