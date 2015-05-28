@@ -7,15 +7,23 @@ install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg2"))
 unitizer.dummy.list <- list(A=1, B=2, C=3)
 unitizer.dummy.list.2 <- list(A=13, B=24, C=35)
 
-try(detach("package:unitizer", unload=TRUE))
-try(detach("package:unitizerdummypkg1", unload=TRUE))
-try(detach("package:unitizerdummypkg2", unload=TRUE))
+try(detach("package:unitizer", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 
 library(unitizer)
 library(unitizerdummypkg1)
 library(unitizerdummypkg2)
 
+test_that("Detecting packages", {
+  expect_true(unitizer:::is.loaded_package("package:unitizer"))
+  expect_false(unitizer:::is.loaded_package("unitizer"))
+  expect_true(unitizer:::is.loaded_package("package:stats"))
+  expect_error(unitizer:::is.loaded_package(1))
+  expect_error(unitizer:::is.loaded_package(letters))
+  expect_false(unitizer:::is.loaded_package("Autoloads"))
+} )
 search.init <- unitizer:::search_as_envs()
 
 test_that("Moving Objects on Search Path Works", {
@@ -40,10 +48,9 @@ test_that("Moving Objects on Search Path Works", {
     sapply(search.init, attributes, simplify=FALSE)
   )
 })
-
-try(detach("package:unitizer", unload=TRUE))
-try(detach("package:unitizerdummypkg1", unload=TRUE))
-try(detach("package:unitizerdummypkg2", unload=TRUE))
+try(detach("package:unitizer", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 library(unitizer)
 
 search.ref <- NULL # will be modified later
@@ -53,7 +60,6 @@ untz.glob <- unitizer:::unitizerGlobal$new()
 test_that("Search Path Journaling Works", {
   # Note, these are intended to be run without the shimming in place
 
-  untz.glob$enable()
   expect_identical(
     untz.glob$status,
     new(
@@ -61,7 +67,10 @@ test_that("Search Path Journaling Works", {
       par.env=TRUE, options=TRUE
     )
   )
-  st.0 <- untz.glob$state()
+  # state should only be recorded if it changes
+
+  st.0 <- untz.glob$indices.last
+  st.1 <- untz.glob$state()
   expect_identical(
     st.0,
     new(
@@ -69,11 +78,13 @@ test_that("Search Path Journaling Works", {
       options=1L
     )
   )
+  expect_identical(st.0, st.1)
+
   # Add a package
 
   library("unitizerdummypkg1")
-  st.1 <- untz.glob$state()
-  expect_equal(st.1@search.path, 2L) # have two recorded states
+  st.2 <- untz.glob$state()
+  expect_equal(st.2@search.path, 2L) # have two recorded states
   expect_equal(diff(sapply(untz.glob$tracking@search.path, length)), 1L)  # should have one more item
   expect_equal(
     environmentName(untz.glob$tracking@search.path[[2L]][[2L]]),
@@ -86,24 +97,26 @@ test_that("Search Path Journaling Works", {
   # Add another package at a different position
 
   library("unitizerdummypkg2", pos=4L)
-  st.2 <- untz.glob$state()
+  st.3 <- untz.glob$state()
 
   expect_equal(diff(sapply(untz.glob$tracking@search.path, length)), c(1L, 1L))
   expect_equal(
-    environmentName(untz.glob$tracking@search.path[[st.2@search.path]][[4L]]),
+    environmentName(untz.glob$tracking@search.path[[st.3@search.path]][[4L]]),
     "package:unitizerdummypkg2"
   )
   # Attach a list
 
   attach(unitizer.dummy.list)
-  search.ref <<- st.3 <- untz.glob$state()
+  search.ref <<- untz.glob$state()
 
   expect_equal(
-    environmentName(untz.glob$tracking@search.path[[st.3@search.path]][[2L]]),
+    environmentName(
+      untz.glob$tracking@search.path[[search.ref@search.path]][[2L]]
+    ),
     "unitizer.dummy.list"
   )
   expect_identical(
-    as.list(untz.glob$tracking@search.path[[st.3@search.path]][[2L]]),
+    as.list(untz.glob$tracking@search.path[[search.ref@search.path]][[2L]]),
     unitizer.dummy.list
   )
   # And one more, but modified
@@ -141,7 +154,7 @@ test_that("Search Path Journaling Works", {
   # detach some stuff
 
   detach(2L)  # this is the first list
-  st.5 <- untz.glob$state()
+  untz.glob$state()
   curr.sp.ind <- untz.glob$indices.last@search.path
 
   expect_identical(
@@ -149,7 +162,7 @@ test_that("Search Path Journaling Works", {
     untz.glob$tracking@search.path[[curr.sp.ind - 1L]][-2L]
   )
   detach("package:unitizerdummypkg2")
-  st.6 <- untz.glob$state()
+  untz.glob$state()
   curr.sp.ind <- untz.glob$indices.last@search.path
 
   expect_identical(
@@ -166,7 +179,7 @@ test_that("Resetting search path", {
   )
   # set to just after we added the original dummy list
 
-  st.7 <- untz.glob$reset(search.ref)
+  untz.glob$reset(search.ref)
   expect_identical(
     as.list(as.environment("unitizer.dummy.list")),
     unitizer.dummy.list
@@ -188,3 +201,29 @@ test_that("Resetting search path", {
     unitizer:::search_path_attrs(search.init)
   )
 } )
+
+test_that("Search Path Trim / Restore", {
+  search.init <- unitizer:::search_as_envs()
+  untz.glob <- unitizer:::unitizerGlobal$new()
+
+  library(unitizerdummypkg1)
+  library(unitizerdummypkg2)
+
+  keep.more <- c("package:testthat", getOption("unitizer.search.path.keep"))
+  keep.all <- c(keep.more, .unitizer.base.packages)
+  unitizer:::search_path_trim(keep.more)
+  untz.glob$state()
+
+  expect_identical(
+    search(),
+    keep.all[match(names(search.init), keep.all, nomatch=0L)]
+  )
+  untz.glob$resetFull()
+
+  expect_identical(
+    unitizer:::search_path_attrs(),
+    unitizer:::search_path_attrs(search.init)
+  )
+} )
+
+
