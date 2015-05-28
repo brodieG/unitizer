@@ -180,7 +180,6 @@ unitize_core <- function(
   # Initialize new tracking object; this will also record starting state
 
   global <- unitizerGlobal$new()
-  .global$global <- global          # so traced funs can access
 
   glob.set <- reproducible.global.settings
   if(is.null(par.env)) {

@@ -143,6 +143,7 @@ unitizerGlobal <- setRefClass(
       obj <- callSuper(..., par.env=par.env)
       enable(enable.which)
       state()
+      .global$global <- .self  # top level copy for access from other namespaces
       obj
     },
     enable=function(which=.unitizer.global.settings.names) {
