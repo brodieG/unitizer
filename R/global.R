@@ -139,16 +139,18 @@ unitizerGlobal <- setRefClass(
   ),
   methods=list(
     initialize=function(
-      ..., disabled=FALSE,
+      ..., disabled=FALSE, enable.which=.unitizer.global.settings.names,
       par.env=new.env(parent=.GlobalEnv)
     ) {
       obj <- callSuper(..., par.env=par.env)
+      enable(enable.which)
       state()
       obj
     },
     enable=function(which=.unitizer.global.settings.names) {
       '
-      Turn on global environment tracking
+      Turn on global environment tracking, shouldnt be needed since usually
+      called during initialization
       '
       stopifnot(
         is.character(which), all(which %in% .unitizer.global.settings.names)
