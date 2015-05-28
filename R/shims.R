@@ -2,23 +2,40 @@
 
 NULL
 
+.unitizer.base.funs.to.shim <- c("library", "attach", "detach")
+
 unitizerGlobal$methods(
   shimFuns=function(funs=.unitizer.base.funs.to.shim) {
+    '
+    Shimming is solely to ensure that the parent environment tracks position 2
+    in the search path
+    '
     stopifnot(
       is.character(funs), all(!is.na(funs)),
       all(vapply(.unitizer.base.funs[funs], is.function, logical(1L)))
     )
     funs.to.shim <- .unitizer.base.funs[funs]
+    if(!tracingState()) {
+      warning(
+        "Unable to shim required functions to run with `par.env=NULL` because ",
+        "tracing is disabled. Setting `par.env=.GlobalEnv`.",
+        immediate.=TRUE
+      )
+      disable("par.env")
+      return(FALSE)
+    }
     if(any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))) {
       warning(
         "Unable to shim required functions to run with `par.env=NULL` because ",
-        "they are already traced. Setting `par.env=.GlobalEnv`"
+        "they are already traced. Setting `par.env=.GlobalEnv`.",
+        immediate.=TRUE
       )
+      disable("par.env")
       return(FALSE)
     }
     # apply shims
 
-    if(!all(vapply(funs, shimFun, logical(1L)))) {
+    if(!all(vapply(funs, .self$shimFun, logical(1L)))) {
       unshimFuns()
       return(FALSE)
     }
@@ -43,7 +60,7 @@ unitizerGlobal$methods(
     # Now shim
 
     shimmed <- try(
-      trace(
+      base::trace(
         name,
         tracer=quote(
           {
@@ -101,7 +118,8 @@ unitizerGlobal$methods(
       warning("Unable to trace `", name, "`", immediate.=TRUE)
       return(FALSE)
     }
-    # Store shimmed functions so we can check whether they have been un/reshimmed
+    # Store shimmed functions so we can check whether they have been
+    # un/reshimmed
 
     shim.funs[[name]] <<- getFun(name)
     TRUE
@@ -144,7 +162,7 @@ unitizerGlobal$methods(
 
 getFun <- function(name) {
   fun <- try(
-    get(name, where=.BaseNamespaceEnv, inherits=FALSE, mode="function"),
+    get(name, envir=.BaseNamespaceEnv, inherits=FALSE, mode="function"),
     silent=TRUE
   )
   if(inherits(fun, "try-error")) NULL else fun

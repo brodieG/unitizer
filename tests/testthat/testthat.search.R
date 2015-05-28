@@ -226,4 +226,9 @@ test_that("Search Path Trim / Restore", {
   )
 } )
 
+try(detach("package:unitizer", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
+while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 
+remove.packages(c("unitizerdummypkg1", "unitizerdummypkg2"))

@@ -14,8 +14,6 @@ NULL
   getwd=base::getwd,
   setwd=base::setwd
 )
-.unitizer.base.funs.to.shim <- c("library", "attach", "detach")
-
 
 #' Get Current Search Path as List of Environments
 #'
