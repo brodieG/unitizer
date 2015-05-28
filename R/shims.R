@@ -62,17 +62,18 @@ unitizerGlobal$methods(
     shimmed <- try(
       base::trace(
         name,
-        tracer=quote(
+        tracer=bquote(
           {
+            untz <- asNamespace("unitizer")
+            global <- untz$.global$global
             calls <- sys.calls()
             calls.len <- length(calls)
-            global <- asNamespace("unitizer")$.global$global
             if(
               calls.len >= 5L &&
               identical(calls[[calls.len - 3L]][[1L]], quote(.doTrace))
             ) {
               call.orig <- calls[[calls.len - 4L]]
-              call.orig[[1L]] <- .unitizer.base.funs[[name]]
+              call.orig[[1L]] <- untz$.unitizer.base.funs[[.(name)]]
               # re-eval original fun where it would have been evaluated, and then
               # return without allowing the function itself to start
 
@@ -81,14 +82,14 @@ unitizerGlobal$methods(
               return(res)
             } else {
               warning(
-                "Error while using shimmed version of `", name, "`, re-setting ",
+                "Error while using shimmed version of `", .(name), "`, re-setting ",
                 "`par.env` to `.GlobalEnv` which disables clean workspace mode",
                 immediate.=TRUE
               )
               unshim <- try(global$disable("par.env"))
               if(inherits(unshim, "try-error"))
                 stop(
-                  "Logic Error: failed attempting to unshim `", name, "`; contact ",
+                  "Logic Error: failed attempting to unshim `", .(name), "`; contact ",
                   "maintainer.  In the meantime, we recommend you restart your ",
                   "session to restore a clean global environment, and manually ",
                   "set the `par.env` argument to `.GlobalEnv` or some such to ",
