@@ -114,10 +114,11 @@ unitizerGlobal$methods(
     std.err <- tempfile()
     std.err.con <- file(std.err, "w+b")
     on.exit({
-      try(get_text_capture(std.err.con, std.err, type="message"))
+      txt <- try(get_text_capture(std.err.con, std.err, type="message"))
       release_sinks()
       close(std.err.con)
       unlink(std.err)
+      if(!inherits(txt, "try-error")) word_msg(txt)
       stop("Failed attempting to shim `", name, "`")
     } )
     capt.con <- set_text_capture(std.err.con, "message")
@@ -142,7 +143,10 @@ unitizerGlobal$methods(
 
     if(
       !identical(
-        sprintf("Tracing function \"%s\" in package \"namespace:base\"", name),
+        sprintf(
+          "Tracing function \"%s\" in package \"namespace:base\"\n",
+          name
+        ),
         shim.out
       ) || inherits(shimmed, "try-error")
     )
@@ -159,11 +163,47 @@ unitizerGlobal$methods(
     TRUE
   },
   unshimFuns=function() {
+    std.err <- tempfile()
+    std.err.con <- file(std.err, "w+b")
+    on.exit({
+      txt <- try(get_text_capture(std.err.con, std.err, type="message"))
+      release_sinks()
+      close(std.err.con)
+      unlink(std.err)
+      if(!inherits(txt, "try-error")) word_msg(txt)
+      stop(
+        "Failed attempting to unshim `", name, "`; you should consider ",
+        "manually untracing the function, or restarting your R session to ",
+        "restore function to original value."
+      )
+    } )
+    capt.con <- set_text_capture(std.err.con, "message")
+    untraced <- character()
+
     for(i in names(shim.funs)) {
-      if(identical(getFun(i), shim.funs[[i]]))  # if not identical, then someone else shimmed / unshimmed
+      if(identical(getFun(i), shim.funs[[i]])) {   # if not identical, then someone else shimmed / unshimmed
         base::untrace(i, where=.BaseNamespaceEnv)
+        untraced <- c(untraced, i)
+      }
       shim.funs[[i]] <<- NULL
     }
+    unshim.out <- get_text_capture(capt.con, std.err, "message")
+    on.exit(NULL)
+    close(std.err.con)
+    unlink(std.err)
+
+    if(
+      !identical(
+        paste0(
+          "Untracing function \"", untraced,
+          "\" in package \"namespace:base\"\n", collapse=""
+        ),
+        unshim.out
+      )
+    ) {
+      word_msg(unshim.out)
+    }
+    TRUE
   },
   checkShims=function() {
     if(!status@par.env) return(TRUE)  # currently shims only matter for par.env
