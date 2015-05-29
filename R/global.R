@@ -3,7 +3,7 @@
 NULL
 
 .unitizer.global.settings.names <-
-  c("search.path", "options", "working.directory", "par.env")
+  c("search.path", "options", "working.directory", "par.env", "random.seed")
 
 #' Get Current Search Path as List of Environments
 #'
@@ -46,10 +46,12 @@ setClass(
     search.path="logical",
     options="logical",
     working.directory="logical",
-    par.env="logical"
+    par.env="logical",
+    random.seed="logical"
   ),
   prototype=list(
-    search.path=FALSE, working.directory=FALSE, options=FALSE, par.env=FALSE
+    search.path=FALSE, working.directory=FALSE, options=FALSE, par.env=FALSE,
+    random.seed=FALSE
   ),
   validity=function(object) {
     for(i in slotNames(object)) if(!is.TF(slot(object, i)))
@@ -66,7 +68,8 @@ setClass(
     search.path="list",
     options="list",
     working.directory="list",
-    par.env="list"               # not used, but present for code simplicity
+    par.env="list",              # not used, but present for code simplicity
+    random.seed="list"
   )
 )
 #' @rdname global_structures
@@ -78,9 +81,13 @@ setClass(
     search.path="integer",
     options="integer",
     working.directory="integer",
-    par.env="integer"
+    par.env="integer",
+    random.seed="integer",
   ),
-  prototype=list(search.path=0L, options=0L, working.directory=0L, par.env=0L),
+  prototype=list(
+    search.path=0L, options=0L, working.directory=0L, par.env=0L,
+    random.seed=0L
+  ),
   validity=function(object){
     for(i in slotNames(object))
       if(length(slot(object, i)) != 1L || slot(object, i) < 0L)
@@ -95,13 +102,17 @@ setClass(
   "unitizerGlobalStateFuns", contains="unitizerGlobalBase",
   slots=c(
     search.path="function", options="function", working.directory="function",
-    par.env="function"
+    par.env="function", random.seed="function"
   ),
   prototype=list(
     search.path=search_as_envs,
     options=options,
     working.directory=getwd,
-    par.env=function() NULL
+    par.env=function() NULL,
+    random.seed=function()
+      mget(
+        ".Random.seed", envir=.GlobalEnv, inherits=FALSE, ifnotfound=list(NULL)
+      )
   )
 )
 #' Objects / Methods used to Track Global Settings and the Like
@@ -187,7 +198,8 @@ unitizerGlobal <- setRefClass(
       for(i in slotNames(tracking)) {
         if(!slot(status, i)) next             # Don't record statuses that aren't being tracked
         new.obj <- slot(state.funs, i)()      # Get state with pre-defined function
-        ref.obj <- if(slot(indices.last, i)) slot(tracking, i)[[slot(indices.last, i)]]
+        ref.obj <- if(slot(indices.last, i))
+          slot(tracking, i)[[slot(indices.last, i)]]
         if(!identical(new.obj, ref.obj)) {
           slot(tracking, i) <<- append(slot(tracking, i), list(new.obj))
           if(identical(mode, "init")) {
@@ -212,7 +224,10 @@ unitizerGlobal <- setRefClass(
           tracking@working.directory[[to@working.directory]]
         )
       if(status@par.env) parent.env(par.env) <<- as.environment(2L)
-
+      if(status@random.seed && to@random.seed)
+        assign(
+          ".Random.seed", tracking@random.seed[[to@random.seed]], .GlobalEnv
+        )
       indices.last <<- to
       indices.last
     },
@@ -225,12 +240,13 @@ unitizerGlobal <- setRefClass(
     },
     resetFull=function() {
       '
-      Reset global settings to what they were on first load
+      Reset global settings to what they were on first load; par.env doesnt
+      matter since only meaningful in context of unitizer
       '
       reset(
         new(
           "unitizerGlobalIndices", search.path=1L, options=1L,
-          working.directory=1L
+          working.directory=1L, random.seed=1L
       ) )
     }
 ) )
