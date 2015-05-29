@@ -55,11 +55,18 @@ unitizerGlobal$methods(
       all(vapply(.unitizer.base.funs[funs], is.function, logical(1L))),
       all(vapply(.unitizer.base.funs.ref[funs], is.function, logical(1L)))
     )
-    funs.to.shim <- .unitizer.base.funs[funs]
     if(!tracingState()) {
       warning(sprintf(err.base, "tracing state is FALSE") ,immediate.=TRUE)
       disable("par.env")
       return(FALSE)
+    }
+    funs.to.shim <- mget(
+      funs, ifnotfound=vector("list", length(funs)), mode="function",
+      envir=.BaseNamespaceEnv
+    )
+    if(!all(vapply(funs.to.shim, is.function, logical(1L)))) {
+      warning(sprintf(err.base, "some cannot be found"), immediate.=TRUE)
+      disable("par.env")
     }
     if(any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))) {
       warning(sprintf(err.base, "they are already traced"), immediate.=TRUE)
@@ -80,7 +87,7 @@ unitizerGlobal$methods(
           err.base,
           paste0(
             "base functions ",
-            paste0("`", names(funs.to.shim[!fun.identical]), "`",
+            paste0("`", funs[!fun.identical], "`",
               collapse=", "
             ),
             "do not have the definitions they had when this package was ",
