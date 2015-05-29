@@ -5,8 +5,6 @@
 #'
 #' @keywords internal
 
-warning("Update authors@ to include R core")
-
 .unitizer.base.funs.ref <- list(
   library=function(
     package, help, pos = 2, lib.loc = NULL, character.only = FALSE,

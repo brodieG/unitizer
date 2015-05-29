@@ -1,3 +1,4 @@
+#' @include class_unions.R
 #' @include fun.ref.R
 #' @include global.R
 
@@ -6,9 +7,38 @@ NULL
 .unitizer.base.funs <- list(
   library=base::library,
   attach=base::attach,
-  detach=base:detach
+  detach=base::detach
 )
 .unitizer.base.funs.to.shim <- c("library", "attach", "detach")
+.unitizer.tracer <- quote(
+  {
+    .par.env <- asNamespace("unitizer")$.global$global$par.env
+    parent.env(.par.env) <- as.environment(2L)
+} )
+setClass(
+  "unitizerShimDat",
+  slots=c(
+    tracer="languageOrNULL",
+    exit="languageOrNULL",
+    at="list"
+  ),
+  validity=function(object) {
+    if(is.null(object@tracer) && is.null(object@exit))
+      return("Both `tracer` and `exit` slots may not be NULL at same time")
+    if(!is.null(object@tracer) && !length(object@at))
+      return("Slot `at` must be specified if slot `tracer` is specified")
+    if(!all(vapply(object@at, is.integer, logical(1L))))
+      return("All values in `at` slot must be integer")
+  }
+)
+.unitizer.shim.dat <- list(
+  library=new(
+    "unitizerShimDat", tracer=.unitizer.tracer,
+    at=list(c(7L, 3L, 9L, 3L, 13L, 3L, 3L, 4L, 6L), 8L)
+  ),
+  attach=new("unitizerShimDat", exit=.unitizer.tracer),
+  detach=new("unitizerShimDat", exit=.unitizer.tracer)
+)
 
 unitizerGlobal$methods(
   shimFuns=function(funs=.unitizer.base.funs.to.shim) {
@@ -22,16 +52,17 @@ unitizerGlobal$methods(
     )
     stopifnot(
       is.character(funs), all(!is.na(funs)),
-      all(vapply(.unitizer.base.funs[funs], is.function, logical(1L)))
+      all(vapply(.unitizer.base.funs[funs], is.function, logical(1L))),
+      all(vapply(.unitizer.base.funs.ref[funs], is.function, logical(1L)))
     )
     funs.to.shim <- .unitizer.base.funs[funs]
     if(!tracingState()) {
-      warning(printf(err.base, "tracing state is FALSE") ,immediate.=TRUE)
+      warning(sprintf(err.base, "tracing state is FALSE") ,immediate.=TRUE)
       disable("par.env")
       return(FALSE)
     }
     if(any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))) {
-      warning(printf(err.base, "they are already traced"), immediate.=TRUE)
+      warning(sprintf(err.base, "they are already traced"), immediate.=TRUE)
       disable("par.env")
       return(FALSE)
     }
@@ -40,12 +71,12 @@ unitizerGlobal$methods(
         fun.identical <- unlist(
           Map(
             function(x, y) identical(body(x), body(y)),
-            .unitizer.base.funs,
-            .unitizer.base.funs.ref
+            .unitizer.base.funs[funs],
+            .unitizer.base.funs.ref[funs]
       ) ) )
     ) {
       warning(
-        printf(
+        sprintf(
           err.base,
           paste0(
             "base functions ",
@@ -86,46 +117,14 @@ unitizerGlobal$methods(
 
     # Now shim
 
+    if(!is(.unitizer.shim.dat[[name]], "unitizerShimDat"))
+      stop("Logic Error: missing shim data")
+
     shimmed <- try(
       base::trace(
-        name,
-        tracer=bquote(
-          {
-            untz <- asNamespace("unitizer")
-            global <- untz$.global$global
-            calls <- sys.calls()
-            calls.len <- length(calls)
-            if(
-              calls.len >= 5L &&
-              identical(calls[[calls.len - 3L]][[1L]], quote(.doTrace))
-            ) {
-              call.orig <- calls[[calls.len - 4L]]
-              call.orig[[1L]] <- untz$.unitizer.base.funs[[.(name)]]
-              # re-eval original fun where it would have been evaluated, and then
-              # return without allowing the function itself to start
-
-              res <- eval(call.orig, parent.frame(5L))
-              parent.env(global$par.env) <- as.environment(2L)
-              return(res)
-            } else {
-              warning(
-                "Error while using shimmed version of `", .(name), "`, re-setting ",
-                "`par.env` to `.GlobalEnv` which disables clean workspace mode",
-                immediate.=TRUE
-              )
-              unshim <- try(global$disable("par.env"))
-              if(inherits(unshim, "try-error"))
-                stop(
-                  "Logic Error: failed attempting to unshim `", .(name), "`; contact ",
-                  "maintainer.  In the meantime, we recommend you restart your ",
-                  "session to restore a clean global environment, and manually ",
-                  "set the `par.env` argument to `.GlobalEnv` or some such to ",
-                  "remove the need to shim search path functions."
-                )
-        } } ),
-        at=1L,
-        print=FALSE,
-        where=.BaseNamespaceEnv
+        name, tracer=.unitizer.shim.dat[[name]]@tracer,
+        at=.unitizer.shim.dat[[name]]@at, print=FALSE,
+        where=.BaseNamespaceEnv, exit=.unitizer.shim.dat[[name]]@exit
     ) )
     # Process std.err to make sure nothing untoward happened
 

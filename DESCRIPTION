@@ -6,8 +6,14 @@ Description: Simplifies regression tests by comparing objects produced by test
     interactive mode, tests can be reviewed through the provided interactive
     environment.
 Version: 0.9.0
-Author: Brodie Gaslam
-Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
+Authors@R: c(
+    person(
+    "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
+    role=c("aut", "cre")),
+    person(
+    family="R Core Team",
+    email="R-core@r-project.org", role="cph",
+    comment="Copy of source for library / attach / detach"))
 Depends:
     R (>= 3.1.2)
 Imports:
@@ -17,7 +23,9 @@ VignetteBuilder: knitr
 Suggests:
     knitr,
     testthat,
-    devtools
+    devtools,
+    unitizerdummypgk1,
+    unitizerdummypgk2
 License: GPL-3
 LazyData: true
 Collate:
@@ -42,6 +50,7 @@ Collate:
     'capture.R'
     'demo.R'
     'faux_prompt.R'
+    'fun.ref.R'
     'get.R'
     'heal.R'
     'load.R'
