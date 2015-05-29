@@ -5,16 +5,6 @@ NULL
 .unitizer.global.settings.names <-
   c("search.path", "options", "working.directory", "par.env")
 
-.unitizer.base.funs <- list(
-  library=base::library,
-  attach=base::attach,
-  detach=base::detach,
-  options=base::options,
-  search=base::search,
-  getwd=base::getwd,
-  setwd=base::setwd
-)
-
 #' Get Current Search Path as List of Environments
 #'
 #' Internal utility function

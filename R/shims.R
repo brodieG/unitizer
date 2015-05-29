@@ -1,7 +1,13 @@
+#' @include fun.ref.R
 #' @include global.R
 
 NULL
 
+.unitizer.base.funs <- list(
+  library=base::library,
+  attach=base::attach,
+  detach=base:detach
+)
 .unitizer.base.funs.to.shim <- c("library", "attach", "detach")
 
 unitizerGlobal$methods(
@@ -10,24 +16,45 @@ unitizerGlobal$methods(
     Shimming is solely to ensure that the parent environment tracks position 2
     in the search path
     '
+    err.base <- paste(
+      "Unable to shim required functions to run with `par.env=NULL` because",
+      "%s. Setting `par.env=.GlobalEnv`."
+    )
     stopifnot(
       is.character(funs), all(!is.na(funs)),
       all(vapply(.unitizer.base.funs[funs], is.function, logical(1L)))
     )
     funs.to.shim <- .unitizer.base.funs[funs]
     if(!tracingState()) {
-      warning(
-        "Unable to shim required functions to run with `par.env=NULL` because ",
-        "tracing is disabled. Setting `par.env=.GlobalEnv`.",
-        immediate.=TRUE
-      )
+      warning(printf(err.base, "tracing state is FALSE") ,immediate.=TRUE)
       disable("par.env")
       return(FALSE)
     }
     if(any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))) {
+      warning(printf(err.base, "they are already traced"), immediate.=TRUE)
+      disable("par.env")
+      return(FALSE)
+    }
+    if(  # Make sure funs are unchanged
+      !all(
+        fun.identical <- unlist(
+          Map(
+            function(x, y) identical(body(x), body(y)),
+            .unitizer.base.funs,
+            .unitizer.base.funs.ref
+      ) ) )
+    ) {
       warning(
-        "Unable to shim required functions to run with `par.env=NULL` because ",
-        "they are already traced. Setting `par.env=.GlobalEnv`.",
+        printf(
+          err.base,
+          paste0(
+            "base functions ",
+            paste0("`", names(funs.to.shim[!fun.identical]), "`",
+              collapse=", "
+            ),
+            "do not have the definitions they had when this package was ",
+            "developed"
+        ) ),
         immediate.=TRUE
       )
       disable("par.env")
@@ -77,7 +104,7 @@ unitizerGlobal$methods(
               # re-eval original fun where it would have been evaluated, and then
               # return without allowing the function itself to start
 
-              res <- eval(call, parent.frame(5L))
+              res <- eval(call.orig, parent.frame(5L))
               parent.env(global$par.env) <- as.environment(2L)
               return(res)
             } else {
