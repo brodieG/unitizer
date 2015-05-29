@@ -154,7 +154,7 @@ unitizerGlobal$methods(
   unshimFuns=function() {
     for(i in names(shim.funs)) {
       if(identical(getFun(i), shim.funs[[i]]))  # if not identical, then someone else shimmed / unshimmed
-        untrace(i, where=.BaseNamespaceEnv)
+        base::untrace(i, where=.BaseNamespaceEnv)
       shim.funs[[i]] <<- NULL
     }
   },
