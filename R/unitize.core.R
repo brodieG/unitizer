@@ -23,9 +23,7 @@
 
 unitize_core <- function(
   test.files, store.ids, interactive.mode, par.env,
-  reproducible.global.settings,
-  force.update,
-  auto.accept, pre.load, mode
+  reproducible.state, force.update, auto.accept, pre.load, mode
 ) {
 
   # - Validation / Setup -------------------------------------------------------
@@ -74,18 +72,18 @@ unitize_core <- function(
     stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be NULL or an environment.")
-  if(isTRUE(reproducible.global.settings)) {
-    reproducible.global.settings <- .unitizer.global.settings.names
-  } else if (identical(reproducible.global.settings, FALSE)) {
-    reproducible.global.settings <- character(0L)
+  if(isTRUE(reproducible.state)) {
+    reproducible.state <- .unitizer.global.settings.names
+  } else if (identical(reproducible.state, FALSE)) {
+    reproducible.state <- character(0L)
   } else if (
-    is.character(reproducible.global.settings) &&
-    all(reproducible.global.settings %in% .unitizer.global.settings.names)
+    is.character(reproducible.state) &&
+    all(reproducible.state %in% .unitizer.global.settings.names)
   ) {
-    TRUE  # Don't need to change reproducible.global.settings
+    TRUE  # Don't need to change reproducible.state
   } else {
     stop(
-      "Argument `reproducible.global.settings` must be TRUE, FALSE, or ",
+      "Argument `reproducible.state` must be TRUE, FALSE, or ",
       "character with values in ",
       deparse(.unitizer.global.settings.names, width=500L)
     )
@@ -179,7 +177,7 @@ unitize_core <- function(
 
   # Initialize new tracking object; this will also record starting state
 
-  global <- unitizerGlobal$new(enable.which=reproducible.global.settings)
+  global <- unitizerGlobal$new(enable.which=reproducible.state)
 
   if(is.null(par.env)) {
     global$shimFuns()

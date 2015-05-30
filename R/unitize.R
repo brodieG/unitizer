@@ -45,25 +45,24 @@
 #' @param par.env NULL or environment, if NULL tests are run in a clean
 #'   environment, if an environment they are run with that environment as the
 #'   parent environment.
-#' @param reproducible.global.settings, TRUE, FALSE, or character containing
-#'   values in \code{c("search.path", "options", "working.directory")}.
-#'   Controls how global settings are managed during test evaluation and review.
-#'   Global settings such as the search path, global options, or the working
-#'   indirectly affect the result of R expressions.  If TRUE, this parameter
+#' @param reproducible.state, TRUE, FALSE, or character containing
+#'   values in \code{c("search.path", "options", "working.directory",
+#'   "random.seed")}. Controls how global state is tracked and reset during
+#'   test evaluation and review.  If TRUE, this parameter
 #'    will cause \code{unitizer} to track the global settings throughout test
 #'   evaluation and ensure they are the same when reviewing tests as they were
 #'   during evaluation.  Additionally, when testing multiple \code{unitizers}
 #'    with \code{unitize_dir}, the global settings will be reset prior to
 #'   running each \code{unitizer} to what they were after the helper scripts are
-#'   first loaded (see \code{pre.load} parameter).  The search path will also be
-#'   initialized to the bare bones R search path to ensure it is consistent
-#'   across \code{unitizer} runs.  If FALSE, global settings will not be
-#'   affected by \code{unitizer} other than by whatever the tests themselves
-#'   do.  If character, then any of the global settings included will be tracked
-#'   and reset as described above. If any tracking / resetting is enabled,
-#'   \code{unitizer} will reset the  global settings upon exit to what they were
-#'   prior to running \code{unitizer}.  See "Reproducible Tests" vignette for
-#'   more details.
+#'   first loaded (see \code{pre.load} parameter).  The package search list
+#'   as produced by \code{search()} will also be initialized to the bare bones
+#'   R search path to ensure it is consistent across \code{unitizer} runs.
+#'   If FALSE, global settings will not be affected by \code{unitizer} other
+#'   than by whatever the tests themselves do.  If character, then any of the
+#'   global settings included will be tracked and reset as described above. If
+#'   any tracking / resetting is enabled, \code{unitizer} will reset the  global
+#'   settings upon exit to what they were prior to running \code{unitizer}.
+#'   See "Reproducible Tests" vignette for more details.
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @param test.dir the directory to run the tests on
@@ -114,7 +113,7 @@ unitize <- function(
   test.file, store.id=NULL,
   interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
-  reproducible.global.settings=getOption("unitizer.global.settings"),
+  reproducible.state=getOption("unitizer.reproducible.state"),
   force.update=FALSE,
   auto.accept=character(0L),
   pre.load=NULL
@@ -126,9 +125,8 @@ unitize <- function(
     unitize_core(
       test.file.inf, list(store.id.inf),
       interactive.mode=interactive.mode, par.env=par.env,
-      reproducible.global.settings=reproducible.global.settings,
-      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
-      mode="unitize"
+      reproducible.state=reproducible.state, force.update=force.update,
+      auto.accept=auto.accept, pre.load=pre.load, mode="unitize"
   ) )
 }
 #' @rdname unitize
@@ -143,7 +141,7 @@ review <- function(store.id) {
       store.ids=list(infer_unitizer_location(store.id, type="u")),
       interactive.mode=TRUE,
       par.env=.GlobalEnv,
-      reproducible.global.settings=FALSE,
+      reproducible.state=FALSE,
       force.update=FALSE,
       auto.accept=character(0L), pre.load=list(), mode="review"
   ) )
@@ -157,7 +155,7 @@ unitize_dir <- function(
   pattern="^[^.].*\\.[Rr]$",
   interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
-  reproducible.global.settings=getOption("unitizer.global.settings"),
+  reproducible.state=getOption("unitizer.reproducible.state"),
   force.update=FALSE,
   auto.accept=character(0L),
   pre.load=NULL
@@ -196,7 +194,7 @@ unitize_dir <- function(
     unitize_core(
       test.files=test.files, store.ids=store.ids,
       interactive.mode=interactive.mode, par.env=par.env,
-      reproducible.global.settings=reproducible.global.settings,
+      reproducible.state=reproducible.state,
       force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
       mode="unitize"
   ) )
