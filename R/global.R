@@ -107,7 +107,7 @@ setClass(
     random.seed=function()
       mget(
         ".Random.seed", envir=.GlobalEnv, inherits=FALSE, ifnotfound=list(NULL)
-      )
+      )[[1L]]
   )
 )
 #' Objects / Methods used to Track Global Settings and the Like
