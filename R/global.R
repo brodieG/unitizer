@@ -3,7 +3,7 @@
 NULL
 
 .unitizer.global.settings.names <-
-  c("search.path", "options", "working.directory", "par.env", "random.seed")
+  c("search.path", "options", "working.directory", "random.seed")
 
 #' Get Current Search Path as List of Environments
 #'
@@ -46,11 +46,10 @@ setClass(
     search.path="logical",
     options="logical",
     working.directory="logical",
-    par.env="logical",
     random.seed="logical"
   ),
   prototype=list(
-    search.path=FALSE, working.directory=FALSE, options=FALSE, par.env=FALSE,
+    search.path=FALSE, working.directory=FALSE, options=FALSE,
     random.seed=FALSE
   ),
   validity=function(object) {
@@ -68,7 +67,6 @@ setClass(
     search.path="list",
     options="list",
     working.directory="list",
-    par.env="list",              # not used, but present for code simplicity
     random.seed="list"
   )
 )
@@ -81,12 +79,10 @@ setClass(
     search.path="integer",
     options="integer",
     working.directory="integer",
-    par.env="integer",
-    random.seed="integer",
+    random.seed="integer"
   ),
   prototype=list(
-    search.path=0L, options=0L, working.directory=0L, par.env=0L,
-    random.seed=0L
+    search.path=0L, options=0L, working.directory=0L, random.seed=0L
   ),
   validity=function(object){
     for(i in slotNames(object))
@@ -102,13 +98,12 @@ setClass(
   "unitizerGlobalStateFuns", contains="unitizerGlobalBase",
   slots=c(
     search.path="function", options="function", working.directory="function",
-    par.env="function", random.seed="function"
+    random.seed="function"
   ),
   prototype=list(
     search.path=search_as_envs,
     options=options,
     working.directory=getwd,
-    par.env=function() NULL,
     random.seed=function()
       mget(
         ".Random.seed", envir=.GlobalEnv, inherits=FALSE, ifnotfound=list(NULL)
@@ -164,14 +159,17 @@ unitizerGlobal <- setRefClass(
           next
         }
         slot(status, i) <<- TRUE
-        if(identical(i, "par.env")) parent.env(par.env) <<- as.environment(2L)
       }
       status
     },
     disable=function(which=.unitizer.global.settings.names) {
       '
       Turn off global settings; for `par.env` also unshims the functions used
-      to enable tracking of topmost environment
+      to enable tracking of topmost environment.
+
+      Currently not truly needed but left in for future use since the enable/
+      disable paradigm is not as important now that `par.env` is being handled
+      separately
       '
       stopifnot(
         is.character(which), all(!is.na(which)),
@@ -180,10 +178,7 @@ unitizerGlobal <- setRefClass(
       for(i in which) {
         slot(status, i) <<- FALSE
         slot(disabled, i) <<- TRUE
-        if(identical(i, "par.env")) {
-          unshimFuns()
-          parent.env(par.env) <<- .GlobalEnv
-      } }
+      }
       status
     },
     state=function(mode="normal") {
@@ -223,7 +218,6 @@ unitizerGlobal <- setRefClass(
         setwd(
           tracking@working.directory[[to@working.directory]]
         )
-      if(status@par.env) parent.env(par.env) <<- as.environment(2L)
       if(status@random.seed && to@random.seed)
         assign(
           ".Random.seed", tracking@random.seed[[to@random.seed]], .GlobalEnv

@@ -64,7 +64,7 @@ test_that("Search Path Journaling Works", {
     untz.glob$status,
     new(
       "unitizerGlobalStatus", search.path=TRUE, working.directory=TRUE,
-      par.env=TRUE, options=TRUE
+      options=TRUE, random.seed=TRUE
     )
   )
   # state should only be recorded if it changes
@@ -75,7 +75,7 @@ test_that("Search Path Journaling Works", {
     st.0,
     new(
       "unitizerGlobalIndices", search.path=1L, working.directory=1L,
-      options=1L
+      options=1L, random.seed=1L
     )
   )
   expect_identical(st.0, st.1)

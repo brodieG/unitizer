@@ -46,6 +46,7 @@ unitizerGlobal$methods(
     Shimming is solely to ensure that the parent environment tracks position 2
     in the search path
     '
+    parent.env(par.env) <<- as.environment(2L)
     err.base <- paste(
       "Unable to shim required functions to run with `par.env=NULL` because",
       "%s. Setting `par.env=.GlobalEnv`."
@@ -55,25 +56,21 @@ unitizerGlobal$methods(
       all(vapply(.unitizer.base.funs[funs], is.function, logical(1L))),
       all(vapply(.unitizer.base.funs.ref[funs], is.function, logical(1L)))
     )
-    if(!tracingState()) {
-      warning(sprintf(err.base, "tracing state is FALSE") ,immediate.=TRUE)
-      disable("par.env")
-      return(FALSE)
-    }
     funs.to.shim <- mget(
       funs, ifnotfound=vector("list", length(funs)), mode="function",
       envir=.BaseNamespaceEnv
     )
-    if(!all(vapply(funs.to.shim, is.function, logical(1L)))) {
-      warning(sprintf(err.base, "some cannot be found"), immediate.=TRUE)
-      disable("par.env")
-    }
-    if(any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))) {
-      warning(sprintf(err.base, "they are already traced"), immediate.=TRUE)
-      disable("par.env")
-      return(FALSE)
-    }
-    if(  # Make sure funs are unchanged
+    err.extra <- ""  # 0 char means no error
+
+    if(!tracingState()) {
+      err.extra <- "tracing state is FALSE"
+    } else if(!all(vapply(funs.to.shim, is.function, logical(1L)))) {
+      err.extra <- "some cannot be found"
+    } else if(
+      any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))
+    ) {
+      err.extra <- "they are already traced"
+    } else if(  # Make sure funs are unchanged
       !all(
         fun.identical <- unlist(
           Map(
@@ -82,26 +79,21 @@ unitizerGlobal$methods(
             .unitizer.base.funs.ref[funs]
       ) ) )
     ) {
-      warning(
-        sprintf(
-          err.base,
-          paste0(
-            "base functions ",
-            paste0("`", funs[!fun.identical], "`",
-              collapse=", "
-            ),
-            "do not have the definitions they had when this package was ",
-            "developed"
-        ) ),
-        immediate.=TRUE
+      err.extra <- paste0(
+        "base functions ",paste0("`", funs[!fun.identical], "`", collapse=", "),
+        "do not have the definitions they had when this package was ",
+        "developed"
       )
-      disable("par.env")
+    }
+    if(nchar(err.extra)) {
+      warning(sprintf(err.base, err.extra), immediate.=TRUE)
+      parent.env(par.env) <<- .GlobalEnv
       return(FALSE)
     }
     # apply shims
 
-    if(!all(vapply(funs, .self$shimFun, logical(1L)))) {
-      unshimFuns()
+    if(shim.fail <- !all(vapply(funs, .self$shimFun, logical(1L)))) {
+      unshimFuns()  # This also resets par.env parent
       return(FALSE)
     }
     return(TRUE)
@@ -163,6 +155,7 @@ unitizerGlobal$methods(
     TRUE
   },
   unshimFuns=function() {
+    parent.env(par.env) <<- .GlobalEnv
     std.err <- tempfile()
     std.err.con <- file(std.err, "w+b")
     on.exit({
@@ -206,7 +199,6 @@ unitizerGlobal$methods(
     TRUE
   },
   checkShims=function() {
-    if(!status@par.env) return(TRUE)  # currently shims only matter for par.env
     fail <- FALSE
     if(!tracingState()) {
       warning(
@@ -226,8 +218,10 @@ unitizerGlobal$methods(
       )
       fail <- TRUE
     }
-    if(fail) disable("par.env")
-    status@par.env
+    if(fail) {
+      unshimFuns()
+      FALSE
+    } else TRUE
   }
 )
 #' Utility Function

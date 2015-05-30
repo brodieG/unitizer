@@ -110,7 +110,7 @@ search_path_update <- function(id, global) {
   # numbering doesn't get messed up
 
   to.detach <- which(is.na(match(sc.id, st.id)))
-  for(i in sort(to.detach, decreasing=TRUE)) .unitizer.base.funs$detach(pos=i)
+  for(i in sort(to.detach, decreasing=TRUE)) detach(pos=i)
   if(length(to.detach)) sc.id.tmp <- sc.id.tmp[-to.detach]
 
   # Add the stuff that definitely needs to get added, but this time from the
@@ -165,7 +165,7 @@ search_path_update <- function(id, global) {
   if(!all(tar.objs)) {
     for(i in which(!tar.objs)) {
       if(i == 1L) next # global env doesn't count since
-      .unitizer.base.funs$detach(pos=i, character.only=TRUE)
+      detach(pos=i, character.only=TRUE)
       reattach(
         i, names(search.target)[[i]], type="object", data=search.target[[i]]
   ) } }
@@ -201,7 +201,7 @@ search_path_trim <- function(
     if(!is.chr1(pack))
       stop("Logic Error: invalid search path token; contact maintainer.")
 
-    .unitizer.base.funs$detach(pack, character.only=TRUE)
+    detach(pack, character.only=TRUE)
   }
   invisible(TRUE)
 }
@@ -238,12 +238,12 @@ reattach <- function(pos, name, type, data, extra=NULL) {
 
   if(identical(type, "package")) {
     suppressPackageStartupMessages(
-      .unitizer.base.funs$library(
+      library(
         name, pos=pos, quietly=TRUE, character.only=TRUE,
         lib.loc=extra, warn.conflicts=FALSE
     ) )
   } else {
-    .unitizer.base.funs$attach(data, pos=pos, name=name, warn.conflicts=FALSE)
+    attach(data, pos=pos, name=name, warn.conflicts=FALSE)
   }
 }
 #' @keywords internal
@@ -266,7 +266,7 @@ move_on_path <- function(new.pos, old.pos) {
     extra <- NULL
   }
   name.clean <- sub("package:", "", name)
-  .unitizer.base.funs$detach(pos=old.pos)
+  detach(pos=old.pos)
   reattach(pos=new.pos, name=name.clean, type=type, data=obj, extra=extra)
 }
 #' Make Unique IDs For Search Path Object

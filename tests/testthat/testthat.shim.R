@@ -2,6 +2,8 @@ library(unitizer)
 library(devtools)
 library(testthat)
 
+prev.trace.state <- tracingState(TRUE)
+if(!prev.trace.state) message("Turned on tracing state for tests")
 unitizer.dir <- system.file(package="unitizer")
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
@@ -52,8 +54,7 @@ test_that("Parent env tracking with search path manip", {
 } )
 
 test_that("Disable Unshims, etc.", {
-  untz.glob$disable("par.env")
-
+  untz.glob$unshimFuns()
   expect_true(
     !any(
       vapply(
@@ -62,8 +63,6 @@ test_that("Disable Unshims, etc.", {
         logical(1L),
         "functionWithTrace"
   ) ) )
-  expect_false(untz.glob$status@par.env)
-  expect_warning(untz.glob$enable("par.env"), "already been disabled")  # can't re-enable
 } )
 
 test_that("Checks, errors, etc.", {
@@ -71,8 +70,6 @@ test_that("Checks, errors, etc.", {
   tracingState(FALSE)
 
   expect_warning(untz.glob$shimFuns(), "tracing state is FALSE")
-  expect_false(untz.glob$status@par.env)
-  expect_true(untz.glob$disabled@par.env)
   expect_identical(parent.env(my.env), .GlobalEnv)
 
   tracingState(TRUE)
@@ -82,8 +79,6 @@ test_that("Checks, errors, etc.", {
   lib.trace <- library
 
   expect_warning(untz.glob$shimFuns(), "already traced")
-  expect_false(untz.glob$status@par.env)
-  expect_true(untz.glob$disabled@par.env)
   expect_identical(parent.env(my.env), .GlobalEnv)
 
   expect_false(inherits(attach, "functionWithTrace"))
@@ -100,8 +95,6 @@ test_that("Checks, errors, etc.", {
   attach.trace <- attach
 
   expect_warning(untz.glob$checkShims(), "functions unexpectedly changed")
-  expect_false(untz.glob$status@par.env)
-  expect_true(untz.glob$disabled@par.env)
   expect_identical(parent.env(my.env), .GlobalEnv)
 
   expect_false(inherits(detach, "functionWithTrace"))
@@ -115,8 +108,6 @@ test_that("Checks, errors, etc.", {
 
   tracingState(FALSE)
   expect_warning(untz.glob$checkShims(), "Tracing state off")
-  expect_false(untz.glob$status@par.env)
-  expect_true(untz.glob$disabled@par.env)
   expect_identical(parent.env(my.env), .GlobalEnv)
 
   tracingState(TRUE)
@@ -129,3 +120,4 @@ test_that("Checks, errors, etc.", {
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 remove.packages(c("unitizerdummypkg1"))
+tracingState(prev.trace.state)
