@@ -38,19 +38,6 @@ setClass(
   "package:datasets", "package:methods", "Autoloads", "package:base",
   ".GlobalEnv"
 )
-#' Error message shared across functions
-#'
-#' @keywords internal
-
-.unitizer.search.fail.msg <- paste0(
-  "  We recommend you restart R to restore the search path to a clean state.  ",
-  "You can run also `unitizer(clean.search.path=FALSE)` to disable search path ",
-  "manipulation if these warnings persist."
-)
-.unitizer.search.fail.msg.extra <- paste0(
-  "  Please contact maintainer to alert them of this warning."
-)
-
 #' Search Path Management Functions
 #'
 #' Set of functions used to manage search path state.  Strategy is to
