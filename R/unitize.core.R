@@ -179,20 +179,17 @@ unitize_core <- function(
 
   # Initialize new tracking object; this will also record starting state
 
-  global <- unitizerGlobal$new()
+  global <- unitizerGlobal$new(enable.which=reproducible.global.settings)
 
-  glob.set <- reproducible.global.settings
   if(is.null(par.env)) {
+    global$shimFuns()
     par.env <- global$par.env
-    glob.set <- unique(glob.set, "par.env")
   }
-  global$enable(glob.set)
-
   on.exit(add=TRUE,
     {
       glob.clear <- try({
         global$resetFull()
-        global$disable()
+        global$unshimFuns()
       })
       if(inherits(glob.clear, "try-error"))
         word_msg(
@@ -282,7 +279,7 @@ unitize_core <- function(
 
   on.exit(NULL)
   global$resetFull()
-  global$disable()
+  global$unshimFuns()
 
   return(as.list(unitizers))
 }
