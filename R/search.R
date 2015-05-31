@@ -173,8 +173,13 @@ search_path_update <- function(id, global) {
 search_path_trim <- function(
   keep=getOption("unitizer.search.path.keep")
 ) {
-  stopifnot(is.character(keep), all(!is.na(keep)))
-
+  if(!is.character(keep) && all(!is.na(keep))) {
+    stop(
+      "Global option `unitizer.search.path.keep` must be character ",
+      "and not contain NAs; if you have not modified this option, contact ",
+      "maintainer."
+    )
+  }
   # Make sure search path is compatible with what we're doing
 
   search.path.pre <- search()

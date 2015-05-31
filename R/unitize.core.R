@@ -22,8 +22,8 @@
 #' @param store.ids list of store ids, same length as \code{test.files}
 
 unitize_core <- function(
-  test.files, store.ids, interactive.mode, par.env,
-  reproducible.state, force.update, auto.accept, pre.load, mode
+  test.files, store.ids, par.env, reproducible.state, pre, post,
+  history, interactive.mode, force.update, auto.accept, mode
 ) {
 
   # - Validation / Setup -------------------------------------------------------
@@ -40,6 +40,11 @@ unitize_core <- function(
       )
     if(length(auto.accept))
       stop("Logic Error: auto-accepts not allowed in review mode")
+    if(
+      !identical(reproducible.state, FALSE) &&
+      !is.character(reproducible.state) && !length(reproducible.state)
+    )
+      stop("Logic Error: reproducible.state must be disabled in review mode")
   }
   if(mode == "unitize") {
     if(
@@ -60,16 +65,9 @@ unitize_core <- function(
     )
   if(!length(test.files))
     stop("Logic Error: expected at least one test file; contact maintainer.")
-  if(
-    !is.logical(interactive.mode) || length(interactive.mode) != 1L ||
-    is.na(interactive.mode)
-  )
+  if(!is.TF(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
-  if(
-    !is.logical(force.update) || length(force.update) != 1L ||
-    is.na(force.update)
-  )
-    stop("Argument `force.update` must be TRUE or FALSE")
+  if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be NULL or an environment.")
   if(isTRUE(reproducible.state)) {
@@ -106,15 +104,14 @@ unitize_core <- function(
   } else stop("Argument `auto.accept` must be character")
   if(length(auto.accept) && !length(test.files))
     stop("Argument `test.files` must be specified when using `auto.accept`")
-  if(
-    !is.null(pre.load) && !identical(pre.load, FALSE) && !is.list(pre.load) &&
-    !is.character(pre.load) && length(pre.load) != 1L
-  )
-    stop("Argument `pre.load` must be NULL, FALSE, a list, or character(1L)")
-  if(is.null(pre.load)) {
-     pre.load  <- if(length(test.files))
-      file.path(dirname(test.files[[1L]]), "helper") else list()
-  }
+
+  # validate and convert pre and post load folders to character; this doesn't
+  # check that they point to real stuff
+
+  test.dir <- if(length(test.files)) dirname(test.files[[1L]])
+  pre <- validate_pre_post(pre, test.dir)
+  post <- validate_pre_post(post, test.dir)
+
   quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
   if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
     stop(
@@ -175,7 +172,8 @@ unitize_core <- function(
     )
   # - Global Controls ----------------------------------------------------------
 
-  # Initialize new tracking object; this will also record starting state
+  # Initialize new tracking object; this will also record starting state and
+  # put the object in the `unitizer:::.global` environment object
 
   global <- unitizerGlobal$new(enable.which=reproducible.state)
 
@@ -207,9 +205,9 @@ unitize_core <- function(
   # Handle pre-load data
 
   over_print("Preloads...")
-  pre.load.frame <- try(pre_load(pre.load, gpar.frame))
-  if(inherits(pre.load.frame, "try-error") || !is.environment(pre.load.frame))
-    stop("Argument `pre.load` could not be interpreted")
+  pre.load.frame <- source_files(pre, gpar.frame)
+  if(!is.environment(pre.load.frame))
+    stop("Argument `pre` could not be interpreted: ", pre.load.frame)
 
   global$state("init")  # mark post pre-load state
 
@@ -278,6 +276,13 @@ unitize_core <- function(
   on.exit(NULL)
   global$resetFull()
   global$unshimFuns()
+
+  post.res <- source_files(post, gpar.frame)  # return env on success, char on error
+  if(!is.environment(post.res))
+    warning(
+      "`unitizer` evaluation succeed, but `post` steps had errors:",
+      post.res
+    )
 
   return(as.list(unitizers))
 }
@@ -608,4 +613,29 @@ check_call_stack <- function() {
       "defined outside of `unitize`.  If you did not define this restart contact ",
       "maintainer."
     )
+}
+
+#' Helper function for validations
+#'
+#' @keywords internal
+
+validate_pre_post <- function(what, test.dir) {
+  which <- deparse(substitute(what))
+  stopifnot(which %in% c("pre", "post"))
+  stopifnot(is.chr1(test.dir) || is.null(test.dir))
+  if(
+    !is.null(what) && !identical(what, FALSE) && !is.character(what)
+  )
+    stop(
+      simpleError(
+        message=paste0(
+          "Argument `", which, "` must be NULL, FALSE, or character"
+        ),
+        call=sys.call(-1L)
+    ) )
+  if(is.null(what) && !is.null(test.dir)) {
+    file.path(test.dir, sprintf("_%s", which))
+  } else if (is.character(what)) {
+    what
+  } else character(0L)
 }
