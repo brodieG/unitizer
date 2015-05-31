@@ -118,14 +118,17 @@ filename_to_storeid <- function(x) {
 #'
 #' @keywords internal
 
-history_capt <- function() {
+history_capt <- function(hist.file=NULL) {
   # set up local history
+
+  if(is.null(hist.file)) return(list(con=NULL, file=NULL))
 
   hist.try <- try(savehistory(), silent=TRUE)
   if(inherits(hist.try, "try-error"))
     warning(conditionMessage(attr(hist.try, "condition")))
-  hist.file <- tempfile()
-  hist.con <- file(hist.file, "at")
+  hist.con <- try(file(hist.file, "at"))
+  if(inherits(hist.con, "try-error"))
+    stop("Unable to open a connection to file provided for history")
   cat(
     "## <unitizer> (original history will be restored on exit)\n",
     file=hist.con
@@ -139,6 +142,8 @@ history_capt <- function() {
   list(con=hist.con, file=hist.file)
 }
 history_release <- function(hist.obj) {
+  if(all(vapply(hist.obj, is.null, logical(1L))))
+    return(invisible(TRUE))
   close(hist.obj$con)
   file.remove(hist.obj$file)
   hist.try <- try(loadhistory(), silent=TRUE)

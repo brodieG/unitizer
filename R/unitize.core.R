@@ -118,6 +118,17 @@ unitize_core <- function(
       "Logic Error: unitizer option `unitizer.prompt.b4.quit.time` ",
       "is miss-specified"
     )
+  # Make sure history is kosher
+
+  if(!is.null(history)) {
+    test.con <- try(file(history, "at"))
+    if(inherits(test.con, "try-error"))
+      stop(
+        "Argument `history` must be the name of a file that can be opened in ",
+        "\"at\" mode"
+      )
+    close(test.con)
+  }
   # Make sure nothing untoward will happen if a test triggers an error
 
   check_call_stack()
@@ -196,10 +207,6 @@ unitize_core <- function(
   } )
   gpar.frame <- par.env
 
-  # Trim search path if warranted
-
-  if("search.path" %in% glob.set) search_path_trim()
-
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
@@ -263,7 +270,8 @@ unitize_core <- function(
       mode=mode,
       interactive.mode=interactive.mode,
       force.update=force.update,
-      auto.accept=auto.accept
+      auto.accept=auto.accept,
+      history=history
     )
     eval.which.valid <- which(
       vapply(as.list(unitizers[valid]), slot, logical(1L), "eval")
@@ -344,7 +352,7 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
 #' @param force.update whether to store unitizer
 
 unitize_browse <- function(
-  unitizers, mode, interactive.mode, force.update, auto.accept
+  unitizers, mode, interactive.mode, force.update, auto.accept, history
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -354,7 +362,7 @@ unitize_browse <- function(
   }
   over_print("Prepping Unitizers...")
 
-  hist.obj <- history_capt()
+  hist.obj <- history_capt(history)
   on.exit(history_release(hist.obj))
 
   # Get summaries

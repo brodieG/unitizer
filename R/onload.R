@@ -7,9 +7,11 @@
   setOptIfNot("unitizer.prompt.b4.quit.time", 10)         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   setOptIfNot("unitizer.search.path.clean", TRUE)         # Whether to run in clean search path by default
   setOptIfNot("unitizer.max.capture.chars", 200000)       # Maximum number of characters we allow capture of per test
+  setOptIfNot("unitizer.history.file", tempfile())        # File to use for `unitizer` history
   setOptIfNot(                                            # what objects to keep on search path when initializing unitizer
     "unitizer.search.path.keep", c("tools:rstudio", "package:unitizer")
   )
+  setOptIfNot("unitizer.reproducible.state", TRUE)
 }
 .onUnload <- function(libpath) {
 }
