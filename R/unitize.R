@@ -111,12 +111,13 @@
 
 unitize <- function(
   test.file, store.id=NULL,
-  interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
   reproducible.state=getOption("unitizer.reproducible.state"),
+  pre=NULL, post=NULL,
+  history=getOption("unitizer.history.file"),
+  interactive.mode=interactive(),
   force.update=FALSE,
-  auto.accept=character(0L),
-  pre.load=NULL
+  auto.accept=character(0L)
 ) {
   test.file.inf <- infer_unitizer_location(test.file)
   store.id.inf <- store.id
@@ -124,9 +125,10 @@ unitize <- function(
   invisible(
     unitize_core(
       test.file.inf, list(store.id.inf),
-      interactive.mode=interactive.mode, par.env=par.env,
-      reproducible.state=reproducible.state, force.update=force.update,
-      auto.accept=auto.accept, pre.load=pre.load, mode="unitize"
+      par.env=par.env, reproducible.state=reproducible.state,
+      pre=pre, post=post, history=history,
+      interactive.mode=interactive.mode,  force.update=force.update,
+      auto.accept=auto.accept, mode="unitize"
   ) )
 }
 #' @rdname unitize
@@ -139,11 +141,14 @@ review <- function(store.id) {
     unitize_core(
       test.files=NA_character_,
       store.ids=list(infer_unitizer_location(store.id, type="u")),
-      interactive.mode=TRUE,
       par.env=.GlobalEnv,
       reproducible.state=FALSE,
+      pre=FALSE, post=FALSE,
+      history=getOption("unitizer.history.file"),
+      interactive.mode=TRUE,
       force.update=FALSE,
-      auto.accept=character(0L), pre.load=list(), mode="review"
+      auto.accept=character(0L),
+      mode="review"
   ) )
 }
 #' @rdname unitize
@@ -153,12 +158,13 @@ unitize_dir <- function(
   test.dir,
   store.ids=filename_to_storeid,
   pattern="^[^.].*\\.[Rr]$",
-  interactive.mode=interactive(),
   par.env=getOption("unitizer.par.env"),
   reproducible.state=getOption("unitizer.reproducible.state"),
+  pre=NULL, post=NULL,
+  history=getOption("unitizer.history.file")
+  interactive.mode=interactive(),
   force.update=FALSE,
-  auto.accept=character(0L),
-  pre.load=NULL
+  auto.accept=character(0L)
 ) {
   # Validations
   if(!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir))
@@ -193,9 +199,9 @@ unitize_dir <- function(
   invisible(
     unitize_core(
       test.files=test.files, store.ids=store.ids,
-      interactive.mode=interactive.mode, par.env=par.env,
-      reproducible.state=reproducible.state,
-      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
-      mode="unitize"
+      par.env=par.env, reproducible.state=reproducible.state,
+      pre=pre, post=post, history=history,
+      interactive.mode=interactive.mode, force.update=force.update,
+      auto.accept=auto.accept, mode="unitize"
   ) )
 }
