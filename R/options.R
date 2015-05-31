@@ -11,7 +11,7 @@
 #' @return the result of calling \code{option} if option is not set, or NULL
 #'   invisibly if it is already set
 
-setOptIfNot <- function(x, value) {
+setOptIfNotSet <- function(x, value) {
   if(!is.chr1(x)) stop("Argument `x` must be chracter(1L) and not NA")
   if(!x %in% names(options())) {
     opt.call <- list(quote(options))
