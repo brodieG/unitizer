@@ -7,14 +7,6 @@
 #' \code{unitize_dir} creates tests from all the R files in the specified
 #' directory (analogous to \code{testthat::test_dir}).
 #'
-#' \code{review} allows you to review existing \code{unitizer}s and modify them
-#' by dropping tests from them.  This is useful if you ever have second thoughts
-#' about previously accepted tests and wish to inspect them.  Note though that
-#' in review mode the parent environment is always \code{.GlobalEnv} and global
-#' settings are not modified in any way, so it is entirely possible that tests
-#' will produce different values to those stored when you re-run them from
-#' the \code{unitizer} prompt in review mode.
-#'
 #' \code{unitizer} stores are identified by \code{unitizer} ids, which by
 #' default are character strings containing the location of the folder the
 #' \code{unitizer} RDS files are kept in.  \code{unitize} and
@@ -24,6 +16,13 @@
 #' implementing S3 methods for \code{\link{get_unitizer}} and
 #' \code{\link{set_unitizer}}.
 #'
+#' \code{review} allows you to review existing \code{unitizer}s and modify them
+#' by dropping tests from them.  Tests are not evaluated in this mode; you are
+#' just allowed to review the results of previous evaluations of the tests
+#' Because of this, no effort is made to create reproducible state in the
+#' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
+#' (see \code{reproducible.state} parameter).
+#'
 #' See \code{unitizer} vignettes and demo for details and examples.
 #'
 #' @export
@@ -32,42 +31,16 @@
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
 #'   path (see \code{\link{infer_unitizer_location}})
+#' @param test.dir the directory to run the tests on
+#' @param pattern a regular expression used to match what subset of files in
+#'   \code{test.dir} to \code{unitize}
 #' @param store.id if NULL (default), \code{unitizer} will select a directory
 #'   based on the \code{test.file} name by replacing \code{.[rR]} with
 #'   \code{.unitizer}.  You can also specify a directory name, or pass any
 #'   object that has a defined \code{\link{get_unitizer}} method which allows
 #'   you to specify non-standard \code{unitizer} storage mechanisms (see
 #'   \code{\link{get_unitizer}}).  Finally, you can pass an actual
-#'   \code{unitizer} object if you are using \code{review}
-##' @param interactive.mode logical(1L) whether to run in interactive mode (
-#'   request user input when needed) or not (error if user input is required,
-#'   e.g. if all tests do not pass).
-#' @param par.env NULL or environment, if NULL tests are run in a clean
-#'   environment, if an environment they are run with that environment as the
-#'   parent environment.
-#' @param reproducible.state, TRUE, FALSE, or character containing
-#'   values in \code{c("search.path", "options", "working.directory",
-#'   "random.seed")}. Controls how global state is tracked and reset during
-#'   test evaluation and review.  If TRUE, this parameter
-#'    will cause \code{unitizer} to track the global settings throughout test
-#'   evaluation and ensure they are the same when reviewing tests as they were
-#'   during evaluation.  Additionally, when testing multiple \code{unitizers}
-#'    with \code{unitize_dir}, the global settings will be reset prior to
-#'   running each \code{unitizer} to what they were after the helper scripts are
-#'   first loaded (see \code{pre.load} parameter).  The package search list
-#'   as produced by \code{search()} will also be initialized to the bare bones
-#'   R search path to ensure it is consistent across \code{unitizer} runs.
-#'   If FALSE, global settings will not be affected by \code{unitizer} other
-#'   than by whatever the tests themselves do.  If character, then any of the
-#'   global settings included will be tracked and reset as described above. If
-#'   any tracking / resetting is enabled, \code{unitizer} will reset the  global
-#'   settings upon exit to what they were prior to running \code{unitizer}.
-#'   See "Reproducible Tests" vignette for more details.
-#' @param force.update logical(1L) if TRUE will give the option to re-store a
-#'   unitizer after re-evaluating all the tests even if all tests passed.
-#' @param test.dir the directory to run the tests on
-#' @param pattern a regular expression used to match what subset of files in
-#'   \code{test.dir} to \code{unitize}
+#'   \code{unitizer} object if you are using \code{review}.
 #' @param store.ids one of \itemize{
 #'   \item a function that converts test file names to \code{unitizer} ids; if
 #'     \code{unitize}ing multiple files will be \code{lapply}ed over each file
@@ -77,37 +50,93 @@
 #'     test files being reviewed; useful when you implement special storage
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
+#' @param par.env the parent environment to the environments tests are evaluated
+#'   in.  May be either an environemnt or NULL. If NULL, a special environment
+#'   that remains anchored at \code{search()[[2L]]} is used as \code{par.env},
+#'   which means tests will not be affected by objects in your workspace (see
+#'   "Reproducible Tests" vignette).  Set to \code{NULL} by default.
+#' @param reproducible.state, FALSE, or integer vector with values in
+#'   \code{0:2} and names in
+#'   \code{c("search.path", "options", "working.directory", "random.seed")}.
+#'   See details and "Reproducible Tests" vignette.
+#' @param pre NULL, or a character vector pointing to files and/or directories.
+#'   If a character vector, then any files referenced therein will be sourced,
+#'   and any directories referenced therein will be scanned non-recursively for
+#'   visible files ending in ".r" or ".R", which are then also sourced.  If
+#'   NULL, then \code{unitizer} will look for a directory named "_pre" in the
+#'   directory containing the first test file and will treat it as if you had
+#'   specified it in \code{pre}.  Any objects created by those scripts will be
+#'   put into a parent environment for all tests.  This provides a mechanism for
+#'   creating objects that are shared across different test files, as well as
+#'   loading shared packages.  Unlike objects created during test evaluation,
+#'   any objects created here will not be stored in the \code{unitizer} so you
+#'   will have not direct way to check whether these objects changed across
+#'   \code{unitizer} runs.  Additionally, typing \code{ls} from the review
+#'   prompt will not list these objects.
+#' @param post NULL, or a character vector pointing to files and/or directories.
+#'   See \code{pre}.  If NULL will look for a directory named "_post" in the
+#'   directory containing the first test file.  Scripts are run just prior to
+#'   existing \code{unitizer}.  Keep in mind that \code{unitizer} can manage
+#'   most aspects of global state, so you should not need to use this parameter
+#'   to unload packages, remove objects, etc.  See details.
+#' @param interactive.mode logical(1L) whether to run in interactive mode (
+#'   request user input when needed) or not (error if user input is required,
+#'   e.g. if all tests do not pass).
+#' @param force.update logical(1L) if TRUE will give the option to re-store a
+#'   unitizer after re-evaluating all the tests even if all tests passed.
 #' @param auto.accept character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
 #'   YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
 #'   prompting, use values in \code{c("new", "failed", "deleted", "error")} to
 #'   specify which type(s) of test you wish to auto accept (i.e. same as typing
 #'   \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
 #'   off (default)
-#' @param pre.load \code{NULL}, \code{FALSE}, a directory or a list of objects:
-#'   \itemize{
-#'     \item if \code{NULL}, looks for a 'helper' directory in same directory as
-#'       test file (or first test file if using \code{unitize_dir}) and
-#'       \code{\link{sys.source}}s the files therein into an environment that
-#'       has for parent \code{par.env}
-#'     \item if a directory, then the same as \code{NULL}, except it uses files
-#'       in the specified directory
-#'     \item if a list transforms the list into an environment that has for
-#'       parent \code{par.env}
-#'     \item if \code{FALSE} does nothing
-#'   }
-#'   The environment generated by this process will be a parent to the
-#'   environments the tests are run in.  The primary purpose of this file is to
-#'   run \code{library} calls that are shared by multiple \code{unitizer} files.
-#'   Any packages you load in these files will be unloaded upon completion of
-#'   the \code{unitize} process unless you modify the \code{search.path.clean}
-#'   setting. You can also pre-load objects shared amongst tests, but you should
-#'   use this feature sparingly because these objects are not recorded in the
-#'   \code{unitizer}s and don't show up in \code{ls} calls from the
-#'   \code{unitizer} prompt, which makes it difficult to troubleshoot problems
-#'   related to those objects changing between \code{unitizer} runs
 #' @return the \code{unitizer} object updated as per user instructions,
 #'   invisibly, or for \code{unitize_dir}, a list of the \code{unitizer}
 #'   objects generated by each test file, invisibly
+#'
+#' @section Default Settings:
+#'
+#' Many of the default settings are specfied in the form \code{getOption("...")}
+#' to allow the user to "permanently" set them to their prefered modes by
+#' setting options in their \code{.Rprofile} file.
+#'
+#' @section Reproducible State:
+#'
+#' There are several aspects of the state of an R session that can affect code
+#' evaluation.  \code{unitizer} attempts to control some aspects of state
+#' through the \code{par.env} and  \code{reproducible.state} argument.
+#'
+#' Setting \code{par.env} to NULL (the default) ensures the state of your
+#' workspace does not affect test evaluation, and vice versa.
+#' \code{reproducible.state} allows control of the  following aspects of state:
+#' \itemize{
+#'   \item Search Path
+#'   \item Options
+#'   \item Working Directory
+#'   \item Random Seed
+#' }
+#' The default behavior is to set the state as close to that of a freshly loaded
+#' vanilla R session as we reasonably can.  This includes detaching all objects
+#' from the search path that are not typically attached by default, and
+#' resetting most options to "factory" values.  Additionally, the random seed
+#' is set to a specific value and method so that random number generation is
+#' consistent across \code{unitizer} runs, and the working directory is set to
+#' the directory containing the first test file.
+#'
+#' State is reset after running each test file when running multiple test
+#' files with \code{unitize_dir}, which means state changes in one test file
+#' will not affect the next one. Upon exit \code{unitizer} will restore state
+#' to what it was on entry.
+#'
+#' If you want to set global state for all tests (e.g. loading a particular
+#' package needed for all test files), you can do so with the \code{pre}
+#' argument.
+#'
+#' You can turn off state control by setting \code{reproducible.state} to
+#' \code{FALSE}.  You can also chose to control only some aspects of state, or
+#' the degree with which each is controlled.  See "Reproducible Tests" vignette
+#' for more details.
+
 
 unitize <- function(
   test.file, store.id=NULL,
