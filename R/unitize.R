@@ -190,7 +190,7 @@ unitize_dir <- function(
   par.env=getOption("unitizer.par.env"),
   reproducible.state=getOption("unitizer.reproducible.state"),
   pre=NULL, post=NULL,
-  history=getOption("unitizer.history.file")
+  history=getOption("unitizer.history.file"),
   interactive.mode=interactive(),
   force.update=FALSE,
   auto.accept=character(0L)
