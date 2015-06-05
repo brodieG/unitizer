@@ -51,8 +51,10 @@ setClass(
 #'
 #' \code{search_path_trim} attempts to recreate a clean environment by
 #' unloading all packages and objects that are not loaded by default in the
-#' default R configuration. This does not unload namespaces, but rather just
-#' detaches them from the namespace.  This function is intended to be called
+#' default R configuration. This also unloads namespaces so that packages can
+#' be reloaded with all corresponding hooks evaluating as with a normal load.
+#' As documented in \code{?detach}, it is likely there may be some issues with
+#' some packages with this approach.  This function is intended to be called
 #' after journaling has been enabled.
 #'
 #' \code{`tools:rstudio`} is kept in search path as the default argument because
@@ -165,6 +167,8 @@ search_path_update <- function(id, global) {
   )
     stop("Logic Error: path reorder failed at last step; contact maintainer.")
 
+  # Line up the namespaces
+
   invisible(TRUE)
 }
 #' @keywords internal
@@ -180,15 +184,10 @@ search_path_trim <- function(
       "maintainer."
     )
   }
-  # Make sure search path is compatible with what we're doing
-
-  search.path.pre <- search()
-  search.path.pkg <- vapply(search.path.pre, is.loaded_package, logical(1L))
-  search.path.pkg.names <-
-    sub("^package:", "", search.path.pre[search.path.pkg])
-
   # detach each object, but make sure we do so in an order that doesn't cause
   # issues with namespace dependencies
+
+  search.path.pre <- search()
 
   to.detach <- setdiff(search.path.pre, c(keep, .unitizer.base.packages))
   to.detach.pkg <- vapply(to.detach, is.loaded_package, logical(1L))
@@ -205,40 +204,65 @@ search_path_trim <- function(
       stop("Logic Error: invalid search path token; contact maintainer.")
     detach(pack, character.only=TRUE)
   }
+  # Now attempt to unload namespaces
+
+  unload_namespaces(setdiff(loadedNamespaces(), to.keep.pkg.names))
+
+  invisible(TRUE)
+}
+#' Unload Namespaces
+#'
+#' Attempts to unload namespaces in an order that avoids dependency issues
+#' based on data from \code{getNamespaceImports}
+
+unload_namespaces <- function(unload) {
+  stopifnot(is.character(unload), all(!is.na(unload)))
+
+  # Make sure search path is compatible with what we're doing
+
+  search.path.pre <- search()
+  search.path.pkg <- vapply(search.path.pre, is.loaded_package, logical(1L))
+  search.path.pkg.names <-
+    sub("^package:", "", search.path.pre[search.path.pkg])
+
   # Check that none of the keep namespaces reference namespaces other than the
   # keep namespaces, and warn otherwise since we won't be able to unload /
   # re-load that one
 
+  lns.raw <- loadedNamespaces()
+  if(!all(unload %in% lns.raw))
+    stop(
+      "Logic Error: attempting to unload namespaces that are not loaded; ",
+      "contact maintainer."
+    )
+
   lns.tmp <- sapply(
-    loadedNamespaces(), function(x) unique(names(getNamespaceImports(x))),
+    unload, function(x) unique(names(getNamespaceImports(x))),
     simplify=FALSE
   )
   # order these in search path order if attached, as that will likely be easiest
-  # order to detach in
+  # order to detach in (though in most cases by the time we get here the
+  # package should have been detached already - shouldn't be trying to unload)
+  # the namespace of a still attached package
 
   lns <- lns.tmp[
     order(
       match(names(lns.tmp), search.path.pkg.names, nomatch=0L)
   ) ]
-
-  lns.base.imps <- unique(unlist(lns[to.keep.pkg.names]))
-  if(any(lns.base.imp.extra <- !(lns.base.imps %in% to.keep.pkg.names))) {
-    warning(
-      "The following namespaces cannot be unloaded because they are imported",
-      "by packages we are keeping on the search path:\n",
-      deparse(lns.base.imps[!lns.base.imp.extra])
-    )
-  }
   # Cycle through path attempting to unload namespaces until we cannot unload
   # any more.  This is not a particularly efficient algorithm, but should make
   # do for our purposes
 
+  safety <- 0
   repeat {
+    if(safety <- safety + 1L > 1000)
+      stop(
+        "Logic Error: namespace unloading not complete after 1000 iterations"
+      )
     lns.names <- names(lns)
     unloaded <- integer(0L)
     for(i in seq_along(lns)) {
       tar.ns <- names(lns)[[i]]
-      if(tar.ns %in% to.keep.pkg.names) next
       if(!tar.ns %in% unlist(lns[-i])) {
         # No dependencies, so attempt to unload
 
@@ -256,16 +280,13 @@ search_path_trim <- function(
     lns <- lns[-unloaded]
     if(!length(unloaded)) break
   }
-  if(any(extra.ns <- !names(lns) %in% to.keep.pkg.names)) {
+  if(length(lns)) {
     warning(
-      "Unable to unload the following namespaces:\n",
-      deparse(names(lns)[extra.ns]),
+      "Unable to unload the following namespaces:\n", deparse(names(lns)),
       immediate.=TRUE
     )
   }
-  invisible(TRUE)
 }
-
 #' Check Whether a Package Is Loaded
 #'
 #' A package is considered loaded if it is in the search path and there is a
