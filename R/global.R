@@ -7,13 +7,16 @@ NULL
 
 #' Get Current Search Path as List of Environments
 #'
-#' Internal utility function
+#' Internal utility function.  Loaded namespaces attached as an attribute.
+#' Probably should be an S4 class
 #'
 #' @keywords internal
 
 search_as_envs <- function() {
   sp <- search()
-  setNames(lapply(seq_along(sp), as.environment), sp)
+  res <- setNames(lapply(seq_along(sp), as.environment), sp)
+  attr(res, "loadedNamespaces") <- loadedNamespaces()
+  res
 }
 
 #' Structures For Tracking Global Options
@@ -25,6 +28,9 @@ search_as_envs <- function() {
 #' Not we don't use "ANY" slots here because that would allow partially
 #' specified sub classes (i.e. classes with slots that are "ANY"), which we
 #' do not want to allow.
+#'
+#' \code{unitizerGlobalTrackingStore} is used to keep "compressed" versions of
+#' \code{unitizerGlobal}
 #'
 #' @rdname global_structures
 #' @keywords internal
@@ -69,6 +75,35 @@ setClass(
     working.directory="list",
     random.seed="list"
   )
+)
+#' @rdname global_structures
+#' @keywords internal
+
+setClass(
+  "unitizerGlobalTrackingStore", contains="unitizerGlobalTracking",
+  slots=c(dummy="environment")
+)
+setGeneric(
+  "unitizerCompressTracking", function(x, ...) standardGeneric("unitizerCompressTracking")
+)
+setMethod(
+  "unitizerCompressTracking", "unitizerGlobalTracking",
+  function(x, ...) {
+    res <- new("unitizerGlobalTrackingStore")
+    res@search.path <- lapply(x@search.path, names)
+    res@options <- lapply(
+      x@options,
+      function(y) {
+        if(
+          !is.null(environment(x)) || is.environment(x) ||
+          object.size(y) > 1000
+        )
+          res@dummy else y
+      }
+    )
+    res@working.directory <- x@working.directory
+    res@random.seed <- x@random.seed # this could be big!!!
+  }
 )
 #' @rdname global_structures
 #' @keywords internal
