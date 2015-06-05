@@ -183,17 +183,85 @@ search_path_trim <- function(
   # Make sure search path is compatible with what we're doing
 
   search.path.pre <- search()
+  search.path.pkg <- vapply(search.path.pre, is.loaded_package, logical(1L))
+  search.path.pkg.names <-
+    sub("^package:", "", search.path.pre[search.path.pkg])
 
-  # detach each object, and record them for purposes of restoring them later
+  # detach each object, but make sure we do so in an order that doesn't cause
+  # issues with namespace dependencies
 
-  packs.to.detach <- setdiff(search.path.pre, c(keep, .unitizer.base.packages))
+  to.detach <- setdiff(search.path.pre, c(keep, .unitizer.base.packages))
+  to.detach.pkg <- vapply(to.detach, is.loaded_package, logical(1L))
+  to.detach.pkg.names <- sub("^package:", "", to.detach[to.detach.pkg])
 
-  for(i in seq_along(packs.to.detach)) {
-    pack <- packs.to.detach[[i]]
+  to.keep <- intersect(c(keep, .unitizer.base.packages), search.path.pre)
+  to.keep.pkg <- vapply(to.keep, is.loaded_package, logical(1L))
+  to.keep.pkg.names <- sub("^package:", "", to.keep[to.keep.pkg])
+
+  # start by detaching without unloading
+
+  for(pack in to.detach) {
     if(!is.chr1(pack))
       stop("Logic Error: invalid search path token; contact maintainer.")
-
     detach(pack, character.only=TRUE)
+  }
+  # Check that none of the keep namespaces reference namespaces other than the
+  # keep namespaces, and warn otherwise since we won't be able to unload /
+  # re-load that one
+
+  lns.tmp <- sapply(
+    loadedNamespaces(), function(x) unique(names(getNamespaceImports(x))),
+    simplify=FALSE
+  )
+  # order these in search path order if attached, as that will likely be easiest
+  # order to detach in
+
+  lns <- lns.tmp[
+    order(
+      match(names(lns.tmp), search.path.pkg.names, nomatch=0L)
+  ) ]
+
+  lns.base.imps <- unique(unlist(lns[to.keep.pkg.names]))
+  if(any(lns.base.imp.extra <- !(lns.base.imps %in% to.keep.pkg.names))) {
+    warning(
+      "The following namespaces cannot be unloaded because they are imported",
+      "by packages we are keeping on the search path:\n",
+      deparse(lns.base.imps[!lns.base.imp.extra])
+    )
+  }
+  # Cycle through path attempting to unload namespaces until we cannot unload
+  # any more.  This is not a particularly efficient algorithm, but should make
+  # do for our purposes
+
+  repeat {
+    lns.names <- names(lns)
+    unloaded <- integer(0L)
+    for(i in seq_along(lns)) {
+      tar.ns <- names(lns)[[i]]
+      if(tar.ns %in% to.keep.pkg.names) next
+      if(!tar.ns %in% unlist(lns[-i])) {
+        # No dependencies, so attempt to unload
+
+        attempt <- try(unloadNamespace(tar.ns))
+        if(inherits(attempt, "try-error"))
+          warning(
+            "Unexpectedly unable to unload namespace `", tar.ns, "`",
+            immediate.=TRUE
+          )
+        unloaded <- c(unloaded, i)
+      }
+    }
+    # Keep looping until length of remaining namespaces doesn't decrease anymore
+
+    lns <- lns[-unloaded]
+    if(!length(unloaded)) break
+  }
+  if(any(extra.ns <- !names(lns) %in% to.keep.pkg.names)) {
+    warning(
+      "Unable to unload the following namespaces:\n",
+      deparse(names(lns)[extra.ns]),
+      immediate.=TRUE
+    )
   }
   invisible(TRUE)
 }
