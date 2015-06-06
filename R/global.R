@@ -112,6 +112,24 @@ setClass(
     TRUE
   }
 )
+
+#' Get Current Search Path as List of Environments
+#'
+#' Internal utility function.  Loaded namespaces attached as an attribute.
+#' Probably should be an S4 class.
+#'
+#' This has to be in this file, and not in R/search.R for teh setClass for the
+#' state funs object.
+#'
+#' @keywords internal
+
+search_as_envs <- function() {
+  sp <- search()
+  res <- setNames(lapply(seq_along(sp), as.environment), sp)
+  attr(res, "loadedNamespaces") <- get_namespace_data()
+  res
+}
+
 #' @rdname global_structures
 #' @keywords internal
 

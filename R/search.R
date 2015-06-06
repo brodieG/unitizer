@@ -398,21 +398,6 @@ search_path_attrs <- function(x=NULL) {
   if(is.null(x)) x <- search_as_envs()
   sapply(x, attributes, simplify=FALSE)
 }
-
-#' Get Current Search Path as List of Environments
-#'
-#' Internal utility function.  Loaded namespaces attached as an attribute.
-#' Probably should be an S4 class
-#'
-#' @keywords internal
-
-search_as_envs <- function() {
-  sp <- search()
-  res <- setNames(lapply(seq_along(sp), as.environment), sp)
-  attr(res, "loadedNamespaces") <- get_namespace_data()
-  res
-}
-
 get_namespace_data <- function() {
   sapply(
     loadedNamespaces(),
