@@ -382,3 +382,59 @@ search_path_attrs <- function(x=NULL) {
   sapply(x, attributes, simplify=FALSE)
 }
 
+#' Get Current Search Path as List of Environments
+#'
+#' Internal utility function.  Loaded namespaces attached as an attribute.
+#' Probably should be an S4 class
+#'
+#' @keywords internal
+
+search_as_envs <- function() {
+  sp <- search()
+  res <- setNames(lapply(seq_along(sp), as.environment), sp)
+  attr(res, "loadedNamespaces") <- get_namespace_data()
+  res
+}
+
+get_namespace_data <- function() {
+  sapply(
+    loadedNamespaces(),
+    function(x) {
+      loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
+      ver <- try(getNamespaceVersion(x))
+      new(
+        "unitizerNamespaceData",
+        name=x,
+        lib.loc=if(!inherits(loc, "try-error")) loc else "",
+        version=if(!inherits(ver, "try-error")) ver else ""
+      )
+    },
+    simplify=FALSE
+  )
+}
+get_package_data <- function() {
+  sapply(
+    search(),
+    function(x) {
+      loc <- try(package.path(x))
+      ver <- try(getNamespaceVersion(x))
+      new(
+        "unitizerNamespaceData",
+        name=x,
+        lib.loc=if(!inherits(loc, "try-error")) loc else "",
+        version=if(!inherits(ver, "try-error")) ver else ""
+      )
+    },
+    simplify=FALSE
+  )
+}
+setClass(
+  "unitizerNamespaceData",
+  slots=c(
+    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
+) )
+setClass(
+  "unitizerPackageData",
+  slots=c(
+    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
+) )

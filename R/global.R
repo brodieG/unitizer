@@ -5,20 +5,6 @@ NULL
 .unitizer.global.settings.names <-
   c("search.path", "options", "working.directory", "random.seed")
 
-#' Get Current Search Path as List of Environments
-#'
-#' Internal utility function.  Loaded namespaces attached as an attribute.
-#' Probably should be an S4 class
-#'
-#' @keywords internal
-
-search_as_envs <- function() {
-  sp <- search()
-  res <- setNames(lapply(seq_along(sp), as.environment), sp)
-  attr(res, "loadedNamespaces") <- loadedNamespaces()
-  res
-}
-
 #' Structures For Tracking Global Options
 #'
 #' Immplemented as S4 classes just so we can ensure everything is guaranteed
