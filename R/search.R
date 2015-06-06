@@ -235,17 +235,20 @@ unload_namespaces <- function(unload) {
       "Logic Error: attempting to unload namespaces that are not loaded; ",
       "contact maintainer."
     )
-
   lns.tmp <- sapply(
     unload, function(x) unique(names(getNamespaceImports(x))),
     simplify=FALSE
   )
+  # Get lib locations to unload DLLs later (if applicable)
+
+  lib.locs <- vapply(unload, find.package, character(1L))
+
   # order these in search path order if attached, as that will likely be easiest
   # order to detach in (though in most cases by the time we get here the
   # package should have been detached already - shouldn't be trying to unload)
   # the namespace of a still attached package
 
-  lns <- lns.tmp[
+  lns.orig <- lns <- lns.tmp[
     order(
       match(names(lns.tmp), search.path.pkg.names, nomatch=0L)
   ) ]
@@ -254,32 +257,46 @@ unload_namespaces <- function(unload) {
   # do for our purposes
 
   safety <- 0
+  unloaded.success <- character(0L)
   repeat {
     if(safety <- safety + 1L > 1000)
       stop(
         "Logic Error: namespace unloading not complete after 1000 iterations"
       )
     lns.names <- names(lns)
-    unloaded <- integer(0L)
+    unloaded.try <- integer(0L)
     for(i in seq_along(lns)) {
       tar.ns <- names(lns)[[i]]
       if(!tar.ns %in% unlist(lns[-i])) {
         # No dependencies, so attempt to unload
 
+        unloaded.try <- c(unloaded.try, i)
         attempt <- try(unloadNamespace(tar.ns))
-        if(inherits(attempt, "try-error"))
+        if(inherits(attempt, "try-error")) {
           warning(
-            "Unexpectedly unable to unload namespace `", tar.ns, "`",
+            "Error while attempting to unload namespace `", tar.ns, "`",
             immediate.=TRUE
           )
-        unloaded <- c(unloaded, i)
-      }
-    }
+        } else {
+          unloaded.success <- c(unloaded.success, lns.names[i])
+    } } }
     # Keep looping until length of remaining namespaces doesn't decrease anymore
 
-    lns <- lns[-unloaded]
-    if(!length(unloaded)) break
+    lns <- lns[-unloaded.try]
+    if(!length(unloaded.try)) break
   }
+  # Unload any dynamic libraries associated with the stuff we detached by
+  # matching paths to what's in dynlibs
+
+  dyn.lib.fnames <- vapply(.dynLibs(), `[[`, character(1L), "path")
+  dls <- sub("/libs/[^/].*$", "", dyn.lib.fnames)
+  lib.locs.ul <- lib.locs[unloaded.success]
+  dls.to.ul <-  lib.locs.ul[lib.locs.ul %in% dls]
+
+  for(i in names(dls.to.ul)) library.dynam.unload(i, dls.to.ul[i])
+
+  # Warn if some namespaces could not be unloaded (likely due to dependency)
+
   if(length(lns)) {
     warning(
       "Unable to unload the following namespaces:\n", deparse(names(lns)),
