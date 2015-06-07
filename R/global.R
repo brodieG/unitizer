@@ -178,8 +178,6 @@ unitizerGlobal <- setRefClass(
       obj <- callSuper(..., par.env=par.env)
       enable(enable.which)
       state()
-      if(status@search.path) search_path_trim()
-      state()
       .global$global <- .self  # top level copy for access from other namespaces
       obj
     },
