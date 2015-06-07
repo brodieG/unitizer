@@ -53,6 +53,10 @@ try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 library(unitizer)
 
+# Initialize a global tracking object.  Doing it funny here because we don't
+# want to run the search_path_trim command yet, and that would happen if we
+# did a normal init
+
 search.ref <- NULL # will be modified later
 search.init <- unitizer:::search_as_envs()
 untz.glob <- unitizer:::unitizerGlobal$new()
@@ -90,9 +94,14 @@ test_that("Search Path Journaling Works", {
     environmentName(untz.glob$tracking@search.path[[2L]][[2L]]),
     "package:unitizerdummypkg1"
   )
+  sp.tmp <- untz.glob$tracking@search.path
+  # note we compare attribute separately because subsetting drops them
+  expect_identical(c(sp.tmp[[1L]]), sp.tmp[[2L]][-2L])
   expect_identical(
-    untz.glob$tracking@search.path[[1L]],
-    untz.glob$tracking@search.path[[2L]][-2L]
+    attr(sp.tmp[[1L]], "loadedNamespaces"),
+    attr(sp.tmp[[2L]], "loadedNamespaces")[
+      names(attr(sp.tmp[[2L]], "loadedNamespaces")) != "unitizerdummypkg1"
+    ]
   )
   # Add another package at a different position
 
@@ -158,7 +167,7 @@ test_that("Search Path Journaling Works", {
   curr.sp.ind <- untz.glob$indices.last@search.path
 
   expect_identical(
-    untz.glob$tracking@search.path[[curr.sp.ind]],
+    c(untz.glob$tracking@search.path[[curr.sp.ind]]),
     untz.glob$tracking@search.path[[curr.sp.ind - 1L]][-2L]
   )
   detach("package:unitizerdummypkg2")
@@ -166,7 +175,7 @@ test_that("Search Path Journaling Works", {
   curr.sp.ind <- untz.glob$indices.last@search.path
 
   expect_identical(
-    untz.glob$tracking@search.path[[curr.sp.ind]],
+    c(untz.glob$tracking@search.path[[curr.sp.ind]]),
     untz.glob$tracking@search.path[[curr.sp.ind - 1L]][-5L]
   )
 })

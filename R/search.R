@@ -179,7 +179,7 @@ search_path_update <- function(id, global) {
         "namespace data in unexpected format; contact maintainer."
       )
     cur.lns <- loadedNamespaces()
-    tar.lns.loc <- vapply(tar.lns.dat, slot, character(1L), "lib.loc")
+    tar.lns.loc <- sapply(tar.lns.dat, slot, "lib.loc", simplify=FALSE)  # may contain nulls
     tar.lns <- names(tar.lns.loc)
     unload_namespaces(setdiff(cur.lns, tar.lns))
     to.load <- setdiff(tar.lns, loadedNamespaces())

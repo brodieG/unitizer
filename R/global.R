@@ -233,7 +233,8 @@ unitizerGlobal <- setRefClass(
         if(!slot(status, i)) next             # Don't record statuses that aren't being tracked
         new.obj <- slot(state.funs, i)()      # Get state with pre-defined function
         ref.obj <- if(slot(indices.last, i))
-          slot(tracking, i)[[slot(indices.last, i)]]
+          slot(tracking, i)[[slot(indices.last, i)]] else
+            new.env()  # this can't possibly be identical to anything other than itself
         if(!identical(new.obj, ref.obj)) {
           slot(tracking, i) <<- append(slot(tracking, i), list(new.obj))
           if(identical(mode, "init")) {
