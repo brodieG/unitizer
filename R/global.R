@@ -258,10 +258,13 @@ unitizerGlobal <- setRefClass(
         setwd(
           tracking@working.directory[[to@working.directory]]
         )
-      if(status@random.seed && to@random.seed)
-        assign(
-          ".Random.seed", tracking@random.seed[[to@random.seed]], .GlobalEnv
-        )
+      if(status@random.seed && to@random.seed) {
+        if(is.null(tracking@random.seed[[to@random.seed]])) {
+          rm(".Random.seed", envir=.GlobalEnv)
+        } else {
+          assign(
+            ".Random.seed", tracking@random.seed[[to@random.seed]], .GlobalEnv
+      ) } }
       indices.last <<- to
       indices.last
     },
