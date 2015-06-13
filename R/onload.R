@@ -10,8 +10,10 @@
     unitizer.history.file=tempfile(),        # File to use for `unitizer` history
     unitizer.search.path.keep=c("tools:rstudio", "package:unitizer"),  # what objects to keep on search path when initializing unitizer
     unitizer.reproducible.state=TRUE,
-    unitizer.opts.base=.unitizer.opts.base,
-    unitizer.opts.asis=.unitizer.opts.sys
+    unitizer.opts.base=.unitizer.opts.base,  # what to set options to when running in reproducible state
+    unitizer.opts.asis=.unitizer.opts.sys,   # system dependent options that should not be changed
+    unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
+        list(seed=42L, kind="Wichmann-Hill")
   )
   options(untz.opts[setdiff(names(untz.opts), names(options()))])
 }

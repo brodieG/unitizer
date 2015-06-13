@@ -73,18 +73,49 @@ unitize_core <- function(
   if(isTRUE(reproducible.state)) {
     reproducible.state <- .unitizer.global.settings.names
   } else if (identical(reproducible.state, FALSE)) {
-    reproducible.state <- character(0L)
+    reproducible.state <- integer(0L)
   } else if (
-    is.character(reproducible.state) &&
-    all(reproducible.state %in% .unitizer.global.settings.names)
+    (
+      is.integer(reproducible.state) || (
+        is.numeric(reproducible.state) &&
+        identical(as.integer(reproducible.state), reproducible.state)
+      )
+    ) &&
+    is.character(names(reproducible.state)) &&
+    all(names(reproducible.state) %in% .unitizer.global.settings.names) &&
+    all(as.integer(reproducible.state) %in% 0:2)
   ) {
-    TRUE  # Don't need to change reproducible.state
+    # Remove zero values
+    reproducible.state <- as.integer(
+      reproducible.state[as.logical(reproducible.state)]
+    )
   } else {
     stop(
-      "Argument `reproducible.state` must be TRUE, FALSE, or ",
-      "character with values in ",
+      "Argument `reproducible.state` must be FALSE, or ",
+      "integer with values in 0:2 and names in ",
       deparse(.unitizer.global.settings.names, width=500L)
     )
+  }
+  if(
+    identical(reproducible.state[["options"]], 2L) &&
+    !identical(reproducible.state[["search.path"]], 2L)
+  ) {
+    stop(
+      "Argument `reproducible.state` has an invalid state: 'options' is set ",
+      "to 2, but 'search.path' is not"
+    )
+  }
+  if(identical(reproducible.state[["random.seed"]], 2L)) {
+    prev.seed <- mget(".Random.seed", envir=.GlobalEnv, ifnotfound=list(NULL))
+    seed.dat <- getOption("unitizer.seed")
+    if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
+      stop(
+        "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
+        "is a list of possible arguments to `set.seed`."
+    ) }
+    if(is.null(prev.seed) && exists(".Random.seed", envir=.GlobalEnv))
+      rm(".Random.seed", envir=.GlobalEnv) else
+        assign(".Random.seed", prev.seed, envir=.GlobalEnv)
   }
   auto.accept.valid <- character()
   if(is.character(auto.accept)) {
@@ -186,7 +217,7 @@ unitize_core <- function(
   # Initialize new tracking object; this will also record starting state and
   # put the object in the `unitizer:::.global` environment object
 
-  global <- unitizerGlobal$new(enable.which=reproducible.state)
+  global <- unitizerGlobal$new(enable.which=names(reproducible.state))
 
   if(is.null(par.env)) {
     global$shimFuns()
@@ -207,6 +238,24 @@ unitize_core <- function(
   } )
   gpar.frame <- par.env
 
+  # Set the zero state if needed
+
+  if(identical(reproducible.state[["search.path"]], 2L)) {
+    search_path_trim()
+  }
+  if(identical(reproducible.state[["options"]], 2L)) {
+    if(!identical(reproducible.state[["search.path"]], 2L)) {
+      warning("Cannot set zero options if search.path is not also zero set")
+    } else options_zero()
+  }
+  if(identical(reproducible.state[["random.seed"]], 2L)) {
+    if(inherits(try(do.call(set.seed, seed.dat)))) {
+      stop(
+        "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
+        "is a list of possible arguments to `set.seed`."
+      )
+    }
+  }
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
