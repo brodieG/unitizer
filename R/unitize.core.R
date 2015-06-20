@@ -698,7 +698,8 @@ validate_pre_post <- function(what, test.dir) {
         call=sys.call(-1L)
     ) )
   if(is.null(what) && !is.null(test.dir)) {
-    file.path(test.dir, sprintf("_%s", which))
+    tmp <- file.path(test.dir, sprintf("_%s", which))
+    if(file_test("-d", tmp)) tmp else character(0L)
   } else if (is.character(what)) {
     what
   } else character(0L)
