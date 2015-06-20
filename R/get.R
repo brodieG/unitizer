@@ -432,7 +432,7 @@ source_files <- function(files, env.par, pattern="\\.[rR]$") {
     !inherits(try(grepl(pattern, "a"), silent=TRUE), "try-error"),
     is.environment(env.par)
   )
-  file.norm <- try(normalizePath(files), mustWork=TRUE)
+  file.norm <- try(normalizePath(files, mustWork=TRUE))
   if(inherits(file.norm, "try-error"))
     return("Unable to normalize file paths; see previous error")
 
