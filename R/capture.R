@@ -62,17 +62,18 @@ get_text_capture <- function(con, file.name, type, no.unsink=FALSE) {
       !identical(showConnections()[as.character(con), 1], file.name)
     ) {
       stop(
-        "Logic Error: ", type, " capture connection has been subverted; either ",
-        "test code is manipulating connections, or there is a bug in this code."
+        "Logic Error: ", type, " capture connection has been subverted; ",
+        "either test code is manipulating connections, or there is a bug in ",
+        "this code."
     ) }
     if(identical(type, "message")) {
       if(!no.unsink) release_stderr_sink(silent=TRUE)  # close sink since it is the same we opened
     } else if (identical(type, "output")) {
       if(isTRUE(sink.number() > 1L)) {  # test expression added a diversion
         stop(
-          "Test expressions introduced additional stdout diversions, which is not supported. ",
-          "If you don't believe the test expressions introduced diversions (i.e. used ",
-          "`sink`), contact maintainer."
+          "Test expressions introduced additional stdout diversions, which is ",
+          "not supported. If you don't believe the test expressions ",
+          "introduced diversions (i.e. used `sink`), contact maintainer."
       ) }
       if(!no.unsink) sink()
     } else {
@@ -85,6 +86,14 @@ get_text_capture <- function(con, file.name, type, no.unsink=FALSE) {
     chrs <- 1e4
     chrs.mlt <- 10
     chrs.max <- getOption("unitizer.max.capture.chars")
+    if(
+      !is.integer(chrs.max) || length(chrs.max) != 1L || is.na(chrs.max) ||
+      chrs.max < 100L
+    )
+      stop(
+        "Option `unitizer.max.capture.chars` must be integer(1L) and greater ",
+        "than 100L"
+      )
     res <- ""
 
     while(chrs.prev < chrs.max) {

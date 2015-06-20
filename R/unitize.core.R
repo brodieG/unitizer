@@ -84,8 +84,9 @@ unitize_core <- function(
     all(as.integer(reproducible.state) %in% 0:2)
   ) {
     # Remove zero values
-    reproducible.state <- as.integer(
-      reproducible.state[as.logical(reproducible.state)]
+    reproducible.state <- setNames(
+      as.integer(reproducible.state[as.logical(reproducible.state)]),
+      names(reproducible.state[as.logical(reproducible.state)])
     )
   } else {
     stop(
@@ -221,19 +222,25 @@ unitize_core <- function(
     global$shimFuns()
     par.env <- global$par.env
   }
-  on.exit(add=TRUE,
+  on.exit(
     {
-      glob.clear <- try({
-        global$resetFull()
-        global$unshimFuns()
-      })
+      glob.clear <- try(global$resetFull())
+      glob.unshim <- try(global$unshimFuns())
       if(inherits(glob.clear, "try-error"))
         word_msg(
           "Failed restoring global settings to original state; you may want",
           "to restart your R session to ensure all global settings are in a",
           "reasonable state."
         )
-  } )
+      if(inherits(glob.unshim, "try-error"))
+        word_msg(
+          "Failed unshimming library/detach/attach; you may want to restart",
+          "your R session to reset them to their original values (or you",
+          "can `untrace` them manually)"
+        )
+    },
+    add=TRUE
+  )
   gpar.frame <- par.env
 
   # Set the zero state if needed
@@ -247,13 +254,11 @@ unitize_core <- function(
     } else options_zero()
   }
   if(identical(reproducible.state[["random.seed"]], 2L)) {
-    if(inherits(try(do.call(set.seed, seed.dat)))) {
+    if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
       stop(
         "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
         "is a list of possible arguments to `set.seed`."
-      )
-    }
-  }
+  ) } }
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
@@ -376,7 +381,11 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
     unitizer <- unitizers[[i]]
 
     if(unitizer@eval) {
-      global$resetInit()  # reset global settings if active to just after pre-loads
+      # reset global settings if active to just after pre-loads (DO WE NEED TO
+      # CHECK WHETHER THIS MODE IS ENABLED, OR IS IT HANDLED INERNALLY?)
+
+      global$resetInit()
+
       tests <- new("unitizerTests") + test.dat
       if(test.len > 1L)
         over_print(

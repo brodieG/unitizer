@@ -421,16 +421,16 @@ is_unitizer_dir <- function(dir)
 #' though only top level files in that directory are sourced.
 #'
 #' @keywords internal
-#' @param file_or_dir character(1L) pointing to a file or director
+#' @param files character() pointing to files or directories
 #' @param env an environment
 #' @return environment, or a character message explaining why it failed
 
 source_files <- function(files, env.par, pattern="\\.[rR]$") {
   stopifnot(
-    is.character(file_or_dir),
+    is.character(files),
     is.chr1(pattern),
     !inherits(try(grepl(pattern, "a"), silent=TRUE), "try-error"),
-    is.environment(env)
+    is.environment(env.par)
   )
   file.norm <- try(normalizePath(files), mustWork=TRUE)
   if(inherits(file.norm, "try-error"))

@@ -165,7 +165,7 @@ unitizerGlobal$methods(
       unlink(std.err)
       if(!inherits(txt, "try-error")) word_msg(txt)
       stop(
-        "Failed attempting to unshim `", name, "`; you should consider ",
+        "Failed attempting to unshim `", i, "`; you should consider ",
         "manually untracing the function, or restarting your R session to ",
         "restore function to original value."
       )
