@@ -87,13 +87,15 @@ get_text_capture <- function(con, file.name, type, no.unsink=FALSE) {
     chrs.mlt <- 10
     chrs.max <- getOption("unitizer.max.capture.chars")
     if(
-      !is.integer(chrs.max) || length(chrs.max) != 1L || is.na(chrs.max) ||
+      !is.numeric(chrs.max) || length(chrs.max) != 1L || is.na(chrs.max) ||
       chrs.max < 100L
-    )
-      stop(
+    ) {
+      warning(
         "Option `unitizer.max.capture.chars` must be integer(1L) and greater ",
-        "than 100L"
+        "than 100L; using 200000L for now", immediate.=TRUE
       )
+      chrs.max <- 200000L
+    }
     res <- ""
 
     while(chrs.prev < chrs.max) {
