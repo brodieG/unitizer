@@ -74,7 +74,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     on.exit(NULL)
     options(warn=warn.opt)
-    options(error=err.opt)
+    options(error=err.opt)   # ADAPT TO NEW OPTIONS TRACKING
 
     # Revert settings, get captured messages, if any and if user isn't capturing already
 

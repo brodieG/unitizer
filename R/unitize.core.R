@@ -70,9 +70,7 @@ unitize_core <- function(
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be NULL or an environment.")
-  if(isTRUE(reproducible.state)) {
-    reproducible.state <- .unitizer.global.settings.names
-  } else if (identical(reproducible.state, FALSE)) {
+  if (identical(reproducible.state, FALSE)) {
     reproducible.state <- integer(0L)
   } else if (
     (

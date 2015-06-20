@@ -9,7 +9,9 @@
     unitizer.max.capture.chars=200000,       # Maximum number of characters we allow capture of per test
     unitizer.history.file=tempfile(),        # File to use for `unitizer` history
     unitizer.search.path.keep=c("tools:rstudio", "package:unitizer"),  # what objects to keep on search path when initializing unitizer
-    unitizer.reproducible.state=TRUE,
+    unitizer.reproducible.state=c(
+      search.path=2L, options=2L, random.seed=2L, working.directory=2L
+    ),
     unitizer.opts.base=.unitizer.opts.base,  # what to set options to when running in reproducible state
     unitizer.opts.asis=.unitizer.opts.sys,   # system dependent options that should not be changed
     unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
