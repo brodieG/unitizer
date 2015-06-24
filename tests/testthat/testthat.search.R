@@ -234,10 +234,29 @@ test_that("Search Path Trim / Restore", {
     unitizer:::search_path_attrs(search.init)
   )
 } )
-
-try(detach("package:unitizer", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 
+test_that("Loaded Namespaces don't cause issues", {
+  # had a problem earlier trying to re-attach namespaces
+
+  loadNamespace("unitizerdummypkg1")
+  untz.glob <- unitizer:::unitizerGlobal$new()
+  keep.more <- c("package:testthat", getOption("unitizer.search.path.keep"))
+  unitizer:::search_path_trim(keep.more)
+  untz.glob$state()
+  loadNamespace("unitizerdummypkg2")
+  untz.glob$state()
+  expect_false("unitizerdummypkg1" %in% loadedNamespaces())
+  expect_true("unitizerdummypkg2" %in% loadedNamespaces())
+  untz.glob$resetFull()
+  expect_true("unitizerdummypkg1" %in% loadedNamespaces())
+  expect_false("unitizerdummypkg2" %in% loadedNamespaces())
+  unloadNamespace("unitizerdummypkg1")
+})
+
+try(detach("package:unitizer", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
+try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 remove.packages(c("unitizerdummypkg1", "unitizerdummypkg2"))

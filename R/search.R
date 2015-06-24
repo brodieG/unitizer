@@ -183,7 +183,7 @@ search_path_update <- function(id, global) {
     tar.lns <- names(tar.lns.loc)
     unload_namespaces(setdiff(cur.lns, tar.lns))
     to.load <- setdiff(tar.lns, loadedNamespaces())
-    for(i in to.load) loadNamespace(i, lib.loc=tar.lns.loc[[i]])
+    for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
   }
   invisible(TRUE)
 }
