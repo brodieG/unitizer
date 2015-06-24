@@ -242,7 +242,7 @@ unitizerGlobal <- setRefClass(
           } else {
             slot(indices.last, i) <<- length(slot(tracking, i))
       } } }
-      if(identical(mode, "init")) inidices.init else indices.last
+      if(identical(mode, "init")) indices.init else indices.last
     },
     reset=function(to) {
       '
