@@ -105,7 +105,9 @@ unitize_core <- function(
     )
   }
   if(identical(reproducible.state[["random.seed"]], 2L)) {
-    prev.seed <- mget(".Random.seed", envir=.GlobalEnv, ifnotfound=list(NULL))
+    prev.seed <- mget(
+      ".Random.seed", envir=.GlobalEnv, ifnotfound=list(NULL)
+    )[[1L]]
     seed.dat <- getOption("unitizer.seed")
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
       stop(

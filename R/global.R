@@ -260,7 +260,8 @@ unitizerGlobal <- setRefClass(
         )
       if(status@random.seed && to@random.seed) {
         if(is.null(tracking@random.seed[[to@random.seed]])) {
-          rm(".Random.seed", envir=.GlobalEnv)
+          if(exists(".Random.seed", .GlobalEnv, inherits=FALSE))
+            rm(".Random.seed", envir=.GlobalEnv)
         } else {
           assign(
             ".Random.seed", tracking@random.seed[[to@random.seed]], .GlobalEnv
