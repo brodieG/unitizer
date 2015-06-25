@@ -224,25 +224,7 @@ unitize_core <- function(
     global$shimFuns()
     par.env <- global$par.env
   }
-  on.exit(
-    {
-      glob.clear <- try(global$resetFull())
-      glob.unshim <- try(global$unshimFuns())
-      if(inherits(glob.clear, "try-error"))
-        word_msg(
-          "Failed restoring global settings to original state; you may want",
-          "to restart your R session to ensure all global settings are in a",
-          "reasonable state."
-        )
-      if(inherits(glob.unshim, "try-error"))
-        word_msg(
-          "Failed unshimming library/detach/attach; you may want to restart",
-          "your R session to reset them to their original values (or you",
-          "can `untrace` them manually)"
-        )
-    },
-    add=TRUE
-  )
+  on.exit(reset_and_unshim(global), add=TRUE)
   gpar.frame <- par.env
 
   # Set the zero state if needed
@@ -336,8 +318,7 @@ unitize_core <- function(
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
-  global$resetFull()
-  global$unshimFuns()
+  reset_and_unshim()
 
   post.res <- source_files(post, gpar.frame)  # return env on success, char on error
   if(!is.environment(post.res))
@@ -680,7 +661,6 @@ check_call_stack <- function() {
       "maintainer."
     )
 }
-
 #' Helper function for validations
 #'
 #' @keywords internal
@@ -705,4 +685,30 @@ validate_pre_post <- function(what, test.dir) {
   } else if (is.character(what)) {
     what
   } else character(0L)
+}
+#' Helper function for global state stuff
+#'
+#' Maybe this should be a global method?
+#'
+#' @keywords internal
+
+reset_and_unshim <- function(global) {
+  stopifnot(is(global, "unitizerGlobal"))
+  glob.clear <- try(global$resetFull())
+  glob.unshim <- try(global$unshimFuns())
+  success.clear <- !inherits(glob.clear, "try-error")
+  success.unshim <-  !inherits(glob.unshim, "try-error")
+  if(!success.clear)
+    word_msg(
+      "Failed restoring global settings to original state; you may want",
+      "to restart your R session to ensure all global settings are in a",
+      "reasonable state."
+    )
+  if(!success.unshim)
+    word_msg(
+      "Failed unshimming library/detach/attach; you may want to restart",
+      "your R session to reset them to their original values (or you",
+      "can `untrace` them manually)"
+    )
+  success.clear && success.unshim
 }
