@@ -318,7 +318,7 @@ unitize_core <- function(
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
-  reset_and_unshim()
+  reset_and_unshim(global)
 
   post.res <- source_files(post, gpar.frame)  # return env on success, char on error
   if(!is.environment(post.res))
