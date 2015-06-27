@@ -83,7 +83,10 @@ load_unitizers <- function(
       attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
       if(inherits(attempt, "try-error")) {
         msg <- conditionMessage(attr(attempt, "condition"))
-        if(nchar(msg)) msg else "unitizer validity check failed"
+        paste0(
+          c("unitizer validity check failed", if(nchar(msg)) c(": ", msg)),
+          collapse=""
+        )
       } else ""
     },
     character(1L)
