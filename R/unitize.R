@@ -104,7 +104,7 @@
 #'
 #' There are several aspects of the state of an R session that can affect code
 #' evaluation.  \code{unitizer} attempts to control some aspects of state
-#' through the \code{par.env} and  \code{reproducible.state} argument.
+#' through the \code{par.env} and  \code{reproducible.state} arguments.
 #'
 #' Setting \code{par.env} to NULL (the default) ensures the state of your
 #' workspace does not affect test evaluation, and vice versa.
@@ -121,7 +121,8 @@
 #' resetting most options to "factory" values.  Additionally, the random seed
 #' is set to a specific value and method so that random number generation is
 #' consistent across \code{unitizer} runs, and the working directory is set to
-#' the directory containing the first test file.
+#' the directory containing the first test file (TBD FOR wd; MAYBE SHOULD BE
+#' SOMETHING DIFFERENT?).
 #'
 #' State is reset after running each test file when running multiple test
 #' files with \code{unitize_dir}, which means state changes in one test file
