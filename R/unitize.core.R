@@ -322,7 +322,7 @@ unitize_core <- function(
 
   post.res <- source_files(post, gpar.frame)  # return env on success, char on error
   if(!is.environment(post.res))
-    warning(
+    word_msg(
       "`unitizer` evaluation succeed, but `post` steps had errors:",
       post.res
     )
