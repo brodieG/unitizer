@@ -72,7 +72,7 @@ setClass(
   "unitizer",
   representation(
     id="ANY",
-    version="ANY",                # should really be 'package_version', but want to avoid setOldClass
+    version="character",          # should really be 'package_version', but want to avoid setOldClass, so use `as.character(packageVersion())` to populate
     zero.env="environment",       # keep functions and stuff here
     base.env="environment",
     test.file.loc="character",    # location of teset file that produced `unitizer`
@@ -118,7 +118,7 @@ setClass(
     changes="unitizerChanges"              # Summary of user changes
   ),
   prototype(
-    version=packageVersion("unitizer"),
+    version=as.character(packageVersion("unitizer")),
     tests.status=factor(levels=.unitizer.tests.levels),
     zero.env=baseenv(),
     test.file.loc=NA_character_,

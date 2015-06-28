@@ -84,7 +84,7 @@ load_unitizers <- function(
       if(inherits(attempt, "try-error")) {
         msg <- conditionMessage(attr(attempt, "condition"))
         paste0(
-          c("unitizer validity check failed", if(nchar(msg)) c(": ", msg)),
+          c("unitizer object is invalid", if(nchar(msg)) c(": ", msg)),
           collapse=""
         )
       } else ""
@@ -102,9 +102,10 @@ load_unitizers <- function(
     function(x)
       if(
         !is(x, "unitizer") ||
-        inherits(x.ver <- try(x@version, silent=TRUE), "try-error") ||
-        !is.package_version(x.ver)
-      ) null.version else x@version
+        inherits(
+          x.ver <- try(package_version(x@version), silent=TRUE), "try-error"
+        ) || !is.package_version(x.ver)
+      ) null.version else x.ver
   )
   version.out.of.date <- vapply(
     versions, function(x) !identical(x, null.version) && curr.version > x,

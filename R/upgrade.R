@@ -30,11 +30,16 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
 #' @keywords internal
 
 upgrade_internal <- function(object) {
+
+  ver <- object@version
+  if(is.character(ver)) ver <- package_version(ver)
+  if(!is.package_version(ver)) stop("Cannot determine unitizer version.")
+
   # - 0.4.3 --------------------------------------------------------------------
 
   # Need to add tests.conditions.new slot
 
-  if(object@version < "0.4.3") {
+  if(ver < "0.4.3") {
     object <- addSlot(
       object, "tests.conditions.new", logical(length(object@items.new))
     )
@@ -44,7 +49,7 @@ upgrade_internal <- function(object) {
   # Need to add sections.ref and section.map.ref, and add a section id slot
   # to all the unitizerItem objects
 
-  if(object@version < "0.5.2") {
+  if(ver < "0.5.2") {
     # This adds the reference test section data
 
     # Add the requisite reference section fields
@@ -70,14 +75,14 @@ upgrade_internal <- function(object) {
 
   # Make sure ref item ids are reasonable
 
-  if(object@version < "0.5.3") {
+  if(ver < "0.5.3") {
     for(i in seq(len=length(object@items.ref))) object@items.ref[[i]]@id <- i
   }
   # - 0.9.0 --------------------------------------------------------------------
 
   # Add new slots
 
-  if(object@version < "0.9.0") {
+  if(ver < "0.9.0") {
     object <- addSlot(object, "test.file.loc", NA_character_)  # not sure this is completely necessary since we're just using the prototype value
     object <- addSlot(object, "eval", FALSE)                   # not sure this is completely necessary since we're just using the prototype value
     object <- addSlot(object, "eval.time", 0)                  # not sure this is completely necessary since we're just using the prototype value
@@ -88,12 +93,16 @@ upgrade_internal <- function(object) {
   }
   # - 1.0.0 --------------------------------------------------------------------
 
-  if(object@version < "1.0.0") {
+  # adding some slots, and version now stored as character instead of
+  # `package_version` in an 'ANY' slot
+
+  if(ver < "1.0.0") {
     for(i in seq_along(object@items.ref))
       object@items.ref[[i]] <-
         addSlot(
           object@items.ref[[i]], "glob.indices", new("unitizerGlobalIndices")
         )
+    object@version <- as.character(object@version)
     object <- addSlot(object, "state.ref", new("unitizerGlobalTrackingStore"))
     object <- addSlot(object, "global", NULL)
   }
@@ -102,7 +111,7 @@ upgrade_internal <- function(object) {
   # Always make sure that any added upgrades require a version bump as we always
   # set version to current version, not the last version that required upgrades
 
-  object@version <- packageVersion("unitizer")
+  object@version <- as.character(packageVersion("unitizer"))
 
   # - Done ---------------------------------------------------------------------
 
