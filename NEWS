@@ -1,3 +1,17 @@
+unitizer 1.0.0
+--------------------------------------------------------------------------------
+
+* More comprehensive state tracking and resetting; in particular:
+    * Random.seed, options, and wd are now tracked in addition to search path
+    * State reset during test review to what it was
+    * State stored in `unitizer` to alert of changes if there is an error
+    * Cleaner less intrusive shimming
+* Function parameters tweaked
+   * Technically API breaking, but mostly cosmetic and done now given the
+     package is not in broad use
+* Vignette updates
+* Demo update
+
 unitizer 0.9.0
 --------------------------------------------------------------------------------
 
