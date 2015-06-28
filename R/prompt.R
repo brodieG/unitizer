@@ -45,13 +45,7 @@ NULL
 #' @return mixed allowable user input
 
 unitizer_prompt <- function(
-  text,
-  browse.env=new.env(
-    parent=if(is.environment(pack.env$zero.env.par)) {
-      pack.env$zero.env.par
-    } else .GlobalEnv
-  ),
-  help=character(),
+  text, browse.env=baseenv(), help=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
   ...
 ) {

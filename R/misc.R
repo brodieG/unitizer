@@ -154,8 +154,7 @@ history_release <- function(hist.obj) {
 #' Simplify a Path As Much as Possible to Working Directory
 #'
 #' @param wd NULL or character(1L) resolving to a directory, if NULL will be
-#'   resolved to either \code{getwd} or what \code{getwd} was at the beginning
-#'   of a \code{unitizer} run
+#'   resolved to \code{getwd};
 #' @param only.if.shorter logical(1L) whether to relativize only if the
 #'   resulting \code{path} is shorter than the input
 #' @keywords internal
@@ -170,13 +169,7 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     !file_test("-d", wd)
   )
     stop("Argument `wd` must be NULL or a reference of to a directory")
-  if(is.null(wd)) {
-    wd <- if(
-      inherits(try(pack.env, silent=TRUE), "try-error") ||
-      !is.character(pack.env$wd) || !identical(length(pack.env$wd), 1L) ||
-      !file.exists(pack.env$wd)
-    ) getwd() else pack.env$wd
-  }
+  if(is.null(wd)) wd <- getwd()
   wd <- try(normalizePath(wd, mustWork=TRUE), silent=TRUE)
   res <- if(
     !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
