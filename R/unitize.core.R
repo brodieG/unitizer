@@ -224,7 +224,13 @@ unitize_core <- function(
     global$shimFuns()
     par.env <- global$par.env
   }
-  on.exit(reset_and_unshim(global), add=TRUE)
+  on.exit(
+    {
+      reset_and_unshim(global)
+      word_msg("`unitizer` unexpectedly exited; store not modified.")
+    },
+    add=TRUE
+  )
   gpar.frame <- par.env
 
   # Set the zero state if needed
