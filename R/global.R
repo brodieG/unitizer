@@ -16,7 +16,15 @@ NULL
 #' do not want to allow.
 #'
 #' \code{unitizerGlobalTrackingStore} is used to keep "compressed" versions of
-#' \code{unitizerGlobal}
+#' \code{unitizerGlobal}.  The compressed versions obviously lose some
+#' information.  In particular, environments or things that have environments
+#' as parents, or large objects, are not stored and instead a reference to
+#' a dummy environment is stored.  This environment is used to unambiguously
+#' indicate a non-stored state component.
+#'
+#' When comparing state between new and reference tests, only explicitly stored
+#' items are compared (though any extra or missing items may be brought up as
+#' possible mismatches).
 #'
 #' @rdname global_structures
 #' @keywords internal
@@ -70,7 +78,8 @@ setClass(
   slots=c(dummy="environment")
 )
 setGeneric(
-  "unitizerCompressTracking", function(x, ...) standardGeneric("unitizerCompressTracking")
+  "unitizerCompressTracking",
+  function(x, ...) standardGeneric("unitizerCompressTracking")
 )
 setMethod(
   "unitizerCompressTracking", "unitizerGlobalTracking",
@@ -87,10 +96,13 @@ setMethod(
           res@dummy else y
       }
     )
-    res@working.directory <- x@working.directory
-    res@random.seed <- x@random.seed # this could be big!!!
-  }
-)
+    res@working.directory <- x@working.directory  # not sure whether this is something that we want to be comparing
+    res@random.seed <- lapply(  # this could be big!!!
+      x@random.seed,
+      function(y) if(length(y) > 10L) res@dummy else y
+    )
+  res
+} )
 #' @rdname global_structures
 #' @keywords internal
 
