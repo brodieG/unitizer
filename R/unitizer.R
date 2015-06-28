@@ -113,6 +113,8 @@ setClass(
     sections.ref="list",
     section.ref.map="integer",
 
+    state.ref="unitizerGlobalTrackingStore",
+
     changes="unitizerChanges"              # Summary of user changes
   ),
   prototype(
