@@ -86,6 +86,17 @@ upgrade_internal <- function(object) {
       object@items.ref[[i]] <-
         addSlot(object@items.ref[[i]], "section.name", "<unknown>")
   }
+  # - 1.0.0 --------------------------------------------------------------------
+
+  if(object@version < "1.0.0") {
+    for(i in seq_along(object@items.ref))
+      object@items.ref[[i]] <-
+        addSlot(
+          object@items.ref[[i]], "glob.indices", new("unitizerGlobalIndices")
+        )
+    object <- addSlot(object, "state.ref", new("unitizerGlobalTrackingStore"))
+    object <- addSlot(object, "global", NULL)
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
