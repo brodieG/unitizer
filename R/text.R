@@ -317,10 +317,12 @@ word_wrap <- function(
     }
     res[1L:(res.idx - 1L)]
   }
+  # x.lst workaround required because `strsplit` swallows zero char char items!!
+
   x.lst <- as.list(x)
   x.lst[nchar(x) > 0] <- strsplit(gsub("\n", "\n\n", x[nchar(x) > 0]), "\n")     # replace new lines with 0 char item
-  x.exp <- unlist(x.lst)  # x.lst workaround required because `strsplit` swallows zero char char items!!
-  res <- lapply(x.exp, break_char)
+  #x.exp <- unlist(x.lst)
+  res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
   if(unlist) unlist(res) else res
 }
 #' Print To Screen Wrapping Words

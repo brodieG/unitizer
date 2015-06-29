@@ -41,7 +41,7 @@ local({
     )
   } )
   test_that("cap_first", {
-    set.seed(1)
+    set.seed(1, "Mersenne-Twister")
     words <- replicate(2, paste0(sample(letters, 5), collapse=""))
     WORDS <- toupper(words)
     expect_identical(
@@ -82,6 +82,11 @@ local({
     expect_identical(
       c("hello ", "sunset ", "", "there ", "moonrise"),
       unitizer:::word_wrap("hello sunset \nthere moonrise", width=12L)
+    )
+    x1 <- c("this is supposed to be a particularly long string\nthat allows us to test the behavior of bullets once we start seeing\nsome wrapping kicking in which was a problem once upon a time")
+    expect_identical(
+      unitizer:::word_wrap(x1, unlist=FALSE, width=80L),
+      list(c("this is supposed to be a particularly long string", "", "that allows us to test the behavior of bullets once we start seeing", "", "some wrapping kicking in which was a problem once upon a time"))
     )
   })
   test_that("bullets", {
