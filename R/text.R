@@ -38,9 +38,20 @@ screen_out <- function(
 diff_obj_out <- function(
   obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
   obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
-  max.len=getOption("unitizer.test.fail.out.lines"),
+  max.len=NULL,
   file=stdout(), frame=parent.frame()
 ) {
+  err.type <- "Argument"
+  if(is.null(max.len)) {
+    getOption("unitizer.test.fail.out.lines")
+    err.type <- "Option"
+  }
+  if(!is.numeric(max.len) || length(max.len) < 1L || max.len < 1)
+    stop(
+      err.type, " `unitizer.test.fail.out.lines` must be integer(1L) and ",
+      "greater than or equal to 1"
+    )
+  max.len <- as.integer(max.len)
   frame # force
   tar.width <- width - 4L
   obj.add.capt <- obj_capt(obj.add, tar.width, frame)
