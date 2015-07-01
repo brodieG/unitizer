@@ -84,7 +84,7 @@ setMethod(
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
-    quit.time <- unitizer@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
+    quit.time <- x@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
     if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
     slow.run <- x@eval.time > quit.time
@@ -523,9 +523,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
       ) {
-        summary(curr.sub.sec.obj@show.fail[[id.rel]])
+        err.obj <- curr.sub.sec.obj@show.fail[[id.rel]]
+        err.obj@max.out.len <-
+          unitizer@global$unitizer.opts[["unitizerItemTestsErrors"]]
+        summary(err.obj)
         eval(  # must eval to make sure that correct methods are available when outputing failures to screen
-          call("show", curr.sub.sec.obj@show.fail[[id.rel]]),
+          call("show", err.obj),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
     } }

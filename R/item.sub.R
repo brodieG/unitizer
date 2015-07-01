@@ -81,9 +81,11 @@ setClass("unitizerItemTestsErrors",
     conditions="unitizerItemTestError",
     output="unitizerItemTestError",
     message="unitizerItemTestError",
-    aborted="unitizerItemTestError"
+    aborted="unitizerItemTestError",
+    .max.out.len="numericOrNULL" # for passing around options for
 ) )
-unitizerItemTestsErrorsSlots <- slotNames("unitizerItemTestsErrors")
+unitizerItemTestsErrorsSlots <-
+  grep("^[^.]", slotNames("unitizerItemTestsErrors"), value=TRUE)
 if(!identical(unitizerItemDataSlots, unitizerItemTestsErrorsSlots)) { # used to do this with virtual class, but slow
   stop(
     "Install error: `unitizerItemData` and `unitizerItemTestsErrors` slots ",
@@ -142,7 +144,7 @@ setMethod("as.character", "unitizerItemTestsErrors",
 
 setMethod("show", "unitizerItemTestsErrors",
   function(object) {
-    slots <- slotNames(object)
+    slots <- grep("^[^.]", slotNames(object), value=TRUE)
     for(i in slots) {
       curr.err <- slot(object, i)
       if(is.null(curr.err@value)) next  # No error, so continue
@@ -161,7 +163,8 @@ setMethod("show", "unitizerItemTestsErrors",
         if(identical(i, "value")) x else paste0(toupper(x), "$", i)
 
       diff_obj_out(
-        curr.err@.ref, curr.err@.new, make_cont(".ref"), make_cont(".new")
+        curr.err@.ref, curr.err@.new, make_cont(".ref"), make_cont(".new"),
+        max.len=object@.max.out.len
       )
     }
     invisible(NULL)
@@ -169,7 +172,7 @@ setMethod("show", "unitizerItemTestsErrors",
 
 setMethod("summary", "unitizerItemTestsErrors",
   function(object, ...) {
-    slots <- slotNames(object)
+    slots <- grep("^[^.]", slotNames(object), value=TRUE)
     slot.err <- logical(length(slots))
     for(i in seq_along(slots))
       slot.err[[i]] <- !is.null(slot(object, slots[[i]])@value)
