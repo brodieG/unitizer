@@ -26,11 +26,9 @@
 #' @keywords internal
 #' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
 
-set_text_capture <- function(con, type) {
-  if(isTRUE(getOption("unitizer.disable.capt"))) {
-    warning(type, " capture disabled (see getOption(unitizer.disable.capt))")
-    return(FALSE)
-  }
+set_text_capture <- function(
+  con, type, capt.disabled=getOption("unitizer.disable.capt", FALSE)
+) {
   if(identical(type, "message")) {
     waive.capt <- !identical(sink.number(type="message"), 2L)
   } else if (identical(type, "output")) {
@@ -49,7 +47,10 @@ set_text_capture <- function(con, type) {
 #' @rdname set_text_capture
 #' @keywords internal
 
-get_text_capture <- function(con, file.name, type, no.unsink=FALSE) {
+get_text_capture <- function(
+  con, file.name, type, no.unsink=FALSE,
+  chrs.max=getOption("unitizer.max.capture.chars", 200000L)
+) {
   if(
     !isTRUE(type %in% c("message", "output")) || !is.character(file.name) ||
     length(file.name) != 1L || !(inherits(con, "file") && isOpen(con) ||
@@ -57,6 +58,14 @@ get_text_capture <- function(con, file.name, type, no.unsink=FALSE) {
   ) {
     stop("Logic Error: invalid arguments; contact maintainer.")
   }
+  if(
+    !is.numeric(chrs.max) || length(chrs.max) != 1L || is.na(chrs.max) ||
+    chrs.max < 100L
+  ) {
+    stop(
+      "Argument `chrs.max` must be integer(1L) and greater ",
+      "than 100L; using 200000L for now", immediate.=TRUE
+  ) }
   if(inherits(con, "file") && isOpen(con)) {
     if(!as.character(con) %in% rownames(showConnections()) ||
       !identical(showConnections()[as.character(con), 1], file.name)
@@ -85,17 +94,6 @@ get_text_capture <- function(con, file.name, type, no.unsink=FALSE) {
     chrs.prev <- 0
     chrs <- 1e4
     chrs.mlt <- 10
-    chrs.max <- getOption("unitizer.max.capture.chars")
-    if(
-      !is.numeric(chrs.max) || length(chrs.max) != 1L || is.na(chrs.max) ||
-      chrs.max < 100L
-    ) {
-      warning(
-        "Option `unitizer.max.capture.chars` must be integer(1L) and greater ",
-        "than 100L; using 200000L for now", immediate.=TRUE
-      )
-      chrs.max <- 200000L
-    }
     res <- ""
 
     while(chrs.prev < chrs.max) {
@@ -144,9 +142,16 @@ release_stderr_sink <- function(silent=FALSE) {
   if(!isTRUE(silent)) message("Stderr sink released.")
   if(!identical(sink.number(type="message"), 2L)) sink(type="message")
 }
-get_capture <- function(cons, display=getOption("unitizer.show.output")) {
-  message <- get_text_capture(cons$err.c, cons$err.f, "message")  # Do message first, so we can see subsequent errors
-  output <- get_text_capture(cons$out.c, cons$out.f, "output")
+get_capture <- function(
+  cons, display=getOption("unitizer.show.output", TRUE),
+  chrs.max=getOption("unitizer.max.capture.chars", 200000L)
+) {
+  message <- get_text_capture(    # Do message first, so we can see subsequent errors
+    cons$err.c, cons$err.f, "message", chrs.max=chrs.max
+  )
+  output <- get_text_capture(
+    cons$out.c, cons$out.f, "output", chrs.max=chrs.max
+  )
   if(isTRUE(display)) {
     cat(c(message, "\n"), file=stderr(), sep="\n")
     cat(c(output, "\n"), sep="\n")

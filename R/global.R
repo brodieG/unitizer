@@ -176,6 +176,8 @@ unitizerGlobal <- setRefClass(
     disabled="unitizerGlobalStatus",
     tracking="unitizerGlobalTracking",
 
+    unitizer.opts="list",   # store original unitizer options before they get zeroed out
+
     state.funs="unitizerGlobalStateFuns",
     shim.funs="list",
 
@@ -189,6 +191,8 @@ unitizerGlobal <- setRefClass(
     ) {
       obj <- callSuper(..., par.env=par.env)
       enable(enable.which)
+      opts <- options()
+      unitizer.opts <<- opts[grep("^unitizer\\.", names(opts))]
       state()
       .global$global <- .self  # top level copy for access from other namespaces
       obj

@@ -84,9 +84,10 @@ setMethod(
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
+    quit.time <- unitizer@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
+    if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
-    slow.run <-
-      x@eval.time > getOption("unitizer.prompt.b4.quit.time", 10)
+    slow.run <- x@eval.time > quit.time
 
     something.happened <- any(
       y@mapping@review.type != "Passed" & !y@mapping@ignored
@@ -127,7 +128,7 @@ setMethod(
                   y@review <- TRUE
                 } else {
                   review.prev <- y@review
-                  y <- reviewNext(y)
+                  y <- reviewNext(y, x)
                   if(!review.prev && y@review) next
                 }
                 if(y@review) {
@@ -349,7 +350,7 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 #' @keywords internal
 
 setMethod("reviewNext", c("unitizerBrowse"),
-  function(x, ...) {
+  function(x, unitizer, ...) {
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
       last.reviewed.sec <-
@@ -495,7 +496,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       cat(deparse_prompt(item.main@call), sep="\n")
 
       # If there are conditions that showed up in main that are not in reference
-      # show the message, and set the trace if relevant
+      # show the message, and set the trace if relevant; options need to be
+      # retrieved from unitizer object since they get reset
+
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
@@ -503,13 +506,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
         if(nchar(item.main@data@message))
           screen_out(
             item.main@data@message,
-            max.len=getOption("unitizer.test.msg.lines"), stderr()
+            max.len=unitizer@global$unitizer.opts[["unitizer.test.msg.lines"]],
+            stderr()
           )
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
       if(curr.sub.sec.obj@show.out && nchar(item.main@data@output))
-        screen_out(item.main@data@output)
-
+        screen_out(
+          item.main@data@output,
+          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
+        )
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
 

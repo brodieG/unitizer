@@ -35,11 +35,21 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       x.comments <- x.extracted$comments      # need to recover comments from container since we can't attach comments directly to name
       x <- x.extracted$call                   # get rid of comment container
     }
-
     warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
     err.opt <- getOption("error")
-    capt.cons$err.c <- set_text_capture(capt.cons$err.c, "message")
-    capt.cons$out.c <- set_text_capture(capt.cons$out.c, "output")
+
+    # Setup text capture; a bit messy due to funny way we have to pull in
+    # unitize specific options
+
+    set_args <- list()
+    set_args[["capt.disabled"]] <-
+      global$unitizer.opts[["unitizer.disable.capt"]]
+    capt.cons$err.c <- do.call(
+      set_text_capture, c(list(capt.cons$err.c, "message"), set_args)
+    )
+    capt.cons$out.c <- do.call(
+      set_text_capture, c(list(capt.cons$out.c, "output"), set_args)
+    )
     x.to.eval <- `attributes<-`(x, NULL)
 
     # Manage unexpected outcomes
@@ -76,9 +86,15 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     options(warn=warn.opt)
     options(error=err.opt)   # ADAPT TO NEW OPTIONS TRACKING
 
-    # Revert settings, get captured messages, if any and if user isn't capturing already
+    # Revert settings, get captured messages, if any and if user isn't capturing
+    # already; do.call so we can rely on default get_capture settings if those
+    # in `unitizer.opts` are NULL
 
-    capt <- get_capture(capt.cons)
+    get_args <- list(capt.cons)
+    get_args[["display"]] <- global$unitizer.opts[["unitizer.show.output"]]
+    get_args[["chrs.max"]] <-
+      global$unitizer.opts[["unitizer.max.capture.chars"]]
+    capt <- do.call(get_capture, get_args)
 
     if(aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
       stop(
