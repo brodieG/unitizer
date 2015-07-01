@@ -227,7 +227,10 @@ unitize_core <- function(
   on.exit(
     {
       reset_and_unshim(global)
-      word_msg("`unitizer` unexpectedly exited; store not modified.")
+      word_msg(
+        "Unexpectedly exited before storing unitizer; tests were not saved or",
+        "changed."
+      )
     },
     add=TRUE
   )
@@ -345,12 +348,6 @@ unitize_core <- function(
 #' @keywords internal
 
 unitize_eval <- function(tests.parsed, unitizers, global) {
-  on.exit(                                   # In case interrupted or some such
-    message(
-      "Unexpectedly exited before storing unitizer; tests were not saved or ",
-      "changed."
-    )
-  )
   test.len <- length(tests.parsed)
   if(!identical(test.len, length(unitizers)))
     stop(
@@ -386,7 +383,6 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
     }
     unitizers[[i]]@eval <- FALSE
   }
-  on.exit()
   unitizers
 }
 #' Run User Interaction And \code{unitizer} Storage
