@@ -372,6 +372,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     cur.sub.sec.items <-
       x@mapping@sub.sec.id == curr.sub.sec & x@mapping@sec.id == curr.sec
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
+    if(last.id.rel)
+      last.sub.sec.obj <- x[[last.reviewed.sec]][[last.reviewed.sub.sec]]
     id.rel <- x@mapping@item.id.rel[[which(x@mapping@item.id == curr.id)]]
 
     # Display Section Headers as Necessary
@@ -470,11 +472,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # really not matter in almost all circumstances
 
     last.glob.set <- if(last.id.rel) {
-      last.item.new <- if(!is.null(curr.sub.sec.obj@items.new))
-        curr.sub.sec.obj@items.new[[last.id.rel]]
-      last.item.ref <- if(!is.null(curr.sub.sec.obj@items.ref))
-        curr.sub.sec.obj@items.ref[[last.id.rel]]
-
+      last.item.new <- if(!is.null(last.sub.sec.obj@items.new))
+        last.sub.sec.obj@items.new[[last.id.rel]]
+      last.item.ref <- if(!is.null(last.sub.sec.obj@items.ref))
+        last.sub.sec.obj@items.ref[[last.id.rel]]
       if(is.null(last.item.new)) {
         last.item.ref@glob.indices
       } else last.item.new@glob.indices
@@ -524,8 +525,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !item.main@ignore
       ) {
         err.obj <- curr.sub.sec.obj@show.fail[[id.rel]]
-        err.obj@max.out.len <-
-          unitizer@global$unitizer.opts[["unitizerItemTestsErrors"]]
+        err.obj@.max.out.len <-
+          unitizer@global$unitizer.opts[["unitizer.test.fail.out.lines"]]
         summary(err.obj)
         eval(  # must eval to make sure that correct methods are available when outputing failures to screen
           call("show", err.obj),
