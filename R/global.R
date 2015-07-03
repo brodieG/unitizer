@@ -191,8 +191,6 @@ unitizerGlobal <- setRefClass(
     ) {
       obj <- callSuper(..., par.env=par.env)
       enable(enable.which)
-      opts <- options()
-      unitizer.opts <<- opts[grep("^unitizer\\.", names(opts))]
       state()
       .global$global <- .self  # top level copy for access from other namespaces
       obj

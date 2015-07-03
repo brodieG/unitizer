@@ -25,7 +25,6 @@ unitize_core <- function(
   test.files, store.ids, par.env, reproducible.state, pre, post,
   history, interactive.mode, force.update, auto.accept, mode
 ) {
-
   # - Validation / Setup -------------------------------------------------------
 
   if(
@@ -70,54 +69,17 @@ unitize_core <- function(
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be NULL or an environment.")
-  if (identical(reproducible.state, FALSE)) {
-    reproducible.state <- integer(0L)
-  } else if (
-    (
-      is.integer(reproducible.state) || (
-        is.numeric(reproducible.state) &&
-        identical(as.integer(reproducible.state), reproducible.state)
-      )
-    ) &&
-    is.character(names(reproducible.state)) &&
-    all(names(reproducible.state) %in% .unitizer.global.settings.names) &&
-    all(as.integer(reproducible.state) %in% 0:2)
-  ) {
-    # Remove zero values
+  if(identical(reproducible.state, FALSE)) {
     reproducible.state <- setNames(
-      as.integer(reproducible.state[as.logical(reproducible.state)]),
-      names(reproducible.state[as.logical(reproducible.state)])
-    )
-  } else {
-    stop(
-      "Argument `reproducible.state` must be FALSE, or ",
-      "integer with values in 0:2 and names in ",
-      deparse(.unitizer.global.settings.names, width=500L)
-    )
-  }
-  if(
-    identical(reproducible.state[["options"]], 2L) &&
-    !identical(reproducible.state[["search.path"]], 2L)
-  ) {
-    stop(
-      "Argument `reproducible.state` has an invalid state: 'options' is set ",
-      "to 2, but 'search.path' is not"
-    )
-  }
-  if(identical(reproducible.state[["random.seed"]], 2L)) {
-    prev.seed <- mget(
-      ".Random.seed", envir=.GlobalEnv, ifnotfound=list(NULL)
-    )[[1L]]
-    seed.dat <- getOption("unitizer.seed")
-    if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
-      stop(
-        "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
-        "is a list of possible arguments to `set.seed`."
-    ) }
-    if(is.null(prev.seed) && exists(".Random.seed", envir=.GlobalEnv))
-      rm(".Random.seed", envir=.GlobalEnv) else
-        assign(".Random.seed", prev.seed, envir=.GlobalEnv)
-  }
+      integer(length(.unitizer.global.settings.names)),
+      .unitizer.global.settings.names
+  ) }
+  if(!isTRUE(is.valid_rep_state(reproducible.state)))
+    stop("Argument `reproducible.state` is invalid; see prior errors")
+  reproducible.state <- setNames(
+    as.integer(reproducible.state[as.logical(reproducible.state)]),
+    names(reproducible.state[as.logical(reproducible.state)])
+  )
   auto.accept.valid <- character()
   if(is.character(auto.accept)) {
     if(length(auto.accept)) {
@@ -144,12 +106,6 @@ unitize_core <- function(
   pre <- validate_pre_post(pre, test.dir)
   post <- validate_pre_post(post, test.dir)
 
-  quit.time <- getOption("unitizer.prompt.b4.quit.time", 10)
-  if(!is.numeric(quit.time) || length(quit.time) != 1L || quit.time < 0)
-    stop(
-      "Logic Error: unitizer option `unitizer.prompt.b4.quit.time` ",
-      "is miss-specified"
-    )
   # Make sure history is kosher
 
   if(!is.null(history)) {
@@ -215,11 +171,20 @@ unitize_core <- function(
     )
   # - Global Controls ----------------------------------------------------------
 
-  # Initialize new tracking object; this will also record starting state and
-  # put the object in the `unitizer:::.global` environment object
+  # Store a copy of the unitizer options, though make sure to validate them
+  # first (note validation is potentially a bit duplicative since some of the
+  # params would have been pulled from options); we store the opts because they
+  # get nuked by `options_zero` but we still need some of the unitizer ones
 
-  global <- unitizerGlobal$new(enable.which=names(reproducible.state))
+  opts <- options()
+  opts.untz <- opts[grep("^unitizer\\.", names(opts))]
+  validate_options(opts.untz)
 
+  # Initialize new tracking object; this will also record starting state
+
+  global <- unitizerGlobal$new(
+    enable.which=names(reproducible.state), unitizer.opts=opts.untz
+  )
   if(is.null(par.env)) {
     global$shimFuns()
     par.env <- global$par.env
@@ -237,6 +202,8 @@ unitize_core <- function(
   gpar.frame <- par.env
 
   # Set the zero state if needed
+
+  seed.dat <- getOption("unitizer.seed")  # get seed before 'options_zero'
 
   if(identical(reproducible.state[["search.path"]], 2L)) {
     search_path_trim()
@@ -316,7 +283,8 @@ unitize_core <- function(
       interactive.mode=interactive.mode,
       force.update=force.update,
       auto.accept=auto.accept,
-      history=history
+      history=history,
+      global=global
     )
     eval.which.valid <- which(
       vapply(as.list(unitizers[valid]), slot, logical(1L), "eval")
@@ -393,7 +361,7 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
 #' @param force.update whether to store unitizer
 
 unitize_browse <- function(
-  unitizers, mode, interactive.mode, force.update, auto.accept, history
+  unitizers, mode, interactive.mode, force.update, auto.accept, history, global
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -521,7 +489,7 @@ unitize_browse <- function(
         if(identical(pick, "Q")) {
           if(
             Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
-            getOption("unitizer.prompt.b4.quit.time", 10)
+            global@unitizer.opts[["unitizer.prompt.b4.quit.time"]]
           ) {
             word_cat("Are you sure you want to quit?")
             ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
@@ -688,6 +656,8 @@ validate_pre_post <- function(what, test.dir) {
     what
   } else character(0L)
 }
+
+
 #' Helper function for global state stuff
 #'
 #' Maybe this should be a global method?

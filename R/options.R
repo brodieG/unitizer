@@ -1,3 +1,7 @@
+#' @include search.R
+
+NULL
+
 #' Set Option if Not Set
 #'
 #' Utility function used by .onLoad to set a global option if it is not set
@@ -111,4 +115,117 @@ options_zero <- function(
   return(NULL)
 }
 
+.unitizer.opts.default <- list(
+  unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
+  unitizer.disable.capt=FALSE,             # Will prevent capture
+  unitizer.test.out.lines=c(50L, 15L),     # How many lines to display when showing test values, or truncate to if exceeds
+  unitizer.test.fail.out.lines=c(10L, 5L), # How many lines to display when showing failed objects (note banner means one more line than this displayed)
+  unitizer.test.msg.lines=c(10L, 3L),      # How many lines to display when showing test errors, or truncate to if exceeds
+  unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
+  unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
+  unitizer.history.file=tempfile(),        # File to use for `unitizer` history
+  unitizer.search.path.keep=c(             # what objects to keep on search path when initializing unitizer
+    .unitizer.base.packages,
+    "tools:rstudio", "package:unitizer"
+  ),
+  unitizer.namespace.keep=c(               # namespaces not to auto-unload, no matter what
+    .unitizer.namespace.keep
+  ),
+  unitizer.reproducible.state=c(           # default reproducible state mode
+    search.path=2L, options=2L, random.seed=2L, working.directory=2L
+  ),
+  unitizer.opts.base=.unitizer.opts.base,  # what to set options to when running in reproducible state
+  unitizer.opts.asis=.unitizer.opts.sys,   # system dependent options that should not be changed
+  unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
+      list(seed=42L, kind="Wichmann-Hill")
+)
 
+#' Checks that options meet expectations before anything gets run
+
+validate_options <- function(opts.to.validate) {
+  stopifnot(
+    is.list(opts.to.validate),
+    all(grep("^unitizer\\.", names(opts.to.validate)))
+  )
+  if(
+    any(
+      missing.opts <-
+        !names(.unitizer.opts.default) %in% names(opts.to.validate)
+    )
+  ) {
+    stop(
+      "The following options must be set in order for `unitizer` to work: ",
+      deparse(names(.unitizer.opts.default)[missing.opts], width=500L)
+    )
+  }
+  with(
+    opts.to.validate,
+    {
+      if(!is.TF(unitizer.show.output))
+        stop("Option `unitizer.show.output` must be TRUE or FALSE")
+      if(!is.TF(unitizer.disable.capt))
+        stop("Option `unitizer.disable.capt` must be TRUE or FALSE")
+      if(!is.int.pos.2L(unitizer.test.out.lines))
+        stop(
+          "Option `unitizer.test.out.lines` must be integer(2L), strictly ",
+          "positive, and not NA"
+        )
+      if(!is.int.pos.2L(unitizer.test.fail.out.lines))
+        stop(
+          "Option `unitizer.test.fail.out.lines` must be integer(2L), ",
+          "strictly positive, and not NA"
+        )
+      if(!is.int.pos.2L(unitizer.test.msg.lines))
+        stop(
+          "Option `unitizer.test.msg.lines` must be integer(2L), strictly ",
+          "positive, and not NA"
+        )
+      if(
+        !is.numeric(unitizer.prompt.b4.quit.time) ||
+        length(unitizer.prompt.b4.quit.time) != 1L ||
+        is.na(unitizer.prompt.b4.quit.time) ||
+        unitizer.prompt.b4.quit.time < 0
+      )
+        stop(
+          "Option `unitizer.prompt.b4.quit.time` must be numeric(1L), not NA, ",
+          "and strictly positive"
+        )
+      if(
+        !is.integer(unitizer.max.capture.chars) ||
+        length(unitizer.max.capture.chars) != 1L ||
+        is.na(unitizer.max.capture.chars) ||
+        unitizer.max.capture.chars < 0
+      )
+        stop(
+          "Option `unitizer.max.capture.chars` must be integer(1L), not NA, ",
+          "and strictly positive"
+        )
+      if(!is.chr1(unitizer.history.file))
+        stop("Option `unitizer.history.file` must be character(1L) and not NA")
+      if(
+        !is.character(unitizer.search.path.keep) ||
+        any(is.na(unitizer.search.path.keep))
+      )
+        stop("Option `unitizer.search.path.keep` must be character and not NA")
+      if(
+        !is.character(unitizer.namespace.keep) ||
+        any(is.na(unitizer.namespace.keep))
+      )
+        stop("Option `unitizer.namespace.keep` must be character and not NA")
+
+      if(
+        !identical(unitizer.reproducible.state, FALSE) &&
+        !is.valid_rep_state(unitizer.reproducible.state)
+      )
+        stop(
+          "Option `unitizer.reproducible.state` is invalid; see prior errors"
+        )
+      if(!is.list(unitizer.opts.base))
+        stop("Option `unitizer.opts.base` must be a list")
+      if(!is.character(unitizer.opts.asis) || any(is.na(unitizer.opts.asis)))
+        stop("Option `unitizer.opts.asis` must be character and not NA")
+      if(!is.list(unitizer.seed))  # note, more specific validation done in is.valid_rep_state
+        stop("Option `unitizer.seed` must be a list")
+  } )
+  TRUE
+}

@@ -55,8 +55,71 @@ is.chr1 <- function(x) is.character(x) && length(x) == 1L && !is.na(x)
 
 is.TF <- function(x) isTRUE(x) || identical(x, FALSE)
 
+#' @rdname is.simpleobj
+#' @keywords internal
+
+is.int.pos.2L <- function(x)
+  is.numeric(x) && length(x) == 2L && !any(is.na(x)) &&
+  all.equal(x, round(x)) && all(x) > 0L
+
 #' Check Whether Provided Store ID Is in Default Form
 #'
 #' @keywords internal
 
 is.default_unitizer_id <- function(x) is.chr1plain(x) && !is.na(x)
+
+#' Check for reproducible state variable
+#'
+#' @keywords internal
+
+is.valid_rep_state <- function(x) {
+  if (
+      (
+        is.integer(x) || (
+          is.numeric(x) &&
+          identical(as.integer(x), x)
+        )
+      ) &&
+      is.character(names(x)) &&
+      all(names(x) %in% .unitizer.global.settings.names) &&
+      all(as.integer(x) %in% 0:2)
+  ) {
+    return(TRUE)
+  } else {
+    word_msg(
+      "Argument `reproducible.state` must be FALSE, or ",
+      "integer with values in 0:2 and names in ",
+      deparse(.unitizer.global.settings.names, width=500L)
+    )
+    return(FALSE)
+  }
+  if(
+    identical(x[["options"]], 2L) &&
+    !identical(x[["search.path"]], 2L)
+  ) {
+    word_msg(
+      "Argument `reproducible.state` has an invalid state: 'options' is set ",
+      "to 2, but 'search.path' is not"
+    )
+    return(FALSE)
+  }
+  if(identical(x[["random.seed"]], 2L)) {
+    prev.seed <- mget(
+      ".Random.seed", envir=.GlobalEnv, ifnotfound=list(NULL)
+    )[[1L]]
+    seed.dat <- getOption("unitizer.seed")
+    if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
+      word_msg(
+        "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
+        "is a list of possible arguments to `set.seed`."
+      )
+      return(FALSE)
+    }
+    if(is.null(prev.seed) && exists(".Random.seed", envir=.GlobalEnv))
+      rm(".Random.seed", envir=.GlobalEnv) else
+        assign(".Random.seed", prev.seed, envir=.GlobalEnv)
+  }
+  TRUE
+}
+
+
