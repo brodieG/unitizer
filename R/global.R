@@ -182,7 +182,9 @@ unitizerGlobal <- setRefClass(
     shim.funs="list",
 
     indices.init="unitizerGlobalIndices",
-    indices.last="unitizerGlobalIndices"
+    indices.last="unitizerGlobalIndices",
+
+    namespaces.loaded="logical"  # track which of the keep namespaces started off loaded
   ),
   methods=list(
     initialize=function(
@@ -193,6 +195,8 @@ unitizerGlobal <- setRefClass(
       enable(enable.which)
       state()
       .global$global <- .self  # top level copy for access from other namespaces
+      namespaces.loaded <<-
+        unitizer.opts[["unitizer.namespace.keep"]] %in% loadedNamespaces()
       obj
     },
     enable=function(which=.unitizer.global.settings.names) {
@@ -258,14 +262,17 @@ unitizerGlobal <- setRefClass(
       } }
       if(identical(mode, "init")) indices.init else indices.last
     },
-    reset=function(to) {
+    reset=function(to, force=FALSE) {
       '
-      Reset global settings to a prior State
+      Reset global settings to a prior State, `force` is typically used When
+      attempting to do a best effort reset with an on.exit reset b/c there
+      was a failure or some such elsewhere, particularly within an actual
+      non full reset attempt.
       '
       stopifnot(is(to, "unitizerGlobalIndices"))
 
       if(status@search.path && to@search.path)
-        search_path_update(to@search.path, .self)
+        search_path_update(to@search.path, .self, force=force)
       if(status@options && to@options)
         options(tracking@options[[to@options]])
       if(status@working.directory && to@working.directory)
@@ -299,7 +306,8 @@ unitizerGlobal <- setRefClass(
         new(
           "unitizerGlobalIndices", search.path=1L, options=1L,
           working.directory=1L, random.seed=1L
-      ) )
+        ), force=TRUE
+      )
     }
 ) )
 

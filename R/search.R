@@ -38,6 +38,16 @@ setClass(
   "package:datasets", "package:methods", "Autoloads", "package:base",
   ".GlobalEnv"
 )
+#' Additional Namespaces to Keep Loaded
+#'
+#' \itemize{
+#'   \item data.table must be kept loaded due to issue
+#'      \href{https://github.com/Rdatatable/data.table/issues/990}{#990}
+#' }
+#' @export
+
+.unitizer.namespace.keep <- c("data.table")
+
 #' Search Path Management Functions
 #'
 #' Set of functions used to manage search path state.  Strategy is to
@@ -75,11 +85,12 @@ setClass(
 #' @keywords internal
 #' @rdname search_path
 
-search_path_update <- function(id, global) {
+search_path_update <- function(id, global, force=FALSE) {
   stopifnot(
     is(global, "unitizerGlobal"),
     is.integer(id), length(id) == 1L, !is.na(id),
-    id %in% seq_along(global$tracking@search.path)
+    id %in% seq_along(global$tracking@search.path),
+    is.TF(force)
   )
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
@@ -181,7 +192,30 @@ search_path_update <- function(id, global) {
     cur.lns <- loadedNamespaces()
     tar.lns.loc <- sapply(tar.lns.dat, slot, "lib.loc", simplify=FALSE)  # may contain nulls
     tar.lns <- names(tar.lns.loc)
-    unload_namespaces(setdiff(cur.lns, tar.lns))
+    to.unload <- setdiff(cur.lns, tar.lns)
+    to.keep <- global$unitizer.opts[["unitizer.namespace.keep"]]
+    if(
+      length(unload.conf <- which(to.unload %in% to.keep)) &&
+      global$status@options && !force
+    ) {
+      many <- length(unload.conf) > 1L
+      word_msg(
+        "Incompatible `reproducible.state` settings: `unitizer` is trying to ",
+        "auto-unload namespaces which are marked as un-unloadable while ",
+        "`reproducible.state[[\"options\"]]` is greater than zero; either set ",
+        "`reproducible.state[[\"options\"]]` to zero, or consult the ",
+        "reproducible tests vignette (`vignette(\"vgn05reproducibletests\")`) ",
+        "for other possible work-arounds.  The namespace",
+        if(many) "s", " that caused this error ", if(many) "are" else "is",
+        ": ", deparse(to.unload[unload.conf], width=500L), sep=""
+      )
+      stop("Unable to proceed")
+    }
+    unload_namespaces(
+      setdiff(
+        cur.lns,
+        c(tar.lns, to.keep)
+    ) )
     to.load <- setdiff(tar.lns, loadedNamespaces())
     for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
   }
