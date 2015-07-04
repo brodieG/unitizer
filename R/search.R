@@ -211,10 +211,11 @@ search_path_update <- function(id, global, force=FALSE) {
       )
       stop("Unable to proceed")
     }
+    to.keep.depends <- unlist(lapply(to.keep, getNamespaceImports))
     unload_namespaces(
       setdiff(
         cur.lns,
-        c(tar.lns, to.keep)
+        c(tar.lns, to.keep, to.keep.depends)
     ) )
     to.load <- setdiff(tar.lns, loadedNamespaces())
     for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
