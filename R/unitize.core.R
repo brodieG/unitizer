@@ -224,7 +224,7 @@ unitize_core <- function(
   over_print("Preloads...")
   pre.load.frame <- source_files(pre, gpar.frame)
   if(!is.environment(pre.load.frame))
-    stop("Argument `pre` could not be interpreted: ", pre.load.frame)
+    stop("Argument `pre` could not be interpreted:\n", pre.load.frame)
 
   global$state("init")  # mark post pre-load state
 
@@ -487,7 +487,7 @@ unitize_browse <- function(
         if(identical(pick, "Q")) {
           if(
             Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
-            global@unitizer.opts[["unitizer.prompt.b4.quit.time"]]
+            global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
           ) {
             word_cat("Are you sure you want to quit?")
             ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
