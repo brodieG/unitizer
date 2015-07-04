@@ -76,10 +76,6 @@ unitize_core <- function(
   ) }
   if(!isTRUE(is.valid_rep_state(reproducible.state)))
     stop("Argument `reproducible.state` is invalid; see prior errors")
-  reproducible.state <- setNames(
-    as.integer(reproducible.state[as.logical(reproducible.state)]),
-    names(reproducible.state[as.logical(reproducible.state)])
-  )
   auto.accept.valid <- character()
   if(is.character(auto.accept)) {
     if(length(auto.accept)) {
@@ -184,7 +180,8 @@ unitize_core <- function(
   # Initialize new tracking object; this will also record starting state
 
   global <- unitizerGlobal$new(
-    enable.which=names(reproducible.state), unitizer.opts=opts.untz
+    enable.which=names(reproducible.state)[as.logical(reproducible.state)],
+    unitizer.opts=opts.untz
   )
   if(is.null(par.env)) {
     global$shimFuns()
