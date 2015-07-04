@@ -123,7 +123,7 @@ options_zero <- function(
   unitizer.test.msg.lines=c(10L, 3L),      # How many lines to display when showing test errors, or truncate to if exceeds
   unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
-  unitizer.history.file=tempfile(),        # File to use for `unitizer` history
+  unitizer.history.file="",                # "" is interpreted as tempfile()
   unitizer.search.path.keep=c(             # what objects to keep on search path when initializing unitizer
     .unitizer.base.packages,
     "tools:rstudio", "package:unitizer"
@@ -201,7 +201,10 @@ validate_options <- function(opts.to.validate) {
           "and strictly positive"
         )
       if(!is.chr1(unitizer.history.file))
-        stop("Option `unitizer.history.file` must be character(1L) and not NA")
+        stop(
+          "Option `unitizer.history.file` must be character(1L) and not NA, ",
+          " or NULL"
+        )
       if(
         !is.character(unitizer.search.path.keep) ||
         any(is.na(unitizer.search.path.keep))

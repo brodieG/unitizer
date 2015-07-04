@@ -108,7 +108,7 @@ unitize_core <- function(
 
   # Make sure history is kosher
 
-  if(!is.null(history)) {
+  if(nchar(history)) {
     test.con <- try(file(history, "at"))
     if(inherits(test.con, "try-error"))
       stop(
@@ -116,7 +116,8 @@ unitize_core <- function(
         "\"at\" mode"
       )
     close(test.con)
-  }
+  } else history <- tempfile()
+
   # Make sure nothing untoward will happen if a test triggers an error
 
   check_call_stack()
