@@ -441,15 +441,17 @@ source_files <- function(files, env.par, pattern="\\.[rR]$") {
   for(i in sort(file.norm)) {
     sub.files <- if(file_test("-d", i)) {
       dir.cont <- try(
-        list.files(i, pattern=pattern, all.files=TRUE, full.names=T, no..=TRUE)
-      )
+        list.files(
+          i, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
+      ) )
       if(inherits(dir.cont, "try-error"))
         return("Unable to list file contents of directory; see previous error")
       dir.cont
     } else i
     for(j in sub.files) {
-      fail <- inherits(try(sys.source(i, env)), "try-error")
-      if(fail) return("Error sourcing file `", i, "`, see above for details")
+      fail <- inherits(try(sys.source(j, env)), "try-error")
+      if(fail)
+        return(paste0("Error sourcing file `", j, "`, see above for details"))
     }
   }
   env
