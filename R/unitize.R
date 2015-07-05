@@ -211,9 +211,11 @@ unitize_dir <- function(
   if(!file_test("-d", test.dir))
     stop("Argument `test.dir` must point to a direcctory")
 
-  test.files <- list.files(
-    path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
-  )
+  test.files <- Filter(
+    function(x) file_test("-f", x),
+    list.files(
+      path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
+  ) )
   if(!length(test.files))
     stop("No files to test in '", test.dir, "'")
 
