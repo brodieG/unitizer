@@ -255,12 +255,14 @@ unitize_core <- function(
   ) {
     active <- intersect(eval.which, which(valid)) # kind of implied in `eval.which` after first loop
 
-    # Load / create all the unitizers
+    # Load / create all the unitizers; note loading envs with references to
+    # namespace envs can cause state to change so we need to record it here
 
     unitizers[active] <- load_unitizers(
       store.ids[active], test.files[active], par.frame=util.frame,
       interactive.mode=interactive.mode, mode=mode, global=global
     )
+    global$state()
     valid <- vapply(as.list(unitizers), is, logical(1L), "unitizer")
 
     # Now evaluate, whether a unitizer is evaluated or not is a function of
