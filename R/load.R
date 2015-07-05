@@ -223,6 +223,15 @@ load_unitizers <- function(
   new("unitizerObjectList", .items=unitizers)
 }
 
+#' Need to make sure we do not unintentionally store a bunch of references to
+#' objects or namespaces we do not want:
+#'
+#' \itemize{
+#'   \item reset parent env to be base
+#'   \item remove all contents of base.env (otherwise we get functions with
+#'     environments that reference namespaces)
+#' }
+#'
 #' @keywords internal
 #' @rdname load_unitizers
 
@@ -233,6 +242,7 @@ store_unitizer <- function(unitizer) {
   on.exit(parent.env(unitizer@zero.env) <- old.par.env)
   parent.env(unitizer@zero.env) <- baseenv()
   unitizer@global <- NULL  # to avoid taking up a bunch of storage on large object
+  rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {
