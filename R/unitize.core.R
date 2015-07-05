@@ -635,8 +635,10 @@ check_call_stack <- function() {
 
 validate_pre_post <- function(what, test.dir) {
   which <- deparse(substitute(what))
-  stopifnot(which %in% c("pre", "post"))
-  stopifnot(is.chr1(test.dir) || is.null(test.dir))
+  stopifnot(
+    which %in% c("pre", "post"),
+    (is.character(test.dir) && length(test.dir) == 1L) || is.null(test.dir)
+  )
   if(
     !is.null(what) && !identical(what, FALSE) && !is.character(what)
   )
