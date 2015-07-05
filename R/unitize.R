@@ -165,7 +165,6 @@ unitize <- function(
 #' @export
 
 review <- function(store.id) {
-  warning("Need to handle global settings")
   if(!interactive()) stop("`review` only available in interactive mode")
   invisible(
     unitize_core(
