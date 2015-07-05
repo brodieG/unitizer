@@ -75,7 +75,8 @@ setClass(
 
 setClass(
   "unitizerGlobalTrackingStore", contains="unitizerGlobalTracking",
-  slots=c(dummy="environment")
+  slots=c(dummy="environment"),
+  prototype=list(dummy=new.env(parent=baseenv()))
 )
 setGeneric(
   "unitizerCompressTracking",
