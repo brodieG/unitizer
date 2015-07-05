@@ -274,7 +274,7 @@ unitizerGlobal <- setRefClass(
       if(status@search.path && to@search.path)
         search_path_update(to@search.path, .self, force=force)
       if(status@options && to@options)
-        options(tracking@options[[to@options]])
+        options_update(tracking@options[[to@options]])
       if(status@working.directory && to@working.directory)
         setwd(
           tracking@working.directory[[to@working.directory]]

@@ -114,6 +114,20 @@ options_zero <- function(
   options(base)
   return(NULL)
 }
+#' Set Options to Specified State
+#'
+#' This makes sure to unset options not present in target.
+#'
+#' @keywords internal
+
+options_update <- function(tar.opts) {
+  stopifnot(is.list(tar.opts), is.character(names(tar.opts)))
+  cur.opts <- names(options())
+  to.rem <- setdiff(cur.opts, names(tar.opts))
+  to.rem.vec <- setNames(vector("list", length(to.rem)), to.rem)
+  options(to.rem.vec)
+  options(tar.opts)
+}
 
 .unitizer.opts.default <- list(
   unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
