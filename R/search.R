@@ -211,7 +211,9 @@ search_path_update <- function(id, global, force=FALSE) {
       )
       stop("Unable to proceed")
     }
-    to.keep.depends <- unlist(lapply(to.keep, getNamespaceImports))
+    to.keep.depends <- unlist(
+      lapply(to.keep[to.keep %in% cur.lns], getNamespaceImports)
+    )
     unload_namespaces(
       setdiff(
         cur.lns,
