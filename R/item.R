@@ -113,7 +113,8 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
   dots.names <- names(dots.all)
-  if(!("call" %in% dots.names)) .Object@call <- NULL else .Object@call <- dots.all$call
+  if(!("call" %in% dots.names))
+    .Object@call <- NULL else .Object@call <- dots.all$call
   if("env" %in% dots.names) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&
@@ -127,6 +128,8 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   }
   if("comment" %in% dots.names) .Object@comment <- dots.all$comment
   if("trace" %in% dots.names) .Object@trace <- dots.all$trace
+  if("glob.indices" %in% dots.names)
+    .Object@glob.indices <- dots.all$glob.indices
   dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
