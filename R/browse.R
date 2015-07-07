@@ -57,7 +57,6 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     )
     # Need to store our `unitizer`
 
-    if(force.update) browse.res@updated <- TRUE
     if(browse.res@updated) {
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
@@ -97,15 +96,9 @@ setMethod(
     )
 
     if(!length(y)) {
-      message("No tests to review.")
+      word_msg("No tests to review.")
     } else if(!something.happened && !force.update) {
-      message("All tests passed, unitizer store unchanged.")
-    } else if(!something.happened && force.update) {
-      message(
-        "No changes to unitizer, but re-saving anyway as we are in ",
-        "\"force.update\" mode"
-      )
-      update <- TRUE
+      word_msg("All tests passed, unitizer store unchanged.")
     } else {
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
@@ -185,7 +178,7 @@ setMethod(
             "non-interactive mode"
           )
           break
-        } else if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
+        } else if(!y@human && !user.quit && y@auto.accept) {  # quitting user doesn't allow us to register humanity...
           if(y@navigating || y@re.eval)
             stop(
               "Logic Error: should only get here in `auto.accept` mode, ",
@@ -222,10 +215,17 @@ setMethod(
             Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
             R="[R]e-evaluate", RR=""
           )
-          if(update) {
+          if(!length(x@changes) && force.update)
             word_msg(
-              "You will IRREVERSIBLY modify '", getTarget(x), "' by:", sep=""
-          ) }
+              "Running in `force.update` mode so `unitizer` will be re-saved",
+              "even though there are no changes to record (see `?unitize` for",
+              "details)."
+            )
+          if(update)
+            word_msg(
+              "You will IRREVERSIBLY modify '", getTarget(x), "'",
+              if(length(x@changes)) " by", ":", sep=""
+            )
           if(length(x@changes) > 0) {
             show(x@changes)
             cat("\n")

@@ -400,25 +400,22 @@ unitize_browse <- function(
   # than once, where previous choices are over-written by the auto-accepts?
   # maybe auto-accepts only get applied first time around?
 
-  auto.accepted <- 0L
   eval.which <- integer(0L)
 
   if(length(auto.accept)) {
     over_print("Applying auto-accepts...")
     for(i in seq_along(untz.browsers)) {
+      auto.accepted <- 0L
       for(auto.val in auto.accept) {
         auto.type <- which(
           tolower(untz.browsers[[i]]@mapping@review.type) == auto.val
         )
         untz.browsers[[i]]@mapping@review.val[auto.type] <- "Y"
         untz.browsers[[i]]@mapping@reviewed[auto.type] <- TRUE
-        auto.accepted <- auto.accepted + length(auto.type)
+        auto.accepted <- auto.accepted + length(auto.type)  # not used?
       }
-      # run browser in non-interactive mode, which should just update the
-      # unitizers
-    }
-    # return with eval.which for all
-  }
+      if(auto.accepted) untz.browsers[[i]]@auto.accept <- TRUE
+  } }
   # Browse, or fail depending on interactive mode
 
   reviewed <- int.error <- logical(test.len)
@@ -426,18 +423,10 @@ unitize_browse <- function(
 
   # Re-used message
 
-  force.up.msg <- paste(
-    "Running in `force.update` mode; any examined unitizers will be",
-    "updated to this most current evaluation even if all tests pass (see",
-    "`?unitize` for details)"
-  )
-
   # - Interactive --------------------------------------------------------------
 
-  if(test.len > 1L) {
-    show(summaries)
-    if(force.update) word_msg(force.up.msg)
-  }
+  if(test.len > 1L) show(summaries)
+
   if(identical(mode, "review") || any(to.review) || force.update) {
     # We have fairly different treatment for a single test versus multi-test
     # review, so the logic gets a little convoluted (keep eye out for)
@@ -477,7 +466,6 @@ unitize_browse <- function(
             "contact maintainer."
           )
         show(summaries)
-        if(force.update) word_msg(force.up.msg)
       }
       first.time <- FALSE
       eval.which <- integer(0L)
