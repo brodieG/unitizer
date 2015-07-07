@@ -241,8 +241,6 @@ store_unitizer <- function(unitizer) {
   old.par.env <- parent.env(unitizer@zero.env)
   on.exit(parent.env(unitizer@zero.env) <- old.par.env)
   parent.env(unitizer@zero.env) <- baseenv()
-  unitizer@state.ref <- unitizer@state.new
-  unitizer@state.new <- new("unitizerGlobalTrackingStore")  # should really be NULL, but would need to change `upgrade` to allow changing slot type
   unitizer@global <- NULL  # to avoid taking up a bunch of storage on large object
   rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
   success <- try(set_unitizer(unitizer@id, unitizer))

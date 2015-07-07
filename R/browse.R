@@ -313,7 +313,7 @@ setMethod(
 
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
-      base.env=x@base.env, test.file.loc=x@test.file.loc
+      base.env=x@base.env, test.file.loc=x@test.file.loc, state.ref=x@state.new
     )
     unitizer <- unitizer + items.ref
 

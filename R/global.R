@@ -89,6 +89,7 @@ setMethod(
     res@search.path <- lapply(x@search.path, names)
     res@options <- lapply(
       x@options,
+      lapply,
       function(y) {
         if(
           !is.null(environment(x)) || is.environment(x) ||
