@@ -533,6 +533,47 @@ setMethod("reviewNext", c("unitizerBrowse"),
           call("show", err.obj),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
+        # Check to see if state is different between new and reference
+
+        i.n.ind <- vapply(
+          slotNames(item.new@glob.indices), slot, integer(1L),
+          object=item.new@glob.indices
+        )
+        i.r.ind <- vapply(
+          slotNames(item.ref@glob.indices), slot, integer(1L),
+          object=item.ref@glob.indices
+        )
+        to.check <- intersect(
+          which(as.logical(i.n.ind)), which(as.logical(i.r.ind))
+        )
+        to.check.names <- slotNames(item.new@glob.indices)[to.check]
+        dummy.new <- unitizer@state.new@.dummy
+        dummy.ref <- unitizer@state.ref@.dummy
+
+        state.disc <- integer(length(to.check))  # track discrepancies
+
+        for(i in seq_along(to.check)) {
+          state.name <- to.check.names[[i]]
+          state.new <-
+            slot(unitizer@state.new, state.name)[[i.n.ind[[to.check[[i]]]]]]
+          state.ref <-
+            slot(unitizer@state.ref, state.name)[[i.r.ind[[to.check[[i]]]]]]
+          if(
+            identical(state.new, state.ref) ||
+            identical(state.new, dummy.new) && identical(state.ref, dummy.ref)
+          ) {
+            next
+          } else if (
+            identical(state.new, dummy.new) || identical(state.ref, dummy.ref)
+          ) {
+            state.disc[[i]] <- 1L
+          } else state.disc[[i]] <- 2L
+        }
+        if(any(as.logical(state.disc))) {
+          word_msg(
+            "Additionally, there are state differences between new and",
+            "reference tests."
+        ) }
     } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
