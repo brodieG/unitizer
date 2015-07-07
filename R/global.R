@@ -75,8 +75,8 @@ setClass(
 
 setClass(
   "unitizerGlobalTrackingStore", contains="unitizerGlobalTracking",
-  slots=c(dummy="environment"),
-  prototype=list(dummy=new.env(parent=baseenv()))
+  slots=c(.dummy="environment"),
+  prototype=list(.dummy=new.env(parent=baseenv()))
 )
 setGeneric(
   "unitizerCompressTracking",
@@ -94,13 +94,13 @@ setMethod(
           !is.null(environment(x)) || is.environment(x) ||
           object.size(y) > 1000
         )
-          res@dummy else y
+          res@.dummy else y
       }
     )
     res@working.directory <- x@working.directory  # not sure whether this is something that we want to be comparing
     res@random.seed <- lapply(  # this could be big!!!
       x@random.seed,
-      function(y) if(length(y) > 10L) res@dummy else y
+      function(y) if(length(y) > 10L) res@.dummy else y
     )
   res
 } )

@@ -113,6 +113,7 @@ setClass(
     sections.ref="list",
     section.ref.map="integer",
 
+    state.new="unitizerGlobalTrackingStore",  # "compressed" versions of the tracking data in @global
     state.ref="unitizerGlobalTrackingStore",
 
     changes="unitizerChanges"              # Summary of user changes

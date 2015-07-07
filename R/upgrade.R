@@ -106,6 +106,10 @@ upgrade_internal <- function(object) {
     object <- addSlot(object, "state.ref", new("unitizerGlobalTrackingStore"))
     object <- addSlot(object, "global", NULL)
   }
+  if(ver < "1.0.1") {
+    object@state.ref <- renameSlot(object@state.ref, "dummy", ".dummy")
+    object <- addSlot(object, "state.new", new("unitizerGlobalTrackingStore"))
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
@@ -117,7 +121,6 @@ upgrade_internal <- function(object) {
 
   object
 }
-
 #' Helper Function To Add A Slot to An Out-of-date S4 Object
 #'
 #' @keywords internal
@@ -141,4 +144,24 @@ addSlot <- function(object, slot.name, slot.value) {
   }
   new.object
 }
+#' Rename a slot
+#'
+#' Basically assumes old name exists in object, but not in new class definition
+#'
+#' @keywords internal
 
+renameSlot <- function(object, old.name, new.name) {
+  stopifnot( isS4(object), is.chr1(old.name), is.chr1(new.name))
+  slots <- slotNames(object)
+  stopifnot(!old.name %in% slots, new.name %in% slots)
+  old.slot <- try(slot(object, old.name))
+  if(inherits(old.slot, "try-error"))
+    stop("Old slot `", old.name, "` doesn't exist in object")
+
+  slot.vals <-
+    sapply(slots[slots != new.name], slot, object=object, simplify=FALSE)
+  args.final <- c(
+    class(object), slot.vals, setNames(list(slot(object, old.name)), new.name)
+  )
+  do.call("new", args.final)
+}
