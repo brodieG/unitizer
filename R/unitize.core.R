@@ -385,7 +385,9 @@ unitize_browse <- function(
   # Determine implied review mode (all tests passed in a particular unitizer,
   # but user may still pick it to review)
 
-  review.mode <- ifelse(!to.review & test.len > 1L, "review", mode)
+  review.mode <- ifelse(
+    !to.review & !force.update & test.len > 1L, "review", mode
+  )
   untz.browsers <- mapply(
     browsePrep, as.list(unitizers), review.mode,
     MoreArgs=list(hist.con=hist.obj$con, interactive=interactive.mode),
@@ -422,10 +424,21 @@ unitize_browse <- function(
   reviewed <- int.error <- logical(test.len)
   over_print("")
 
+  # Re-used message
+
+  force.up.msg <- paste(
+    "Running in `force.update` mode; any examined unitizers will be",
+    "updated to this most current evaluation even if all tests pass (see",
+    "`?unitize` for details)"
+  )
+
   # - Interactive --------------------------------------------------------------
 
-  if(test.len > 1L) show(summaries)
-  if(identical(mode, "review") || any(to.review)) {
+  if(test.len > 1L) {
+    show(summaries)
+    if(force.update) word_msg(force.up.msg)
+  }
+  if(identical(mode, "review") || any(to.review) || force.update) {
     # We have fairly different treatment for a single test versus multi-test
     # review, so the logic gets a little convoluted (keep eye out for)
     # `test.len > 1L`, but this obviates the need for multiple different calls
@@ -464,6 +477,7 @@ unitize_browse <- function(
             "contact maintainer."
           )
         show(summaries)
+        if(force.update) word_msg(force.up.msg)
       }
       first.time <- FALSE
       eval.which <- integer(0L)
@@ -588,11 +602,6 @@ unitize_browse <- function(
     for(i in eval.which) unitizers[[i]]@eval <- TRUE
   } else for(i in seq_along(unitizers))  unitizers[[i]]@eval <- FALSE  # this one may not be necessary
 
-  # Force update stuff if needed; need to know what has already been stored
-
-  if(any(force.update & !to.review & !summaries@updated)) {
-    stop("INTERNAL: Need to implement force for non-review tests")
-  }
   unitizers
 }
 #' Check Not Running in Undesirable Environments

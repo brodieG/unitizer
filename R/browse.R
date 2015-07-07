@@ -45,11 +45,11 @@ setGeneric(
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
 
-    if(identical(y@mode, "review") && !isTRUE(y@interactive))
+    if(identical(y@mode, "review") && (!isTRUE(y@interactive) || force.update))
       stop(
         "Logic Error: attempt to enter unitizer in review mode in ",
-        "non-interactive state, which should not be possible, contact ",
-        "maintainer."
+        "non-interactive state or in force.update mode,  which should not be ",
+        "possible, contact maintainer."
       )
     browse.res <- withRestarts(
       browseUnitizerInternal(x, y, force.update=force.update),
@@ -57,6 +57,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     )
     # Need to store our `unitizer`
 
+    if(force.update) browse.res@updated <- TRUE
     if(browse.res@updated) {
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
