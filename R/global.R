@@ -16,11 +16,15 @@ NULL
 #' do not want to allow.
 #'
 #' \code{unitizerGlobalTrackingStore} is used to keep "compressed" versions of
-#' \code{unitizerGlobal}.  The compressed versions obviously lose some
+#' \code{unitizerGlobal$tracking}.  The compressed versions obviously lose some
 #' information.  In particular, environments or things that have environments
 #' as parents, or large objects, are not stored and instead a reference to
-#' a dummy environment is stored.  This environment is used to unambiguously
-#' indicate a non-stored state component.
+#' a \code{unitizerDummy} object is stored.  This object unambiguously
+#' identifies a non-stored object since no user or system code should
+#' normally creating a \code{unitizerDummy} object.
+#'
+#' \code{unitizerGlobalState} tracks a single state which is just one value from
+#' each of the slots of \code{unitizerGlobalTrackingStore}
 #'
 #' When comparing state between new and reference tests, only explicitly stored
 #' items are compared (though any extra or missing items may be brought up as
@@ -73,9 +77,23 @@ setClass(
 #' @rdname global_structures
 #' @keywords internal
 
+setClass("unitizerDummy", slots=c(.="NULL"))
+
+#' @rdname global_structures
+#' @keywords internal
+
+setClass("unitizerGlobalTrackingStore", contains="unitizerGlobalTracking")
+#' @rdname global_structures
+#' @keywords internal
+
 setClass(
-  "unitizerGlobalTrackingStore", contains="unitizerGlobalTracking",
-  slots=c(.dummy="environment"),
+  "unitizerGlobalState", contains="unitizerGlobalBase",
+  slots=c(
+    search.path="characterOrNULL",
+    options="listOrNULL",
+    working.directory="characterOrNULL",
+    random.seed="integerOrNULL"
+  ),
   prototype=list(.dummy=new.env(parent=baseenv()))
 )
 setGeneric(
@@ -95,13 +113,13 @@ setMethod(
           !is.null(environment(x)) || is.environment(x) ||
           object.size(y) > 1000
         )
-          res@.dummy else y
+          new("unitizerDummy") else y
       }
     )
     res@working.directory <- x@working.directory  # not sure whether this is something that we want to be comparing
     res@random.seed <- lapply(  # this could be big!!!
       x@random.seed,
-      function(y) if(length(y) > 10L) res@.dummy else y
+      function(y) if(length(y) > 10L) new("unitizerDummy") else y
     )
   res
 } )
