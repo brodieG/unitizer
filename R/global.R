@@ -105,17 +105,23 @@ setMethod(
   function(x, ...) {
     res <- new("unitizerGlobalTrackingStore")
     res@search.path <- lapply(x@search.path, names)
-    res@options <- lapply(
-      x@options,
-      lapply,
-      function(y) {
-        if(
-          !is.null(environment(x)) || is.environment(x) ||
-          object.size(y) > 1000
-        )
-          new("unitizerDummy") else y
-      }
+    opts.ignore <- names(
+      unlist(x$unitizer.opts[c("unitizer.opts.base", "unitizer.opts.asis")])
     )
+    # Don't store stuff with environments or stuff that is too big
+    # (size cut-off should be an option?), or stuff that is part of the base or
+    # as.is options
+
+    res@options <- lapply(x@options,
+      function(i) {
+        lapply(
+          setdiff(names(i), opts.ignore),
+          function(j)
+            if(
+              !is.null(environment(i[[j]])) || is.environment(i[[j]]) ||
+              object.size(i[[j]]) > 1000
+            ) new("unitizerDummy") else y
+    ) } )
     res@working.directory <- x@working.directory  # not sure whether this is something that we want to be comparing
     res@random.seed <- lapply(  # this could be big!!!
       x@random.seed,
