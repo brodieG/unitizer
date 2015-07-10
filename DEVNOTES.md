@@ -286,6 +286,73 @@ wrong bad things would happen.  What if packages introduce options that are
 system specific?  Then they should get loaded on package attach, and will be
 different
 
+### Options And Namespaces
+
+There is an additional complication with options which is how to handle the
+default options that get set by the `.onLoad` hooks.  In order for everything
+to work well, we need to fully unload a namespace so that next time
+`library` is called with the same package, the `.onLoad` hooks are kicked off.
+Unfortunately, some packages (cough, data.table) cannot be unloaded (and more
+generally R docs warn full unloads are not really well supported).
+
+We can't just run `.onLoad` as in a normal `.onLoad` the package environment
+is unlocked and `.onLoad` hook scripts expect to be able to modify bindings in
+the namespace.
+
+So, what is the most reasonable compromise for this?  If some namespaces are
+not unloaded, then we have to make sure the options set by those namespaces are
+not undone at any point.  So suppose we start with a blank slate, then:
+
+* `library(data.table)`
+* do a bunch of stuff
+* go to reset state
+
+We can prevent the unloading of the `data.table` namespace easily enough, but
+we cannot undo any options without risking undoing `data.table` options.  In
+fact given that the `data.table` namespace may have been loaded even before
+we kick off `unitizer`, we can't even see what options were added by
+`data.table`.
+
+It seems that if one of the no-unload namespaces is loaded at any time then we
+must set the options tracking to 0 if.  Actually, there are three types of
+situations:
+
+1. no-unload loaded before we even run unitizer
+2. loaded in pre-loads
+3. loaded only in pre-loads (i.e. not loaded before hand at all)
+4. loaded in a unitizer file
+
+For 1. and 2., we can run in modes 0 and 1.  For 3. we can run in 0:2, but since
+we don't unload the namespace that only works the first time since the second
+time we run the namespace will already be loaded...  Not super useful.  For
+4. we can only run in mode 0.
+
+Hmm, even for 2. running in mode 1 we might have a problem since we would still
+be trying to undo the pre-loads, which would undo the options, but not the
+no-unload namespaces and dump us back to the normal R prompt in that state.
+
+Let's say we run into one of these namespaces in an incompatible mode; what do
+we do?
+
+1. Throw a warning and change modes to compatible mode?
+2. Throw an error indicating what mode would be compatible?
+
+Another possible work-around is to force a namespace load even before the
+initial state recording and then run in mode 1 so that we don't undo that
+namespace load.
+
+Gah... and WTF do we do about all the potentially unloadable namespaces that
+we can no longer unload because an unloadable namespace imports them?  This
+greatly complicates the problem.
+
+More and more it seems like we need to narrowly define the acceptable modes,
+which seem to be 0, or 1 iff the namespace was already loaded by the time we
+hit pre-loads.
+
+So do we have an additional "unitizer.load.namespace.if.not.loaded" list?  And
+does that make "unitizer.keep.namespace" redundant or do we still need both?
+Probably still need both.  So need to check that namespace was already
+pre-loaded against keep.namespace list.
 
 
 ## Interface
