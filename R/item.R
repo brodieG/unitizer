@@ -71,7 +71,8 @@ setClass(
     data="unitizerItemData",
     section.id="integer",
     section.name="character",
-    glob.indices="unitizerGlobalIndices"
+    glob.indices="unitizerGlobalIndices",
+    state="unitizerGlobalState"
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L,
