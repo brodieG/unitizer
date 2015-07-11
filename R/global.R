@@ -79,6 +79,10 @@ setClass(
 
 setClass("unitizerDummy", slots=c(.="NULL"))
 
+setClassUnion("listOrNULLOrDummy", c("list", "NULL", "unitizerDummy"))
+setClassUnion("characterOrNULLOrDummy", c("character", "NULL", "unitizerDummy"))
+setClassUnion("integerOrNULLOrDummy", c("integer", "NULL", "unitizerDummy"))
+
 #' @rdname global_structures
 #' @keywords internal
 
@@ -89,13 +93,132 @@ setClass("unitizerGlobalTrackingStore", contains="unitizerGlobalTracking")
 setClass(
   "unitizerGlobalState", contains="unitizerGlobalBase",
   slots=c(
-    search.path="characterOrNULL",
-    options="listOrNULL",
-    working.directory="characterOrNULL",
-    random.seed="integerOrNULL"
+    search.path="characterOrNULLOrDummy",
+    options="listOrNULLOrDummy",
+    working.directory="characterOrNULLOrDummy",
+    random.seed="integerOrNULLOrDummy"
   ),
   prototype=list(.dummy=new.env(parent=baseenv()))
 )
+#' Compare State Between Reference and New Tests
+#'
+#' Designed to compare the state snapshots as stored and recorded in a
+#' \code{unitizer}.  These approximate various aspects of global state.
+#' The approximation is because state objects that are too large are not kept,
+#' so we are not always certain whether some parts of state changed or not.
+#'
+#' We report several levels of differences between state values:
+#' \itemize{
+#'    \item affirmative difference, when we know with certainty the state values
+#'      are different
+#'    \item probable difference, when we have one known value and one unknown
+#'      value, typically because one was too large to store
+#'    \item possible difference, when both values are unknown
+#' }
+#' Additionally, it is possible that the state tracking settings change between
+#' \code{unitizer} runs.  If that happens, then:
+#' \itemize{
+#'   \item if state type is not tracked in new (current), then we assume state
+#'     is unchanged
+#'   \item if state is tracked in new, but was not in reference (target), then
+#'     we report a probable difference
+#' }
+#' @export
+
+setMethod(
+  "all.equal",
+  c("unitizerGlobalState", "unitizerGlobalState"),
+  function(target, current, ...) {
+    valid.diff <- 0L:3L
+    err.msgs <- paste(c("possible", "likely", "definite"), "differences")
+    deltas <- setNames(
+      vector("list", length(.unitizer.global.settings.names)),
+      .unitizer.global.settings.names
+    )
+    for(i in .unitizer.global.settings.names) {
+      tar <- slot(target, i)
+      cur <- slot(current, i)
+      msg.header <- sprintf("`%s` state mismatch:", i)
+
+      deltas[[i]] <- if(is.null(tar) && !is.null(cur)) {
+        paste(msg.header, err.msgs[[2L]])
+      } else if(is.null(cur)) {
+        NULL
+      } else {
+        if(identical(i, "options")) {
+          # Compare common options with state_item_compare, all others are
+          # assumed to be different; note that system and asis options should
+          # not be part of these lists
+
+          common.opts <- intersect(names(tar), names(cur))
+          deltas.opts <- unlist(
+            Map(
+              state_item_compare, tar[common.opts], cur[common.opts]
+          ) )
+          mismatch.opts <- c(
+            setdiff(names(tar), names(cur)), setdiff(names(cur), names(tar))
+          )
+          deltas.opts <- c(
+            deltas.opts, setNames(rep(3L, length(mismatch.opts)), mismatch.opts)
+          )
+          if(any(as.logical(deltas.opts))) {
+            deltas.split <- split(names(deltas.opts), deltas.opts)
+            deltas.by.type <- unlist(  # unlist drops any NULL values so we get rid of "0"
+              lapply(
+                sort(names(deltas.split), decreasing=TRUE),
+                function(x) {
+                  if(identical(x, "0")) return(NULL)
+                  paste0(
+                    err.msgs[[as.integer(x)]], " for option",
+                    if(length(deltas.split[[x]]) > 1L) "s", " ",
+                    paste0(sprintf("\"%s\"", deltas.split[[x]]), collapse=", ")
+            ) } ) )
+            # Bulleted list of more than one type of option delta
+
+            if(length(deltas.by.type) > 1L) {
+              c(msg.header, as.character(UL(deltas.by.type)))
+            } else paste(msg.header, deltas.by.type)
+          }
+        } else {
+          # States other than options that don't need to be compared element
+          # for element
+
+          state.diff <- state_item_compare(tar, cur)
+          if(state.diff) paste(msg.header, err.msgs[[state.diff]])
+    } } }
+    # Finalize
+
+    if(length(deltas))
+      vapply(deltas, paste0, character(1L), collapse="\n") else TRUE
+} )
+# Helper function for all.equal
+
+state_item_compare <- function(tar, cur) {
+  tar.dum <- is(tar, "unitizerDummy")
+  cur.dum <- is(cur, "unitizerDummy")
+  if(tar.dum && cur.dum) 1L else if (tar.dum || cur.dum) 2L else {
+    if(identical(tar, cur)) 0L else 3L
+} }
+# Pull out a single state from a tracking object
+
+setGeneric(
+  "unitizerGlobalStateExtract",
+  function(x, y, ...) standardGeneric("unitizerGlobalStateExtract")
+)
+setMethod(
+  "unitizerGlobalStateExtract",
+  c("unitizerGlobalTrackingStore", "unitizerGlobalIndices"),
+  function(x, y, ...) {
+    vals <- Map(
+      function(x, y) unlist(x[y]),
+      lapply(.unitizer.global.settings.names, slot, object=x),
+      lapply(.unitizer.global.settings.names, slot, object=y)
+    )
+    do.call("new", c("unitizerGlobalState", vals))
+} )
+
+# Reduce size of a tracking object for storage purposes
+
 setGeneric(
   "unitizerCompressTracking",
   function(x, ...) standardGeneric("unitizerCompressTracking")
