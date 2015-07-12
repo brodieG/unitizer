@@ -321,11 +321,14 @@ setMethod("$", c("unitizerItem"),
     what <- substitute(name)
     what <- if(is.symbol(what)) as.character(what) else name
     data.slots <- slotNames(x@data)
+    extras <- c("call", "state")
+    valid <- c(extras, data.slots)
+    if(what %in% c("call", "state")) return(slot(x, what))
     if(identical(what, "call")) return(x@call)
-    else if(length(what) != 1L || ! what %in% data.slots) {
+    if(length(what) != 1L || !what %in% data.slots) {
       stop(
         "Argument `name` must be in ",
-        paste0(deparse(c("call", data.slots), width.cutoff=500L), collapse=", ")
+        paste0(deparse(valid, width.cutoff=500L), collapse=", ")
     ) }
     slot(x@data, what)
 } )

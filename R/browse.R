@@ -449,9 +449,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
               collapse=", "
             ),
             ")?\n"
-        ) }
-      )
-    }
+    ) } ) }
     # Retrieve actual tests objects
 
     item.new <- if(!is.null(curr.sub.sec.obj@items.new))
@@ -538,16 +536,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
         # nulling them out
 
         item.new@state <- unitizerGlobalStateExtract(
-          state.new, item.new@glob.indices
+          unitizer@state.new, item.new@glob.indices
         )
         item.ref@state <- unitizerGlobalStateExtract(
-          state.ref, item.ref@glob.indices
+          unitizer@state.ref, item.ref@glob.indices
         )
         state.comp <- all.equal(item.ref@state, item.new@state)
         if(!isTRUE(state.comp))
           word_msg(
             "Additionally, there are state differences between new and",
-            "reference tests."
+            "reference tests (check with `all.equal(.REF$state, .NEW$state)`)."
           )
     } }
     # Need to add ignored tests as default action is N, though note that ignored

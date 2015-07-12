@@ -211,12 +211,11 @@ setMethod(
   function(x, y, ...) {
     vals <- Map(
       function(x, y) unlist(x[y]),
-      lapply(.unitizer.global.settings.names, slot, object=x),
+      sapply(.unitizer.global.settings.names, slot, object=x, simplify=FALSE),
       lapply(.unitizer.global.settings.names, slot, object=y)
     )
     do.call("new", c("unitizerGlobalState", vals))
 } )
-
 # Reduce size of a tracking object for storage purposes
 
 setGeneric(
@@ -225,25 +224,25 @@ setGeneric(
 )
 setMethod(
   "unitizerCompressTracking", "unitizerGlobalTracking",
-  function(x, ...) {
+  function(x, opts.ignore, ...) {
+    stopifnot(is.character(opts.ignore))
     res <- new("unitizerGlobalTrackingStore")
     res@search.path <- lapply(x@search.path, names)
-    opts.ignore <- names(
-      unlist(x$unitizer.opts[c("unitizer.opts.base", "unitizer.opts.asis")])
-    )
+
     # Don't store stuff with environments or stuff that is too big
     # (size cut-off should be an option?), or stuff that is part of the base or
     # as.is options
 
-    res@options <- lapply(x@options,
-      function(i) {
-        lapply(
+    res@options <- Map(
+      x@options,
+      f=function(i) {
+        Map(
           setdiff(names(i), opts.ignore),
-          function(j)
+          f=function(j)
             if(
               !is.null(environment(i[[j]])) || is.environment(i[[j]]) ||
               object.size(i[[j]]) > 1000
-            ) new("unitizerDummy") else y
+            ) new("unitizerDummy") else i[[j]]
     ) } )
     res@working.directory <- x@working.directory  # not sure whether this is something that we want to be comparing
     res@random.seed <- lapply(  # this could be big!!!

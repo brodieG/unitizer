@@ -350,7 +350,10 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
       unitizers[[i]] <- unitizer
     }
     unitizers[[i]]@eval <- FALSE
-    unitizers[[i]]@state.new <- unitizerCompressTracking(global$tracking)
+    unitizers[[i]]@state.new <- unitizerCompressTracking(
+      global$tracking,
+      names(global$unitizer.opts[c("unitizer.opts.base", "unitizer.opts.asis")])
+    )
   }
   unitizers
 }
