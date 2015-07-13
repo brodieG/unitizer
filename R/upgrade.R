@@ -107,7 +107,7 @@ upgrade_internal <- function(object) {
     object <- addSlot(object, "global", NULL)
   }
   if(ver < "1.0.1") {
-    object@state.ref <- renameSlot(object@state.ref, "dummy", ".dummy")
+    object@state.ref <- removeSlots(object@state.ref, c("dummy", ".dummy"))
     object <- addSlot(object, "state.new", new("unitizerGlobalTrackingStore"))
   }
   # - Keep at End---------------------------------------------------------------
@@ -164,4 +164,18 @@ renameSlot <- function(object, old.name, new.name) {
     class(object), slot.vals, setNames(list(slot(object, old.name)), new.name)
   )
   do.call("new", args.final)
+}
+#' Removes Slots
+#'
+#' Ignores slots that are already missing
+#'
+#' @keywords internal
+
+removeSlots <- function(object, slots.to.remove) {
+  stopifnot(isS4(object))
+  slots <- slotNames(object)
+  slot.vals <- sapply(
+    slots[!slots %in% slots.to.remove], slot, object=object, simplify=FALSE
+  )
+  do.call("new", c(class(object), slot.vals))
 }
