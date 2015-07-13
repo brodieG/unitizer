@@ -128,9 +128,10 @@ setClass(
 setMethod(
   "all.equal",
   c("unitizerGlobalState", "unitizerGlobalState"),
-  function(target, current, ...) {
+  function(target, current, verbose=TRUE, strict=FALSE, ...) {
+    stopifnot(is.TF(verbose), is.TF(strict))
     valid.diff <- 0L:3L
-    err.msgs <- paste(c("possible", "likely", "definite"), "differences")
+    err.msgs <- paste0(c("possible ", "likely ", "known "), "differences")
     deltas <- setNames(
       vector("list", length(.unitizer.global.settings.names)),
       .unitizer.global.settings.names
@@ -141,7 +142,7 @@ setMethod(
       msg.header <- sprintf("`%s` state mismatch:", i)
 
       deltas[[i]] <- if(is.null(tar) && !is.null(cur)) {
-        paste(msg.header, err.msgs[[2L]])
+        paste(msg.header, "reference state not recorded")
       } else if(is.null(cur)) {
         NULL
       } else {
@@ -161,13 +162,13 @@ setMethod(
           deltas.opts <- c(
             deltas.opts, setNames(rep(3L, length(mismatch.opts)), mismatch.opts)
           )
-          if(any(as.logical(deltas.opts))) {
+          if(any(deltas.opts > !strict)) {
             deltas.split <- split(names(deltas.opts), deltas.opts)
             deltas.by.type <- unlist(  # unlist drops any NULL values so we get rid of "0"
               lapply(
                 sort(names(deltas.split), decreasing=TRUE),
                 function(x) {
-                  if(identical(x, "0")) return(NULL)
+                  if(x %in% c("0", if(!strict) "1")) return(NULL)
                   paste0(
                     err.msgs[[as.integer(x)]], " for option",
                     if(length(deltas.split[[x]]) > 1L) "s", " ",
@@ -184,12 +185,26 @@ setMethod(
           # for element
 
           state.diff <- state_item_compare(tar, cur)
-          if(state.diff) paste(msg.header, err.msgs[[state.diff]])
+          if(state.diff)
+            paste(
+              msg.header,
+              if(identical(state.diff, 3L)) {
+                aq <- all.equal(tar, cur)
+                if(isTRUE(aq) || !is.character(aq)) {
+                  err.msgs[[state.diff]]
+                } else {
+                  if(length(aq) > 1L) paste0(aq[[1L]], "...") else aq
+                }
+              } else err.msgs[[state.diff]]
+            )
     } } }
     # Finalize
 
-    if(length(deltas))
-      vapply(deltas, paste0, character(1L), collapse="\n") else TRUE
+    if(length(deltas)) {
+      res <- vapply(deltas, paste0, character(1L), collapse="\n")
+      if(verbose) word_cat(res, sep="\n")
+      invisible(res)
+    } else TRUE
 } )
 # Helper function for all.equal
 

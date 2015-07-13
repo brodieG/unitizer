@@ -541,7 +541,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         item.ref@state <- unitizerGlobalStateExtract(
           unitizer@state.ref, item.ref@glob.indices
         )
-        state.comp <- all.equal(item.ref@state, item.new@state)
+        state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
         if(!isTRUE(state.comp))
           word_msg(
             "Additionally, there are state differences between new and",
