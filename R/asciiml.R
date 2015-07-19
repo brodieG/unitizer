@@ -125,19 +125,6 @@ OL <- function(x, style="numbers", offset=0L) {
   stopifnot(is.chr1(style) && style %in% c("numbers", "letters", "LETTERS"))
   bullet_obj(x, style=style, type="ordered", offset=offset)
 }
-bullet_obj <- function(x, type, style, offset) {
-  if(!is.int.1L(offset) || offset < 0L)
-    stop("Argument `offset` must be integer(1L) and GTE 0")
-  stopifnot(is.chr1(type), type %in% c("ordered", "unordered"))
-  if(is.character(x)) x <- as.list(x)
-  x <- validate_bullet_list(x, offset)
-  bulleter <- if(identical(type, "ordered"))
-    bullet_funs[[type]] else
-    function(x) rep(style, x)
-  structure(
-    x, class=c(type, "bullet"), style=style, offset=offset, bulleter=bulleter
-  )
-}
 make_let_combn_fun <- function(dat) {
   function(x) {
     let.count <- ceiling(log(x, base=length(dat)))
@@ -146,13 +133,29 @@ make_let_combn_fun <- function(dat) {
         list(dat),
         replicate(let.count - 1L, c(" ", dat), simplify=FALSE)
     ) )
-    let.combn <- sort(do.call(paste0, do.call(expand.grid, let.list)))
+    paste0(head(sort(do.call(paste0, do.call(expand.grid, let.list))), x), ".")
 } }
-bullet_funs <- list(
-  numeric=function(x) as.character(seq.int(x)),
+.bullet.funs <- list(
+  numbers=function(x) paste0(as.character(seq.int(x)), "."),
   letters=make_let_combn_fun(letters),
   LETTERS=make_let_combn_fun(LETTERS)
 )
+bullet_obj <- function(x, type, style, offset) {
+  if(!is.int.1L(offset) || offset < 0L)
+    stop("Argument `offset` must be integer(1L) and GTE 0")
+  stopifnot(is.chr1(type), type %in% c("ordered", "unordered"))
+  if(is.character(x)) x <- as.list(x)
+  x <- validate_bullet_list(x, offset)  # also updates offset of all internal ones
+  bulleter <- if(identical(type, "ordered")) {
+    f <- .bullet.funs[[style]]
+    if(!is.function(f))
+      stop("Logic Error; could not find ordered function; contact maintainer")
+    f
+  } else function(x) rep(style, x)
+  structure(
+    x, class=c(type, "bullet"), style=style, offset=offset, bulleter=bulleter
+  )
+}
 validate_bullet_list <- function(x, offset) {
   if(!is.list(x))
     stop("Argument `x` must be a list")
@@ -202,18 +205,19 @@ as.character.bullet <- function(x, width=0L, ...) {
 bullet_with_offset <- function(x, width) {
   pad <- paste0(rep(" ", attr(x, "offset")), collapse="")
   char.vals <- vapply(x, is.character, logical(1L))
-  char.pad <- paste0(pad, format(attr(x, "bulleter")(sum(char.vals))))
+  char.pad <- paste0(pad, format(attr(x, "bulleter")(sum(char.vals))), " ")
   char.pad.size <- nchar(char.pad[[1L]])
   text.width <- max(width - char.pad.size, 8L)
   char.wrapped <- word_wrap(
     unlist(x[which(char.vals)]), width=text.width, unlist=FALSE
   )
   pad.extra <- paste0(rep(" ", char.pad.size), collapse="")
-  char.padded <- lapply(
+  char.padded <- Map(
     char.wrapped,
-    function(x)
+    char.pad,
+    f=function(x, y)
       if(!length(x)) x else
-        paste0(c(char.pad, rep(pad.extra, length(x) - 1L)), x)
+        paste0(c(y, rep(pad.extra, length(x) - 1L)), x)
   )
   final <- vector("list", length(x))
   final[which(char.vals)] <- char.padded
