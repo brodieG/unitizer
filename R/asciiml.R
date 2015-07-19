@@ -2,6 +2,7 @@
 #' comprehensive stand alone library for ASCII structured objects (banners,
 #' tables, etc.).
 #'
+#' @name asciiml
 #' @include list.R
 
 NULL
