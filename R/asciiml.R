@@ -1,3 +1,7 @@
+#' Functions defined here should ultimately be extended into a more
+#' comprehensive stand alone library for ASCII structured objects (banners,
+#' tables, etc.).
+#'
 #' @include list.R
 
 NULL
@@ -112,6 +116,9 @@ H3 <- function(x) header(x, 3L)
 #' Similar to UL and OL objects from HTML.  These can be nested.  \code{OL}
 #' supports \code{c("numbers", "letters", "LETTERS")} as bullet types.
 #'
+#' Ultimately should implement this as S4 classes as assembly of lists is
+#' annoying since the UL object is itself a list.
+#'
 #' @keywords internal
 #' @aliases OL
 #' @param x character vector of items to make a list out of
@@ -145,7 +152,12 @@ bullet_obj <- function(x, type, style, offset) {
     stop("Argument `offset` must be integer(1L) and GTE 0")
   stopifnot(is.chr1(type), type %in% c("ordered", "unordered"))
   if(is.character(x)) x <- as.list(x)
-  x <- validate_bullet_list(x, offset)  # also updates offset of all internal ones
+  if(!is.list(x))
+    stop("Argument `x` must be a list")
+  for(i in seq_along(x))
+    if(!validate_bullet(x[[i]]))
+      stop("Argument `x` contains invalid bullet item at position ", i)
+
   bulleter <- if(identical(type, "ordered")) {
     f <- .bullet.funs[[style]]
     if(!is.function(f))
@@ -155,17 +167,6 @@ bullet_obj <- function(x, type, style, offset) {
   structure(
     x, class=c(type, "bullet"), style=style, offset=offset, bulleter=bulleter
   )
-}
-validate_bullet_list <- function(x, offset) {
-  if(!is.list(x))
-    stop("Argument `x` must be a list")
-  for(i in seq_along(x)) {
-    if(!validate_bullet(x[[i]]))
-      stop("Argument `x` contains invalid bullet item at position ", i)
-    if(inherits(x[[i]], "bullet"))
-      attr(x[[i]], "offset") <- attr(x[[i]], "offset") + offset + 2L
-  }
-  x
 }
 validate_bullet <- function(x)
   (is.character(x) && length(x) == 1L) || inherits(x, "bullet")
@@ -202,8 +203,11 @@ as.character.bullet <- function(x, width=0L, ...) {
   if(width == 0) width <- getOption("width")
   bullet_with_offset(x, width)
 }
-bullet_with_offset <- function(x, width) {
-  pad <- paste0(rep(" ", attr(x, "offset")), collapse="")
+bullet_with_offset <- function(x, width, pad=0L) {
+  stopifnot(is.int.1L(pad), pad >= 0L)
+  stopifnot(is.int.1L(width), width >= 0L)
+  pad.num <- pad + attr(x, "offset")
+  pad <- paste0(rep(" ", pad.num), collapse="")
   char.vals <- vapply(x, is.character, logical(1L))
   char.pad <- paste0(pad, format(attr(x, "bulleter")(sum(char.vals))), " ")
   char.pad.size <- nchar(char.pad[[1L]])
@@ -221,6 +225,8 @@ bullet_with_offset <- function(x, width) {
   )
   final <- vector("list", length(x))
   final[which(char.vals)] <- char.padded
-  final[which(!char.vals)] <- lapply(x[which(!char.vals)], bullet_with_offset)
+  final[which(!char.vals)] <- lapply(
+    x[which(!char.vals)], bullet_with_offset, width=width, pad=pad.num + 2L
+  )
   unlist(final)
 }
