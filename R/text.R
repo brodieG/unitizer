@@ -38,8 +38,7 @@ screen_out <- function(
 diff_obj_out <- function(
   obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
   obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
-  max.len=NULL,
-  file=stdout(), frame=parent.frame()
+  max.len=NULL, file=stdout(), frame=parent.frame()
 ) {
   err.type <- "Argument"
   if(is.null(max.len)) {
@@ -68,17 +67,16 @@ diff_obj_out <- function(
     first.diff <- max(1L, min.len - max.len[[1L]] + 1L)
     max.len <- rep(max.len[[1L]], 2L)
   }
-  cat(sep="\n",
-    res <- c(
-      obj_screen_chr(
-        obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
-        width=tar.width, pad="-   "
-      ),
-      obj_screen_chr(
-        obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
-        width=tar.width, pad="+   "
-      )
+  res <- c(
+    obj_screen_chr(
+      obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
+      width=tar.width, pad="-   "
+    ),
+    obj_screen_chr(
+      obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
+      width=tar.width, pad="+   "
   ) )
+  if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
 # @keywords internal
