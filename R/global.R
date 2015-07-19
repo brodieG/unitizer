@@ -78,7 +78,9 @@ setClass(
 #' @keywords internal
 
 setClass("unitizerDummy", slots=c(.="NULL"))
-
+setMethod(
+  "show", "unitizerDummy", function(object) cat("<object not recorded>")
+)
 setClassUnion("listOrNULLOrDummy", c("list", "NULL", "unitizerDummy"))
 setClassUnion("characterOrNULLOrDummy", c("character", "NULL", "unitizerDummy"))
 setClassUnion("integerOrNULLOrDummy", c("integer", "NULL", "unitizerDummy"))

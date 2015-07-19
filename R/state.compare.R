@@ -112,3 +112,123 @@ state_item_compare <- function(tar, cur) {
   if(tar.dum && cur.dum) 1L else if (tar.dum || cur.dum) 2L else {
     if(identical(tar, cur)) 0L else 3L
 } }
+# \code{all.equal} methods involving dummy
+
+setMethod(
+  "all.equal", c("unitizerDummy", "unitizerDummy"),
+  function(target, current, ...) {
+    paste0(
+      "state values not explicitly recorded for either `target` or `current`; ",
+      "these may or may not have been different."
+    )
+  }
+)
+setMethod(
+  "all.equal", c("unitizerDummy", "ANY"),
+  function(target, current, ...)
+    "`target` state was not recorded; it is likely different to `current` state"
+)
+setMethod(
+  "all.equal", c("ANY", "unitizerDummy"),
+  function(target, current, ...)
+    "`current` state was not recorded; it is likely different to `target` state"
+)
+#' Present State Differences in Easy to Review Form
+#'
+#' Intended to be called primarily from \code{unitizer} prompt where it can
+#' find the \code{.NEW} and \code{.REF} objects; interface params provided for
+#' testing.
+#'
+#' @export
+#' @param target unitizerGlobalState object
+#' @param current unitizerGlobalState object
+#' @param width how many characters wide the display should be
+#' @return NULL
+
+diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
+  target <- if(!is.null(target))
+    target else try(get(".NEW", parent.env(envir))$state, silent=T)
+  current <- if(!is.null(current))
+    current else try(get(".REF", parent.env(envir))$state, silent=T)
+  if(inherits(target, "try-error")) return(cat("`.NEW` object not present"))
+  if(inherits(current, "try-error")) return(cat("`.REF` object not present"))
+  stopifnot(
+    is(target, "unitizerGlobalState"), is(current, "unitizerGlobalState")
+  )
+  for(i in .unitizer.global.settings.names) {
+    cur <- slot(current, i)
+    tar <- slot(target, i)
+    if(is.null(cur) || identical(tar, cur)) next
+
+    msg.header <- sprintf("`%s` state mismatch:", i)
+    if(!is.int.1L(width) || width < 8L) width <- 8L else width <- width - 2L
+
+    diff.string <- if(identical(i, "options")) {
+      # Compare common options with state_item_compare, all others are
+      # assumed to be different; note that system and asis options should
+      # not be part of these lists
+
+      common.opts <- intersect(names(tar), names(cur))
+      deltas.opts <- Map(all.equal, tar[common.opts], cur[common.opts])
+      missing.cur <- setdiff(names(tar), names(cur))
+      missing.tar <- setdiff(names(cur), names(tar))
+      deltas.opts <- c(
+        deltas.opts,
+        Map(missing.cur, f=function(x) "missing from `current` state"),
+        Map(missing.tar, f=function(x) "missing from `target` state")
+      )
+      deltas.real <- vapply(deltas.opts, Negate(isTRUE), logical(1L))
+      deltas.names <- names(deltas.opts)
+      deltas.count <- sum(deltas.real)
+
+      # Depending on how many options there are, either show a full diff, or
+      # the all.equal output, or just what options are different
+
+      if(deltas.count < 1L) next
+
+      if(deltas.count == 1L) {
+        diff_obj_out(
+          tar, cur,
+          obj.rem.name=sprintf(".REF$state@%s", i),
+          obj.add.name=sprintf(".REF$state@%s", i),
+          width=width, file=NULL
+        )
+      } else if(deltas.count <= 10L) {
+        # Depending on whether `all.equal` output is one or more lines, use
+        # different display mode
+
+        diff.list <- vector("list", 2 * deltas.count)
+        k <- 0L
+
+        for(j in which(deltas.real)) {
+          k <- k + 1L
+          if(!is.character(deltas.opts[[j]]) || !length(deltas.opts[[j]])) {
+            diff.list[[k]] <-
+              paste0(deltas.names[[j]], ": <unknown difference>")
+          } else if(length(deltas.opts[[j]]) == 1L) {
+            diff.list[[k]] <-
+              paste0(deltas.names[[j]], ": ", deltas.opts[[j]])
+          } else {
+            diff.list[[k]] <- deltas.names[[j]]
+            diff.list[[k + 1L]] <- UL(deltas.opts, style="+")
+            k <- k + 1L
+        } }
+        as.character(UL(diff.list[seq.int(k)]), width=width)
+      } else {
+        word_wrap(
+          "The following options have mismatches: ",
+          paste0(diff.list, collapse=","),
+          width=width
+      ) }
+    } else {
+      diff_obj_out(
+        tar, cur,
+        obj.rem.name=sprintf(".REF$state@%s", i),
+        obj.add.name=sprintf(".REF$state@%s", i),
+        width=getOption("width", 2L) - 2L, file=NULL
+      )
+    }
+    cat(msg.header, "\n", sep="")
+    cat(paste0(paste0(rep(" ", 2L), collapse=""), diff.string), sep="\n")
+  }
+}
