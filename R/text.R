@@ -29,7 +29,8 @@ screen_out <- function(
 #' @param obj.rem.name object to compare
 #' @param obj.add.name object to compare
 #' @param width at what width to wrap output
-#' @param max.len 2 length integer vector with first value threshold at which we start trimming output
+#' @param max.len 2 length integer vector with first value threshold at which we
+#'   start trimming output and the second the length we tri to
 #' @param file whether to show to stdout or stderr
 #' @param frame what frame to capture in, relevant mostly if looking for a print
 #'   method
@@ -42,12 +43,14 @@ diff_obj_out <- function(
 ) {
   err.type <- "Argument"
   if(is.null(max.len)) {
-    getOption("unitizer.test.fail.out.lines")
+    max.len <- getOption("unitizer.test.fail.out.lines")
     err.type <- "Option"
   }
-  if(!is.numeric(max.len) || length(max.len) < 1L || max.len < 1)
+  if(
+    !is.numeric(max.len) || !identical(length(max.len), 2L) || any(max.len < 1)
+  )
     stop(
-      err.type, " `unitizer.test.fail.out.lines` must be integer(1L) and ",
+      err.type, " `unitizer.test.fail.out.lines` must be integer(2L) and ",
       "greater than or equal to 1"
     )
   max.len <- as.integer(max.len)

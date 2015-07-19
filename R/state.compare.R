@@ -116,22 +116,17 @@ state_item_compare <- function(tar, cur) {
 
 setMethod(
   "all.equal", c("unitizerDummy", "unitizerDummy"),
-  function(target, current, ...) {
-    paste0(
-      "state values not explicitly recorded for either `target` or `current`; ",
-      "these may or may not have been different."
-    )
-  }
+  function(target, current, ...) TRUE
 )
 setMethod(
   "all.equal", c("unitizerDummy", "ANY"),
   function(target, current, ...)
-    "`target` state was not recorded; it is likely different to `current` state"
+    "`.REF` value was not recorded, but `.NEW` was; they are likely different"
 )
 setMethod(
   "all.equal", c("ANY", "unitizerDummy"),
   function(target, current, ...)
-    "`current` state was not recorded; it is likely different to `target` state"
+    "`.NEW` value was not recorded, but `.REF` was; they are likely different"
 )
 #' Present State Differences in Easy to Review Form
 #'
@@ -170,12 +165,16 @@ diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
 
       common.opts <- intersect(names(tar), names(cur))
       deltas.opts <- Map(all.equal, tar[common.opts], cur[common.opts])
-      missing.cur <- setdiff(names(tar), names(cur))
-      missing.tar <- setdiff(names(cur), names(tar))
       deltas.opts <- c(
         deltas.opts,
-        Map(missing.cur, f=function(x) "missing from `current` state"),
-        Map(missing.tar, f=function(x) "missing from `target` state")
+        Map(
+          setdiff(names(tar), names(cur)),
+          f=function(x) "this option is missing from `.NEW` state"
+        ),
+        Map(
+          setdiff(names(cur), names(tar)),
+          f=function(x) "this option is missing from `.REF` state"
+        )
       )
       deltas.real <- vapply(deltas.opts, Negate(isTRUE), logical(1L))
       deltas.names <- names(deltas.opts)
@@ -190,7 +189,7 @@ diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
         diff_obj_out(
           tar, cur,
           obj.rem.name=sprintf(".REF$state@%s", i),
-          obj.add.name=sprintf(".REF$state@%s", i),
+          obj.add.name=sprintf(".NEW$state@%s", i),
           width=width, file=NULL
         )
       } else if(deltas.count <= 10L) {
@@ -221,11 +220,11 @@ diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
           width=width
       ) }
     } else {
-      diff_obj_out(
+      diff_obj_out(  # should try to collapse this with the one for options
         tar, cur,
         obj.rem.name=sprintf(".REF$state@%s", i),
-        obj.add.name=sprintf(".REF$state@%s", i),
-        width=getOption("width", 2L) - 2L, file=NULL
+        obj.add.name=sprintf(".NEW$state@%s", i),
+        width=width, file=NULL
       )
     }
     cat(msg.header, "\n", sep="")
