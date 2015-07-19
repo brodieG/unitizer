@@ -7,7 +7,7 @@ NULL
 #' @keywords internal
 #' @aliases print.H2, print.H3, print.header
 #' @param x a 1 length character vector
-#' @param margin one of "both", "top", "bottom", "none", weather to add newlines at top or bottom
+#' @param margin one of "both", "top", "bottom", "none", whether to add newlines at top or bottom
 #' @return 1 length character vector
 #' @export
 
@@ -109,23 +109,64 @@ H3 <- function(x) header(x, 3L)
 
 #' Create List Objects
 #'
-#' Turns a character vector into list items.
-#'
-#' Currently doesn't support nested lists, but this might be added in the future.
+#' Similar to UL and OL objects from HTML.  These can be nested.  \code{OL}
+#' supports \code{c("numbers", "letters", "LETTERS")} as bullet types.
 #'
 #' @keywords internal
 #' @aliases OL
 #' @param x character vector of items to make a list out of
 #' @return OL/UL object
 
-UL <- function(x) {
-  if(!is.character(x)) stop("Argument `x` must be a character vector")
-  structure(x, class=c("UL", "bullet"))
+UL <- function(x, style="-", offset=0L) {
+  stopifnot(is.chr1(style) && nchar(style) == 1L)
+  bullet_obj(x, style=style, type="unordered", offset=offset)
 }
-OL <- function(x) {
-  if(!is.character(x)) stop("Argument `x` must be a character vector")
-  structure(x, class=c("OL", "bullet"))
+OL <- function(x, style="numbers", offset=0L) {
+  stopifnot(is.chr1(style) && style %in% c("numbers", "letters", "LETTERS"))
+  bullet_obj(x, style=style, type="ordered", offset=offset)
 }
+bullet_obj <- function(x, type, style, offset) {
+  if(!is.int.1L(offset) || offset < 0L)
+    stop("Argument `offset` must be integer(1L) and GTE 0")
+  stopifnot(is.chr1(type), type %in% c("ordered", "unordered"))
+  if(is.character(x)) x <- as.list(x)
+  x <- validate_bullet_list(x, offset)
+  bulleter <- if(identical(type, "ordered"))
+    bullet_funs[[type]] else
+    function(x) rep(style, x)
+  structure(
+    x, class=c(type, "bullet"), style=style, offset=offset, bulleter=bulleter
+  )
+}
+make_let_combn_fun <- function(dat) {
+  function(x) {
+    let.count <- ceiling(log(x, base=length(dat)))
+    let.list <- rev(
+      c(
+        list(dat),
+        replicate(let.count - 1L, c(" ", dat), simplify=FALSE)
+    ) )
+    let.combn <- sort(do.call(paste0, do.call(expand.grid, let.list)))
+} }
+bullet_funs <- list(
+  numeric=function(x) as.character(seq.int(x)),
+  letters=make_let_combn_fun(letters),
+  LETTERS=make_let_combn_fun(LETTERS)
+)
+validate_bullet_list <- function(x, offset) {
+  if(!is.list(x))
+    stop("Argument `x` must be a list")
+  for(i in seq_along(x)) {
+    if(!validate_bullet(x[[i]]))
+      stop("Argument `x` contains invalid bullet item at position ", i)
+    if(inherits(x[[i]], "bullet"))
+      attr(x[[i]], "offset") <- attr(x[[i]], "offset") + offset + 2L
+  }
+  x
+}
+validate_bullet <- function(x)
+  (is.character(x) && length(x) == 1L) || inherits(x, "bullet")
+
 #' Print Methods for \code{`\link{UL}`} and \code{`\link{OL}`} objects
 #'
 #' @keywords internal
@@ -150,42 +191,32 @@ print.bullet <- function(x, width=0L, ...) {
 #'   corresponds to a line
 #' @keywords internal
 
-as.character.bullet <- function(x, width=0L, pre="", ...) {
+as.character.bullet <- function(x, width=0L, ...) {
   if(!is.numeric(width) || length(width) != 1L || width < 0) {
     stop("Argument `width` must be a one length positive numeric.")
   }
-  if(!is.character(pre) || length(pre) == 0)
-    stop("Argument `pre` must be character and greater than one long.")
-  if(length(x) %% length(pre))
-    stop("Argument `x` length must be a multiple of argument `pre` length.")
-
   width <- as.integer(width)
   if(width == 0) width <- getOption("width")
-  screen.width <- width - max(nchar(pre))
-  if(screen.width < 8L) width <- 8L
-  items <- word_wrap(unclass(x), width=screen.width, unlist=FALSE)
-  if(length(items) != length(x))
-    stop("Logic Error: length mismatch when making bullets; contact maintainer.")
-
-  pre.fmt <- format(pre, justify="right")
-  pre.pad <- paste0(rep(" ", len=nchar(pre.fmt[[1L]])), collapse="")
-
-  unname(
-    unlist(
-      mapply(
-        function(content, bullet)
-          paste0(c(bullet, rep(pre.pad, length(content) - 1L)), content),
-        items, pre.fmt, SIMPLIFY=FALSE
-) ) ) }
-#' @export
-
-as.character.UL <- function(x, width=0L, ...) {
-  bullets <- rep("- ", length(x))
-  NextMethod(pre=bullets)
+  bullet_with_offset(x, width)
 }
-#' @export
-
-as.character.OL <- function(x, width=0L, ...) {
-  bullets <- paste0(1:length(x), ". ")
-  NextMethod(pre=bullets)
+bullet_with_offset <- function(x, width) {
+  pad <- paste0(rep(" ", attr(x, "offset")), collapse="")
+  char.vals <- vapply(x, is.character, logical(1L))
+  char.pad <- paste0(pad, format(attr(x, "bulleter")(sum(char.vals))))
+  char.pad.size <- nchar(char.pad[[1L]])
+  text.width <- max(width - char.pad.size, 8L)
+  char.wrapped <- word_wrap(
+    unlist(x[which(char.vals)]), width=text.width, unlist=FALSE
+  )
+  pad.extra <- paste0(rep(" ", char.pad.size), collapse="")
+  char.padded <- lapply(
+    char.wrapped,
+    function(x)
+      if(!length(x)) x else
+        paste0(c(char.pad, rep(pad.extra, length(x) - 1L)), x)
+  )
+  final <- vector("list", length(x))
+  final[which(char.vals)] <- char.padded
+  final[which(!char.vals)] <- lapply(x[which(!char.vals)], bullet_with_offset)
+  unlist(final)
 }

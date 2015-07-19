@@ -62,6 +62,13 @@ is.int.pos.2L <- function(x)
   is.numeric(x) && length(x) == 2L && !any(is.na(x)) &&
   all.equal(x, round(x)) && all(x) > 0L
 
+is.int.pos.1L <- function(x)
+  is.numeric(x) && length(x) == 1L && !any(is.na(x)) &&
+  all.equal(x, round(x)) && all(x) > 0L
+
+is.int.1L <- function(x)
+  is.numeric(x) && length(x) == 1L && !any(is.na(x)) && all.equal(x, round(x))
+
 #' Check Whether Provided Store ID Is in Default Form
 #'
 #' @keywords internal

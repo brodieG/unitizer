@@ -61,6 +61,7 @@ Collate:
     'rename.R'
     'repairenvs.R'
     'shims.R'
+    'state.compare.R'
     'translate.R'
     'unitize.R'
     'unitize.core.R'

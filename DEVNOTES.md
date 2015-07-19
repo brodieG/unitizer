@@ -190,6 +190,51 @@ Note we gave up on the above; either enable or disable feature is only option,
 and if finer grain control needed then do it through options.  `par.env` is
 a bit different because state is not tracked.
 
+### Display
+
+```
+State differeces (if more than one state difference):
+  + `search.path` differences: if one line, print on one line
+  + `options` differences: deltas with "blah":
+    - abcdefg
+    - boomboom
+For more details you can directly access the recorded states (
+e.g. .NEW$state@search.path)
+
+`options` differences: deltas with "blah": blah blah blah blah blah blah blah
+blah blah blah blah
+
+`options` differences: 15 options with known differences
+For more details: all.equal(.NEW$state, .REF$state, mode="options")
+
+`options` differences:
+- "opt1":
+  + blah blah blah
+  + blah blah blah
+- "opt2": blah blah blah blah blah
+- "opt3":
+  + blah blah blah
+  + blah blah blah
+- "opt4":
+  + blah blah blah
+  + blah blah blah
+
+Options differences:
+- "opt1":
+  + blah blah blah
+  + blah blah blah
+- "opt2": blah blah blah blah blah
+
+
+
+try you can directly access the recorded states (
+e.g. .NEW$state@search.path)
+
+```
+
+
+
+
 ### Philosophy
 
 Offer two options for each setting:
