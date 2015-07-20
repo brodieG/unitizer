@@ -29,26 +29,24 @@ setOptIfNotSet <- function(x, value) {
 #' reproducibility setting to minimize odds that test failures are caused
 #' by changes to global options.
 #'
-#' \itemize{
-#'   \item \code{.unitizer.opts.base} will be passed to \code{options} as the
-#'     argument
-#'   \item \code{.unitizer.opts.sys} are options to leave unchanged; these are
-#'     typically system specific, should be very unlikely to affect test
-#'     outcomes, and could possibly cause problems if we unset them or tried to
-#'     set them to the defaults of a different system.
-#' }
-#' All other options are set to NULL.
+#' If running in highest reproducibily mode, all options except those that match
+#' those set in \code{getOption("unitizer.opts.asis")} are set to NULL.  Then,
+#' we use \code{getOption("unitizer.opts.base")} to set base line options that
+#' are typically loaded in a fresh vanilla R session.
 #'
-#' The variables are applied by being as the \code{"unitizer.opts.base"} and
-#' \code{"unitizer.opts.asis"} options (e.g.
-#' \code{options(unitizer.opts.base=.unitizer.opts.base)}); if you wish to use
-#' different values specify them through the options.
+#' Any packages loaded during tests should set their own options.
+#' \code{unitizer} unloads packages so that each new invocation of the package
+#' runs the \code{onload} scripts and resets options.  Because of this, any
+#' packages that you add to \code{getOption("unitizer.search.path.keep")} must
+#' have their options included in \code{getOption("unitizer.opts.asis")} as
+#' otherwise those options would be unset, but not reset since \code{unitizer}
+#' will not unload and reload the package.
 #'
-#' Note that when \code{unitizer} resets options to base set, the
-#' \code{unitizer} options are also re-set, but \code{unitizer} always reads in
-#' the options before clearing them.
-#'
-#' All options are restored to their original values on exit.
+#' Occasionally you will run into packages that cannot be unloaded.  If your
+#' tests involve such a package you can either add it to
+#' \code{getOption("unitizer.search.path.keep")} and its options to
+#' \code{getOption("unitizer.opts.asis")}, or turn off the reproducibility
+#' setting for options.
 #'
 #' @rdname unitizer.opts
 #' @export
@@ -81,9 +79,10 @@ setOptIfNotSet <- function(x, value) {
 #' @export
 
 .unitizer.opts.sys <- c(
-  "browser", "device", "dvipscmd", "mailer", "pager", "pdfviewer", "pkgType",
-  "printcmd", "HTTPUserAgent", "texi2dvi", "unzip", "editor", "papersize",
-  "bitmapType", "menu.graphics"
+  "^browser$", "^device$", "^dvipscmd$", "^mailer$", "^pager$",  "^pdfviewer$",
+  "^pkgType$", "^printcmd$", "^HTTPUserAgent$",  "^texi2dvi$", "^unzip$",
+  "^editor$", "^papersize$", "^bitmapType$",  "^menu\\.graphics$",
+  "^unitizer\\."
 )
 #' Set Options to Initial Zero State
 #'
@@ -103,10 +102,12 @@ options_zero <- function(
     stop("Option `unitizer.opts.asis` must be character and not contain NA")
 
   curr.opts <- options()
+  curr.opts.nms <- names(curr.opts)
+  curr.opts.asis <- unlist(lapply(as.is, grep, curr.opts.nms, value=TRUE))
 
   # Drop unneeded options
 
-  null.opts <- setdiff(names(curr.opts), c(nms, as.is))
+  null.opts <- setdiff(names(curr.opts), c(nms, curr.opts.asis))
   options(setNames(vector("list", length(null.opts)), null.opts))
 
   # Reset others
@@ -138,7 +139,7 @@ options_update <- function(tar.opts) {
   unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
   unitizer.history.file="",                # "" is interpreted as tempfile()
-  unitizer.search.path.keep=c(             # what objects to keep on search path when initializing unitizer
+  unitizer.search.path.keep=c(             # what objects to keep on search path when initializing unitizer; if you modify this make sure you ajdust `unitizer.opts.asis` accordingly as well (see reproducible state vignette)
     .unitizer.base.packages,
     "tools:rstudio", "package:unitizer"
   ),
@@ -149,7 +150,7 @@ options_update <- function(tar.opts) {
     search.path=2L, options=2L, random.seed=2L, working.directory=2L
   ),
   unitizer.opts.base=.unitizer.opts.base,  # what to set options to when running in reproducible state
-  unitizer.opts.asis=.unitizer.opts.sys,   # system dependent options that should not be changed
+  unitizer.opts.asis=.unitizer.opts.sys,   # system dependent and other options that should not be changed; these are matched as regular expressions
   unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
       list(seed=42L, kind="Wichmann-Hill")
 )
