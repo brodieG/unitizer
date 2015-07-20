@@ -1,5 +1,9 @@
 #' Compare State Between Reference and New Tests
 #'
+#' These functions were implemented before \code{\link{diff_state}}, and we
+#' recommend you use \code{\link{diff_state}} to get a high level view of
+#' state differences instead of these.
+#'
 #' Designed to compare the state snapshots as stored and recorded in a
 #' \code{unitizer}.  These approximate various aspects of global state.
 #' The approximation is because state objects that are too large are not kept,
@@ -21,7 +25,7 @@
 #'   \item if state is tracked in new, but was not in reference (target), then
 #'     we report a probable difference
 #' }
-#' @export
+#' @keywords internal
 
 setMethod(
   "all.equal",
@@ -114,7 +118,7 @@ state_item_compare <- function(tar, cur) {
 } }
 # \code{all.equal} methods involving dummy
 
-setMethod(
+setMethod(  # We could just drop this altogether, but leaving it for future use
   "all.equal", c("unitizerDummy", "unitizerDummy"),
   function(target, current, ...) TRUE
 )
@@ -134,7 +138,7 @@ setMethod(
       "different"
     )
 )
-#' Present State Differences in Easy to Review Form
+#' Display State Differences Between New and Reference Tests
 #'
 #' Intended to be called primarily from \code{unitizer} prompt where it can
 #' find the \code{.NEW} and \code{.REF} objects; interface params provided for
@@ -145,13 +149,19 @@ setMethod(
 #' @param current unitizerGlobalState object
 #' @param width how many characters wide the display should be
 #' @return NULL
+#' @examples
+#' \dontrun{
+#' ## type at `unitizer` prompt
+#' diff_state()
+#' }
 
 diff_state <- function(
-  target=NULL, current=NULL, width=getOption("width"), file=stdout()) {
+  target=NULL, current=NULL, width=getOption("width"), file=stdout()
+) {
   target <- if(!is.null(target))
-    target else try(get(".NEW", parent.env(envir))$state, silent=T)
+    target else try(get(".NEW", parent.env(parent.frame()))$state, silent=T)
   current <- if(!is.null(current))
-    current else try(get(".REF", parent.env(envir))$state, silent=T)
+    current else try(get(".REF", parent.env(parent.frame()))$state, silent=T)
   if(inherits(target, "try-error")) return(cat("`.NEW` object not present"))
   if(inherits(current, "try-error")) return(cat("`.REF` object not present"))
   stopifnot(
@@ -244,9 +254,9 @@ diff_state <- function(
   )
   msg.extra <- word_wrap(
     if(length(out)) paste0(
-      "For a more detailed comparision you may access state values ",
+      "For a more detailed comparison you can access state values ",
       "directly (e.g. .NEW$state@options).  ", msg.no.diff
-    ) else msg.no.diff
+    ) else c("No state differences detected.", "", msg.no.diff)
   )
   out <- c(out, msg.extra)
   if(!is.null(file)) cat(out, sep="\n", file=file)
