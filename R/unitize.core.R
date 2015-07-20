@@ -350,9 +350,18 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
       unitizers[[i]] <- unitizer
     }
     unitizers[[i]]@eval <- FALSE
+    glob.opts <- Filter(Negate(is.null), lapply(global$tracking@options, names))
+    glob.opts <- if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
+
+    no.track <- c(
+      unlist(
+        lapply(global$unitizer.opts[["unitizer.opts.asis"]], grep, glob.opts)
+      ),
+      match(
+        names(global$unitizer.opts[["unitizer.opts.base"]]), glob.opts, nomatch=0L
+    ) )
     unitizers[[i]]@state.new <- unitizerCompressTracking(
-      global$tracking,
-      names(global$unitizer.opts[c("unitizer.opts.base", "unitizer.opts.asis")])
+      global$tracking, glob.opts[no.track]
     )
   }
   unitizers

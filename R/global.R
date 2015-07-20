@@ -114,7 +114,7 @@ setMethod(
   c("unitizerGlobalTrackingStore", "unitizerGlobalIndices"),
   function(x, y, ...) {
     vals <- Map(
-      function(x, y) unlist(x[y]),
+      function(x, y) unlist(x[y], recursive=FALSE),
       sapply(.unitizer.global.settings.names, slot, object=x, simplify=FALSE),
       lapply(.unitizer.global.settings.names, slot, object=y)
     )
