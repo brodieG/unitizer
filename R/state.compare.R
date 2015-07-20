@@ -159,9 +159,9 @@ diff_state <- function(
   target=NULL, current=NULL, width=getOption("width"), file=stdout()
 ) {
   target <- if(!is.null(target))
-    target else try(get(".NEW", parent.env(parent.frame()))$state, silent=T)
+    target else try(get(".REF", parent.env(parent.frame()))$state, silent=T)
   current <- if(!is.null(current))
-    current else try(get(".REF", parent.env(parent.frame()))$state, silent=T)
+    current else try(get(".NEW", parent.env(parent.frame()))$state, silent=T)
   if(inherits(target, "try-error")) return(cat("`.NEW` object not present"))
   if(inherits(current, "try-error")) return(cat("`.REF` object not present"))
   stopifnot(
@@ -234,8 +234,10 @@ diff_state <- function(
         as.character(UL(diff.list[seq.int(k)]), width=width)
       } else {
         word_wrap(
-          "The following options have mismatches: ",
-          paste0(diff.list, collapse=","),
+          c(
+            "The following options have mismatches: ",
+            paste0("\"", deltas.names[which(deltas.real)], "\"", collapse=", ")
+          ),
           width=width
       ) }
     } else {
