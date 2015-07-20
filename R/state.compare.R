@@ -121,12 +121,18 @@ setMethod(
 setMethod(
   "all.equal", c("unitizerDummy", "ANY"),
   function(target, current, ...)
-    "`.REF` value was not recorded, but `.NEW` was; they are likely different"
+    paste(
+      "`.REF` value was not recorded, but `.NEW` value was; they are likely",
+      "different"
+    )
 )
 setMethod(
   "all.equal", c("ANY", "unitizerDummy"),
   function(target, current, ...)
-    "`.NEW` value was not recorded, but `.REF` was; they are likely different"
+    paste(
+      "`.NEW` value was not recorded, but `.REF` value was; they are likely",
+      "different"
+    )
 )
 #' Present State Differences in Easy to Review Form
 #'
@@ -140,7 +146,8 @@ setMethod(
 #' @param width how many characters wide the display should be
 #' @return NULL
 
-diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
+diff_state <- function(
+  target=NULL, current=NULL, width=getOption("width"), file=stdout()) {
   target <- if(!is.null(target))
     target else try(get(".NEW", parent.env(envir))$state, silent=T)
   current <- if(!is.null(current))
@@ -150,13 +157,14 @@ diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
   stopifnot(
     is(target, "unitizerGlobalState"), is(current, "unitizerGlobalState")
   )
+  out <- character(0L) # we're growing this, but it's small
   for(i in .unitizer.global.settings.names) {
     cur <- slot(current, i)
     tar <- slot(target, i)
     if(is.null(cur) || identical(tar, cur)) next
 
     msg.header <- sprintf("`%s` state mismatch:", i)
-    if(!is.int.1L(width) || width < 8L) width <- 8L else width <- width - 2L
+    if(!is.int.1L(width) || width < 8L) width <- 8L else width <- width - 4L
 
     diff.string <- if(identical(i, "options")) {
       # Compare common options with state_item_compare, all others are
@@ -186,10 +194,11 @@ diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
       if(deltas.count < 1L) next
 
       if(deltas.count == 1L) {
+        diff.name <- deltas.names[[which(deltas.real)]]
         diff_obj_out(
-          tar, cur,
-          obj.rem.name=sprintf(".REF$state@%s", i),
-          obj.add.name=sprintf(".NEW$state@%s", i),
+          tar[[diff.name]], cur[[diff.name]],
+          obj.rem.name=sprintf(".REF$state@%s[[\"%s\"]]", i, diff.name),
+          obj.add.name=sprintf(".NEW$state@%s[[\"%s\"]]", i, diff.name),
           width=width, file=NULL
         )
       } else if(deltas.count <= 10L) {
@@ -208,8 +217,8 @@ diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
             diff.list[[k]] <-
               paste0(deltas.names[[j]], ": ", deltas.opts[[j]])
           } else {
-            diff.list[[k]] <- deltas.names[[j]]
-            diff.list[[k + 1L]] <- UL(deltas.opts, style="+")
+            diff.list[[k]] <- paste0(deltas.names[[j]], ": not `all.equal`:")
+            diff.list[[k + 1L]] <- OL(deltas.opts[[j]])
             k <- k + 1L
         } }
         as.character(UL(diff.list[seq.int(k)]), width=width)
@@ -227,7 +236,19 @@ diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
         width=width, file=NULL
       )
     }
-    cat(msg.header, "\n", sep="")
-    cat(paste0(paste0(rep(" ", 2L), collapse=""), diff.string), sep="\n")
+    out <- c(out, msg.header, paste0("    ", diff.string))
   }
+  msg.no.diff <- paste0(
+    "Note that there may be state differences that are not reported here as ",
+    "state tracking is incomplete.  See vignette for details."
+  )
+  msg.extra <- word_wrap(
+    if(length(out)) paste0(
+      "For a more detailed comparision you may access state values ",
+      "directly (e.g. .NEW$state@options).  ", msg.no.diff
+    ) else msg.no.diff
+  )
+  out <- c(out, msg.extra)
+  if(!is.null(file)) cat(out, sep="\n", file=file)
+  invisible(out)
 }

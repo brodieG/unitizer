@@ -23,12 +23,27 @@ test_that("All Equal States", {
   )
   state.B <- new(
     "unitizerGlobalState",
-     search.path=letters[1:3],
+    search.path=letters[1:3],
     options=list(
       a=5:7, b=new("unitizerDummy"), d="goodbye", c=new("unitizerDummy")
     ),
     working.directory=new("unitizerDummy"),
     random.seed=1:3
+  )
+  state.C <- new(
+    "unitizerGlobalState",
+    search.path=letters,
+    options=list(
+      a=list(5, 6, 7), c=LETTERS
+    ),
+    working.directory=new("unitizerDummy"),
+    random.seed=1:3
+  )
+  state.D <- new(  # just compare to A
+    "unitizerGlobalState",
+    search.path=letters[1:3],
+    options=list(a=list(1, 2, 3), b=new("unitizerDummy"), c="hello"),
+    working.directory="a/b/c"
   )
   expect_equal(
     all.equal(state.A, state.B),
