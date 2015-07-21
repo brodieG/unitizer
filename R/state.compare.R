@@ -182,18 +182,16 @@ diff_state <- function(
       # not be part of these lists
 
       common.opts <- intersect(names(tar), names(cur))
-      deltas.opts <- Map(all.equal, tar[common.opts], cur[common.opts])
-      deltas.opts <- c(
-        deltas.opts,
-        Map(
-          setdiff(names(tar), names(cur)),
-          f=function(x) "this option is missing from `.NEW` state"
-        ),
-        Map(
-          setdiff(names(cur), names(tar)),
-          f=function(x) "this option is missing from `.REF` state"
-        )
+      deltas.common <- Map(all.equal, tar[common.opts], cur[common.opts])
+      deltas.cur.miss <- Map(
+        setdiff(names(tar), names(cur)),
+        f=function(x) "this option is missing from `.NEW` state"
       )
+      deltas.tar.miss <- Map(
+        setdiff(names(cur), names(tar)),
+        f=function(x) "this option is missing from `.REF` state"
+      )
+      deltas.opts <- c(deltas.common, deltas.cur.miss, deltas.tar.miss)
       deltas.real <- vapply(deltas.opts, Negate(isTRUE), logical(1L))
       deltas.names <- names(deltas.opts)
       deltas.count <- sum(deltas.real)
@@ -233,13 +231,34 @@ diff_state <- function(
         } }
         as.character(UL(diff.list[seq.int(k)]), width=width)
       } else {
-        word_wrap(
-          c(
-            "The following options have mismatches: ",
-            paste0("\"", deltas.names[which(deltas.real)], "\"", collapse=", ")
-          ),
-          width=width
-      ) }
+        # this is a mess, need to cleanup someday
+
+        tmp <- character()
+        common.fail <- vapply(deltas.common, Negate(isTRUE), logical(1L))
+        if(any(common.fail)) {
+          tmp.out <- capture.output(
+            print(sort(names(deltas.common)[common.fail]), width=width)
+          )
+          tmp <- c(tmp, "The following options have mismatches: ", tmp.out)
+        }
+        if(length(deltas.cur.miss)) {
+          tmp.out <- capture.output(
+            print(sort(names(deltas.cur.miss)), width=width)
+          )
+          tmp <- c(
+            tmp, "The following options are missing from `.NEW`: ", tmp.out
+          )
+        }
+        if(length(deltas.tar.miss)) {
+          tmp.out <- capture.output(
+            print(sort(names(deltas.tar.miss)), width=width)
+          )
+          tmp <- c(
+            tmp, "The following options are missing from `.REF`: ", tmp.out
+          )
+        }
+        word_wrap(tmp, width=width)
+      }
     } else {
       diff_obj_out(  # should try to collapse this with the one for options
         tar, cur,
