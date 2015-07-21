@@ -68,26 +68,24 @@ reproducibility setting to minimize odds that test failures are caused
 by changes to global options.
 }
 \details{
-\itemize{
-  \item \code{.unitizer.opts.base} will be passed to \code{options} as the
-    argument
-  \item \code{.unitizer.opts.sys} are options to leave unchanged; these are
-    typically system specific, should be very unlikely to affect test
-    outcomes, and could possibly cause problems if we unset them or tried to
-    set them to the defaults of a different system.
-}
-All other options are set to NULL.
+If running in highest reproducibily mode, all options except those that match
+those set in \code{getOption("unitizer.opts.asis")} are set to NULL.  Then,
+we use \code{getOption("unitizer.opts.base")} to set base line options that
+are typically loaded in a fresh vanilla R session.
 
-The variables are applied by being as the \code{"unitizer.opts.base"} and
-\code{"unitizer.opts.asis"} options (e.g.
-\code{options(unitizer.opts.base=.unitizer.opts.base)}); if you wish to use
-different values specify them through the options.
+Any packages loaded during tests should set their own options.
+\code{unitizer} unloads packages so that each new invocation of the package
+runs the \code{onload} scripts and resets options.  Because of this, any
+packages that you add to \code{getOption("unitizer.search.path.keep")} must
+have their options included in \code{getOption("unitizer.opts.asis")} as
+otherwise those options would be unset, but not reset since \code{unitizer}
+will not unload and reload the package.
 
-Note that when \code{unitizer} resets options to base set, the
-\code{unitizer} options are also re-set, but \code{unitizer} always reads in
-the options before clearing them.
-
-All options are restored to their original values on exit.
+Occasionally you will run into packages that cannot be unloaded.  If your
+tests involve such a package you can either add it to
+\code{getOption("unitizer.search.path.keep")} and its options to
+\code{getOption("unitizer.opts.asis")}, or turn off the reproducibility
+setting for options.
 }
 \keyword{datasets}
 

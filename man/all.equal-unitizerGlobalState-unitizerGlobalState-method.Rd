@@ -9,12 +9,16 @@
   verbose = TRUE, strict = FALSE, ...)
 }
 \description{
+These functions were implemented before \code{\link{diff_state}}, and we
+recommend you use \code{\link{diff_state}} to get a high level view of
+state differences instead of these.
+}
+\details{
 Designed to compare the state snapshots as stored and recorded in a
 \code{unitizer}.  These approximate various aspects of global state.
 The approximation is because state objects that are too large are not kept,
 so we are not always certain whether some parts of state changed or not.
-}
-\details{
+
 We report several levels of differences between state values:
 \itemize{
    \item affirmative difference, when we know with certainty the state values
@@ -32,4 +36,5 @@ Additionally, it is possible that the state tracking settings change between
     we report a probable difference
 }
 }
+\keyword{internal}
 
