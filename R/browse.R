@@ -545,7 +545,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         if(!isTRUE(state.comp))
           word_msg(
             "Additionally, there are state differences between new and",
-            "reference tests (check with `all.equal(.REF$state, .NEW$state)`)."
+            "reference tests (check with `diff_state()`)."
           )
     } }
     # Need to add ignored tests as default action is N, though note that ignored
