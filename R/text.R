@@ -265,23 +265,23 @@ word_wrap <- function(
   )
   vows <- "[aeiouyAEIOUY]"
   ltrs <- "[a-zA-Z]"
-  seps <- "[^a-zA-Z0-9']"
-  base.ptrn <- paste0(
-    "(?:",
-      "(?:(.*%s).{0,", max(tolerance - 1L, 0L), "}.)|",
-      "(?:(.*%s).{0,", tolerance, "})",
-    ")$"
-  )
-  spc.ptrn <- sprintf(base.ptrn, "\\s", "\\s")
-  non.alph.ptrn <- sprintf(base.ptrn, seps, seps)
+  base.ptrn <- paste0("(.*%s).{0,", tolerance, "}$")
+  non.alph.ptrn <- paste0("(.*\\W)\\w{0,", max(tolerance - 1L, 0L), "}.$")
+  spc.ptrn <- sprintf(base.ptrn, "\\s")
   hyph.base <- paste0(
-    "^(.*[A-Za-z]*%s[A-Za-z]*%s)%s[A-Za-z].{0,", tolerance, "}$"
+    "^(.*\\S*%s\\S*%s)%s\\S.{0,", tolerance, "}$"
   )
+  # patterns mark places that you can insert a hyphen in, in order of preference
+  # though right now there is no trade-off at all between how many more
+  # characters you need to cut off to get the better match, which perhaps we
+  # should explore
+
   hyph.ptrns <- c(
     sprintf(hyph.base, vows, cons, cons.no.h),
     sprintf(hyph.base, ltrs, cons, vows),
     sprintf(hyph.base, ltrs, vows, cons),
-    sprintf(hyph.base, ltrs, vows, vows)
+    sprintf(hyph.base, ltrs, vows, vows),
+    sprintf(hyph.base, ".", ".", ".")      # catch-all allows hyphen anyplace
   )
   break_char <- function(x) {
     lines.raw <- ceiling(nchar(x) / (width - tolerance))
@@ -293,11 +293,11 @@ word_wrap <- function(
       pad <- 0L  # account for hyphen
       if(nchar(x) > width) {
         x.sub <- substr(x, 1L, width + 1L)
-        x.trim <- sub(spc.ptrn, "\\1\\2", x.sub)
-        matched <- grepl(spc.ptrn, x.sub)
+        x.trim <- sub(spc.ptrn, "\\1", x.sub, perl=TRUE)
+        matched <- grepl(spc.ptrn, x.sub, perl=TRUE)
         if(!matched) {
-          x.trim <- sub(non.alph.ptrn, "\\1\\2", x.sub)
-          matched <- grepl(non.alph.ptrn, x.sub)
+          x.trim <- sub(non.alph.ptrn, "\\1", x.sub, perl=TRUE)
+          matched <- grepl(non.alph.ptrn, x.sub, perl=TRUE)
         }
         # Attempt to hyphenate
 
@@ -305,8 +305,8 @@ word_wrap <- function(
         if(hyphens) {
           if(!matched) {
             for(pat in hyph.ptrns) {
-              x.trim <- sub(pat, "\\1", x.sub)
-              matched <- grepl(pat, x.sub)
+              x.trim <- sub(pat, "\\1", x.sub, perl=TRUE)
+              matched <- grepl(pat, x.sub, perl=TRUE)
               if(matched) {
                 x.trim <- paste0(x.trim, "-")
                 pad <- 1L
@@ -318,7 +318,8 @@ word_wrap <- function(
         x.trim <- substr(x.trim, 1L, width)  # we allow one extra char for pattern matching in some cases, remove here
         x <- sub(  # remove leading space if any
           "^\\s(.*)", "\\1",
-          substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x))
+          substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x)),
+          perl=TRUE
         )
       } else {
         x.trim <- x
