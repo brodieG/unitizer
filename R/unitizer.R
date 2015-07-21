@@ -125,7 +125,8 @@ setClass(
     test.file.loc=NA_character_,
     eval=FALSE,
     eval.time=0,
-    updated=FALSE
+    updated=FALSE,
+    global=unitizerGlobal$new(enable.which=character())  # dummy so tests will run
   ),
   validity=function(object) {
     if(length(object@items.ref)) {

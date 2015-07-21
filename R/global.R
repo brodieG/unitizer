@@ -1,5 +1,4 @@
 #' @include is.R
-#' @include search.R
 
 NULL
 
@@ -103,6 +102,27 @@ setClass(
   ),
   prototype=list(.dummy=new.env(parent=baseenv()))
 )
+#' @rdname global_structures
+#' @keywords internal
+
+setClass(
+  "unitizerGlobalIndices",
+  slots=c(
+    search.path="integer",
+    options="integer",
+    working.directory="integer",
+    random.seed="integer"
+  ),
+  prototype=list(
+    search.path=0L, options=0L, working.directory=0L, random.seed=0L
+  ),
+  validity=function(object){
+    for(i in slotNames(object))
+      if(length(slot(object, i)) != 1L || slot(object, i) < 0L)
+        return(paste0("slot `", i, "` must be integer(1L) and positive"))
+    TRUE
+  }
+)
 
 # Pull out a single state from a tracking object
 
@@ -156,28 +176,6 @@ setMethod(
     )
   res
 } )
-#' @rdname global_structures
-#' @keywords internal
-
-setClass(
-  "unitizerGlobalIndices",
-  slots=c(
-    search.path="integer",
-    options="integer",
-    working.directory="integer",
-    random.seed="integer"
-  ),
-  prototype=list(
-    search.path=0L, options=0L, working.directory=0L, random.seed=0L
-  ),
-  validity=function(object){
-    for(i in slotNames(object))
-      if(length(slot(object, i)) != 1L || slot(object, i) < 0L)
-        return(paste0("slot `", i, "` must be integer(1L) and positive"))
-    TRUE
-  }
-)
-
 #' Get Current Search Path as List of Environments
 #'
 #' Internal utility function.  Loaded namespaces attached as an attribute.
@@ -242,7 +240,7 @@ unitizerGlobal <- setRefClass(
   methods=list(
     initialize=function(
       ..., disabled=FALSE, enable.which=.unitizer.global.settings.names,
-      par.env=new.env(parent=.GlobalEnv)
+      par.env=new.env(parent=baseenv())
     ) {
       obj <- callSuper(..., par.env=par.env)
       enable(enable.which)
