@@ -1,4 +1,3 @@
-#' @include global.R
 #' @include class_unions.R
 
 NULL

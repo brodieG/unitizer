@@ -1,4 +1,5 @@
 #' @include is.R
+#' @include search.R
 
 NULL
 
