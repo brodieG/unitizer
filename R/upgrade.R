@@ -32,7 +32,11 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
 upgrade_internal <- function(object) {
 
   ver <- object@version
-  if(is.character(ver)) ver <- package_version(ver)
+  if(is.character(ver)) {
+    ver <- package_version(ver)
+  } else {
+    object@version <- as.character(ver)
+  }
   if(!is.package_version(ver)) stop("Cannot determine unitizer version.")
 
   # - 0.4.3 --------------------------------------------------------------------
