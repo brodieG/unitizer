@@ -136,6 +136,8 @@ some point.
 
 ## Side Effects
 
+### Overview
+
 Rationalizing side effects.
 
 Major types:
@@ -158,80 +160,35 @@ Simplified implementation:
 
 Different meaning for each of the types of things.
 
----
+### Default Settings
 
-Old possibilities:
+Unfortunately reproducible state can cause issues with packages that cannot
+be unloaded (e.g. data.table) and also likely to be a little less robust since
+we are doing a lot of borderline stuff to make it happen.  Questions then:
 
-General modes:
+1. Should default mode be full on reproducible state?
+2. What should be the interplay between reproducible state and the parent
+   environment?
+3. What about for translated testthat tests that are pretty much guaranteed not
+   to have been written in reproducible mode?
 
-* Vanilla: do nothing
-* before preloads
-* after preloads
-* after each
+Additionally, would be nice to be able to change just one value of reproducible
+state instead of having to do the entire settings string.  Perhaps the best
+interface is a combination of either a single string value for a preset, and
+the full named integer vector.  For example:
 
-Actions
-
-* nothing
-* reset
-* warn / nothing
-* warn / reset
-* stop
-
-
-        lib    opt     wd     hist
-b4 pre    x      -      -        -
-af pre    -      -      -        x
-af tst    x      x      x        x
-
-Each needs to be controlled separately, so main question is do we do it as an
-argument to `unitize_core`, or do we do it as global options?
-
-Note we gave up on the above; either enable or disable feature is only option,
-and if finer grain control needed then do it through options.  `par.env` is
-a bit different because state is not tracked.
-
-### Display
-
-```
-State differeces (if more than one state difference):
-  + `search.path` differences: if one line, print on one line
-  + `options` differences: deltas with "blah":
-    - abcdefg
-    - boomboom
-For more details you can directly access the recorded states (
-e.g. .NEW$state@search.path)
-
-`options` differences: deltas with "blah": blah blah blah blah blah blah blah
-blah blah blah blah
-
-`options` differences: 15 options with known differences
-For more details: all.equal(.NEW$state, .REF$state, mode="options")
-
-`options` differences:
-- "opt1":
-  + blah blah blah
-  + blah blah blah
-- "opt2": blah blah blah blah blah
-- "opt3":
-  + blah blah blah
-  + blah blah blah
-- "opt4":
-  + blah blah blah
-  + blah blah blah
-
-Options differences:
-- "opt1":
-  + blah blah blah
-  + blah blah blah
-- "opt2": blah blah blah blah blah
+* "max":   everything set to full reproducible
+* "safe":  search.path and options off, random.seed and
+* "basic": reproducibility only between tests, though a bit odd that safe has a
+  higher level of reproducibility than for some settings
+* "off":   everything off
 
 
 
-try you can directly access the recorded states (
-e.g. .NEW$state@search.path)
-
-```
-
+Shouldn't worry too much about 3. since translation is a secondary
+consideration.  The reasonable thing would be to run in some lower level of
+reproducibility, though annoyingly any time we re-run the tests we would have
+to use those exact settings.  This is somewhat mitigated if we
 
 
 
@@ -398,56 +355,6 @@ So do we have an additional "unitizer.load.namespace.if.not.loaded" list?  And
 does that make "unitizer.keep.namespace" redundant or do we still need both?
 Probably still need both.  So need to check that namespace was already
 pre-loaded against keep.namespace list.
-
-
-## Interface
-
-```
-unitize <- function(
-  test.file, store.id=NULL,
-  interactive.mode=interactive(),
-  par.env=getOption("unitizer.par.env"),
-  reproducible.global.settings=getOption("unitizer.global.settings"),
-  force.update=FALSE,
-  auto.accept=character(0L),
-  pre.load=NULL
-)
-```
-Interface is too complex, need to simplify.
-
-Advanced Features:
-* force.update
-* auto.accept
-
-Potential for option based:
-* history
-* interactive.mode
-
-Baseline
-* test.file
-* store.id
-
-* par.env
-
-* reproducible.state??
-* pre??
-* post??
-* history??
-
-* force.update??
-* auto.accept??
-* interactive.mode??
-
-Might be fine to keep all features upfront, provided the less useful ones are
-deprioritized in order of appearance.
-
-Should history be controlled independent of track.state?  Probably.
-
-Should par.env be controlled independent of track.state?  Probably too, but a
-bit more complicated because of intimate relationship between par.env and
-search path tracking.  Does the relationship actually need to be that intimate?
-One of the problems is that a lot of the enabling / disabling infrastructure is
-co-mingled, but maybe it doesn't need to be?
 
 
 # Scenarios to test
