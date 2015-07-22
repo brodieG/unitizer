@@ -17,7 +17,7 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
       return(
         paste0(
           "Upgrade failed: ",
-          paste0(conditionMessage(attr(object, "condition")), collapse=TRUE)
+          paste0(conditionMessage(attr(object, "condition")), collapse="")
       ) )
     }
     if(inherits(try(validObject(object, complete=TRUE)), "try-error")){
