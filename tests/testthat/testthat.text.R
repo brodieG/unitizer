@@ -41,7 +41,7 @@ local({
     )
   } )
   test_that("cap_first", {
-    set.seed(1)
+    set.seed(1, "Mersenne-Twister")
     words <- replicate(2, paste0(sample(letters, 5), collapse=""))
     WORDS <- toupper(words)
     expect_identical(
@@ -56,6 +56,7 @@ local({
   test_that("word_wrap", {
     lorem1 <- "Today, with Kiernan on the stand offering confirmation, Howard walked the jury through the enormous amount of data pulled from Ulbricht's computer. Defense lawyers haven't had a chance yet to respond to this evidence—that will likely come tomorrow. The mountain they have to climb looks higher than ever, though. Last week, Ulbricht's lawyer outlined a defense in which Ulbricht walked away from the marketplace he created and was \"lured back.\" But what will explain the dozens of folders of data on this laptop, with data from the upper echelons of Silk Road management—mixed with the most intimate details of Ulbricht's personal life?"
     lorem2 <- "/Volumes/FIXED/folder1/folder2/folder.2345/folderabac/file.text.batch"
+    lorem3 <- "\"untz.state.test\", \"add.smooth\", \"bitmapType\", \"browser\", \"browserNLdisabled\", \"CBoundsCheck\", \"check.bounds\", \"citation.bibtex.max\", \"continue\", \"contrasts\""
 
     expect_equal(
       c(18L, 25L), range(nchar(head(unitizer:::word_wrap(lorem1, 25L), -1L)))
@@ -64,32 +65,59 @@ local({
       c(23L, 25L), range(nchar(head(unitizer:::word_wrap(lorem1, 25L, 3L), -1L)))
     )
     expect_identical(
-      c("Today, with Kiernan on the stand offering co-", "nfirmation, Howard walked the jury through ", "the enormous amount of data pulled from Ulb-", "richt's computer."),
-      unitizer:::word_wrap(substr(lorem1, 1, 147), 45L, 3L)
+      unitizer:::word_wrap(substr(lorem1, 1, 147), 45L, 3L),
+      c("Today, with Kiernan on the stand offering co-", "nfirmation, Howard walked the jury through ", "the enormous amount of data pulled from Ulb-", "richt's computer.")
     )
     expect_identical(
-      c("Today, with Kiernan on the stand offering con", "firmation, Howard walked the jury through the", "enormous amount of data pulled from Ulbricht'", "s computer."),
-      unitizer:::word_wrap(substr(lorem1, 1, 147), 45L, 3L, FALSE)
+      unitizer:::word_wrap(substr(lorem1, 1, 147), 45L, 3L, FALSE),
+      c("Today, with Kiernan on the stand offering con", "firmation, Howard walked the jury through the", "enormous amount of data pulled from Ulbricht'", "s computer.")
     )
     expect_identical(
-      c("/Volumes/FIXED/", "folder1/folder2", "/folder.2345/", "folderabac/file", ".text.batch"),
-      unitizer:::word_wrap(lorem2, 15L, 3L)
+      unitizer:::word_wrap(lorem2, 15L, 3L),
+      c("/Volumes/FIXED/", "folder1/fol-", "der2/folder.23-", "45/folderabac/", "file.text.batch")
     )
     expect_identical(
-      c("/Volumes/FIXED/", "folder1/", "folder2/folder.", "2345/folderabac", "/file.text.", "batch"),
-      unitizer:::word_wrap(lorem2, 15L, 8L)
+      unitizer:::word_wrap(lorem2, 15L, 8L),
+      c("/Volumes/FIXED/", "folder1/", "folder2/folder.", "2345/fol-", "derabac/file.", "text.batch")
+
     )
     expect_identical(
-      c("hello ", "sunset ", "", "there ", "moonrise"),
-      unitizer:::word_wrap("hello sunset \nthere moonrise", width=12L)
+      unitizer:::word_wrap(lorem3, 76L, 8L),
+      c("\"untz.state.test\", \"add.smooth\", \"bitmapType\", \"browser\", \"browserNLdisab-", "led\", \"CBoundsCheck\", \"check.bounds\", \"citation.bibtex.max\", \"continue\", ", "\"contrasts\"")
+    )
+    expect_identical(
+      unitizer:::word_wrap("hello sunset \nthere moonrise", width=12L),
+      c("hello sunset", "", "there ", "moonrise")
+    )
+    x1 <- c("this is supposed to be a particularly long string\nthat allows us to test the behavior of bullets once we start seeing\nsome wrapping kicking in which was a problem once upon a time")
+    expect_identical(
+      unitizer:::word_wrap(x1, unlist=FALSE, width=80L),
+      list(c("this is supposed to be a particularly long string", "", "that allows us to test the behavior of bullets once we start seeing", "", "some wrapping kicking in which was a problem once upon a time"))
     )
   })
   test_that("bullets", {
     x <- c("there was once a time when the fantastic unicorns could fly", "bugs bunny ate carrots and drank milk while hunting ducks")
     xx <- unitizer:::UL(x)
     expect_identical(
-      c("- there was once a time when ", "  the fantastic unicorns ", "  could fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks"),
-      as.character(xx, width=30L)
+      as.character(xx, width=30L),
+      c("- there was once a time when ", "  the fantastic unicorns could", "  fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks")
+    )
+    yy <- unitizer:::OL(x)
+    expect_identical(
+      as.character(yy, width=30L),
+      c("1. there was once a time when ", "   the fantastic unicorns ",  "   could fly", "2. bugs bunny ate carrots and ", "   drank milk while hunting ",  "   ducks"),
+    )
+    expect_identical(
+      as.character(unitizer:::OL(rep(letters, 2), style="LETTERS")),
+      c(" A. a", " B. b", " C. c", " D. d", " E. e", " F. f", " G. g", " H. h", " I. i", " J. j", " K. k", " L. l", " M. m", " N. n", " O. o", " P. p", " Q. q", " R. r", " S. s", " T. t", " U. u", " V. v", " W. w", " X. x", " Y. y", " Z. z", "AA. a", "AB. b", "AC. c", "AD. d", "AE. e", "AF. f", "AG. g", "AH. h", "AI. i", "AJ. j", "AK. k", "AL. l", "AM. m", "AN. n", "AO. o", "AP. p", "AQ. q", "AR. r", "AS. s", "AT. t", "AU. u", "AV. v", "AW. w", "AX. x", "AY. y", "AZ. z")
+    )
+    xl <- as.list(x)
+    y <- unitizer:::UL(
+      c(xl, list(unitizer:::OL(c(xl, list(unitizer:::UL(x))))), "yowza it is raining toads today!")
+    )
+    expect_identical(
+      as.character(y, width=30),
+      c("- there was once a time when ", "  the fantastic unicorns could", "  fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks", "  1. there was once a time ", "     when the fantastic ", "     unicorns could fly", "  2. bugs bunny ate carrots ", "     and drank milk while ", "     hunting ducks", "    - there was once a time ", "      when the fantastic ", "      unicorns could fly", "    - bugs bunny ate carrots ", "      and drank milk while ", "      hunting ducks", "- yowza it is raining toads ",  "  today!")
     )
   })
   test_that("substr_const", {

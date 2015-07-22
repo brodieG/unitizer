@@ -83,7 +83,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       if(done(e2 <- nextItem(e2))) break
 
       item <- withRestarts(
-        exec(getItem(e2), test.env, capt.cons),
+        exec(getItem(e2), test.env, capt.cons, e1@global),
         unitizerQuitExit=unitizer_quit_handler
       )
       # If item is a section, added to the store and update the tests with the contents of

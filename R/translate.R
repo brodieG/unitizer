@@ -30,15 +30,20 @@
 #'
 #' \enumerate{
 #'   \item Start a fresh R session
-#'   \item Run your \code{testthat} tests with \code{test_file} to
-#'     ensure they are still passing.  If you cannot use \code{test_file}
-#'     because your tests require prior set-up, or are runnable only via
-#'     \code{test_check} because they directly access the namespace of your
-#'     package, see "Differences That May Cause Problems" below
-#'   \item Run \code{testthat_file_translate} or \code{testthat_dir_translate}
+#'   \item Run your \code{testthat} tests with \code{test_dir} to
+#'     ensure they are still passing.  If you cannot use \code{test_dir}
+#'     are runnable only via \code{test_check} because they directly access the
+#'     namespace of your package, see "Differences That May Cause Problems" below
+#'   \item Run \code{testthat_dir_translate}
 #'   \item [optional] use \code{\link{review}} to review the resulting
 #'      unitizer(s)
 #' }
+#' We recommend using \code{testthat_translate_dir} over
+#' \code{testthat_translate_file} because the former also copies and loads any
+#' helper files that may be defined.  Since libraries used by multiple test
+#' files are commonly loaded in these helper files, it is likely that just
+#' translating a single file without also copying the helper files will not
+#' work properly.
 #'
 #' @section How the Conversion Works:
 #'
@@ -90,30 +95,23 @@
 #' cases.
 #'
 #' When using \code{testthat_translate_dir}, any files that match
-#' \code{"^helper.*[rR]$"} are copied over to a '/helper' subdirectory
+#' \code{"^helper.*[rR]$"} are copied over to a '/_pre' subdirectory
 #' in \code{"target.dir"}, and are pre-loaded by default before the tests are
-#' \code{unitize}d.  We provide this feature for compatibility, but recommend
-#' avoiding it (see below).
+#' \code{unitize}d.
 #'
 #' @section \code{unitizer} Differences That May Cause Problems:
 #'
-#' \code{unitize} by default runs each \code{unitizer} test file in a clean
-#' environment with a clean search path.  This means that if you load libraries
-#' before you run your tests you will have to set
-#' \code{search.path.clean=FALSE} for them to be loaded in your tests.  One
-#' exception is if you load the libraries in helper files, in which case they
-#' will be available to your tests, and unloaded upon completion.
+#' DEV NOTE: UPDATE FOR STATE TRACKING
 #'
-#' If you run your tests during development with \code{test_file} odds
+#' If you run your tests during development with \code{test_dir} odds
 #' are the translation will work just fine.  On the other hand, if you rely
 #' exclusively on \code{test_check} you may need to use
 #' \code{par.env=getNamespace("pkgName")} when you translate to make sure your
 #' tests have access to the internal namespace functions.
 #'
-#' If your tests were translated with parameters \code{par.env} and/or
-#' \code{search.path.clean} changed from their default values, you will have
-#' to use the same values for those parameters in future \code{unitize} or
-#' \code{unitize_dir} runs.
+#' If your tests were translated with parameter \code{par.env} changed from
+#' its default value, you will have to use the same value for that parameter in
+#' future \code{unitize} or \code{unitize_dir} runs.
 #'
 #' @note In order for the conversion to succeed \code{testthat} must be
 #' installed on your system.  We do not rely on \code{NAMESPACE} imports to
@@ -168,8 +166,6 @@
 #'   \code{testthat_translate_dir} runs \code{testthat_translate_file})
 #' @param par.env parent environment for tests (see same argument for
 #'   \code{\link{unitize}})
-#' @param search.path.clean whether to unload search path to bare minimum before
-#'   \code{unitize}ing tests (see same argument for \code{\link{unitize}})
 #' @return a file path or a character vector (see \code{target.dir})
 #' @examples
 #' \dontrun{
@@ -197,8 +193,7 @@
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  par.env=NULL, search.path.clean=TRUE, keep.testthat.call=TRUE,
-  prompt="always", ...
+  par.env=NULL, keep.testthat.call=TRUE, prompt="always", ...
 ) {
   if(!is.null(par.env) && !is.environment(par.env))
     stop("Argument `par.env` must be an environment or NULL")
@@ -456,8 +451,8 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=TRUE,
-  keep.testthat.call=TRUE, force=FALSE, ...
+  filter="^test.*\\.[rR]", par.env=NULL, keep.testthat.call=TRUE, force=FALSE,
+  ...
 ) {
   is_testthat_attached()
   # Validate
@@ -514,7 +509,7 @@ testthat_translate_dir <- function(
     # Load helper files and copy them to new location
 
     if(length(files.helper)) {
-      dir.create(help.dir <- file.path(target.dir, "helper"))
+      dir.create(help.dir <- file.path(target.dir, "_pre"))
       file.copy(files.helper, help.dir)
     }
     # Translate files, need to unitize one by one mostly because we wrote the
@@ -544,7 +539,7 @@ testthat_translate_dir <- function(
 
     unitize_dir(
       test.dir=target.dir, auto.accept="new", par.env=par.env,
-      search.path.clean=search.path.clean, interactive.mode=FALSE
+      interactive.mode=FALSE
     )
   }
   if(length(unparseable))

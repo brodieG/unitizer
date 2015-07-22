@@ -45,11 +45,11 @@ setGeneric(
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
 
-    if(identical(y@mode, "review") && !isTRUE(y@interactive))
+    if(identical(y@mode, "review") && (!isTRUE(y@interactive) || force.update))
       stop(
         "Logic Error: attempt to enter unitizer in review mode in ",
-        "non-interactive state, which should not be possible, contact ",
-        "maintainer."
+        "non-interactive state or in force.update mode,  which should not be ",
+        "possible, contact maintainer."
       )
     browse.res <- withRestarts(
       browseUnitizerInternal(x, y, force.update=force.update),
@@ -84,9 +84,10 @@ setMethod(
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
+    quit.time <- x@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
+    if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
-    slow.run <-
-      x@eval.time > getOption("unitizer.prompt.b4.quit.time", 10)
+    slow.run <- x@eval.time > quit.time
 
     something.happened <- any(
       y@mapping@review.type != "Passed" & !y@mapping@ignored
@@ -95,15 +96,9 @@ setMethod(
     )
 
     if(!length(y)) {
-      message("No tests to review.")
+      word_msg("No tests to review.")
     } else if(!something.happened && !force.update) {
-      message("All tests passed, unitizer store unchanged.")
-    } else if(!something.happened && force.update) {
-      message(
-        "No changes to unitizer, but re-saving anyway as we are in ",
-        "\"force.update\" mode"
-      )
-      update <- TRUE
+      word_msg("All tests passed, unitizer store unchanged.")
     } else {
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
@@ -127,7 +122,7 @@ setMethod(
                   y@review <- TRUE
                 } else {
                   review.prev <- y@review
-                  y <- reviewNext(y)
+                  y <- reviewNext(y, x)
                   if(!review.prev && y@review) next
                 }
                 if(y@review) {
@@ -183,7 +178,7 @@ setMethod(
             "non-interactive mode"
           )
           break
-        } else if(!y@human && !user.quit) {  # quitting user doesn't allow us to register humanity...
+        } else if(!y@human && !user.quit && y@auto.accept) {  # quitting user doesn't allow us to register humanity...
           if(y@navigating || y@re.eval)
             stop(
               "Logic Error: should only get here in `auto.accept` mode, ",
@@ -220,10 +215,17 @@ setMethod(
             Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
             R="[R]e-evaluate", RR=""
           )
-          if(update) {
+          if(!length(x@changes) && force.update)
             word_msg(
-              "You will IRREVERSIBLY modify '", getTarget(x), "' by:", sep=""
-          ) }
+              "Running in `force.update` mode so `unitizer` will be re-saved",
+              "even though there are no changes to record (see `?unitize` for",
+              "details)."
+            )
+          if(update)
+            word_msg(
+              "You will IRREVERSIBLY modify '", getTarget(x), "'",
+              if(length(x@changes)) " by", ":", sep=""
+            )
           if(length(x@changes) > 0) {
             show(x@changes)
             cat("\n")
@@ -311,7 +313,7 @@ setMethod(
 
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
-      base.env=x@base.env, test.file.loc=x@test.file.loc
+      base.env=x@base.env, test.file.loc=x@test.file.loc, state.ref=x@state.new
     )
     unitizer <- unitizer + items.ref
 
@@ -349,7 +351,7 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 #' @keywords internal
 
 setMethod("reviewNext", c("unitizerBrowse"),
-  function(x, ...) {
+  function(x, unitizer, ...) {
     curr.id <- x@last.id + 1L
     if(x@last.reviewed) {
       last.reviewed.sec <-
@@ -358,8 +360,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@mapping@sub.sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
       furthest.reviewed <- if(length(which(x@mapping@reviewed)))
         max(which(x@mapping@reviewed)) else 0L
+      last.id.rel <-
+        x@mapping@item.id.rel[[which(x@mapping@item.id == x@last.reviewed)]]
     } else {
-      last.reviewed.sec <- last.reviewed.sub.sec <- furthest.reviewed <- 0L
+      last.reviewed.sec <- last.reviewed.sub.sec <- furthest.reviewed <-
+        last.id.rel <- 0L
     }
     x@last.reviewed <- curr.id
 
@@ -368,6 +373,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     cur.sub.sec.items <-
       x@mapping@sub.sec.id == curr.sub.sec & x@mapping@sec.id == curr.sec
     curr.sub.sec.obj <- x[[curr.sec]][[curr.sub.sec]]
+    if(last.id.rel)
+      last.sub.sec.obj <- x[[last.reviewed.sec]][[last.reviewed.sub.sec]]
     id.rel <- x@mapping@item.id.rel[[which(x@mapping@item.id == curr.id)]]
 
     # Display Section Headers as Necessary
@@ -442,9 +449,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
               collapse=", "
             ),
             ")?\n"
-        ) }
-      )
-    }
+    ) } ) }
     # Retrieve actual tests objects
 
     item.new <- if(!is.null(curr.sub.sec.obj@items.new))
@@ -459,6 +464,25 @@ setMethod("reviewNext", c("unitizerBrowse"),
       item.main <- item.new
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
     }
+    # Retrieve previous object so we can use the global settings data to figure
+    # out if we need to reset the global settings; this is not 100% perfect
+    # since we are setting up the environment as of test completion, but for
+    # the show stuff for errors we might want the status before the test; should
+    # really not matter in almost all circumstances
+
+    last.glob.set <- if(last.id.rel) {
+      last.item.new <- if(!is.null(last.sub.sec.obj@items.new))
+        last.sub.sec.obj@items.new[[last.id.rel]]
+      last.item.ref <- if(!is.null(last.sub.sec.obj@items.ref))
+        last.sub.sec.obj@items.ref[[last.id.rel]]
+      if(is.null(last.item.new)) {
+        last.item.ref@glob.indices
+      } else last.item.new@glob.indices
+    } else new("unitizerGlobalIndices")
+
+    if(!identical(last.glob.set, item.main@glob.indices))
+      x@global$reset(item.main@glob.indices)
+
     # Show test to screen, but only if the entire section is not ignored, and
     # not passed tests and requesting that those not be shown
 
@@ -472,7 +496,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       cat(deparse_prompt(item.main@call), sep="\n")
 
       # If there are conditions that showed up in main that are not in reference
-      # show the message, and set the trace if relevant
+      # show the message, and set the trace if relevant; options need to be
+      # retrieved from unitizer object since they get reset
+
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
@@ -480,13 +506,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
         if(nchar(item.main@data@message))
           screen_out(
             item.main@data@message,
-            max.len=getOption("unitizer.test.msg.lines"), stderr()
+            max.len=unitizer@global$unitizer.opts[["unitizer.test.msg.lines"]],
+            stderr()
           )
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
       if(curr.sub.sec.obj@show.out && nchar(item.main@data@output))
-        screen_out(item.main@data@output)
-
+        screen_out(
+          item.main@data@output,
+          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
+        )
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
 
@@ -494,11 +523,30 @@ setMethod("reviewNext", c("unitizerBrowse"),
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
       ) {
-        summary(curr.sub.sec.obj@show.fail[[id.rel]])
+        err.obj <- curr.sub.sec.obj@show.fail[[id.rel]]
+        err.obj@.max.out.len <-
+          unitizer@global$unitizer.opts[["unitizer.test.fail.out.lines"]]
+        summary(err.obj)
         eval(  # must eval to make sure that correct methods are available when outputing failures to screen
-          call("show", curr.sub.sec.obj@show.fail[[id.rel]]),
+          call("show", err.obj),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
+        # Extract specific state based on indices and attach the to the objects;
+        # these objects will be discarded so we don't need to worry about
+        # nulling them out
+
+        item.new@state <- unitizerGlobalStateExtract(
+          unitizer@state.new, item.new@glob.indices
+        )
+        item.ref@state <- unitizerGlobalStateExtract(
+          unitizer@state.ref, item.ref@glob.indices
+        )
+        state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
+        if(!isTRUE(state.comp))
+          word_msg(
+            "Additionally, there are state differences between new and",
+            "reference tests (check with `diff_state()`)."
+          )
     } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed

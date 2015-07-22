@@ -5,9 +5,15 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-Version: 0.9.0
-Author: Brodie Gaslam
-Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
+Version: 1.0.1
+Authors@R: c(
+    person(
+    "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
+    role=c("aut", "cre")),
+    person(
+    family="R Core Team",
+    email="R-core@r-project.org", role="cph",
+    comment="Copy of source for library / attach / detach"))
 Depends:
     R (>= 3.1.2)
 Imports:
@@ -25,6 +31,8 @@ Collate:
     'list.R'
     'asciiml.R'
     'text.R'
+    'is.R'
+    'global.R'
     'conditions.R'
     'item.R'
     'deparse.R'
@@ -40,20 +48,23 @@ Collate:
     'capture.R'
     'demo.R'
     'faux_prompt.R'
+    'fun.ref.R'
     'get.R'
     'heal.R'
-    'is.R'
     'load.R'
     'ls.R'
     'misc.R'
+    'search.R'
+    'options.R'
     'onload.R'
     'parse.R'
     'rename.R'
     'repairenvs.R'
+    'shims.R'
+    'state.compare.R'
     'translate.R'
     'unitize.R'
     'unitize.core.R'
     'unitizer-package.r'
     'unitizer.add.R'
     'upgrade.R'
-    'zeroenv.R'

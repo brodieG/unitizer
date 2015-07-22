@@ -42,19 +42,11 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 * should we keep objects that user creates while browsing across tests?
   probably, but we don't right now.
-* accept all (hidden?) option
-  * Right now comes up most when removing tests and wanting them all deleted
-    w/o having to review every single one
-* Deleted tests getting attributed to `Total` while showing a column of zeros is
-  confusing; maybe should be it's own line
 * Current behavior of automatically storing new non-tests and discarding
   reference non tests can be potentially confusing to someone examining the
   environment and not realizing the object they are looking at is not the same
   that was used in the evaluation of the reference test; need to think about
   now to handle this (throw warning whenever such objects are accessed?)
-* Sometimes we want to replace a test with a variation on it, with the expectation
-  that the result is unchanged; how do we provide a mechanism for the user to
-  do this?  Some system to browse all the tests and extract the objects there-in?
 * Should ESC be treated the same way as `Q`?  Right now causes an unexpected exit
   with loss of all work.
 * Adding a browser inside `browse` source code, and then Q from browser() env
@@ -70,9 +62,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * And how to make it clear that tests are ordered first by test outcome, and as
   a result a display order will not be the same as the order in the file?
   Document clearly?
-* removed tests coming last?  Trying to match them back to a section is too
-  onerous, and besides, likely wouldn't have them in the same spot anyway.
-
 
 ## Internal
 
@@ -105,9 +94,6 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Conditions
 
-* Implement getCond() to supplement getConds()?  Or maybe add note to
-  print.getConds() that makes it clear how to get the full message for a given
-  condition?
 * not sure that condition comparison function should automatically loop
   through lists. this complicates the function substantially, though it
   does have the advantage of allowing the user to handle the cases were
@@ -148,62 +134,228 @@ possible dispatch to contend with.  We also haven't been super consistent, as
 in some cases we do not use S4 methods.  Need to rationalize all of this at
 some point.
 
-## Handling Passed Tests
+## Side Effects
 
-Need to do this in order to implement a review capability for unitizers that
-have been stored.
+### Overview
 
-* Modify as.character.unitizerBrowse so we have the option of reviewing all
-  tests, not just those that have been reviewed
-* create a unitizerBrowseSubSectionPass
-* Need to preserve reference sections, this is the single most important part.
-  Looks like we need to, in the browse process, keep track of the section that
-  each item was in.
-* Main issue seems to be whether we can re-use browserPrep, which seems
-  challenging since we would have completely different logic depending on
-  whether it is being called from `unitize` or from `review`.
-* Actually browserPrep is not the main issue.  The main issue is whether we can
-  use `browse`, as that's where the PITA stuff happens.  This means we have to
-  pull out the `browsePrep` stuff from `browse` and move it to `unitize` so we
-  can have a different `browsePrep`for tests that we're reviewing.
-* Do we need a new `unitizer` class? `unitizer`, which is for the live review
-  of new and old tests, and `unitizerStore` which is the version that gets
-  stored?  This resolves the problem with browserPrep.
-* Or alternatively, do we spoof a version of a normal unitizer?  Move all the
-  tests back to `items.new`, and then add a flag to `browserPrep`, this seems
-  most promising, we just need to preserve all the data.  Maybe we don't actually
-  move stuff to items.ref until we reload the unitizer, insted of doing so just
-  before we save it.  But this may require too much re-org of existing structure
-  (healenvs, etc.).
+Rationalizing side effects.
 
-Strategy for recovering sections
+Major types:
 
-* parent sections are tracked in the unitizerBrowse objects
-* these are available in processInput
-    * can attach section to each item
-* then +,unitizer,unitizerItems-method will need to:
-    * pull out section ids
-    * copy sections from the new test section to reference
-    * handle situations where sections were not recorded, gracefully
+* search path changes (library / attach / etc)
+* options
+* working directory changes
 
-Potential issue: tracking sections from older reference tests
+Types that are treated differently
 
-* Not really an issue so long as we re-assign the section always in processInput
-* Main problem is for tests that are deleted from new source file but kept by
-  user; these should just be assigned an NA section, which can be re-labeled as
-  removed/missing tests when browsing, though might need some explanation
+* history
+* reference objects             # can't do anything yet (hashing in future?)
+* evaluation environment        # is this changeable?  Not really
+* search path keep?
 
-We want to re-use browse infrastructure as much as possible
+Simplified implementation:
 
-* A version of browsePrep that handles items.ref instead of the just run tests
-* Add all the passed tests to the existing version of browsePrep
-* reviewNext needs a mode to suppress the passed tests, vs one that doesn't
-* One problem here is that when re-loading a store, we're dealing with stuff in
-  ref, whereas with passed tests we're dealing with stuff in new.  Does that mean
-  that we need to move the reference stuff to new?  Probably, but not really
-  desirable given all the dependencies involved with building up `items.new`
-* Actually, re ^^, looks like we can just do this by passing hte ref items as
-  new to the browser sub-section.
+* special treatment
+* no special treatment
+
+Different meaning for each of the types of things.
+
+### Default Settings
+
+Unfortunately reproducible state can cause issues with packages that cannot
+be unloaded (e.g. data.table) and also likely to be a little less robust since
+we are doing a lot of borderline stuff to make it happen.  Questions then:
+
+1. Should default mode be full on reproducible state?
+2. What should be the interplay between reproducible state and the parent
+   environment?
+3. What about for translated testthat tests that are pretty much guaranteed not
+   to have been written in reproducible mode?
+
+Additionally, would be nice to be able to change just one value of reproducible
+state instead of having to do the entire settings string.  Perhaps the best
+interface is a combination of either a single string value for a preset, and
+the full named integer vector.  For example:
+
+* "max":   everything set to full reproducible
+* "safe":  search.path and options off, random.seed and
+* "basic": reproducibility only between tests, though a bit odd that safe has a
+  higher level of reproducibility than for some settings
+* "off":   everything off
+
+
+
+Shouldn't worry too much about 3. since translation is a secondary
+consideration.  The reasonable thing would be to run in some lower level of
+reproducibility, though annoyingly any time we re-run the tests we would have
+to use those exact settings.  This is somewhat mitigated if we
+
+
+
+### Philosophy
+
+Offer two options for each setting:
+
+* 0: Nothing (don't track / reset, etc.)
+* 1: Track (includes resetting between unitizers, but accepting initial state as is)
+* 2: Zero-set
+
+There is some interplay between search path and options, particularly because
+many options are often set up when a path is first loaded.  Perhaps this means
+that you can only have zero-set options if you also have zero set search path.
+
+Additionally this means that the search path trimming should happen with
+unloading namespaces as well so that when they are re-attached onload scripts
+get run again (and define options as they often do)?
+
+### Seed Tracking
+
+The Mersenne Seed is way too large, need to use Marsaglia Multi Carry or some
+such.
+
+### Options Tracking
+
+It is viable to store all the non-function options in each unitizer (2-3KB
+expected per unitizer).  But there are a few issues:
+
+* what to do before any tests are run (i.e. with options that come from global)
+* after each test is run (undo option changes)?
+
+Details
+
+* several options are system specific and could potentially cause problems when
+  running tests on different machines
+* we have to drop function type options
+  * typically non impacting to tests, and fairly large (e.g. `editor`)
+  * what about options(error=XXX)?, which is often a function
+  * loosely related, `options(error=NULL)` is technically not set
+* maybe we record
+
+Possibilities
+
+* options changed by tests are reset
+* options changed by user / system are not reset, but if any tests fails then
+  we alert to them
+  * need mechanism to review options
+  * complicated because each unitizer in a directory could have been run with
+    different set of options
+  * additionally even if we log initial set of reference options, we are not
+    tracking the changes that happened (at least not without much more logging)
+    so if a user inspects the option delta for a particular test they may not
+    get the actual reference options as they were for that test
+  * one option would be to report that there was a difference in options when
+    the the tests began to be evaluated (if there is an error)
+* Alternate approach is to track a well know subset of options, and ignore all
+  others.  Or perhaps better, keep a list of well known options that should
+  not be tracked...  Really we want to know all system specific options.
+
+Should we make a distinction between options being changed by user vs. by
+tests?  The easiest thing to do would be that.
+
+And how do options like working directory fit in all this?  Do we want to change
+it to a directory that may not exist?  Should it be test-writer responsibility
+to make sure they don't have any relative path references?
+
+Some of these global settings are almost certainly going to be different even
+when comparing the creation run to the R CMD check run.  I guess we could force
+them to be the same, but what does that even mean for stuff like working
+directory?
+
+So again, two broad categories:
+
+* state that is the same for each test file
+  * working directory
+* state that is the same across unitizer runs
+  * empty parent env (sort off)
+  * search path (more or less, can get messed up by search.path.keep)
+  * options?
+  * random.seed
+
+Go the whole hog, track all options and store them for reference tests, need a
+lighter weight mechanism for storing the options.  Store only deltas and
+recompute them as needed?  Would need getOldState functions that would just pull
+the requested entry for most states, but for options would recompute them from
+early data.  The main issue remains that there options are that need to be
+different when run in different environments, such as:
+
+* pager
+* pdfviewer
+* device
+* width!
+
+etc.  Can we realistically have a list of options not to change?  If we get it
+wrong bad things would happen.  What if packages introduce options that are
+system specific?  Then they should get loaded on package attach, and will be
+different
+
+### Options And Namespaces
+
+There is an additional complication with options which is how to handle the
+default options that get set by the `.onLoad` hooks.  In order for everything
+to work well, we need to fully unload a namespace so that next time
+`library` is called with the same package, the `.onLoad` hooks are kicked off.
+Unfortunately, some packages (cough, data.table) cannot be unloaded (and more
+generally R docs warn full unloads are not really well supported).
+
+We can't just run `.onLoad` as in a normal `.onLoad` the package environment
+is unlocked and `.onLoad` hook scripts expect to be able to modify bindings in
+the namespace.
+
+So, what is the most reasonable compromise for this?  If some namespaces are
+not unloaded, then we have to make sure the options set by those namespaces are
+not undone at any point.  So suppose we start with a blank slate, then:
+
+* `library(data.table)`
+* do a bunch of stuff
+* go to reset state
+
+We can prevent the unloading of the `data.table` namespace easily enough, but
+we cannot undo any options without risking undoing `data.table` options.  In
+fact given that the `data.table` namespace may have been loaded even before
+we kick off `unitizer`, we can't even see what options were added by
+`data.table`.
+
+It seems that if one of the no-unload namespaces is loaded at any time then we
+must set the options tracking to 0 if.  Actually, there are three types of
+situations:
+
+1. no-unload loaded before we even run unitizer
+2. loaded in pre-loads
+3. loaded only in pre-loads (i.e. not loaded before hand at all)
+4. loaded in a unitizer file
+
+For 1. and 2., we can run in modes 0 and 1.  For 3. we can run in 0:2, but since
+we don't unload the namespace that only works the first time since the second
+time we run the namespace will already be loaded...  Not super useful.  For
+4. we can only run in mode 0.
+
+Hmm, even for 2. running in mode 1 we might have a problem since we would still
+be trying to undo the pre-loads, which would undo the options, but not the
+no-unload namespaces and dump us back to the normal R prompt in that state.
+
+Let's say we run into one of these namespaces in an incompatible mode; what do
+we do?
+
+1. Throw a warning and change modes to compatible mode?
+2. Throw an error indicating what mode would be compatible?
+
+Another possible work-around is to force a namespace load even before the
+initial state recording and then run in mode 1 so that we don't undo that
+namespace load.
+
+Gah... and WTF do we do about all the potentially unloadable namespaces that
+we can no longer unload because an unloadable namespace imports them?  This
+greatly complicates the problem.
+
+More and more it seems like we need to narrowly define the acceptable modes,
+which seem to be 0, or 1 iff the namespace was already loaded by the time we
+hit pre-loads.
+
+So do we have an additional "unitizer.load.namespace.if.not.loaded" list?  And
+does that make "unitizer.keep.namespace" redundant or do we still need both?
+Probably still need both.  So need to check that namespace was already
+pre-loaded against keep.namespace list.
+
 
 # Scenarios to test
 

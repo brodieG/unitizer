@@ -18,7 +18,8 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
     unitizer.browse <- new(
-      "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive
+      "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive,
+      global=x@global
     )
     # - Unitize ----------------------------------------------------------------
 
@@ -255,9 +256,11 @@ setClass("unitizerBrowse", contains="unitizerList",
     inspect.all="logical",      # whether to force inspection of all elements, whether ignored/passed or not
     navigating="logical",       # whether user has triggered at least one navigation command
     human="logical",            # whether user has had any interaction at all
-    re.eval="integer",          # so navigate prompt can communciate back re-eval status
-    interactive="logical",      # whether to browse in interactie mode
-    interactive.error="logical" # whether in non-interactive mode but required input
+    re.eval="integer",          # so navigate prompt can communicate back re-eval status
+    interactive="logical",      # whether to browse in interactive mode
+    interactive.error="logical",# whether in non-interactive mode but required input
+    global="unitizerGlobal",    # object for global settings
+    auto.accept="logical"       # indicate whether any auto-accepts were triggered
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -271,18 +274,20 @@ setClass("unitizerBrowse", contains="unitizerList",
     human=FALSE,
     re.eval=0L,
     interactive=FALSE,
-    interactive.error=FALSE
+    interactive.error=FALSE,
+    auto.accept=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
       return("Slot `@mode` must be character(1L) in c(\"unitize\", \"review\")")
     }
-    if(length(object@review) != 1L || is.na(object@review))
-      return("Slot `@review` must be logical(1L) and not NA.")
-    if(length(object@inspect.all) != 1L || is.na(object@inspect.all))
-      return("Slot `@inspect.all` must be logical(1L) and not NA.")
-    if(length(object@navigating) != 1L || is.na(object@navigating))
-      return("Slot `@navigating` must be logical(1L) and not NA.")
+    if(!is.TF(object@review)) return("Slot `@review` must be TRUE or FALSE")
+    if(!is.TF(object@inspect.all))
+      return("Slot `@inspect.all` must be TRUE or FALSE")
+    if(!is.TF(object@navigating))
+      return("Slot `@navigating` must be TRUE or FALSE")
+    if(!is.TF(object@auto.accept))
+      return("Slot `@auto.accept` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
       return("Slot `@re.eval` must be integer(1L) and in 0:2")
     TRUE

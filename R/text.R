@@ -29,7 +29,8 @@ screen_out <- function(
 #' @param obj.rem.name object to compare
 #' @param obj.add.name object to compare
 #' @param width at what width to wrap output
-#' @param max.len 2 length integer vector with first value threshold at which we start trimming output
+#' @param max.len 2 length integer vector with first value threshold at which we
+#'   start trimming output and the second the length we tri to
 #' @param file whether to show to stdout or stderr
 #' @param frame what frame to capture in, relevant mostly if looking for a print
 #'   method
@@ -38,9 +39,21 @@ screen_out <- function(
 diff_obj_out <- function(
   obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
   obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
-  max.len=getOption("unitizer.test.fail.out.lines"),
-  file=stdout(), frame=parent.frame()
+  max.len=NULL, file=stdout(), frame=parent.frame()
 ) {
+  err.type <- "Argument"
+  if(is.null(max.len)) {
+    max.len <- getOption("unitizer.test.fail.out.lines")
+    err.type <- "Option"
+  }
+  if(
+    !is.numeric(max.len) || !identical(length(max.len), 2L) || any(max.len < 1)
+  )
+    stop(
+      err.type, " `unitizer.test.fail.out.lines` must be integer(2L) and ",
+      "greater than or equal to 1"
+    )
+  max.len <- as.integer(max.len)
   frame # force
   tar.width <- width - 4L
   obj.add.capt <- obj_capt(obj.add, tar.width, frame)
@@ -57,17 +70,16 @@ diff_obj_out <- function(
     first.diff <- max(1L, min.len - max.len[[1L]] + 1L)
     max.len <- rep(max.len[[1L]], 2L)
   }
-  cat(sep="\n",
-    res <- c(
-      obj_screen_chr(
-        obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
-        width=tar.width, pad="-   "
-      ),
-      obj_screen_chr(
-        obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
-        width=tar.width, pad="+   "
-      )
+  res <- c(
+    obj_screen_chr(
+      obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
+      width=tar.width, pad="-   "
+    ),
+    obj_screen_chr(
+      obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
+      width=tar.width, pad="+   "
   ) )
+  if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
 # @keywords internal
@@ -253,23 +265,23 @@ word_wrap <- function(
   )
   vows <- "[aeiouyAEIOUY]"
   ltrs <- "[a-zA-Z]"
-  seps <- "[^a-zA-Z0-9']"
-  base.ptrn <- paste0(
-    "(?:",
-      "(?:(.*%s).{0,", max(tolerance - 1L, 0L), "}.)|",
-      "(?:(.*%s).{0,", tolerance, "})",
-    ")$"
-  )
-  spc.ptrn <- sprintf(base.ptrn, "\\s", "\\s")
-  non.alph.ptrn <- sprintf(base.ptrn, seps, seps)
+  base.ptrn <- paste0("(.*%s).{0,", tolerance, "}$")
+  non.alph.ptrn <- paste0("(.*\\W)\\w{0,", max(tolerance - 1L, 0L), "}.$")
+  spc.ptrn <- sprintf(base.ptrn, "\\s")
   hyph.base <- paste0(
-    "^(.*[A-Za-z]*%s[A-Za-z]*%s)%s[A-Za-z].{0,", tolerance, "}$"
+    "^(.*\\S*%s\\S*%s)%s\\S.{0,", tolerance, "}$"
   )
+  # patterns mark places that you can insert a hyphen in, in order of preference
+  # though right now there is no trade-off at all between how many more
+  # characters you need to cut off to get the better match, which perhaps we
+  # should explore
+
   hyph.ptrns <- c(
     sprintf(hyph.base, vows, cons, cons.no.h),
     sprintf(hyph.base, ltrs, cons, vows),
     sprintf(hyph.base, ltrs, vows, cons),
-    sprintf(hyph.base, ltrs, vows, vows)
+    sprintf(hyph.base, ltrs, vows, vows),
+    sprintf(hyph.base, ".", ".", ".")      # catch-all allows hyphen anyplace
   )
   break_char <- function(x) {
     lines.raw <- ceiling(nchar(x) / (width - tolerance))
@@ -281,11 +293,11 @@ word_wrap <- function(
       pad <- 0L  # account for hyphen
       if(nchar(x) > width) {
         x.sub <- substr(x, 1L, width + 1L)
-        x.trim <- sub(spc.ptrn, "\\1\\2", x.sub)
-        matched <- grepl(spc.ptrn, x.sub)
+        x.trim <- sub(spc.ptrn, "\\1", x.sub, perl=TRUE)
+        matched <- grepl(spc.ptrn, x.sub, perl=TRUE)
         if(!matched) {
-          x.trim <- sub(non.alph.ptrn, "\\1\\2", x.sub)
-          matched <- grepl(non.alph.ptrn, x.sub)
+          x.trim <- sub(non.alph.ptrn, "\\1", x.sub, perl=TRUE)
+          matched <- grepl(non.alph.ptrn, x.sub, perl=TRUE)
         }
         # Attempt to hyphenate
 
@@ -293,8 +305,8 @@ word_wrap <- function(
         if(hyphens) {
           if(!matched) {
             for(pat in hyph.ptrns) {
-              x.trim <- sub(pat, "\\1", x.sub)
-              matched <- grepl(pat, x.sub)
+              x.trim <- sub(pat, "\\1", x.sub, perl=TRUE)
+              matched <- grepl(pat, x.sub, perl=TRUE)
               if(matched) {
                 x.trim <- paste0(x.trim, "-")
                 pad <- 1L
@@ -306,7 +318,8 @@ word_wrap <- function(
         x.trim <- substr(x.trim, 1L, width)  # we allow one extra char for pattern matching in some cases, remove here
         x <- sub(  # remove leading space if any
           "^\\s(.*)", "\\1",
-          substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x))
+          substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x)),
+          perl=TRUE
         )
       } else {
         x.trim <- x
@@ -317,10 +330,12 @@ word_wrap <- function(
     }
     res[1L:(res.idx - 1L)]
   }
+  # x.lst workaround required because `strsplit` swallows zero char char items!!
+
   x.lst <- as.list(x)
   x.lst[nchar(x) > 0] <- strsplit(gsub("\n", "\n\n", x[nchar(x) > 0]), "\n")     # replace new lines with 0 char item
-  x.exp <- unlist(x.lst)  # x.lst workaround required because `strsplit` swallows zero char char items!!
-  res <- lapply(x.exp, break_char)
+  #x.exp <- unlist(x.lst)
+  res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
   if(unlist) unlist(res) else res
 }
 #' Print To Screen Wrapping Words

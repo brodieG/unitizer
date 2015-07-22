@@ -3,6 +3,7 @@
 #' @include conditions.R
 #' @include class_unions.R
 #' @include list.R
+#' @include global.R
 
 NULL
 
@@ -69,7 +70,9 @@ setClass(
     trace="list",
     data="unitizerItemData",
     section.id="integer",
-    section.name="character"
+    section.name="character",
+    glob.indices="unitizerGlobalIndices",
+    state="unitizerGlobalState"
   ),
   prototype(
     reference=FALSE, ignore=FALSE, id=1L,
@@ -111,7 +114,8 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
   dots.names <- names(dots.all)
-  if(!("call" %in% dots.names)) .Object@call <- NULL else .Object@call <- dots.all$call
+  if(!("call" %in% dots.names))
+    .Object@call <- NULL else .Object@call <- dots.all$call
   if("env" %in% dots.names) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&
@@ -125,6 +129,8 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   }
   if("comment" %in% dots.names) .Object@comment <- dots.all$comment
   if("trace" %in% dots.names) .Object@trace <- dots.all$trace
+  if("glob.indices" %in% dots.names)
+    .Object@glob.indices <- dots.all$glob.indices
   dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
@@ -315,11 +321,14 @@ setMethod("$", c("unitizerItem"),
     what <- substitute(name)
     what <- if(is.symbol(what)) as.character(what) else name
     data.slots <- slotNames(x@data)
+    extras <- c("call", "state")
+    valid <- c(extras, data.slots)
+    if(what %in% c("call", "state")) return(slot(x, what))
     if(identical(what, "call")) return(x@call)
-    else if(length(what) != 1L || ! what %in% data.slots) {
+    if(length(what) != 1L || !what %in% data.slots) {
       stop(
         "Argument `name` must be in ",
-        paste0(deparse(c("call", data.slots), width.cutoff=500L), collapse=", ")
+        paste0(deparse(valid, width.cutoff=500L), collapse=", ")
     ) }
     slot(x@data, what)
 } )

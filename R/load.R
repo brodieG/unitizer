@@ -11,11 +11,13 @@
 #' @param test.file the R file associated with the store id
 #' @param force.upgrade whether to allow upgrades in non-interactive mode, for
 #'   testing purposes
+#' @param global the global tracking object
 #' @return a \code{unitizer} object, or anything, in which case the calling
 #'   code should exit
 
 load_unitizers <- function(
-  store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE
+  store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE,
+  global=unitizerGlobal$new()
 ) {
   if(!is.character(test.files))
     stop("Argument `test.files` must be character")
@@ -81,7 +83,10 @@ load_unitizers <- function(
       attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
       if(inherits(attempt, "try-error")) {
         msg <- conditionMessage(attr(attempt, "condition"))
-        if(nchar(msg)) msg else "unitizer validity check failed"
+        paste0(
+          c("unitizer object is invalid", if(nchar(msg)) c(": ", msg)),
+          collapse=""
+        )
       } else ""
     },
     character(1L)
@@ -97,9 +102,10 @@ load_unitizers <- function(
     function(x)
       if(
         !is(x, "unitizer") ||
-        inherits(x.ver <- try(x@version, silent=TRUE), "try-error") ||
-        !is.package_version(x.ver)
-      ) null.version else x@version
+        inherits(
+          x.ver <- try(package_version(x@version), silent=TRUE), "try-error"
+        ) || !is.package_version(x.ver)
+      ) null.version else x.ver
   )
   version.out.of.date <- vapply(
     versions, function(x) !identical(x, null.version) && curr.version > x,
@@ -174,6 +180,7 @@ load_unitizers <- function(
     unitizers[[i]]@id <- norm_store_id(store.ids[[i]])
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
     parent.env(unitizers[[i]]@zero.env) <- par.frame
+    unitizers[[i]]@global <- global
     unitizers[[i]]@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
   }
   unitizers[!seq(unitizers) %in% valid.idx] <- FALSE
@@ -216,6 +223,15 @@ load_unitizers <- function(
   new("unitizerObjectList", .items=unitizers)
 }
 
+#' Need to make sure we do not unintentionally store a bunch of references to
+#' objects or namespaces we do not want:
+#'
+#' \itemize{
+#'   \item reset parent env to be base
+#'   \item remove all contents of base.env (otherwise we get functions with
+#'     environments that reference namespaces)
+#' }
+#'
 #' @keywords internal
 #' @rdname load_unitizers
 
@@ -225,6 +241,8 @@ store_unitizer <- function(unitizer) {
   old.par.env <- parent.env(unitizer@zero.env)
   on.exit(parent.env(unitizer@zero.env) <- old.par.env)
   parent.env(unitizer@zero.env) <- baseenv()
+  unitizer@global <- NULL  # to avoid taking up a bunch of storage on large object
+  rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {

@@ -118,14 +118,17 @@ filename_to_storeid <- function(x) {
 #'
 #' @keywords internal
 
-history_capt <- function() {
+history_capt <- function(hist.file=NULL) {
   # set up local history
+
+  if(is.null(hist.file)) return(list(con=NULL, file=NULL))
 
   hist.try <- try(savehistory(), silent=TRUE)
   if(inherits(hist.try, "try-error"))
     warning(conditionMessage(attr(hist.try, "condition")))
-  hist.file <- tempfile()
-  hist.con <- file(hist.file, "at")
+  hist.con <- try(file(hist.file, "at"))
+  if(inherits(hist.con, "try-error"))
+    stop("Unable to open a connection to file provided for history")
   cat(
     "## <unitizer> (original history will be restored on exit)\n",
     file=hist.con
@@ -139,6 +142,8 @@ history_capt <- function() {
   list(con=hist.con, file=hist.file)
 }
 history_release <- function(hist.obj) {
+  if(all(vapply(hist.obj, is.null, logical(1L))))
+    return(invisible(TRUE))
   close(hist.obj$con)
   file.remove(hist.obj$file)
   hist.try <- try(loadhistory(), silent=TRUE)
@@ -149,8 +154,7 @@ history_release <- function(hist.obj) {
 #' Simplify a Path As Much as Possible to Working Directory
 #'
 #' @param wd NULL or character(1L) resolving to a directory, if NULL will be
-#'   resolved to either \code{getwd} or what \code{getwd} was at the beginning
-#'   of a \code{unitizer} run
+#'   resolved to \code{getwd};
 #' @param only.if.shorter logical(1L) whether to relativize only if the
 #'   resulting \code{path} is shorter than the input
 #' @keywords internal
@@ -165,13 +169,7 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     !file_test("-d", wd)
   )
     stop("Argument `wd` must be NULL or a reference of to a directory")
-  if(is.null(wd)) {
-    wd <- if(
-      inherits(try(pack.env, silent=TRUE), "try-error") ||
-      !is.character(pack.env$wd) || !identical(length(pack.env$wd), 1L) ||
-      !file.exists(pack.env$wd)
-    ) getwd() else pack.env$wd
-  }
+  if(is.null(wd)) wd <- getwd()
   wd <- try(normalizePath(wd, mustWork=TRUE), silent=TRUE)
   res <- if(
     !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
