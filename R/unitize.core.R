@@ -256,7 +256,8 @@ unitize_core <- function(
     active <- intersect(eval.which, which(valid)) # kind of implied in `eval.which` after first loop
 
     # Load / create all the unitizers; note loading envs with references to
-    # namespace envs can cause state to change so we need to record it here
+    # namespace envs can cause state to change so we need to record it here;
+    # also, `global` is attached to the `unitizer` here
 
     unitizers[active] <- load_unitizers(
       store.ids[active], test.files[active], par.frame=util.frame,

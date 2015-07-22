@@ -239,7 +239,7 @@ unitizerGlobal <- setRefClass(
   ),
   methods=list(
     initialize=function(
-      ..., disabled=FALSE, enable.which=.unitizer.global.settings.names,
+      ..., disabled=FALSE, enable.which=character(0L),
       par.env=new.env(parent=baseenv())
     ) {
       obj <- callSuper(..., par.env=par.env)

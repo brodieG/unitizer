@@ -17,7 +17,7 @@
 
 load_unitizers <- function(
   store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE,
-  global=global
+  global=unitizerGlobal$new()
 ) {
   if(!is.character(test.files))
     stop("Argument `test.files` must be character")
