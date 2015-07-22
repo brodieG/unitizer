@@ -144,7 +144,7 @@ make_let_combn_fun <- function(dat) {
     paste0(head(sort(do.call(paste0, do.call(expand.grid, let.list))), x), ".")
 } }
 .bullet.funs <- list(
-  numbers=function(x) paste0(as.character(seq.int(x)), "."),
+  numbers=function(x) paste0(seq.int(x), "."),
   letters=make_let_combn_fun(letters),
   LETTERS=make_let_combn_fun(LETTERS)
 )
@@ -210,7 +210,10 @@ bullet_with_offset <- function(x, width, pad=0L) {
   pad.num <- pad + attr(x, "offset")
   pad <- paste0(rep(" ", pad.num), collapse="")
   char.vals <- vapply(x, is.character, logical(1L))
-  char.pad <- paste0(pad, format(attr(x, "bulleter")(sum(char.vals))), " ")
+  char.pad <- paste0(
+    pad,
+    format(attr(x, "bulleter")(sum(char.vals)), justify="right"), " "
+  )
   char.pad.size <- nchar(char.pad[[1L]])
   text.width <- max(width - char.pad.size, 8L)
   char.wrapped <- word_wrap(
