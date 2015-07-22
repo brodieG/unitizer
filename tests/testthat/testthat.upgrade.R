@@ -7,6 +7,6 @@ test_that("Upgrade works", {
 
   unitizer.up <- unitizer:::upgrade_internal(unitizer)
   expect_true(validObject(unitizer.up))
-  expect_equal(unitizer.up@version, packageVersion("unitizer"))
+  expect_equal(unitizer.up@version, as.character(packageVersion("unitizer")))
 })
 

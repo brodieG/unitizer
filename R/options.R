@@ -131,6 +131,7 @@ options_update <- function(tar.opts) {
 }
 
 .unitizer.opts.default <- list(
+  unitizer.par.env=NULL,                   # NULL means use the special unitizer environment
   unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
   unitizer.disable.capt=FALSE,             # Will prevent capture
   unitizer.test.out.lines=c(50L, 15L),     # How many lines to display when showing test values, or truncate to if exceeds
@@ -162,17 +163,12 @@ validate_options <- function(opts.to.validate) {
     is.list(opts.to.validate),
     all(grep("^unitizer\\.", names(opts.to.validate)))
   )
-  if(
-    any(
-      missing.opts <-
-        !names(.unitizer.opts.default) %in% names(opts.to.validate)
-    )
-  ) {
+  names.def <- setdiff(names(.unitizer.opts.default), "unitizer.par.env")  # unitizer.par.env can be NULL
+  if(any(missing.opts <- !names.def %in% names(opts.to.validate)))
     stop(
       "The following options must be set in order for `unitizer` to work: ",
       deparse(names(.unitizer.opts.default)[missing.opts], width=500L)
     )
-  }
   with(
     opts.to.validate,
     {
@@ -245,5 +241,10 @@ validate_options <- function(opts.to.validate) {
       if(!is.list(unitizer.seed))  # note, more specific validation done in is.valid_rep_state
         stop("Option `unitizer.seed` must be a list")
   } )
+  if( # needs to be outside b/c var may not be defined in option list
+    !is.null(opts.to.validate[["unitizer.par.env"]]) &&
+    !is.environment(opts.to.validate[["unitizer.par.env"]])
+  )
+    stop("Option `unitizer.par.env` must be an environment or NULL")
   TRUE
 }

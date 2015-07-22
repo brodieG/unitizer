@@ -59,7 +59,8 @@ library(unitizer)
 
 search.ref <- NULL # will be modified later
 search.init <- unitizer:::search_as_envs()
-untz.glob <- unitizer:::unitizerGlobal$new()
+state.set <- unitizer:::.unitizer.global.settings.names
+untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
 
 test_that("Search Path Journaling Works", {
   # Note, these are intended to be run without the shimming in place
@@ -213,7 +214,7 @@ test_that("Resetting search path", {
 
 test_that("Search Path Trim / Restore", {
   search.init <- unitizer:::search_as_envs()
-  untz.glob <- unitizer:::unitizerGlobal$new()
+  untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
 
   library(unitizerdummypkg1)
   library(unitizerdummypkg2)
@@ -242,7 +243,7 @@ test_that("Loaded Namespaces don't cause issues", {
   # had a problem earlier trying to re-attach namespaces
 
   loadNamespace("unitizerdummypkg1")
-  untz.glob <- unitizer:::unitizerGlobal$new()
+  untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
   keep.more <- c("package:testthat", getOption("unitizer.search.path.keep"))
   unitizer:::search_path_trim(keep.more)
   untz.glob$state()
