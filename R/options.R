@@ -147,9 +147,7 @@ options_update <- function(tar.opts) {
   unitizer.namespace.keep=c(               # namespaces not to auto-unload, no matter what
     .unitizer.namespace.keep
   ),
-  unitizer.reproducible.state=c(           # default reproducible state mode
-    search.path=2L, options=2L, random.seed=2L, working.directory=2L
-  ),
+  unitizer.state="pristine",               # default reproducible state mode
   unitizer.opts.base=.unitizer.opts.base,  # what to set options to when running in reproducible state
   unitizer.opts.asis=.unitizer.opts.sys,   # system dependent and other options that should not be changed; these are matched as regular expressions
   unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
@@ -227,13 +225,8 @@ validate_options <- function(opts.to.validate) {
       )
         stop("Option `unitizer.namespace.keep` must be character and not NA")
 
-      if(
-        !identical(unitizer.reproducible.state, FALSE) &&
-        !is.valid_rep_state(unitizer.reproducible.state)
-      )
-        stop(
-          "Option `unitizer.reproducible.state` is invalid; see prior errors"
-        )
+      if(!is(is.valid_state(unitizer.state), "unitizerState"))
+        stop("Option `unitizer.state` is invalid; see prior errors")
       if(!is.list(unitizer.opts.base))
         stop("Option `unitizer.opts.base` must be a list")
       if(!is.character(unitizer.opts.asis) || any(is.na(unitizer.opts.asis)))

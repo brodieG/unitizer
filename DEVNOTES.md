@@ -183,7 +183,20 @@ the full named integer vector.  For example:
   higher level of reproducibility than for some settings
 * "off":   everything off
 
+An alternative is to create a new S4 class that represents all the state values,
+and control the population through the constructor.  We can also extend that
+class to provide other pre-set options, so we might have `stateSettings` and
+`stateSettingsSafe` or some such.  The main problem with this implementation
+is that it would require an S4 object being stored as an option, which is
+undesirable.  Perhaps can accept either character value or S4 object?
 
+Then we would have five state values, the traditional four plus par.env?
+
+Is it worth the extra complexity for the argument in order to eliminate one
+single argument?  Maybe, the best reason to do this is that then all state
+related aspects of evaluation are controlled through the one argument, which
+makes more sense.  In particular, this allows us to have the "safe" mode also
+reasonably control par.env.
 
 Shouldn't worry too much about 3. since translation is a secondary
 consideration.  The reasonable thing would be to run in some lower level of
