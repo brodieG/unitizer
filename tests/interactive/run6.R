@@ -5,10 +5,25 @@ unitize_dir("tests/interactive/unitizer/", pattern="^state")
 
 # Should get state warnings below
 
-message("Running state1 with state0.unitizer")
+unitizer:::word_msg(
+  paste0(
+    "Running state1 with state0.unitizer with default reproducible",
+    "make sure you don't accept changes\n"
+) )
 
 unitize(
   "tests/interactive/unitizer/state1.R",
   "tests/interactive/unitizer/state0.unitizer"
 )
 
+unitizer:::word_msg(
+  paste0(
+    "Running state1 with state0.unitizer with no state tracking",
+    "make sure you don't accept changes\n"
+) )
+
+unitize(
+  "tests/interactive/unitizer/state1.R",
+  "tests/interactive/unitizer/state0.unitizer",
+  state="off"
+)

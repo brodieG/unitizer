@@ -62,7 +62,6 @@ unitize_core <- function(
   if(!is.TF(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
-  valid.state.chr <- c("pristine", "noopt", "basic", "off")
 
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components

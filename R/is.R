@@ -92,8 +92,8 @@ is.valid_state <- function(x) {
     return(FALSE)
   }
   if(is.character(x)) x <- switch(
-    x, pristine=new("unitizerStatePristine"), noopt="unitizerStateNoOpt",
-    basic=new("unitizerStateBasic"), off="unitizerStateOff"
+    x, pristine=new("unitizerStatePristine"), noopt=new("unitizerStateNoOpt"),
+    basic=new("unitizerStateBasic"), off=new("unitizerStateOff")
   )
   return(x)
 }
