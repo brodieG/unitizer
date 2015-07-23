@@ -222,7 +222,7 @@ unitize_dir <- function(
   invisible(
     unitize_core(
       test.files=test.files, store.ids=store.ids,
-      par.env=par.env, reproducible.state=reproducible.state,
+      state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode, force.update=force.update,
       auto.accept=auto.accept, mode="unitize"
