@@ -21,7 +21,7 @@
 #' just allowed to review the results of previous evaluations of the tests
 #' Because of this, no effort is made to create reproducible state in the
 #' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
-#' (see \code{reproducible.state} parameter).
+#' (see \code{state} parameter).
 #'
 #' See \code{unitizer} vignettes and demo for details and examples.
 #'
@@ -79,7 +79,7 @@
 #'   e.g. if all tests do not pass).
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
-#' @param auto.accept character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
+#' @param auto.accept character(X) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
 #'   YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
 #'   prompting, use values in \code{c("new", "failed", "deleted", "error")} to
 #'   specify which type(s) of test you wish to auto accept (i.e. same as typing
@@ -100,8 +100,8 @@
 #' While R generally adheres to a "functional" programming style, there are
 #' several aspects of session state that can affect the results of code
 #' evaluation.  State driven variability in code results is undesirable for
-#' unit tests, so \code{unitizer} attempts to insulate test code from some of
-#' the major drivers of state induced evaluation variability:
+#' unit tests, so \code{unitizer} attempts to insulate test code from the
+#' following:
 #' \itemize{
 #'   \item Workspace
 #'   \item Search Path
