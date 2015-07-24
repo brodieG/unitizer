@@ -99,8 +99,7 @@ setClass(
     options="listOrNULLOrDummy",
     working.directory="characterOrNULLOrDummy",
     random.seed="integerOrNULLOrDummy"
-  ),
-  prototype=list(.dummy=new.env(parent=baseenv()))
+  )
 )
 #' @rdname global_structures
 #' @keywords internal
