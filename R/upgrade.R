@@ -114,6 +114,13 @@ upgrade_internal <- function(object) {
     object@state.ref <- removeSlots(object@state.ref, c("dummy", ".dummy"))
     object <- addSlot(object, "state.new", new("unitizerGlobalTrackingStore"))
   }
+  if(ver < "1.0.2") {
+    statObj <- new("unitizerGlobalStatus")
+    object@items.ref@.items <- lapply(
+      object@items.ref@.items,
+      function(x) addSlot(x, "state", statObj)
+    )
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
