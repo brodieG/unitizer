@@ -21,7 +21,7 @@
 #' just allowed to review the results of previous evaluations of the tests
 #' Because of this, no effort is made to create reproducible state in the
 #' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
-#' (see \code{reproducible.state} parameter).
+#' (see \code{state} parameter).
 #'
 #' See \code{unitizer} vignettes and demo for details and examples.
 #'
@@ -50,15 +50,10 @@
 #'     test files being reviewed; useful when you implement special storage
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
-#' @param par.env the parent environment to the environments tests are evaluated
-#'   in.  May be either an environemnt or NULL. If NULL, a special environment
-#'   that remains anchored at \code{search()[[2L]]} is used as \code{par.env},
-#'   which means tests will not be affected by objects in your workspace (see
-#'   "Reproducible Tests" vignette).  Set to \code{NULL} by default.
-#' @param reproducible.state, FALSE, or integer vector with values in
-#'   \code{0:2} and names in
-#'   \code{c("search.path", "options", "working.directory", "random.seed")}.
-#'   See details and "Reproducible Tests" vignette.
+#' @param state character(1L) one of
+#'   \code{c("prisitine", "noopt", "basic", "off")} or an S4 object inheriting
+#'   from \code{unitizerState}; modifies how \code{unitizer} manages aspects
+#'   of session state that could affect test evaluation (see details).
 #' @param pre NULL, or a character vector pointing to files and/or directories.
 #'   If a character vector, then any files referenced therein will be sourced,
 #'   and any directories referenced therein will be scanned non-recursively for
@@ -84,7 +79,7 @@
 #'   e.g. if all tests do not pass).
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
-#' @param auto.accept character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
+#' @param auto.accept character(X) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
 #'   YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
 #'   prompting, use values in \code{c("new", "failed", "deleted", "error")} to
 #'   specify which type(s) of test you wish to auto accept (i.e. same as typing
@@ -100,49 +95,49 @@
 #' to allow the user to "permanently" set them to their prefered modes by
 #' setting options in their \code{.Rprofile} file.
 #'
-#' @section Reproducible State:
+#' @section State:
 #'
-#' There are several aspects of the state of an R session that can affect code
-#' evaluation.  \code{unitizer} attempts to control some aspects of state
-#' through the \code{par.env} and  \code{reproducible.state} arguments.
-#'
-#' Setting \code{par.env} to NULL (the default) ensures the state of your
-#' workspace does not affect test evaluation, and vice versa.
-#' \code{reproducible.state} allows control of the  following aspects of state:
+#' While R generally adheres to a "functional" programming style, there are
+#' several aspects of session state that can affect the results of code
+#' evaluation.  State driven variability in code results is undesirable for
+#' unit tests, so \code{unitizer} attempts to insulate test code from the
+#' following:
 #' \itemize{
+#'   \item Workspace
 #'   \item Search Path
 #'   \item Options
 #'   \item Working Directory
 #'   \item Random Seed
 #' }
-#' The default behavior is to set the state as close to that of a freshly loaded
-#' vanilla R session as we reasonably can.  This includes detaching all objects
-#' from the search path that are not typically attached by default, and
-#' resetting most options to "factory" values.  Additionally, the random seed
-#' is set to a specific value and method so that random number generation is
-#' consistent across \code{unitizer} runs, and the working directory is set to
-#' the directory containing the first test file (TBD FOR wd; MAYBE SHOULD BE
+#' The default setting is to use a special parent environment for all tests that
+#' does not inherit from \code{.GlobalEnv}.  This prevents objects that are
+#' laying around in your workspace from interfering with your tests.
+#' Additionally both the search path and options are set to what you would
+#' typically find in a freshly loaded vanilla R session.  This means any non
+#' default packages that are loaded when you run your tests are unloaded prior
+#' to running your tests.  If you want to use the same libraries across multiple
+#' tests you can load them with the \code{pre} argument.
+#'
+#' Finally, the random seed is set to a specific value so that tests using
+#' random values get the same value at every test iteration.
+#'
+#' DEVNOTE: TBD about what happens with working directory; set to the
+#' directory containing the first test file (TBD FOR wd; MAYBE SHOULD BE
 #' SOMETHING DIFFERENT?).
 #'
 #' State is reset after running each test file when running multiple test
 #' files with \code{unitize_dir}, which means state changes in one test file
-#' will not affect the next one. Upon exit \code{unitizer} will restore state
-#' to what it was on entry.
+#' will not affect the next one.
 #'
-#' If you want to set global state for all tests (e.g. loading a particular
-#' package needed for all test files), you can do so with the \code{pre}
-#' argument.
+#' Upon exit \code{unitizer} will restore state to what it was on entry.
 #'
-#' You can turn off state control by setting \code{reproducible.state} to
-#' \code{FALSE}.  You can also chose to control only some aspects of state, or
-#' the degree with which each is controlled.  See "Reproducible Tests" vignette
-#' for more details.
-
+#' You can modify all aspects of state control with the \code{state} parameter.
+#' See the \code{\link{state}} documentation and the \code{state} vignette for
+#' more details.
 
 unitize <- function(
   test.file, store.id=NULL,
-  par.env=getOption("unitizer.par.env"),
-  reproducible.state=getOption("unitizer.reproducible.state"),
+  state=getOption("unitizer.state"),
   pre=NULL, post=NULL,
   history=getOption("unitizer.history.file"),
   interactive.mode=interactive(),
@@ -154,8 +149,7 @@ unitize <- function(
   if(is.null(store.id)) store.id.inf <- filename_to_storeid(test.file.inf)
   invisible(
     unitize_core(
-      test.file.inf, list(store.id.inf),
-      par.env=par.env, reproducible.state=reproducible.state,
+      test.file.inf, list(store.id.inf), state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode,  force.update=force.update,
       auto.accept=auto.accept, mode="unitize"
@@ -170,8 +164,7 @@ review <- function(store.id) {
     unitize_core(
       test.files=NA_character_,
       store.ids=list(infer_unitizer_location(store.id, type="u")),
-      par.env=.GlobalEnv,
-      reproducible.state=FALSE,
+      state="off",
       pre=FALSE, post=FALSE,
       history=getOption("unitizer.history.file"),
       interactive.mode=TRUE,
@@ -187,8 +180,7 @@ unitize_dir <- function(
   test.dir,
   store.ids=filename_to_storeid,
   pattern="^[^.].*\\.[Rr]$",
-  par.env=getOption("unitizer.par.env"),
-  reproducible.state=getOption("unitizer.reproducible.state"),
+  state=getOption("unitizer.state"),
   pre=NULL, post=NULL,
   history=getOption("unitizer.history.file"),
   interactive.mode=interactive(),
@@ -230,7 +222,7 @@ unitize_dir <- function(
   invisible(
     unitize_core(
       test.files=test.files, store.ids=store.ids,
-      par.env=par.env, reproducible.state=reproducible.state,
+      state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode, force.update=force.update,
       auto.accept=auto.accept, mode="unitize"

@@ -22,15 +22,12 @@
 #' @param store.ids list of store ids, same length as \code{test.files}
 
 unitize_core <- function(
-  test.files, store.ids, par.env, reproducible.state, pre, post,
-  history, interactive.mode, force.update, auto.accept, mode
+  test.files, store.ids, state, pre, post, history, interactive.mode,
+  force.update, auto.accept, mode
 ) {
   # - Validation / Setup -------------------------------------------------------
 
-  if(
-    !is.character(mode) || length(mode) != 1L ||
-    !mode %in% c("unitize", "review")
-  )
+  if(!is.chr1(mode) || !mode %in% c("unitize", "review"))
     stop("Logic Error: incorrect value for `mode`; contact maintainer")
   if(mode == "review") {
     if(!all(is.na(test.files)))
@@ -39,11 +36,9 @@ unitize_core <- function(
       )
     if(length(auto.accept))
       stop("Logic Error: auto-accepts not allowed in review mode")
-    if(
-      !identical(reproducible.state, FALSE) &&
-      !is.character(reproducible.state) && !length(reproducible.state)
+    if(!identical(state, "off")
     )
-      stop("Logic Error: reproducible.state must be disabled in review mode")
+      stop("Logic Error: state must be disabled in review mode")
   }
   if(mode == "unitize") {
     if(
@@ -67,15 +62,22 @@ unitize_core <- function(
   if(!is.TF(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
-  if(!is.null(par.env) && !is.environment(par.env))
-    stop("Argument `par.env` must be NULL or an environment.")
-  if(identical(reproducible.state, FALSE)) {
-    reproducible.state <- setNames(
-      integer(length(.unitizer.global.settings.names)),
-      .unitizer.global.settings.names
-  ) }
-  if(!isTRUE(is.valid_rep_state(reproducible.state)))
-    stop("Argument `reproducible.state` is invalid; see prior errors")
+
+  # Validate state; note that due to legacy code we disassemble state into the
+  # par.env and other components
+
+  state <- is.valid_state(state)
+  if(!is(state, "unitizerState"))
+    stop(
+      "Argument `state` could not be interpreted as a `unitizerState`; see ",
+      "prior errors"
+    )
+  par.env <- state@par.env
+  reproducible.state <- sapply(
+    setdiff(slotNames(state), "par.env"), slot, object=state, simplify=FALSE
+  )
+  # auto.accept
+
   auto.accept.valid <- character()
   if(is.character(auto.accept)) {
     if(length(auto.accept)) {
@@ -206,11 +208,7 @@ unitize_core <- function(
   if(identical(reproducible.state[["search.path"]], 2L)) {
     search_path_trim()
   }
-  if(identical(reproducible.state[["options"]], 2L)) {
-    if(!identical(reproducible.state[["search.path"]], 2L)) {
-      warning("Cannot set zero options if search.path is not also zero set")
-    } else options_zero()
-  }
+  if(identical(reproducible.state[["options"]], 2L)) options_zero()
   if(identical(reproducible.state[["random.seed"]], 2L)) {
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
       stop(
