@@ -215,6 +215,23 @@ unitize_core <- function(
         "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
         "is a list of possible arguments to `set.seed`."
   ) } }
+  if(identical(reproducible.state[["working.directory"]], 2L)) {
+    if(length(unique(dirname(test.files)) == 1L)) {
+      base.file <- test.files[[1L]]
+      is.package <- FALSE
+      while(nchar(par.dir <- dirname(base.file)) < nchar(base.file)) {
+        if(isTRUE(is_package_dir(par.dir))) {
+          is.package <- TRUE
+          break
+        }
+        base.file <- par.dir
+    } }
+    if(is.package) setwd(par.dir) else
+      warning(
+        "Test files do not appear to be in package; leaving working dir ",
+        "unchanged.", immediate.=TRUE
+      )
+  }
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data

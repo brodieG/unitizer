@@ -112,6 +112,7 @@
 #' The default setting is to use a special parent environment for all tests that
 #' does not inherit from \code{.GlobalEnv}.  This prevents objects that are
 #' laying around in your workspace from interfering with your tests.
+#'
 #' Additionally both the search path and options are set to what you would
 #' typically find in a freshly loaded vanilla R session.  This means any non
 #' default packages that are loaded when you run your tests are unloaded prior
@@ -119,11 +120,9 @@
 #' tests you can load them with the \code{pre} argument.
 #'
 #' Finally, the random seed is set to a specific value so that tests using
-#' random values get the same value at every test iteration.
-#'
-#' DEVNOTE: TBD about what happens with working directory; set to the
-#' directory containing the first test file (TBD FOR wd; MAYBE SHOULD BE
-#' SOMETHING DIFFERENT?).
+#' random values get the same value at every test iteration, and the working
+#' directory is set to the package directory if all test files are  in the same
+#' sub-directory of a package.
 #'
 #' State is reset after running each test file when running multiple test
 #' files with \code{unitize_dir}, which means state changes in one test file
