@@ -11,6 +11,11 @@ NULL
 #' supposed to map to `.items`).  This last assumption allows us
 #' to implement the subsetting operators in a meaninful manner.
 #'
+#' The validity method will run \code{validObject} on the first, last, and
+#' middle items (if an even number of items, then the middle closer to the
+#' first) assuming they are S4 objects.  We don't run on every object to avoid
+#' potentially expensive computation on all objects.
+#'
 #' @keywords internal
 #' @slot .items a list or expression
 #' @slot .pointer integer, used for implementing iterators
@@ -19,7 +24,18 @@ NULL
 setClass(
   "unitizerList",
   representation(.items="listOrExpression", .pointer="integer", .seek.fwd="logical"),
-  prototype(.pointer=0L, .seek.fwd=TRUE)
+  prototype(.pointer=0L, .seek.fwd=TRUE),
+  validity=function(object) {
+    obj.len <- length(object)
+    if(!length(object)) return(TRUE)
+    idx.to.test <- unique(
+      c(1L, max(1L, as.integer(floor(obj.len / 2))), obj.len)
+    )
+    lapply(
+      idx.to.test, function(x) if(isS4(object[[x]])) validObject(object[[x]])
+    )
+    TRUE
+  }
 )
 # - Methods -------------------------------------------------------------------
 
