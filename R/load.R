@@ -243,6 +243,13 @@ store_unitizer <- function(unitizer) {
   parent.env(unitizer@zero.env) <- baseenv()
   unitizer@global <- NULL  # to avoid taking up a bunch of storage on large object
   rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
+
+  # blow away calls; these should be memorialized as deparsed versions and the
+  # original ones take up a lot of room to store
+
+  for(i in seq_along(unitizer@items.ref)) unitizer@items.ref[[i]]@call <- NULL
+  for(i in seq_along(unitizer@items.new)) unitizer@items.new[[i]]@call <- NULL  # shouldn't really be anything here
+
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {

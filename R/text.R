@@ -442,6 +442,24 @@ desc <- function(val, limit=getOption("width")) {
   }
   if(nchar(val.desc) > limit - 3L) paste0(substr(val.desc, 1L, limit - 3L), "...") else val.desc
 }
+#' Collapse Multi-line Character into one line
+#'
+#' @param x character
+#' @param chars how many characters to display
+#' @keywords internal
+
+one_line <- function(x, chars=0L) {
+  if(!is.character(x) || any(is.na(x)))
+    stop("Argument `x` must be character and may not contain NAs")
+  chars <- as.integer(chars) # not ideal due to NA by coersion
+  if(!is.numeric(chars) || length(chars) != 1L || is.na(chars))
+    stop("Argument `chars` must be integer(1L) and not NA")
+  one.line <- paste0(sub("^\\s*", "", unlist(strsplit(x, "\n"))), collapse="")
+  if(chars < 1L) return(one.line)
+  if(chars < 10L) substr(one.line, 1L, chars) else
+  if(nchar(one.line) > chars)
+    paste0(substr(one.line, 1L, chars - 3L), "...") else one.line
+}
 #' Make Valid Names
 #'
 #' If names are invalid, quotes them with backtics

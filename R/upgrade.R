@@ -121,6 +121,16 @@ upgrade_internal <- function(object) {
       function(x) addSlot(x, "state", statObj)
     )
   }
+  if(ver < "1.0.3") {
+    object@items.ref@.items <- lapply(
+      object@items.ref@.items,
+      function(x) {
+        x <- addSlot(x, "call.dep", deparse_call(x@call))
+        x@call <- NULL
+        x
+      }
+    )
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always

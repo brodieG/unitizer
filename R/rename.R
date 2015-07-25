@@ -63,9 +63,20 @@ setMethod("editCalls", c("unitizer", "language", "language"),
       call
     }
     for(i in seq_along(x@items.ref)) {
+      # complexity here driven by a change from storing the actual call to
+      # only keeping the deparsed version, but not wanting to re-write all the
+      # code for the renaming
+
+      call.is.null <- FALSE
+      if(is.null(x@items.ref[[i]]@call)) {
+        x@items.ref[[i]]@call <- parse(text=x@items.ref[[i]]@call.dep)
+        call.is.null <- TRUE
+      }
       x@items.ref[[i]]@call <-
         call_sub(x@items.ref[[i]]@call, lang.old, lang.new)
-      x@items.ref.calls.deparse[[i]] <- deparse_call(x@items.ref[[i]]@call)
+      x@items.ref[[i]]@call.dep <- deparse_call(x@items.ref[[i]]@call)
+      x@items.ref.calls.deparse[[i]] <- x@items.ref[[i]]@call.dep
+      if(call.is.null) x@items.ref[[i]]@call <- NULL
     }
     x
 } )

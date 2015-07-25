@@ -493,7 +493,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           x@mapping@review.val[[curr.id]], "\""
       ) }
       if(length(item.main@comment)) cat(item.main@comment, sep="\n")
-      cat(deparse_prompt(item.main@call), sep="\n")
+      cat(deparse_prompt(parse(text=item.main@call.dep)), sep="\n")
 
       # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant; options need to be

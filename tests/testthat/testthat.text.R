@@ -145,5 +145,19 @@ local({
     expect_equal(unitizer:::strtrunc(str1, 10L), c("abcdefg...", "ABCDEFG..."))
     expect_equal(unitizer:::strtrunc(str1, 10L, from="left"), c("...tuvwxyz", "...TUVWXYZ"))
   })
-
+  test_that("oneline", {
+    dep <- c(
+      "res <- data %>% group_by(ID) %>% summarise(date2 = nth(date, ",
+      "    2), time2 = nth(time, 2), first_date = first(date), last_date = last(date), ",
+      "    first_time = first(time), last_time = last(time))"
+    )
+    expect_equal(
+      unitizer:::one_line(dep),
+      "res <- data %>% group_by(ID) %>% summarise(date2 = nth(date, 2), time2 = nth(time, 2), first_date = first(date), last_date = last(date), first_time = first(time), last_time = last(time))"
+    )
+    expect_equal(
+      unitizer:::one_line(dep, 50),
+       "res <- data %>% group_by(ID) %>% summarise(date..."
+    )
+  } )
 })

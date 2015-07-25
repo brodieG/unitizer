@@ -395,7 +395,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
         l <- l + 1L
       }
       # Now paste the call together, substituting into the padding template
-      call.dep <- paste0(deparse_peek(item@call, disp.len), " ")
+      call.dep <- paste0(one_line(item@call.dep, disp.len), " ")
       call.str <- dot.pad
       substr(call.str, 1L, nchar(call.dep)) <- call.dep
 
@@ -650,7 +650,9 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
 #'
 #' @keywords internal
 
-setMethod("[", signature(x="unitizerBrowse", i="subIndex", j="missing", drop="missing"),
+setMethod(
+  "[",
+  signature(x="unitizerBrowse", i="subIndex", j="missing", drop="missing"),
   function(x, i) {
     if(!is.numeric(i) || any(is.na(i)) || any(i < 0))
       stop("Argument `i` must be stricitly positive numeric")
