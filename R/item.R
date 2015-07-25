@@ -331,7 +331,7 @@ setMethod("$", c("unitizerItem"),
     data.slots <- slotNames(x@data)
     extras <- c("call", "state")
     valid <- c(extras, data.slots)
-    if(identical(what, "call")) return(parse(text=x@call.dep))
+    if(identical(what, "call")) return(parse(text=x@call.dep)[[1L]])
     if(identical(what, "state")) return(x@state)
     if(length(what) != 1L || !what %in% data.slots) {
       stop(
