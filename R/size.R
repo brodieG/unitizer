@@ -9,38 +9,47 @@ NULL
 #' other packages.
 
 setGeneric("size", function(x, ...) StandardGeneric("size"))
-setMethod("size", "ANY", function(x, ...) object.size(x))
+setMethod(
+  "size", "ANY", function(x, ...) c(size=object.size(x), rds=sizeRDS(x))
+)
 setMethod(
   "size", "unitizerItems",
   function(x, ...) {
-    item.sizes <- sapply(
-      x@.items,
-      function(y) {
-        c(
-          sapply(setdiff(slotNames(y), "data"), function(z) size(slot(y, z))),
-          sapply(slotNames(y@data), function(z) size(slot(y@data, z)))
-    ) } )
-    special.rows <- c("value", "conditions", "output", "message")
-    special.rows.idx <- match(special.rows, rownames(item.sizes))
-    if(any(is.na(special.rows.idx)))
-      stop("Logic Error: missing row names; contact maintainer.")
-    item.sizes.grp <- rbind(
-      item.sizes[special.rows.idx, ],
-      other=colSums(item.sizes[-special.rows.idx, ]),
-      total=colSums(item.sizes)
+    # Extract all the component items into a 2D list
+
+    rows <- length(x)
+    if(!rows) return(0)
+    dat.base <- setdiff(slotNames(x[[1L]]), "data")
+    dat.extra <-  slotNames(x[[1L]]@data)
+    col.names <- c(dat.base, dat.extra)
+    cols <- length(col.names)
+    items <- structure(
+      vector("list", cols * rows),
+      dim=c(rows, cols), dimnames=list(NULL, col.names)
     )
-    items <- ncol(item.sizes.grp)
-    top.20.pct <-
-      order(-item.sizes.grp["total", ])[seq.int(ceiling(items * .2))]
-    rbind(
-      All=rowSums(item.sizes.grp),
-      `Top 20%`=rowSums(item.sizes.grp[, top.20.pct]),
-      Largest=item.sizes.grp[, top.20.pct[[1L]]]
-    )
+    for(i in seq.int(rows)) {
+      items[i, ] <- c(
+        lapply(dat.base, function(z) slot(x[[i]], z)),
+        lapply(dat.extra, function(z) slot(x[[i]]@data, z))
+    ) }
+    t(apply(items, 2, function(x) c(size=object.size(x), rds=sizeRDS(x))))
   }
 )
-setMethod("size", "unitizer", function(x, ...) NULL)
-
+setMethod("size", "unitizer",
+  function(x, ...) {
+    res <- lapply(slotNames(x),
+      function(y) {
+        size.tmp <- size(slot(x, y))
+        if(is.matrix(size.tmp)) {
+          rbind(
+            matrix(apply(size.tmp, 2, sum), ncol=2, dimnames=list(y, NULL)),
+            `rownames<-`(size.tmp, paste0("    ", rownames(size.tmp)))
+          )
+        } else matrix(size.tmp, ncol=2, dimnames=list(y, NULL))
+      }
+    )
+    do.call(rbind, res)
+} )
 
 #' Measure object size as an RDS
 
