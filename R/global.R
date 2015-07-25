@@ -79,7 +79,7 @@ setClass(
 
 setClass("unitizerDummy", slots=c(.="NULL"))
 setMethod(
-  "show", "unitizerDummy", function(object) cat("<object not recorded>")
+  "show", "unitizerDummy", function(object) cat("<object not recorded>\n")
 )
 setClassUnion("listOrNULLOrDummy", c("list", "NULL", "unitizerDummy"))
 setClassUnion("characterOrNULLOrDummy", c("character", "NULL", "unitizerDummy"))

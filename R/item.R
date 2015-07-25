@@ -132,6 +132,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   if("glob.indices" %in% dots.names)
     .Object@glob.indices <- dots.all$glob.indices
   dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]
+  if(.Object@ignore) dots[["value"]] <- new("unitizerDummy")
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
