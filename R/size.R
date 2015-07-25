@@ -4,27 +4,26 @@ NULL
 
 #' Utility To Examine Object Size
 #'
-#' This is not considered a core function, and the name might change in the
-#' future given the high probability of conflict with functions defined in
+#' Funny name is just to avoid conflicts with functions with same names in
 #' other packages.
 
-setGeneric("size", function(x, ...) StandardGeneric("size"))
+setGeneric("sizeUntz", function(x, ...) StandardGeneric("sizeUntz"))
 setMethod(
-  "size", "ANY", function(x, ...) c(size=object.size(x), rds=sizeRDS(x))
+  "sizeUntz", "ANY", function(x, ...) c(size=object.size(x), rds=sizeRDS(x))
 )
 setMethod(
-  "size", "unitizerItems",
+  "sizeUntz", "unitizerItems",
   function(x, ...) {
-    items <- flatten(x)
+    items <- flattenUntz(x)
     if(!length(items)) return(c(size=0, rds=0))
     t(apply(items, 2, function(x) c(size=object.size(x), rds=sizeRDS(x))))
   }
 )
-setMethod("size", "unitizer",
+setMethod("sizeUntz", "unitizer",
   function(x, ...) {
     res <- lapply(slotNames(x),
       function(y) {
-        size.tmp <- size(slot(x, y))
+        size.tmp <- sizeUntz(slot(x, y))
         if(is.matrix(size.tmp)) {
           rbind(
             matrix(apply(size.tmp, 2, sum), ncol=2, dimnames=list(y, NULL)),
@@ -42,9 +41,9 @@ setMethod("size", "unitizer",
 #'
 #' Currently we only define a method for \code{unitizerItems-class} objects
 
-setGeneric("flatten", function(x, ...) StandardGeneric("flatten"))
+setGeneric("flattenUntz", function(x, ...) StandardGeneric("flattenUntz"))
 setMethod(
-  "flatten", "unitizerItems",
+  "flattenUntz", "unitizerItems",
   function(x, ...) {
     rows <- length(x)
     if(!rows) return(list())
