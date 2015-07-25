@@ -15,23 +15,8 @@ setMethod(
 setMethod(
   "size", "unitizerItems",
   function(x, ...) {
-    # Extract all the component items into a 2D list
-
-    rows <- length(x)
-    if(!rows) return(0)
-    dat.base <- setdiff(slotNames(x[[1L]]), "data")
-    dat.extra <-  slotNames(x[[1L]]@data)
-    col.names <- c(dat.base, dat.extra)
-    cols <- length(col.names)
-    items <- structure(
-      vector("list", cols * rows),
-      dim=c(rows, cols), dimnames=list(NULL, col.names)
-    )
-    for(i in seq.int(rows)) {
-      items[i, ] <- c(
-        lapply(dat.base, function(z) slot(x[[i]], z)),
-        lapply(dat.extra, function(z) slot(x[[i]]@data, z))
-    ) }
+    items <- flatten(x)
+    if(!length(items)) return(c(size=0, rds=0))
     t(apply(items, 2, function(x) c(size=object.size(x), rds=sizeRDS(x))))
   }
 )
@@ -50,6 +35,35 @@ setMethod("size", "unitizer",
     )
     do.call(rbind, res)
 } )
+#' Reduce S4 objects Into Lists
+#'
+#' This is particularly useful with "list" type S4 objects, and relates loosely
+#' to the subsetting functions defined for \code{unitizerBrowse} objects.
+#'
+#' Currently we only define a method for \code{unitizerItems-class} objects
+
+setGeneric("flatten", function(x, ...) StandardGeneric("flatten"))
+setMethod(
+  "flatten", "unitizerItems",
+  function(x, ...) {
+    rows <- length(x)
+    if(!rows) return(list())
+    dat.base <- setdiff(slotNames(x[[1L]]), "data")
+    dat.extra <-  slotNames(x[[1L]]@data)
+    col.names <- c(dat.base, dat.extra)
+    cols <- length(col.names)
+    items <- structure(
+      vector("list", cols * rows),
+      dim=c(rows, cols), dimnames=list(NULL, col.names)
+    )
+    for(i in seq.int(rows)) {
+      items[i, ] <- c(
+        lapply(dat.base, function(z) slot(x[[i]], z)),
+        lapply(dat.extra, function(z) slot(x[[i]]@data, z))
+    ) }
+    items
+  }
+)
 
 #' Measure object size as an RDS
 
