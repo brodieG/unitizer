@@ -88,9 +88,12 @@ search_path_update <- function(id, global, force=FALSE) {
   stopifnot(
     is(global, "unitizerGlobal"),
     is.integer(id), length(id) == 1L, !is.na(id),
-    id %in% seq_along(global$tracking@search.path),
     is.TF(force)
   )
+  if(!id %in% seq_along(global$tracking@search.path))
+    stop(
+      "Logic Error: attempt to reset state to unknown index; contact maintainer"
+    )
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 

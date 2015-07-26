@@ -457,31 +457,20 @@ setMethod("reviewNext", c("unitizerBrowse"),
     item.ref <- if(!is.null(curr.sub.sec.obj@items.ref))
       curr.sub.sec.obj@items.ref[[id.rel]]
 
+    # Assign main object (always new if present), and set up global setting
+    # indices; always use indices.init if don't have new items.
+
     if(is.null(item.new)) {
       item.main <- item.ref
       base.env.pri <- parent.env(curr.sub.sec.obj@items.ref@base.env)
+      new.glob.indices <- x@global$indices.init
     } else {
       item.main <- item.new
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
+      new.glob.indices <- item.new@glob.indices
     }
-    # Retrieve previous object so we can use the global settings data to figure
-    # out if we need to reset the global settings; this is not 100% perfect
-    # since we are setting up the environment as of test completion, but for
-    # the show stuff for errors we might want the status before the test; should
-    # really not matter in almost all circumstances
-
-    last.glob.set <- if(last.id.rel) {
-      last.item.new <- if(!is.null(last.sub.sec.obj@items.new))
-        last.sub.sec.obj@items.new[[last.id.rel]]
-      last.item.ref <- if(!is.null(last.sub.sec.obj@items.ref))
-        last.sub.sec.obj@items.ref[[last.id.rel]]
-      if(is.null(last.item.new)) {
-        last.item.ref@glob.indices
-      } else last.item.new@glob.indices
-    } else new("unitizerGlobalIndices")
-
-    if(!identical(last.glob.set, item.main@glob.indices))
-      x@global$reset(item.main@glob.indices)
+    if(!identical(x@global$indices.last, new.glob.indices))
+      x@global$reset(new.glob.indices)
 
     # Show test to screen, but only if the entire section is not ignored, and
     # not passed tests and requesting that those not be shown
@@ -493,7 +482,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
           x@mapping@review.val[[curr.id]], "\""
       ) }
       if(length(item.main@comment)) cat(item.main@comment, sep="\n")
-      cat(deparse_prompt(parse(text=item.main@call.dep)[[1L]]), sep="\n")
+      parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
+      if(inherits(parsed.call, "try-error"))
+        stop("Logic Error: malformed call stored; contact maintainer.")
+      cat(deparse_prompt(parsed.call), sep="\n")
 
       # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant; options need to be
