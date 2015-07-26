@@ -264,6 +264,7 @@ unitize_core <- function(
         over_print(paste("Parsing", x))
         parse_tests(x, comments=TRUE)
   } ) }
+  over_print("")
 
   while(
     (length(eval.which) || mode == identical(mode, "review")) && length(valid)
