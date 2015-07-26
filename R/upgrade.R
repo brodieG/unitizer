@@ -130,6 +130,9 @@ upgrade_internal <- function(object) {
         x
       }
     )
+    object@items.ref.calls.deparse <- vapply(
+      object@items.ref@.items, slot, character(1L), "call.dep"
+    )
   }
   # - Keep at End---------------------------------------------------------------
 
