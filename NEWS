@@ -1,16 +1,25 @@
-unitizer 1.0.0
+unitizer 1.0.3
 --------------------------------------------------------------------------------
 
-* More comprehensive state tracking and resetting; in particular:
-    * Random.seed, options, and wd are now tracked in addition to search path
-    * State reset during test review to what it was
-    * State stored in `unitizer` to alert of changes if there is an error
-    * Cleaner less intrusive shimming
-* Function parameters tweaked
-   * Technically API breaking, but mostly cosmetic and done now given the
-     package is not in broad use
+Improvement / Changes:
+
+* More comprehensive state tracking and resetting:
+    * options, random.seed, and wd are tracked in addition to seach path
+    * state is reset when reviewing tests as well as when executing them
+    * you are alerted off state differences between new and reference tests
+      on error
+    * see state vignette for more details
+* Streamlining of state control parameters into one (`state`); API breaking
+* 'helper' directory renamed '_pre'
 * Vignette updates
 * Demo update
+
+Internal:
+
+* Reduced storage requirements for the `unitizer` stores
+    * No longer storing assignments both as test value and object in environment
+    * Calls recorded deparsed instead of as call objects
+* Shimming used for search path tracking is more lightweight
 
 unitizer 0.9.0
 --------------------------------------------------------------------------------
