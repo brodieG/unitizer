@@ -101,6 +101,12 @@ search_path_update <- function(id, global, force=FALSE) {
     # not entirely sure this check is needed
     stop("Logic Error: mismatch between actual search path and tracked path")
   }
+  # If we exit pre-maturely we'll be in a weird state so we need to mark this
+  # state so that next time we get here during the overall `on.exit` we can
+  # proceed
+
+  on.exit(global$state())
+
   # Get uniquely identified objects on search path; this isn't completely
   # perfect because some objects that are genuinely the same might be identified
   # as different because R copied them during attach / detach
@@ -202,13 +208,13 @@ search_path_update <- function(id, global, force=FALSE) {
     ) {
       many <- length(unload.conf) > 1L
       word_msg(
-        "Incompatible `reproducible.state` settings: `unitizer` is trying to ",
+        "Incompatible `state` settings: `unitizer` is trying to ",
         "auto-unload namespaces which are marked as un-unloadable while ",
-        "`reproducible.state[[\"options\"]]` is greater than zero; either set ",
-        "`reproducible.state[[\"options\"]]` to zero, or consult the ",
-        "reproducible tests vignette (`vignette(\"vgn05reproducibletests\")`) ",
-        "for other possible work-arounds.  The namespace",
-        if(many) "s", " that caused this error ", if(many) "are" else "is",
+        "`options` state is being tracked; either run `unitizer` without ",
+        "`options` tracking or consult the reproducible tests vignette ",
+        "(`vignette(\"vgn05reproducibletests\")`) for other possible ",
+        "work-arounds.  The namespace", if(many) "s",
+        " that caused this error ", if(many) "are" else "is",
         ": ", deparse(to.unload[unload.conf], width=500L), sep=""
       )
       stop("Unable to proceed")
@@ -224,6 +230,7 @@ search_path_update <- function(id, global, force=FALSE) {
     to.load <- setdiff(tar.lns, loadedNamespaces())
     for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
   }
+  on.exit(NULL)
   invisible(TRUE)
 }
 #' @keywords internal
