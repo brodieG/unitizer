@@ -43,9 +43,33 @@ setClass(
       )
     TRUE
 } )
+#' @rdname global_structures
+#' @keywords internal
 
 setClass(
   "unitizerGlobalStatus", contains="unitizerGlobalBase",
+  slots=c(
+    search.path="integer",
+    options="integer",
+    working.directory="integer",
+    random.seed="integer"
+  ),
+  prototype=list(
+    search.path=0L, working.directory=0L, options=0L,
+    random.seed=0L
+  ),
+  validity=function(object) {
+    for(i in slotNames(object))
+      if(!is.int.1L(slot(object, i)) || !slot(object, i) %in% 0L:2L)
+        return(paste0("slot `", i, "` must be integer(1L) and in 0:2"))
+    TRUE
+  }
+)
+#' @rdname global_structures
+#' @keywords internal
+
+setClass(
+  "unitizerGlobalDisabled", contains="unitizerGlobalBase",
   slots=c(
     search.path="logical",
     options="logical",
@@ -211,6 +235,20 @@ setClass(
       )[[1L]]
   )
 )
+#' @rdname global_structures
+#' @keywords internal
+
+setClass(
+  "unitizerGlobalNsOptConflict",
+  slots=c(conflict="logical", namespaces="character", file="character"),
+  prototype=list(conflict=FALSE),
+  validity=function(object) {
+    if(!is.TF(conflict)) return("Slot `conflict` must be TRUE or FALSE")
+    if(!is.chr1(file)) return("Slot `file` must be character(1L) and not NA")
+    if(any(is.na(namespaces))) return("Slot `namespaces` may not contain NAs")
+    TRUE
+  }
+)
 #' Objects / Methods used to Track Global Settings and the Like
 #'
 #' Implemented as Reference Class
@@ -223,8 +261,9 @@ unitizerGlobal <- setRefClass(
     par.env="environment",
 
     status="unitizerGlobalStatus",
-    disabled="unitizerGlobalStatus",
+    disabled="unitizerGlobalDisabled",
     tracking="unitizerGlobalTracking",
+    ns.opt.conflict="unitizerGlobalNsOptConflict",    # Allow us to remember if an error happened on state reset
 
     unitizer.opts="list",   # store original unitizer options before they get zeroed out
 
@@ -232,40 +271,46 @@ unitizerGlobal <- setRefClass(
     shim.funs="list",
 
     indices.init="unitizerGlobalIndices",
-    indices.last="unitizerGlobalIndices",
-
-    namespaces.loaded="logical"  # track which of the keep namespaces started off loaded
+    indices.last="unitizerGlobalIndices"
   ),
   methods=list(
     initialize=function(
-      ..., disabled=FALSE, enable.which=character(0L),
+      ..., disabled=FALSE, enable.which=integer(0L),
       par.env=new.env(parent=baseenv())
     ) {
       obj <- callSuper(..., par.env=par.env)
       enable(enable.which)
       state()
+      ns.opt.conflict@conflict <<- FALSE
       .global$global <- .self  # top level copy for access from other namespaces
-      namespaces.loaded <<-
-        unitizer.opts[["unitizer.namespace.keep"]] %in% loadedNamespaces()
       obj
     },
-    enable=function(which=.unitizer.global.settings.names) {
+    enable=function(
+      which=setNames(
+        rep(2L, length(.unitizer.global.settings.names)),
+        .unitizer.global.settings.names
+      )
+    ) {
       '
       Turn on global environment tracking, shouldnt be needed since usually
       called during initialization
       '
+      if(!length(which)) return(status)
       stopifnot(
-        is.character(which), all(which %in% .unitizer.global.settings.names)
+        is.integer(which), !any(is.na(which)),
+        !is.null(names(which)) && !any(is.na(names(which))),
+        all(names(which) %in% .unitizer.global.settings.names),
+        length(which) == length(unique(names(which)))
       )
-      for(i in which) {
+      for(i in names(which)) {
         if(slot(disabled, i)) {
           warning(
-            "Reproducible setting for `", i, "` has already been disabled and ",
+            "State setting for `", i, "` has already been disabled and ",
             "cannot be re-enabled", immediate.=TRUE
           )
           next
         }
-        slot(status, i) <<- TRUE
+        slot(status, i) <<- which[[i]]
       }
       status
     },
@@ -311,7 +356,7 @@ unitizerGlobal <- setRefClass(
       }
       indices.last
     },
-    reset=function(to, force=FALSE) {
+    reset=function(to) {
       '
       Reset global settings to a prior State, `force` is typically used When
       attempting to do a best effort reset with an on.exit reset b/c there
@@ -321,7 +366,7 @@ unitizerGlobal <- setRefClass(
       stopifnot(is(to, "unitizerGlobalIndices"))
 
       if(status@search.path && to@search.path)
-        search_path_update(to@search.path, .self, force=force)
+        search_path_update(to@search.path, .self)
       if(status@options && to@options)
         options_update(tracking@options[[to@options]])
       if(status@working.directory && to@working.directory)
@@ -355,7 +400,7 @@ unitizerGlobal <- setRefClass(
         new(
           "unitizerGlobalIndices", search.path=1L, options=1L,
           working.directory=1L, random.seed=1L
-        ), force=TRUE
+        )
       )
     }
 ) )

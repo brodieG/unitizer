@@ -78,17 +78,16 @@ setClass(
 #'   pre attached are always kept.  The \code{`keep`} packages are an addition
 #'   to those.
 #' @param id integer(1L) what recorded state to revert to
-#' @param .global reference object of class "unitizerGlobal" that holds the
-#'   global settings, provided for testing purposes only since should normally
-#'   always refer to \code{unitizer:::.global}
+#' @param global reference object of class "unitizerGlobal" that holds the
+#'   global settings
 #' @keywords internal
 #' @rdname search_path
 
-search_path_update <- function(id, global, force=FALSE) {
+search_path_update <- function(id, global) {
   stopifnot(
     is(global, "unitizerGlobal"),
-    is.integer(id), length(id) == 1L, !is.na(id),
-    is.TF(force)
+    is.integer(id), length(id) == 1L,
+    !is.na(id)
   )
   if(!id %in% seq_along(global$tracking@search.path))
     stop(
@@ -201,32 +200,11 @@ search_path_update <- function(id, global, force=FALSE) {
     tar.lns.loc <- sapply(tar.lns.dat, slot, "lib.loc", simplify=FALSE)  # may contain nulls
     tar.lns <- names(tar.lns.loc)
     to.unload <- setdiff(cur.lns, tar.lns)
-    to.keep <- global$unitizer.opts[["unitizer.namespace.keep"]]
-    if(
-      length(unload.conf <- which(to.unload %in% to.keep)) &&
-      global$status@options && !force
-    ) {
-      many <- length(unload.conf) > 1L
-      word_msg(
-        "Incompatible `state` settings: `unitizer` is trying to ",
-        "auto-unload namespaces which are marked as un-unloadable while ",
-        "`options` state is being tracked; either run `unitizer` without ",
-        "`options` tracking or consult the reproducible tests vignette ",
-        "(`vignette(\"vgn05reproducibletests\")`) for other possible ",
-        "work-arounds.  The namespace", if(many) "s",
-        " that caused this error ", if(many) "are" else "is",
-        ": ", deparse(to.unload[unload.conf], width=500L), sep=""
-      )
-      stop("Unable to proceed")
-    }
-    to.keep.depends <- unlist(
-      lapply(to.keep[to.keep %in% cur.lns], getNamespaceImports)
-    )
+
     unload_namespaces(
-      setdiff(
-        cur.lns,
-        c(tar.lns, to.keep, to.keep.depends)
-    ) )
+      to.unload, global=global,
+      keep.ns=global$unitizer.opts[["unitizer.namespace.keep"]]
+    )
     to.load <- setdiff(tar.lns, loadedNamespaces())
     for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
   }
@@ -237,25 +215,25 @@ search_path_update <- function(id, global, force=FALSE) {
 #' @rdname search_path
 
 search_path_trim <- function(
-  keep=getOption("unitizer.search.path.keep")
+  keep.path=getOption("unitizer.search.path.keep"),
+  keep.ns=getOption("unitizer.namespace.keep"),
+  global=unitizerGlobal$new()
 ) {
-  if(!is.character(keep) && all(!is.na(keep))) {
-    stop(
-      "Global option `unitizer.search.path.keep` must be character ",
-      "and not contain NAs; if you have not modified this option, contact ",
-      "maintainer."
-    )
-  }
+  stopifnot(
+    is.character(keep.path) && !any(is.na(keep.path)),
+    is.character(keep.ns) && !any(is.na(keep.ns)),
+    is(global, "unitizerGlobal")
+  )
   # detach each object, but make sure we do so in an order that doesn't cause
   # issues with namespace dependencies
 
   search.path.pre <- search()
 
-  to.detach <- setdiff(search.path.pre, c(keep, .unitizer.base.packages))
+  to.detach <- setdiff(search.path.pre, c(keep.path, .unitizer.base.packages))
   to.detach.pkg <- vapply(to.detach, is.loaded_package, logical(1L))
   to.detach.pkg.names <- sub("^package:", "", to.detach[to.detach.pkg])
 
-  to.keep <- intersect(c(keep, .unitizer.base.packages), search.path.pre)
+  to.keep <- intersect(c(keep.path, .unitizer.base.packages), search.path.pre)
   to.keep.pkg <- vapply(to.keep, is.loaded_package, logical(1L))
   to.keep.pkg.names <- sub("^package:", "", to.keep[to.keep.pkg])
 
@@ -268,8 +246,10 @@ search_path_trim <- function(
   }
   # Now attempt to unload namespaces
 
-  unload_namespaces(setdiff(loadedNamespaces(), to.keep.pkg.names))
-
+  unload_namespaces(
+    setdiff(loadedNamespaces(), c(to.keep.pkg.names, keep.ns)),
+    global=global, keep.ns=keep.ns
+  )
   invisible(TRUE)
 }
 #' Unload Namespaces
@@ -277,8 +257,29 @@ search_path_trim <- function(
 #' Attempts to unload namespaces in an order that avoids dependency issues
 #' based on data from \code{getNamespaceImports}
 
-unload_namespaces <- function(unload) {
-  stopifnot(is.character(unload), all(!is.na(unload)))
+unload_namespaces <- function(
+  unload, global, keep.ns=getOption("unitizer.namespace.keep")
+) {
+  stopifnot(
+    is.character(unload), all(!is.na(unload)),
+    is.character(keep.ns) && !any(is.na(keep.ns)),
+    is(global, "unitizerGlobal")
+  )
+  # Deal with options/namespace state conflict
+
+  if(
+    length(unload.conf <- which(unload %in% keep.ns)) &&
+    global$status@options
+  ) {
+    global$ns.opt.conflict@conflict <- TRUE
+    global$ns.opt.conflict@namespaces <- unload[unload.conf]
+    global$status@options <- 0L
+    global$disabled@options <- TRUE
+  }
+  to.keep.depends <- unlist(
+    lapply(keep.ns[keep.ns %in% loadedNamespaces()], getNamespaceImports)
+  )
+  unload.net <- setdiff(unload, c(keep.ns, to.keep.depends))
 
   # Make sure search path is compatible with what we're doing
 
@@ -292,18 +293,18 @@ unload_namespaces <- function(unload) {
   # re-load that one
 
   lns.raw <- loadedNamespaces()
-  if(!all(unload %in% lns.raw))
+  if(!all(unload.net %in% lns.raw))
     stop(
       "Logic Error: attempting to unload namespaces that are not loaded; ",
       "contact maintainer."
     )
   lns.tmp <- sapply(
-    unload, function(x) unique(names(getNamespaceImports(x))),
+    unload.net, function(x) unique(names(getNamespaceImports(x))),
     simplify=FALSE
   )
   # Get lib locations to unload DLLs later (if applicable)
 
-  lib.locs <- vapply(unload, find.package, character(1L))
+  lib.locs <- vapply(unload.net, find.package, character(1L))
 
   # order these in search path order if attached, as that will likely be easiest
   # order to detach in (though in most cases by the time we get here the
