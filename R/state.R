@@ -28,11 +28,22 @@ NULL
 #'   \item \code{unitizerStateOff} state tracking is turned off
 #' }
 #' In addition to the preset classes, you can set any of the slots to any valid
-#' setting (see examples).
-#'
+#' setting (see examples).  For \code{par.env} that setting is either
+#' \code{NULL} or an environment.  for all other slots, the settings are in
+#' \code{0:2} and mean:
+#' \enumerate{
+#'   \item 0 turn off state tracking
+#'   \item 1 track, but start with state as it was when \code{unitize} was
+#'     called
+#'   \item 2 track and set state to what you would typically find in a clean
+#'     R session, with the exception of \code{random.seed}, which is
+#'     set to \code{\link{getOption("unitizer.seed")}} (of kind "Wichmann-Hill"
+#'     as that seed is substantially smaller than the R default).
+#' }
 #' @note \code{\link{unitize_dir}} and \code{\link{unitize}} can accept
 #'   character values instead of the classes here; these are just translated to
-#'   the corresponding class defined here
+#'   the corresponding class defined here.  See the docs for the \code{state}
+#'   parameter for those functions.
 #' @examples
 #' \dontrun{
 #' ## use a custom environment as parent env
@@ -42,7 +53,16 @@ NULL
 #' unitize(..., state=new("unitizerStateBasic", options=0))
 #' }
 #'
-#' @rdname state
+#' @slot search.path one of \code{\link{0:2}}
+#' @slot options one of \code{\link{0:2}}
+#' @slot working.directory one of \code{\link{0:2}}
+#' @slot random.seed one of \code{\link{0:2}}
+#' @slot par.env \code{NULL} to use the special \code{unitizer} parent
+#'   environment, or an environment to use as the parent environment
+#'
+#' @rdname unitizerState
+#' @name unitizerState
+#' @seealso \code{\link{unitize}}
 
 setClass(
   "unitizerState",
@@ -115,6 +135,7 @@ setMethod("initialize", "unitizerState",
     do.call(callNextMethod, c(.Object, dots))
 } )
 
+#' @rdname unitizerState
 setClass(
   "unitizerStatePristine", contains="unitizerState",
   prototype=list(
@@ -122,7 +143,7 @@ setClass(
     par.env=NULL
   )
 )
-#' @rdname state
+#' @rdname unitizerState
 
 setClass(
   "unitizerStateNoOpt", contains="unitizerState",
@@ -131,7 +152,7 @@ setClass(
     par.env=.GlobalEnv
   )
 )
-#' @rdname state
+#' @rdname unitizerState
 
 setClass(
   "unitizerStateBasic", contains="unitizerState",
@@ -140,7 +161,7 @@ setClass(
     par.env=NULL
   )
 )
-#' @rdname state
+#' @rdname unitizerState
 
 setClass(
   "unitizerStateOff", contains="unitizerState",
