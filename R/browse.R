@@ -495,7 +495,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
       ) {
-        if(nchar(item.main@data@message))
+        if(length(item.main@data@message) && nchar(item.main@data@message))
           screen_out(
             item.main@data@message,
             max.len=unitizer@global$unitizer.opts[["unitizer.test.msg.lines"]],
