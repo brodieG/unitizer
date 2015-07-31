@@ -165,7 +165,7 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
     e1@items.ref <- e2
     if(length(e1@items.ref)) {
       e1@items.ref.calls.deparse <- vapply(
-        as.list(e1@items.ref), function(x) deparse_call(x@call), character(1L)
+        as.list(e1@items.ref), slot, character(1L), "call.dep"
       )
       e1@items.ref.map <- rep(NA_integer_, length(e1@items.ref))
     }

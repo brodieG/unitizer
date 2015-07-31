@@ -92,7 +92,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #'
 #' If you wish to modify the comparison functions for the side effects of test
 #' evaluation (e.g. screen output or conditions), then you need to pass a
-#' \code{\link{unitizerItemTestsFuns-class}} object intialized with the
+#' \code{\link{unitizerItemTestsFuns}} object intialized with the
 #' appropriate functions (see example).
 #'
 #' Make sure your comparison functions are available to \code{\link{unitize}}.
@@ -135,7 +135,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #'   several calls inside (see examples)
 #' @param details character more detailed description of what the purpose
 #'   of the section is; currently this doesn't do anything.
-#' @param compare a function or a \code{\link{unitizerItemTestsFuns-class}}
+#' @param compare a function or a \code{\link{unitizerItemTestsFuns}}
 #'   object
 #' @examples
 #' unitizer_sect("Custom Tests", {

@@ -10,4 +10,5 @@ search_path_attrs(x = NULL)
 Not perfect, by any means, but necessary because we can't directly compare
 the search path environments as they change on detach / re-attach
 }
+\keyword{internal}
 

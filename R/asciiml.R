@@ -1,8 +1,13 @@
+#' Text Representations of HTML Objects
+#'
 #' Functions defined here should ultimately be extended into a more
 #' comprehensive stand alone library for ASCII structured objects (banners,
 #' tables, etc.).
 #'
+#' Blah b
+#'
 #' @name asciiml
+#' @keywords internal
 #' @include list.R
 
 NULL

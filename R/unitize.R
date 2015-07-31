@@ -132,7 +132,9 @@
 #'
 #' You can modify all aspects of state control with the \code{state} parameter.
 #' See the \code{\link{state}} documentation and the \code{state} vignette for
-#' more details.
+#' more details.  One exception to this control are the \code{warn} and
+#' \code{error} options; these are always set to \code{1} and \code{NULL}
+#' respectively during test evaluation.
 
 unitize <- function(
   test.file, store.id=NULL,

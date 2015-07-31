@@ -73,8 +73,8 @@ unitize_core <- function(
       "prior errors"
     )
   par.env <- state@par.env
-  reproducible.state <- sapply(
-    setdiff(slotNames(state), "par.env"), slot, object=state, simplify=FALSE
+  reproducible.state <- vapply(
+    setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
   )
   # auto.accept
 
@@ -179,11 +179,13 @@ unitize_core <- function(
   opts.untz <- opts[grep("^unitizer\\.", names(opts))]
   validate_options(opts.untz)
 
-  # Initialize new tracking object; this will also record starting state
+  # Initialize new tracking object; this will also record starting state and
+  # store unitizer options; open question of how exposed we want to be to
+  # user manipulation of options
 
   global <- unitizerGlobal$new(
-    enable.which=names(reproducible.state)[as.logical(reproducible.state)],
-    unitizer.opts=opts.untz
+    enable.which=reproducible.state,
+    unitizer.opts=opts.untz             # this may no longer be necessary now that we don't unload unitizer options
   )
   if(is.null(par.env)) {
     global$shimFuns()
@@ -201,21 +203,29 @@ unitize_core <- function(
   )
   gpar.frame <- par.env
 
-  # Set the zero state if needed
+  # Set the zero state if needed; `seach.path` should be done first so that we
+  # can disable options if there is a conflict there; WARNING, there is some
+  # fragility here since it is possible using these functions could modify
+  # global (see `options` example)
 
   seed.dat <- getOption("unitizer.seed")  # get seed before 'options_zero'
 
-  if(identical(reproducible.state[["search.path"]], 2L)) {
-    search_path_trim()
-  }
-  if(identical(reproducible.state[["options"]], 2L)) options_zero()
-  if(identical(reproducible.state[["random.seed"]], 2L)) {
+  if(identical(global$status@search.path, 2L))
+    search_path_trim(
+      global=global,
+      keep.ns=global$unitizer.opts[["unitizer.namespace.keep"]],
+      keep.path=global$unitizer.opts[["unitizer.search.path.keep"]]
+    )
+  if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""  # indicate conflict happened prior to test eval
+
+  if(identical(global$status@options, 2L)) options_zero()
+  if(identical(global$status@random.seed, 2L)) {
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
       stop(
         "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
         "is a list of possible arguments to `set.seed`."
   ) } }
-  if(identical(reproducible.state[["working.directory"]], 2L)) {
+  if(identical(global$status@working.directory, 2L)) {
     if(length(unique(dirname(test.files)) == 1L)) {
       base.file <- test.files[[1L]]
       is.package <- FALSE
@@ -228,8 +238,8 @@ unitize_core <- function(
     } }
     if(is.package) setwd(par.dir) else
       warning(
-        "Test files do not appear to be in package; leaving working dir ",
-        "unchanged.", immediate.=TRUE
+        "Test files do not appear to be part of a package; leaving working ",
+        "directory unchanged.", immediate.=TRUE
       )
   }
   # - Parse / Load -------------------------------------------------------------
@@ -264,6 +274,7 @@ unitize_core <- function(
         over_print(paste("Parsing", x))
         parse_tests(x, comments=TRUE)
   } ) }
+  over_print("")
 
   while(
     (length(eval.which) || mode == identical(mode, "review")) && length(valid)
@@ -289,7 +300,6 @@ unitize_core <- function(
         tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
         global=global
       )
-
     # Gather user input, and store tests as required.  Any unitizers that
     # the user marked for re-evaluation will be re-evaluated in this loop
 
@@ -354,14 +364,17 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
       # reset global settings if active to just after pre-loads (DO WE NEED TO
       # CHECK WHETHER THIS MODE IS ENABLED, OR IS IT HANDLED INERNALLY?)
 
-      global$resetInit()
-
       tests <- new("unitizerTests") + test.dat
       if(test.len > 1L)
         over_print(
           paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": ")
         )
       unitizers[[i]] <- unitizer + tests
+      global$resetInit()
+      if(
+        global$ns.opt.conflict@conflict && !length(global$ns.opt.conflict@file)
+      )
+        global$ns.opt.conflict@file <- basename(unitizer@test.file.loc)
     } else {
       unitizers[[i]] <- unitizer
     }
@@ -454,164 +467,202 @@ unitize_browse <- function(
   # - Interactive --------------------------------------------------------------
 
   if(test.len > 1L) show(summaries)
+  quit <- FALSE
 
-  if(identical(mode, "review") || any(to.review) || force.update) {
-    # We have fairly different treatment for a single test versus multi-test
-    # review, so the logic gets a little convoluted (keep eye out for)
-    # `test.len > 1L`, but this obviates the need for multiple different calls
-    # to `browseUnitizers`
+  # If any conflicts in state tracking are detected, alert user and give them
+  # a chance to bail out
 
-    # Additional convolution introduced given the need to handle the possibility
-    # of auto.accepts in non-interactive mode, and since for ease of
-    # implementation we chose to do auto.accepts through `browseUnitizer`, we
-    # need to add some hacks to handle that outcome since by design originally
-    # the browse stuff was never meant to handle non-interactive use...
-
-    first.time <- TRUE
-    repeat {
-      prompt <- paste0(
-        "\nType number of unitizer to review",
-        if(any(to.review))
-          ", 'A' to review all that require review",
-        if(any(summaries@updated))
-          ", 'R' to re-evaluate all updated"
+  if(global$ns.opt.conflict@conflict) {
+    many <- length(global$ns.opt.conflict@namespaces)
+    word_msg(
+      "`unitizer` was unable to run with `options` state tracking enabled ",
+      "starting with ",
+      if(!nchar(global$ns.opt.conflict@file)) "the first test file" else
+        paste0("test file \"", global$ns.opt.conflict@file, "\""),
+      " because in order to do we would have had to unload the following ",
+      "namespace", if(many > 1L) "s", " in contravention of ",
+      "`getOption(unitizer.namespace.keep)`: ",
+      paste0(deparse(global$ns.opt.conflict@namespaces, width=500L), sep=""),
+      ".", sep=""
+    )
+    if(interactive.mode) {
+      word_msg(
+        "You may proceed normally but be aware that option state was not ",
+        "managed starting with the file in question, and option state will ",
+        "not be managed during review, or restored to original values after ",
+        "`unitizer` completes evaluation.  You may quit `unitizer` now to ",
+        "avoid any changes.  See state vignette for more details.", sep=""
       )
-      help.opts <- c(
-        paste0(deparse(seq.int(test.len)), ": unitizer number to review"),
-        if(any(to.review)) "A: Review all `unitzers` that require review (*)",
-        "AA: Review all tests",
-        if(any(summaries@updated)) "R: Re-evaluate all updated unitizers ($)",
-        "RR: Re-evaluate all tests",
-        "Q: quit"
+      proceed <- "Do you wish to proceed despite compromised state tracking"
+      word_cat(proceed, "([Y]es, [N]o)?\n")
+      prompt <- unitizer_prompt(
+        "Do you wish to proceed despite compromised state tracking",
+        valid.opts=c(Y="[Y]es", N="[N]o"),
+        exit.condition=exit_fun, valid.vals=seq.int(test.len),
+        hist.con=hist.obj$con, help=help
       )
-      help <- c(
-        "Available options:", paste0(as.character(UL(help.opts)), collapse="\n")
-      )
-      if(!first.time) {
-        if(!interactive.mode)
-          stop(
-            "Logic Error: looping for user input in non-interactive mode, ",
-            "contact maintainer."
-          )
-        show(summaries)
-      }
-      first.time <- FALSE
-      eval.which <- integer(0L)
+      if(prompt %in% c("N", "Q") && confirm_quit(unitizers)) quit <- TRUE
+    } else {
+      stop(
+        "Unable to proceed in non-interactive mode; set options state ",
+        "tracking to a value less than or equal to search path state tracking ",
+        "or see vignette for other workarounds."
+  ) } }
 
-      if(test.len > 1L) {
-        pick.num <- integer()
-        pick <- if(interactive.mode) {
-          word_cat(prompt)
-          unitizer_prompt(
-            "Pick a unitizer or an option",
-            valid.opts=c(
-              A=if(any(to.review)) "[A]ll",
-              R=if(any(summaries@updated)) "[R]e-eval",
-              AA="", RR=""
-            ),
-            exit.condition=exit_fun, valid.vals=seq.int(test.len),
-            hist.con=hist.obj$con, help=help
-          )
-        } else {
-          # in non.interactive mode, review all, this will apply auto.accepts
-          # if successfull
-          "A"
-        }
-        if(identical(pick, "Q")) {
-          if(
-            Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
-            global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
-          ) {
-            word_cat("Are you sure you want to quit?")
-            ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
-            if(identical(ui, "N")) next
-          }
-          break
-        } else if(identical(pick, "A")) {
-          pick.num <- which(to.review & !summaries@updated)
-        } else if(identical(pick, "AA")) {
-          pick.num <- seq.int(test.len)
-        } else if(identical(pick, "R")) {
-          eval.which <- which(summaries@updated)
-        } else if(identical(pick, "RR")) {
-          eval.which <- seq.int(test.len)
-        } else {
-          pick.num <- as.integer(pick)
-          if(!pick.num %in% seq.int(test.len)) {
-            word_msg(
-              "Input not a valid unitizer; choose in ",
-              deparse(seq.int(test.len))
+  if(!quit) {
+    if(identical(mode, "review") || any(to.review) || force.update) {
+      # We have fairly different treatment for a single test versus multi-test
+      # review, so the logic gets a little convoluted (keep eye out for)
+      # `test.len > 1L`, but this obviates the need for multiple different calls
+      # to `browseUnitizers`
+
+      # Additional convolution introduced given the need to handle the
+      # possibility of auto.accepts in non-interactive mode, and since for ease
+      # of implementation we chose to do auto.accepts through `browseUnitizer`,
+      # we need to add some hacks to handle that outcome since by design
+      # originally the browse stuff was never meant to handle non-interactive
+      # use...
+
+      first.time <- TRUE
+      repeat {
+        prompt <- paste0(
+          "\nType number of unitizer to review",
+          if(any(to.review))
+            ", 'A' to review all that require review",
+          if(any(summaries@updated))
+            ", 'R' to re-evaluate all updated"
+        )
+        help.opts <- c(
+          paste0(deparse(seq.int(test.len)), ": unitizer number to review"),
+          if(any(to.review)) "A: Review all `unitzers` that require review (*)",
+          "AA: Review all tests",
+          if(any(summaries@updated)) "R: Re-evaluate all updated unitizers ($)",
+          "RR: Re-evaluate all tests",
+          "Q: quit"
+        )
+        help <- c(
+          "Available options:",
+          paste0(as.character(UL(help.opts)), collapse="\n")
+        )
+        if(!first.time) {
+          if(!interactive.mode)
+            stop(
+              "Logic Error: looping for user input in non-interactive mode, ",
+              "contact maintainer."
             )
-            next
-        } }
-      } else pick.num <- 1L
+          show(summaries)
+        }
+        first.time <- FALSE
+        eval.which <- integer(0L)
 
-      for(i in pick.num) {
-        print(
-          H1(
-            paste0(
-              "unitizer for: ", getName(unitizers[[i]]), collapse=""
-        ) ) )
-        if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])  # summaries don't really work well in review mode if the tests are not evaluated
-        browse.res <- browseUnitizer(
-          unitizers[[i]], untz.browsers[[i]],
-          force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers
-        )
-        summaries@updated[[i]] <- browse.res@updated
-        unitizers[[i]] <- browse.res@unitizer
-        int.error[[i]] <- browse.res@interactive.error
+        if(test.len > 1L) {
+          pick.num <- integer()
+          pick <- if(interactive.mode) {
+            word_cat(prompt)
+            unitizer_prompt(
+              "Pick a unitizer or an option",
+              valid.opts=c(
+                A=if(any(to.review)) "[A]ll",
+                R=if(any(summaries@updated)) "[R]e-eval",
+                AA="", RR=""
+              ),
+              exit.condition=exit_fun, valid.vals=seq.int(test.len),
+              hist.con=hist.obj$con, help=help
+            )
+          } else {
+            # in non.interactive mode, review all, this will apply auto.accepts
+            # if successfull
+            "A"
+          }
+          if(identical(pick, "Q")) {
+            if(confirm_quit(unitizers)) break else next
+          } else if(identical(pick, "A")) {
+            pick.num <- which(to.review & !summaries@updated)
+          } else if(identical(pick, "AA")) {
+            pick.num <- seq.int(test.len)
+          } else if(identical(pick, "R")) {
+            eval.which <- which(summaries@updated)
+          } else if(identical(pick, "RR")) {
+            eval.which <- seq.int(test.len)
+          } else {
+            pick.num <- as.integer(pick)
+            if(!pick.num %in% seq.int(test.len)) {
+              word_msg(
+                "Input not a valid unitizer; choose in ",
+                deparse(seq.int(test.len))
+              )
+              next
+          } }
+        } else pick.num <- 1L
 
-        # Check to see if any need to be re-evaled, and if so, mark unitizers
-        # and return
-
-        eval.which <- unique(
-          c(
-            eval.which,
-            if(identical(browse.res@re.eval, 1L)) {
-              i
-            } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
-        ) )
-      }
-      # - Non-interactive Issues -----------------------------------------------
-      if(any(int.error)) {
-        if(interactive.mode)
-          stop(
-            "Logic Error: should not get here in interactive mode; contact ",
-            " maintainer"
+        for(i in pick.num) {
+          print(
+            H1(
+              paste0(
+                "unitizer for: ", getName(unitizers[[i]]), collapse=""
+          ) ) )
+          if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])  # summaries don't really work well in review mode if the tests are not evaluated
+          browse.res <- browseUnitizer(
+            unitizers[[i]], untz.browsers[[i]],
+            force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers
           )
-        # Problems during non-interactive review; we only allow this as a
-        # mechanism for allowing auto-accepts in non-interactive mode
+          summaries@updated[[i]] <- browse.res@updated
+          unitizers[[i]] <- browse.res@unitizer
+          int.error[[i]] <- browse.res@interactive.error
 
-        for(i in which(int.error)) {
-          untz <- unitizers[[i]]
-          delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
-          word_msg(
-            paste0(
-              "  * ",
-              format(paste0(untz@tests.status[delta.show], ": ")),
-              untz@items.new.calls.deparse[delta.show],
-              collapse="\n"
+          # Check to see if any need to be re-evaled, and if so, mark unitizers
+          # and return
+
+          eval.which <- unique(
+            c(
+              eval.which,
+              if(identical(browse.res@re.eval, 1L)) {
+                i
+              } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
+          ) )
+        }
+        # - Non-interactive Issues -----------------------------------------------
+        if(any(int.error)) {
+          if(interactive.mode)
+            stop(
+              "Logic Error: should not get here in interactive mode; contact ",
+              " maintainer"
+            )
+          # Problems during non-interactive review; we only allow this as a
+          # mechanism for allowing auto-accepts in non-interactive mode
+
+          for(i in which(int.error)) {
+            untz <- unitizers[[i]]
+            delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
+            word_msg(
+              paste0(
+                "  * ",
+                format(paste0(untz@tests.status[delta.show], ": ")),
+                untz@items.new.calls.deparse[delta.show],
+                collapse="\n"
+              ),
+              "\nin '", relativize_path(untz@test.file.loc), "'\n",
+              sep=""
+            )
+          }
+          stop(
+            "Newly evaluated tests do not match unitizer (",
+            paste(
+              names(summaries@totals), summaries@totals, sep=": ", collapse=", "
             ),
-            "\nin '", relativize_path(untz@test.file.loc), "'\n",
-            sep=""
+            "); see above for more info, or run in interactive mode"
           )
         }
-        stop(
-          "Newly evaluated tests do not match unitizer (",
-          paste(
-            names(summaries@totals), summaries@totals, sep=": ", collapse=", "
-          ),
-          "); see above for more info, or run in interactive mode"
-        )
-      }
-      # - Simple Outcomes / no-review ------------------------------------------
+        # - Simple Outcomes / no-review ------------------------------------------
 
-      if(identical(test.len, 1L) || length(eval.which) || !interactive.mode)
-        break
+        if(identical(test.len, 1L) || length(eval.which) || !interactive.mode)
+          break
+      }
+    } else {
+      message("All tests passed; nothing to review.")
     }
-  } else {
-    message("All tests passed; nothing to review.")
-  }
+  } else eval.which <- integer(0L)  # we quit, so don't want to re-evalute anything
+
   # Set eval status before return
 
   if(length(eval.which)) {
@@ -711,4 +762,20 @@ reset_and_unshim <- function(global) {
       "can `untrace` them manually)"
     )
   success.clear && success.unshim
+}
+#' Prompt to Quit if Enough Time Spent on Evaluation
+#' @keywords internal
+
+confirm_quit <- function(unitizers) {
+  stopifnot(is(unitizers, "unitizerList"))
+  if(
+    length(unitizers) &&
+    Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
+      unitizers[[1L]]@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
+  ) {
+    word_cat("Are you sure you want to quit?")
+    ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
+    return(!identical(ui, "N"))
+  }
+  TRUE
 }

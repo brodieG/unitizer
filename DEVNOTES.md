@@ -22,6 +22,8 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## Capture
 
+### Legacy questions
+
 * Should we really allow execution in interactive mode with stderr() and
   stdout() captured?  seems weird.
 * implement capture handling at condition handler level and integrate output
@@ -30,13 +32,25 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 * should we capture actual stdout() vs stdout caused by a visible
   value separately?  probably yes, makes way more sense for the
   show.unitizeritem method
-* need a better mechanism for handling the options changes for error and
-  warning?  do we really want to change the error options? or allow warning=2?
 * debugging partially implemented by disabling captures, but really,
   that's not real debugging.  unfortunately, because we capture std.err
   and we can't tee that, there is no good debugging to implement.
-* should we capture all options in case user changes some that we don't expect
-  and don't know what to do about?
+
+### Stdout and Message Capture
+
+Turns out stdout and stderr capture is a very small portion of the storage
+space taken up in a unitizer.
+
+### Storage optimization
+
+Looks like the majority of storage is actually taken by values, calls, and
+environments.  We partially addressed values by no longer storing ignored
+tests.  We probably can't do anything about the environments.
+
+For calls, we're planning on storing the deparsed calls rather than the calls
+themselves.  This should save a lot of room, at the cost of some computation
+time since the deparse/parse cycle is about 150us per call, which is less than
+ideal.
 
 ## Browse
 

@@ -95,6 +95,13 @@ is.valid_state <- function(x) {
     x, pristine=new("unitizerStatePristine"), noopt=new("unitizerStateNoOpt"),
     basic=new("unitizerStateBasic"), off=new("unitizerStateOff")
   )
+  if(x@options > x@search.path) {
+    word_msg(
+      "Options state tracking (", x@options, ") must be less than search path ",
+      "state tracking (", x@search.path, ").", sep=""
+    )
+    return(FALSE)
+  }
   return(x)
 }
 

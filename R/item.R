@@ -45,8 +45,11 @@ setClass(
 ) )
 #' Full Representation Of an Evaluated \code{`unitizer`} Test
 #'
+#' Note we have both a `call` and `call.dep` object due to the
+#'
 #' @keywords internal
 #' @slot call the call that is tested
+#' @slot call.dep deparsed version of the call
 #' @slot reference whether this is a reference or new \code{`unitizerItem`}
 #' @slot ignore whether this test should be treated as a test or just a step
 #'   towards compiling a test
@@ -61,6 +64,7 @@ setClass(
   "unitizerItem",
   representation(
     call="ANY",
+    call.dep="character",
     id="integer",
     reference="logical",
     env="environmentOrNULL",
@@ -114,8 +118,11 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
   dots.names <- names(dots.all)
-  if(!("call" %in% dots.names))
-    .Object@call <- NULL else .Object@call <- dots.all$call
+  if("call" %in% dots.names) {
+    .Object@call <- dots.all$call
+    .Object@call.dep <- deparse_call(dots.all$call)
+  } else .Object@call <- NULL
+
   if("env" %in% dots.names) .Object@env <- dots.all$env
   if(
     is.call(.Object@call) &&
@@ -132,6 +139,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   if("glob.indices" %in% dots.names)
     .Object@glob.indices <- dots.all$glob.indices
   dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]
+  if(.Object@ignore) dots[["value"]] <- new("unitizerDummy")
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
@@ -163,7 +171,7 @@ setMethod("show", "unitizerItem",
     cat("~~~ ")
     if(object@reference) cat("Reference") else cat("New")
     cat(" Test ~~~\n")
-    cat(deparse_call(object@call), sep="\n")
+    cat(object@call.dep, sep="\n")
     cat("* value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
     if(out.len <- length(object@data@output)) cat("* output:", out.len, "lines\n")
     if(err.len <- length(object@data@message)) cat("* message:", err.len, "lines\n")
@@ -323,8 +331,8 @@ setMethod("$", c("unitizerItem"),
     data.slots <- slotNames(x@data)
     extras <- c("call", "state")
     valid <- c(extras, data.slots)
-    if(what %in% c("call", "state")) return(slot(x, what))
-    if(identical(what, "call")) return(x@call)
+    if(identical(what, "call")) return(parse(text=x@call.dep)[[1L]])
+    if(identical(what, "state")) return(x@state)
     if(length(what) != 1L || !what %in% data.slots) {
       stop(
         "Argument `name` must be in ",
