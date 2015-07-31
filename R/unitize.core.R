@@ -493,6 +493,8 @@ unitize_browse <- function(
         "`unitizer` completes evaluation.  You may quit `unitizer` now to ",
         "avoid any changes.  See state vignette for more details.", sep=""
       )
+      proceed <- "Do you wish to proceed despite compromised state tracking"
+      word_cat(proceed, "([Y]es, [N]o)?\n")
       prompt <- unitizer_prompt(
         "Do you wish to proceed despite compromised state tracking",
         valid.opts=c(Y="[Y]es", N="[N]o"),
