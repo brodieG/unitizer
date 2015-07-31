@@ -764,6 +764,7 @@ reset_and_unshim <- function(global) {
   success.clear && success.unshim
 }
 #' Prompt to Quit if Enough Time Spent on Evaluation
+#' @keywords internal
 
 confirm_quit <- function(unitizers) {
   stopifnot(is(unitizers, "unitizerList"))

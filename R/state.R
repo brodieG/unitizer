@@ -14,7 +14,7 @@ NULL
 #' There are four classes defined, though their only purpose is to act as
 #' presets since they are identical except for their prototype values:
 #' \itemize{
-#'   \item \code{unitizerStatePristine} is the default class and has implements
+#'   \item \code{unitizerStatePristine} is the default class and implements
 #'     the highest level of state tracking and control
 #'   \item \code{unitizerStateNoOpt} turns off options tracking, which makes it
 #'     a good choice if you have a lot of packages that are added to
@@ -62,7 +62,7 @@ NULL
 #'
 #' @rdname unitizerState
 #' @name unitizerState
-#' @seealso \code{\link{unitize}}
+#' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}}
 
 setClass(
   "unitizerState",

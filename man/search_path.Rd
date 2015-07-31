@@ -5,21 +5,22 @@
 \alias{search_path_update}
 \title{Search Path Management Functions}
 \usage{
-search_path_update(id, global, force = FALSE)
+search_path_update(id, global)
 
-search_path_trim(keep = getOption("unitizer.search.path.keep"))
+search_path_trim(keep.path = getOption("unitizer.search.path.keep"),
+  keep.ns = getOption("unitizer.namespace.keep"),
+  global = unitizerGlobal$new())
 }
 \arguments{
 \item{id}{integer(1L) what recorded state to revert to}
+
+\item{global}{reference object of class "unitizerGlobal" that holds the
+global settings}
 
 \item{keep}{character names of packages/objects to keep in search path;
 note that base packages (see .unitizer.base.packages) that come typically
 pre attached are always kept.  The \code{`keep`} packages are an addition
 to those.}
-
-\item{.global}{reference object of class "unitizerGlobal" that holds the
-global settings, provided for testing purposes only since should normally
-always refer to \code{unitizer:::.global}}
 }
 \description{
 Set of functions used to manage search path state.  Strategy is to

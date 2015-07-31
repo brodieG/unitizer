@@ -19,10 +19,11 @@ Implemented as Reference Class
       separately
       }
 
-\item{\code{enable(which = .unitizer.global.settings.names)}}{Turn on global environment tracking, shouldnt be needed since usually
+\item{\code{enable(which = setNames(rep(2L, length(.unitizer.global.settings.names)),
+  .unitizer.global.settings.names))}}{Turn on global environment tracking, shouldnt be needed since usually
 called during initialization}
 
-\item{\code{reset(to, force = FALSE)}}{Reset global settings to a prior State, `force` is typically used When
+\item{\code{reset(to)}}{Reset global settings to a prior State, `force` is typically used When
 attempting to do a best effort reset with an on.exit reset b/c there
 was a failure or some such elsewhere, particularly within an actual
 non full reset attempt.}

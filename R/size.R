@@ -6,6 +6,7 @@ NULL
 #'
 #' Funny name is just to avoid conflicts with functions with same names in
 #' other packages.
+#' @keywords internal
 
 setGeneric("sizeUntz", function(x, ...) StandardGeneric("sizeUntz"))
 setMethod(
@@ -40,6 +41,7 @@ setMethod("sizeUntz", "unitizer",
 #' to the subsetting functions defined for \code{unitizerBrowse} objects.
 #'
 #' Currently we only define a method for \code{unitizerItems-class} objects
+#' @keywords internal
 
 setGeneric("flattenUntz", function(x, ...) StandardGeneric("flattenUntz"))
 setMethod(
@@ -63,8 +65,8 @@ setMethod(
     items
   }
 )
-
 #' Measure object size as an RDS
+#' @keywords internal
 
 sizeRDS <- function(object) {
   f <- tempfile()

@@ -28,25 +28,6 @@ setClass(
     TRUE
   }
 )
-#' Default List of Packages To Keep on Search Path
-#'
-#' @export
-
-.unitizer.base.packages <- c(
-  "package:stats", "package:graphics", "package:grDevices", "package:utils",
-  "package:datasets", "package:methods", "Autoloads", "package:base",
-  ".GlobalEnv"
-)
-#' Additional Namespaces to Keep Loaded
-#'
-#' \itemize{
-#'   \item data.table must be kept loaded due to issue
-#'      \href{https://github.com/Rdatatable/data.table/issues/990}{#990}
-#' }
-#' @export
-
-.unitizer.namespace.keep <- c("data.table")
-
 #' Search Path Management Functions
 #'
 #' Set of functions used to manage search path state.  Strategy is to
@@ -247,8 +228,8 @@ search_path_trim <- function(
   # Now attempt to unload namespaces
 
   unload_namespaces(
-    setdiff(loadedNamespaces(), c(to.keep.pkg.names, keep.ns)),
-    global=global, keep.ns=keep.ns
+    setdiff(loadedNamespaces(), to.keep.pkg.names), global=global,
+    keep.ns=keep.ns
   )
   invisible(TRUE)
 }
@@ -456,6 +437,7 @@ search_path_unique_id <- function(search.path.objs) {
 #'
 #' Not perfect, by any means, but necessary because we can't directly compare
 #' the search path environments as they change on detach / re-attach
+#' @keywords internal
 
 search_path_attrs <- function(x=NULL) {
   if(is.null(x)) x <- search_as_envs()

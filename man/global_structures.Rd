@@ -4,9 +4,12 @@
 \name{unitizerGlobalBase-class}
 \alias{unitizerDummy-class}
 \alias{unitizerGlobalBase-class}
+\alias{unitizerGlobalDisabled-class}
 \alias{unitizerGlobalIndices-class}
+\alias{unitizerGlobalNsOptConflict-class}
 \alias{unitizerGlobalState-class}
 \alias{unitizerGlobalStateFuns-class}
+\alias{unitizerGlobalStatus-class}
 \alias{unitizerGlobalTracking-class}
 \alias{unitizerGlobalTrackingStore-class}
 \title{Structures For Tracking Global Options}

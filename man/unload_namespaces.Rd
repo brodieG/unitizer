@@ -4,7 +4,8 @@
 \alias{unload_namespaces}
 \title{Unload Namespaces}
 \usage{
-unload_namespaces(unload)
+unload_namespaces(unload, global,
+  keep.ns = getOption("unitizer.namespace.keep"))
 }
 \description{
 Attempts to unload namespaces in an order that avoids dependency issues

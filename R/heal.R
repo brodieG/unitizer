@@ -76,6 +76,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' @param y \code{\link{unitizer-class}} object \code{x} was generated from
 #' @param ... unused, here for inheriting methods
 #' @return \code{unitizerItems-class}
+#' @name healEnvs
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"),
   valueClass="unitizerItems",
