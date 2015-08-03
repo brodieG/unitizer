@@ -101,15 +101,13 @@
 #'
 #' @section \code{unitizer} Differences That May Cause Problems:
 #'
-#' DEV NOTE: UPDATE FOR STATE TRACKING
-#'
 #' If you run your tests during development with \code{test_dir} odds
 #' are the translation will work just fine.  On the other hand, if you rely
 #' exclusively on \code{test_check} you may need to use
-#' \code{par.env=getNamespace("pkgName")} when you translate to make sure your
-#' tests have access to the internal namespace functions.
+#' \code{state=unitizerStateNoOpt(par.env="pkgName")} when you translate to
+#' make sure yourtests have access to the internal namespace functions.
 #'
-#' If your tests were translated with parameter \code{par.env} changed from
+#' If your tests were translated with the \code{state} parameter changed from
 #' its default value, you will have to use the same value for that parameter in
 #' future \code{unitize} or \code{unitize_dir} runs.
 #'
@@ -164,7 +162,7 @@
 #' @param force logical(1L) whether to allow writing to a \code{target.dir} that
 #'   contains files (implies \code{prompt="never"} when
 #'   \code{testthat_translate_dir} runs \code{testthat_translate_file})
-#' @param par.env parent environment for tests (see same argument for
+#' @param state what state control to use (see same argument for
 #'   \code{\link{unitize}})
 #' @return a file path or a character vector (see \code{target.dir})
 #' @examples
@@ -172,11 +170,12 @@
 #' library(testthat)  # required
 #' testthat_translate_file("tests/testthat/test-random.R")
 #'
-#' # Translate `dplyr` tests (assumes `dplyr` source is in './dplyr'):
+#' # Translate `dplyr` tests (assumes `dplyr` source is in './dplyr')
+#' # Normally we would use default `state` value but we cannot in this case
+#' # due to conflicting packages and setup
 #'
 #' testthat_translate_dir(
-#'   "dplyr/tests/testthat", par.env=getNamespace("dplyr"),
-#'   search.path.clean=FALSE
+#'   "dplyr/tests/testthat", state=unitizerStateSafe(par.env="dplyr")
 #' )
 #' # Make sure translation worked (checking one file here)
 #' # *NOTE*: folder we are looking at has changed
@@ -186,24 +185,21 @@
 #' # Now we can unitize any time we change our code
 #'
 #' unitize_dir(
-#'   "dplyr/tests/unitizer", par.env=getNamespace("dplyr"),
-#'   search.path.clean=FALSE
+#'   "dplyr/tests/unitizer", state=unitizerStateSafe(par.env="dplyr")
 #' )
 #' }
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  par.env=NULL, keep.testthat.call=TRUE, prompt="always", ...
+  state=getOption("unitizer.state"),
+  keep.testthat.call=TRUE, prompt="always", ...
 ) {
-  if(!is.null(par.env) && !is.environment(par.env))
-    stop("Argument `par.env` must be an environment or NULL")
-
   untz.file <- testthat_transcribe_file(
     file.name, target.dir, keep.testthat.call, prompt, ...
   )
   if(!is.null(target.dir)) {
     unitize(
-      test.file=untz.file, auto.accept="new", par.env=par.env,
+      test.file=untz.file, auto.accept="new", state=state,
       interactive.mode=FALSE
     )
   }
@@ -451,7 +447,8 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", par.env=NULL, keep.testthat.call=TRUE, force=FALSE,
+  filter="^test.*\\.[rR]", state=getOption("unitizer.state"),
+  keep.testthat.call=TRUE, force=FALSE,
   ...
 ) {
   is_testthat_attached()
@@ -473,12 +470,12 @@ testthat_translate_dir <- function(
   if(!file_test("-d", dir.name))
     stop("Argument `", dir.name, "` is not a directory name")
 
-  if(!is.null(par.env) && !is.environment(par.env))
-    stop("Argument `par.env` must be an environment or NULL")
+  state <- is.valid_state(state)
+  if(!is(state, "unitizerState")) stop("Argument `state` is invalid")
 
   # note, parent env below doesn't matter since we're going to change it
 
-  env <- new.env(parent=if(is.null(par.env)) baseenv() else par.env)
+  env <- new.env(parent=if(is.null(state@par.env)) baseenv() else state@par.env)
 
   # Get file names
 
@@ -538,7 +535,7 @@ testthat_translate_dir <- function(
     # Unitize all files in directory
 
     unitize_dir(
-      test.dir=target.dir, auto.accept="new", par.env=par.env,
+      test.dir=target.dir, auto.accept="new", state=state,
       interactive.mode=FALSE
     )
   }
