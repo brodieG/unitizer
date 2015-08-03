@@ -12,6 +12,11 @@ try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 
+state.set <- setNames(
+  rep(2L, length(unitizer:::.unitizer.global.settings.names)),
+  unitizer:::.unitizer.global.settings.names
+)
+
 library(unitizer)
 library(unitizerdummypkg1)
 library(unitizerdummypkg2)
@@ -62,10 +67,7 @@ library(unitizer)
 
 search.ref <- NULL # will be modified later
 search.init <- unitizer:::search_as_envs()
-state.set <- setNames(
-  rep(2L, length(unitizer:::.unitizer.global.settings.names)),
-  unitizer:::.unitizer.global.settings.names
-)
+
 untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
 
 test_that("Search Path Journaling Works", {

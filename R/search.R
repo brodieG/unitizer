@@ -123,7 +123,11 @@ search_path_update <- function(id, global) {
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
-  if(!all.equal(search_as_envs(), search.curr)) {
+  curr.env.check <- search_as_envs()
+  if(
+    !isTRUE(all.equal(curr.env.check, search.curr)) ||
+    !identical(curr.env.check@ns.dat, search.curr@ns.dat)
+  ) {
     # not entirely sure this check is needed, or might be too stringent
     # new version of comparing entire object not tested
     stop("Logic Error: mismatch between actual search path and tracked path")
@@ -153,7 +157,7 @@ search_path_update <- function(id, global) {
 
   for(i in sort(which(is.na(match(st.id, sc.id.tmp))))) {
 
-    obj.name <- attr(search.target[[i]], "name")
+    obj.name <- names(search.target)[[i]]
     if(is.null(obj.name)) obj.name <- ""
     obj.type <- if(grepl("^package:.+", obj.name)) "package" else "object"
     obj.name.clean <- sub("^package:", "", obj.name)
@@ -206,32 +210,24 @@ search_path_update <- function(id, global) {
   ) } }
   # Updated comparison method (might be too stringent)
 
-  if(!all.equal(search_as_envs(), search.target))
+  if(!isTRUE(all.equal(search_as_envs(), search.target)))
     stop("Logic Error: path reorder failed at last step; contact maintainer.")
 
   # Line up the namespaces
 
-  if(!is.null(tar.lns.dat <- attr(search.target, "loadedNamespaces"))) {
-    if(
-      !is.list(tar.lns.dat) ||
-      !all(vapply(tar.lns.dat, is, logical(1L), "unitizerNamespaceData"))
-    )
-      stop(
-        "Logic Error: unable to line up namespaces across states because ",
-        "namespace data in unexpected format; contact maintainer."
-      )
-    cur.lns <- loadedNamespaces()
-    tar.lns.loc <- sapply(tar.lns.dat, slot, "lib.loc", simplify=FALSE)  # may contain nulls
-    tar.lns <- names(tar.lns.loc)
-    to.unload <- setdiff(cur.lns, tar.lns)
+  tar.lns.dat <- search.target@ns.dat
+  cur.lns <- loadedNamespaces()
+  tar.lns.loc <- sapply(as.list(tar.lns.dat), slot, "lib.loc", simplify=FALSE)  # may contain nulls
+  tar.lns <- names(search.target@ns.dat)
+  to.unload <- setdiff(cur.lns, tar.lns)
 
-    unload_namespaces(
-      to.unload, global=global,
-      keep.ns=global$unitizer.opts[["unitizer.namespace.keep"]]
-    )
-    to.load <- setdiff(tar.lns, loadedNamespaces())
-    for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
-  }
+  unload_namespaces(
+    to.unload, global=global,
+    keep.ns=global$unitizer.opts[["unitizer.namespace.keep"]]
+  )
+  to.load <- setdiff(tar.lns, loadedNamespaces())
+  for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
+
   on.exit(NULL)
   invisible(TRUE)
 }

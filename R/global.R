@@ -277,9 +277,10 @@ unitizerGlobal <- setRefClass(
   methods=list(
     initialize=function(
       ..., disabled=FALSE, enable.which=integer(0L),
-      par.env=new.env(parent=baseenv())
+      par.env=new.env(parent=baseenv()),
+      unitizer.opts=options()[grep("^unitizer\\.", names(options()))]
     ) {
-      obj <- callSuper(..., par.env=par.env)
+      obj <- callSuper(..., par.env=par.env, unitizer.opts=unitizer.opts)
       enable(enable.which)
       state()
       ns.opt.conflict@conflict <<- FALSE
