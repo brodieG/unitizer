@@ -175,7 +175,7 @@ setMethod(
   function(x, opts.ignore, ...) {
     stopifnot(is.character(opts.ignore))
     res <- new("unitizerGlobalTrackingStore")
-    res@search.path <- lapply(x@search.path, names)
+    res@search.path <- lapply(x@search.path, unitizerCompressTracking)
 
     # Don't store stuff with environments or stuff that is too big
     # (size cut-off should be an option?), or stuff that is part of the base or
@@ -201,21 +201,22 @@ setMethod(
 } )
 #' Get Current Search Path as List of Environments
 #'
-#' Internal utility function.  Loaded namespaces attached as an attribute.
-#' Probably should be an S4 class.
-#'
-#' This has to be in this file, and not in R/search.R for teh setClass for the
-#' state funs object.
+#' This has to be in this file, and not in R/search.R for the setClass for the
+#' state funs object.  Note there are some weird dependency circularities,
+#' and we're relying on this function not being called until once the full
+#' package is loaded.
 #'
 #' @keywords internal
 
 search_as_envs <- function() {
   sp <- search()
   res <- setNames(lapply(seq_along(sp), as.environment), sp)
-  attr(res, "loadedNamespaces") <- get_namespace_data()
-  res
-}
 
+  new(
+    "unitizerSearchData",
+    .items=res,
+    ns.dat=new("unitizerNsListData", .items=get_namespace_data())
+) }
 #' @rdname global_structures
 #' @keywords internal
 
@@ -276,9 +277,10 @@ unitizerGlobal <- setRefClass(
   methods=list(
     initialize=function(
       ..., disabled=FALSE, enable.which=integer(0L),
-      par.env=new.env(parent=baseenv())
+      par.env=new.env(parent=baseenv()),
+      unitizer.opts=options()[grep("^unitizer\\.", names(options()))]
     ) {
-      obj <- callSuper(..., par.env=par.env)
+      obj <- callSuper(..., par.env=par.env, unitizer.opts=unitizer.opts)
       enable(enable.which)
       state()
       ns.opt.conflict@conflict <<- FALSE

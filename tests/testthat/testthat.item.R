@@ -50,8 +50,17 @@ local( {
     expect_equal(length(my.unitizer2@items.ref), length(ref.exps))
     expect_equal(as.expression(lapply(unitizer:::as.list(my.unitizer2@items.new), slot, "call")), new.exps)
     expect_equal(as.expression(lapply(unitizer:::as.list(my.unitizer2@items.ref), slot, "call")), ref.exps)
-    expect_equal(lapply(unitizer:::as.list(my.unitizer2@items.new), function(x) x@data@value), lapply(new.exps, eval))
-    expect_equal(lapply(unitizer:::as.list(my.unitizer2@items.ref), function(x) x@data@value), lapply(ref.exps, eval))
+
+    vals <- lapply(unitizer:::as.list(my.unitizer2@items.new), function(x) x@data@value)
+    vals.ign <- unitizer:::ignored(my.unitizer2@items.new)
+    expect_equal(vals[!vals.ign], lapply(new.exps, eval)[!vals.ign])
+    expect_true(all(vapply(vals[vals.ign], is, logical(1L), "unitizerDummy")))
+
+    vals <- lapply(unitizer:::as.list(my.unitizer2@items.ref), function(x) x@data@value)
+    vals.ign <- unitizer:::ignored(my.unitizer2@items.ref)
+    expect_equal(vals[!vals.ign], lapply(ref.exps, eval)[!vals.ign])
+    expect_true(all(vapply(vals[vals.ign], is, logical(1L), "unitizerDummy")))
+
     expect_equal(my.unitizer2@items.new.map, c(1L, 2L, 3L, 4L, 5L, NA, NA, NA))
     expect_equal(my.unitizer2@items.ref.map, c(1L, 2L, 3L, 4L, 5L, NA))
     expect_equal(my.unitizer2@tests.fail, c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))

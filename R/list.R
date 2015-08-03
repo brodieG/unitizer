@@ -264,3 +264,7 @@ setMethod("append", c("factor", "factor"),
     x
   }
 )
+setMethod("names", "unitizerList", function(x) names(x@.items))
+setMethod("names<-", "unitizerList",
+  function(x, value) names(x@.items) <- value
+)

@@ -2,7 +2,8 @@ library(unitizer)
 test_that("Random Seed", {
   old.seed <- if(!exists(".Random.seed")) NULL else .Random.seed
   seed.dat <- getOption("unitizer.seed")
-  untz.glob <- unitizer:::unitizerGlobal$new(enable.which="random.seed")
+  untz.glob <-
+    unitizer:::unitizerGlobal$new(enable.which=setNames(2L, "random.seed"))
   do.call(set.seed, seed.dat)
   new.seed <- .Random.seed
   state <- untz.glob$state()
