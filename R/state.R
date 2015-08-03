@@ -52,20 +52,24 @@ NULL
 #' unitize(..., state=unitizerStatePrisitine(par.env=my.env))
 #' ## Basic, but do not track options
 #' unitize(..., state=unitizerStateBasic(options=0))
+#' ## No options tracking, and in `dplyr` namespace package
+#' unitize(..., state=unitizerStateNoOpt(par.env="dplyr"))
 #' }
-#'
 #' @slot search.path one of \code{\link{0:2}}
 #' @slot options one of \code{\link{0:2}}
 #' @slot working.directory one of \code{\link{0:2}}
 #' @slot random.seed one of \code{\link{0:2}}
 #' @slot par.env \code{NULL} to use the special \code{unitizer} parent
-#'   environment, or an environment to use as the parent environment
+#'   environment, or an environment to use as the parent environment, or
+#'   the name of a package as a character string to use that packages'
+#'   namespace as the parent environment
 #'
 #' @rdname unitizerState
+#' @export unitizerState
 #' @name unitizerState
 #' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}}
 
-setClass(
+unitizerState <- setClass(
   "unitizerState",
   slots=c(
     search.path="integer",
@@ -133,10 +137,18 @@ setMethod("initialize", "unitizerState",
     dots.base <- dots[!names(dots) %in% "par.env"]
     for(i in names(dots.base))
       if(is.numeric(dots.base[[i]])) dots[[i]] <- as.integer(dots.base[[i]])
+    if("par.env" %in% names(dots))
+      dots[["par.env"]] <- try(getNamespace(dots[["par.env"]]))
+    if(inherits(dots[["par.env"]], "try-error"))
+      stop(
+        "Argument `par.env` must resolve to a package namespace if supplied as ",
+        "character(1L)"
+      )
     do.call(callNextMethod, c(.Object, dots))
 } )
-
+#' @export unitizerStatePristine
 #' @rdname unitizerState
+
 unitizerStatePristine <- setClass(
   "unitizerStatePristine", contains="unitizerState",
   prototype=list(
@@ -144,6 +156,7 @@ unitizerStatePristine <- setClass(
     par.env=NULL
   )
 )
+#' @export unitizerStateNoOpt
 #' @rdname unitizerState
 
 unitizerStateNoOpt <- setClass(
@@ -153,6 +166,7 @@ unitizerStateNoOpt <- setClass(
     par.env=.GlobalEnv
   )
 )
+#' @export unitizerStateBasic
 #' @rdname unitizerState
 
 unitizerStateBasic <- setClass(
@@ -162,6 +176,7 @@ unitizerStateBasic <- setClass(
     par.env=NULL
   )
 )
+#' @export unitizerStateOff
 #' @rdname unitizerState
 
 unitizerStateOff <- setClass(
