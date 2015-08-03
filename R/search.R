@@ -7,25 +7,71 @@ NULL
 #' @keywords internal
 
 setClass(
-  "unitizerSearchData",
-  list(
-    name="character",
-    type="character",
-    data="environmentOrNULL",
-    extra="ANY"
-  ),
+  "unitizerNsListData", contains="unitizerList",
+  validity=function(object) {
+    if(!all(vapply(object@.items, is, logical(1L), "unitizerNamespaceData")))
+      return("Object may only contain environments")
+    TRUE
+  }
+)
+setClass(
+  "unitizerSearchData", contains="unitizerList",
+  slots=c(ns.dat="unitizerNsListData"),
   prototype=list(data=NULL),
   validity=function(object) {
-    if(
-      identical(length(object@type), 1L) || is.na(object@type) ||
-      !object@type %in% c("package", "object")
-    )
-      return("Slot `type` must be character(1L) and in c(\"package\", \"object\")")
-    if(
-      identical(length(object@name), 1L) || is.na(object@type)
-    )
-      return("Slot `name` must be character(1L) and not NA")
+    if(!all(vapply(object@.items, is.environment, logical(1L))))
+      return("Object may only contain environments")
     TRUE
+  }
+)
+setGeneric(
+  "unitizerGetPaths", function(x, ...) StandardGeneric("unitizerGetPaths")
+)
+setMethod(
+  "unitizerGetPaths", "unitizerSearchData",
+  function(x, ...) lapply(as.list(x), attr, "path")
+)
+setGeneric(
+  "unitizerGetVersions", function(x, ...) StandardGeneric("unitizerGetVersions")
+)
+setMethod(
+  "unitizerGetVersions", "unitizerSearchData",
+  function(x, ...) {
+    ns.loaded <- names(x@ns.dat)
+    ns.version <- vapply(x@ns.dat, slot, character(1L), "version")
+
+    pkg.names <- names(x)
+    are.pkg <- grepl("^package:.+", names(x))
+    pkg.names <- sub("^package:(.*)", "\\1", )
+    pkg.sub <- match(pkg.names, ns.loaded)
+    pkg.ver <- ns.version[pkg.sub]
+    pkg.ver[!are.pkg] <- NA_character_
+    pkg.ver
+  }
+)
+setMethod(
+  "all.equal", c("unitizerSearchData", "unitizerSearchData"),
+  function(target, current, ...) {
+    res <- character()
+    if(!isTRUE(name.comp <- all.equal(names(target), names(current))))
+      res <- c("Search Path Name Mismatch:", name.comp)
+    if(
+      !isTRUE(
+        path.comp <- all.equal(
+          unitizerGetPaths(target), unitizerGetPaths(current)
+    ) ) )
+      res <- c("Search Path Object Path Mismatch:", path.comp)
+    if(length(res)) res else TRUE
+  }
+)
+setMethod(
+  "unitizerCompressTracking", "unitizerSearchData",
+  function(x, ...) {
+    res <- names(x)
+    res.pkg <- grepl("^package:.+", res)
+    ver <- unitizerGetVersions(x)
+    res[res.pkg] <- paste0(res[res.pkg], "(", ver[res.pkg], ")")
+    res
   }
 )
 #' Search Path Management Functions
@@ -77,8 +123,9 @@ search_path_update <- function(id, global) {
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
-  if(!identical(search_path_attrs(), search_path_attrs(search.curr))) {
-    # not entirely sure this check is needed
+  if(!all.equal(search_as_envs(), search.curr)) {
+    # not entirely sure this check is needed, or might be too stringent
+    # new version of comparing entire object not tested
     stop("Logic Error: mismatch between actual search path and tracked path")
   }
   # If we exit pre-maturely we'll be in a weird state so we need to mark this
@@ -91,8 +138,8 @@ search_path_update <- function(id, global) {
   # perfect because some objects that are genuinely the same might be identified
   # as different because R copied them during attach / detach
 
-  st.id <- search_path_unique_id(search.target)
-  sc.id <- sc.id.tmp <- search_path_unique_id(search.curr)
+  st.id <- unitizerUniqueNames(search.target)
+  sc.id <- sc.id.tmp <- unitizerUniqueNames(search.curr)
 
   # Drop the stuff that definitely needs to be dropped, from back so that
   # numbering doesn't get messed up
@@ -136,7 +183,7 @@ search_path_update <- function(id, global) {
     swap.id <- min(reord[mismatch])
     swap.pos <- which(reord == swap.id)
     move_on_path(new.pos=swap.id, old.pos=swap.pos)
-    sc.id.tmp <- search_path_unique_id(search_as_envs())
+    sc.id.tmp <- unitizerUniqueNames(search_as_envs())
   }
   if(!identical(search(), names(search.target)))
     stop("Logic Error: path reorder failed; contact maintainer.")
@@ -157,13 +204,9 @@ search_path_update <- function(id, global) {
       reattach(
         i, names(search.target)[[i]], type="object", data=search.target[[i]]
   ) } }
+  # Updated comparison method (might be too stringent)
 
-  if(
-    !identical(
-      sapply(search_as_envs(), attributes, simplify=FALSE),
-      sapply(search.target, attributes, simplify=FALSE)
-    )
-  )
+  if(!all.equal(search_as_envs(), search.target))
     stop("Logic Error: path reorder failed at last step; contact maintainer.")
 
   # Line up the namespaces
@@ -418,31 +461,29 @@ move_on_path <- function(new.pos, old.pos) {
 #'
 #' @keywords internal
 
-search_path_unique_id <- function(search.path.objs) {
-  stopifnot(
-    is.list(search.path.objs),
-    all(vapply(search.path.objs, is.environment, logical(1L)))
-  )
-  sp.id.base <- names(search.path.objs)
-  ave(
-    sp.id.base, sp.id.base,
-    FUN=function(x) {
-      if(length(x) == 1L) return(x)
-      c(head(x, 1L), paste0(tail(x, -1L), ".", 1:(length(x) - 1L)))
-    }
-  )
-}
-
+setGeneric(
+  "unitizerUniqueNames", function(x, ...)
+  StandardGeneric("unitizerUniqueNames")
+)
+setMethod(
+  "unitizerUniqueNames", "unitizerSearchData",
+  function(x, ...) {
+    sp.id.base <- names(x)
+    ave(
+      sp.id.base, sp.id.base,
+      FUN=function(x) {
+        if(length(x) == 1L) return(x)
+        c(head(x, 1L), paste0(tail(x, -1L), ".", 1:(length(x) - 1L)))
+      }
+    )
+  }
+)
 #' Generate An Identifier out of SP objects
 #'
 #' Not perfect, by any means, but necessary because we can't directly compare
 #' the search path environments as they change on detach / re-attach
 #' @keywords internal
 
-search_path_attrs <- function(x=NULL) {
-  if(is.null(x)) x <- search_as_envs()
-  sapply(x, attributes, simplify=FALSE)
-}
 get_namespace_data <- function() {
   sapply(
     loadedNamespaces(),
