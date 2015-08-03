@@ -124,9 +124,18 @@ search_path_update <- function(id, global) {
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
   curr.env.check <- search_as_envs()
+  ns.in.common <- intersect(
+    names(search.curr@ns.dat), names(curr.env.check@ns.dat)
+  )
+  ns.extra <- setdiff(names(search.curr@ns.dat), ns.in.common)
+
   if(
     !isTRUE(all.equal(curr.env.check, search.curr)) ||
-    !identical(curr.env.check@ns.dat, search.curr@ns.dat)
+    !all(ns.extra %in% global$unitizer.opts[["unitizer.namespace.keep"]]) ||
+    !identical(
+      curr.env.check@ns.dat[ns.in.common],
+      search.curr@ns.dat[ns.in.common]
+    )
   ) {
     # not entirely sure this check is needed, or might be too stringent
     # new version of comparing entire object not tested
@@ -386,6 +395,9 @@ unload_namespaces <- function(
       immediate.=TRUE
     )
   }
+  if(length(lns) || global$ns.opt.conflict@conflict)
+    global$state()  # mark state if we're not able to completely clean it up
+  NULL
 }
 #' Check Whether a Package Is Loaded
 #'
