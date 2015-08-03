@@ -72,25 +72,7 @@ load_unitizers <- function(
       return(
         "`get_unitizer` returned something other than a `unitizer` or FALSE"
   ) } )
-  valid <- vapply(
-    unitizers,
-    function(x) {
-      if(!is(x, "unitizer")) {
-        if(!is.chr1plain(x) || nchar(x) < 1L)
-          return("unknown unitizer load failure")
-        return(x)
-      }
-      attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
-      if(inherits(attempt, "try-error")) {
-        msg <- conditionMessage(attr(attempt, "condition"))
-        paste0(
-          c("unitizer object is invalid", if(nchar(msg)) c(": ", msg)),
-          collapse=""
-        )
-      } else ""
-    },
-    character(1L)
-  )
+  valid <- vapply(unitizers, unitizer_valid, character(1L))
   null.version <- package_version("0.0.0")
   curr.version <- packageVersion("unitizer")
 
@@ -327,5 +309,24 @@ best_file_name <- function(store.id, test.file) {
     return("<unknown-test-file>")
   }
   paste0("Test file for unitizer '", chr.store, "'")
+}
+#' Helper function for load
+#'
+#' @keywords internal
+
+unitizer_valid <- function(x) {
+  if(!is(x, "unitizer")) {
+    if(!is.chr1plain(x) || nchar(x) < 1L)
+      return("unknown unitizer load failure")
+    return(x)
+  }
+  attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
+  if(inherits(attempt, "try-error")) {
+    msg <- conditionMessage(attr(attempt, "condition"))
+    paste0(
+      c("unitizer object is invalid", if(nchar(msg)) c(": ", msg)),
+      collapse=""
+    )
+  } else ""
 }
 
