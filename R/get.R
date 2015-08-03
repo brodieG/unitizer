@@ -349,9 +349,18 @@ infer_unitizer_location.character <- function(
   if(cand.len == 1L) inf_msg(file.final)
   file.final
 }
-#' Check Whether a Directory Likey Contains An R Package
+#' Check Whether Directories Are Likely R Package Source Directories
 #'
-#' Approximate check based on DESCRIPTION file and directory structure.
+#' Heuristic check to see whether a directory contains what likely could be
+#' built into an R package.  This is based on the DESCRIPTION file and directory
+#' structure.
+#'
+#' \code{is_package_dir} checks whether a directory is the top level directory
+#' of a package.
+#'
+#' \code{get_package_dir} checks whether a directory or any of its parents is the
+#' top level directory of a package, and returns the top level package directory
+#' or character(0L) if not
 #'
 #' @keywords internal
 #' @param name a directory to check for package-ness
@@ -360,7 +369,7 @@ infer_unitizer_location.character <- function(
 #'   otherwise
 
 is_package_dir <- function(name, has.tests=FALSE) {
-  if(!file_test("-d", name)) stop("Argument `name` must be a directory")
+  stopifnot(file_test("-d", name), is.TF(has.tests))
 
   # DESCRIPTION file matches directory?
 
@@ -399,6 +408,27 @@ is_package_dir <- function(name, has.tests=FALSE) {
 
   TRUE
 }
+#' @rdname is_package_dir
+
+get_package_dir <- function(name=getwd(), has.tests=FALSE) {
+  stopifnot(
+    is.chr1(name),
+    file_test("-d", name) || file_test("-f", name),
+    is.TF(has.tests)
+  )
+  if(file_test("-f", name)) name <- dirname(name)
+  if(!file_test("-d", name)) return(FALSE)
+  is.package <- FALSE
+  prev.dir <- par.dir <- name
+
+  repeat {
+    if(isTRUE(is_package_dir(par.dir, has.tests))) return(par.dir)
+    if(nchar(par.dir <- dirname(prev.dir)) >= nchar(prev.dir)) break
+    prev.dir <- par.dir
+  }
+  character()
+}
+
 #' Check Whether a Directory as a Unitizer Data Directory
 #'
 #' Just checks that it \emph{could} be a data directory, the test ultimately is
