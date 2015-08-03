@@ -54,7 +54,7 @@ prompt_to_proceed()
 
 prompt_to_proceed()
 
-install(fastlm_dir(version=0))
+install(fastlm_dir(version=0), quiet=TRUE)
 
 # Note: `fastlm_dir` returns the location of the `unitizer.fastlm` sources
 # embedded within `unitizer`. Normally you would just `install` your package.
@@ -83,7 +83,7 @@ prompt_to_proceed()
 
 prompt_to_proceed()
 
-install(fastlm_dir(version=1))
+install(fastlm_dir(version=1), quiet=TRUE)
 
 # We can now re-run `unitize` to check for regressions.  In this case, two of
 # the four tests will fail.
@@ -108,7 +108,7 @@ prompt_to_proceed()
 
 prompt_to_proceed()
 
-install(fastlm_dir(version=2))
+install(fastlm_dir(version=2), quiet=TRUE)
 
 # And re-run our tests; in theory they should all pass.
 
