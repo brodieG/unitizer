@@ -360,10 +360,7 @@ unitizerGlobal <- setRefClass(
     },
     reset=function(to) {
       '
-      Reset global settings to a prior State, `force` is typically used When
-      attempting to do a best effort reset with an on.exit reset b/c there
-      was a failure or some such elsewhere, particularly within an actual
-      non full reset attempt.
+      Reset global settings to a prior State
       '
       stopifnot(is(to, "unitizerGlobalIndices"))
 

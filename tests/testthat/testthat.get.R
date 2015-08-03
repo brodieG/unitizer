@@ -89,7 +89,9 @@ local({
       unitizer:::is_package_dir(file.path(system.file(package="stats"), "R")),  # just picked some folder we know will not work
       "No DESCRIPTION file"
     )
-    expect_error(unitizer:::is_package_dir("ASDFASDF"), "must be a directory")
+    expect_error(
+      unitizer:::is_package_dir("ASDFASDF"), "file_test\\(\"-d\", name\\) is not TRUE"
+    )
     expect_match(
       unitizer:::is_package_dir(
         file.path(
@@ -104,6 +106,18 @@ local({
       ) ),
       "DESCRIPTION file did not have a package name entry"
     )
+    # *get_*package_dir
+
+    pkg.f <- file.path(
+      system.file(package="unitizer"), "tests", "interactive", "run.R"
+    )
+    expect_true(length(unitizer:::get_package_dir(pkg.f)) == 1L)
+    expect_true(length(unitizer:::get_package_dir(dirname(pkg.f))) == 1L)
+    f <- tempfile()
+    cat("helloworld", file=f)
+    expect_true(length(unitizer:::get_package_dir(f)) == 0L)
+    unlink(f)
+    expect_error(unitizer:::get_package_dir(f))
   } )
   test_that("is_unitizer_dir", {
     base.dir <- file.path(
