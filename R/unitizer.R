@@ -129,41 +129,6 @@ setClass(
     global=unitizerGlobal$new(enable.which=character())  # dummy so tests will run
   ),
   validity=function(object) {
-    if(length(object@items.ref)) {
-      ids <- vapply(as.list(object@items.ref), slot, integer(1L), "id")
-      if(!identical(ids, seq_along(ids)))
-        return("Non sequential ids in reference items.")
-      if(length(ids) != length(object@section.ref.map))
-        return("Reference section mapping error")
-
-      # Make sure not using relative paths for either
-
-      if(!identical(length(object@test.file.loc), 1L))
-        return("slot `test.file.loc` must be length 1L")
-      if(!is.na(object@test.file.loc)) {
-        if(!file_test("-f", object@test.file.loc))
-          return("slot `test.file.loc` must point to a file")
-        if(
-          !identical(object@test.file.loc, normalizePath(object@test.file.loc))
-        )
-          return("slot `test.file.loc` must be a properly normalized path")
-      }
-      # Randomly test a subset of the items for validity (testing all becomes
-      # too time consuming)
-
-      samp <- sample(
-        seq_along(object@items.ref), min(5L, length(object@items.ref))
-      )
-      if(length(samp))
-        item.check <- lapply(as.list(object@items.ref[samp]), isValid)
-      if(any(is.chr <- vapply(item.check, is.character, logical(1L))))
-        return(
-          paste0(
-            "Invalid reference item at index[", samp[which(is.chr)[[1L]]],
-            "]: ", item.check[[which(is.chr)[[1L]]]], " (note we randomly ",
-            "pick up to three reference tests to check validity)."
-        ) )
-    }
     if(!is.object(object@id) && is.character(object@id)) { # default id format
       # # No guarantees store id actually exists, so not enforcing this check
       # if(
