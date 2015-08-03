@@ -38,11 +38,11 @@ setMethod(
   "unitizerGetVersions", "unitizerSearchData",
   function(x, ...) {
     ns.loaded <- names(x@ns.dat)
-    ns.version <- vapply(x@ns.dat, slot, character(1L), "version")
+    ns.version <- vapply(x@ns.dat@.items, slot, character(1L), "version")
 
     pkg.names <- names(x)
     are.pkg <- grepl("^package:.+", names(x))
-    pkg.names <- sub("^package:(.*)", "\\1", )
+    pkg.names <- sub("^package:(.*)", "\\1", pkg.names)
     pkg.sub <- match(pkg.names, ns.loaded)
     pkg.ver <- ns.version[pkg.sub]
     pkg.ver[!are.pkg] <- NA_character_
@@ -70,7 +70,7 @@ setMethod(
     res <- names(x)
     res.pkg <- grepl("^package:.+", res)
     ver <- unitizerGetVersions(x)
-    res[res.pkg] <- paste0(res[res.pkg], "(", ver[res.pkg], ")")
+    res[res.pkg] <- paste0(res[res.pkg],  " (v", ver[res.pkg], ")")
     res
   }
 )
