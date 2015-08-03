@@ -27,6 +27,7 @@ NULL
 #'     all the tests
 #'   \item \code{unitizerStateOff} state tracking is turned off
 #' }
+#' Each class has a constructor function of the same name as the class.
 #' In addition to the preset classes, you can set any of the slots to any valid
 #' setting (see examples).  For \code{par.env} that setting is either
 #' \code{NULL} or an environment.  for all other slots, the settings are in
@@ -48,9 +49,9 @@ NULL
 #' \dontrun{
 #' ## use a custom environment as parent env
 #' my.env <- new.env()
-#' unitize(..., state=new("unitizerStatePrisitine", par.env=my.env))
+#' unitize(..., state=unitizerStatePrisitine(par.env=my.env))
 #' ## Basic, but do not track options
-#' unitize(..., state=new("unitizerStateBasic", options=0))
+#' unitize(..., state=unitizerStateBasic(options=0))
 #' }
 #'
 #' @slot search.path one of \code{\link{0:2}}
@@ -136,7 +137,7 @@ setMethod("initialize", "unitizerState",
 } )
 
 #' @rdname unitizerState
-setClass(
+unitizerStatePristine <- setClass(
   "unitizerStatePristine", contains="unitizerState",
   prototype=list(
     search.path=2L, options=2L, working.directory=2L, random.seed=2L,
@@ -145,7 +146,7 @@ setClass(
 )
 #' @rdname unitizerState
 
-setClass(
+unitizerStateNoOpt <- setClass(
   "unitizerStateNoOpt", contains="unitizerState",
   prototype=list(
     search.path=2L, options=0L, working.directory=2L, random.seed=2L,
@@ -154,7 +155,7 @@ setClass(
 )
 #' @rdname unitizerState
 
-setClass(
+unitizerStateBasic <- setClass(
   "unitizerStateBasic", contains="unitizerState",
   prototype=list(
     search.path=1L, options=1L, working.directory=1L, random.seed=1L,
@@ -163,7 +164,7 @@ setClass(
 )
 #' @rdname unitizerState
 
-setClass(
+unitizerStateOff <- setClass(
   "unitizerStateOff", contains="unitizerState",
   prototype=list(
     search.path=0L, options=0L, working.directory=0L, random.seed=0L,
