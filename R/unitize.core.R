@@ -67,11 +67,8 @@ unitize_core <- function(
   # par.env and other components
 
   state <- is.valid_state(state)
-  if(!is(state, "unitizerState"))
-    stop(
-      "Argument `state` could not be interpreted as a `unitizerState`; see ",
-      "prior errors"
-    )
+  if(!is(state, "unitizerState")) stop("Argument `state` is invalid")
+
   par.env <- state@par.env
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
