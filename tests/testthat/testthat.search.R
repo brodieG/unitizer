@@ -32,10 +32,11 @@ test_that("Detecting packages", {
 search.init <- unitizer:::search_as_envs()
 
 test_that("Path Compression", {
-
-
+  expect_identical(
+    head(unitizer:::unitizerCompressTracking(search.init), 3L),
+    c(".GlobalEnv", "package:unitizerdummypkg2 (v0.1)", "package:unitizerdummypkg1 (v0.1)")
+  )
 })
-
 test_that("Moving Objects on Search Path Works", {
   if(length(search.init) < 6L) stop("Unexpetedly short search path")
 
