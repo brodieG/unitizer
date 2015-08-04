@@ -86,25 +86,15 @@ prompt_to_proceed()
 install(fastlm_dir(version=1), quiet=TRUE)
 
 # We can now re-run `unitize` to check for regressions.  In this case, two of
-# the four tests will fail.
-#
-# You can compare the correct reference value with the newly computed one by
-# inspecting the `.ref` and `.new` objects at the `unitizer` prompts.  In this
-# case we know our original test values are the correct ones, so once you are
-# done inspecting type N at the prompt to reject the new values.
-#
-# Since we are not going to accept any changes in this review you will exit
-# `unitize` without modifying the `unitizer` store.
+# the four tests will fail.  Since we know the original implementation was
+# correct these new values should be rejected by typing 'N' at the prompt and
+# exiting `unitizer`.
 
 prompt_to_proceed()
 
 unitize(.unitizer.test.file)
 
-# The failed tests above illustrate how `unitize` detects regressions.
-
-prompt_to_proceed()
-
-# Let's install the final fixed implementation of `unitizer.fastlm`:
+# We will now install the final fixed implementation of `unitizer.fastlm`.
 
 prompt_to_proceed()
 
