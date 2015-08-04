@@ -42,7 +42,7 @@ show_file <- function(f, width=getOption("width", 80L)) {
     justify="right"
   )
   line.txt.chars <- nchar(line.txt[[1L]]) + 2L
-  file.disp <- word_wrap(f, width=width - 4L)
+  file.disp <- word_wrap(f, width=width - 4L, hyphens=FALSE)
   body <- paste0("| ", line.txt, " | ", format(unlist(txt.wrap)), " |")
   body.chrs <- nchar(body[[1L]])
   bar <- paste0(
