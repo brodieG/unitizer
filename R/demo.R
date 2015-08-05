@@ -21,8 +21,7 @@ fastlm_dir <- function(version) {
 #' @export
 #' @rdname unitizer_demo
 
-prompt_to_proceed <- function()
-  invisible(readline("[Press ENTER to Continue]"))  # helper fun
+`[Press ENTER to Continue]` <- readline
 
 #' @export
 #' @rdname unitizer_demo
