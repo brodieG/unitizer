@@ -6,10 +6,13 @@ x <- 1:100
 y <- x ^ 2
 res <- fastlm(x, y)
 
-# The following four expressions are the tests
+# Tests start here
 
 res
 get_slope(res)
 get_rsq(res)
 
-fastlm(x, head(y))  # Causes an error; press Y to add to store
+# The following test is expected to cause an error; press 'Y' to
+# accept it so future checks can confirm the same error persists
+
+fastlm(x, head(y))

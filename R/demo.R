@@ -29,6 +29,8 @@ fastlm_dir <- function(version) {
 show_file <- function(f, width=getOption("width", 80L)) {
   stopifnot(is.chr1(f))
   txt <- try(readLines(f))
+  pkg.dir <- get_package_dir(f)
+  if(nchar(pkg.dir)) f <- relativize_path(f, pkg.dir)
   if(inherits(txt, "try-error")) stop("Unable to open file")
   line.num <- seq_along(txt)
   line.chars <- max(nchar(line.num))
@@ -41,9 +43,9 @@ show_file <- function(f, width=getOption("width", 80L)) {
     justify="right"
   )
   line.txt.chars <- nchar(line.txt[[1L]]) + 2L
-  file.disp <- word_wrap(f, width=width - 4L, hyphens=FALSE)
   body <- paste0("| ", line.txt, " | ", format(unlist(txt.wrap)), " |")
   body.chrs <- nchar(body[[1L]])
+  file.disp <- word_wrap(f, width=nchar(body[[1L]]) - 4L, hyphens=FALSE)
   bar <- paste0(
     c(
       "+", rep("-", line.txt.chars), "+",
@@ -53,7 +55,10 @@ show_file <- function(f, width=getOption("width", 80L)) {
   )
   top.bar <- paste0(c("+", rep("-",  body.chrs - 2L), "+"), collapse="")
   file.disp[[1L]] <- paste0(
-    c(file.disp[[1L]], rep(" ", body.chrs - nchar(file.disp[[1L]]) - 4L)),
+    c(
+      file.disp[[1L]],
+      rep(" ", max(body.chrs - nchar(file.disp[[1L]]) - 4L, 0L))
+    ),
     collapse=""
   )
   res <- c(top.bar, paste0("| ", format(file.disp), " |"), bar, body, bar)
@@ -64,8 +69,8 @@ show_file <- function(f, width=getOption("width", 80L)) {
 #' @rdname demo
 
 copy_fastlm_to_tmpdir <- function() {
-  dir <- tempfile()
-  if(inherits(try(dir.create(dir)), "try-error"))
+  dir <- file.path(tempfile(), "unitizer.fastlm")
+  if(inherits(try(dir.create(dir, recursive=TRUE)), "try-error"))
     stop("Unable to create temporary directory '", dir, "'")
   untz.dir <- system.file(package="unitizer")
   fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0")
