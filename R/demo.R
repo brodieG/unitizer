@@ -86,10 +86,15 @@ update_fastlm <- function(dir, version) {
     file_test("-f", file.path(dir, "DESCRIPTION")),
     file_test("-f", file.path(dir, "R", "fastlm.R"))
   )
-  lm.dir <- switch(version, "0.2"="fastlm.1", "0.3"="fastlm.2")
+  lm.dir <- switch(
+    version, "0.1.1"="fastlm.1", "0.1.2"="fastlm.2",
+    stop("Logic Error; unknown version")
+  )
   untz.dir <- system.file(package="unitizer")
-  lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir, "")
-  cpy.from <- file.path(lm.dir.full, c("DESCRIPTION", file.path("R/fastlm.R")))
+  lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir)
+  cpy.files <- c("DESCRIPTION", file.path("R", "fastlm.R"))
+  cpy.from <- file.path(lm.dir.full, cpy.files)
+  cpy.to <- file.path(dir, cpy.files)
 
-  invisible(file.copy(cpy.from, dir, overwrite=TRUE))
+  invisible(file.copy(cpy.from, cpy.to, overwrite=TRUE))
 }
