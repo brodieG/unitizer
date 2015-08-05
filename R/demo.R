@@ -7,8 +7,8 @@
 #' @note these functions are not for use outside of the unitizer demo
 #'
 #' @aliases prompt_to_proceed, fastlm_dir, show_file
-#' @name unitizer_demo
-#' @rdname unitizer_demo
+#' @name demo
+#' @rdname demo
 #' @param version a number in 0:2
 #' @return character(1L)
 #' @export
@@ -19,12 +19,12 @@ fastlm_dir <- function(version) {
 }
 
 #' @export
-#' @rdname unitizer_demo
+#' @rdname demo
 
 `[Press ENTER to Continue]` <- readline
 
 #' @export
-#' @rdname unitizer_demo
+#' @rdname demo
 
 show_file <- function(f, width=getOption("width", 80L)) {
   stopifnot(is.chr1(f))
@@ -61,15 +61,32 @@ show_file <- function(f, width=getOption("width", 80L)) {
   invisible(res)
 }
 #' @export
-#' @rdname unitizer_demo
+#' @rdname demo
 
 copy_fastlm_to_tmpdir <- function() {
   dir <- tempfile()
   if(inherits(try(dir.create(dir)), "try-error"))
     stop("Unable to create temporary directory '", dir, "'")
   untz.dir <- system.file(package="unitizer")
-  fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0", "/")
+  fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0", "")
   if(inherits(try(file.copy(fastlm.dir, dir, recursive=TRUE)), "try-error"))
     stop("Unable to copy `fastlm` sources")
   dir
+}
+#' @export
+#' @rdname demo
+
+update_fastlm <- function(dir, version) {
+  stopifnot(
+    version %in% c("0.2", "0.3"),
+    file_test("-d", dir),
+    file_test("-f", file.path(dir, "DESCRIPTION")),
+    file_test("-f", file.path(dir, "R", "fastlm.R"))
+  )
+  lm.dir <- switch(version, "0.2"="fastlm.1", "0.3"="fastlm.2")
+  untz.dir <- system.file(package="unitizer")
+  lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir, "")
+  cpy.from <- file.path(lm.dir.full, c("DESCRIPTION", file.path("R/fastlm.R")))
+
+  invisible(file.copy(cpy.from, dir, overwrite=TRUE))
 }
