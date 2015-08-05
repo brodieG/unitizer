@@ -98,3 +98,33 @@ update_fastlm <- function(dir, version) {
 
   invisible(file.copy(cpy.from, cpy.to, overwrite=TRUE))
 }
+#' @export
+#' @rdname demo
+
+unitizer_check_demo_state <- function() {
+  vars <- c(".unitizer.fastlm", ".unitizer.test.file")
+  vars.exist <- logical(length(vars))
+  for(i in seq_along(vars))
+    vars.exist[[i]] <- exists(vars[[i]], envir=parent.frame(), inherits=FALSE)
+  if(any(vars.exist)) {
+    word_msg(
+      "Variables", paste0("`", vars, "`", collapse=", "), " already exist, but",
+      "must be overwritten for demo to proceed.  These could have been left",
+      "over by a previous run of the demo that did not complete properly.\n"
+    )
+    choice <- simple_prompt("Overwrite variables?")
+    if(!identical(choice, "Y")) stop("Cannot continue demo.")
+    rm(list=vars[vars.exist], envir=parent.frame())
+  }
+}
+
+#' @export
+#' @rdname demo
+
+unitizer_cleanup_demo <- function() {
+  vars <- c(".unitizer.fastlm", ".unitizer.test.file")
+  remove.packages("unitizer.fastlm", .libPaths()[[1L]])
+  unlink(.unitizer.fastlm, recursive=TRUE)
+  rm(list=vars, envir=parent.frame())
+}
+
