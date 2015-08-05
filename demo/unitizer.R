@@ -11,100 +11,76 @@ library(unitizer)
 # Note: `unitizer.fastlm` implements fast computations for slope, intercept, and
 # R^2 of a linear single variable regression.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ SETUP START ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# The setup portion of this demo will execute steps would happen organically in
-# the course of your package development, but must be automated here.  The
-# steps are:
-#
-# - Create a file with R expressions to use as tests
-# - Install the package that we are testing
-#
-# The test file would normally reside in "<packagedir>/tests/unitizer", but we
-# will write it to a temporary file:
+# We start by placing our package sources in a temporary directory and use it as
+# our working directory (NOTE: if you interrupt demo you will need to reset the
+# working directory yourself).
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
-# Write tests to temp file by `cat`ing a string to a `tempfile()`
+.unitizer.dir.pkg <- copy_fastlm_to_tmpdir()
+.unitizer.old.dir <- setwd(.unitizer.dir.pkg)
 
-cat(
-  file=(.unitizer.test.file <- tempfile(fileext=".R")),
-  "# Calls to `library` and assignments are not normally considered tests, so
-  # you will not be prompted to review them
+# The sources contain our test file which we will `unitize`.
 
-  library(unitizer.fastlm)
-  x <- 1:100
-  y <- x ^ 2
-  res <- fastlm(x, y)
+show_file("tests/unitizer/fastlm.R")  # this is our test file
 
-  res                     # first reviewable expression
-  get_slope(res)
-  get_rsq(res)
+# Install the package to get started
 
-  fastlm(x, head(y))      # This should cause an error; press Y to add to store\n"
-)
-# Now `.unitizer.test.file` contains the address of an R file with the above
-# expressions
+devtools::install(quiet=TRUE)
 
-prompt_to_proceed()
-
-# Now install initial version of `unitizer.fastlm`
-
-prompt_to_proceed()
-
-install(fastlm_dir(version=0), quiet=TRUE)
-
-# Note: `fastlm_dir` returns the location of the `unitizer.fastlm` sources
-# embedded within `unitizer`. Normally you would just `install` your package.
-#
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~ SETUP COMPLETE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-prompt_to_proceed()
-
 # We can now `unitize`.  After you press ENTER at the next prompt, `unitize`
-# will launch an interactive test review environment.  Add the tests to the
-# `unitizer` store by typing Y at the prompts.  Normally you would carefully
-# review results to ensure they are as expected.
+# will launch.  After `unitizer` launches, accept tests by typing Y at the
+# prompts.  Normally you would carefully review results to ensure they are as
+# expected, but in this case we know the initial implementation is correct and
+# just needs to be optimized.
 #
 # You can always type H at the `unitizer` prompt to get contextual help.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
-unitize(.unitizer.test.file)
+unitize("tests/unitizer/fastlm.R")
 
 # If all went well you successfully added four tests to `unitizer`.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
 # Let's update our `unitizer.fastlm` package to use the real computations
-# instead of piggybacking off of `stats::lm` as our first version did.
+# instead of piggybacking off of `stats::lm` as our first version did.  We
+# do this with `update_fastlm`; in real life you would be updating your source
+# code at this point.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
-install(fastlm_dir(version=1), quiet=TRUE)
+update_fastlm(.unitizer.dir.pkg, version="0.1.1")
+devtools::install(quiet=TRUE)
 
 # We can now re-run `unitize` to check for regressions.  In this case, two of
 # the four tests will fail.  Since we know the original implementation was
 # correct these new values should be rejected by typing 'N' at the prompt and
 # exiting `unitizer`.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
-unitize(.unitizer.test.file)
+unitize("tests/unitizer/fastlm.R")
 
 # We will now install the final fixed implementation of `unitizer.fastlm`.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
-install(fastlm_dir(version=2), quiet=TRUE)
+update_fastlm(.unitizer.dir.pkg, version="0.1.2")
+devtools::install(quiet=TRUE)
 
 # And re-run our tests; in theory they should all pass.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
-unitize(.unitizer.test.file)
+unitize("tests/unitizer/fastlm.R")
 
 # If you followed instructions all tests should have passed, which tells us that
 # `unitizer.fastlm` is now producing the same values as it originally was when
@@ -114,7 +90,7 @@ unitize(.unitizer.test.file)
 # that any regressions we introduce to existing functionality will be detected
 # by `unitize`.
 
-prompt_to_proceed()
+`[Press ENTER to Continue]`()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ DEMO OVER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -126,10 +102,10 @@ local({
   print(system.time(lm.val <- c((lm.res <- lm(y ~ x, DF))$coefficients, summary(lm.res)$r.squared)))
   all.equal(lm.val, unclass(flm.val), check.attributes=FALSE)
 })
-# clean-up / remove temp files, etc
+# Clean-up / remove temp files, etc
 {
   remove.packages("unitizer.fastlm")
-  unlink(.unitizer.test.file)
-  unlink(sub(".R", ".unitizer", .unitizer.test.file), recursive=TRUE)
-  rm(.unitizer.test.file)
+  unlink(.unitizer.dir.pkg, recursive=TRUE)
+  setwd(.unitizer.old.dir)
+  rm(.unitizer.old.dir, .unitizer.dir.pkg)
 }
