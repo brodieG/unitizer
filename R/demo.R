@@ -21,7 +21,7 @@ fastlm_dir <- function(version) {
 #' @export
 #' @rdname demo
 
-`[Press ENTER to Continue]` <- readline
+`[Press ENTER to Continue]` <- function() invisible(readline())
 
 #' @export
 #' @rdname demo
@@ -68,8 +68,11 @@ copy_fastlm_to_tmpdir <- function() {
   if(inherits(try(dir.create(dir)), "try-error"))
     stop("Unable to create temporary directory '", dir, "'")
   untz.dir <- system.file(package="unitizer")
-  fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0", "")
-  if(inherits(try(file.copy(fastlm.dir, dir, recursive=TRUE)), "try-error"))
+  fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0")
+  fastlm.files <- list.files(
+    fastlm.dir, full.names=TRUE, include.dirs=TRUE, no..=TRUE
+  )
+  if(inherits(try(file.copy(fastlm.files, dir, recursive=TRUE)), "try-error"))
     stop("Unable to copy `fastlm` sources")
   dir
 }
@@ -78,7 +81,7 @@ copy_fastlm_to_tmpdir <- function() {
 
 update_fastlm <- function(dir, version) {
   stopifnot(
-    version %in% c("0.2", "0.3"),
+    version %in% c("0.1.1", "0.1.2"),
     file_test("-d", dir),
     file_test("-f", file.path(dir, "DESCRIPTION")),
     file_test("-f", file.path(dir, "R", "fastlm.R"))

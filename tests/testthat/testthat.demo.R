@@ -10,12 +10,12 @@ test_that("copy fastlm dir works", {
     readLines(file.path(x, "DESCRIPTION"))[[5L]],
     "Version: 0.1.0"
   )
-  update_fastlm(x, version="0.2")
+  update_fastlm(x, version="0.1.1")
   expect_identical(
     readLines(file.path(x, "DESCRIPTION"))[[5L]],
     "Version: 0.1.1"
   )
-  update_fastlm(x, version="0.3")
+  update_fastlm(x, version="0.1.2")
   expect_identical(
     readLines(file.path(x, "DESCRIPTION"))[[5L]],
     "Version: 0.1.2"
