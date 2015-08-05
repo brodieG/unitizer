@@ -60,3 +60,16 @@ show_file <- function(f, width=getOption("width", 80L)) {
   cat(res, sep="\n")
   invisible(res)
 }
+#' @export
+#' @rdname unitizer_demo
+
+copy_fastlm_to_tmpdir <- function() {
+  dir <- tempfile()
+  if(inherits(try(dir.create(dir)), "try-error"))
+    stop("Unable to create temporary directory '", dir, "'")
+  untz.dir <- system.file(package="unitizer")
+  fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0", "/")
+  if(inherits(try(file.copy(fastlm.dir, dir, recursive=TRUE)), "try-error"))
+    stop("Unable to copy `fastlm` sources")
+  dir
+}
