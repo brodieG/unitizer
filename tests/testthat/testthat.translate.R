@@ -2,8 +2,9 @@ library("testthat")
 library("unitizer")
 test.file <- "helper/translate/testthat/test-translate2.R"
 target.dir.base <- tempfile()
-target.dir <- file.path(target.dir.base, "helper/translate/unitizer")
+target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
 res1 <- testthat_translate_file(test.file, target.dir, prompt="overwrite")  # has to be outside of `testthat`
+dummy <- new("unitizerDummy")
 
 test_that("translate a file", {
   expect_equal(
@@ -25,7 +26,7 @@ test_that("translate a file", {
   )
   expect_equal(
     lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value),
-    list(NULL, 1:10, NULL, NULL, NULL, NULL, "yoyo")
+    list(dummy, 1:10, NULL, NULL, NULL, NULL, "yoyo")
   )
 })
 unlink(target.dir, recursive=TRUE)
@@ -50,7 +51,7 @@ test_that("translate a dir", {
 
   expect_equal(
     lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value),
-    list(NULL, 1:10, 42, 24, 24, NULL, "yoyo")
+    list(dummy, 1:10, 42, 24, 24, NULL, "yoyo")
   )
   # Can't do it again since there are files there
 
