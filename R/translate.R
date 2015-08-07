@@ -31,9 +31,9 @@
 #' \enumerate{
 #'   \item Start a fresh R session
 #'   \item Run your \code{testthat} tests with \code{test_dir} to
-#'     ensure they are still passing.  If you cannot use \code{test_dir}
-#'     are runnable only via \code{test_check} because they directly access the
-#'     namespace of your package, see "Differences That May Cause Problems" below
+#'     ensure they are still passing.  If your tests are are runnable only
+#'     via \code{test_check} because they directly access the namespace of your
+#'     package, see "Differences That May Cause Problems" below
 #'   \item Run \code{testthat_dir_translate}
 #'   \item [optional] use \code{\link{review}} to review the resulting
 #'      unitizer(s)
@@ -105,7 +105,8 @@
 #' are the translation will work just fine.  On the other hand, if you rely
 #' exclusively on \code{test_check} you may need to use
 #' \code{state=unitizerStateNoOpt(par.env="pkgName")} when you translate to
-#' make sure yourtests have access to the internal namespace functions.
+#' make sure your tests have access to the internal namespace functions.
+#' See \code{\link{unitizerState}} for details on how to modify state tracking.
 #'
 #' If your tests were translated with the \code{state} parameter changed from
 #' its default value, you will have to use the same value for that parameter in
@@ -118,7 +119,7 @@
 #' are called.  We use the functions as the \code{definition} argument of
 #' \code{match.call} to find the \code{object} argument.
 #'
-#' @note Translation of \code{testthat} is not striclty necessary; you can just
+#' @note Translation of \code{testthat} is not strictly necessary; you can just
 #' copy them to a new location and \code{unitize} them.  \code{unitizer} will
 #' just capture the results of the \code{expect_*} functions and will alert
 #' you if those change.  You can then just review the tests that change.
@@ -127,7 +128,7 @@
 #' without further ado.
 #'
 #' @export
-#' @seealso \code{\link{unitize}}
+#' @seealso \code{\link{unitize}}, \code{\link{unitizerState}}
 #' @aliases testthat_translate_name, testthat_translate_dir
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param dir.name a path to the \code{testthat} directory to convert
