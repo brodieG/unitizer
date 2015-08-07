@@ -487,6 +487,8 @@ testthat_translate_dir <- function(
     file.path(dir.name, grep(filter, file.list, value=TRUE))
   )
   res <- character(length(files.test))
+  unparseable <- unparseable.src <-  character()
+
   if(length(files.test)) {
     # Checks
     if(file.exists(target.dir) && !file_test("-d", target.dir))
@@ -512,9 +514,6 @@ testthat_translate_dir <- function(
     # Translate files, need to unitize one by one mostly because we wrote the
     # `testthat_translate_file` function first, but would probably be better
     # if we separate the file translation and unitizing
-
-    unparseable <- character()
-    unparseable.src <- character()
 
     for(i in seq_along(files.test)) {
       # Attempt to parse to make sure parse -> deparse translation didn't go
