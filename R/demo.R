@@ -1,15 +1,45 @@
-#' Functions To Assist With Demo
+#' Demo Details and Helper Functions
+#'
+#' \code{unitizer} provides an interactive demo you can run with
+#' \code{demo("unitizer")}.
+#'
+#' @section Demo Details:
+#'
+#' The demo centers around simulated development of the \code{unitizer.fastlm}
+#' package.  \code{unitizer} includes in its sources three copies of the source
+#' code for the \code{unitizer.fastlm} package, each at a different stage of
+#' development.  This allows us to create reference \code{unitizer} tests under
+#' one version, move to a new version and check for regressions, and finally
+#' fix the regressions with the last version.  The version switching is
+#' intended to represent the package development process.
+#'
+#' The demo manages the \code{unitizer.fastlm} code changes, but between each
+#' update allows the user to interact with \code{unitizer}.  The demo operates
+#' under the assumption that the user will accept the first set of tests and
+#' reject the failing tests after the first update.  If the user does anything
+#' different then the demo commentary may not apply anymore.
+#'
+#' @section \code{unitizer.fastlm}:
+#'
+#' \code{unitizer.fastlm} is a "dummy" package that implements a faster
+#' computation of slope, intercept, and R^2 for single variable linear
+#' regressions than is available via \code{summary(lm()...)}.
+#'
+#' @section Helper Functions:
 #'
 #' \code{fastlm_dir} returns the directory that the \code{unitizer.fastlm}
-#' package is in, \code{prompt_to_proceed} stops demo evaluation until
-#' user presses ENTER, \code{show_file}
+#' package is in, \code{show_file} displays the contents of a source code file,
+#' \code{update_fastlm} changes the source code of \code{unitizer.fastlm},
+#' and \code{unitizer_check_demo_state} and \code{unitizer_cleanup_demo} perform
+#' janitorial functions.  None of these functions are not for use outside of the
+#' unitizer demo
 #'
-#' @note these functions are not for use outside of the unitizer demo
-#'
-#' @aliases prompt_to_proceed, fastlm_dir, show_file
+#' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
 #' @name demo
 #' @rdname demo
-#' @param version a number in 0:2
+#' @param f path to a file
+#' @param width display width in charcters
+#' @param version one of "0.1.0", "0.1.1", "0.1.2"
 #' @return character(1L)
 #' @export
 

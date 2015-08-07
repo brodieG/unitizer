@@ -12,7 +12,7 @@ unitizer_check_demo_state()
 # `unitizer.fastlm` implements faster computations of slope, intercept and R^2
 # for a single variable linear regression.
 #
-# See Also: `?unitizer_demo`, `?unitize`, `?vignette("unitizer")`
+# See Also: `?unitizer::demo`, `?unitize`, `?vignette("unitizer")`
 
 `[Press ENTER to Continue]`()
 
