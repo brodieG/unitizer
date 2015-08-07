@@ -1,23 +1,163 @@
-#' Functions To Assist With Demo
+#' Demo Details and Helper Functions
 #'
-#' \code{`fastlm_dir`} returns the directory that the \code{`unitizer.fastlm`}
-#' package is in, and \code{`prompt_to_proceed`} stops demo evaluation until
-#' user presses ENTER.
+#' \code{unitizer} provides an interactive demo you can run with
+#' \code{demo("unitizer")}.
 #'
-#' @note these functions are not for use outside of the unitizer demo
+#' @section Demo Details:
 #'
-#' @aliases prompt_to_proceed
-#' @param version a number in 0:2
+#' The demo centers around simulated development of the \code{unitizer.fastlm}
+#' package.  \code{unitizer} includes in its sources three copies of the source
+#' code for the \code{unitizer.fastlm} package, each at a different stage of
+#' development.  This allows us to create reference \code{unitizer} tests under
+#' one version, move to a new version and check for regressions, and finally
+#' fix the regressions with the last version.  The version switching is
+#' intended to represent the package development process.
+#'
+#' The demo manages the \code{unitizer.fastlm} code changes, but between each
+#' update allows the user to interact with \code{unitizer}.  The demo operates
+#' under the assumption that the user will accept the first set of tests and
+#' reject the failing tests after the first update.  If the user does anything
+#' different then the demo commentary may not apply anymore.
+#'
+#' @section \code{unitizer.fastlm}:
+#'
+#' \code{unitizer.fastlm} is a "dummy" package that implements a faster
+#' computation of slope, intercept, and R^2 for single variable linear
+#' regressions than is available via \code{summary(lm()...)}.
+#'
+#' @section Helper Functions:
+#'
+#' \code{copy_fastlm_to_tmpdir} copies the initial version of the
+#' \code{unitizer.fastlm} sources to a temporary directory, \code{show_file}
+#' displays the contents of a source code file, \code{update_fastlm} changes the
+#' source code of \code{unitizer.fastlm}, and \code{unitizer_check_demo_state}
+#' and \code{unitizer_cleanup_demo} perform janitorial functions.  None of
+#' these functions are not for use outside of the unitizer demo.
+#'
+#' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
+#'   `[Press ENTER to Continue]`
+#' @name demo
+#' @rdname demo
+#' @param f path to a file
+#' @param width display width in charcters
+#' @param version one of "0.1.0", "0.1.1", "0.1.2"
 #' @return character(1L)
 #' @export
 
-fastlm_dir <- function(version) {
-  unitizer.dir <- system.file(package="unitizer")
-  paste0(unitizer.dir, "/example.pkgs/fastlm.", version)
+NULL
+
+#' @export
+#' @rdname demo
+
+`[Press ENTER to Continue]` <- function() invisible(readline())
+
+#' @export
+#' @rdname demo
+
+show_file <- function(f, width=getOption("width", 80L)) {
+  stopifnot(is.chr1(f))
+  txt <- try(readLines(f))
+  pkg.dir <- get_package_dir(f)
+  if(nchar(pkg.dir)) f <- relativize_path(f, pkg.dir)
+  if(inherits(txt, "try-error")) stop("Unable to open file")
+  line.num <- seq_along(txt)
+  line.chars <- max(nchar(line.num))
+  txt.wrap <- lapply(txt, word_wrap, width=width - 7L)
+  txt.wrap.lines <- vapply(txt.wrap, length, integer(1L))
+  line.txt <-format(
+    unlist(
+      Map(function(x, y) c(x, rep("", y - 1L)), line.num, txt.wrap.lines)
+    ),
+    justify="right"
+  )
+  line.txt.chars <- nchar(line.txt[[1L]]) + 2L
+  body <- paste0("| ", line.txt, " | ", format(unlist(txt.wrap)), " |")
+  body.chrs <- nchar(body[[1L]])
+  file.disp <- word_wrap(f, width=nchar(body[[1L]]) - 4L, hyphens=FALSE)
+  bar <- paste0(
+    c(
+      "+", rep("-", line.txt.chars), "+",
+      rep("-",  body.chrs - line.txt.chars - 3L), "+"
+    ),
+    collapse=""
+  )
+  top.bar <- paste0(c("+", rep("-",  body.chrs - 2L), "+"), collapse="")
+  file.disp[[1L]] <- paste0(
+    c(
+      file.disp[[1L]],
+      rep(" ", max(body.chrs - nchar(file.disp[[1L]]) - 4L, 0L))
+    ),
+    collapse=""
+  )
+  res <- c(top.bar, paste0("| ", format(file.disp), " |"), bar, body, bar)
+  cat(res, sep="\n")
+  invisible(res)
+}
+#' @export
+#' @rdname demo
+
+copy_fastlm_to_tmpdir <- function() {
+  dir <- file.path(tempfile(), "unitizer.fastlm")
+  if(inherits(try(dir.create(dir, recursive=TRUE)), "try-error"))
+    stop("Unable to create temporary directory '", dir, "'")
+  untz.dir <- system.file(package="unitizer")
+  fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0")
+  fastlm.files <- list.files(
+    fastlm.dir, full.names=TRUE, include.dirs=TRUE, no..=TRUE
+  )
+  if(inherits(try(file.copy(fastlm.files, dir, recursive=TRUE)), "try-error"))
+    stop("Unable to copy `fastlm` sources")
+  dir
+}
+#' @export
+#' @rdname demo
+
+update_fastlm <- function(dir, version) {
+  stopifnot(
+    version %in% c("0.1.1", "0.1.2"),
+    file_test("-d", dir),
+    file_test("-f", file.path(dir, "DESCRIPTION")),
+    file_test("-f", file.path(dir, "R", "fastlm.R"))
+  )
+  lm.dir <- switch(
+    version, "0.1.1"="fastlm.1", "0.1.2"="fastlm.2",
+    stop("Logic Error; unknown version")
+  )
+  untz.dir <- system.file(package="unitizer")
+  lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir)
+  cpy.files <- c("DESCRIPTION", file.path("R", "fastlm.R"))
+  cpy.from <- file.path(lm.dir.full, cpy.files)
+  cpy.to <- file.path(dir, cpy.files)
+
+  invisible(file.copy(cpy.from, cpy.to, overwrite=TRUE))
+}
+#' @export
+#' @rdname demo
+
+unitizer_check_demo_state <- function() {
+  vars <- c(".unitizer.fastlm", ".unitizer.test.file")
+  vars.exist <- logical(length(vars))
+  for(i in seq_along(vars))
+    vars.exist[[i]] <- exists(vars[[i]], envir=parent.frame(), inherits=FALSE)
+  if(any(vars.exist)) {
+    word_msg(
+      "Variables", paste0("`", vars, "`", collapse=", "), " already exist, but",
+      "must be overwritten for demo to proceed.  These could have been left",
+      "over by a previous run of the demo that did not complete properly.\n"
+    )
+    choice <- simple_prompt("Overwrite variables?")
+    if(!identical(choice, "Y")) stop("Cannot continue demo.")
+    rm(list=vars[vars.exist], envir=parent.frame())
+  }
 }
 
 #' @export
-#' @rdname fastlm_dir
+#' @rdname demo
 
-prompt_to_proceed <- function()
-  invisible(readline("[Press ENTER to Continue]"))  # helper fun
+unitizer_cleanup_demo <- function() {
+  vars <- c(".unitizer.fastlm", ".unitizer.test.file")
+  remove.packages("unitizer.fastlm", .libPaths()[[1L]])
+  unlink(.unitizer.fastlm, recursive=TRUE)
+  rm(list=vars, envir=parent.frame())
+}
+

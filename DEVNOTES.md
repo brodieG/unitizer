@@ -383,8 +383,16 @@ does that make "unitizer.keep.namespace" redundant or do we still need both?
 Probably still need both.  So need to check that namespace was already
 pre-loaded against keep.namespace list.
 
+## Demo
 
-# Scenarios to test
+1. Better display of the file
+2. Setup the different versions of the packages up front
+3. Use `install(..., quiet=TRUE)
+4. Check the resulting `unitizer` and make sure the results make sense (can we
+   do this without crapping al)
+
+
+## Other Issues
 
 * Very large objects produced by tests
 * test `description` for unitizer_section
