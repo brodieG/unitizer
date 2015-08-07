@@ -27,14 +27,15 @@
 #'
 #' @section Helper Functions:
 #'
-#' \code{fastlm_dir} returns the directory that the \code{unitizer.fastlm}
-#' package is in, \code{show_file} displays the contents of a source code file,
-#' \code{update_fastlm} changes the source code of \code{unitizer.fastlm},
-#' and \code{unitizer_check_demo_state} and \code{unitizer_cleanup_demo} perform
-#' janitorial functions.  None of these functions are not for use outside of the
-#' unitizer demo
+#' \code{copy_fastlm_to_tmpdir} copies the initial version of the
+#' \code{unitizer.fastlm} sources to a temporary directory, \code{show_file}
+#' displays the contents of a source code file, \code{update_fastlm} changes the
+#' source code of \code{unitizer.fastlm}, and \code{unitizer_check_demo_state}
+#' and \code{unitizer_cleanup_demo} perform janitorial functions.  None of
+#' these functions are not for use outside of the unitizer demo.
 #'
 #' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
+#'   `[Press ENTER to Continue]`
 #' @name demo
 #' @rdname demo
 #' @param f path to a file
@@ -43,10 +44,7 @@
 #' @return character(1L)
 #' @export
 
-fastlm_dir <- function(version) {
-  unitizer.dir <- system.file(package="unitizer")
-  paste0(unitizer.dir, "/example.pkgs/fastlm.", version)
-}
+NULL
 
 #' @export
 #' @rdname demo
