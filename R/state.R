@@ -16,6 +16,9 @@ NULL
 #' \itemize{
 #'   \item \code{unitizerStatePristine} is the default class and implements
 #'     the highest level of state tracking and control
+#'   \item \code{unitizerStateSafe} turns off tracking for search path and
+#'     options, which are the two settings most likely to cause problems with
+#'     poorly behaved packages
 #'   \item \code{unitizerStateNoOpt} turns off options tracking, which makes it
 #'     a good choice if you have a lot of packages that are added to
 #'     \code{getOption("unitizer.namespace.keep")} so that you do not need to
@@ -79,7 +82,8 @@ unitizerState <- setClass(
     par.env="environmentOrNULL"
   ),
   prototype=list(
-    search.path=0L, options=0L, working.directory=0L, random.seed=0L
+    search.path=0L, options=0L, working.directory=0L, random.seed=0L,
+    par.env=NULL
   ),
   validity=function(object) {
     # seemingly superflous used to make sure this object is in concordance with
@@ -156,6 +160,16 @@ unitizerStatePristine <- setClass(
     par.env=NULL
   )
 )
+#' @export unitizerStateSafe
+#' @rdname unitizerState
+
+unitizerStateSafe <- setClass(
+  "unitizerStateSafe", contains="unitizerState",
+  prototype=list(
+    search.path=0L, options=0L, working.directory=2L, random.seed=2L,
+    par.env=NULL
+  )
+)
 #' @export unitizerStateNoOpt
 #' @rdname unitizerState
 
@@ -185,5 +199,24 @@ unitizerStateOff <- setClass(
     search.path=0L, options=0L, working.directory=0L, random.seed=0L,
     par.env=.GlobalEnv
   )
+)
+
+setMethod(
+  "show", "unitizerState",
+  function(object) {
+    sn <- slotNames(object)
+    sv <- sapply(sn, slot, object=object, simplify=FALSE)
+    par.env.null <- is.null(sv[["par.env"]])
+    sv[["par.env"]] <- if(par.env.null) "<auto>" else
+      env_name(sv[["par.env"]])
+    print(data.frame(Settings=sn, Values=unlist(sv)))
+    word_cat(
+      "-----", "0: off", "1: track starting with initial state",
+      "2: track starting with clean state",
+      if(par.env.null) "<auto>: use special unitizer environment as 'par.env'",
+      "See `?unitizerState` for more details.",
+      sep="\n"
+    )
+  }
 )
 
