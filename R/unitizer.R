@@ -9,6 +9,11 @@ NULL
 
 .unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
 
+setClass(
+  "unitizerCaptCons",
+  slots=
+    c(err.f="ANY", err.c="ANY", out.f="ANY", out.c="ANY")  # setOldClass issues
+)
 #' Contains All The Data for Our Tests!
 #'
 #' Generally is populated through the \code{+} methods, with the exception of
@@ -80,6 +85,7 @@ setClass(
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
     updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
     global="unitizerGlobalOrNULL",# Global object used to track state
+    cons="unitizerCaptCons",      # Track connections for text/msg capture
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",

@@ -64,8 +64,10 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 
 setMethod("exec", "ANY", valueClass="unitizerItem",
   function(x, test.env, capt.cons, global) {
-    if(!is.environment(test.env)) stop("Argument `test.env` must be an environment.")
-    if(!is.list(capt.cons)) stop("Argument `capt.cons` must be a list")
+    if(!is.environment(test.env))
+      stop("Argument `test.env` must be an environment.")
+    if(!is(capt.cons, "unitizerCaptCons"))
+      stop("Argument `capt.cons` must be a 'unitizerCaptCons' object")
 
     # Check whether we are dealing with a unitizer_sect
 
@@ -128,11 +130,11 @@ eval_with_capture <- function(x, test.env, global, capt.cons) {
   set_args <- list()
   set_args[["capt.disabled"]] <-
     global$unitizer.opts[["unitizer.disable.capt"]]
-  capt.cons$err.c <- do.call(
-    set_text_capture, c(list(capt.cons$err.c, "message"), set_args)
+  capt.cons@err.c <- do.call(
+    set_text_capture, c(list(capt.cons@err.c, "message"), set_args)
   )
-  capt.cons$out.c <- do.call(
-    set_text_capture, c(list(capt.cons$out.c, "output"), set_args)
+  capt.cons@out.c <- do.call(
+    set_text_capture, c(list(capt.cons@out.c, "output"), set_args)
   )
   # Manage unexpected outcomes
 

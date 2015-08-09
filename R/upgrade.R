@@ -134,6 +134,9 @@ upgrade_internal <- function(object) {
       object@items.ref@.items, slot, character(1L), "call.dep"
     )
   }
+  if(ver < "1.0.4") {
+    object <- addSlot(object, "cons", new("unitizerCaptCons"))
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
