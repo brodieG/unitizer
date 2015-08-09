@@ -503,15 +503,22 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
             comp.fun.name, item.ref.dat, item.new.dat
           )
         }
-        test.res <- tryCatch(
-          eval(test.call, e2@env),
-          condition=function(e) structure(
+        # this is a bit roundabout b/c we added this hack in long after the
+        # code was initially written
+
+        res.tmp <- eval_with_capture(test.call, e2@env, e1@global, e1@cons)
+        cond <- res.tmp$conditions
+        test.res <- if(length(cond)) {
+          structure(
             list(
-              msg=conditionMessage(e), call=conditionCall(e),
-              cond.class=class(e)
+              msg=conditionMessage(cond[[1L]]), call=conditionCall(cond[[1L]]),
+              cond.class=class(cond[[1L]])
             ),
             class=c("testItemTestFail")
-        ) )
+          )
+        } else {
+          test.res <- res.tmp$value
+        }
         if(isTRUE(test.res)) {
           test.result[1L, i] <- TRUE
           next
