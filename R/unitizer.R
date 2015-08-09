@@ -532,11 +532,12 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
-          test.cond <- head(tail(test.res$cond.class, 2L), 1L)
+          test.cond <- test.res$cond.class
           if(!length(test.cond)) test.cond <- "<unknown>"
           err.tpl@value <- paste0(
-            err.msg, " signaled a condition of type \"", test.cond
-            , "\", with message \"", test.res$msg, "\" and call `",
+            err.msg, " signaled a condition of class `",
+            deparse(test.cond, width=500), "`",
+            ", with message \"", test.res$msg, "\" and call `",
             paste0(deparse(test.res$call), collapse=""), "`."
           )
           err.tpl@compare.err <- TRUE
