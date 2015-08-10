@@ -221,11 +221,20 @@ setMethod(
               "even though there are no changes to record (see `?unitize` for",
               "details)."
             )
-          if(update)
+          if(update) {
+            tar <- getTarget(x)
+            wd <- if(file.exists(tar)) get_package_dir(tar) else
+              if(file.exists(dirname(tar)))
+                get_package_dir(dirname(tar)) else ""
+
+            tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
+              relativize_path(tar)
+
             word_msg(
-              "You will IRREVERSIBLY modify '", getTarget(x), "'",
+              "You will IRREVERSIBLY modify '", tar.final, "'",
               if(length(x@changes)) " by", ":", sep=""
             )
+          }
           if(length(x@changes) > 0) {
             show(x@changes)
             cat("\n")
