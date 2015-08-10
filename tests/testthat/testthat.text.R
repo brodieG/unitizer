@@ -94,6 +94,11 @@ local({
       unitizer:::word_wrap(x1, unlist=FALSE, width=80L),
       list(c("this is supposed to be a particularly long string", "", "that allows us to test the behavior of bullets once we start seeing", "", "some wrapping kicking in which was a problem once upon a time"))
     )
+    com <- "# this is supposed to be a relatively long comment that will get re-flowed"
+    expect_identical(
+      unitizer:::word_comment(com, width=30L),
+      "c(\"# this is supposed to be a \", \"#relatively long comment that \", \"#will get re-flowed\")"
+    )
   })
   test_that("bullets", {
     x <- c("there was once a time when the fantastic unicorns could fly", "bugs bunny ate carrots and drank milk while hunting ducks")
