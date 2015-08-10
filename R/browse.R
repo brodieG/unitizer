@@ -481,7 +481,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
       ) }
-      if(length(item.main@comment)) cat(item.main@comment, sep="\n")
+      if(length(item.main@comment)) {
+        cat("\n")
+        cat(word_comment(item.main@comment), sep="\n")
+        cat("\n")
+      }
       parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
       if(inherits(parsed.call, "try-error"))
         stop("Logic Error: malformed call stored; contact maintainer.")
