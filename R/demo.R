@@ -36,13 +36,12 @@
 #'
 #' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
 #'   `[Press ENTER to Continue]`
-#' @name demo
 #' @rdname demo
+#' @name demo
 #' @param f path to a file
 #' @param width display width in charcters
 #' @param version one of "0.1.0", "0.1.1", "0.1.2"
 #' @return character(1L)
-#' @export
 
 NULL
 
