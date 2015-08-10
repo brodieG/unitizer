@@ -82,7 +82,6 @@ diff_obj_out <- function(
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
-# @keywords internal
 # @rdname diff_obj_out
 
 obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
@@ -120,7 +119,6 @@ obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
   }
   obj.out
 }
-# @keywords internal
 # @rdname diff_obj_out
 
 obj_screen_chr <- function(
@@ -194,16 +192,32 @@ strtrunc <- function(
     x, paste0(pre, substr(x, start, stop), post)
   )
 }
-#' Wrap Text At Fixed Column Width
+#' Text Wrapping Utilities
 #'
-#' Some day this should be upgraded to break at whitespaces or use hyphens
-#' instead of wrapping arbitrarily at spec'ed width
+#' Functions to break up character vector components to a specified width.
+#'
+#' \itemize{
+#'   \item \code{text_wrap} breaks each element to a specified \code{width},
+#'     where \code{width} can contain different values for each value in
+#'     \code{x}
+#'   \item \code{word_wrap} wraps at whitespace, or crudely hyphenates if
+#'     necessary; note that unlike \code{text_wrap} \code{width} must be scalar
+#'   \item \code{word_cat} is like \code{word_wrap}, except it outputs to screen
+#'   \item \code{word_msg} is like \code{word_cat}, except it ouputs to stderr
+#' }
 #'
 #' @keywords internal
-#' @param x character vector
-#' @param width integer vector with
 #' @return a list with, for each item in \code{`x`}, a character vector
 #'   of the item wrapped to length \code{`width`}
+#' @param x character vector
+#' @param width what width to wrap at
+#' @param tolerance how much earlier than \code{width} we're allowed to wrap
+#' @param hyphens whether to allow hyphenation
+#' @param unlist logical(1L) if FALSE each element in \code{x} is returned as
+#'   an element of a list, otherwise one character vector is returned
+#' @return if \code{unlist} is a parameter, then a character vector, or
+#'   if not or if \code{unlist} is FALSE, a list with each element from \code{x}
+#'   corresponding to an element from the list
 
 text_wrap <- function(x, width) {
   if(
@@ -224,21 +238,7 @@ text_wrap <- function(x, width) {
         start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
 ) } ) }
 
-#' Wrap Lines at Words
-#'
-#' Similar to \code{\link{text_wrap}}, but only allows one length width and
-#' breaks lines at words if possible.
-#'
-#' Will attempt to hyphenate very crudely.
-#'
-#' @keywords internal
-#' @param x character vector
-#' @param width what width to wrap at
-#' @param tolerance how much earlier than \code{width} we're allowed to wrap
-#' @param hyphens whether to allow hyphenation
-#' @param unlist logical(1L) if FALSE each element in \code{x} is returned as
-#'   an element of a list, otherwise one character vector is returned
-#' @return character vector, or list if \code{unlist} is FALSE
+#' @rdname text_wrap
 
 word_wrap <- function(
   x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE
@@ -338,10 +338,7 @@ word_wrap <- function(
   res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
   if(unlist) unlist(res) else res
 }
-#' Print To Screen Wrapping Words
-#'
-#' @keywords internal
-#' @seealso \code{\link{word_wrap}}
+#' @rdname text_wrap
 
 word_cat <- function(
   ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
@@ -354,6 +351,8 @@ word_cat <- function(
   vec <- unlist(strsplit(vec, "\n"))
   invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
+#' @rdname text_wrap
+
 word_msg <- function(...) word_cat(..., file=stderr())
 
 #' Over-write a Line
