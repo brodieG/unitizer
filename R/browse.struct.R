@@ -789,7 +789,7 @@ setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",
 setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
-    prompt="Overwrite with new test",
+    prompt="Overwrite with new test%s",
     detail.s=paste0(
       "The following test failed because the new evaluation does not match ",
       "the reference value from the store."
@@ -803,7 +803,7 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
 setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
   prototype=list(
     title="New",
-    prompt="Add new test to store",
+    prompt="Add test%s to store",
     detail.s="The following test is new.",
     detail.p="The %s tests in this section are new.",
     actions=c(Y="A", N="C"), show.out=TRUE
@@ -812,7 +812,7 @@ setClass("unitizerBrowseSubSectionCorrupted",
   contains="unitizerBrowseSubSection",
   prototype=list(
     title="Corrupted",
-    prompt="Overwrite with new test result",
+    prompt="Overwrite with new test%s",
     detail.s=paste0(
       "The test outcome for the following test cannot be assessed because ",
       "errors occurred while attempting comparison. Please review the errors ",
@@ -830,7 +830,7 @@ setClass("unitizerBrowseSubSectionCorrupted",
 setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Removed",
-    prompt="Remove test from store",
+    prompt="Remove test%s from store",
     detail.s=paste0(
       "The following test exists in the unitizer store but not in the new ",
       "test script."
@@ -844,7 +844,7 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Keep test in store",
+    prompt="Keep test%s in store",
     detail.s="The following test passed.",
     detail.p="The %s tests in this section passed.",
     actions=c(Y="A", N="C"),

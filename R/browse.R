@@ -435,21 +435,22 @@ setMethod("reviewNext", c("unitizerBrowse"),
       print(H3(curr.sub.sec.obj@title))
       rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
 
-      if(rev.count > 1L) {
-        word_cat(sprintf(curr.sub.sec.obj@detail.p, rev.count))
-      } else word_cat(curr.sub.sec.obj@detail.s)
-      cat("\n")
-      word_cat(
-        if(rev.count || x@inspect.all) {
+      prompt.txt <- paste(
+        if(rev.count > 1L) {
+          sprintf(curr.sub.sec.obj@detail.p, rev.count)
+        } else curr.sub.sec.obj@detail.s,
+        if(rev.count || x@inspect.all)
           paste0(
-            curr.sub.sec.obj@prompt, " ",
-            "(",
+            sprintf(curr.sub.sec.obj@prompt, if(rev.count > 1L) "s" else ""),
+            " ", "(",
             paste0(
               c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
               collapse=", "
             ),
             ")?\n"
-    ) } ) }
+      ) )
+      word_cat(prompt.txt, "\n")
+    }
     # Retrieve actual tests objects
 
     item.new <- if(!is.null(curr.sub.sec.obj@items.new))
@@ -482,7 +483,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           x@mapping@review.val[[curr.id]], "\""
       ) }
       if(length(item.main@comment)) {
-        cat("\n")
+        if(x@last.id && x@mapping@ignored[[x@last.id]]) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
         cat("\n")
       }
@@ -630,7 +631,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(
         is(
           x.mod <- navigate_prompt(
-            x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
+            x=x, curr.id=curr.id, text=sprintf(curr.sub.sec.obj@prompt, ""),
             browse.env1=browse.eval.env,
             browse.env2=new.env(parent=parent.env(base.env.pri)),
             valid.opts=valid.opts,
