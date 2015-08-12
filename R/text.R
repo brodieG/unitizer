@@ -119,7 +119,7 @@ char_diff <- function(x, y) {
     n.match <- head(which(x[[i]] == tail(y, -first.diff)), 1L)
     if(length(n.match)) {
       tmp.res <- Recall(
-        tail(x, -i + 1L), tail(y, -n.match[[1L]] + first.diff)
+        x[i:length(x)], y[(n.match[[1L]] + first.diff):length(y)]
       )
       return(
         list(

@@ -97,7 +97,7 @@ local({
     com <- "# this is supposed to be a relatively long comment that will get re-flowed"
     expect_identical(
       unitizer:::word_comment(com, width=30L),
-      "c(\"# this is supposed to be a \", \"#relatively long comment that \", \"#will get re-flowed\")"
+      c("# this is supposed to be a ", "#relatively long comment that ", "#will get re-flowed")
     )
   })
   test_that("bullets", {
@@ -165,4 +165,26 @@ local({
        "res <- data %>% group_by(ID) %>% summarise(date..."
     )
   } )
+  test_that("char_diff", {
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "c")),
+      list(c(FALSE, FALSE, FALSE), c(FALSE, FALSE, FALSE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b"), c("a", "b", "c")),
+      list(c(FALSE, FALSE), c(FALSE, FALSE, TRUE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c"), c("a", "b")),
+      list(c(FALSE, FALSE, TRUE), c(FALSE, FALSE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("b", "c"), c("a", "b")),
+      list(c(FALSE, TRUE), c(TRUE, FALSE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c", "d"), c("a", "b", "b", "d", "e")),
+      list(c(FALSE, FALSE, TRUE, FALSE), c(FALSE, FALSE, TRUE, FALSE, TRUE))
+    )
+  })
 })
