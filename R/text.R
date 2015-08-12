@@ -82,6 +82,57 @@ diff_obj_out <- function(
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
+#' Determine Which Character Vector Elements are Different
+#'
+#' Not particularly optimized at this point.
+#'
+#' @return a list with two vectors, each of same lenght as inputs, where
+#'   FALSE indicates value is the same as in the other vector, and TRUE
+#'   indicates it is different
+
+char_diff <- function(x, y) {
+  stopifnot(
+    is.character(x), is.character(y), !any(is.na(c(x, y)))
+  )
+  # find first difference
+
+  len.match <- min(length(x), length(y))
+  eq <- head(x, len.match) == head(y, len.match)
+  diffs <- which(!eq)
+  if(!length(diffs)) return(
+    list(
+      c(rep(FALSE, len.match), c(rep(TRUE, length(x) - len.match))),
+      c(rep(FALSE, len.match), c(rep(TRUE, length(y) - len.match)))
+    )
+  )
+  first.diff <- diffs[[1L]]
+  eq.so.far <- rep(FALSE, first.diff - 1L)
+  eq.extra <- logical(0L)
+
+  # Try to see if difference exists in y, and if not see if any subsequent line
+  # does exit, indicating deletions from x
+
+  for(i in seq(first.diff, length(x), by=1L)) {
+    n.match <- head(which(x[[i]] == tail(y, -first.diff)), 1L)
+    if(length(n.match)) {
+      tmp.res <- Recall(
+        tail(x, -i + 1L), tail(y, -n.match[[1L]] + first.diff)
+      )
+      return(
+        list(
+          c(eq.so.far, eq.extra, tmp.res[[1L]]),
+          c(eq.so.far, rep(TRUE, n.match[[1L]]), tmp.res[[2L]])
+    ) ) }
+    eq.extra <- c(eq.extra, TRUE)
+  }
+  # Difference did not exist in y
+
+  list(
+    c(eq.so.far, rep(TRUE, length(x) - first.diff)),
+    c(eq.so.far, eq.extra)
+  )
+}
+
 # @rdname diff_obj_out
 
 obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
