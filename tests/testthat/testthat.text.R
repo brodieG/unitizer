@@ -186,5 +186,9 @@ local({
       unitizer:::char_diff(c("a", "b", "c", "d"), c("a", "b", "b", "d", "e")),
       list(c(FALSE, FALSE, TRUE, FALSE), c(FALSE, FALSE, TRUE, FALSE, TRUE))
     )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "d")),
+      list(c(FALSE, FALSE, TRUE), c(FALSE, FALSE, TRUE))
+    )
   })
 })

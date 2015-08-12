@@ -78,19 +78,24 @@ diff_obj_out <- function(
     first.diff <- max(1L, min.len - max.len[[1L]] + 1L)
     max.len <- rep(max.len[[1L]], 2L)
   }
+  diff <- char_diff(obj.rem.capt, obj.add.capt)
+  pad.rem <- rep("|   ", length(obj.rem.capt))
+  pad.add <- rep("|   ", length(obj.add.capt))
+  pad.rem[diff[[1L]]] <- "-   "
+  pad.add[diff[[2L]]] <- "+   "
+
   res <- c(
     obj_screen_chr(
       obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad="-   "
+      width=tar.width, pad=pad.rem
     ),
     obj_screen_chr(
       obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad="+   "
+      width=tar.width, pad=pad.add
   ) )
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
-
 # @rdname diff_obj_out
 
 char_diff <- function(x, y) {
@@ -131,8 +136,8 @@ char_diff <- function(x, y) {
   # Difference did not exist in y
 
   list(
-    c(eq.so.far, rep(TRUE, length(x) - first.diff)),
-    c(eq.so.far, eq.extra)
+    c(eq.so.far, eq.extra),
+    c(eq.so.far, rep(TRUE, length(y) - first.diff + 1L))
   )
 }
 # @rdname diff_obj_out
