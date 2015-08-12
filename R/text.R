@@ -28,12 +28,20 @@ screen_out <- function(
 #' @param obj.add object to compare
 #' @param obj.rem.name object to compare
 #' @param obj.add.name object to compare
+#' @param x a character vector
+#' @param y another character vector to compare to
 #' @param width at what width to wrap output
 #' @param max.len 2 length integer vector with first value threshold at which we
 #'   start trimming output and the second the length we tri to
 #' @param file whether to show to stdout or stderr
 #' @param frame what frame to capture in, relevant mostly if looking for a print
 #'   method
+#' @return
+#'   \itemize{
+#'      \item for \code{char_diff} a list with two vectors, each of same length
+#'        as inputs, where FALSE indicates value is the same as in the other
+#'        vector, and TRUE indicates it is different
+#'   }
 #' @aliases obj_capt obj_screen_out
 
 diff_obj_out <- function(
@@ -82,13 +90,8 @@ diff_obj_out <- function(
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
-#' Determine Which Character Vector Elements are Different
-#'
-#' Not particularly optimized at this point.
-#'
-#' @return a list with two vectors, each of same lenght as inputs, where
-#'   FALSE indicates value is the same as in the other vector, and TRUE
-#'   indicates it is different
+
+# @rdname diff_obj_out
 
 char_diff <- function(x, y) {
   stopifnot(
@@ -132,7 +135,6 @@ char_diff <- function(x, y) {
     c(eq.so.far, eq.extra)
   )
 }
-
 # @rdname diff_obj_out
 
 obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
