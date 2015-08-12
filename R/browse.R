@@ -61,6 +61,8 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
         word_msg("Unable to store '", getTarget(browse.res@unitizer, "'"))
+    } else {
+      message("unitizer unchanged.")
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it
