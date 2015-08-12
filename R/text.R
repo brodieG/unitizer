@@ -79,10 +79,10 @@ diff_obj_out <- function(
     max.len <- rep(max.len[[1L]], 2L)
   }
   diff <- char_diff(obj.rem.capt, obj.add.capt)
-  pad.rem <- rep("|   ", length(obj.rem.capt))
-  pad.add <- rep("|   ", length(obj.add.capt))
-  pad.rem[diff[[1L]]] <- "-   "
-  pad.add[diff[[2L]]] <- "+   "
+  pad.rem <- rep("   ", length(obj.rem.capt))
+  pad.add <- rep("   ", length(obj.add.capt))
+  pad.rem[diff[[1L]]] <- "-  "
+  pad.add[diff[[2L]]] <- "+  "
 
   res <- c(
     obj_screen_chr(
@@ -187,20 +187,30 @@ obj_screen_chr <- function(
   if(length(obj.chr) > max.len[[1L]] && first.diff > 1L) {
     obj.chr <- tail(obj.chr, -(first.diff - 1L))
     pre <- paste0("... omitted ", first.diff - 1L, " lines")
+    pad <- tail(pad, -(first.diff - 1L))
   }
   if((len <- length(obj.chr)) > max.len[[1L]]) {
     obj.chr <- head(obj.chr, max.len[[2L]])
     post <- paste0("... omitted ", len - max.len[[2L]], " lines")
+    pad <- head(pad, max.len[[2L]])
   }
+  pad <- format(pad)
+  pad.pre.post <- paste0(rep(" ", nchar(pad[[1L]])), collapse="")
   if(!is.null(post)) {
-    post <- word_wrap(paste0(post, extra, " ..."), width)
+    post <- paste0(
+      pad.pre.post,
+      word_wrap(paste0(post, extra, " ..."), width - nchar(pad[[1L]]))
+    )
   }
   if (!is.null(pre)) {
-    pre <- word_wrap(paste0(pre, if(is.null(post)) extra, " ..."), width)
-  }
+    pre <- paste0(
+      pad.pre.post,
+      word_wrap(
+        paste0(pre, if(is.null(post)) extra, " ..."), width - nchar(pad[[1L]])
+  ) ) }
   c(
     paste0("@@ ", obj.name, " @@"),
-    paste0(pad, c(pre, obj.chr, post))
+    paste0(c(pre, paste0(pad, obj.chr), post))
   )
 }
 #' Print Only First X characters
