@@ -527,6 +527,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
 
+      state.comp <- FALSE
       if(
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
@@ -552,8 +553,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
         if(!isTRUE(state.comp))
           word_msg(
-            "Additionally, there are state differences between new and",
-            "reference tests (check with `diff_state()`)."
+            "Additionally, there are state differences (compare with",
+            "`diff_state()`)."
           )
     } }
     # Need to add ignored tests as default action is N, though note that ignored
@@ -613,10 +614,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # to the non-ignored test just previous to the one you want to navigate to,
     # the loop will then advance you to that test
 
-    help.prompt <- paste(
-        "In addition to any valid R expression, you may type the following",
-        "at the prompt (without backticks):\n"
-      )
+    help.prompt <- paste0(
+      "Reviewing test #", curr.id, " (type: ", tolower(curr.sub.sec.obj@title),
+      "). ", curr.sub.sec.obj@help,
+      "\n\nIn addition to any valid R expression, you may type the following ",
+      "at the prompt (without backticks):\n\n"
+    )
     help.opts <- c(
       "`P` to go to the previous test",
       "`B` to see a listing of all tests",
@@ -624,14 +627,25 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(!is.null(item.new))
         "`.new` for the current value, or `.NEW` for the full test object",
       if(!is.null(item.ref))
-        "`.ref` for the reference value, or `.REF` for the full reference object",
-      "`YY` or `NN` to apply same choice to all remaining unreviewed items in sub-section",
-      "`YYY` or `NNN` to apply same choice to all remaining unreviewed items in section",
-      "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer",
+        paste0(
+          "`.ref` for the reference value, or `.REF` for the full reference ",
+          "object"
+        ),
+      if(!isTRUE(state.comp))
+        paste0(
+          "`diff_state()` to see differences in state (e.g. search path, ",
+          "random seed) between new and reference tests"
+        ),
+      paste0(
+        "`YY`/`NN`, `YYY`/`NNN`, `YYYY`/`NNNN` to apply same choice to all ",
+        "remaining unreviewed items in, respectively, the sub-section, ",
+        "section, or unitizer"
+      ),
       if(identical(x@mode, "unitize"))
-        c(
-          "`R` to re-evalute the unitizer; used typically after you re-`install` the package you are testing via the unitizer prompt",
-          "`RR` to re-evaluate all loaded `unitizers` (relevant for `unitize_dir`)"
+        paste0(
+          "`R` to re-evalute the unitizer or `RR` to re-evaluate all loaded ",
+          "unitizers; used typically after you re-`install` the package you ",
+          "are testing via the unitizer prompt."
         )
     )
     # navigate_prompt handles the P and B cases internally and modifies the
@@ -647,7 +661,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
             browse.env2=new.env(parent=parent.env(base.env.pri)),
             valid.opts=valid.opts,
             help=c(
-              help.prompt, paste0(as.character(UL(help.opts)), collapse="\n")
+              help.prompt,
+              paste0(as.character(UL(help.opts)), collapse="\n"), "\n"
           ) ),
           "unitizerBrowse"
         )

@@ -547,6 +547,7 @@ setClass("unitizerBrowseSubSection",
     prompt="character",
     detail.s="character",
     detail.p="character",
+    help="character",
     actions="character",
     action.default="character",
     show.out="logical",
@@ -798,6 +799,12 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "The %s tests in this section failed because the new evaluations do not ",
       "match the reference values from the store."
     ),
+    help=paste0(
+      "Tests fail when the evaluation of the test expression no longer ",
+      "produces the value it did when it was originally added to the store. ",
+      "You should select 'N' at the prompt unless you know the previous value ",
+      "was incorrect and should be replaced by the new value."
+    ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
@@ -806,6 +813,11 @@ setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
     prompt="Add test%s to store",
     detail.s="The following test is new.",
     detail.p="The %s tests in this section are new.",
+    help=paste0(
+      "A new test will be used as the reference value for future tests, so ",
+      "make sure you review the value carefully before you add it to the ",
+      "store by selecting 'Y' at the prompt."
+    ),
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
 setClass("unitizerBrowseSubSectionCorrupted",
@@ -825,6 +837,13 @@ setClass("unitizerBrowseSubSectionCorrupted",
       "errors and contemplate using a different comparison function with ",
       "`unitizer_sect`."
     ),
+    help=paste0(
+      "unitizer is unable to compare the reference and new test values ",
+      "because the comparison function itself caused an error.  You can ",
+      "change the unitizer function with `unitizer_sect`.  You can also ",
+      "manually compare `.NEW` and `.REF` and decide whether to replace the ",
+      "old value with the new one by selecting 'Y' at the prompt."
+    ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
@@ -838,6 +857,10 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
     detail.p=paste0(
       "The %s tests in this section exist in the unitizer store but not in the ",
       "new test script."
+    ),
+    help=paste0(
+      "A previously stored test no longer exists in the test file; you can ",
+      "remove the stored value by selecting 'Y' at the prompt."
     ),
     actions=c(Y="C", N="B")
 ) )
