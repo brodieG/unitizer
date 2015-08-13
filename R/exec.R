@@ -95,13 +95,12 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       stop(
         "Failed instantiating a unitizer section:\n", paste0(capt$message, "\n")
       )
-
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
       conditions=new("conditionList", .items=res$conditions),
       output=res$output, message=res$message, aborted=res$aborted,
       env=test.env, comment=x.comments, trace=res$trace,
-      glob.indices=global$state()
+      glob.indices=global$state(), ignore=!isTRUE(res$visible)
     )
 } )
 #' @rdname exec
@@ -117,7 +116,10 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
     if(length(res2$trace)) res$trace <- res2$trace
     res$aborted <- res2$aborted
   }
-  c(list(value=res$value$value), res[-1L])  # convolution required due to possible NULL value
+  # convolution required due to possible NULL value so can't assign directly to
+  # elements
+
+  c(list(value=res$value$value, visible=res$value$visible), res[-1L])
 }
 #' @rdname exec
 

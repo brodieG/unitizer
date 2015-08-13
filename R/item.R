@@ -122,24 +122,27 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
     .Object@call <- dots.all$call
     .Object@call.dep <- deparse_call(dots.all$call)
   } else .Object@call <- NULL
-
   if("env" %in% dots.names) .Object@env <- dots.all$env
-  if(
-    is.call(.Object@call) &&
-    !inherits(
-      try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE),
-      "try-error"
-    ) &&
-    any(vapply(funs.ignore, identical_fun, logical(1L), fun))
-  ) {
-    .Object@ignore <- TRUE
-  }
+  # # Old mechanism for marking stuff as ignored
+  # if(
+  #   is.call(.Object@call) &&
+  #   !inherits(
+  #     try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE),
+  #     "try-error"
+  #   ) &&
+  #   any(vapply(funs.ignore, identical_fun, logical(1L), fun))
+  # ) {
+  #   .Object@ignore <- TRUE
+  # }
   if("comment" %in% dots.names) .Object@comment <- dots.all$comment
   if("trace" %in% dots.names) .Object@trace <- dots.all$trace
   if("glob.indices" %in% dots.names)
     .Object@glob.indices <- dots.all$glob.indices
   dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]
-  if(.Object@ignore) dots[["value"]] <- new("unitizerDummy")
+  if("ignore" %in% dots.names) {
+    .Object@ignore <- dots.all$ignore
+    if(.Object@ignore) dots[["value"]] <- new("unitizerDummy")
+  }
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
