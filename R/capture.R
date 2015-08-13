@@ -147,10 +147,10 @@ get_capture <- function(
   chrs.max=getOption("unitizer.max.capture.chars", 200000L)
 ) {
   message <- get_text_capture(    # Do message first, so we can see subsequent errors
-    cons$err.c, cons$err.f, "message", chrs.max=chrs.max
+    cons@err.c, cons@err.f, "message", chrs.max=chrs.max
   )
   output <- get_text_capture(
-    cons$out.c, cons$out.f, "output", chrs.max=chrs.max
+    cons@out.c, cons@out.f, "output", chrs.max=chrs.max
   )
   if(isTRUE(display)) {
     cat(c(message, "\n"), file=stderr(), sep="\n")
@@ -159,8 +159,8 @@ get_capture <- function(
   list(output=output, message=message)
 }
 close_and_clear <- function(cons) {
-  close(cons$err.c)
-  close(cons$out.c)
-  file.remove(cons$err.f, cons$out.f)
+  close(cons@err.c)
+  close(cons@out.c)
+  file.remove(cons@err.f, cons@out.f)
 }
 

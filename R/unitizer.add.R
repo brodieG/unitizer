@@ -73,17 +73,17 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     std.out.capt <- tempfile()
     std.out.capt.con <- file(std.out.capt, "w+b")
 
-    capt.cons <- list(
+    e1@cons <- new("unitizerCaptCons",
       err.f=std.err.capt, err.c=std.err.capt.con, out.f=std.out.capt,
       out.c=std.out.capt.con
     )
-    on.exit(close_and_clear(capt.cons))
+    on.exit(close_and_clear(e1@cons))
 
     repeat {
       if(done(e2 <- nextItem(e2))) break
 
       item <- withRestarts(
-        exec(getItem(e2), test.env, capt.cons, e1@global),
+        exec(getItem(e2), test.env, e1@cons, e1@global),
         unitizerQuitExit=unitizer_quit_handler
       )
       # If item is a section, added to the store and update the tests with the contents of
@@ -99,8 +99,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
           sect.par <- NA_integer_
         }
         e1 <- e1 + new(
-          "unitizerSection", title=item@data@value@title, details=item@data@value@details,
-          length=length(item@data@value), parent=sect.par, compare=item@data@value@compare
+          "unitizerSection", title=item@data@value@title,
+          details=item@data@value@details, length=length(item@data@value),
+          parent=sect.par, compare=item@data@value@compare
         )
         e2 <- e2 + item@data@value
         next

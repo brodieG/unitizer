@@ -28,16 +28,16 @@ local({
   } )
   test_that("diff", {
     expect_identical(
-      c("@@ mx.1 @@", "-        [,1] [,2] [,3]", "-   [1,]    1    4    7", "-   [2,]    2    5    8", "-   [3,]    3    6    9", "@@ mx.2 @@", "+         [,1] [,2]", "+    [1,]    1   51", "+    [2,]    2   52", "+    [3,]    3   53", "+    [4,]    4   54", "+    [5,]    5   55", "+    [6,]    6   56", "+    [7,]    7   57", "+    [8,]    8   58", "+    [9,]    9   59", "+   ... omitted 41 lines; see `mx.2` ..."),
-      unitizer:::diff_obj_out(mx.1, mx.2, width=60L, max.len=c(10L, 5L), file=stdout())
+      unitizer:::diff_obj_out(mx.1, mx.2, width=60L, max.len=c(10L, 5L), file=stdout()),
+      c("@@ mx.1 @@", "-       [,1] [,2] [,3]", "-  [1,]    1    4    7", "-  [2,]    2    5    8", "-  [3,]    3    6    9", "@@ mx.2 @@", "+        [,1] [,2]", "+   [1,]    1   51", "+   [2,]    2   52", "+   [3,]    3   53", "+   [4,]    4   54", "+   [5,]    5   55", "+   [6,]    6   56", "+   [7,]    7   57", "+   [8,]    8   58", "+   [9,]    9   59", "   ... omitted 41 lines; see `mx.2` ...")
     )
     expect_identical(
-      c("@@ mx.2 @@", "-   ... omitted 31 lines ...", "-   [31,]   31   81", "-   [32,]   32   82", "-   [33,]   33   83", "-   [34,]   34   84", "-   [35,]   35   85", "-   ... omitted 15 lines; see `mx.2` ...", "@@ mx.3 @@", "+   ... omitted 31 lines ...", "+   [31,]   31  111", "+   [32,]   32   82", "+   [33,]   33   83", "+   [34,]   34   84", "+   [35,]   35   85", "+   ... omitted 15 lines; see `mx.3` ..."),
-      unitizer:::diff_obj_out(mx.2, mx.3, width=60L, max.len=c(10L, 5L), file=stdout())
+      unitizer:::diff_obj_out(mx.2, mx.3, width=60L, max.len=c(10L, 5L), file=stdout()),
+      c("@@ mx.2 @@", "   ... omitted 31 lines ...", "-  [31,]   31   81", "   [32,]   32   82", "   [33,]   33   83", "   [34,]   34   84", "   [35,]   35   85", "   ... omitted 15 lines; see `mx.2` ...", "@@ mx.3 @@", "   ... omitted 31 lines ...", "+  [31,]   31  111", "   [32,]   32   82", "   [33,]   33   83", "   [34,]   34   84", "   [35,]   35   85", "   ... omitted 15 lines; see `mx.3` ...")
     )
     expect_identical(
-      c("@@ test.obj.s3 @@", "-   <Error in print/show method for object of class \"test_obj\">", "-   Error in Print", "@@ test.obj.s3 @@", "+   <Error in print/show method for object of class \"test_obj\">", "+   Error in Print"),
-      do1
+      do1,
+      c("@@ test.obj.s3 @@", "   <Error in print/show method for object of class \"test_obj\">", "   Error in Print", "@@ test.obj.s3 @@", "   <Error in print/show method for object of class \"test_obj\">", "   Error in Print")
     )
   } )
   test_that("cap_first", {
@@ -93,6 +93,11 @@ local({
     expect_identical(
       unitizer:::word_wrap(x1, unlist=FALSE, width=80L),
       list(c("this is supposed to be a particularly long string", "", "that allows us to test the behavior of bullets once we start seeing", "", "some wrapping kicking in which was a problem once upon a time"))
+    )
+    com <- "# this is supposed to be a relatively long comment that will get re-flowed"
+    expect_identical(
+      unitizer:::word_comment(com, width=30L),
+      c("# this is supposed to be a ", "#relatively long comment that ", "#will get re-flowed")
     )
   })
   test_that("bullets", {
@@ -160,4 +165,30 @@ local({
        "res <- data %>% group_by(ID) %>% summarise(date..."
     )
   } )
+  test_that("char_diff", {
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "c")),
+      list(c(FALSE, FALSE, FALSE), c(FALSE, FALSE, FALSE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b"), c("a", "b", "c")),
+      list(c(FALSE, FALSE), c(FALSE, FALSE, TRUE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c"), c("a", "b")),
+      list(c(FALSE, FALSE, TRUE), c(FALSE, FALSE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("b", "c"), c("a", "b")),
+      list(c(FALSE, TRUE), c(TRUE, FALSE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c", "d"), c("a", "b", "b", "d", "e")),
+      list(c(FALSE, FALSE, TRUE, FALSE), c(FALSE, FALSE, TRUE, FALSE, TRUE))
+    )
+    expect_identical(
+      unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "d")),
+      list(c(FALSE, FALSE, TRUE), c(FALSE, FALSE, TRUE))
+    )
+  })
 })

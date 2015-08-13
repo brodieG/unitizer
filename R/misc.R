@@ -176,7 +176,7 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     identical(length(.Platform$file.sep), 1L)
   ) {
     norm <- normalizePath(path, mustWork=FALSE)
-    to.norm <- file.exists(norm)
+    to.norm <- TRUE  # used to be only for existing files, but can't recall why
 
     path.pieces <- lapply(
       strsplit(norm[to.norm], .Platform$file.sep, fixed=TRUE), Filter, f=nchar

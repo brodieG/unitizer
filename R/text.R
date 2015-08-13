@@ -28,12 +28,20 @@ screen_out <- function(
 #' @param obj.add object to compare
 #' @param obj.rem.name object to compare
 #' @param obj.add.name object to compare
+#' @param x a character vector
+#' @param y another character vector to compare to
 #' @param width at what width to wrap output
 #' @param max.len 2 length integer vector with first value threshold at which we
 #'   start trimming output and the second the length we tri to
 #' @param file whether to show to stdout or stderr
 #' @param frame what frame to capture in, relevant mostly if looking for a print
 #'   method
+#' @return
+#'   \itemize{
+#'      \item for \code{char_diff} a list with two vectors, each of same length
+#'        as inputs, where FALSE indicates value is the same as in the other
+#'        vector, and TRUE indicates it is different
+#'   }
 #' @aliases obj_capt obj_screen_out
 
 diff_obj_out <- function(
@@ -70,19 +78,68 @@ diff_obj_out <- function(
     first.diff <- max(1L, min.len - max.len[[1L]] + 1L)
     max.len <- rep(max.len[[1L]], 2L)
   }
+  diff <- char_diff(obj.rem.capt, obj.add.capt)
+  pad.rem <- rep("   ", length(obj.rem.capt))
+  pad.add <- rep("   ", length(obj.add.capt))
+  pad.rem[diff[[1L]]] <- "-  "
+  pad.add[diff[[2L]]] <- "+  "
+
   res <- c(
     obj_screen_chr(
       obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad="-   "
+      width=tar.width, pad=pad.rem
     ),
     obj_screen_chr(
       obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad="+   "
+      width=tar.width, pad=pad.add
   ) )
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
-# @keywords internal
+# @rdname diff_obj_out
+
+char_diff <- function(x, y) {
+  stopifnot(
+    is.character(x), is.character(y), !any(is.na(c(x, y)))
+  )
+  # find first difference
+
+  len.match <- min(length(x), length(y))
+  eq <- head(x, len.match) == head(y, len.match)
+  diffs <- which(!eq)
+  if(!length(diffs)) return(
+    list(
+      c(rep(FALSE, len.match), c(rep(TRUE, length(x) - len.match))),
+      c(rep(FALSE, len.match), c(rep(TRUE, length(y) - len.match)))
+    )
+  )
+  first.diff <- diffs[[1L]]
+  eq.so.far <- rep(FALSE, first.diff - 1L)
+  eq.extra <- logical(0L)
+
+  # Try to see if difference exists in y, and if not see if any subsequent line
+  # does exit, indicating deletions from x
+
+  for(i in seq(first.diff, length(x), by=1L)) {
+    n.match <- head(which(x[[i]] == tail(y, -first.diff)), 1L)
+    if(length(n.match)) {
+      tmp.res <- Recall(
+        x[i:length(x)], y[(n.match[[1L]] + first.diff):length(y)]
+      )
+      return(
+        list(
+          c(eq.so.far, eq.extra, tmp.res[[1L]]),
+          c(eq.so.far, rep(TRUE, n.match[[1L]]), tmp.res[[2L]])
+    ) ) }
+    eq.extra <- c(eq.extra, TRUE)
+  }
+  # Difference did not exist in y
+
+  list(
+    c(eq.so.far, eq.extra),
+    c(eq.so.far, rep(TRUE, length(y) - first.diff + 1L))
+  )
+}
 # @rdname diff_obj_out
 
 obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
@@ -120,7 +177,6 @@ obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
   }
   obj.out
 }
-# @keywords internal
 # @rdname diff_obj_out
 
 obj_screen_chr <- function(
@@ -131,20 +187,30 @@ obj_screen_chr <- function(
   if(length(obj.chr) > max.len[[1L]] && first.diff > 1L) {
     obj.chr <- tail(obj.chr, -(first.diff - 1L))
     pre <- paste0("... omitted ", first.diff - 1L, " lines")
+    pad <- tail(pad, -(first.diff - 1L))
   }
   if((len <- length(obj.chr)) > max.len[[1L]]) {
     obj.chr <- head(obj.chr, max.len[[2L]])
     post <- paste0("... omitted ", len - max.len[[2L]], " lines")
+    pad <- head(pad, max.len[[2L]])
   }
+  pad <- format(pad)
+  pad.pre.post <- paste0(rep(" ", nchar(pad[[1L]])), collapse="")
   if(!is.null(post)) {
-    post <- word_wrap(paste0(post, extra, " ..."), width)
+    post <- paste0(
+      pad.pre.post,
+      word_wrap(paste0(post, extra, " ..."), width - nchar(pad[[1L]]))
+    )
   }
   if (!is.null(pre)) {
-    pre <- word_wrap(paste0(pre, if(is.null(post)) extra, " ..."), width)
-  }
+    pre <- paste0(
+      pad.pre.post,
+      word_wrap(
+        paste0(pre, if(is.null(post)) extra, " ..."), width - nchar(pad[[1L]])
+  ) ) }
   c(
     paste0("@@ ", obj.name, " @@"),
-    paste0(pad, c(pre, obj.chr, post))
+    paste0(c(pre, paste0(pad, obj.chr), post))
   )
 }
 #' Print Only First X characters
@@ -194,16 +260,32 @@ strtrunc <- function(
     x, paste0(pre, substr(x, start, stop), post)
   )
 }
-#' Wrap Text At Fixed Column Width
+#' Text Wrapping Utilities
 #'
-#' Some day this should be upgraded to break at whitespaces or use hyphens
-#' instead of wrapping arbitrarily at spec'ed width
+#' Functions to break up character vector components to a specified width.
+#'
+#' \itemize{
+#'   \item \code{text_wrap} breaks each element to a specified \code{width},
+#'     where \code{width} can contain different values for each value in
+#'     \code{x}
+#'   \item \code{word_wrap} wraps at whitespace, or crudely hyphenates if
+#'     necessary; note that unlike \code{text_wrap} \code{width} must be scalar
+#'   \item \code{word_cat} is like \code{word_wrap}, except it outputs to screen
+#'   \item \code{word_msg} is like \code{word_cat}, except it ouputs to stderr
+#' }
 #'
 #' @keywords internal
-#' @param x character vector
-#' @param width integer vector with
 #' @return a list with, for each item in \code{`x`}, a character vector
 #'   of the item wrapped to length \code{`width`}
+#' @param x character vector
+#' @param width what width to wrap at
+#' @param tolerance how much earlier than \code{width} we're allowed to wrap
+#' @param hyphens whether to allow hyphenation
+#' @param unlist logical(1L) if FALSE each element in \code{x} is returned as
+#'   an element of a list, otherwise one character vector is returned
+#' @return if \code{unlist} is a parameter, then a character vector, or
+#'   if not or if \code{unlist} is FALSE, a list with each element from \code{x}
+#'   corresponding to an element from the list
 
 text_wrap <- function(x, width) {
   if(
@@ -224,21 +306,7 @@ text_wrap <- function(x, width) {
         start=(1:breaks - 1) * width.sub + 1, stop=(1:breaks) * width.sub
 ) } ) }
 
-#' Wrap Lines at Words
-#'
-#' Similar to \code{\link{text_wrap}}, but only allows one length width and
-#' breaks lines at words if possible.
-#'
-#' Will attempt to hyphenate very crudely.
-#'
-#' @keywords internal
-#' @param x character vector
-#' @param width what width to wrap at
-#' @param tolerance how much earlier than \code{width} we're allowed to wrap
-#' @param hyphens whether to allow hyphenation
-#' @param unlist logical(1L) if FALSE each element in \code{x} is returned as
-#'   an element of a list, otherwise one character vector is returned
-#' @return character vector, or list if \code{unlist} is FALSE
+#' @rdname text_wrap
 
 word_wrap <- function(
   x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE
@@ -338,10 +406,7 @@ word_wrap <- function(
   res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
   if(unlist) unlist(res) else res
 }
-#' Print To Screen Wrapping Words
-#'
-#' @keywords internal
-#' @seealso \code{\link{word_wrap}}
+#' @rdname text_wrap
 
 word_cat <- function(
   ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
@@ -354,7 +419,25 @@ word_cat <- function(
   vec <- unlist(strsplit(vec, "\n"))
   invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
 }
+#' @rdname text_wrap
+
 word_msg <- function(...) word_cat(..., file=stderr())
+
+#' @rdname text_wrap
+
+word_comment <- function(
+  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE
+) {
+  if(!is.character(x)) stop("Argument `x` must be character")
+  if(!all(grep("^#", x)))
+    stop("Argument `x` must be character with all elements starting with '#'")
+  res <- word_wrap(
+    x=sub("^#", "", x), width=width - 1L, tolerance=tolerance, hyphens=hyphens,
+    unlist=FALSE
+  )
+  res <- lapply(res, function(x) paste0("#", x))
+  if(unlist) unlist(res) else res
+}
 
 #' Over-write a Line
 #'

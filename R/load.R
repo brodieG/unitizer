@@ -224,6 +224,7 @@ store_unitizer <- function(unitizer) {
   on.exit(parent.env(unitizer@zero.env) <- old.par.env)
   parent.env(unitizer@zero.env) <- baseenv()
   unitizer@global <- NULL  # to avoid taking up a bunch of storage on large object
+  unitizer@cons <- new("unitizerCaptCons")  # zero out connections we'v been using
   rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
 
   # blow away calls; these should be memorialized as deparsed versions and the

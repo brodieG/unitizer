@@ -61,6 +61,8 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
         word_msg("Unable to store '", getTarget(browse.res@unitizer, "'"))
+    } else {
+      message("unitizer unchanged.")
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it
@@ -221,11 +223,20 @@ setMethod(
               "even though there are no changes to record (see `?unitize` for",
               "details)."
             )
-          if(update)
+          if(update) {
+            tar <- getTarget(x)
+            wd <- if(file.exists(tar)) get_package_dir(tar) else
+              if(file.exists(dirname(tar)))
+                get_package_dir(dirname(tar)) else ""
+
+            tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
+              relativize_path(tar)
+
             word_msg(
-              "You will IRREVERSIBLY modify '", getTarget(x), "'",
+              "You will IRREVERSIBLY modify '", tar.final, "'",
               if(length(x@changes)) " by", ":", sep=""
             )
+          }
           if(length(x@changes) > 0) {
             show(x@changes)
             cat("\n")
@@ -423,7 +434,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # conditions
 
     if(!identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect) {
-      cat("\n")
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate
@@ -435,21 +445,22 @@ setMethod("reviewNext", c("unitizerBrowse"),
       print(H3(curr.sub.sec.obj@title))
       rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
 
-      if(rev.count > 1L) {
-        word_cat(sprintf(curr.sub.sec.obj@detail.p, rev.count))
-      } else word_cat(curr.sub.sec.obj@detail.s)
-      cat("\n")
-      word_cat(
-        if(rev.count || x@inspect.all) {
+      prompt.txt <- paste(
+        if(rev.count > 1L) {
+          sprintf(curr.sub.sec.obj@detail.p, rev.count)
+        } else curr.sub.sec.obj@detail.s,
+        if(rev.count || x@inspect.all)
           paste0(
-            curr.sub.sec.obj@prompt, " ",
-            "(",
+            sprintf(curr.sub.sec.obj@prompt, if(rev.count > 1L) "s" else ""),
+            " ", "(",
             paste0(
               c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
               collapse=", "
             ),
             ")?\n"
-    ) } ) }
+      ) )
+      word_cat(prompt.txt, "\n")
+    }
     # Retrieve actual tests objects
 
     item.new <- if(!is.null(curr.sub.sec.obj@items.new))
@@ -481,7 +492,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
       ) }
-      if(length(item.main@comment)) cat(item.main@comment, sep="\n")
+      if(length(item.main@comment)) {
+        if(x@last.id && x@mapping@ignored[[x@last.id]]) cat("\n")
+        cat(word_comment(item.main@comment), sep="\n")
+        cat("\n")
+      }
       parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
       if(inherits(parsed.call, "try-error"))
         stop("Logic Error: malformed call stored; contact maintainer.")
@@ -511,6 +526,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
 
+      state.comp <- FALSE
       if(
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
@@ -536,8 +552,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
         if(!isTRUE(state.comp))
           word_msg(
-            "Additionally, there are state differences between new and",
-            "reference tests (check with `diff_state()`)."
+            "Additionally, there are state differences (compare with",
+            "`diff_state()`)."
           )
     } }
     # Need to add ignored tests as default action is N, though note that ignored
@@ -597,10 +613,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # to the non-ignored test just previous to the one you want to navigate to,
     # the loop will then advance you to that test
 
-    help.prompt <- paste(
-        "In addition to any valid R expression, you may type the following",
-        "at the prompt (without backticks):\n"
-      )
+    help.prompt <- paste0(
+      "Reviewing test #", curr.id, " (type: ", tolower(curr.sub.sec.obj@title),
+      "). ", curr.sub.sec.obj@help,
+      "\n\nIn addition to any valid R expression, you may type the following ",
+      "at the prompt (without backticks):\n\n"
+    )
     help.opts <- c(
       "`P` to go to the previous test",
       "`B` to see a listing of all tests",
@@ -608,14 +626,25 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(!is.null(item.new))
         "`.new` for the current value, or `.NEW` for the full test object",
       if(!is.null(item.ref))
-        "`.ref` for the reference value, or `.REF` for the full reference object",
-      "`YY` or `NN` to apply same choice to all remaining unreviewed items in sub-section",
-      "`YYY` or `NNN` to apply same choice to all remaining unreviewed items in section",
-      "`YYYY` or `NNNN` to apply same choice to all remaining unreviewed items in unitizer",
+        paste0(
+          "`.ref` for the reference value, or `.REF` for the full reference ",
+          "object"
+        ),
+      if(!isTRUE(state.comp))
+        paste0(
+          "`diff_state()` to see differences in state (e.g. search path, ",
+          "random seed) between new and reference tests"
+        ),
+      paste0(
+        "`YY`/`NN`, `YYY`/`NNN`, `YYYY`/`NNNN` to apply same choice to all ",
+        "remaining unreviewed items in, respectively, the sub-section, ",
+        "section, or unitizer"
+      ),
       if(identical(x@mode, "unitize"))
-        c(
-          "`R` to re-evalute the unitizer; used typically after you re-`install` the package you are testing via the unitizer prompt",
-          "`RR` to re-evaluate all loaded `unitizers` (relevant for `unitize_dir`)"
+        paste0(
+          "`R` to re-evalute the unitizer or `RR` to re-evaluate all loaded ",
+          "unitizers; used typically after you re-`install` the package you ",
+          "are testing via the unitizer prompt."
         )
     )
     # navigate_prompt handles the P and B cases internally and modifies the
@@ -626,12 +655,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(
         is(
           x.mod <- navigate_prompt(
-            x=x, curr.id=curr.id, text=curr.sub.sec.obj@prompt,
+            x=x, curr.id=curr.id, text=sprintf(curr.sub.sec.obj@prompt, ""),
             browse.env1=browse.eval.env,
             browse.env2=new.env(parent=parent.env(base.env.pri)),
             valid.opts=valid.opts,
             help=c(
-              help.prompt, paste0(as.character(UL(help.opts)), collapse="\n")
+              help.prompt,
+              paste0(as.character(UL(help.opts)), collapse="\n"), "\n"
           ) ),
           "unitizerBrowse"
         )

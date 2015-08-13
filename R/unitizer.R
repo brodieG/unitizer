@@ -9,6 +9,11 @@ NULL
 
 .unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
 
+setClass(
+  "unitizerCaptCons",
+  slots=
+    c(err.f="ANY", err.c="ANY", out.f="ANY", out.c="ANY")  # setOldClass issues
+)
 #' Contains All The Data for Our Tests!
 #'
 #' Generally is populated through the \code{+} methods, with the exception of
@@ -80,6 +85,7 @@ setClass(
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
     updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
     global="unitizerGlobalOrNULL",# Global object used to track state
+    cons="unitizerCaptCons",      # Track connections for text/msg capture
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -217,7 +223,7 @@ setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
-    cat(summ_matrix_to_text(sum.mx), sep="\n")
+    cat(summ_matrix_to_text(sum.mx), "", sep="\n")
     invisible(NULL)
 } )
 
@@ -497,15 +503,22 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
             comp.fun.name, item.ref.dat, item.new.dat
           )
         }
-        test.res <- tryCatch(
-          eval(test.call, e2@env),
-          condition=function(e) structure(
+        # this is a bit roundabout b/c we added this hack in long after the
+        # code was initially written
+
+        res.tmp <- eval_with_capture(test.call, e2@env, e1@global, e1@cons)
+        cond <- res.tmp$conditions
+        test.res <- if(length(cond)) {
+          structure(
             list(
-              msg=conditionMessage(e), call=conditionCall(e),
-              cond.class=class(e)
+              msg=conditionMessage(cond[[1L]]), call=conditionCall(cond[[1L]]),
+              cond.class=class(cond[[1L]])
             ),
             class=c("testItemTestFail")
-        ) )
+          )
+        } else {
+          test.res <- res.tmp$value
+        }
         if(isTRUE(test.res)) {
           test.result[1L, i] <- TRUE
           next
@@ -519,11 +532,12 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 
         if(inherits(test.res, "testItemTestFail")) {
           test.status <- "Error"
-          test.cond <- head(tail(test.res$cond.class, 2L), 1L)
+          test.cond <- test.res$cond.class
           if(!length(test.cond)) test.cond <- "<unknown>"
           err.tpl@value <- paste0(
-            err.msg, " signaled a condition of type \"", test.cond
-            , "\", with message \"", test.res$msg, "\" and call `",
+            err.msg, " signaled a condition of class `",
+            deparse(test.cond, width=500), "`",
+            ", with message \"", test.res$msg, "\" and call `",
             paste0(deparse(test.res$call), collapse=""), "`."
           )
           err.tpl@compare.err <- TRUE

@@ -547,6 +547,7 @@ setClass("unitizerBrowseSubSection",
     prompt="character",
     detail.s="character",
     detail.p="character",
+    help="character",
     actions="character",
     action.default="character",
     show.out="logical",
@@ -789,7 +790,7 @@ setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",
 setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
-    prompt="Overwrite with new test",
+    prompt="Overwrite with new test%s",
     detail.s=paste0(
       "The following test failed because the new evaluation does not match ",
       "the reference value from the store."
@@ -798,21 +799,32 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "The %s tests in this section failed because the new evaluations do not ",
       "match the reference values from the store."
     ),
+    help=paste0(
+      "Tests fail when the evaluation of the test expression no longer ",
+      "produces the value it did when it was originally added to the store. ",
+      "You should select 'N' at the prompt unless you know the previous value ",
+      "was incorrect and should be replaced by the new value."
+    ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
   prototype=list(
     title="New",
-    prompt="Add new test to store",
+    prompt="Add test%s to store",
     detail.s="The following test is new.",
     detail.p="The %s tests in this section are new.",
+    help=paste0(
+      "A new test will be used as the reference value for future tests, so ",
+      "make sure you review the value carefully before you add it to the ",
+      "store by selecting 'Y' at the prompt."
+    ),
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
 setClass("unitizerBrowseSubSectionCorrupted",
   contains="unitizerBrowseSubSection",
   prototype=list(
     title="Corrupted",
-    prompt="Overwrite with new test result",
+    prompt="Overwrite with new test%s",
     detail.s=paste0(
       "The test outcome for the following test cannot be assessed because ",
       "errors occurred while attempting comparison. Please review the errors ",
@@ -825,12 +837,19 @@ setClass("unitizerBrowseSubSectionCorrupted",
       "errors and contemplate using a different comparison function with ",
       "`unitizer_sect`."
     ),
+    help=paste0(
+      "unitizer is unable to compare the reference and new test values ",
+      "because the comparison function itself caused an error.  You can ",
+      "change the unitizer function with `unitizer_sect`.  You can also ",
+      "manually compare `.NEW` and `.REF` and decide whether to replace the ",
+      "old value with the new one by selecting 'Y' at the prompt."
+    ),
     actions=c(Y="A", N="B")
 ) )
 setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Removed",
-    prompt="Remove test from store",
+    prompt="Remove test%s from store",
     detail.s=paste0(
       "The following test exists in the unitizer store but not in the new ",
       "test script."
@@ -839,12 +858,16 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
       "The %s tests in this section exist in the unitizer store but not in the ",
       "new test script."
     ),
+    help=paste0(
+      "A previously stored test no longer exists in the test file; you can ",
+      "remove the stored value by selecting 'Y' at the prompt."
+    ),
     actions=c(Y="C", N="B")
 ) )
 setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Passed",
-    prompt="Keep test in store",
+    prompt="Keep test%s in store",
     detail.s="The following test passed.",
     detail.p="The %s tests in this section passed.",
     actions=c(Y="A", N="C"),
