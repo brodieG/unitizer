@@ -100,7 +100,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       conditions=new("conditionList", .items=res$conditions),
       output=res$output, message=res$message, aborted=res$aborted,
       env=test.env, comment=x.comments, trace=res$trace,
-      glob.indices=global$state(), ignore=!isTRUE(res$visible)
+      glob.indices=global$state(), ignore=identical(res$visible, FALSE)
     )
 } )
 #' @rdname exec
