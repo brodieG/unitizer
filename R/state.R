@@ -177,7 +177,7 @@ unitizerStateNoOpt <- setClass(
   "unitizerStateNoOpt", contains="unitizerState",
   prototype=list(
     search.path=2L, options=0L, working.directory=2L, random.seed=2L,
-    par.env=.GlobalEnv
+    par.env=NULL
   )
 )
 #' @export unitizerStateBasic
