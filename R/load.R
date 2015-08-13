@@ -134,6 +134,16 @@ load_unitizers <- function(
       upgrade.success <- vapply(upgraded, is, logical(1L), "unitizer")
 
       for(i in which(upgrade.success)) {
+        if(
+          !identical(
+            basename(upgraded[[i]]@test.file.loc),
+            basename(test.files[toup.idx][[i]])
+          )
+        ) stop(
+          "Logic Error: upgraded test file does not match original test file ",
+          "('", basename(upgraded[[i]]@test.file.loc), "' vs '",
+          basename(test.files[toup.idx][[i]]), "'); contact maintainer."
+        )
         upgraded[[i]]@id <- norm_store_id(store.ids[toup.idx][[i]])
         upgraded[[i]]@test.file.loc <- norm_file(test.files[toup.idx][[i]])
 
