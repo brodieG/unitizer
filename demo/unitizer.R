@@ -1,16 +1,14 @@
 library(unitizer)
 unitizer_check_demo_state()
 
-# In this script we will demonstrate the `unitizer` workflow by simulating the
-# development process of the `unitizer.fastlm` package, a pseudo package that
-# implements faster computations of slope, intercept and R^2 for a single
-# variable linear regression.
+# In this script we demonstrate the `unitizer` workflow by installing and
+# testing three versions of `unitizer.fastlm`, a package that implements faster
+# computations of slope, intercept and R^2 for a single variable regression.
 #
-# We will install three different versions of the package, and run our tests
-# againt each:
+# The package versions are:
 #
-# 1. v0.1.0: a known working copy based on `base::lm`
-# 2. v0.1.1: initial (flawed) attempt at optimization of existing functionality
+# 1. v0.1.0: a slow version that is know to produce the correct results
+# 2. v0.1.1: initial (flawed) attempt at optimizing our functions
 # 2. v0.1.2: fixes to regressions introduced in v0.1.1
 #
 # See Also: `?unitizer::demo`, `?unitize`, `?vignette("unitizer")`
@@ -19,20 +17,17 @@ unitizer_check_demo_state()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ SETUP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Simulate package development by creating a temporary "package directory" and
-# copying the `unitizer.fastlm` sources there-in:
-
-(.unitizer.fastlm <- copy_fastlm_to_tmpdir())  # package directory
-list.files(.unitizer.fastlm)                   # contains our sources
+(.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
+list.files(.unitizer.fastlm)                     # contains our sources
+devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 
 # And in our sources is the test file, which we will `unitize`:
 
 (.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R"))
 show_file(.unitizer.test.file)
 
-# Install first version of packate
-
-devtools::install(.unitizer.fastlm, quiet=TRUE)
+# Here we copied `untizer.fastlm` sources to a temporary "package directory"
+# and installed it. The test file contained therein is shown for reference.
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END SETUP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
