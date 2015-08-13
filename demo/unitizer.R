@@ -1,16 +1,17 @@
 library(unitizer)
 unitizer_check_demo_state()
 
-# In this script we will demonstrate the `unitizer` workflow by running
-# `unitize` against three different versions of our pseudo package
-# `unitizer.fastlm`:
+# In this script we will demonstrate the `unitizer` workflow by simulating the
+# development process of the `unitizer.fastlm` package, a pseudo package that
+# implements faster computations of slope, intercept and R^2 for a single
+# variable linear regression.
+#
+# We will install three different versions of the package, and run our tests
+# againt each:
 #
 # 1. v0.1.0: a known working copy based on `base::lm`
 # 2. v0.1.1: initial (flawed) attempt at optimization of existing functionality
 # 2. v0.1.2: fixes to regressions introduced in v0.1.1
-#
-# `unitizer.fastlm` implements faster computations of slope, intercept and R^2
-# for a single variable linear regression.
 #
 # See Also: `?unitizer::demo`, `?unitize`, `?vignette("unitizer")`
 

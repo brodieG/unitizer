@@ -116,7 +116,8 @@ update_fastlm <- function(dir, version) {
     version %in% c("0.1.1", "0.1.2"),
     file_test("-d", dir),
     file_test("-f", file.path(dir, "DESCRIPTION")),
-    file_test("-f", file.path(dir, "R", "fastlm.R"))
+    file_test("-f", file.path(dir, "R", "fastlm.R")),
+    file_test("-f", file.path(dir, "tests", "unitizer", "fastlm.R"))
   )
   lm.dir <- switch(
     version, "0.1.1"="fastlm.1", "0.1.2"="fastlm.2",
@@ -124,7 +125,10 @@ update_fastlm <- function(dir, version) {
   )
   untz.dir <- system.file(package="unitizer")
   lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir)
-  cpy.files <- c("DESCRIPTION", file.path("R", "fastlm.R"))
+  cpy.files <- c(
+    "DESCRIPTION", file.path("R", "fastlm.R"),
+    file.path("tests", "unitizer", "fastlm.R")
+  )
   cpy.from <- file.path(lm.dir.full, cpy.files)
   cpy.to <- file.path(dir, cpy.files)
 
