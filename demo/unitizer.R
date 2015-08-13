@@ -30,20 +30,15 @@ list.files(.unitizer.fastlm)                   # contains our sources
 (.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R"))
 show_file(.unitizer.test.file)
 
+# Install first version of packate
+
+devtools::install(.unitizer.fastlm, quiet=TRUE)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END SETUP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 `[Press ENTER to Continue]`()
 
-# Install the package to get started
-
-devtools::install(.unitizer.fastlm, quiet=TRUE)
-
-# After you press ENTER at the next prompt, `unitize` will launch.  Type H at
-# the `unitizer>` prompt for contextual help, or enter any valid R expression
-# to evaluate it in the environment of the test.
-#
-# Once you are done exploring, press 'Y' at each prompt to accept the tests
-# since we know they are correct
+# After you press ENTER at the next prompt, `unitize` will launch.
 
 `[Press ENTER to Continue]`()
 
@@ -51,26 +46,19 @@ unitize(.unitizer.test.file)
 
 # If all went well you added four tests to `unitizer`.
 #
-# Let's update our `unitizer.fastlm` package to use the real computations
+# We will now update `unitizer.fastlm` package to use the fast computations
 # instead of piggybacking off of `stats::lm` as our first version did.  We
 # do this with `update_fastlm`; in real life you would be updating your source
-# code at this point.
+# code at this point.  After the update/re-install, we re-run `unitize`:
 
 `[Press ENTER to Continue]`()
 
 update_fastlm(.unitizer.fastlm, version="0.1.1")
 devtools::install(.unitizer.fastlm, quiet=TRUE)
 
-# We can now re-run `unitize` to check for regressions.  In this case, two of
-# the four tests will fail.  Try typing `str(.new)` or `str(.ref)` at
-# `unitizer>` prompt.  Once you are done reviewing, type 'N' to reject the
-# failing tests since we know they are incorrect.
-
-`[Press ENTER to Continue]`()
-
 unitize(.unitizer.test.file)
 
-# We will now install and run the final implementation of `unitizer.fastlm`
+# Let's fix the regressions we introduced and re-run `unitize`:
 
 `[Press ENTER to Continue]`()
 
