@@ -134,8 +134,8 @@ load_unitizers <- function(
       upgrade.success <- vapply(upgraded, is, logical(1L), "unitizer")
 
       for(i in which(upgrade.success)) {
-        upgraded[[i]]@id <- norm_store_id(store.ids[[i]])
-        upgraded[[i]]@test.file.loc <- norm_file(test.files[[i]])
+        upgraded[[i]]@id <- norm_store_id(store.ids[toup.idx][[i]])
+        upgraded[[i]]@test.file.loc <- norm_file(test.files[toup.idx][[i]])
 
         store.attempt <- try(store_unitizer(upgraded[[i]]), silent=TRUE)
         if(inherits(store.attempt, "try-error")) {
