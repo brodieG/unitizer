@@ -31,6 +31,8 @@ env_name <- function(env) {
 
 #' Functions To Ignore
 #'
+#' DEPRECATED.  Now handled by visibility status.
+#'
 #' Ignored functions are not considered tests if they are called from
 #' the top level.
 #'
