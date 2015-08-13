@@ -4,10 +4,10 @@
 library(unitizer.fastlm)
 res <- fastlm(1:100, (1:100) ^ 2)
 
-# Our new implementation of slope and intercept calculations is not correct,
-# which is why we are seeing these tests as failed.  Type 'N' at the prompts
-# since we do not want to overwrite our previously correct tests with these
-# incorrect ones
+# Our new implementation of slope and intercept calculations is not
+# correct, which is why we are seeing these tests as failed.  Type
+# 'N' at the prompts since we do not want to overwrite our previously
+# correct tests with these incorrect ones
 
 res
 get_slope(res)

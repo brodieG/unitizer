@@ -4,8 +4,9 @@
 library(unitizer.fastlm)
 res <- fastlm(1:100, (1:100) ^ 2)
 
-# You will need to review the following four tests. Add them to the `unitizer`
-# store by typing 'Y' at the prompt.  Type 'H' if you need help.
+# You will need to review the following four tests. Add them to the
+# `unitizer` store by typing 'Y' at the prompt.  Type 'H' if you need
+# help.
 
 res
 get_slope(res)
