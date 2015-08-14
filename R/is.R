@@ -93,7 +93,8 @@ is.valid_state <- function(x) {
   }
   if(is.character(x)) x <- switch(
     x, pristine=new("unitizerStatePristine"), noopt=new("unitizerStateNoOpt"),
-    basic=new("unitizerStateBasic"), off=new("unitizerStateOff")
+    basic=new("unitizerStateBasic"), off=new("unitizerStateOff"),
+    safe=new("unitizerStateSafe")
   )
   if(x@options > x@search.path) {
     word_msg(

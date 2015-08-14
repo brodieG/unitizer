@@ -197,7 +197,7 @@ options_update <- function(tar.opts) {
   unitizer.namespace.keep=c(               # namespaces not to auto-unload, no matter what
     .unitizer.namespace.keep
   ),
-  unitizer.state="pristine",               # default reproducible state mode
+  unitizer.state="safe",                   # default reproducible state mode
   unitizer.opts.base=.unitizer.opts.base,  # what to set options to when running in reproducible state
   unitizer.opts.asis=.unitizer.opts.sys,   # system dependent and other options that should not be changed; these are matched as regular expressions
   unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive

@@ -2,7 +2,7 @@
 
 NULL
 
-.unitizer.valid.state.abbr <-  c("pristine", "noopt", "basic", "off")
+.unitizer.valid.state.abbr <-  c("pristine", "noopt", "basic", "off", "safe")
 
 #' Interface For State Control
 #'

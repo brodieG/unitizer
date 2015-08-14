@@ -51,9 +51,9 @@
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
 #' @param state character(1L) one of
-#'   \code{c("prisitine", "noopt", "basic", "off")} or an S4 object inheriting
-#'   from \code{unitizerState}; modifies how \code{unitizer} manages aspects
-#'   of session state that could affect test evaluation (see details).
+#'   \code{c("prisitine", "noopt", "basic", "off", "safe")} or an S4 object
+#'   inheriting from \code{unitizerState}; modifies how \code{unitizer} manages
+#'   aspects of session state that could affect test evaluation (see details).
 #' @param pre NULL, or a character vector pointing to files and/or directories.
 #'   If a character vector, then any files referenced therein will be sourced,
 #'   and any directories referenced therein will be scanned non-recursively for
