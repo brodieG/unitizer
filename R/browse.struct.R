@@ -790,7 +790,7 @@ setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",
 setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
   prototype=list(
     title="Failed",
-    prompt="Overwrite with new test%s",
+    prompt="Overwrite with new result%s",
     detail.s=paste0(
       "The following test failed because the new evaluation does not match ",
       "the reference value from the store."
@@ -824,7 +824,7 @@ setClass("unitizerBrowseSubSectionCorrupted",
   contains="unitizerBrowseSubSection",
   prototype=list(
     title="Corrupted",
-    prompt="Overwrite with new test%s",
+    prompt="Overwrite with new result%s",
     detail.s=paste0(
       "The test outcome for the following test cannot be assessed because ",
       "errors occurred while attempting comparison. Please review the errors ",
