@@ -44,18 +44,10 @@ NULL
 #' \code{getOption("unitizer.opts.base")} options, which are then read by
 #' \code{unitizer}.  This allows you to specify different default values
 #' for the base options or to add other options to the list to leave untouched.
+#'
 #' If you do modify these settings please take care to ensure that you add your
 #' values to the options rather than completely overwriting them.
-#' DEVNOTES:\itemize{
-#'   \item options, and perhaps unitizer options as a whole, likely to get
-#'     recorded in the future.  Do they need to?  Is it more valuable to make
-#'     sure that a \code{unitizer} evalutes the same across systems, or that
-#'     the \code{unitizer} options affect every unitizer?  Since options are
-#'     already tracked maybe we don't need to record this stuff?
-#'   \item should the option values be done as a delta to the \code{unitizer}
-#'     factory values to make it a little harder to completely mess up the
-#'     factory defaults?
-#' }
+#'
 #' @section Un-unloadable Packages And Namespaces:
 #'
 #' For whatever reason you might want to prevent \code{unitizer} from
@@ -67,9 +59,9 @@ NULL
 #'
 #' If you do add packages and namespaces to the "keep" lists then you need
 #' to ensure you also add all the options associated with those namespaces and
-#' the namespaces they depend on / import \code{getOption("unitizer.opts.asis")}
-#' as well.  Alternatively, turn off options tracking (see
-#' \code{\link{unitizerState}}).
+#' the namespaces they depend on / import to
+#' \code{getOption("unitizer.opts.asis")} as well.  Alternatively, turn off
+#' options tracking (see \code{\link{unitizerState}}).
 #'
 #' Note that some packages cannot be easily loaded and unloaded.  For example
 #' \code{data.table} (<= 1.9.5) cannot be unloaded without causing a segfault
@@ -78,12 +70,16 @@ NULL
 #' \code{getOption("unitizer.namespace.keep")} by default.
 #'
 #' @name unitizer.opts
+#' @rdname unitizer.opts
 #' @seealso \code{\link{unitizerState}}
 
 NULL
 
 #' @rdname unitizer.opts
+#' @name .unitizer.opts.base
 #' @export
+
+NULL
 
 .unitizer.opts.base <- list(
   add.smooth = TRUE, browserNLdisabled = FALSE, CBoundsCheck = FALSE,
@@ -110,7 +106,10 @@ NULL
   warn = 0, warning.length = 1000L, width = 80L
 )
 #' @rdname unitizer.opts
+#' @name .unitizer.opts.sys
 #' @export
+
+NULL
 
 .unitizer.opts.sys <- c(
   "^browser$", "^device$", "^dvipscmd$", "^mailer$", "^pager$",  "^pdfviewer$",
@@ -119,11 +118,15 @@ NULL
   "^unitizer\\."
 )
 #' @rdname unitizer.opts
+#' @name .unitizer.namespace.keep
 #' @export
+
+NULL
 
 .unitizer.namespace.keep <- c("data.table")
 
 #' @rdname unitizer.opts
+#' @name .unitizer.base.packages
 #' @export
 
 .unitizer.base.packages <- c(
@@ -178,7 +181,10 @@ options_update <- function(tar.opts) {
   options(tar.opts)
 }
 #' @rdname unitizer.opts
+#' @name .unitizer.opts.default
 #' @export
+
+NULL
 
 .unitizer.opts.default <- list(
   unitizer.par.env=NULL,                   # NULL means use the special unitizer environment
