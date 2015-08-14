@@ -23,7 +23,7 @@ devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 
 # And in our sources is the test file, which we will `unitize`:
 
-(.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R"))
+.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R")
 show_file(.unitizer.test.file)
 
 # Here we copied `untizer.fastlm` sources to a temporary "package directory"
@@ -31,9 +31,8 @@ show_file(.unitizer.test.file)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ END SETUP ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`[Press ENTER to Continue]`()
-
-# After you press ENTER at the next prompt, `unitize` will launch.
+# After you press ENTER at the prompt, `unitize` will launch.  You should accept
+# the tests since we know the first package version is correct, though slow.
 
 `[Press ENTER to Continue]`()
 
@@ -41,8 +40,7 @@ unitize(.unitizer.test.file)
 
 # If all went well you added four tests to `unitizer`.
 #
-# We will now update `unitizer.fastlm` package to use the fast computations
-# instead of piggybacking off of `stats::lm` as our first version did.  We
+# We will now update `unitizer.fastlm` package to use the fast computations. We
 # do this with `update_fastlm`; in real life you would be updating your source
 # code at this point.  After the update/re-install, we re-run `unitize`:
 
