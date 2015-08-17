@@ -176,7 +176,7 @@ search_path_update <- function(id, global) {
 
     reattach(
       i, name=obj.name.clean, type=obj.type, data=search.target[[i]],
-      extra=extra
+      extra=extra, global=global
     )
     sc.id.tmp <- append(sc.id.tmp, st.id[[i]], i - 1L)
   }
@@ -198,13 +198,17 @@ search_path_update <- function(id, global) {
     move_on_path(new.pos=swap.id, old.pos=swap.pos)
     sc.id.tmp <- unitizerUniqueNames(search_as_envs())
   }
-  if(!identical(search(), names(search.target)))
+  search.new <- search()
+  sp.check <- match(search.new, names(search.target))
+  if(any(is.na(sp.check)) || any(diff(sp.check) < 1L))
     stop("Logic Error: path reorder failed; contact maintainer.")
+  search.target <- search.target[search.new]
 
   # Replace all non packages with those in the target list since those may have
-  # been changed
+  # been changed (note, using search.new as it is possible we failed to fully
+  # restore path (e.g. if a package is removed but not dettached/unloaded))
 
-  tar.objs <- vapply(names(search.target), is.loaded_package, logical(1L))
+  tar.objs <- vapply(search.new, is.loaded_package, logical(1L))
   cur.objs <- vapply(names(search_as_envs()), is.loaded_package, logical(1L))
 
   if(!identical(tar.objs, cur.objs))
@@ -215,7 +219,8 @@ search_path_update <- function(id, global) {
       if(i == 1L) next # global env doesn't count since
       detach(pos=i, character.only=TRUE)
       reattach(
-        i, names(search.target)[[i]], type="object", data=search.target[[i]]
+        i, names(search.target)[[i]], type="object", data=search.target[[i]],
+        global=global
   ) } }
   # Updated comparison method (might be too stringent)
 
@@ -235,8 +240,14 @@ search_path_update <- function(id, global) {
     keep.ns=global$unitizer.opts[["unitizer.namespace.keep"]]
   )
   to.load <- setdiff(tar.lns, loadedNamespaces())
-  for(i in to.load) loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]]))
-
+  for(i in to.load) {
+    try.ln <- try(loadNamespace(i, lib.loc=dirname(tar.lns.loc[[i]])))
+    if(inherits(try.ln, "try-error"))
+      warning(
+        "Unable to fully restore previously loaded namespaces.",
+        immediate.=TRUE
+      )
+  }
   on.exit(NULL)
   invisible(TRUE)
 }
@@ -348,7 +359,7 @@ unload_namespaces <- function(
       if(inherits(loc <- try(find.package(x), silent=TRUE), "try-error")) {
         warning(
           "Unloading namespace \"", x, "\", but it does not appear to have a ",
-          "corresponding installed package.", .immediate=TRUE
+          "corresponding installed package.", immediate.=TRUE
         )
         ""
       } else loc
@@ -443,29 +454,41 @@ is.loaded_package <- function(pkg.name) {
 #'
 #' @keywords internal
 
-reattach <- function(pos, name, type, data, extra=NULL) {
-  stopifnot(is.integer(pos), identical(length(pos), 1L), !is.na(pos), pos > 0L)
-  stopifnot(is.chr1plain(name), !is.na(name))
-  stopifnot(is.chr1plain(type), !is.na(type), type %in% c("package", "object"))
-  stopifnot(is.environment(data))
-
+reattach <- function(pos, name, type, data, extra=NULL, global) {
+  stopifnot(
+    is.integer(pos), identical(length(pos), 1L), !is.na(pos), pos > 0L,
+    is.chr1plain(name), !is.na(name),
+    is.chr1plain(type), !is.na(type), type %in% c("package", "object"),
+    is.environment(data),
+    is(global, "unitizerGlobal")
+  )
   if(identical(type, "package")) {
     suppressPackageStartupMessages(
-      library(
+      lib.try <- try(library(
         name, pos=pos, quietly=TRUE, character.only=TRUE,
         lib.loc=extra, warn.conflicts=FALSE
-    ) )
+    ) ) )
+    if(inherits(lib.try, "try-error")) {
+      warning(
+        "Unable to fully restore search path; see prior error.",
+        immediate.=TRUE
+      )
+      global$state()
+    }
   } else {
     attach(data, pos=pos, name=name, warn.conflicts=FALSE)
   }
 }
 #' @keywords internal
 #' @rdname reattach
-move_on_path <- function(new.pos, old.pos) {
-  stopifnot(is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos))
-  stopifnot(is.integer(old.pos), length(old.pos) == 1L, !is.na(old.pos))
-  stopifnot(old.pos > new.pos)  # otherwise detaching old.pos would mess path up
-  stopifnot(new.pos > 1L)       # can't attach at 1L
+move_on_path <- function(new.pos, old.pos, global) {
+  stopifnot(
+    is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos),
+    is.integer(old.pos), length(old.pos) == 1L, !is.na(old.pos),
+    old.pos > new.pos,   # otherwise detaching old.pos would mess path up
+    new.pos > 1L,        # can't attach at 1L
+    is(global, "unitizerGlobal")
+  )
   sp <- search()
   stopifnot(new.pos <= length(sp), old.pos <= length(sp))
   name <- sp[[old.pos]]
@@ -480,7 +503,10 @@ move_on_path <- function(new.pos, old.pos) {
   }
   name.clean <- sub("package:", "", name)
   detach(pos=old.pos)
-  reattach(pos=new.pos, name=name.clean, type=type, data=obj, extra=extra)
+  reattach(
+    pos=new.pos, name=name.clean, type=type, data=obj, extra=extra,
+    global=global
+  )
 }
 #' Make Unique IDs For Search Path Object
 #'
