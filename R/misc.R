@@ -212,3 +212,18 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     ifelse(nchar(res) < nchar(path), res, path)
   } else res
 }
+#' Merge Two Lists
+#'
+#' Values in \code{y} ovewrite existing values in \code{x}
+#'
+#' @keywords internal
+#' @param x a list
+#' @param y a list
+
+merge_lists <- function(x, y, keep.null=FALSE) {
+  stopifnot(is.list(x), is.list(y), !is.null(names(x)), !is.null(names(y)))
+  if(!identical(keep.null, FALSE)) stop("Currently `keep.null` must be FALSE")
+  x[names(y)] <- names(y)
+  x
+}
+

@@ -244,8 +244,14 @@ search_path_update <- function(id, global) {
 #' @rdname search_path
 
 search_path_trim <- function(
-  keep.path=getOption("unitizer.search.path.keep"),
-  keep.ns=getOption("unitizer.namespace.keep"),
+  keep.path=union(
+    getOption("unitizer.search.path.keep.base"),
+    getOption("unitizer.search.path.keep")
+  ),
+  keep.ns=union(
+    getOption("unitizer.namespace.keep.base"),
+    getOption("unitizer.namespace.keep")
+  ),
   global=unitizerGlobal$new()
 ) {
   stopifnot(
@@ -287,7 +293,10 @@ search_path_trim <- function(
 #' based on data from \code{getNamespaceImports}
 
 unload_namespaces <- function(
-  unload, global, keep.ns=getOption("unitizer.namespace.keep")
+  unload, global, keep.ns=union(
+    getOption("unitizer.namespace.keep.base"),
+    getOption("unitizer.namespace.keep")
+  )
 ) {
   stopifnot(
     is.character(unload), all(!is.na(unload)),

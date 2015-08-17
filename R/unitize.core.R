@@ -205,13 +205,19 @@ unitize_core <- function(
   # fragility here since it is possible using these functions could modify
   # global (see `options` example)
 
-  seed.dat <- getOption("unitizer.seed")  # get seed before 'options_zero'
+  seed.dat <- global$unitizer.opts[["unitizer.seed"]]  # get seed before 'options_zero'
 
   if(identical(global$status@search.path, 2L))
     search_path_trim(
       global=global,
-      keep.ns=global$unitizer.opts[["unitizer.namespace.keep"]],
-      keep.path=global$unitizer.opts[["unitizer.search.path.keep"]]
+      keep.ns=union(
+        global$unitizer.opts[["unitizer.namespace.keep.base"]],
+        global$unitizer.opts[["unitizer.namespace.keep"]]
+      ),
+      keep.path=union(
+        global$unitizer.opts[["search.path.keep.base"]],
+        global$unitizer.opts[["search.path.keep"]]
+      )
     )
   if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""  # indicate conflict happened prior to test eval
 
@@ -376,10 +382,22 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
 
     no.track <- c(
       unlist(
-        lapply(global$unitizer.opts[["unitizer.opts.asis"]], grep, glob.opts)
+        lapply(
+          union(
+            global$unitizer.opts[["unitizer.opts.asis.base"]],
+            global$unitizer.opts[["unitizer.opts.asis"]]
+          ),
+          grep, glob.opts
+        )
       ),
       match(
-        names(global$unitizer.opts[["unitizer.opts.base"]]), glob.opts, nomatch=0L
+        names(
+          merge_lists(
+            global$unitizer.opts[["unitizer.opts.init.base"]],
+            global$unitizer.opts[["unitizer.opts.init"]],
+        ) ),
+        glob.opts,
+        nomatch=0L,
     ) )
     unitizers[[i]]@state.new <- unitizerCompressTracking(
       global$tracking, glob.opts[no.track]
