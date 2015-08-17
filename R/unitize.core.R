@@ -215,8 +215,8 @@ unitize_core <- function(
         global$unitizer.opts[["unitizer.namespace.keep"]]
       ),
       keep.path=union(
-        global$unitizer.opts[["search.path.keep.base"]],
-        global$unitizer.opts[["search.path.keep"]]
+        global$unitizer.opts[["unitizer.search.path.keep.base"]],
+        global$unitizer.opts[["unitizer.search.path.keep"]]
       )
     )
   if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""  # indicate conflict happened prior to test eval

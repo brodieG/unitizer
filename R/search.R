@@ -342,8 +342,19 @@ unload_namespaces <- function(
   )
   # Get lib locations to unload DLLs later (if applicable)
 
-  lib.locs <- vapply(unload.net, find.package, character(1L))
-
+  lib.locs <- vapply(
+    unload.net,
+    function(x) {
+      if(inherits(loc <- try(find.package(x), silent=TRUE), "try-error")) {
+        warning(
+          "Unloading namespace \"", x, "\", but it does not appear to have a ",
+          "corresponding installed package.", .immediate=TRUE
+        )
+        ""
+      } else loc
+    },
+    character(1L)
+  )
   # order these in search path order if attached, as that will likely be easiest
   # order to detach in (though in most cases by the time we get here the
   # package should have been detached already - shouldn't be trying to unload)
@@ -376,7 +387,7 @@ unload_namespaces <- function(
         if(inherits(attempt, "try-error")) {
           warning(
             "Error while attempting to unload namespace `", tar.ns, "`",
-            immediate.=TRUE
+            .immediate=TRUE
           )
         } else {
           unloaded.success <- c(unloaded.success, lns.names[i])
