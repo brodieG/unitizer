@@ -76,7 +76,7 @@ NULL
 #'     \code{data.table})
 #'   \item \code{unitizer.search.path.keep.base}: vanilla R session packages,
 #'     plus \code{"package:unitizer"} and \code{"tools:rstudio"}, the latter
-#'     because its implementation prevens re-attaching it if it is detached.
+#'     because its implementation prevents re-attaching it if it is detached.
 #'   \item \code{unitizer.opts.asis.base}: system specific options that should
 #'     not affect test evaluation (e.g. \code{getOption("editor")}).
 #'   \item \code{unitizer.opts.init.base}: base options (e.g.
@@ -87,8 +87,9 @@ NULL
 #' of inadvertent modification. They are exposed as options to allow the user to
 #' unset single values if required, though this is intended to be rare.
 #' \code{unitizer} runs with the union of user options and the system versions
-#' described here.  For \code{unitizer.opts.init}, any options set to NULL that
-#' are also present in \code{unitizer.opts.init.base} will be removed.
+#' described here.  For \code{unitizer.opts.init}, any options set that are
+#' also present in \code{unitizer.opts.init.base} will overrule the base
+#' version.
 #'
 #' @section Display / Text Capture Options:
 #'

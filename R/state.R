@@ -49,11 +49,11 @@ NULL
 #' \href{https://github.com/Rdatatable/data.table/issues/990}{data.table}). If
 #' you know the packages you typically load in your sessions can be unloaded,
 #' you can turn this functionality on by setting
-#' \code{options(unitizer.state="pristine")} either in your session or in your
-#' \code{.Rprofile} file.  If you have packages that cannot be unloaded, but
-#' you still want to enable these features, see the
-#' "Un-unloadable Packages and Namespaces" section of
-#' \code{\link{unitizer.opts}} docs.
+#' \code{options(unitizer.state="pristine")} either in your session, in your
+#' \code{.Rprofile} file, or in each call to \code{unitize} or
+#' \code{unitize_dir}.  If you have packages that cannot be unloaded, but
+#' you still want to enable these features, see the "Search Path and Namespace
+#' State Options" section of \code{\link{unitizer.opts}} docs.
 #'
 #' @section State Presets:
 #'
@@ -62,7 +62,7 @@ NULL
 #' as the \code{state} argument to \code{\link{unitize}} and
 #' \code{\link{unitize_dir}}.
 #'
-#' There are four classes defined, though their only purpose is to act as
+#' There are several classes defined, though their only purpose is to act as
 #' presets since they are identical except for their prototype values:
 #' \itemize{
 #'   \item \code{unitizerStateSafe} is the default and turns off tracking for
