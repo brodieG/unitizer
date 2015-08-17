@@ -199,4 +199,18 @@ test_that("relativize_path", {
     unitizer:::relativize_path(c(p1, p2, file.path("notarealpath", "foo")), wd),
     c("R", "../unitizerdummypkg1", file.path("notarealpath", "foo"))
   )
-} )
+})
+test_that("unitizer:::merge_listss", {
+  expect_equal(
+    unitizer:::merge_lists(list(a=1, b=2), list(c=3)),
+    list(a=1, b=2, c=3)
+  )
+  expect_equal(
+    unitizer:::merge_lists(list(a=1, b=2, c=3), list(d=5, c=5)),
+    list(a=1, b=2, c=5, d=5)
+  )
+  expect_equal(
+    unitizer:::merge_lists(list(a=1, b=2, c=3), list(a=NULL, d=5, c=5)),
+    list(a=NULL, b=2, c=5, d=5)
+  )
+})
