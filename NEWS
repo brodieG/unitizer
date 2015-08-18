@@ -10,7 +10,14 @@ Improvement / Changes:
       on error
     * see state vignette for more details
 * Streamlining of state control parameters into one (`state`); API breaking
-* 'helper' directory renamed '_pre'
+* Whether an expression is ignored or not is now a function of whether the
+  expression returns visibly or not
+* Pre and post test scripts
+    * 'helper' directory renamed '_pre'
+    * Can now use a '_post' directory to run cleanup
+* Interactive environment cleanup
+    * Display tweaks
+    * Contextual help tweaks
 * Vignette updates
 * Demo update
 
@@ -20,6 +27,9 @@ Internal:
     * No longer storing assignments both as test value and object in environment
     * Calls recorded deparsed instead of as call objects
 * Shimming used for search path tracking is more lightweight
+
+Issues Fixed:
+  107, 106, 104, 103, 101, 99, 98, 94, 93, 90, 85, 84, 77, 74, 71, 67
 
 unitizer 0.9.0
 --------------------------------------------------------------------------------
