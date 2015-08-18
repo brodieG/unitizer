@@ -159,6 +159,7 @@ unitizer_check_demo_state <- function() {
 
 unitizer_cleanup_demo <- function() {
   vars <- c(".unitizer.fastlm", ".unitizer.test.file")
+  detach("package:unitizer.fastlm", unload=TRUE)
   remove.packages("unitizer.fastlm", .libPaths()[[1L]])
   unlink(.unitizer.fastlm, recursive=TRUE)
   rm(list=vars, envir=parent.frame())
