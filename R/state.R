@@ -45,7 +45,8 @@ NULL
 #'
 #' Search path and options state management are turned off by default because
 #' in order to work they require the ability to fully unload any non-default
-#' packages, and there are some packages that cannot be unloaded (e.g.
+#' packages and namespaces, and there are some packages that cannot be
+#' unloaded, or should not be unloaded (e.g.
 #' \href{https://github.com/Rdatatable/data.table/issues/990}{data.table}). If
 #' you know the packages you typically load in your sessions can be unloaded,
 #' you can turn this functionality on by setting
@@ -54,6 +55,11 @@ NULL
 #' \code{unitize_dir}.  If you have packages that cannot be unloaded, but
 #' you still want to enable these features, see the "Search Path and Namespace
 #' State Options" section of \code{\link{unitizer.opts}} docs.
+#'
+#' If you run \code{unitizer} with options and search path tracking and you run
+#' into a namespace that cannot be unloaded, or should not be unloaded because
+#' it is listed in \code{getOption("unitizer.namespace.keep")}, \code{unitizer}
+#' will turn off \code{options} state tracking from that point onwards.
 #'
 #' @section State Presets:
 #'

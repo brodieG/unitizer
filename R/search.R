@@ -316,15 +316,6 @@ unload_namespaces <- function(
   )
   # Deal with options/namespace state conflict
 
-  if(
-    length(unload.conf <- which(unload %in% keep.ns)) &&
-    global$status@options
-  ) {
-    global$ns.opt.conflict@conflict <- TRUE
-    global$ns.opt.conflict@namespaces <- unload[unload.conf]
-    global$status@options <- 0L
-    global$disabled@options <- TRUE
-  }
   to.keep.depends <- unlist(
     lapply(keep.ns[keep.ns %in% loadedNamespaces()], getNamespaceImports)
   )
@@ -418,7 +409,7 @@ unload_namespaces <- function(
 
   for(i in names(dls.to.ul)) library.dynam.unload(i, dls.to.ul[i])
 
-  # Warn if some namespaces could not be unloaded (likely due to dependency)
+
 
   if(length(lns)) {
     warning(
@@ -426,8 +417,21 @@ unload_namespaces <- function(
       immediate.=TRUE
     )
   }
-  if(length(lns) || global$ns.opt.conflict@conflict)
+  # Warn if some namespaces could not be unloaded (likely due to dependency),
+  # and register the conflict if we're tracking options
+
+  if(
+    (
+      length(unload.conf <- which(unload %in% keep.ns)) ||
+      length(lns)
+    ) && global$status@options
+  ) {
+    global$ns.opt.conflict@conflict <- TRUE
+    global$ns.opt.conflict@namespaces <- c(unload[unload.conf], lns)
+    global$status@options <- 0L
+    global$disabled@options <- TRUE
     global$state()  # mark state if we're not able to completely clean it up
+  }
   NULL
 }
 #' Check Whether a Package Is Loaded

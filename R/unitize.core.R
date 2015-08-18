@@ -495,9 +495,8 @@ unitize_browse <- function(
       "starting with ",
       if(!nchar(global$ns.opt.conflict@file)) "the first test file" else
         paste0("test file \"", global$ns.opt.conflict@file, "\""),
-      " because in order to do we would have had to unload the following ",
-      "namespace", if(many > 1L) "s", " in contravention of ",
-      "`getOption(unitizer.namespace.keep)`: ",
+      " because the following namespace", if(many > 1L) "s", " could not be ",
+      "unloaded: ",
       paste0(deparse(global$ns.opt.conflict@namespaces, width=500L), sep=""),
       ".", sep=""
     )
@@ -507,7 +506,7 @@ unitize_browse <- function(
         "managed starting with the file in question, and option state will ",
         "not be managed during review, or restored to original values after ",
         "`unitizer` completes evaluation.  You may quit `unitizer` now to ",
-        "avoid any changes.  See state vignette for more details.", sep=""
+        "avoid any changes.  See `?unitizerState` for more details.", sep=""
       )
       proceed <- "Do you wish to proceed despite compromised state tracking"
       word_cat(proceed, "([Y]es, [N]o)?\n")
