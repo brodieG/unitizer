@@ -234,12 +234,18 @@ unitize_core <- function(
       length(par.dir <- get_package_dir(test.files[[1L]]))
     ) {
       setwd(par.dir)
-    } else
+    } else {
+      multi.file <- length(test.files) > 1L
       warning(
-        "Test files do not appear to be part of a package; leaving working ",
-        "directory unchanged.", immediate.=TRUE
-      )
-  }
+        "Working directory state tracking is in mode 2, but test file",
+        if(multi.file) "s do not" else " does not", "appear to be part of a ",
+        "package so instead of setting directory to the package dir ",
+        if(multi.file)
+          paste0(
+            "prior to running each test file we will set it to ",
+            "the current working directory."
+          ) else "we will leave it unchanged.", immediate.=TRUE
+  ) } }
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
