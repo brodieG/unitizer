@@ -86,7 +86,7 @@ setMethod(
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
-    quit.time <- x@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
+    quit.time <- getOption("unitizer.prompt.b4.quit.time")
     if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
     slow.run <- x@eval.time > quit.time

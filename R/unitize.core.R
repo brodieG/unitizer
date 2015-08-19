@@ -205,13 +205,19 @@ unitize_core <- function(
   # fragility here since it is possible using these functions could modify
   # global (see `options` example)
 
-  seed.dat <- getOption("unitizer.seed")  # get seed before 'options_zero'
+  seed.dat <- global$unitizer.opts[["unitizer.seed"]]  # get seed before 'options_zero'
 
   if(identical(global$status@search.path, 2L))
     search_path_trim(
       global=global,
-      keep.ns=global$unitizer.opts[["unitizer.namespace.keep"]],
-      keep.path=global$unitizer.opts[["unitizer.search.path.keep"]]
+      keep.ns=union(
+        global$unitizer.opts[["unitizer.namespace.keep.base"]],
+        global$unitizer.opts[["unitizer.namespace.keep"]]
+      ),
+      keep.path=union(
+        global$unitizer.opts[["unitizer.search.path.keep.base"]],
+        global$unitizer.opts[["unitizer.search.path.keep"]]
+      )
     )
   if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""  # indicate conflict happened prior to test eval
 
@@ -228,12 +234,18 @@ unitize_core <- function(
       length(par.dir <- get_package_dir(test.files[[1L]]))
     ) {
       setwd(par.dir)
-    } else
+    } else {
+      multi.file <- length(test.files) > 1L
       warning(
-        "Test files do not appear to be part of a package; leaving working ",
-        "directory unchanged.", immediate.=TRUE
-      )
-  }
+        "Working directory state tracking is in mode 2, but test file",
+        if(multi.file) "s do not" else " does not", "appear to be part of a ",
+        "package so instead of setting directory to the package dir ",
+        if(multi.file)
+          paste0(
+            "prior to running each test file we will set it to ",
+            "the current working directory."
+          ) else "we will leave it unchanged.", immediate.=TRUE
+  ) } }
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
@@ -376,10 +388,22 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
 
     no.track <- c(
       unlist(
-        lapply(global$unitizer.opts[["unitizer.opts.asis"]], grep, glob.opts)
+        lapply(
+          union(
+            global$unitizer.opts[["unitizer.opts.asis.base"]],
+            global$unitizer.opts[["unitizer.opts.asis"]]
+          ),
+          grep, glob.opts
+        )
       ),
       match(
-        names(global$unitizer.opts[["unitizer.opts.base"]]), glob.opts, nomatch=0L
+        names(
+          merge_lists(
+            global$unitizer.opts[["unitizer.opts.init.base"]],
+            global$unitizer.opts[["unitizer.opts.init"]],
+        ) ),
+        glob.opts,
+        nomatch=0L,
     ) )
     unitizers[[i]]@state.new <- unitizerCompressTracking(
       global$tracking, glob.opts[no.track]
@@ -471,9 +495,8 @@ unitize_browse <- function(
       "starting with ",
       if(!nchar(global$ns.opt.conflict@file)) "the first test file" else
         paste0("test file \"", global$ns.opt.conflict@file, "\""),
-      " because in order to do we would have had to unload the following ",
-      "namespace", if(many > 1L) "s", " in contravention of ",
-      "`getOption(unitizer.namespace.keep)`: ",
+      " because the following namespace", if(many > 1L) "s", " could not be ",
+      "unloaded: ",
       paste0(deparse(global$ns.opt.conflict@namespaces, width=500L), sep=""),
       ".", sep=""
     )
@@ -483,7 +506,7 @@ unitize_browse <- function(
         "managed starting with the file in question, and option state will ",
         "not be managed during review, or restored to original values after ",
         "`unitizer` completes evaluation.  You may quit `unitizer` now to ",
-        "avoid any changes.  See state vignette for more details.", sep=""
+        "avoid any changes.  See `?unitizerState` for more details.", sep=""
       )
       proceed <- "Do you wish to proceed despite compromised state tracking"
       word_cat(proceed, "([Y]es, [N]o)?\n")

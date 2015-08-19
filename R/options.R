@@ -2,109 +2,136 @@
 
 NULL
 
-#' Set Option if Not Set
+#' Unitizer Options
 #'
-#' Utility function used by .onLoad to set a global option if it is not set
-#' already.  This is equivalent to conditionally using \code{option} to set
-#' options that are not defined yet.
+#' Description of major \code{unitizer} option settings.  Once \code{unitizer}
+#' is loaded, you can see a full list of \code{unitizer} options with
+#' \code{grep("^unitizer", options(), value=TRUE)}.
 #'
-#' @export
-#' @param x the name of the option to set
-#' @param value the value to set the option to
-#' @return the result of calling \code{option} if option is not set, or NULL
-#'   invisibly if it is already set
-
-setOptIfNotSet <- function(x, value) {
-  if(!is.chr1(x)) stop("Argument `x` must be chracter(1L) and not NA")
-  if(!x %in% names(options())) {
-    opt.call <- list(quote(options))
-    opt.call[[x]] <- value
-    eval(as.call(opt.call), parent.frame())
-  } else invisible(NULL)
-}
-
-#' Global Option State Options
+#' @section Basic State Options:
 #'
-#' Details on how to manage options state settings.
+#' Basic state options:
 #'
-#' When managing sessions state, there is an unfortunate dependency between
-#' namespaces and options.  In particular, most packages set their namespaces
-#' when they are loaded, not when they are attached.  This means that if we
-#' want to ensure packages have reasonable options set and also wish to
-#' attach and dettach them from the search path, we must fully unload their
-#' namespace and imported namespaces so that options are reset when the
-#' package is re-loaded.
-#'
-#' Matters are complicated by the need to allow preservation of certain
-#' packages and namespaces, which by definition are not reloaded.  For state
-#' manipulation to work we must ensure that packages and namespaces that
-#' cannot be unloaded have their options preserved or at a minimum set to
-#' reasonable values.
-#'
-#' @section Options Settings:
-#'
-#' To achieve this we have identified all the options that
-#' are used in a freshly loaded R session, and split them into two groups:
-#'
-#' \enumerate{
-#'   \item system specific options that are unlikely to affect test
-#'     evaluation (e.g. \code{getOption("papersize")})
-#'   \item other base options typically loaded in a vanilla R session (e.g.
-#'     \code{getOption("width")})
+#' \itemize{
+#'   \item \code{unitizer.state}: default state tracking setting (see
+#'     \code{unitizerState})
+#'   \item \code{unitizer.seed}: default seed to use when random seed tracking
+#'     is enabled; this is of type "Wichman-Hill" because it is a lot more
+#'     compact than the default R random seed, and should be adequate for most
+#'     unit testing purposes.
 #' }
+#' @section Options State Options:
 #'
-#' \code{unitizer} never modifies system specific options, and these are
-#' specified in \code{.unitizer.opts.sys} as regular expression patterns.
-#' Base options will be set to what we believe are the factory settings for
-#' them, and those values are stored in \code{.unitizer.opts.base} as a
-#' name-value pairs list (an actual list, not a pairlist).
+#' Additionally, when tracking option state we set options to what you would
+#' find in a freshly loaded vanilla R session, except for systems specific
+#' options which we leave unchanged (e.g. \code{getOption("papersize")}).
+#' If you want to add default option values or options to leave unchanged, you
+#' can use:
 #'
-#' In order to allow for modification of these settings \code{unitizer} does
-#' not use them directly, rather they are applied to the
-#' \code{getOption("unitizer.opts.asis")} and
-#' \code{getOption("unitizer.opts.base")} options, which are then read by
-#' \code{unitizer}.  This allows you to specify different default values
-#' for the base options or to add other options to the list to leave untouched.
-#' If you do modify these settings please take care to ensure that you add your
-#' values to the options rather than completely overwriting them.
-#' DEVNOTES:\itemize{
-#'   \item options, and perhaps unitizer options as a whole, likely to get
-#'     recorded in the future.  Do they need to?  Is it more valuable to make
-#'     sure that a \code{unitizer} evalutes the same across systems, or that
-#'     the \code{unitizer} options affect every unitizer?  Since options are
-#'     already tracked maybe we don't need to record this stuff?
-#'   \item should the option values be done as a delta to the \code{unitizer}
-#'     factory values to make it a little harder to completely mess up the
-#'     factory defaults?
+#' \itemize{
+#'   \item \code{unitizer.opts.init}: named list, where names are options, and
+#'     the associated value is the value to use as the default value for that
+#'     option when a \code{unitizer} is launched with options tracking enabled.
+#'   \item \code{unitizer.opts.asis}: character, containing regular expressions
+#'     to match options to leave unchanged (e.g \code{"^unitizer\\."})
 #' }
-#' @section Un-unloadable Packages And Namespaces:
+#' @section Search Path and Namespace State Options:
 #'
-#' For whatever reason you might want to prevent \code{unitizer} from
-#' detaching specific packages or unloading specific namespaces without
-#' completely disabling the reproducible search path feature.  You can do so by
-#' adding the packages and namespaces in question to
-#' \code{getOption("unitizer.search.path.keep")} and
-#' \code{getOption("unitizer.namespace.keep")}.
+#' We also provide options to limit what elements can be removed from
+#' the search path and/or have their namespaces unloaded when \code{unitizer}
+#' tracks the search path state.  For example, we use this mechanism to prevent
+#' removal of the \code{unitizer} package itself as well as the default
+#' R vanilla session packages.
 #'
-#' If you do add packages and namespaces to the "keep" lists then you need
-#' to ensure you also add all the options associated with those namespaces and
-#' the namespaces they depend on / import \code{getOption("unitizer.opts.asis")}
-#' as well.  Alternatively, turn off options tracking (see
-#' \code{\link{unitizerState}}).
+#' \itemize{
+#'   \item \code{unitizer.namespace.keep}: character, names of namespaces to
+#'     keep loaded (e.g. \code{"utils"}); note that any imported namespaces
+#'     imported by namespaces listed here will also remain loaded
+#'   \item \code{unitizer.search.path.keep}: character, names of objects to
+#'     keep on search path (e.g. \code{"package:utils"}, note the
+#'    \code{"package:"}); associated namespaces will also be kept loaded
+#' }
+#' \bold{IMPORTANT}: There is a dependency between options tracking and search
+#' path / namespace exceptions that stems from most packages setting their
+#' default options when they are loaded.  As a result, if you add any packages
+#' or namespaces to these options and options state tracking is enabled, then
+#' you must also add their options to \code{unitizer.opts.init} or
+#' \code{unitizer.opts.asis} to ensure those options remain loaded or at least
+#' set to reasonable values.  If you do not do this the packages risk having
+#' their options unset.
 #'
-#' Note that some packages cannot be easily loaded and unloaded.  For example
+#' Some packages cannot be easily loaded and unloaded.  For example
 #' \code{data.table} (<= 1.9.5) cannot be unloaded without causing a segfault
 #' (see issue \href{https://github.com/Rdatatable/data.table/issues/990}{#990}).
 #' For this reason \code{data.table} is included in
 #' \code{getOption("unitizer.namespace.keep")} by default.
 #'
+#' @section Sytem Default State Options:
+#'
+#' The following options hold the default system values for the search
+#' path / namespace and options state tracking options:
+#' \itemize{
+#'   \item \code{unitizer.namespace.keep.base}: namespaces that are known to
+#'     cause problems when unloaded (as of this writing includes
+#'     \code{data.table})
+#'   \item \code{unitizer.search.path.keep.base}: vanilla R session packages,
+#'     plus \code{"package:unitizer"} and \code{"tools:rstudio"}, the latter
+#'     because its implementation prevents re-attaching it if it is detached.
+#'   \item \code{unitizer.opts.asis.base}: system specific options that should
+#'     not affect test evaluation (e.g. \code{getOption("editor")}).
+#'   \item \code{unitizer.opts.init.base}: base options (e.g.
+#'     \code{getOption("width")} that will be set to what we believe are the
+#'     factory settings for them.
+#' }
+#' These are kept separate from the user specified ones to limit the possibility
+#' of inadvertent modification. They are exposed as options to allow the user to
+#' unset single values if required, though this is intended to be rare.
+#' \code{unitizer} runs with the union of user options and the system versions
+#' described here.  For \code{unitizer.opts.init}, any options set that are
+#' also present in \code{unitizer.opts.init.base} will overrule the base
+#' version.
+#'
+#' @section Display / Text Capture Options:
+#'
+#' These options control how \code{unitizer} displays data such as diffs, test
+#' results, etc.
+#'
+#' \itemize{
+#'   \item \code{unitizer.test.out.lines}: integer(2L), where first values is
+#'     maximum number of lines of screen output to show for each test, and
+#'     second value is the number of lines to show if there are more lines than
+#'     allowed by the first value
+#'   \item \code{unitizer.test.fail.out.lines}: like
+#'     \code{unitizer.test.out.lines}, but used for limiting the size of the
+#'     diffs comparing new and reference objects
+#'   \item \code{unitizer.test.msg.lines}: like \code{unitizer.test.out.lines},
+#'     but for \code{stderr output}
+#'   \item \code{unitizer.show.output}: TRUE or FALSE, whether to display test
+#'     \code{stdout} and \code{stderr} output as it is evaluated.
+#'   \item \code{unitizer.disable.capt}: TRUE or FALSE, whether to prevent
+#'     \code{unitizer} from capturing \code{stdout} and \code{stderr}
+#'   \item \code{unitizer.max.capture.chars}: integer(1L) maximum number of
+#'     characters to allow capture of per test
+#' }
+#'
+#' @section Misc Options:
+#'
+#' \itemize{
+#'   \item \code{unitizer.history.file} character(1L) location of file to use
+#'     to store history of command entered by user in in interactive
+#'     \code{unitizer} prompt; \code{""} is interpreted as tempfile()
+#'   \item \code{unitizer.prompt.b4.quit.time} integer(1L) \code{unitizers} that
+#'     take more seconds than this to evaluate will post a confirmation prompt
+#'     before quitting; this is to avoid accidentally quitting after running a
+#'     \code{unitizer} with many slow running tests and having to re-run them
+#'     again.
+#' }
+#'
 #' @name unitizer.opts
+#' @rdname unitizer.opts
 #' @seealso \code{\link{unitizerState}}
 
 NULL
-
-#' @rdname unitizer.opts
-#' @export
 
 .unitizer.opts.base <- list(
   add.smooth = TRUE, browserNLdisabled = FALSE, CBoundsCheck = FALSE,
@@ -130,22 +157,14 @@ NULL
   ts.eps = 1e-05, ts.S.compat = FALSE, useFancyQuotes = TRUE, verbose = FALSE,
   warn = 0, warning.length = 1000L, width = 80L
 )
-#' @rdname unitizer.opts
-#' @export
 
-.unitizer.opts.sys <- c(
+.unitizer.opts.asis <- c(
   "^browser$", "^device$", "^dvipscmd$", "^mailer$", "^pager$",  "^pdfviewer$",
   "^pkgType$", "^printcmd$", "^HTTPUserAgent$",  "^texi2dvi$", "^unzip$",
   "^editor$", "^papersize$", "^bitmapType$",  "^menu\\.graphics$",
   "^unitizer\\."
 )
-#' @rdname unitizer.opts
-#' @export
-
 .unitizer.namespace.keep <- c("data.table")
-
-#' @rdname unitizer.opts
-#' @export
 
 .unitizer.base.packages <- c(
   "package:stats", "package:graphics", "package:grDevices", "package:utils",
@@ -155,17 +174,22 @@ NULL
 
 #' Set Options to Initial Zero State
 #'
+#' @rdname options_extra
 #' @keywords internal
 
 options_zero <- function(
-  base=getOption("unitizer.opts.base"),
-  as.is=getOption("unitizer.opts.asis")
+  base=merge_lists(
+    getOption("unitizer.opts.init.base"), getOption("unitizer.opts.init")
+  ),
+  as.is=union(
+    getOption("unitizer.opts.asis.base"), getOption("unitizer.opts.asis")
+  )
 ) {
   if(
     !is.list(base) || !is.character(nms <- attr(base, "names")) ||
     length(nms) != length(base) || any(is.na(nms))
   ) {
-    stop("Option `unitizer.opts.base` must be a named list")
+    stop("Option `unitizer.opts.init` must be a named list")
   }
   if(!is.character(as.is) || any(is.na(as.is)))
     stop("Option `unitizer.opts.asis` must be character and not contain NA")
@@ -188,6 +212,7 @@ options_zero <- function(
 #'
 #' This makes sure to unset options not present in target.
 #'
+#' @rdname options_extra
 #' @keywords internal
 
 options_update <- function(tar.opts) {
@@ -198,8 +223,6 @@ options_update <- function(tar.opts) {
   options(to.rem.vec)
   options(tar.opts)
 }
-#' @rdname unitizer.opts
-#' @export
 
 .unitizer.opts.default <- list(
   unitizer.par.env=NULL,                   # NULL means use the special unitizer environment
@@ -211,21 +234,27 @@ options_update <- function(tar.opts) {
   unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
   unitizer.history.file="",                # "" is interpreted as tempfile()
-  unitizer.search.path.keep=c(             # what objects to keep on search path when initializing unitizer; if you modify this make sure you ajdust `unitizer.opts.asis` accordingly as well (see reproducible state vignette)
+  unitizer.search.path.keep=character(),   # User specified objects to keep on search path; if you modify this make sure you ajdust `unitizer.opts.asis` accordingly as well (see reproducible state vignette)
+  unitizer.search.path.keep.base=c(        # Default objects to keep on search path when initializing unitizer;
     .unitizer.base.packages,
     "tools:rstudio", "package:unitizer"
   ),
-  unitizer.namespace.keep=c(               # namespaces not to auto-unload, no matter what
+  unitizer.namespace.keep = character(),   # names of namespaces not auto-unload
+  unitizer.namespace.keep.base=c(          # system namespaces not to auto-unload, no matter what
     .unitizer.namespace.keep
   ),
-  unitizer.state="pristine",               # default reproducible state mode
-  unitizer.opts.base=.unitizer.opts.base,  # what to set options to when running in reproducible state
-  unitizer.opts.asis=.unitizer.opts.sys,   # system dependent and other options that should not be changed; these are matched as regular expressions
+  unitizer.state="safe",                   # default reproducible state mode
+  unitizer.opts.init=list(),               # User default option values when running with options state tracking
+  unitizer.opts.init.base=.unitizer.opts.base,  # Default option values when running with options state tracking
+  unitizer.opts.asis=character(0L),             # User specified options that should not be changed; these are matched as regular expressions
+  unitizer.opts.asis.base=.unitizer.opts.asis,  # Default options not to change; these are primarily system dependent and other options; these are matched as regular expressions
   unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
       list(seed=42L, kind="Wichmann-Hill")
 )
 
 #' Checks that options meet expectations before anything gets run
+#' @rdname options_extra
+#' @keywords internal
 
 validate_options <- function(opts.to.validate) {
   stopifnot(
@@ -291,17 +320,31 @@ validate_options <- function(opts.to.validate) {
       )
         stop("Option `unitizer.search.path.keep` must be character and not NA")
       if(
+        !is.character(unitizer.search.path.keep.base) ||
+        any(is.na(unitizer.search.path.keep.base))
+      )
+        stop("Option `unitizer.search.path.keep.base` must be character and not NA")
+      if(
         !is.character(unitizer.namespace.keep) ||
         any(is.na(unitizer.namespace.keep))
       )
         stop("Option `unitizer.namespace.keep` must be character and not NA")
+      if(
+        !is.character(unitizer.namespace.keep.base) ||
+        any(is.na(unitizer.namespace.keep.base))
+      )
+        stop("Option `unitizer.namespace.keep.base` must be character and not NA")
 
       if(!is(is.valid_state(unitizer.state), "unitizerState"))
         stop("Option `unitizer.state` is invalid; see prior errors")
-      if(!is.list(unitizer.opts.base))
-        stop("Option `unitizer.opts.base` must be a list")
+      if(!is.list(unitizer.opts.init))
+        stop("Option `unitizer.opts.init` must be a list")
+      if(!is.list(unitizer.opts.init.base))
+        stop("Option `unitizer.opts.init.base` must be a list")
       if(!is.character(unitizer.opts.asis) || any(is.na(unitizer.opts.asis)))
         stop("Option `unitizer.opts.asis` must be character and not NA")
+      if(!is.character(unitizer.opts.asis.base) || any(is.na(unitizer.opts.asis.base)))
+        stop("Option `unitizer.opts.asis.base` must be character and not NA")
       if(!is.list(unitizer.seed))  # note, more specific validation done in is.valid_rep_state
         stop("Option `unitizer.seed` must be a list")
   } )

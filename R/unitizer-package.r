@@ -7,7 +7,7 @@
 #'
 #' @import methods
 #' @import stats
-#' @name unitizer-package
+#' @name `unitizer-package`
 #' @docType package
 
 NULL
