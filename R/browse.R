@@ -294,6 +294,7 @@ setMethod(
             )
             if(is(user.input, "unitizerBrowse")) {
               y <- user.input
+              y@review <- y@review + 1L
               loop.status <- "n"
               break
             } else if (isTRUE(grepl("^RR?$", user.input))) {      # Re-eval
