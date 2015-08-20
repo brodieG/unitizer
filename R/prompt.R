@@ -175,7 +175,6 @@ navigate_prompt <- function(
 #' @return either a \code{`unitizerBrowse`}, or "Q" if the user chose to quit
 
 review_prompt <- function(x, nav.env) {
-
   if(!is(x, "unitizerBrowse") || !is.environment(nav.env))
     stop(
       "Logic Error: unexpected inputs to internal function; contact maintainer."
@@ -237,7 +236,7 @@ review_prompt <- function(x, nav.env) {
       identical(x@mode, "unitize") &&
       identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
     )
-  x@review <- x@inspect.all
+  x@review <- if(x@inspect.all) -1L else 1L
 
   if(x@inspect.all) {
     word_msg(

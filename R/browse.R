@@ -121,13 +121,19 @@ setMethod(
               if(!done(y)) {
                 if(first.time && identical(y@mode, "review")) { # for passed tests, start by showing the list of tests
                   first.time <- FALSE
-                  y@review <- TRUE
+                  y@review <- 0L
                 } else {
-                  review.prev <- y@review
+                  # we use y@review as delayed counter so that if user choses
+                  # to review a normally unreviewed test, we can force the
+                  # browse menu _after_ the first review by setting y@review
+                  # to -1L
+
                   y <- reviewNext(y, x)
-                  if(!review.prev && y@review) next
-                }
-                if(y@review) {
+                  if(y@review) {
+                     y@review <- y@review + 1L
+                    next
+                } }
+                if(identical(y@review, 0L)) {
                   y.tmp <- review_prompt(y, new.env(parent=x@base.env))
                   if(identical(y.tmp, "Q")) {
                     invokeRestart("earlyExit")
@@ -138,11 +144,12 @@ setMethod(
                     )
                   } else y <- y.tmp
                 }
+                # Automatically increment review counter since `review_prompt`
+                # is called directly instead of within `reviewNext`
+
+                y@review <- y@review + 1L
                 next
-              } else {
-                # wtf? intended to be NULL??
-              }
-            },
+            } },
             # a bit lazy to use a restart here, but this simplifies the logic
             # of being able to effectively have quit pathways from functions
             # called by this function, as well as functions called by functions
@@ -484,9 +491,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
       x@global$reset(new.glob.indices)
 
     # Show test to screen, but only if the entire section is not ignored, and
-    # not passed tests and requesting that those not be shown
+    # not passed tests, and requesting that those not be shown, and not elected
+    # to review a test that isn't usually reviewed (x@review)
 
-    if(!ignore.sub.sec) {
+    if(!ignore.sub.sec || x@review == 0L) {
       if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
         message(
           "You are re-reviewing a test; previous selection was: \"",
@@ -508,7 +516,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
       if(
         !is.null(item.new) && !is.null(item.ref) &&
-        x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg
+        x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg ||
+        x@review == 0L
       ) {
         if(length(item.main@data@message) && nchar(item.main@data@message))
           screen_out(
@@ -518,7 +527,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
           )
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
-      if(curr.sub.sec.obj@show.out && nchar(item.main@data@output))
+      if(
+        (curr.sub.sec.obj@show.out || x@review == 0L) &&
+        nchar(item.main@data@output)
+      )
         screen_out(
           item.main@data@output,
           max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]

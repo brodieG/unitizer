@@ -252,7 +252,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     last.reviewed="integer",    # used so that `reviewNext` knows what headers to display
     hist.con="ANY",             # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
     mode="character",
-    review="logical",           # whether to force-show review menu or not
+    review="integer",           # counter used to figure out when to pop up browse/review menu
     inspect.all="logical",      # whether to force inspection of all elements, whether ignored/passed or not
     navigating="logical",       # whether user has triggered at least one navigation command
     human="logical",            # whether user has had any interaction at all
@@ -268,7 +268,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     last.reviewed=0L,
     hist.con=NULL,
     mode="unitize",
-    review=FALSE,
+    review=1L,
     inspect.all=FALSE,
     navigating=FALSE,
     human=FALSE,
@@ -281,7 +281,6 @@ setClass("unitizerBrowse", contains="unitizerList",
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
       return("Slot `@mode` must be character(1L) in c(\"unitize\", \"review\")")
     }
-    if(!is.TF(object@review)) return("Slot `@review` must be TRUE or FALSE")
     if(!is.TF(object@inspect.all))
       return("Slot `@inspect.all` must be TRUE or FALSE")
     if(!is.TF(object@navigating))
