@@ -176,8 +176,11 @@ setMethod("show", "unitizerItem",
     cat(" Test ~~~\n")
     cat(object@call.dep, sep="\n")
     cat("* value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
-    if(out.len <- length(object@data@output)) cat("* output:", out.len, "lines\n")
-    if(err.len <- length(object@data@message)) cat("* message:", err.len, "lines\n")
+
+    if(out.len <- sum(nchar(object@data@output)))
+      cat("* output:", out.len, "chars\n")
+    if(err.len <- sum(nchar(object@data@message)))
+      cat("* message:", err.len, "chars\n")
     if(cond.len <- length(object@data@conditions)) {
       cond.types <- vapply(
         as.list(object@data@conditions),
