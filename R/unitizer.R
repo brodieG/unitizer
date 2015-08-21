@@ -12,8 +12,38 @@ NULL
 setClass(
   "unitizerCaptCons",
   slots=
-    c(err.f="ANY", err.c="ANY", out.f="ANY", out.c="ANY")  # setOldClass issues
+    c(err.f="ANY", err.c="ANY", out.f="ANY", out.c="ANY"),  # setOldClass issues
+  validity=function(object) {
+    # Allow NULLs since that is how the con object is stored
+
+    if(!is.null(object@err.f) && !is.chr1(object@err.f))
+      return("Slot `err.f` must be character(1L)")
+    if(
+      !is.null(object@err.f) &&
+      (!inherits(object@err.c, "file") || !isOpen(object@err.c))
+    )
+       return("Slot `err.c` must be an open file connection")
+    if(!is.null(object@out.f) && !is.chr1(object@out.f))
+      return("Slot `out.f` must be character(1L)")
+    if(
+      !is.null(object@out.f) &&
+      (!inherits(object@out.c, "file") || !isOpen(object@out.c))
+    )
+       return("Slot `out.c` must be an open file connection")
+    TRUE
+  }
 )
+setMethod("initialize", "unitizerCaptCons", function(.Object, ...) {
+  dots <- list(...)
+  if(length(dots)) callNextMethod() else {
+    .Object@err.f <- tempfile()
+    .Object@err.c <- file(.Object@err.f, "w+b")
+    .Object@out.f <- tempfile()
+    .Object@out.c <- file(.Object@out.f, "w+b")
+    .Object
+  }
+} )
+
 #' Contains All The Data for Our Tests!
 #'
 #' Generally is populated through the \code{+} methods, with the exception of

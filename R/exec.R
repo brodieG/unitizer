@@ -123,13 +123,20 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
 }
 #' @rdname exec
 
-eval_with_capture <- function(x, test.env, global, capt.cons) {
+eval_with_capture <- function(
+  x, test.env, global=unitizerGlobal$new(), capt.cons=NULL
+) {
   warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
   err.opt <- getOption("error")
 
   # Setup text capture; a bit messy due to funny way we have to pull in
   # unitize specific options
 
+  came.with.capts <- TRUE
+  if(is.null(capt.cons)) {
+    capt.cons <- new("unitizerCaptCons")
+    came.with.capts <- FALSE
+  }
   set_args <- list()
   set_args[["capt.disabled"]] <-
     global$unitizer.opts[["unitizer.disable.capt"]]
@@ -142,19 +149,20 @@ eval_with_capture <- function(x, test.env, global, capt.cons) {
   # Manage unexpected outcomes
 
   on.exit({
-    options(warn=warn.opt)
-    options(error=err.opt)
-    try(get_capture(capt.cons, display=TRUE))
-    release_sinks()
-    message(
-      "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
-      paste0(deparse(x), collapse=""),
-      "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
-      "invoking a restart defined outside `unitize`, evaluating an expression that ",
-      "calls `quit()`/`q()`, or quitting from a `browser()`/`debug()`/`trace()`. ",
-      "If none of these apply yet you are seeing this message please contact ",
-      "package maintainer."
-    )
+      options(warn=warn.opt)
+      options(error=err.opt)
+      try(get_capture(capt.cons, display=TRUE))
+      release_sinks()
+      if(!came.with.capts) close_and_clear(capt.cons)
+      message(
+        "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
+        paste0(deparse(x), collapse=""),
+        "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
+        "invoking a restart defined outside `unitize`, evaluating an expression that ",
+        "calls `quit()`/`q()`, or quitting from a `browser()`/`debug()`/`trace()`. ",
+        "If none of these apply yet you are seeing this message please contact ",
+        "package maintainer."
+      )
   } )
   # Evaluate expression
 
@@ -177,6 +185,14 @@ eval_with_capture <- function(x, test.env, global, capt.cons) {
     global$unitizer.opts[["unitizer.max.capture.chars"]]
   capt <- do.call(get_capture, get_args)
   res[c("output", "message")] <- capt[c("output", "message")]
+  if(
+    nchar(res$message) && is.list(res$trace) && identical(length(res$trace), 1L)
+  ) {
+    res$message[[1L]] <- sub(
+      "^Error in (?:withVisible\\(.*?\\)|eval\\(expr, envir, enclos\\)) :",
+      "Error:", res$message[[1L]]
+    )
+  }
   res
 }
 #' @rdname exec
@@ -298,3 +314,10 @@ get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
   } }
   stop("Logic Error: couldn't extract trace; contact maintainer.")
 }
+#' @rdname exec
+
+clean_message <- function(res) {
+  stopifnot(is.list(res))
+
+}
+

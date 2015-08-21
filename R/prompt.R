@@ -98,15 +98,12 @@ unitizer_prompt <- function(
     } else {
       if(!identical(res, FALSE)) return(res)
     }
-    warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
-    on.exit(options(warn=warn.opt))
-    if(warn.opt != 1L) options(warn=1L)
-    trace.res <- NULL
-
     # Note `val` here is the expression the user inputted, not the result of the
     # evaluation.  The latter will be in res$value
 
-    res <- eval_user_exp(val, browse.env)
+    res <- eval_with_capture(val, browse.env)
+    if(nchar(res$message)) cat(res$message, file=stderr())
+    if(nchar(res$output)) cat(res$output, file=stdout())
 
     # store / record history
 
