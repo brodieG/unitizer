@@ -221,8 +221,8 @@ setMethod(
                 "browse tests, `U` to go to first unreviewed test.\n\n", sep=""
           ) } }
           valid.opts <- c(
-            Y="[Y]es", N=if(update) "[N]o", P="[P]revious", B="[B]rowse",
-            R="[R]e-evaluate", RR=""
+            Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
+            R="[R]erun", RR=""
           )
           if(!length(x@changes) && force.update)
             word_msg(
@@ -269,13 +269,13 @@ setMethod(
             }
             if(y@re.eval) {
               if(identical(y@re.eval, 1L)) {
-                actions <- c(actions, "re-evaluate unitizer")
+                actions <- c(actions, "re-run unitizer")
               } else if(identical(y@re.eval, 2L)) {
-                actions <- c(actions, "re-evaluate all loaded unitizers")
-              } else stop("Logic Error: unexpected re-eval value")
+                actions <- c(actions, "re-run all loaded unitizers")
+              } else stop("Logic Error: unexpected re-run value")
               nav.hlp <- paste0(
                 nav.hlp,
-                "\n\nAdditionally, pressing Y will cause re-evaluation of ",
+                "\n\nAdditionally, pressing Y will cause re-running of ",
                 "unitizers as per your input"
               )
             }
@@ -399,9 +399,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # Display Section Headers as Necessary
 
     valid.opts <- c(
-      Y="[Y]es", N="[N]o", P="[P]revious", B="[B]rowse", YY="", YYY="", YYYY="",
+      Y="[Y]es", N="[N]o", P="[P]rev", B="[B]rowse", YY="", YYY="", YYYY="",
       NN="", NNN="", NNNNN="",
-      if(identical(x@mode, "unitize")) c(R="[R]e-eval", RR="")
+      if(identical(x@mode, "unitize")) c(R="[R]erun", RR="")
     )
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
@@ -655,7 +655,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ),
       if(identical(x@mode, "unitize"))
         paste0(
-          "`R` to re-evalute the unitizer or `RR` to re-evaluate all loaded ",
+          "`R` to re-run the unitizer or `RR` to re-run all loaded ",
           "unitizers; used typically after you re-`install` the package you ",
           "are testing via the unitizer prompt."
         )
@@ -766,7 +766,7 @@ setMethod("toggleReeval", "unitizerBrowse",
     re.mode <- switch(
       nchar(y), "this unitizer", "all loaded unitizers"
     )
-    word_msg("Toggling re-eval mode", re.status, "for", re.mode)
+    word_msg("Toggling re-run mode", re.status, "for", re.mode)
     x@re.eval <- if(x@re.eval) 0L else nchar(y)
     x
 })
