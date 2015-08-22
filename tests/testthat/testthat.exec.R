@@ -169,19 +169,19 @@ local( {
       "Error: \n  this is a long error message that is supposed to cause R to add a new line after the error: part\n"
     )
     expect_equal(d$message, "Warning: short warning message\n")
-    expect_equal(e$message, "Warning: \n  short warning message .* with regex\n")
+    expect_equal(e$message, "Warning: short warning message .* with regex\n")
     expect_equal(
       f$message,
       "Warning:\n  this is a long error message that is supposed to cause R to add a new line after the error: part\n"
     )
     expect_equal(g$message, "Error: short stop message\n")
-    expect_equal(h$message, "Error: \n  short stop .* with regex message\n")
+    expect_equal(h$message, "Error: short stop .* with regex message\n")
     expect_equal(
       i$message,
       "Error: \n  this is a long error message that is supposed to cause R to add a new line after the error: part\n"
     )
-    expect_equal(j$message, "Warning: \n  short warning message\n")
-    expect_equal(k$message, "Warning: \n  short warning message .* with regex\n")
+    expect_equal(j$message, "Warning: short warning message\n")
+    expect_equal(k$message, "Warning: short warning message .* with regex\n")
     expect_equal(
       l$message,
       "Warning:\n  this is a long error message that is supposed to cause R to add a new line after the error: part\n"

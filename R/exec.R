@@ -321,7 +321,7 @@ clean_message <- function(res) {
   reg.base <- paste0(
     "((?:Warning|Error) in ",
     "(?:withVisible\\(.*?\\)?|eval\\(expr, envir, enclos\\)) :)",
-    "((?:\\n|\\s)*%s).*"
+    "((?:\\n|\\s)*%s)\\n.*"
   )
   if(nchar(res$message)) {
     pats <- lapply(
@@ -368,7 +368,7 @@ clean_message <- function(res) {
 
         # Undo line break if shorter call doesn't warrant it anymore
 
-        obj2.short <- sub("^(?s)\\s*(.*?\n)", " \\1", obj2, perl=TRUE)
+        obj2.short <- sub("^(?s)\\s*(.*)$", " \\1", obj2, perl=TRUE)
         msg <- if(nchar(paste0(obj, obj2.short)) <= width)
           paste0(pre, obj, obj2.short, post) else
           paste0(pre, obj, obj2, post)
