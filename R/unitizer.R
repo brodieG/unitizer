@@ -43,6 +43,7 @@ setMethod("initialize", "unitizerCaptCons", function(.Object, ...) {
     .Object
   }
 } )
+setClassUnion("unitizerCaptConsOrNULL", c("unitizerCaptCons", "NULL"))
 
 #' Contains All The Data for Our Tests!
 #'
@@ -115,7 +116,7 @@ setClass(
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
     updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
     global="unitizerGlobalOrNULL",# Global object used to track state
-    cons="unitizerCaptCons",      # Track connections for text/msg capture
+    cons="unitizerCaptConsOrNULL",# Track connections for text/msg capture
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
