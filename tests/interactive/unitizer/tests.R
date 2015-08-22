@@ -1,5 +1,6 @@
 1 + 1
 print("heya")
+{1; 2; 3}
 invisible("yowza")
 w <- "a" / 3
 w <- log(-1)

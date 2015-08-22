@@ -107,10 +107,8 @@ unitizer_prompt <- function(
 
     # store / record history
 
-    if(!is.null(hist.con) && length(val) == 1L) {
-      cat(deparse(val[[1L]]), file=hist.con, sep="\n")
-      loadhistory(showConnections()[as.character(hist.con), "description"])
-    }
+    if(!is.null(hist.con) && length(val) == 1L)
+      history_write(hist.con, deparse(val[[1L]]))
     if(res$aborted || !length(val)) word_cat(text, opts.txt)  # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }

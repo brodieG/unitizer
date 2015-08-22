@@ -510,6 +510,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(inherits(parsed.call, "try-error"))
         stop("Logic Error: malformed call stored; contact maintainer.")
       cat(deparse_prompt(parsed.call), sep="\n")
+      history_write(x@hist.con, item.main@call.dep)
 
       # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant; options need to be
