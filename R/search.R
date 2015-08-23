@@ -483,7 +483,7 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
 }
 #' @keywords internal
 #' @rdname reattach
-move_on_path <- function(new.pos, old.pos, global) {
+move_on_path <- function(new.pos, old.pos, global=unitizerGlobal$new()) {
   stopifnot(
     is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos),
     is.integer(old.pos), length(old.pos) == 1L, !is.na(old.pos),

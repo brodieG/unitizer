@@ -223,7 +223,7 @@ test_that("Search Path Trim / Restore", {
   library(unitizerdummypkg2)
 
   keep.more <- c("package:testthat", getOption("unitizer.search.path.keep"))
-  keep.all <- c(keep.more, .unitizer.base.packages)
+  keep.all <- c(keep.more, unitizer:::.unitizer.base.packages)
   unitizer:::search_path_trim(keep.more)
   untz.glob$state()
 
