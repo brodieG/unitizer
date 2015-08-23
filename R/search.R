@@ -409,8 +409,6 @@ unload_namespaces <- function(
 
   for(i in names(dls.to.ul)) library.dynam.unload(i, dls.to.ul[i])
 
-
-
   if(length(lns)) {
     warning(
       "Unable to unload the following namespaces:\n", deparse(names(lns)),
@@ -427,7 +425,7 @@ unload_namespaces <- function(
     ) && global$status@options
   ) {
     global$ns.opt.conflict@conflict <- TRUE
-    global$ns.opt.conflict@namespaces <- c(unload[unload.conf], lns)
+    global$ns.opt.conflict@namespaces <- c(unload[unload.conf], names(lns))
     global$status@options <- 0L
     global$disabled@options <- TRUE
     global$state()  # mark state if we're not able to completely clean it up

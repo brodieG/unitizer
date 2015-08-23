@@ -256,6 +256,17 @@ test_that("Loaded Namespaces don't cause issues", {
   expect_false("unitizerdummypkg2" %in% loadedNamespaces())
   unloadNamespace("unitizerdummypkg1")
 })
+test_that("Prevent Namespace Unload Works", {
+  old.opt <- options(unitizer.namespace.keep="unitizerdummypkg1")
+  loadNamespace("unitizerdummypkg1")
+  glb <- unitizer:::unitizerGlobal$new()
+  glb$status@options <- 2L
+  unitizer:::unload_namespaces("unitizerdummypkg1", global=glb)
+  expect_true(glb$ns.opt.conflict@conflict)
+  expect_equal(glb$ns.opt.conflict@namespaces, "unitizerdummypkg1")
+  options(old.opt)
+  unloadNamespace("unitizerdummypkg1")
+})
 
 try(detach("package:unitizer", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
