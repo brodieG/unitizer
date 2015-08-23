@@ -135,7 +135,7 @@ upgrade_internal <- function(object) {
     )
   }
   if(ver < "1.0.4") {
-    object <- addSlot(object, "cons", new("unitizerCaptCons"))
+    object <- addSlot(object, "cons", NULL)
   }
   # - Keep at End---------------------------------------------------------------
 
