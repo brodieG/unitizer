@@ -192,8 +192,14 @@ unitize_core <- function(
     {
       reset_and_unshim(global)
       word_msg(
-        "Unexpectedly exited before storing unitizer; tests were not saved or",
-        "changed."
+        "Unexpectedly exited before storing unitizer; ",
+        if(length(unitizers) < 2L)
+          "tests were not saved or changed." else c(
+          "if you were reviewing a unitizer changes to that unitizer were not ",
+          "saved.  Note that any unitizers you *completed* review of should ",
+          "have been saved."
+        ),
+        sep=""
       )
     },
     add=TRUE
