@@ -73,10 +73,11 @@ load_unitizers <- function(
       return(
         "`get_unitizer` returned something other than a `unitizer` or FALSE"
   ) } )
-  valid <- vapply(unitizers, unitizer_valid, character(1L))
   null.version <- package_version("0.0.0")
   curr.version <- packageVersion("unitizer")
-
+  valid <- vapply(
+    unitizers, unitizer_valid, character(1L), curr.version=curr.version
+  )
   # unitizers without a `version` slot or slot in incorrect form not eligible
   # for upgrade
 
@@ -145,7 +146,7 @@ load_unitizers <- function(
         ) warning(
           "Upgraded test file does not match original test file ",
           "('", basename(upgraded[[i]]@test.file.loc), "' vs '",
-          basename(test.files[toup.idx][[i]]), "').", .immediate=TRUE
+          basename(test.files[toup.idx][[i]]), "').", immediate.=TRUE
         )
         upgraded[[i]]@id <- norm_store_id(store.ids[toup.idx][[i]])
         upgraded[[i]]@test.file.loc <- norm_file(test.files[toup.idx][[i]])
@@ -334,19 +335,35 @@ best_file_name <- function(store.id, test.file) {
 #'
 #' @keywords internal
 
-unitizer_valid <- function(x) {
+unitizer_valid <- function(x, curr.version=packageVersion("unitizer")) {
   if(!is(x, "unitizer")) {
     if(!is.chr1plain(x) || nchar(x) < 1L)
       return("unknown unitizer load failure")
     return(x)
   }
-  attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
-  if(inherits(attempt, "try-error")) {
-    msg <- conditionMessage(attr(attempt, "condition"))
-    paste0(
-      c("unitizer object is invalid", if(nchar(msg)) c(": ", msg)),
-      collapse=""
-    )
-  } else ""
-}
+  null.version <- package_version("0.0.0")
+  version <- try(x@version, silent=TRUE)
 
+  if(inherits(version, "try-error")) {
+    msg <- conditionMessage(attr(version, "condition"))
+    paste0(
+      "could not retrieve version from `unitizer`: ",
+      if(nchar(msg)) sprintf(": %s", msg)
+    )
+  } else {
+    # Make sure not using any `unitizer`s with version older than what we're at
+
+    if(!identical(version, null.version) && curr.version < version) {
+      paste0(
+        "Cannot load a unitizer store of version greater (", version,
+        ") than of installed unitizer package (", curr.version, ")"
+      )
+    } else {
+      attempt <- try(validObject(x, complete=TRUE), silent=TRUE)
+      if(inherits(attempt, "try-error")) {
+        msg <- conditionMessage(attr(attempt, "condition"))
+        paste0(
+          "unitizer object is invalid", if(nchar(msg)) sprintf(": %s", msg)
+        )
+      } else ""
+} } }
