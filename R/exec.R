@@ -100,7 +100,8 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       conditions=new("conditionList", .items=res$conditions),
       output=res$output, message=res$message, aborted=res$aborted,
       env=test.env, comment=x.comments, trace=res$trace,
-      glob.indices=global$state(), ignore=identical(res$visible, FALSE)
+      glob.indices=global$state(),
+      ignore=identical(res$visible, FALSE) && !length(res$conditions)
     )
 } )
 #' @rdname exec
@@ -123,13 +124,20 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
 }
 #' @rdname exec
 
-eval_with_capture <- function(x, test.env, global, capt.cons) {
+eval_with_capture <- function(
+  x, test.env=new.env(), global=unitizerGlobal$new(), capt.cons=NULL
+) {
   warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
   err.opt <- getOption("error")
 
   # Setup text capture; a bit messy due to funny way we have to pull in
   # unitize specific options
 
+  came.with.capts <- TRUE
+  if(is.null(capt.cons)) {
+    capt.cons <- new("unitizerCaptCons")
+    came.with.capts <- FALSE
+  }
   set_args <- list()
   set_args[["capt.disabled"]] <-
     global$unitizer.opts[["unitizer.disable.capt"]]
@@ -142,19 +150,20 @@ eval_with_capture <- function(x, test.env, global, capt.cons) {
   # Manage unexpected outcomes
 
   on.exit({
-    options(warn=warn.opt)
-    options(error=err.opt)
-    try(get_capture(capt.cons, display=TRUE))
-    release_sinks()
-    message(
-      "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
-      paste0(deparse(x), collapse=""),
-      "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
-      "invoking a restart defined outside `unitize`, evaluating an expression that ",
-      "calls `quit()`/`q()`, or quitting from a `browser()`/`debug()`/`trace()`. ",
-      "If none of these apply yet you are seeing this message please contact ",
-      "package maintainer."
-    )
+      options(warn=warn.opt)
+      options(error=err.opt)
+      try(get_capture(capt.cons, display=TRUE))
+      release_sinks()
+      if(!came.with.capts) close_and_clear(capt.cons)
+      message(
+        "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
+        paste0(deparse(x), collapse=""),
+        "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
+        "invoking a restart defined outside `unitize`, evaluating an expression that ",
+        "calls `quit()`/`q()`, or quitting from a `browser()`/`debug()`/`trace()`. ",
+        "If none of these apply yet you are seeing this message please contact ",
+        "package maintainer."
+      )
   } )
   # Evaluate expression
 
@@ -176,8 +185,9 @@ eval_with_capture <- function(x, test.env, global, capt.cons) {
   get_args[["chrs.max"]] <-
     global$unitizer.opts[["unitizer.max.capture.chars"]]
   capt <- do.call(get_capture, get_args)
+  if(!came.with.capts) close_and_clear(capt.cons)
   res[c("output", "message")] <- capt[c("output", "message")]
-  res
+  clean_message(res)
 }
 #' @rdname exec
 
@@ -298,3 +308,74 @@ get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
   } }
   stop("Logic Error: couldn't extract trace; contact maintainer.")
 }
+#' @rdname exec
+
+clean_message <- function(res) {
+  # Deal with top level warnings and errors that show up weird in the message
+  # output because they are not truly top level within unitizer
+
+  stopifnot(
+    is.list(res), is.character(res$message), identical(length(res$message), 1L)
+  )
+  # this all assumes options(warn=1)
+
+  reg.base <- paste0(
+    "((?:Warning|Error) in ",
+    "(?:withVisible\\(.*?\\)?|eval\\(expr, envir, enclos\\)) :)",
+    "((?:\\n|\\s)*%s)\\n.*"
+  )
+  if(nchar(res$message)) {
+    pats <- lapply(
+      res$conditions,
+      function(cond) {
+        token <- NULL
+        if(
+          is.null(conditionCall(cond)) &&
+          (inherits(cond, "simpleWarning") || inherits(cond, "simpleError"))
+        ) {
+          sprintf(
+            reg.base,
+            gsub(
+              "([-\\\\^$*+?.()|[\\]{}])", "\\\\\\1", conditionMessage(cond),
+              perl=TRUE
+    ) ) } } )
+    if(!all(vapply(pats, is.null, logical(1L)))) {
+      # Our pattern has two matching elements per match, and these are going to
+      # show up sequentially in our match, so we turn the capture data into
+      # a matrix where col 1 is the first match, and col 2 the second match
+
+      pats.fin <- do.call(paste0, c(list("(?s)"), pats))
+      m <- regexpr(pats.fin, res$message, perl=T)
+      m.st <- t(matrix(attr(m, "capture.start"), nrow=2))
+      m.len <- t(matrix(attr(m, "capture.length"), nrow=2))
+
+      # Loop backwards through string so that modifications don't affect character
+      # locations for subsequent replacements
+
+      msg <- res$message
+      width <- getOption("width")
+
+      for(i in rev(seq.int(nrow(m.st)))) {
+        if(m.st[i, 1L] < 1L || m.len[i, 1L] < 1L) next
+        pre <- if(m.st[i, 1L] == 1L) "" else substr(msg, 1L, m.st[i, 1L] - 1L)
+        obj <- sub(
+          "^(\\w+).*", "\\1:",  # replace obj with first word
+          substr(msg, m.st[i, 1L], m.st[i, 1L] + m.len[i, 1L] - 1),
+          perl=TRUE
+        )
+        obj2 <- substr(msg, m.st[i, 2L], m.st[i, 2L] + m.len[i, 2L] - 1)
+        post <- if(m.st[i, 2L] + m.len[i, 2L] > nchar(msg)) "" else
+          substr(msg, m.st[i, 2L] + m.len[i, 2L], nchar(msg))
+
+        # Undo line break if shorter call doesn't warrant it anymore
+
+        obj2.short <- sub("^(?s)\\s*(.*)$", " \\1", obj2, perl=TRUE)
+        msg <- if(nchar(paste0(obj, obj2.short)) <= width)
+          paste0(pre, obj, obj2.short, post) else
+          paste0(pre, obj, obj2, post)
+      }
+      res$message <- msg
+  } }
+  res
+}
+

@@ -152,7 +152,13 @@ history_release <- function(hist.obj) {
   if(inherits(hist.try, "try-error"))
     warning(conditionMessage(attr(hist.try, "condition")))
 }
-
+history_write <- function(hist.con, data) {
+  stopifnot(is.open_con(hist.con), is.character(data))
+  if(is.open_con(hist.con)) {
+    cat(data, file=hist.con, sep="\n")
+    loadhistory(showConnections()[as.character(hist.con), "description"])
+  }
+}
 #' Simplify a Path As Much as Possible to Working Directory
 #'
 #' @param wd NULL or character(1L) resolving to a directory, if NULL will be

@@ -192,8 +192,14 @@ unitize_core <- function(
     {
       reset_and_unshim(global)
       word_msg(
-        "Unexpectedly exited before storing unitizer; tests were not saved or",
-        "changed."
+        "Unexpectedly exited before storing unitizer; ",
+        if(length(test.files) < 2L)
+          "tests were not saved or changed." else c(
+          "if you were reviewing a unitizer changes to that unitizer were not ",
+          "saved.  Note that any unitizers you *completed* review of should ",
+          "have been saved."
+        ),
+        sep=""
       )
     },
     add=TRUE
@@ -545,14 +551,14 @@ unitize_browse <- function(
           if(any(to.review))
             ", 'A' to review all that require review",
           if(any(summaries@updated))
-            ", 'R' to re-evaluate all updated"
+            ", 'R' to re-run all updated"
         )
         help.opts <- c(
           paste0(deparse(seq.int(test.len)), ": unitizer number to review"),
           if(any(to.review)) "A: Review all `unitzers` that require review (*)",
           "AA: Review all tests",
-          if(any(summaries@updated)) "R: Re-evaluate all updated unitizers ($)",
-          "RR: Re-evaluate all tests",
+          if(any(summaries@updated)) "R: Re-run all updated unitizers ($)",
+          "RR: Re-run all tests",
           "Q: quit"
         )
         help <- c(
@@ -578,7 +584,7 @@ unitize_browse <- function(
               "Pick a unitizer or an option",
               valid.opts=c(
                 A=if(any(to.review)) "[A]ll",
-                R=if(any(summaries@updated)) "[R]e-eval",
+                R=if(any(summaries@updated)) "[R]erun",
                 AA="", RR=""
               ),
               exit.condition=exit_fun, valid.vals=seq.int(test.len),

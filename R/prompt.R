@@ -98,22 +98,17 @@ unitizer_prompt <- function(
     } else {
       if(!identical(res, FALSE)) return(res)
     }
-    warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
-    on.exit(options(warn=warn.opt))
-    if(warn.opt != 1L) options(warn=1L)
-    trace.res <- NULL
-
     # Note `val` here is the expression the user inputted, not the result of the
     # evaluation.  The latter will be in res$value
 
-    res <- eval_user_exp(val, browse.env)
+    res <- eval_with_capture(val, browse.env)
+    if(nchar(res$message)) cat(res$message, file=stderr())
+    if(nchar(res$output)) cat(res$output, file=stdout())
 
     # store / record history
 
-    if(!is.null(hist.con) && length(val) == 1L) {
-      cat(deparse(val[[1L]]), file=hist.con, sep="\n")
-      loadhistory(showConnections()[as.character(hist.con), "description"])
-    }
+    if(!is.null(hist.con) && length(val) == 1L)
+      history_write(hist.con, deparse(val[[1L]]))
     if(res$aborted || !length(val)) word_cat(text, opts.txt)  # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
@@ -175,7 +170,6 @@ navigate_prompt <- function(
 #' @return either a \code{`unitizerBrowse`}, or "Q" if the user chose to quit
 
 review_prompt <- function(x, nav.env) {
-
   if(!is(x, "unitizerBrowse") || !is.environment(nav.env))
     stop(
       "Logic Error: unexpected inputs to internal function; contact maintainer."
@@ -237,7 +231,7 @@ review_prompt <- function(x, nav.env) {
       identical(x@mode, "unitize") &&
       identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
     )
-  x@review <- x@inspect.all
+  x@review <- if(x@inspect.all) -1L else 1L
 
   if(x@inspect.all) {
     word_msg(

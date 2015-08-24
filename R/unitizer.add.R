@@ -68,15 +68,8 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 
     test.env <- new.env(parent=e1@items.new@base.env)
     chr.width <- getOption("width")
-    std.err.capt <- tempfile()
-    std.err.capt.con <- file(std.err.capt, "w+b")
-    std.out.capt <- tempfile()
-    std.out.capt.con <- file(std.out.capt, "w+b")
 
-    e1@cons <- new("unitizerCaptCons",
-      err.f=std.err.capt, err.c=std.err.capt.con, out.f=std.out.capt,
-      out.c=std.out.capt.con
-    )
+    e1@cons <- new("unitizerCaptCons")
     on.exit(close_and_clear(e1@cons))
 
     repeat {

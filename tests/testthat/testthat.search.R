@@ -222,14 +222,16 @@ test_that("Search Path Trim / Restore", {
   library(unitizerdummypkg1)
   library(unitizerdummypkg2)
 
-  keep.more <- c("package:testthat", getOption("unitizer.search.path.keep"))
-  keep.all <- c(keep.more, .unitizer.base.packages)
+  keep.more <- c(
+    "package:testthat",
+    getOption("unitizer.search.path.keep.base")
+  )
   unitizer:::search_path_trim(keep.more)
   untz.glob$state()
 
   expect_identical(
     search(),
-    keep.all[match(names(search.init), keep.all, nomatch=0L)]
+    keep.more[match(names(search.init@.items), keep.more, nomatch=0L)]
   )
   untz.glob$resetFull()
 
@@ -241,10 +243,11 @@ while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 
 test_that("Loaded Namespaces don't cause issues", {
   # had a problem earlier trying to re-attach namespaces
-
   loadNamespace("unitizerdummypkg1")
   untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
-  keep.more <- c("package:testthat", getOption("unitizer.search.path.keep"))
+  keep.more <- c(
+    "package:testthat", getOption("unitizer.search.path.keep.base")
+  )
   unitizer:::search_path_trim(keep.more)
   untz.glob$state()
   loadNamespace("unitizerdummypkg2")
@@ -254,6 +257,17 @@ test_that("Loaded Namespaces don't cause issues", {
   untz.glob$resetFull()
   expect_true("unitizerdummypkg1" %in% loadedNamespaces())
   expect_false("unitizerdummypkg2" %in% loadedNamespaces())
+  unloadNamespace("unitizerdummypkg1")
+})
+test_that("Prevent Namespace Unload Works", {
+  old.opt <- options(unitizer.namespace.keep="unitizerdummypkg1")
+  loadNamespace("unitizerdummypkg1")
+  glb <- unitizer:::unitizerGlobal$new()
+  glb$status@options <- 2L
+  unitizer:::unload_namespaces("unitizerdummypkg1", global=glb)
+  expect_true(glb$ns.opt.conflict@conflict)
+  expect_equal(glb$ns.opt.conflict@namespaces, "unitizerdummypkg1")
+  options(old.opt)
   unloadNamespace("unitizerdummypkg1")
 })
 

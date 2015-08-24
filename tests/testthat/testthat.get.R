@@ -76,6 +76,20 @@ local({
       mode="unitize", force.upgrade=FALSE
     )
     expect_equal(untzs2.1[[1L]]@eval.time, 33)
+
+    # Purposefully increase version to something ridiculously large to test that
+    # we can't load a newer store with an older package
+
+    untz.tmp <- readRDS(file.path(tmp.sub.dir2, "data.rds"))
+    untz.tmp@version <- "9999.0.0"
+    saveRDS(untz.tmp, file.path(tmp.sub.dir2, "data.rds"))
+
+    expect_false(
+      unitizer:::load_unitizers(
+        list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+        mode="unitize", force.upgrade=FALSE
+      )[[1L]]
+    )
   } )
   unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE)
   print("random print to flush warnings")
