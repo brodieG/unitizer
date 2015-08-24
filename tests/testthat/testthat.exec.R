@@ -135,8 +135,8 @@ local( {
 
   m <- unitizer:::eval_with_capture(expression("a" / 3))
 
-  fun <- function() warning("error in fun")
   exp.q <- quote({
+    fun <- function() warning("error in fun")
     message("boo hay \n there \n")
     warning("this is a fairly long warning wladsfasdfasd that might wrap if we keep typing humpty dumpty sat on a wall and had a big fall");
     warning("ashorter warning blah");
@@ -149,6 +149,7 @@ local( {
   })
   x <- unitizer:::eval_with_capture(exp.q)
   exp.exp <- expression({
+    fun <- function() warning("error in fun")
     message("boo hay \n there \n")
     warning("this is a fairly long warning wladsfasdfasd that might wrap if we keep typing humpty dumpty sat on a wall and had a big fall");
     warning("ashorter warning blah");

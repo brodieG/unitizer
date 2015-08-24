@@ -341,7 +341,7 @@ local( {
     expect_identical(as.character(my.unitizer2@tests.status), c("Pass", "Error"))
     expect_identical(
       my.unitizer2@tests.errorDetails[[2]]@value@value,
-      "comparison function `fun` signaled a condition of type \"warning\", with message \"not gonna work\" and call `fun(2, 2)`."
+      "comparison function `fun` signaled a condition of class `c(\"simpleWarning\", \"warning\", \"condition\")`, with message \"not gonna work\" and call `fun(2, 2)`."
     )
   } )
   test_that("Language Objects Tested Properly", {

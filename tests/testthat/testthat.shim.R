@@ -42,7 +42,9 @@ test_that("Parent Env Stays on Top", {
 
 test_that("Parent env tracking with search path manip", {
   untz.glob$state()
-  keep.more <- c("package:testthat", getOption("unitizer.search.path.keep"))
+  keep.more <- c(
+    "package:testthat", getOption("unitizer.search.path.keep.base")
+  )
   unitizer:::search_path_trim(keep.more)
   untz.glob$state()
 
