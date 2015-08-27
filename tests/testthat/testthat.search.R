@@ -241,6 +241,14 @@ try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 
+message("\n\nNamespaces\n\n")
+
+test_that("Namespace Unload Failsafes", {
+  expect_error(  # assuming at least one base package still loaded
+    unitizer:::unloadNamespace(loadedNamespaces), "Attempting to unload"
+  )
+})
+
 test_that("Loaded Namespaces don't cause issues", {
   # had a problem earlier trying to re-attach namespaces
   loadNamespace("unitizerdummypkg1")

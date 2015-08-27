@@ -302,6 +302,9 @@ search_path_trim <- function(
 #'
 #' Attempts to unload namespaces in an order that avoids dependency issues
 #' based on data from \code{getNamespaceImports}
+#'
+#' Needs to be thought through a bit more in terms of how integrated it should
+#' be with the functions that use it.
 
 unload_namespaces <- function(
   unload, global, keep.ns=union(
@@ -314,23 +317,34 @@ unload_namespaces <- function(
     is.character(keep.ns) && !any(is.na(keep.ns)),
     is(global, "unitizerGlobal")
   )
-  # Deal with options/namespace state conflict
-
-  to.keep.depends <- unlist(
-    lapply(keep.ns[keep.ns %in% loadedNamespaces()], getNamespaceImports)
-  )
-  unload.net <- setdiff(unload, c(keep.ns, to.keep.depends))
-
-  # Make sure search path is compatible with what we're doing
+  # We can't unload any namespaces associated with packages; packages must be
+  # unloaded first
 
   search.path.pre <- search()
   search.path.pkg <- vapply(search.path.pre, is.loaded_package, logical(1L))
   search.path.pkg.names <-
     sub("^package:", "", search.path.pre[search.path.pkg])
 
+  sp.depends <- c(
+    search.path.pkg.names,
+    unlist(lapply(search.path.pkg.names, getNamespaceImports))
+  )
+  if(any(sp.ns.conf <- sp.depends %in% unload))
+    stop(
+      "Attempting to unload namespaces associated with loaded packages: ",
+      deparse(unname(sp.depends[sp.ns.conf])),
+      "; this should not happen, contact maintainer."
+    )
   # Check that none of the keep namespaces reference namespaces other than the
   # keep namespaces, and warn otherwise since we won't be able to unload /
   # re-load that one
+
+  to.keep.depends <- unlist(
+    lapply(keep.ns[keep.ns %in% loadedNamespaces()], getNamespaceImports)
+  )
+  unload.net <- setdiff(unload, c(keep.ns, to.keep.depends))
+
+  # Now unload namespaces
 
   lns.raw <- loadedNamespaces()
   if(!all(unload.net %in% lns.raw))
@@ -357,19 +371,11 @@ unload_namespaces <- function(
     },
     character(1L)
   )
-  # order these in search path order if attached, as that will likely be easiest
-  # order to detach in (though in most cases by the time we get here the
-  # package should have been detached already - shouldn't be trying to unload)
-  # the namespace of a still attached package
-
-  lns.orig <- lns <- lns.tmp[
-    order(
-      match(names(lns.tmp), search.path.pkg.names, nomatch=0L)
-  ) ]
   # Cycle through path attempting to unload namespaces until we cannot unload
   # any more.  This is not a particularly efficient algorithm, but should make
   # do for our purposes
 
+  lns.orig <- lns <- lns.tmp
   safety <- 0
   unloaded.success <- character(0L)
   repeat {
