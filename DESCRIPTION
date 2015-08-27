@@ -15,7 +15,7 @@ Authors@R: c(
     email="R-core@r-project.org", role="cph",
     comment="Copy of source for library / attach / detach"))
 Depends:
-    R (>= 3.1.2)
+    R (>= 3.2.2)
 Imports:
     methods,
     stats
