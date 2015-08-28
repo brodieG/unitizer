@@ -290,12 +290,10 @@ search_path_trim <- function(
       stop("Logic Error: invalid search path token; contact maintainer.")
     detach(pack, character.only=TRUE)
   }
-  # Now attempt to unload namespaces
+  # Now attempt to unload namespaces; note 'unload_namespaces' won't unload
+  # namespaces or imported namespaces for attached packages
 
-  unload_namespaces(
-    setdiff(loadedNamespaces(), to.keep.pkg.names), global=global,
-    keep.ns=keep.ns
-  )
+  unload_namespaces(loadedNamespaces(), global=global, keep.ns=keep.ns)
   invisible(TRUE)
 }
 #' Unload Namespaces
@@ -307,7 +305,7 @@ search_path_trim <- function(
 #' be with the functions that use it.
 
 unload_namespaces <- function(
-  unload, global, keep.ns=union(
+  unload=loadedNamespaces(), global, keep.ns=union(
     getOption("unitizer.namespace.keep.base"),
     getOption("unitizer.namespace.keep")
   )
@@ -325,23 +323,33 @@ unload_namespaces <- function(
   search.path.pkg.names <-
     sub("^package:", "", search.path.pre[search.path.pkg])
 
-  sp.depends <- c(
-    search.path.pkg.names,
-    unlist(lapply(search.path.pkg.names, getNamespaceImports))
-  )
-  if(any(sp.ns.conf <- sp.depends %in% unload))
-    stop(
-      "Attempting to unload namespaces associated with loaded packages: ",
-      deparse(unname(sp.depends[sp.ns.conf])),
-      "; this should not happen, contact maintainer."
-    )
+  sp.depends <- unique(
+    c(
+      search.path.pkg.names,
+      unlist(
+        lapply(search.path.pkg.names, function(x) names(getNamespaceImports(x)))
+  ) ) )
+  unload <- setdiff(unload, sp.depends)
+
   # Check that none of the keep namespaces reference namespaces other than the
   # keep namespaces, and warn otherwise since we won't be able to unload /
   # re-load that one
 
   to.keep.depends <- unlist(
-    lapply(keep.ns[keep.ns %in% loadedNamespaces()], getNamespaceImports)
-  )
+    lapply(
+      keep.ns[keep.ns %in% loadedNamespaces()],
+      function(x) names(getNamespaceImports(x))
+  ) )
+  # Since `getNamespaceImports` is supposed to be a bit experimental, make sure
+  # that all namespaces we got are actually loaded, which they really should be
+
+  if(!all(union(sp.depends, to.keep.depends) %in% loadedNamespaces()))
+    stop(
+      "Logic Error: loaded namespace dependency calculation produced ",
+      "non-loaded namespaces; this should not happen; contact maintainer."
+    )
+  # Stuff left to unload
+
   unload.net <- setdiff(unload, c(keep.ns, to.keep.depends))
 
   # Now unload namespaces
@@ -373,7 +381,9 @@ unload_namespaces <- function(
   )
   # Cycle through path attempting to unload namespaces until we cannot unload
   # any more.  This is not a particularly efficient algorithm, but should make
-  # do for our purposes
+  # do for our purposes.  Really should create a dependency matrix, decrementing
+  # dependencies as we unload them, and look for rows (or cols) with zero values
+  # to find namespaces to unload
 
   lns.orig <- lns <- lns.tmp
   safety <- 0
@@ -386,6 +396,7 @@ unload_namespaces <- function(
     lns.names <- names(lns)
     unloaded.try <- integer(0L)
     for(i in seq_along(lns)) {
+
       tar.ns <- names(lns)[[i]]
       if(!tar.ns %in% unlist(lns[-i])) {
         # No dependencies, so attempt to unload
@@ -395,11 +406,13 @@ unload_namespaces <- function(
         if(inherits(attempt, "try-error")) {
           warning(
             "Error while attempting to unload namespace `", tar.ns, "`",
-            .immediate=TRUE
+            immediate.=TRUE
           )
         } else {
-          unloaded.success <- c(unloaded.success, lns.names[i])
-    } } }
+          unloaded.success <- c(unloaded.success, tar.ns)
+        }
+      }
+    }
     # Keep looping until length of remaining namespaces doesn't decrease anymore
 
     lns <- lns[-unloaded.try]
