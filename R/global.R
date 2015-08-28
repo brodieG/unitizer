@@ -403,8 +403,15 @@ unitizerGlobal <- setRefClass(
       )
     }
 ) )
+ # used purely for traced functions that need access to global object; in most
+ # cases should be just our traced functions, note that we just create this
+ # object here for test; any time a `unitizer` is instantiated
 
 .global <- new.env()
-# .global$global <- unitizerGlobal$new() # used purely for traced functions that need access to global object
+
+# not necessary since any use of `shimFuns` can only occur if a unitizerGlobal
+# object is instantiated, so $global will have been created by initialize method
+
+# .global$global <- unitizerGlobal$new()
 
 setClassUnion("unitizerGlobalOrNULL", c("unitizerGlobal", "NULL"))
