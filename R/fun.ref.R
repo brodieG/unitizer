@@ -6,6 +6,10 @@
 #' @keywords internal
 
 .unitizer.base.funs.ref <- list(
+
+  # WARNING WARNING WARNING: if you change these make sure you check the shim dat
+  # to make sure tracers are introduced in right place!!!!!
+
   library=function (package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     logical.return = FALSE, warn.conflicts = TRUE, quietly = FALSE,
     verbose = getOption("verbose")) {
@@ -355,8 +359,12 @@
             TRUE
         else invisible(.packages())
     },
-  attach=function (what, pos = 2L, name = deparse(substitute(what)), warn.conflicts = TRUE)
-{
+  # WARNING WARNING WARNING: if you change these make sure you check the shim dat
+  # to make sure tracers are introduced in right place!!!!!
+
+  attach=function(
+    what, pos = 2L, name = deparse(substitute(what)), warn.conflicts = TRUE
+    ) {
     checkConflicts <- function(env) {
         dont.mind <- c("last.dump", "last.warning", ".Last.value",
             ".Random.seed", ".Last.lib", ".onDetach", ".packageName",
@@ -422,6 +430,9 @@
         methods:::cacheMetaData(value, TRUE)
     invisible(value)
 },
+  # WARNING WARNING WARNING: if you change these make sure you check the shim dat
+  # to make sure tracers are introduced in right place!!!!!
+
   detach=function (name, pos = 2L, unload = FALSE, character.only = FALSE,
     force = FALSE)
 {
