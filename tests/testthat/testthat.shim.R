@@ -11,7 +11,10 @@ while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 unitizer.dummy.list <- list(z=23, x=1, y="hello")
 
 my.env <- new.env()
-untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env)
+state.set <- c(search.path=2L)
+untz.glob <- unitizer:::unitizerGlobal$new(
+  par.env=my.env, enable.which=state.set
+)
 untz.glob$shimFuns()
 
 sp <- search()
@@ -45,12 +48,13 @@ test_that("Parent env tracking with search path manip", {
   keep.more <- c(
     "package:testthat", getOption("unitizer.search.path.keep.base")
   )
-  unitizer:::search_path_trim(keep.more)
+  unitizer:::search_path_trim(keep.more, global=untz.glob)
   untz.glob$state()
 
   expect_identical(
     environmentName(parent.env(my.env)), search()[[2L]]
   )
+
   untz.glob$resetFull()
   expect_identical(environmentName(parent.env(my.env)), curr2)
 } )
@@ -68,7 +72,9 @@ test_that("Disable Unshims, etc.", {
 } )
 
 test_that("Checks, errors, etc.", {
-  untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env)
+  untz.glob <- unitizer:::unitizerGlobal$new(
+    par.env=my.env, enable.which=state.set
+  )
   tracingState(FALSE)
 
   expect_warning(untz.glob$shimFuns(), "tracing state is FALSE")
