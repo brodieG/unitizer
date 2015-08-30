@@ -114,31 +114,29 @@ setClass(
 )
 setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
 
-#' Convert An Error Into Character
-#' @keywords internal
-
-setMethod("as.character", "unitizerItemTestsErrors",
-  function(x, ...) {
-    err.lst <- list()
-    for(i in slotNames(x)) {
-      if(!is.null(slot(x, i)@value)) err.lst[[i]] <- slot(x, i)
-    }
-    chr <- character()
-    prep <- if(length(err.lst) > 1L) "- " else ""
-    for(i in names(err.lst)) {
-      err <- err.lst[[i]]@value
-      mismatch <- if(err.lst[[i]]@compare.err) {
-        paste0(prep, "Unable to compare ", i, ": ")
-      } else {
-        paste0(prep, cap_first(i), " mismatch: ")
-      }
-      if(length(err) < 2L) {
-        chr <- c(chr, paste0(mismatch, err))
-      } else {
-        chr <- c(chr, mismatch, paste0("  + ", err))
-    } }
-    chr
-} )
+# # Not clear this is used anyplace; TBD
+# setMethod("as.character", "unitizerItemTestsErrors",
+#   function(x, ...) {
+#     err.lst <- list()
+#     for(i in slotNames(x)) {
+#       if(!is.null(slot(x, i)@value)) err.lst[[i]] <- slot(x, i)
+#     }
+#     chr <- character()
+#     prep <- if(length(err.lst) > 1L) "- " else ""
+#     for(i in names(err.lst)) {
+#       err <- err.lst[[i]]@value
+#       mismatch <- if(err.lst[[i]]@compare.err) {
+#         paste0(prep, "Unable to compare ", i, ": ")
+#       } else {
+#         paste0(prep, cap_first(i), " mismatch: ")
+#       }
+#       if(length(err) < 2L) {
+#         chr <- c(chr, paste0(mismatch, err))
+#       } else {
+#         chr <- c(chr, mismatch, paste0("  + ", err))
+#     } }
+#     chr
+# } )
 #' Display Test Errors
 #' @keywords internal
 
