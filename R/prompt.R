@@ -1,3 +1,5 @@
+# no cov start
+
 #' @include exec.R
 
 NULL
@@ -312,4 +314,4 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
   return(y[[1L]])
 }
 
-
+# no cov end
