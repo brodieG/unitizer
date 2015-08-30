@@ -136,6 +136,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     } }
     over_print("")
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
+    on.exit()
+    close_and_clear(e1@cons)
+    e1@cons <- NULL
     e1
 } )
 #' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
