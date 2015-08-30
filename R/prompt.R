@@ -1,5 +1,3 @@
-# no cov start
-
 #' @include exec.R
 
 NULL
@@ -314,4 +312,32 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
   return(y[[1L]])
 }
 
-# no cov end
+#' Version of readline That Can Accept Pre-decined input
+#'
+#' Used primarily so that interactive user text driven functions can be auto-
+#' mated
+#'
+
+read_line <- function(prompt="") {
+  stopifnot(is.chr1(prompt))
+  if(
+    is.null(.global$prompt.vals) ||
+    (is.character(.global$prompt.vals) && !length(.global$prompt.vals))
+  ) {
+    return(readline(prompt))
+  }
+  if(!is.character(.global$prompt.vals) || !length(.global$prompt.vals)) {
+    stop(
+      "Logic Error: internal object `.global$prompt.vals` has unexpected ",
+      "value; contact maintainer."
+    )
+  }
+  res <- .global$prompt.vals[[1L]]
+  .global$prompt.vals <- tail(.global$prompt.vals, -1L)
+  res
+}
+
+read_line_set_vals <- function(vals) {
+  stopifnot(is.character(vals))
+  .global$prompt.vals <- vals
+}
