@@ -45,6 +45,11 @@ local( {
   my.unitizer2 <- my.unitizer2 + new.exps   # now test against new.exps
 
   test_that("unitizer creation worked as expected", {
+    expect_true(validObject(my.unitizer, complete=TRUE))
+    expect_equal(
+      capture.output(show(my.unitizer@items.new[[1L]])),
+      c("~~~ New Test ~~~", "1 + 1", "* value: double numeric [1]", "* output: 6 chars", "Access component `x` with `.NEW$x`; see `help(\"$\", \"unitizer\")`")
+    )
     expect_equal(length(my.unitizer2), length(new.exps))
     expect_equal(length(my.unitizer2@items.new), length(new.exps))
     expect_equal(length(my.unitizer2@items.ref), length(ref.exps))
@@ -69,6 +74,11 @@ local( {
     expect_equal(unitizer:::ignored(my.unitizer2@items.new), c(F, T, T, F, T, F, T, F))
     expect_equal(unitizer:::ignored(my.unitizer2@items.ref), c(F, T, T, F, T, F))
   } )
+  test_that("Size Measurement works", {
+    x <- unitizer:::sizeUntz(my.unitizer2)
+    expect_true(is.matrix(x) && is.numeric(x))
+    expect_identical(colnames(x), c("size", "rds"))
+  })
   test_that("Environment healing works", {
     items.mixed <- my.unitizer2@items.new[4:5] + my.unitizer2@items.ref[[1]] + my.unitizer2@items.new[c(2, 6, 8)]
     items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2)
@@ -96,6 +106,27 @@ local( {
     )
     expect_equal(unique(unlist(lapply(unitizer:::as.list(items.sorted), function(x) x@ls$status))), "")
   } )
+  # Tests with conditions
+
+  my_fun <- function() {warning("hello"); 25}
+  ref.exps1a <- expression(stop("boom"), my_fun())
+  my.unitizer1a <- new("unitizer", id=100, zero.env=new.env())
+  my.unitizer1a <- my.unitizer1a + ref.exps1a   # add ref.exps as new items
+
+  test_that("Items with conditions", {
+    expect_equal(
+      capture.output(show(my.unitizer1a@items.new[[1L]])),
+      c("~~~ New Test ~~~", "stop(\"boom\")", "* value: NULL", "* message: 12 chars", "* conditions: 1 error", "Access component `x` with `.NEW$x`; see `help(\"$\", \"unitizer\")`")
+    )
+    expect_equal(
+      capture.output(show(my.unitizer1a@items.new[[2L]])),
+      c("~~~ New Test ~~~", "my_fun()", "* value: double numeric [1]", "* output: 7 chars", "* message: 28 chars", "* conditions: 1 warning", "Access component `x` with `.NEW$x`; see `help(\"$\", \"unitizer\")`")
+    )
+    expect_equal(
+      capture.output(show(my.unitizer1a@items.new[[1L]]@data@conditions)),
+      c("Condition list with 1 condition:", "1: Error: boom", "Access a condition directly with `[[` (e.g. `conditions[[1L]]`)")
+    )
+  })
   new.exps2 <- expression(
     1 + 1,                #  1 *    Stars highlight items we are selecting, but keep in mind that
     a <- 54,              #  2      unitizer only cares about non ignored tests, and that the selection
@@ -203,6 +234,10 @@ local( {
       structure(list(new = c("a", "b", "e", "f", "howdy"), ref = c("a", "b", "e", "f", "howdy"), tests = c(".new", ".NEW", ".ref", ".REF")), .Names = c("new", "ref", "tests"), class = "unitizer_ls", mods = character(0)),
       evalq(unitizer:::unitizer_ls(), env.eval)
     )
+    expect_equal(
+      capture.output(print(evalq(unitizer:::unitizer_ls(), env.eval))),
+      c("$`objects in new test env:`", "[1] \"a\"     \"b\"     \"e\"     \"f\"     \"howdy\"", "", "$`objects in ref test env:`", "[1] \"a\"     \"b\"     \"e\"     \"f\"     \"howdy\"", "", "$`unitizer objects:`", "[1] \".new\" \".NEW\" \".ref\" \".REF\"", "", "Use `ref(.)` to access objects in ref test env", "`.new` / `.ref` for test value, `.NEW` / `.REF` for details.")
+    )
   } )
   # Test that reference tests moving around doesn't cause major issues
 
@@ -281,6 +316,22 @@ local( {
       cbind(my.unitizer7@tests.new, my.unitizer7@tests.result)
     )
   } )
+  # Error objects
+
+  test_that("Error Display", {
+    expect_match(
+      paste0(capture.output(show(my.unitizer7@tests.errorDetails[[5L]])), collapse=";"),
+      "^@@ \\.ref @@;-  \\[1\\] [0-9.]+;@@ \\.new @@", "+  \\[1\\] [0-9.]$"
+    )
+    expect_match(
+      capture.output(show(my.unitizer7@tests.errorDetails[[5L]]), type="message"),
+      "^\\*value\\* mismatch: mean relative difference: "
+    )
+    expect_match(
+      capture.output(unitizer:::summary(my.unitizer7@tests.errorDetails[[5L]]), type="message"),
+      "^unitizer test fails on value mismatch:"
+    )
+  })
 
   test_that("unitizerItemTestsFuns", {
     # these two should just work fine

@@ -22,3 +22,17 @@ test_that("copy fastlm dir works", {
   )
   unlink(x, recursive=TRUE)
 })
+
+test_that("show_file", {
+  f <- tempfile()
+  cat("this is a\ntest code\nfile\n", file=f)
+  file.show <- capture.output(show_file(f))
+  expect_equal(file.show[[1L]], "+---------------+")
+  start.file <- grep("+---+-----------+", file.show, fixed=TRUE)
+  expect_equal(length(start.file), 2L)
+  expect_equal(
+    file.show[start.file[[1L]]:start.file[[2L]]],
+    c("+---+-----------+", "| 1 | this is a |", "| 2 | test code |", "| 3 | file      |", "+---+-----------+")
+  )
+  unlink(f)
+})

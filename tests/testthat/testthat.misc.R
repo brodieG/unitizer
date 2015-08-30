@@ -81,6 +81,12 @@ test_that("deparse fun", {
   expect_identical(unitizer:::deparse_fun(quote(function(x) NULL)), NA_character_)
   expect_identical(unitizer:::deparse_fun("hello"), character(0L))
 } )
+test_that("deparse_prompt", {
+  expect_identical(
+    unitizer:::deparse_prompt(quote(if(TRUE) {25} else {42})),
+    c("> if (TRUE) {", "+     25", "+ } else {", "+     42", "+ }" )
+  )
+})
 test_that("(Un)ordered Lists", {
   vec <- c(
     "hello htere how are you blah blah blah blah blah",
@@ -200,7 +206,7 @@ test_that("relativize_path", {
     c("R", "../unitizerdummypkg1", file.path("notarealpath", "foo"))
   )
 })
-test_that("unitizer:::merge_listss", {
+test_that("unitizer:::merge_lists", {
   expect_equal(
     unitizer:::merge_lists(list(a=1, b=2), list(c=3)),
     list(a=1, b=2, c=3)
@@ -213,4 +219,15 @@ test_that("unitizer:::merge_listss", {
     unitizer:::merge_lists(list(a=1, b=2, c=3), list(a=NULL, d=5, c=5)),
     list(a=NULL, b=2, c=5, d=5)
   )
+})
+test_that("is", {
+  f <- tempfile()
+  fc <- file(f, "r")
+  expect_true(is.valid_con(fc))
+  expect_true(is.valid_con(fc, f))
+  expect_error(is.valid_con(fc, 1:5))
+  expect_match(is.valid_con(fc, "tada"), "file name does not match")
+  expect_true(is.open_con(fc))
+  close(fc)
+  unlink(f)
 })

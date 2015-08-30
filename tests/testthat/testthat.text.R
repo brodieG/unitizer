@@ -107,6 +107,10 @@ local({
       as.character(xx, width=30L),
       c("- there was once a time when ", "  the fantastic unicorns could", "  fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks")
     )
+    expect_identical(
+      capture.output(print(xx, width=80L)),
+      c("- there was once a time when the fantastic unicorns could fly", "- bugs bunny ate carrots and drank milk while hunting ducks")
+    )
     yy <- unitizer:::OL(x)
     expect_identical(
       as.character(yy, width=30L),
@@ -124,6 +128,7 @@ local({
       as.character(y, width=30),
       c("- there was once a time when ", "  the fantastic unicorns could", "  fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks", "  1. there was once a time ", "     when the fantastic ", "     unicorns could fly", "  2. bugs bunny ate carrots ", "     and drank milk while ", "     hunting ducks", "    - there was once a time ", "      when the fantastic ", "      unicorns could fly", "    - bugs bunny ate carrots ", "      and drank milk while ", "      hunting ducks", "- yowza it is raining toads ",  "  today!")
     )
+    expect_error(unitizer:::as.character.bullet(hello, 1:10))
   })
   test_that("substr_const", {
     expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L), c("ab  ", "abcd", "abc "))
@@ -189,6 +194,12 @@ local({
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "d")),
       list(c(FALSE, FALSE, TRUE), c(FALSE, FALSE, TRUE))
+    )
+  })
+  test_that("let_comb_fun",{
+    expect_identical(
+      unitizer:::make_let_combn_fun(letters)(12),
+      c("a.", "b.", "c.", "d.", "e.", "f.", "g.", "h.", "i.", "j.",  "k.", "l.")
     )
   })
 })
