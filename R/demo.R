@@ -45,10 +45,12 @@
 
 NULL
 
+# nocov start
 #' @export
 #' @rdname demo
 
 `[Press ENTER to Continue]` <- function() invisible(readline())
+# nocov end
 
 #' @export
 #' @rdname demo
@@ -57,7 +59,7 @@ show_file <- function(f, width=getOption("width", 80L)) {
   stopifnot(is.chr1(f))
   txt <- try(readLines(f))
   pkg.dir <- get_package_dir(f)
-  if(nchar(pkg.dir)) f <- relativize_path(f, pkg.dir)
+  if(length(pkg.dir)) f <- relativize_path(f, pkg.dir)
   if(inherits(txt, "try-error")) stop("Unable to open file")
   line.num <- seq_along(txt)
   line.chars <- max(nchar(line.num))
@@ -134,6 +136,7 @@ update_fastlm <- function(dir, version) {
 
   invisible(file.copy(cpy.from, cpy.to, overwrite=TRUE))
 }
+# nocov start
 #' @export
 #' @rdname demo
 
@@ -153,7 +156,9 @@ unitizer_check_demo_state <- function() {
     rm(list=vars[vars.exist], envir=parent.frame())
   }
 }
+# nocov end
 
+# nocov start
 #' @export
 #' @rdname demo
 
@@ -164,4 +169,5 @@ unitizer_cleanup_demo <- function() {
   unlink(.unitizer.fastlm, recursive=TRUE)
   rm(list=vars, envir=parent.frame())
 }
+# nocov end
 
