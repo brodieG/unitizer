@@ -41,16 +41,18 @@ setMethod("editCalls", c("unitizer", "language", "language"),
     if(!interactive() && interactive.only)
       stop("Set interactive.only to FALSE to run in non-interactive mode")
     i <- 0L
-    repeat {
-      ans <- readline("Do you wish to proceed ([Y]es/[N]o)? ")
-      if(tolower(ans) %in% c("y", "yes")) break
-      else if(tolower(ans) %in% c("n", "no")) {
-        message("Existing without edits")
-        return(x)
-      } else {
-        message("Invalid input, should be \"Y\" or \"N\"")
+    if(interactive.only) {
+      repeat {
+        ans <- readline("Do you wish to proceed ([Y]es/[N]o)? ")
+        if(tolower(ans) %in% c("y", "yes")) break
+        else if(tolower(ans) %in% c("n", "no")) {
+          message("Existing without edits")
+          return(x)
+        } else {
+          message("Invalid input, should be \"Y\" or \"N\"")
+        }
+        if((i <- i + 1L) > 2L) stop("You are not making sense; I give up!")
       }
-      if((i <- i + 1L) > 2L) stop("You are not making sense; I give up!")
     }
     call_sub <- function(call, old.name, new.name) {
       if(is.language(call)) {
@@ -69,7 +71,13 @@ setMethod("editCalls", c("unitizer", "language", "language"),
 
       call.is.null <- FALSE
       if(is.null(x@items.ref[[i]]@call)) {
-        x@items.ref[[i]]@call <- parse(text=x@items.ref[[i]]@call.dep)
+        call.parsed <- parse(text=x@items.ref[[i]]@call.dep)
+        if(!is.expression(call.parsed) || length(call.parsed) != 1L)
+          stop(
+            "Logic Error: call `", x@items.ref[[i]]@call.dep,
+            "` did not produce a length one expression when parsed"
+          )
+        x@items.ref[[i]]@call <- call.parsed[[1L]]
         call.is.null <- TRUE
       }
       x@items.ref[[i]]@call <-
