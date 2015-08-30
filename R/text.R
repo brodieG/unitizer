@@ -417,7 +417,9 @@ word_cat <- function(
   )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
   vec <- unlist(strsplit(vec, "\n"))
-  invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
+  out <- word_wrap(vec, width, tolerance)
+  cat(out, file=file, sep="\n")
+  invisible(out)
 }
 #' @rdname text_wrap
 
