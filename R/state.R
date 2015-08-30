@@ -261,7 +261,6 @@ unitizerStateOff <- setClass(
     par.env=.GlobalEnv
   )
 )
-
 setMethod(
   "show", "unitizerState",
   function(object) {
