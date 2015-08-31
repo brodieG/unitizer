@@ -103,7 +103,8 @@ unitizer_prompt <- function(
     "(", paste0(valid.opts[nchar(valid.opts) > 0], collapse=", "), ")?"
   )
   repeat {
-    while(inherits(try(val <- faux_prompt("unitizer> ")), "try-error")) NULL
+    val <- tryCatch(faux_prompt("unitizer> "), simpleError=function(e) e)
+    if(inherits(val, "simpleError")) next
 
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) &&
@@ -338,9 +339,12 @@ read_line <- function(prompt="") {
       "value; contact maintainer."
     )
   } else if(!length(.global$prompt.vals)) {
-    stop(
+    # Need dedicated condition so `unitizer_prompt` can catch it
+    cond <- simpleCondition(
       "Logic Error: ran out of predifined readline input; contact maintainer."
     )
+    class(cond) <- c("readError", "error", class(cond))
+    stop(cond)
   } else {
     res <- .global$prompt.vals[[1L]]
     .global$prompt.vals <- tail(.global$prompt.vals, -1L)
