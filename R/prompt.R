@@ -2,27 +2,42 @@
 
 NULL
 
-#' Handles The Actual User Interaction
+#' Interactively Retrieve User Input
 #'
-#' Will keep accepting user input until either:
-#' \itemize{
-#'   \item User types one of the names of \code{valid.opts}, typically "Y" or
-#'     "N", but will vary
-#'   \item User types "Q"
-#'   \item User inputs an expression that when evaluated and fed to
-#'     \code{exit.condition} returns TRUE
-#' }
+#' Different functions used in different contexts to capture user input.
+#' \code{unitizer_prompt}, \code{navigate_prompt}, and \code{review_prompt} are
+#' more advanced and allow evaluation of arbitrary expressions, in addition to
+#' searching for specific commands such as "Y", "N", etc. \code{simple_prompt}
+#' only matches along specified values.
+#'
 #' The set-up is intended to replicate something similar to what happens when
 #' code hits a \code{browse()} statement.  User expressions are evaluated
 #' and output to screen, and special expressions as described above cause the
 #' evaluation loop to terminate.
+#'
+#' \code{navigate_prompt} is just a wrapper around \code{unitizer_prompt} that
+#' provides the special shortcuts to navigate to other tests in the
+#' \code{unitizer}.
+#'
+#' \code{review_prompt} is also a wrapper, but used only when at the menu that
+#' presents available test items to navigate to.
+#'
+#' \code{simple_prompt} simpler prompting function used to allow user to select
+#' from pre-specified values.
+#'
+#' \code{exit_fun} is used as a generic function to pass to the
+#' \code{exit.condition} argument of \code{unitizer_prompt}.
+#'
+#' \code{read_line} and \code{read_line_set_vals} are utility functions that
+#' are used to implement a version of \code{\link{readline}} that can be
+#' automated for testing.
 #'
 #' @keywords internal
 #' @seealso browse_unitizer_items
 #' @param text the prompt text to display
 #' @param browse.env the environment to evaluate user expressions in; typically
 #'   this will contain interesting objects (use \code{ls()} to review)
-#' @param valid opts the special letters user can type to get a special action,
+#' @param valid.opts the special letters user can type to get a special action,
 #'   typically a character vector where the names are one letter (though they
 #'   don't actually have to be) and are looked for as user typed input; note that
 #'   the quit and help options will always be appended to this
@@ -41,15 +56,36 @@ NULL
 #'   which may not be desirable.  Function should return a value which will then
 #'   be returned by \code{unitizer_prompt}, unless this value is \code{FALSE}
 #'   in which case \code{unitizer_prompt} will continue with normal evaluation.
+#' @param x a unitizerBrowse object
+#' @param browse.env1 environment to have user review tests, run commands, etc
+#' @param browse.env2 navigation environment
+#' @param curr.id which id we are currently browsing
+#' @param nav.env an environment
 #' @param ... additional arguments for \code{exit.condition}
-#' @return mixed allowable user input
+#' @param message character ask the user a question
+#' @param values character valid responses
+#' @param prompt see \code{\link{readline}}
+#' @param attempts how many times to try before erroring
+#' @param case.sensitive whether to care about case sensitivity when matching
+#'   user input
+#' @return \itemize{
+#'   \item \code{unitizer_prompt}: mixed allowable user input
+#'   \item \code{navigate_prompt}: a \code{unitizerBrowse} object, or allowable
+#'     user input
+#'   \item \code{review_prompt}: a \code{unitizerBrowse} object, or "Q" if the
+#'     user chose to quit
+#'   \item \code{simple_prompt}: one of \code{values} as selected by user
+#' }
 
 unitizer_prompt <- function(
   text, browse.env=baseenv(), help=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
   ...
 ) {
-  if(!interactive())
+  if(
+    !interactive() &&
+    (!is.character(.global$prompt.vals) || !length(.global$prompt.vals))
+  )
     stop(
       "Logic Error: attempting to use interactive unitizer environment in ",
       "non-interactive session."
@@ -102,8 +138,8 @@ unitizer_prompt <- function(
     # evaluation.  The latter will be in res$value
 
     res <- eval_with_capture(val, browse.env)
-    if(nchar(res$message)) cat(res$message, file=stderr())
-    if(nchar(res$output)) cat(res$output, file=stdout())
+    if(length(res$mesage) && nchar(res$message)) cat(res$message, file=stderr())
+    if(length(res$output) && nchar(res$output)) cat(res$output, file=stdout())
 
     # store / record history
 
@@ -112,17 +148,7 @@ unitizer_prompt <- function(
     if(res$aborted || !length(val)) word_cat(text, opts.txt)  # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
-#' Wrapper Around User Interaction
-#'
-#' Specifically for cases were user has the choice to input something or to try
-#' to navigate to another test.
-#'
-#' @seealso unitizer_prompt
-#' @inheritParams unitizer_prompt
-#' @param x a unitizer.browse object
-#' @param browse.env1 environment to have user review tests, run commands, etc
-#' @param browse.env2 navigation environment
-#' @param curr.id which id we are currently browsing
+#' @rdname unitizer_prompt
 #' @keywords internal
 
 navigate_prompt <- function(
@@ -160,14 +186,8 @@ navigate_prompt <- function(
   }
   return(prompt.val)
 }
-#' Manages Producing Test Navigation Message / Prompt
-#'
-#' Probably should be an S4 method, along with \code{`\link{navigate_prompt}`}
-#'
+#' @rdname unitizer_prompt
 #' @keywords internal
-#' @param x a unitizerBrowse object
-#' @param nav.env an environment
-#' @return either a \code{`unitizerBrowse`}, or "Q" if the user chose to quit
 
 review_prompt <- function(x, nav.env) {
   if(!is(x, "unitizerBrowse") || !is.environment(nav.env))
@@ -247,22 +267,18 @@ review_prompt <- function(x, nav.env) {
   x@navigating <- TRUE
   return(x)
 }
-#' A Simple Prompting Function
-#'
+#' @rdname unitizer_prompt
 #' @keywords internal
-#' @param message character ask the user a question
-#' @param values character valid responses
-#' @param prompt see \code{\link{readline}}
-#' @param attempts how many times to try before erroring
-#' @param case.sensitive whether to care about case sensitivity when matching
-#'   user input
-#' @return one of \code{values} as selected by user
 
 simple_prompt <- function(
   message, values=c("Y", "N"), prompt="unitizer> ", attempts=5L,
   case.sensitive=FALSE
 ) {
-  if(!interactive()) stop("This function is only available in interactive mode")
+  if(
+    !interactive() &&
+    (!is.character(.global$prompt.vals) || !length(.global$prompt.vals))
+  )
+    stop("This function is only available in interactive mode")
   if(!is.character(message)) stop("Argument `message` must be character")
   if(!is.character(values) || length(values) < 1L || any(is.na(values)))
     stop("Argument `values` must be character with no NAs")
@@ -273,6 +289,8 @@ simple_prompt <- function(
     attempts < 1
   )
     stop("Argument `attempts` must be numeric(1L), not NA, and one or greater")
+  if(!is.TF(case.sensitive))
+    stop("Argument `case.sensitive` must be TRUE or FALSE")
 
   attempts <- attempts.left <- as.integer(attempts)
   val.tran <- if(!case.sensitive) tolower(values)
@@ -280,24 +298,20 @@ simple_prompt <- function(
   word_cat(message)
 
   while(attempts.left > 0L) {
-    x <- readline(prompt)
+    x <- read_line(prompt)
     if(!case.sensitive) x <- tolower(x)
     if(!(res.ind <- match(x, val.tran, nomatch=0L))) {
       word_cat(
         paste(
-          "Invalid input, please select one of: ", paste(values, collapse=", ")
+          "Invalid input, please select one of:", paste(values, collapse=", ")
       ) )
     } else return(values[[res.ind]])
     attempts.left <- attempts.left - 1L
   }
   stop("Gave up trying to collect user input after ", attempts, " attempts.")
 }
-#' An Exit Fun For Prompts Expecting a Specific Selection
-#'
-#' Intended for use solely with \code{\link{unitizer_prompt}}
-#'
 #' @keywords internal
-#' @param valid.vals vector to check user input against
+#' @rdname unitizer_prompt
 
 exit_fun <- function(y, env, valid.vals) {               # keep re-prompting until user types in valid value
   if(!is.expression(y)) stop("Argument `y` should be an expression.")
@@ -311,33 +325,33 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
   }
   return(y[[1L]])
 }
-
-#' Version of readline That Can Accept Pre-decined input
-#'
-#' Used primarily so that interactive user text driven functions can be auto-
-#' mated
-#'
+#' @keywords internal
+#' @rdname unitizer_prompt
 
 read_line <- function(prompt="") {
   stopifnot(is.chr1(prompt))
-  if(
-    is.null(.global$prompt.vals) ||
-    (is.character(.global$prompt.vals) && !length(.global$prompt.vals))
-  ) {
-    return(readline(prompt))
-  }
-  if(!is.character(.global$prompt.vals) || !length(.global$prompt.vals)) {
+  if(is.null(.global$prompt.vals)) {
+    readline(prompt)
+  } else if(!is.character(.global$prompt.vals)) {
     stop(
       "Logic Error: internal object `.global$prompt.vals` has unexpected ",
       "value; contact maintainer."
     )
+  } else if(!length(.global$prompt.vals)) {
+    stop(
+      "Logic Error: ran out of predifined readline input; contact maintainer."
+    )
+  } else {
+    res <- .global$prompt.vals[[1L]]
+    .global$prompt.vals <- tail(.global$prompt.vals, -1L)
+    cat(prompt, res, "\n", sep="")
+    res
   }
-  res <- .global$prompt.vals[[1L]]
-  .global$prompt.vals <- tail(.global$prompt.vals, -1L)
-  res
 }
+#' @keywords internal
+#' @rdname unitizer_prompt
 
 read_line_set_vals <- function(vals) {
-  stopifnot(is.character(vals))
+  stopifnot(is.character(vals) || is.null(vals))
   .global$prompt.vals <- vals
 }

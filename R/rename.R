@@ -43,10 +43,10 @@ setMethod("editCalls", c("unitizer", "language", "language"),
     i <- 0L
     if(interactive.only) {
       repeat {
-        ans <- readline("Do you wish to proceed ([Y]es/[N]o)? ")
+        ans <- read_line("Do you wish to proceed ([Y]es/[N]o)? ")
         if(tolower(ans) %in% c("y", "yes")) break
         else if(tolower(ans) %in% c("n", "no")) {
-          message("Existing without edits")
+          message("Exiting without edits")
           return(x)
         } else {
           message("Invalid input, should be \"Y\" or \"N\"")
