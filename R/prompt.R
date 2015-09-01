@@ -32,6 +32,9 @@ NULL
 #' are used to implement a version of \code{\link{readline}} that can be
 #' automated for testing.
 #'
+#' \code{interactive_mode} returns interactive status, accounting for whether
+#' we are in faux-interactive mode as set by \code{read_line_set_vals}
+#'
 #' @keywords internal
 #' @seealso browse_unitizer_items
 #' @param text the prompt text to display
@@ -82,10 +85,7 @@ unitizer_prompt <- function(
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
   ...
 ) {
-  if(
-    !interactive() &&
-    (!is.character(.global$prompt.vals) || !length(.global$prompt.vals))
-  )
+  if(!interactive_mode())
     stop(
       "Logic Error: attempting to use interactive unitizer environment in ",
       "non-interactive session."
@@ -275,10 +275,7 @@ simple_prompt <- function(
   message, values=c("Y", "N"), prompt="unitizer> ", attempts=5L,
   case.sensitive=FALSE
 ) {
-  if(
-    !interactive() &&
-    (!is.character(.global$prompt.vals) || !length(.global$prompt.vals))
-  )
+  if(!interactive_mode())
     stop("This function is only available in interactive mode")
   if(!is.character(message)) stop("Argument `message` must be character")
   if(!is.character(values) || length(values) < 1L || any(is.na(values)))
@@ -359,3 +356,10 @@ read_line_set_vals <- function(vals) {
   stopifnot(is.character(vals) || is.null(vals))
   .global$prompt.vals <- vals
 }
+#' @keywords internal
+#' @rdname unitizer_prompt
+
+interactive_mode <- function() {
+  interactive() || is.character(.global$prompt.vals)
+}
+

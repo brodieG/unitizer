@@ -128,7 +128,7 @@ unitize <- function(
 #' @export
 
 review <- function(store.id) {
-  if(!interactive()) stop("`review` only available in interactive mode")
+  if(!interactive_mode()) stop("`review` only available in interactive mode")
   invisible(
     unitize_core(
       test.files=NA_character_,
