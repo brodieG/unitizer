@@ -262,77 +262,7 @@ store_unitizer <- function(unitizer) {
   }
   return(invisible(TRUE))
 }
-
-#' Get A Store ID in Full Path Format
-#'
-#' Loosely related to \code{getTarget,unitizer-method} and
-#' \code{getName,unitizer-method} although these are not trying to convert to
-#' character or check anything, just trying to normalize if possible.
-#'
-#' Relevant for default ids
-#' @keywords internal
-
-norm_store_id <- function(x) if(is.default_unitizer_id(x)) norm_file(x) else x
-
-#' @rdname norm_store_id
-#' @keywords internal
-
-norm_file <- function(x) {
-  if(
-    !inherits(  # maybe this should just throw an error
-      normed <- try(normalizePath(x, mustWork=TRUE), silent=TRUE),
-      "try-error"
-    )
-  ) normed else x
-}
-
-#' Convert Store ID to Character
-#'
-#' For display purposes only since path is relativized.
-#'
-#' If not possible make up a name
-#'
-#' @keywords internal
-
-as.store_id_chr <- function(x) {
-  if(is.chr1plain(x)){
-    return(relativize_path(x))
-  }
-  target <- try(as.character(x), silent=TRUE)
-  if(inherits(target, "try-error")) return(FALSE)
-  target
-}
-#' Get Most Intuitive Name for Store
-#'
-#' Based on data from \code{store.id} and \code{test.file}
-#'
-#' @param store.id a \code{unitizer} store id
-#' @param test.file the location of the R test file
-#' @return character(1L)
-
-best_store_name <- function(store.id, test.file) {
-  stopifnot(is.chr1plain(test.file))
-  if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
-    if(is.na(test.file)) return("<untranslateable-unitizer-id>")
-    return(
-      paste0("unitizer for test file '", relativize_path(test.file), "'")
-    )
-  }
-  chr.store
-}
-#' @keywords internal
-#' @rdname best_store_name
-
-best_file_name <- function(store.id, test.file) {
-  stopifnot(is.chr1plain(test.file))
-  if(!is.na(test.file)) return(relativize_path(test.file))
-  if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
-    return("<unknown-test-file>")
-  }
-  paste0("Test file for unitizer '", chr.store, "'")
-}
-#' Helper function for load
-#'
+#' @rdname load_unitizer
 #' @keywords internal
 
 unitizer_valid <- function(x, curr.version=packageVersion("unitizer")) {
@@ -367,3 +297,79 @@ unitizer_valid <- function(x, curr.version=packageVersion("unitizer")) {
         )
       } else ""
 } } }
+
+#' Manipulate \code{unitizer} Store and File Names
+#'
+#' Used to provide display friendly or absolute versions of \code{unitizer}
+#' test file or store identifiers.
+#'
+#' @section \code{norm_store_id}, \code{norm_file}:
+#'
+#' Loosely related to \code{getTarget,unitizer-method} and
+#' \code{getName,unitizer-method} although these are not trying to convert to
+#' character or check anything, just trying to normalize if possible.
+#'
+#' @section \code{best_store_name}, \code{best_file_name}:
+#'
+#' Generate the most intuitive names possible for either the store or the test
+#' file.
+#'
+#' @section \code{as.store_id_chr}:
+#'
+#' Converts as store ID to character
+#'
+#' @rdname best_store_name
+#' @keywords internal
+#' @param store.id a \code{unitizer} store id
+#' @param test.file the location of the R test file
+#' @return character(1L), except for \code{as.store_id_chr}, which returns FALSE
+#'   on failure
+
+norm_store_id <- function(x) if(is.default_unitizer_id(x)) norm_file(x) else x
+
+#' @rdname norm_store_id
+#' @keywords internal
+
+norm_file <- function(x) {
+  if(
+    !inherits(  # maybe this should just throw an error
+      normed <- try(normalizePath(x, mustWork=TRUE), silent=TRUE),
+      "try-error"
+    )
+  ) normed else x
+}
+#' @keywords internal
+#' @rdname best_store_name
+
+as.store_id_chr <- function(x) {
+  if(is.chr1plain(x)){
+    return(relativize_path(x))
+  }
+  target <- try(as.character(x), silent=TRUE)
+  if(inherits(target, "try-error")) return(FALSE)
+  target
+}
+#' @keywords internal
+#' @rdname best_store_name
+
+best_store_name <- function(store.id, test.file) {
+  stopifnot(is.chr1plain(test.file))
+  if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
+    if(is.na(test.file)) return("<untranslateable-unitizer-id>")
+    return(
+      paste0("unitizer for test file '", relativize_path(test.file), "'")
+    )
+  }
+  chr.store
+}
+#' @keywords internal
+#' @rdname best_store_name
+
+best_file_name <- function(store.id, test.file) {
+  stopifnot(is.chr1plain(test.file))
+  if(!is.na(test.file)) return(relativize_path(test.file))
+  if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
+    return("<unknown-test-file>")
+  }
+  paste0("Test file for unitizer '", chr.store, "'")
+}
