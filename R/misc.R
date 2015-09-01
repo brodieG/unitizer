@@ -139,25 +139,37 @@ history_capt <- function(hist.file=NULL) {
     loadhistory(showConnections()[as.character(hist.con), "description"]),
     silent=TRUE
   )
-  if(inherits(hist.try, "try-error"))
+  if(inherits(hist.try, "try-error")) {
     warning(conditionMessage(attr(hist.try, "condition")))
+    attr(hist.con, "no.hist") <- TRUE
+  }
   list(con=hist.con, file=hist.file)
 }
 history_release <- function(hist.obj) {
   if(all(vapply(hist.obj, is.null, logical(1L))))
     return(invisible(TRUE))
+  no.hist <- attr(hist.obj$con, "no.hist")
   close(hist.obj$con)
   file.remove(hist.obj$file)
-  hist.try <- try(loadhistory(), silent=TRUE)
-  if(inherits(hist.try, "try-error"))
-    warning(conditionMessage(attr(hist.try, "condition")))
+  if(!isTRUE(no.hist)) {
+    hist.try <- try(loadhistory(), silent=TRUE)
+    if(inherits(hist.try, "try-error"))
+      warning(conditionMessage(attr(hist.try, "condition")))
+  }
 }
 history_write <- function(hist.con, data) {
   stopifnot(is.open_con(hist.con), is.character(data))
   if(is.open_con(hist.con)) {
     cat(data, file=hist.con, sep="\n")
-    loadhistory(showConnections()[as.character(hist.con), "description"])
-  }
+    if(!isTRUE(attr(hist.con, "no.hist"))) {
+      hist.save <-
+        try(
+          loadhistory(showConnections()[as.character(hist.con), "description"]),
+          silent=TRUE
+        )
+      if(inherits(hist.save, "try-error"))
+        warning(attr(hist.save, "condition"), immediate.=TRUE)
+  } }
 }
 #' Simplify a Path As Much as Possible to Working Directory
 #'
