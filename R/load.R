@@ -179,8 +179,6 @@ load_unitizers <- function(
     unitizers[[i]]@global <- global
     unitizers[[i]]@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
   }
-  unitizers[!seq(unitizers) %in% valid.idx] <- FALSE
-
   # Issue errors as required
 
   if(length(invalid.idx)) {
@@ -216,6 +214,16 @@ load_unitizers <- function(
     word_cat(
       "No valid unitizer", if(length(store.ids) > 1L) "s", " to load", sep=""
     )
+  # Create fail load objects for all failures
+
+  invalid.idx <- which(!seq_along(unitizers) %in% valid.idx)
+  unitizers[invalid.idx] <- lapply(
+    invalid.idx,
+    function(x)
+      new(
+        "unitizerLoadFail", test.file=test.files[[x]], store.id=store.ids[[x]],
+        reason=valid[[x]]
+  ) )
   new("unitizerObjectList", .items=unitizers)
 }
 
@@ -297,6 +305,40 @@ unitizer_valid <- function(x, curr.version=packageVersion("unitizer")) {
         )
       } else ""
 } } }
+setClass(
+  "unitizerLoadFail",
+  slots=c(
+    test.file="character",
+    store.id="ANY",
+    reason="character"
+  ),
+  validity=function(object) {
+    if(!is.chr1(object@test.file))
+      return("Slot `test.file` must be character(1L)")
+    if(!is.chr1(object@reason))
+      return("Slot `reason` must be character(1L)")
+    TRUE
+  }
+)
+setMethod(
+  "show", "unitizerLoadFail",
+  function(object) {
+    word_cat(
+      "Failed Loading Unitizer:",
+      as.character(
+        UL(
+          c(
+            paste0(
+              "Test file: ", best_file_name(object@store.id, object@test.file)
+            ),
+            paste0(
+              "Store: ", best_store_name(object@store.id, object@test.file)
+            ),
+            paste0("Reason: ", object@reason)
+    ) ) ) )
+    invisible(NULL)
+  }
+)
 
 #' Manipulate \code{unitizer} Store and File Names
 #'
@@ -345,8 +387,12 @@ as.store_id_chr <- function(x) {
   if(is.chr1plain(x)){
     return(relativize_path(x))
   }
-  target <- try(as.character(x), silent=TRUE)
-  if(inherits(target, "try-error")) return(FALSE)
+  target <- try(as.character(x))
+  if(inherits(target, "try-error"))
+    stop(
+      "Unable to convert store id to character; if you are using custom ",
+      "store IDs be sure to define an `as.character` method for them"
+    )
   target
 }
 #' @keywords internal
@@ -354,7 +400,8 @@ as.store_id_chr <- function(x) {
 
 best_store_name <- function(store.id, test.file) {
   stopifnot(is.chr1plain(test.file))
-  if(!is.chr1plain(chr.store <- as.store_id_chr(store.id))) {
+  chr.store <- try(as.store_id_chr(store.id), silent=TRUE)
+  if(!is.chr1plain(chr.store)) {
     if(is.na(test.file)) return("<untranslateable-unitizer-id>")
     return(
       paste0("unitizer for test file '", relativize_path(test.file), "'")

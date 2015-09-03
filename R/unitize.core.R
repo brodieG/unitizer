@@ -339,7 +339,42 @@ unitize_core <- function(
       "`unitizer` evaluation succeed, but `post` steps had errors:",
       post.res
     )
+  # We need to reload the unitizers now since we can't directly return the
+  # `unitizers` that are available at this level since they are not the ones
+  # that actually get stored (necessary for re-eval purposes); some question
+  # whether this is necessary as it is potentially slow.
 
+  unitizer.reload <- try(
+    load_unitizers(
+      store.ids[valid], test.files[valid], par.frame=util.frame,
+      interactive.mode=FALSE, mode=mode, global=global
+  ) )
+  if(inherits(unitizer.reload, "try-error"))
+    stop(
+      "Logic Error: unitizer completed, but is unable to reload unitizer ",
+      "stores to return them; this should not happen, contact maintainer."
+    )
+  reload.valid <- vapply(as.list(unitizer.reload), is, logical(1L), "unitizer")
+  reload.invalid <- which(!reload.valid)
+  if(length(reload.invalid)) {
+    reload.fail.names <- character(length(reload.invalid))
+    for(i in reload.invalid) {
+      if(!is(unitizer.reload[[i]], "unitizerLoadFail"))
+        stop(
+          "Logic Error: unitizer list may only contain untizers or ",
+          "unitizerLoadFail objects; found object of class `",
+          deparse(class(unitizer.reload[[i]]), width=500), "` at index ", i,
+          "; contact maintainer."
+        )
+      reload.fail.names[[i]] <- best_file_name(unitizer.reload[[i]]@test.file)
+    }
+    word_cat(
+      "The following unitizers ran successfully, but could not be reloaded ",
+      "for return:",
+      as.character(UL(reload.fail.names))
+    )
+  }
+  unitizers[valid] <- as.list(unitizer.reload)
   return(as.list(unitizers))
 }
 #' Evaluate User Tests

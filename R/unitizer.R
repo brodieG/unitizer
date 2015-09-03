@@ -219,10 +219,13 @@ setClass(
       !all(
         vapply(
           object@.items,
-          function(x) is(x, "unitizer") || identical(x, FALSE),
+          function(x) is(x, "unitizer") || is(x, "unitizerLoadFail"),
           logical(1L))
     ) )
-      return("slot `.items` may only contain \"unitizer\" objects or FALSE")
+      return(
+        "slot `.items` may only contain \"unitizer\" or \"unitizerLoadFail\" ",
+        "objects."
+      )
     TRUE
   }
 )
@@ -231,11 +234,11 @@ setClass(
   slots=c(test.files="character", totals="integer", updated="logical"),
   validity=function(object) {
     if(!all(vapply(object@.items, is, logical(1L), "unitizerSummary")))
-      return("slot `.items` may only contain \"unitizer\" objects")
+      return("slot `.items` may only contain \"unitizerSummary\" objects")
     if(length(object@.items) != length(object@test.files))
-      return("slot `items` and slot `test.files` must be same length")
+      return("slot `.items` and slot `test.files` must be same length")
     if(length(object@.items) != length(object@updated))
-      return("slot `items` and slot `updated` must be same length")
+      return("slot `.items` and slot `updated` must be same length")
     TRUE
 } )
 # - Methods -------------------------------------------------------------------
