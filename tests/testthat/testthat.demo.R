@@ -37,17 +37,37 @@ test_that("show_file", {
   unlink(f)
 })
 # Run actual demo bits; note we want to force `interactive.mode=TRUE` so that
-# `read_line_vals` values are used as user input
+# `read_line_vals` values are used as user input; note that until we fix
+# / rationalize how sinking behaves within unitizer when the standard streams
+# come in sunk, we won't be able to fully test everything, since for example
+# the display of the captured stdout just won't happen.
 
+old.width <- options(width=80)
+
+# devtools::install()
+library(unitizer)
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R")
 .unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.unitizer")
 
 unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
-cat(unitizer:::.global$prompt.vals, sep="\n")
-untz <- unitize(.unitizer.test.file, interactive.mode=TRUE)
+txt1 <- unitizer:::capture_output(
+  untz <- unitize(.unitizer.test.file, interactive.mode=TRUE)
+)
+# Re-running doesn't change unitizer
 
+txt2 <- unitizer:::capture_output(
+  untz2 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
+)
+# Rejecting failed tests does not change unitizer
+
+update_fastlm(.unitizer.fastlm, version="0.1.1")
+devtools::install(.unitizer.fastlm, quiet=TRUE)
+unitizer:::read_line_set_vals(c("N", "N", "Y"))
+txt3 <- unitizer:::capture_output(
+  untz3 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
+)
 test_that("demo create worked", {
   expect_is(untz, "unitizer")
   expect_equal(
@@ -58,18 +78,53 @@ test_that("demo create worked", {
     lapply(unitizer:::as.list(untz@items.ref[4:7]), function(x) x@data@value),
     list(structure(c(-1717, 101, 0.938678984853783), .Names = c("intercept", "slope", "rsq"), class = "fastlm"), 101, 0.938678984853783, NULL)
   )
+  expect_equal(untz, untz2)
+  expect_equal(untz, untz3)
+  expect_match(
+    paste0(txt1$output, collapse=""),
+    "\\+-+\\+| unitizer for: tests/unitizer/fastlm\\.R.*Pass Fail  New  1\\. <untitled>     -    -    4.*= Finalize Unitizer.*- Adding 4 out of 4 new tests"
+  )
+  expect_match(
+    paste0(txt1$message, collapse=""),
+    "Error in fastlm\\(1:100, 1:10\\).*You will IRREVERSIBLY modify.*unitizer updated"
+  )
+  expect_match(
+    paste0(txt2$message, collapse=""), "All tests passed; nothing to review\\."
+  )
+  expect_match(
+    paste0(txt3$message, collapse=""), "unitizer test fails on value mismatch:.*unitizer unchanged\\."
+  )
 })
+# review is always in interactive mode
+
 unitizer:::read_line_set_vals(c("5", "Q"))
-txt <- capture.output(review(.unitizer.test.store)) # review is always in interactive mode
+txt4 <- unitizer:::capture_output(review(.unitizer.test.store))
 
 test_that("demo review", {
-  expect_true(
-    grepl(
-      "5\\. get_slope\\(res\\).*> get_slope\\(res\\)\\[1\\] 101.*Q",
-      paste0(txt, collapse="")
-    )
+  expect_match(
+    paste0(txt4$output, collapse=""),
+    "5\\. get_slope\\(res\\).*> get_slope\\(res\\).*Q"
+  )
+  expect_match(
+    paste0(txt4$message, collapse=""),
+    "No changes recorded; exiting.unitizer unchanged."
+  )
+})
+unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
+
+txt5 <- unitizer:::capture_output(
+  untz5 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
+)
+test_that("demo changes", {
+  expect_match(
+    paste0(txt5$output, collapse=""), "Pass Fail 1\\. <untitled>     2    2"
+  )
+  expect_match(
+    paste0(txt5$message, collapse=""),
+    "\\*value\\* mismatch: mean relative difference: 19854602162.*You will IRREVERSIBLY modify"
   )
 })
 
 unitizer:::read_line_set_vals(NULL)
-
+options(old.width)
+unitizer_cleanup_demo()
