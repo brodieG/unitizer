@@ -627,7 +627,6 @@ str_reduce_unique <- function(x, from="left") {
   }
   res
 }
-
 #' Convert A Matrix of Test Outcomes for Display
 #'
 #' Used by \code{show} methods for both \code{unitizerSummary} and
@@ -693,3 +692,31 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
   )
   res
 }
+#' Capture Both StdOut and StdErr
+#'
+#' Will sink both "output" and "message" streams without checking whether they
+#' are already sunk, and will unsink them the same way.
+#'
+#' @keywords internal
+#' @param a quoted to evaluate
+#' @param env an environment to evaluate them in
+#' @return a list with stdout and stderr captured separately
+
+capture_output <- function(expr, env=parent.frame()) {
+  std.out <- tempfile()
+  std.err <- tempfile()
+  std.err.con <- file(std.err, "w")
+  files <- c(output=std.out, message=std.err)
+  sink(std.out)
+  sink(std.err.con, type="message")
+  on.exit({
+    sink()
+    sink(type="message")
+    close(std.err.con)
+    unlink(files)
+  })
+  eval(expr, env)
+  res <- lapply(files, readLines)
+  res
+}
+
