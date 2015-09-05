@@ -111,7 +111,10 @@ unitize_core <- function(
         "\"at\" mode"
       )
     close(test.con)
-  } else history <- tempfile()
+  } else {
+    history <- tempfile()
+    attr(history, "hist.tmp") <- TRUE
+  }
 
   # Make sure nothing untoward will happen if a test triggers an error
 
@@ -136,7 +139,7 @@ unitize_core <- function(
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
     word_cat(
       "In order to proceed unitizer must create the following ", dir.word,
-      ":\n"
+      ":\n", sep=""
     )
     print(UL(dir.names.clean))
     prompt <- paste0("Create ", dir.word)
