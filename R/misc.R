@@ -150,7 +150,7 @@ history_release <- function(hist.obj) {
     return(invisible(TRUE))
   no.hist <- attr(hist.obj$con, "no.hist")
   close(hist.obj$con)
-  file.remove(hist.obj$file)
+  if(isTRUE(attr(hist.obj$file, "hist.tmp"))) file.remove(hist.obj$file)
   if(!isTRUE(no.hist)) {
     hist.try <- try(loadhistory(), silent=TRUE)
     if(inherits(hist.try, "try-error"))
