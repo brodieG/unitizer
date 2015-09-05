@@ -707,16 +707,24 @@ capture_output <- function(expr, env=parent.frame()) {
   std.err <- tempfile()
   std.err.con <- file(std.err, "w")
   files <- c(output=std.out, message=std.err)
+  success <- FALSE
   sink(std.out)
   sink(std.err.con, type="message")
   on.exit({
     sink()
     sink(type="message")
     close(std.err.con)
+    if(!success) {
+      try({
+        cat(readLines(std.out), sep="\n")
+        cat(readLines(std.err), sep="\n", file=stderr())
+      })
+    }
     unlink(files)
   })
   eval(expr, env)
   res <- lapply(files, readLines)
+  success <- TRUE
   res
 }
 
