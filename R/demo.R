@@ -158,7 +158,6 @@ unitizer_check_demo_state <- function() {
 }
 # nocov end
 
-# nocov start
 #' @export
 #' @rdname demo
 
@@ -169,5 +168,3 @@ unitizer_cleanup_demo <- function() {
   unlink(.unitizer.fastlm, recursive=TRUE)
   rm(list=vars, envir=parent.frame())
 }
-# nocov end
-
