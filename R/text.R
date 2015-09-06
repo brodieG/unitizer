@@ -64,8 +64,8 @@ diff_obj_out <- function(
   max.len <- as.integer(max.len)
   frame # force
   tar.width <- width - 4L
-  obj.add.capt <- obj_capt(obj.add, tar.width, frame)
-  obj.rem.capt <- obj_capt(obj.rem, tar.width, frame)
+  obj.add.capt <- sub("\\s+$", "", obj_capt(obj.add, tar.width, frame))
+  obj.rem.capt <- sub("\\s+$", "", obj_capt(obj.rem, tar.width, frame))
 
   min.len <- min(length(obj.add.capt), length(obj.rem.capt))
   diffs <-
