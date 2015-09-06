@@ -234,9 +234,12 @@ unitize_core <- function(
   if(identical(global$status@random.seed, 2L)) {
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
       stop(
-        "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
-        "is a list of possible arguments to `set.seed`."
-  ) } }
+        paste0(collapse="\n",
+          word_wrap(
+            paste0(collapse="",
+              "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
+              "is a list of possible arguments to `set.seed`."
+  ) ) ) ) } }
   if(identical(global$status@working.directory, 2L)) {
     if(
       length(unique(dirname(test.files)) == 1L) &&
@@ -246,14 +249,20 @@ unitize_core <- function(
     } else {
       multi.file <- length(test.files) > 1L
       warning(
-        "Working directory state tracking is in mode 2, but test file",
-        if(multi.file) "s do not" else " does not", "appear to be part of a ",
-        "package so instead of setting directory to the package dir ",
-        if(multi.file)
-          paste0(
-            "prior to running each test file we will set it to ",
-            "the current working directory."
-          ) else "we will leave it unchanged.", immediate.=TRUE
+        paste0(
+          collapse="\n",
+          word_wrap(
+            paste0(collapse="",
+              "Working directory state tracking is in mode 2, but test file",
+              if(multi.file) "s do not" else " does not", "appear to be part of a ",
+              "package so instead of setting directory to the package dir ",
+              if(multi.file)
+                paste0(
+                  "prior to running each test file we will set it to ",
+                  "the current working directory."
+                ) else "we will leave it unchanged."
+        ) ) ),
+        immediate.=TRUE
   ) } }
   # - Parse / Load -------------------------------------------------------------
 
@@ -563,10 +572,14 @@ unitize_browse <- function(
       if(prompt %in% c("N", "Q") && confirm_quit(unitizers)) quit <- TRUE
     } else {
       stop(
-        "Unable to proceed in non-interactive mode; set options state ",
-        "tracking to a value less than or equal to search path state tracking ",
-        "or see vignette for other workarounds."
-  ) } }
+        paste0(collapse="\n",
+          word_wrap(
+            paste0(
+              collapse="",
+              "Unable to proceed in non-interactive mode; set options state ",
+              "tracking to a value less than or equal to search path state ",
+              "tracking or see vignette for other workarounds."
+  ) ) ) ) } }
 
   if(!quit) {
     if(identical(mode, "review") || any(to.review) || force.update) {
@@ -705,12 +718,16 @@ unitize_browse <- function(
             )
           }
           stop(
-            "Newly evaluated tests do not match unitizer (",
-            paste(
-              names(summaries@totals), summaries@totals, sep=": ", collapse=", "
-            ),
-            "); see above for more info, or run in interactive mode"
-          )
+            paste0(collapse="\n",
+              word_wrap(
+                paste0(
+                  collapse="",
+                  "Newly evaluated tests do not match unitizer (",
+                  paste(
+                    names(summaries@totals), summaries@totals, sep=": ", collapse=", "
+                  ),
+                  "); see above for more info, or run in interactive mode"
+          ) ) ) )
         }
         # - Simple Outcomes / no-review ------------------------------------------
 
@@ -718,7 +735,7 @@ unitize_browse <- function(
           break
       }
     } else {
-      message("All tests passed; nothing to review.")
+      word_msg("All tests passed; nothing to review.")
     }
   } else eval.which <- integer(0L)  # we quit, so don't want to re-evalute anything
 
@@ -751,21 +768,32 @@ check_call_stack <- function() {
           c("withCallingHandlers", "withRestarts", "tryCatch")
     ) )
   ) warning(
-    "It appears you are running unitizer inside an error handling function such ",
-    "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
-    "discouraged as it may cause unpredictable behavior from unitizer in the ",
-    "event tests produce conditions / errors.  We strongly recommend you re-run ",
-    "your tests outside of such handling functions.", immediate.=TRUE
+    paste0(
+      collapse="\n",
+      word_wrap(
+        paste0(collapse="",
+          "It appears you are running unitizer inside an error handling ",
+          "function such as `withCallingHanlders`, `tryCatch`, or ",
+          "`withRestarts`.  This is strongly discouraged as it may cause ",
+          "unpredictable behavior from unitizer in the event tests produce ",
+          "conditions / errors.  We strongly recommend you re-run ",
+          "your tests outside of such handling functions."
+    ) ) ),
+    immediate.=TRUE
   )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
   if("unitizerQuitExit" %in% restart.names)
     stop(
-      "`unitizerQuitExit` restart is already defined; unitizer relies on this ",
-      "restart to restore state prior to exit, so unitizer will not run if it is ",
-      "defined outside of `unitize`.  If you did not define this restart contact ",
-      "maintainer."
-    )
+      paste0(
+        collapse="\n",
+        word_wrap(
+          paste0(collapse="",
+            "`unitizerQuitExit` restart is already defined; unitizer relies ",
+            "on this restart to restore state prior to exit, so unitizer will ",
+            "not run if it is defined outside of `unitize`.  If you did not ",
+            "define this restart contact maintainer."
+    ) ) ) )
 }
 #' Helper function for validations
 #'
