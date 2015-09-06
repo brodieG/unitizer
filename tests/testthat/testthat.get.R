@@ -60,8 +60,10 @@ local({
     untzs.classes <- vapply(unitizer:::as.list(untzs), class, character(1L))
     expect_equal(
       untzs.classes,
-      c("logical", "logical", "unitizer", "unitizer", "unitizer")
-    )
+      c(
+        "unitizerLoadFail", "unitizerLoadFail", "unitizer",
+        "unitizer", "unitizer"
+    ) )
     untzs2 <- unitizer:::load_unitizers(
       list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
       mode="unitize", force.upgrade=FALSE
@@ -84,11 +86,12 @@ local({
     untz.tmp@version <- "9999.0.0"
     saveRDS(untz.tmp, file.path(tmp.sub.dir2, "data.rds"))
 
-    expect_false(
+    expect_is(
       unitizer:::load_unitizers(
         list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
         mode="unitize", force.upgrade=FALSE
-      )[[1L]]
+      )[[1L]],
+      "unitizerLoadFail"
     )
   } )
   unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE)
