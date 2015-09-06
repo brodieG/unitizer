@@ -153,10 +153,10 @@ eval_with_capture <- function(
   on.exit({
       options(warn=warn.opt)
       options(error=err.opt)
-      try(get_capture(capt.cons, display=TRUE))
-      release_sinks()
+      capt.try <- try(get_capture(capt.cons, display=TRUE))
+      if(inherits(capt.try, "try-error")) release_sinks()
       if(!came.with.capts) close_and_clear(capt.cons)
-      message(
+      word_msg(
         "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
         paste0(deparse(x), collapse=""),
         "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
