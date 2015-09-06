@@ -700,7 +700,8 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
 #' @keywords internal
 #' @param a quoted to evaluate
 #' @param env an environment to evaluate them in
-#' @return a list with stdout and stderr captured separately
+#' @return a list with stdout and stderr captured separately, classed as
+#'   "captured_output"
 
 capture_output <- function(expr, env=parent.frame()) {
   std.out <- tempfile()
@@ -725,6 +726,13 @@ capture_output <- function(expr, env=parent.frame()) {
   eval(expr, env)
   res <- lapply(files, readLines)
   success <- TRUE
-  res
+  invisible(structure(res, class="captured_output"))
+}
+#' @export
+#' @rdname capture_output
+
+print.captured_output <- function(x, ...) {
+  cat(x$output, sep="\n")
+  cat(x$message, sep="\n", file=stderr())
 }
 
