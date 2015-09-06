@@ -111,11 +111,21 @@ test_that("unitize_dir", {
 # Namespace conflicts; unfortunately if either `covr` or `data.table` are loaded
 # this may not work quite right
 
-old.keep.ns <- options(unitizer.namespace.keep=c("unitizer.fastlm", "testthat"))
+old.keep.ns <- options(unitizer.namespace.keep=c("testthat"))
 unitizer:::read_line_set_vals("Y")
 txt4 <- unitizer:::capture_output(unitize_dir(test.dir, state="pristine", interactive.mode=TRUE))
 unitizer:::read_line_set_vals("N")
 txt5 <- unitizer:::capture_output(unitize_dir(test.dir, state="pristine", interactive.mode=TRUE))
+
+# Non-interactive; also testing what happens when we run a test with errors
+# inside a try block (txt6)
+
+txt6 <- unitizer:::capture_output(
+  try(unitize_dir(test.dir, state="pristine", interactive.mode=FALSE))
+)
+txt7 <- unitizer:::capture_output(
+  try(unitize(file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE))
+)
 options(old.keep.ns)
 
 test_that("namespace conflict", {
@@ -124,6 +134,12 @@ test_that("namespace conflict", {
   )
   expect_equal_to_reference(
     txt5, file.path("helper", "refobjs", "unitize_nsconf2.rds")
+  )
+  expect_equal_to_reference(
+    txt6, file.path("helper", "refobjs", "unitize_errintry.rds")
+  )
+  expect_equal_to_reference(
+    txt7, file.path("helper", "refobjs", "unitize_nsconf3.rds")
   )
 })
 unitizer_cleanup_demo()
