@@ -270,8 +270,7 @@ store_unitizer <- function(unitizer) {
   }
   return(invisible(TRUE))
 }
-#' @rdname load_unitizer
-#' @keywords internal
+#' @rdname load_unitizers
 
 unitizer_valid <- function(x, curr.version=packageVersion("unitizer")) {
   if(!is(x, "unitizer")) {
@@ -369,8 +368,7 @@ setMethod(
 
 norm_store_id <- function(x) if(is.default_unitizer_id(x)) norm_file(x) else x
 
-#' @rdname norm_store_id
-#' @keywords internal
+#' @rdname best_store_name
 
 norm_file <- function(x) {
   if(
@@ -380,7 +378,6 @@ norm_file <- function(x) {
     )
   ) normed else x
 }
-#' @keywords internal
 #' @rdname best_store_name
 
 as.store_id_chr <- function(x) {
@@ -395,7 +392,6 @@ as.store_id_chr <- function(x) {
     )
   target
 }
-#' @keywords internal
 #' @rdname best_store_name
 
 best_store_name <- function(store.id, test.file) {
@@ -409,7 +405,6 @@ best_store_name <- function(store.id, test.file) {
   }
   chr.store
 }
-#' @keywords internal
 #' @rdname best_store_name
 
 best_file_name <- function(store.id, test.file) {
