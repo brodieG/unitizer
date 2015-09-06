@@ -313,7 +313,7 @@ setClass(
     reason="character"
   ),
   validity=function(object) {
-    if(!is.chr1(object@test.file))
+    if(!is.character(object@test.file) || length(object@test.file) != 1L)
       return("Slot `test.file` must be character(1L)")
     if(!is.chr1(object@reason))
       return("Slot `reason` must be character(1L)")
