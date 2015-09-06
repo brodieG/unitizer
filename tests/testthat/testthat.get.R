@@ -99,19 +99,33 @@ local({
     expect_true(unitizer:::is_package_dir(system.file(package="methods")))
     expect_true(unitizer:::is_package_dir(system.file(package="stats"), has.tests=TRUE))
     expect_true(unitizer:::is_package_dir(system.file(package="methods"), has.tests=TRUE))
+    expect_equal(
+      unitizer:::pretty_path(
+        file.path(system.file(package="stats"), "DESCRIPTION")
+      ),
+      "package:stats/DESCRIPTION"
+    )
+    old.wd <- getwd()
+    setwd(system.file(package="stats"))
+    expect_equal(
+      unitizer:::pretty_path(
+        file.path(system.file(package="stats"), "DESCRIPTION")
+      ),
+      "DESCRIPTION"
+    )
+    expect_equal(
+      unitizer:::pretty_path(
+        file.path(system.file(package="stats"))
+      ),
+      "."
+    )
+    setwd(old.wd)
     expect_match(
       unitizer:::is_package_dir(file.path(system.file(package="stats"), "R")),  # just picked some folder we know will not work
       "No DESCRIPTION file"
     )
     expect_error(
       unitizer:::is_package_dir("ASDFASDF"), "file_test\\(\"-d\", name\\) is not TRUE"
-    )
-    expect_match(
-      unitizer:::is_package_dir(
-        file.path(
-          system.file(package="unitizer"), "example.pkgs", "baddescription0"
-      ) ),
-      "unitizerdummypkg2.*not match.*baddescription0"
     )
     expect_match(
       unitizer:::is_package_dir(
@@ -132,6 +146,8 @@ local({
     expect_true(length(unitizer:::get_package_dir(f)) == 0L)
     unlink(f)
     expect_error(unitizer:::get_package_dir(f))
+
+
   } )
   test_that("is_unitizer_dir", {
     base.dir <- file.path(
