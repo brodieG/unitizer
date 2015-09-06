@@ -284,7 +284,7 @@ unitize_core <- function(
     tests.parsed <- lapply(
       test.files,
       function(x) {
-        over_print(paste("Parsing", x))
+        over_print(paste("Parsing", relativize_path(x)))
         parse_tests(x, comments=TRUE)
   } ) }
   over_print("")
