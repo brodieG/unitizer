@@ -368,6 +368,8 @@ unitize_core <- function(
     )
   reload.valid <- vapply(as.list(unitizer.reload), is, logical(1L), "unitizer")
   reload.invalid <- which(!reload.valid)
+  # nocov start
+  # really shouldn't happen, so can't be tested
   if(length(reload.invalid)) {
     reload.fail.names <- character(length(reload.invalid))
     for(i in reload.invalid) {
@@ -386,6 +388,7 @@ unitize_core <- function(
       as.character(UL(reload.fail.names))
     )
   }
+  # nocov end
   unitizers[valid] <- as.list(unitizer.reload)
   return(as.list(unitizers))
 }
