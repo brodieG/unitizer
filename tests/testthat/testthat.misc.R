@@ -87,6 +87,13 @@ test_that("deparse_prompt", {
     c("> if (TRUE) {", "+     25", "+ } else {", "+     42", "+ }" )
   )
 })
+test_that("deparse_mixed", {
+  b <- setNames(1:3, letters[1:3])
+  x <- quote(1 + b)
+  x[[3]] <- b
+  expect_equal(unitizer:::deparse_mixed(x), "quote(1 + 1:3)")
+})
+
 test_that("(Un)ordered Lists", {
   vec <- c(
     "hello htere how are you blah blah blah blah blah",
@@ -161,6 +168,7 @@ test_that("Compare Functions With Traces", {
   untrace(library, where=.BaseNamespaceEnv)
   expect_error(unitizer:::identical_fun(1, base::library))
   expect_error(unitizer:::identical_fun(base::library, 1))
+  expect_true(unitizer:::identical_fun(base::print, base::print))
 } )
 test_that("word_cat", {
   str <- "Humpty dumpty sat on a wall and took a big fall.  All the kings horses and men couldn't put humpty dumpty together again"
@@ -206,6 +214,10 @@ test_that("relativize_path", {
     c("R", "../unitizerdummypkg1", file.path("notarealpath", "foo"))
   )
 })
+test_that("path_clean", {
+  expect_error(unitizer:::path_clean(list()), "must be character")
+  expect_equal(unitizer:::path_clean(file.path("a", "", "b", "c")), file.path("a", "b", "c"))
+})
 test_that("unitizer:::merge_lists", {
   expect_equal(
     unitizer:::merge_lists(list(a=1, b=2), list(c=3)),
@@ -231,3 +243,8 @@ test_that("is", {
   close(fc)
   unlink(f)
 })
+test_that("filename to storeid", {
+  expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
+  expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
+})
+

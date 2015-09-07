@@ -147,6 +147,16 @@ test_that("namespace conflict", {
 update_fastlm(.unitizer.fastlm, version="0.1.1")
 devtools::install(.unitizer.fastlm)
 
+# Try navigating through the unitizer
+
+unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N", "N", "B", "U", "Q"))
+txt7a <- unitizer:::capture_output(unitize(.unitizer.test.file, interactive.mode=TRUE))
+
+test_that("navigate", {
+  expect_equal_to_reference(
+    txt7a, file.path("helper", "refobjs", "unitize_nav1.rds")
+  )
+})
 # list help, review first item, but do nothing
 
 unitizer:::read_line_set_vals(c("H", "1", "Q", "Q"))
@@ -241,6 +251,19 @@ test_that("review dir", {
   )
   expect_equal_to_reference(
     txt13b, file.path("helper", "refobjs", "unitize_multiaccept3.rds")
+  )
+})
+# Upgrade again, and try with deleted tests and other things
+
+update_fastlm(.unitizer.fastlm, version="0.1.2")
+devtools::install(.unitizer.fastlm)
+
+unitizer:::read_line_set_vals(c("3", "ref(res)", "Y", "Y", "B", "1", "B", "U", "Y", "RR", "Y", "Q"))
+txt20 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+test_that("multi-sect", {
+  expect_equal_to_reference(
+    txt20, file.path("helper", "refobjs", "unitize_multisect1.rds")
   )
 })
 

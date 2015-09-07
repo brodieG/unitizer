@@ -53,6 +53,19 @@ local({
       ),
       "Cannot upgrade .* in non-interactive"
     )
+    unitizer:::read_line_set_vals("N")
+    untzs0 <- unitizer:::load_unitizers(
+      store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+      interactive.mode=TRUE, mode="unitize"
+    )
+    unitizer:::read_line_set_vals(NULL)
+    expect_true(all(vapply(unitizer:::as.list(untzs0), is, logical(1L), "unitizerLoadFail")))
+    expect_true(
+      all(
+        vapply(unitizer:::as.list(untzs0[-(1:2)]), slot, character(1L), "reason") ==
+          "User elected not to upgrade unitizers"
+      )
+    )
     untzs <- unitizer:::load_unitizers(
       store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
       interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
@@ -61,9 +74,19 @@ local({
     expect_equal(
       untzs.classes,
       c(
-        "unitizerLoadFail", "unitizerLoadFail", "unitizer",
+        "unitizerLoadFail", "unitizerLoadFail", "unitizerLoadFail", "unitizer",
         "unitizer", "unitizer"
     ) )
+    old.width <- options(width=80L)
+    txt1 <- paste0(collapse=";", capture.output(show(untzs[[1L]])))
+    txt2 <- paste0(collapse=";", capture.output(show(untzs[[3L]])))
+    expect_match(
+      txt1, "Failed Loading Unitizer:;- Test file.*;- Store.*;- Reason: `get_unitizer` error: Retrieved object is not a unitizer store"
+    )
+    expect_match(
+      txt2, "Failed Loading Unitizer:;- Test file.*;- Store.*;- Reason: Upgrade failed: no slot of name \"items.ref\" for this object"
+    )
+    options(old.width)
     untzs2 <- unitizer:::load_unitizers(
       list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
       mode="unitize", force.upgrade=FALSE
@@ -95,7 +118,6 @@ local({
     )
   } )
   unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE)
-  print("random print to flush warnings")
 
   test_that("is_package", {
     expect_true(unitizer:::is_package_dir(system.file(package="stats")))
@@ -202,6 +224,36 @@ local({
     expect_match(
       infer(file.path(base.dir2, "z"), type="u"),
       "tests/unitizer/zzz\\.unitizer$"
+    )
+    # Interactive mode
+
+    unitizer:::read_line_set_vals(c("26", "Q"))
+    expect_equal(
+      unitizer:::infer_unitizer_location(file.path(base.dir, "*"), type="f", interactive.mode=TRUE),
+      file.path(base.dir, "*")
+    )
+    unitizer:::read_line_set_vals(c("5"))
+    expect_equal(
+      unitizer:::infer_unitizer_location(file.path(base.dir, "*"), type="f", interactive.mode=TRUE),
+      file.path(base.dir, "tests", "unitizer", "zzz.R")
+    )
+    unitizer:::read_line_set_vals(NULL)
+  })
+  test_that("test file / store manip", {
+    expect_identical(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello")
+    expect_error(unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")), "Unable to convert")
+    as.character.custstore <- function(x, ...) x
+    expect_match(
+      unitizer:::best_store_name(structure(list("hello", class="custstore")), "hello"),
+      "unitizer for .*hello"
+    )
+    expect_match(
+      unitizer:::best_store_name(structure(list("hello", class="custstore")), NA_character_),
+      "untranslateable"
+    )
+    expect_match(
+      unitizer:::best_file_name(structure(list("hello", class="custstore")), NA_character_),
+      "unknown-test-file"
     )
   })
 } )

@@ -30,7 +30,7 @@ test_that("Detecting packages", {
   expect_error(unitizer:::is.loaded_package(1))
   expect_error(unitizer:::is.loaded_package(letters))
   expect_false(unitizer:::is.loaded_package("Autoloads"))
-  expect_true(is.list(pkg.dat <- get_package_data()))
+  expect_true(is.list(pkg.dat <- unitizer:::get_package_data()))
   expect_true(all(vapply(pkg.dat, is, logical(1L), "unitizerNamespaceData")))
 } )
 search.init <- unitizer:::search_as_envs()
