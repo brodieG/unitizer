@@ -322,7 +322,7 @@ setClass(
 setMethod(
   "show", "unitizerLoadFail",
   function(object) {
-    word_cat(
+    word_cat(sep="\n",
       "Failed Loading Unitizer:",
       as.character(
         UL(
@@ -392,6 +392,10 @@ as.store_id_chr <- function(x) {
     )
   target
 }
+# for testing only; needs to be in namespace
+
+as.character.untz_stochrerr <- function(x, ...) stop("I am an error")
+
 #' @rdname best_store_name
 
 best_store_name <- function(store.id, test.file) {
