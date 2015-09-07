@@ -67,16 +67,21 @@ identical_fun <- function(x, y) {
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
   invokeRestart("unitizerQuitExit", list(save=save, status=status, runLast=runLast))
 }
+# nocov start
+# can't test this without quitting R!
 #' @keywords internal
 
 unitizer_quit_handler <- function(quitArgs) {
-  message(
-    "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
-    "quitting type `Q` (without quotes) at the unitizer prompt, or avoid using ",
-    "test code that involves calls to `quit()`/`q()`."
+  word_msg(
+    paste0(
+      "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
+      "quitting type `Q` (without quotes) at the unitizer prompt, or avoid using ",
+      "test code that involves calls to `quit()`/`q()`."
+    )
   )
   do.call("quit", quitArgs)
 }
+# nocov end
 
 #' Cleans a Path to be In Standard Format
 #'
