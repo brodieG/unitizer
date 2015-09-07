@@ -115,14 +115,14 @@ copy_fastlm_to_tmpdir <- function() {
 
 update_fastlm <- function(dir, version) {
   stopifnot(
-    version %in% c("0.1.1", "0.1.2"),
+    version %in% c("0.1.0", "0.1.1", "0.1.2"),
     file_test("-d", dir),
     file_test("-f", file.path(dir, "DESCRIPTION")),
     file_test("-f", file.path(dir, "R", "fastlm.R")),
     file_test("-f", file.path(dir, "tests", "unitizer", "fastlm.R"))
   )
   lm.dir <- switch(
-    version, "0.1.1"="fastlm.1", "0.1.2"="fastlm.2",
+    version, "0.1.0"="fastlm.0", "0.1.1"="fastlm.1", "0.1.2"="fastlm.2",
     stop("Logic Error; unknown version")
   )
   untz.dir <- system.file(package="unitizer")
