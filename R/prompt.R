@@ -139,7 +139,7 @@ unitizer_prompt <- function(
     # evaluation.  The latter will be in res$value
 
     res <- eval_with_capture(val, browse.env)
-    if(length(res$mesage) && nchar(res$message)) cat(res$message, file=stderr())
+    if(length(res$message) && nchar(res$message)) cat(res$message, file=stderr())
     if(length(res$output) && nchar(res$output)) cat(res$output, file=stdout())
 
     # store / record history
