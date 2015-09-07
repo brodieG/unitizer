@@ -142,6 +142,108 @@ test_that("namespace conflict", {
     txt7, file.path("helper", "refobjs", "unitize_nsconf3.rds")
   )
 })
+# Update `fastlm` to cause unitizers to fail, and go through the errors
+
+update_fastlm(.unitizer.fastlm, version="0.1.1")
+devtools::install(.unitizer.fastlm)
+
+# list help, review first item, but do nothing
+
+unitizer:::read_line_set_vals(c("H", "1", "Q", "Q"))
+txt8 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+# incorrect selection
+
+unitizer:::read_line_set_vals(c("H", "4", "1", "Q", "Q"))
+txt8a <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+# simulate slow unitizer review
+
+old.opt <- options(unitizer.prompt.b4.quit.time=0)
+unitizer:::read_line_set_vals(c("H", "1", "Q", "Q", "Q", "Y"))
+txt8b <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+options(old.opt)
+
+# Failures in non-interactive mode (note, can't run on the actual "fastlm.R"
+# file b/c we need to do this under a `try`):
+
+txt8c <- unitizer:::capture_output(
+  try(unitize_dir(test.dir, pattern="unitize|fastlm2", interactive.mode=FALSE))
+)
+# review all that need review, but don't do anything
+
+unitizer:::read_line_set_vals(c("A", "Q", "Q", "Q"))
+txt9 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+# review all, but don't do anything
+
+unitizer:::read_line_set_vals(c("AA", "Q", "Q", "Q", "Q"))
+txt10 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+# review one, and Re-eval despite no change
+
+unitizer:::read_line_set_vals(c("1", "R", "Y", "Q"))
+txt12 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+unitizer:::read_line_set_vals(c("1", "RR", "Y", "Q"))
+txt12a <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+# Variations on YY, YYY, and YYY
+
+unitizer:::read_line_set_vals(c("1", "YY", "Y", "Q", "Q"))
+txt13 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+unitizer:::read_line_set_vals(c("1", "YYY", "Y", "Q", "Q"))
+txt13a <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+unitizer:::read_line_set_vals(c("1", "YYYY", "Y", "Q", "Q"))
+txt13b <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+# review all, accepting all changes, and reevaluting everything; note that this
+# means we're accepting tests that are not correct
+
+unitizer:::read_line_set_vals(c("A", "Y", "Y", "Y", "Y", "Y", "Y", "RR"))
+txt11 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+test_that("review dir", {
+  expect_equal_to_reference(
+    txt8, file.path("helper", "refobjs", "unitize_revdir1.rds")
+  )
+  expect_equal_to_reference(
+    txt8a, file.path("helper", "refobjs", "unitize_revdir1a.rds")
+  )
+  expect_equal_to_reference(
+    txt8b, file.path("helper", "refobjs", "unitize_revdir1b.rds")
+  )
+  expect_equal_to_reference(
+    txt8c, file.path("helper", "refobjs", "unitize_revdir1c.rds")
+  )
+  expect_equal_to_reference(
+    txt9, file.path("helper", "refobjs", "unitize_revdir2.rds")
+  )
+  expect_equal_to_reference(
+    txt10, file.path("helper", "refobjs", "unitize_revdir3.rds")
+  )
+  expect_equal_to_reference(
+    txt11, file.path("helper", "refobjs", "unitize_revdir4.rds")
+  )
+  expect_equal_to_reference(
+    txt12, file.path("helper", "refobjs", "unitize_reeval1.rds")
+  )
+  expect_equal_to_reference(
+    txt12a, file.path("helper", "refobjs", "unitize_reeval2.rds")
+  )
+  expect_equal_to_reference(
+    txt13, file.path("helper", "refobjs", "unitize_multiaccept1.rds")
+  )
+  expect_equal_to_reference(
+    txt13a, file.path("helper", "refobjs", "unitize_multiaccept2.rds")
+  )
+  expect_equal_to_reference(
+    txt13b, file.path("helper", "refobjs", "unitize_multiaccept3.rds")
+  )
+})
+
 unitizer_cleanup_demo()
 unitizer:::read_line_set_vals(NULL)
 options(old.width)
