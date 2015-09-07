@@ -64,7 +64,7 @@ is.int.pos.2L <- function(x)
 
 is.int.pos.1L <- function(x)
   is.numeric(x) && length(x) == 1L && !any(is.na(x)) &&
-  all.equal(x, round(x)) && all(x) > 0L
+  all.equal(x, round(x)) && all(x > 0L)
 
 is.int.1L <- function(x)
   is.numeric(x) && length(x) == 1L && !any(is.na(x)) && all.equal(x, round(x))
@@ -87,7 +87,7 @@ is.valid_state <- function(x) {
     word_msg(
       "Argument `x` must be character(1L) %in% ",
       deparse(.unitizer.valid.state.abbr), " or must inherit from S4 class ",
-      " `unitizerState`"
+      " `unitizerState`", sep=""
     )
     return(FALSE)
   }
