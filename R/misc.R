@@ -157,9 +157,12 @@ history_release <- function(hist.obj) {
   close(hist.obj$con)
   if(isTRUE(attr(hist.obj$file, "hist.tmp"))) file.remove(hist.obj$file)
   if(!isTRUE(no.hist)) {
+    # nocov start
+    # covr runs non-interactively; can't have history
     hist.try <- try(loadhistory(), silent=TRUE)
     if(inherits(hist.try, "try-error"))
       warning(conditionMessage(attr(hist.try, "condition")))
+    # nocov end
   }
 }
 history_write <- function(hist.con, data) {
@@ -167,6 +170,8 @@ history_write <- function(hist.con, data) {
   if(is.open_con(hist.con)) {
     cat(data, file=hist.con, sep="\n")
     if(!isTRUE(attr(hist.con, "no.hist"))) {
+      # nocov start
+      # covr runs non-interactively; can't have history
       hist.save <-
         try(
           loadhistory(showConnections()[as.character(hist.con), "description"]),
@@ -174,6 +179,7 @@ history_write <- function(hist.con, data) {
         )
       if(inherits(hist.save, "try-error"))
         warning(attr(hist.save, "condition"), immediate.=TRUE)
+      # nocov end
   } }
 }
 #' Simplify a Path As Much as Possible to Working Directory

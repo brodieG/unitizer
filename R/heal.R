@@ -118,7 +118,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         if(items.new.idx[[i.org]] + gaps[[i]] == 0L) {
           item.env <- x@base.env
         } else if (items.new.idx[[i.org]] + gaps[[i]] < 0) {
+          # nocov start
           stop("Logic Error, gap too low, contact maintainer.")
+          # nocov end
         } else {
           item.env <- y@items.new[[items.new.idx[[i.org]] + gaps[[i]]]]@env
         }
@@ -143,12 +145,14 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
           # it's parent env assigned to itself.  Here we had a unit test that
           # relied on this so we don't want to outright forbid it out of lazyness...
 
+          # nocov start
           warning(
             "Logic Problem: would have assigned circular environment ",
             "reference but over-rode that; this message should only show up ",
             "in `unitizer` development tests, if you see it please contact ",
             " maintainer."
           )
+          # nocov end
         } else {
           parent.env(x[items.new.select][[i.org]]@env) <- item.env
         }
@@ -216,11 +220,13 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         ) )
       }
       if(inherits(item.ref.updated, "try-error")) {
+        # nocov start
         stop(
           "Logic Error: item environment history corrupted in unknown way; ",
           "contact maintainer.  You can attempt to recover your `unitizer` by ",
           "using `repair_envs`."
         )
+        # nocov end
       } else if (identical(item.ref.updated, FALSE)) {  # Corrupted env history, will have to repair
         repair <- TRUE
         item.ref.updated <- x[items.ref.select][[i]]
@@ -254,6 +260,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
     new.ig.assign <- ig_assign(y@items.new)
     ref.ig.assign <- ig_assign(y@items.ref)
 
+    # nocov start
     if(
       any(!items.new.idx %in% new.ig.assign) ||
       any(!items.ref.idx %in% ref.ig.assign)
@@ -262,6 +269,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         "Logic Error: error re-assigning ignored items to actual tests; ",
         "contact maintainer"
       )
+    # nocov end
+
     # For each selected test, add back the ignored ones; for new ones this is
     # easy because we know they are all in the right order already in y@items.new
 
@@ -303,11 +312,13 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
 
     if(repair) {
       items.final <- try(repairEnvs(items.final))
+      # nocov start
       if(inherits(x, "try-error")) {
         stop(
           "Logic Error: unable to repair reference test environments; contact ",
           "maintainer."
       ) }
+      # nocov end
     }
     items.final
 } )
