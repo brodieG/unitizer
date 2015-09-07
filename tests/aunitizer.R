@@ -3,7 +3,6 @@
 library(unitizer)
 library(testthat)
 
-set.seed(1)
-unitize("unitizer/tests2.R", state="off")
-unitize("unitizer/sectionsRCMDCHECK.R", state="off")
+unitize("unitizer/tests2.R")
+unitize("unitizer/sectionsRCMDCHECK.R")
 unitize("unitizer/translate.R", state="off")
