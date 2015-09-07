@@ -171,15 +171,12 @@ navigate_prompt <- function(
   if(identical(prompt.val, "P")) {
 
     # Go back to previous
-    if(curr.id == 1L) {
-      message("At first reviewable item; nothing to step back to")
-      return(x)
-    }
     prev.tests <- x@mapping@item.id < curr.id & !x@mapping@ignored & (
       if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
       else TRUE
     )
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
+    if(!x@last.id) word_msg("At first reviewable item; nothing to step back to")
     x@navigating <- TRUE
     return(x)
   } else if (identical(prompt.val, "B")) {
