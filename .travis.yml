@@ -12,6 +12,12 @@ sudo: required
 
 cran: http://cran.rstudio.com/
 
+r_github_packages:
+  - jimhester/covr/tree/no_try
+
+after_success:
+  - Rscript -e 'covr::codecov(quiet=FALSE, ...=list(quiet=FALSE))'
+
 # notifications:
 #   email:
 #     on_success: brodie.gaslam@yahoo.com
