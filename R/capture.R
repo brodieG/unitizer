@@ -23,8 +23,14 @@
 #' @param file.name character(1L) file location corresponding to \code{con}
 #' @param no.unsink logical(1L) for testing purposes so we don't release a sink
 #'   when none was actually set
+#' @return \itemize{
+#'   \item \code{set_text_capture}: a connection, with attribute "waive" set to
+#'     TRUE if the sink was already sunk and we did not sink it again
+#'   \item \code{get_text_capture}: character
+#' }
 #' @keywords internal
-#' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink, release_stderr_sink
+#' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink,
+#'   release_stderr_sink
 
 set_text_capture <- function(
   con, type, capt.disabled=getOption("unitizer.disable.capt", FALSE)
@@ -42,7 +48,8 @@ set_text_capture <- function(
     sink(con, type=type)
     return(con)
   }
-  return(FALSE)
+  attr(con, "waive") <- TRUE
+  return(con)
 }
 #' @rdname set_text_capture
 #' @keywords internal
@@ -67,6 +74,7 @@ get_text_capture <- function(
       "than 100L; using 200000L for now", immediate.=TRUE
   ) }
   if(inherits(con, "file") && isOpen(con)) {
+    if(isTRUE(attr(con, "waive"))) return(character())
     if(!as.character(con) %in% rownames(showConnections()) ||
       !identical(showConnections()[as.character(con), 1], file.name)
     ) {
@@ -123,8 +131,8 @@ get_text_capture <- function(
       seek(con, pos, rw="write")
     }
     return(res)
-  } else if (!identical(con, FALSE)) {
-    stop("Logic Error: argument `con` must be a file connection or FALSE")
+  } else {
+    stop("Logic Error: argument `con` must be an open file connection or FALSE")
   }
   return(character())
 }

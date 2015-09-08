@@ -5,10 +5,12 @@
 #' @param continue what character to use as the second and onward prompt line character
 #' @return the expression typed in by the user
 
-faux_prompt <- function(prompt=getOption("prompt"), continue=getOption("continue")) {
+faux_prompt <- function(
+  prompt=getOption("prompt"), continue=getOption("continue")
+) {
   res <- character()
   repeat {
-    res <- paste0(res, readline(prompt))
+    res <- paste0(res, read_line(prompt))
     res.parse <- tryCatch(
       parsed <- parse(text=res),
       error=function(e) {

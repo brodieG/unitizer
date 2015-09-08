@@ -138,10 +138,12 @@ setMethod(
                   if(identical(y.tmp, "Q")) {
                     invokeRestart("earlyExit")
                   } else if(!is(y.tmp, "unitizerBrowse")) {
+                    # nocov start
                     stop(
                       "Logic Error: review should return `unitizerBrowse`; ",
                       "contact maintainer."
                     )
+                    # nocov end
                   } else y <- y.tmp
                 }
                 # Automatically increment review counter since `review_prompt`

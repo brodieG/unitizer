@@ -15,6 +15,12 @@ test_that("Random Seed", {
     expect_false(exists(".Random.seed")) else
     expect_identical(old.seed, .Random.seed)
 } )
+test_that("State Show", {
+  expect_equal(
+    capture.output(show(unitizerStatePristine())),
+    c("                           Settings Values", "search.path             search.path      2",  "options                     options      2", "working.directory working.directory      2",  "random.seed             random.seed      2", "par.env                     par.env <auto>",  "-----", "0: off", "1: track starting with initial state", "2: track starting with clean state",  "<auto>: use special unitizer environment as 'par.env'", "See `?unitizerState` for more details." )
+  )
+})
 test_that("All Equal States", {
   state.A <- new(
     "unitizerGlobalState",

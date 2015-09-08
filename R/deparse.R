@@ -93,6 +93,9 @@ deparse_call <- function(expr) paste0(deparse(uncomment(expr)), collapse="\n")
 #' Not completely fool proof since you can probably created an object that nests
 #' call and non-call stuff repeatedly that would confuse this thing.
 #'
+#' This is just used to generate objects for tests, not actually part of
+#' \code{unitizer} proper
+#'
 #' @keywords internal
 
 deparse_mixed <- function(expr, width.cutoff = 500L, control = "all", ...) {

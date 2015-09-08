@@ -64,8 +64,8 @@ diff_obj_out <- function(
   max.len <- as.integer(max.len)
   frame # force
   tar.width <- width - 4L
-  obj.add.capt <- obj_capt(obj.add, tar.width, frame)
-  obj.rem.capt <- obj_capt(obj.rem, tar.width, frame)
+  obj.add.capt <- sub("\\s+$", "", obj_capt(obj.add, tar.width, frame))
+  obj.rem.capt <- sub("\\s+$", "", obj_capt(obj.rem, tar.width, frame))
 
   min.len <- min(length(obj.add.capt), length(obj.rem.capt))
   diffs <-
@@ -417,7 +417,9 @@ word_cat <- function(
   )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
   vec <- unlist(strsplit(vec, "\n"))
-  invisible(cat(word_wrap(vec, width, tolerance), file=file, sep="\n"))
+  out <- word_wrap(vec, width, tolerance)
+  cat(out, file=file, sep="\n")
+  invisible(out)
 }
 #' @rdname text_wrap
 
@@ -625,7 +627,6 @@ str_reduce_unique <- function(x, from="left") {
   }
   res
 }
-
 #' Convert A Matrix of Test Outcomes for Display
 #'
 #' Used by \code{show} methods for both \code{unitizerSummary} and
@@ -691,3 +692,47 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
   )
   res
 }
+#' Capture Both StdOut and StdErr
+#'
+#' Will sink both "output" and "message" streams without checking whether they
+#' are already sunk, and will unsink them the same way.
+#'
+#' @keywords internal
+#' @param a quoted to evaluate
+#' @param env an environment to evaluate them in
+#' @return a list with stdout and stderr captured separately, classed as
+#'   "captured_output"
+
+capture_output <- function(expr, env=parent.frame()) {
+  std.out <- tempfile()
+  std.err <- tempfile()
+  std.err.con <- file(std.err, "w")
+  files <- c(output=std.out, message=std.err)
+  success <- FALSE
+  sink(std.out)
+  sink(std.err.con, type="message")
+  on.exit({
+    sink()
+    sink(type="message")
+    close(std.err.con)
+    if(!success) {
+      try({
+        cat(readLines(std.out), sep="\n")
+        cat(readLines(std.err), sep="\n", file=stderr())
+      })
+    }
+    unlink(files)
+  })
+  eval(expr, env)
+  res <- lapply(files, readLines)
+  success <- TRUE
+  invisible(structure(res, class="captured_output"))
+}
+#' @export
+#' @rdname capture_output
+
+print.captured_output <- function(x, ...) {
+  cat(x$output, sep="\n")
+  cat(x$message, sep="\n", file=stderr())
+}
+

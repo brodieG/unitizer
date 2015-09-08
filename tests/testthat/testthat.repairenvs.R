@@ -45,7 +45,35 @@ local({
     items.heal <- unitizer:::healEnvs(items.picked, my.unitizer)
   } )
 
+  test_that("full repair process works", {
+    # copy files and then try messing up environment for the object
 
+    expect_true(file_test("-d", file.path("helper")))
+    tmp.dir <- tempfile()
+    store <- file.path("helper", "trivial.unitizer")
+    store.new <- file.path(tmp.dir, store)
+    dir.create(store.new, recursive=TRUE)
+    cpy.files <- c(
+      list.files(store, full.names=TRUE),
+      file.path("helper", "trivial.R")
+    )
+    file.copy(cpy.files, file.path(tmp.dir, cpy.files), overwrite=TRUE)
+    untz <- unitizer:::load_unitizers(
+      list(store.new), NA_character_, par.frame=.GlobalEnv,
+      interactive.mode=TRUE, mode="unitize"
+    )
+    # Break env chain, store, and reload
+
+    expect_identical(untz[[1L]]@items.ref.calls.deparse[[5L]], "y * x")
+    parent.env(untz[[1L]]@items.ref[[5L]]@env) <- baseenv()
+
+    unitizer:::store_unitizer(untz[[1L]])
+    untz.rep <- repair_environments(store.new)
+    expect_that(
+      unitizer:::healEnvs(untz.rep@items.ref, untz.rep), not(gives_warning())
+    )
+    unlink(tmp.dir, recursive=TRUE)
+  } )
 
 
 })

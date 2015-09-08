@@ -164,7 +164,7 @@ NULL
   "^editor$", "^papersize$", "^bitmapType$",  "^menu\\.graphics$",
   "^unitizer\\."
 )
-.unitizer.namespace.keep <- c("data.table")
+.unitizer.namespace.keep <- c("data.table", "covr")
 
 .unitizer.base.packages <- c(
   "package:stats", "package:graphics", "package:grDevices", "package:utils",

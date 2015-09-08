@@ -8,9 +8,13 @@ NULL
 #' corrupted environments.  You should only use this if you get an error
 #' telling you to use it.
 #'
-#' @seealso \code{`\link{unitize}`}
-#' @param x either a unitizer, or a store id (see \code{`\link{unitize}`})
-#' @return a \code{`unitizer`} object
+#' If you pass a store id this will re-save the repaired \code{unitizer} to
+#' the location specified by the store id.
+#'
+#' @seealso \code{\link{unitize}}
+#' @export
+#' @param x either a unitizer, or a store id (see \code{\link{unitize}})
+#' @return a \code{unitizer} object
 
 repair_environments <- function(x) {
   save <- FALSE
@@ -18,8 +22,8 @@ repair_environments <- function(x) {
     unitizer <- try(
       load_unitizers(
         list(x), test.files=NA_character_, par.frame=baseenv(),
-        interactive.mode=interactive()
-      )
+        interactive.mode=interactive_mode(), mode="unitize"
+      )[[1L]]
     )
     if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
     save <- TRUE

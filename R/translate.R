@@ -401,7 +401,7 @@ testthat_transcribe_file <- function(
     }
     if(!file.exists(target.dir)) {
       if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
-        u.inp <- if(interactive()) {
+        u.inp <- if(interactive_mode()) {
           simple_prompt(
             paste0("Create directory ", target.dir," for unitizer tests?")
           )
@@ -422,7 +422,7 @@ testthat_transcribe_file <- function(
     # prompt if file already exists
 
     if(!identical(prompt, "never") && file.exists(untz.test)) {
-      u.inp <- if(interactive()) {
+      u.inp <- if(interactive_mode()) {
         simple_prompt(
           paste0("Overwrite file '", normalizePath(untz.test), "'?")
         )

@@ -122,13 +122,14 @@ unitize <- function(
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode,  force.update=force.update,
       auto.accept=auto.accept, mode="unitize"
-  ) )
+    )[[1L]]
+  )
 }
 #' @rdname unitize
 #' @export
 
 review <- function(store.id) {
-  if(!interactive()) stop("`review` only available in interactive mode")
+  if(!interactive_mode()) stop("`review` only available in interactive mode")
   invisible(
     unitize_core(
       test.files=NA_character_,
@@ -140,7 +141,8 @@ review <- function(store.id) {
       force.update=FALSE,
       auto.accept=character(0L),
       mode="review"
-  ) )
+    )[[1L]]
+  )
 }
 #' @rdname unitize
 #' @export

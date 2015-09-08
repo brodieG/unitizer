@@ -255,6 +255,14 @@ local( {
       c("# FALSE, match.call disabled", "# first sub.call", "# second sub.call"),
       candc$comments
     )
-
   } )
+  test_that("failing parses produce proper errors", {
+    txt <- "this is a + syntax error that cannot be parsed"
+    expect_error(unitizer:::parse_tests(text=txt), "Unable to parse test file")
+    f <- tempfile()
+    cat(txt, "\n", sep="", file=f)
+    expect_error(unitizer:::parse_tests(f), "Unable to parse test file")
+    unlink(f)
+    expect_error(unitizer:::parse_tests(text=txt, comment=FALSE), "Error in parse")
+  })
 } )

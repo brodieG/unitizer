@@ -111,7 +111,10 @@ unitize_core <- function(
         "\"at\" mode"
       )
     close(test.con)
-  } else history <- tempfile()
+  } else {
+    history <- tempfile()
+    attr(history, "hist.tmp") <- TRUE
+  }
 
   # Make sure nothing untoward will happen if a test triggers an error
 
@@ -136,7 +139,7 @@ unitize_core <- function(
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
     word_cat(
       "In order to proceed unitizer must create the following ", dir.word,
-      ":\n"
+      ":\n", sep=""
     )
     print(UL(dir.names.clean))
     prompt <- paste0("Create ", dir.word)
@@ -231,9 +234,12 @@ unitize_core <- function(
   if(identical(global$status@random.seed, 2L)) {
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
       stop(
-        "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
-        "is a list of possible arguments to `set.seed`."
-  ) } }
+        paste0(collapse="\n",
+          word_wrap(
+            paste0(collapse="",
+              "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
+              "is a list of possible arguments to `set.seed`."
+  ) ) ) ) } }
   if(identical(global$status@working.directory, 2L)) {
     if(
       length(unique(dirname(test.files)) == 1L) &&
@@ -243,14 +249,20 @@ unitize_core <- function(
     } else {
       multi.file <- length(test.files) > 1L
       warning(
-        "Working directory state tracking is in mode 2, but test file",
-        if(multi.file) "s do not" else " does not", "appear to be part of a ",
-        "package so instead of setting directory to the package dir ",
-        if(multi.file)
-          paste0(
-            "prior to running each test file we will set it to ",
-            "the current working directory."
-          ) else "we will leave it unchanged.", immediate.=TRUE
+        paste0(
+          collapse="\n",
+          word_wrap(
+            paste0(collapse="",
+              "Working directory state tracking is in mode 2, but test file",
+              if(multi.file) "s do not" else " does not", "appear to be part of a ",
+              "package so instead of setting directory to the package dir ",
+              if(multi.file)
+                paste0(
+                  "prior to running each test file we will set it to ",
+                  "the current working directory."
+                ) else "we will leave it unchanged."
+        ) ) ),
+        immediate.=TRUE
   ) } }
   # - Parse / Load -------------------------------------------------------------
 
@@ -281,7 +293,7 @@ unitize_core <- function(
     tests.parsed <- lapply(
       test.files,
       function(x) {
-        over_print(paste("Parsing", x))
+        over_print(paste("Parsing", relativize_path(x)))
         parse_tests(x, comments=TRUE)
   } ) }
   over_print("")
@@ -339,7 +351,45 @@ unitize_core <- function(
       "`unitizer` evaluation succeed, but `post` steps had errors:",
       post.res
     )
+  # We need to reload the unitizers now since we can't directly return the
+  # `unitizers` that are available at this level since they are not the ones
+  # that actually get stored (necessary for re-eval purposes); some question
+  # whether this is necessary as it is potentially slow.
 
+  unitizer.reload <- try(
+    load_unitizers(
+      store.ids[valid], test.files[valid], par.frame=util.frame,
+      interactive.mode=FALSE, mode=mode, global=global
+  ) )
+  if(inherits(unitizer.reload, "try-error"))
+    stop(
+      "Logic Error: unitizer completed, but is unable to reload unitizer ",
+      "stores to return them; this should not happen, contact maintainer."
+    )
+  reload.valid <- vapply(as.list(unitizer.reload), is, logical(1L), "unitizer")
+  reload.invalid <- which(!reload.valid)
+  # nocov start
+  # really shouldn't happen, so can't be tested
+  if(length(reload.invalid)) {
+    reload.fail.names <- character(length(reload.invalid))
+    for(i in reload.invalid) {
+      if(!is(unitizer.reload[[i]], "unitizerLoadFail"))
+        stop(
+          "Logic Error: unitizer list may only contain untizers or ",
+          "unitizerLoadFail objects; found object of class `",
+          deparse(class(unitizer.reload[[i]]), width=500), "` at index ", i,
+          "; contact maintainer."
+        )
+      reload.fail.names[[i]] <- best_file_name(unitizer.reload[[i]]@test.file)
+    }
+    word_cat(
+      "The following unitizers ran successfully, but could not be reloaded ",
+      "for return:",
+      as.character(UL(reload.fail.names))
+    )
+  }
+  # nocov end
+  unitizers[valid] <- as.list(unitizer.reload)
   return(as.list(unitizers))
 }
 #' Evaluate User Tests
@@ -525,10 +575,14 @@ unitize_browse <- function(
       if(prompt %in% c("N", "Q") && confirm_quit(unitizers)) quit <- TRUE
     } else {
       stop(
-        "Unable to proceed in non-interactive mode; set options state ",
-        "tracking to a value less than or equal to search path state tracking ",
-        "or see vignette for other workarounds."
-  ) } }
+        paste0(collapse="\n",
+          word_wrap(
+            paste0(
+              collapse="",
+              "Unable to proceed in non-interactive mode; set options state ",
+              "tracking to a value less than or equal to search path state ",
+              "tracking or see vignette for other workarounds."
+  ) ) ) ) } }
 
   if(!quit) {
     if(identical(mode, "review") || any(to.review) || force.update) {
@@ -667,12 +721,16 @@ unitize_browse <- function(
             )
           }
           stop(
-            "Newly evaluated tests do not match unitizer (",
-            paste(
-              names(summaries@totals), summaries@totals, sep=": ", collapse=", "
-            ),
-            "); see above for more info, or run in interactive mode"
-          )
+            paste0(collapse="\n",
+              word_wrap(
+                paste0(
+                  collapse="",
+                  "Newly evaluated tests do not match unitizer (",
+                  paste(
+                    names(summaries@totals), summaries@totals, sep=": ", collapse=", "
+                  ),
+                  "); see above for more info, or run in interactive mode"
+          ) ) ) )
         }
         # - Simple Outcomes / no-review ------------------------------------------
 
@@ -680,7 +738,7 @@ unitize_browse <- function(
           break
       }
     } else {
-      message("All tests passed; nothing to review.")
+      word_msg("All tests passed; nothing to review.")
     }
   } else eval.which <- integer(0L)  # we quit, so don't want to re-evalute anything
 
@@ -713,21 +771,32 @@ check_call_stack <- function() {
           c("withCallingHandlers", "withRestarts", "tryCatch")
     ) )
   ) warning(
-    "It appears you are running unitizer inside an error handling function such ",
-    "as `withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly ",
-    "discouraged as it may cause unpredictable behavior from unitizer in the ",
-    "event tests produce conditions / errors.  We strongly recommend you re-run ",
-    "your tests outside of such handling functions.", immediate.=TRUE
+    paste0(
+      collapse="\n",
+      word_wrap(
+        paste0(collapse="",
+          "It appears you are running unitizer inside an error handling ",
+          "function such as `withCallingHanlders`, `tryCatch`, or ",
+          "`withRestarts`.  This is strongly discouraged as it may cause ",
+          "unpredictable behavior from unitizer in the event tests produce ",
+          "conditions / errors.  We strongly recommend you re-run ",
+          "your tests outside of such handling functions."
+    ) ) ),
+    immediate.=TRUE
   )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
   if("unitizerQuitExit" %in% restart.names)
     stop(
-      "`unitizerQuitExit` restart is already defined; unitizer relies on this ",
-      "restart to restore state prior to exit, so unitizer will not run if it is ",
-      "defined outside of `unitize`.  If you did not define this restart contact ",
-      "maintainer."
-    )
+      paste0(
+        collapse="\n",
+        word_wrap(
+          paste0(collapse="",
+            "`unitizerQuitExit` restart is already defined; unitizer relies ",
+            "on this restart to restore state prior to exit, so unitizer will ",
+            "not run if it is defined outside of `unitize`.  If you did not ",
+            "define this restart contact maintainer."
+    ) ) ) )
 }
 #' Helper function for validations
 #'

@@ -98,7 +98,8 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
       conditions=new("conditionList", .items=res$conditions),
-      output=res$output, message=res$message, aborted=res$aborted,
+      output=res$output, message=res$message,
+      aborted=res$aborted,
       env=test.env, comment=x.comments, trace=res$trace,
       glob.indices=global$state(),
       ignore=identical(res$visible, FALSE) && !length(res$conditions)
@@ -152,10 +153,10 @@ eval_with_capture <- function(
   on.exit({
       options(warn=warn.opt)
       options(error=err.opt)
-      try(get_capture(capt.cons, display=TRUE))
-      release_sinks()
+      capt.try <- try(get_capture(capt.cons, display=TRUE))
+      if(inherits(capt.try, "try-error")) release_sinks()
       if(!came.with.capts) close_and_clear(capt.cons)
-      message(
+      word_msg(
         "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
         paste0(deparse(x), collapse=""),
         "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
@@ -186,7 +187,9 @@ eval_with_capture <- function(
     global$unitizer.opts[["unitizer.max.capture.chars"]]
   capt <- do.call(get_capture, get_args)
   if(!came.with.capts) close_and_clear(capt.cons)
-  res[c("output", "message")] <- capt[c("output", "message")]
+  res[c("output", "message")] <- lapply(
+    capt[c("output", "message")], function(x) if(!length(x)) "" else x
+  )
   clean_message(res)
 }
 #' @rdname exec

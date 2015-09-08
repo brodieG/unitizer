@@ -180,11 +180,14 @@ comments_assign <- function(expr, comment.dat) {
   if(length(which(comment.dat$token %in% tk.lst$brac.open)) > 1L || length(which(comment.dat$token %in% tk.lst$brac.close)) > 1L)
     stop("Logic Error: more than one bracket at top level; contact maintainer.")
   if(length(brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
+    # nocov start
+    # shouldn't happen, can't test
     if(
       !identical(comment.dat$token[brac.pos], "')'") ||
       !identical(brac.pos, nrow(comment.dat) - 1L) ||
       !identical(comment.dat$token[[1L]], "FUNCTION")
     ) stop("Logic Error: closing brackets may only be on last row, unless a paren and part of a functions formal definition; contact maintainer.")
+    # nocov end
   }
   if(
     !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) && brac.pos > 1L ||
@@ -350,11 +353,14 @@ parse_with_comments <- function(file, text=NULL) {
   if(!identical(unname(vapply(parse.dat, class, "")), c("integer", "integer", "integer", "integer", "integer", "integer",  "character", "logical", "character")))
     stop("Argument `expr` produced data with unexpected column data types")
   if(!all(parse.dat$token %in% unlist(tk.lst))) {
+    # nocov start
+    # shouldn't happen, can't test
     stop(
       "Logic Error: unexpected tokens in parse data (",
         paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
         "); contact maintainer."
-    );
+    )
+    # nocov end
   }
 
   prsdat_recurse <- function(expr, parse.dat, top.level) {
@@ -394,7 +400,11 @@ parse_with_comments <- function(file, text=NULL) {
         head(line.dat["max", ], -1L) == tail(line.dat["min", ], -1L) &
         head(col.dat["max", ], -1L) >= tail(col.dat["min", ], -1L)
     ) ) {
+      # nocov start
+      # shouldn't happen, can't test
+
       stop("Logic Error: expression parse data overlapping; contact maintainer")
+      # nocov end
     }
     # For each parent expression, assign comments; parent expressions that include
     # a function definition have to exclude the formals part (which is a pairlist)
@@ -436,11 +446,15 @@ parse_with_comments <- function(file, text=NULL) {
     }
     j <- 1
     if(!is.expression(expr) && !is.call(expr)) {
+      # nocov start
+      # shouldn't happen, can't test
+
       if(term.len <- length(which(!prsdat.par.red$terminal)) > 1L) {
         stop("Logic Error: terminal expression has more than one token, contact maintainer.")
       } else if (term.len) {
         expr <- Recall(expr, prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
       }
+      # nocov end
     } else {
       for(i in 1:nrow(prsdat.par.red)) {
         if(prsdat.par.red$terminal[[i]]) next
@@ -567,13 +581,17 @@ prsdat_reduce <- function(parse.dat) {
       stop("Logic Error: right argument to `$` must be SYMBOL")
   } else if (nrow(parse.dat.red) == 1L) {
     if(!parse.dat.red$token[[1L]] %in% c("expr", tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$brac.open)) {
+      # nocov start
       stop("Logic Error: single element parent levels must be symbol or constant or expr")
+      # nocov end
     }
   } else if (
     length(which(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra))) <
       nrow(parse.dat.red) - 1L
   ) {
+    # nocov start
     stop("Logic Error: in most cases all but at most one token must be of type `expr` or `exprlist`; contact maintainer.")
+    # nocov end
   }
   parse.dat.red[order(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra)), ]
 }

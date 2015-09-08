@@ -34,7 +34,7 @@ setClass(
 .unitizer.shim.dat <- list(
   library=new(
     "unitizerShimDat", tracer=.unitizer.tracer,
-    at=list(c(7L, 3L, 9L, 3L, 13L, 3L, 3L, 4L, 6L), 8L)
+    at=list(c(7L, 3L, 9L, 3L, 13L, 3L, 4L, 4L, 6L), 8L)
   ),
   attach=new("unitizerShimDat", exit=.unitizer.tracer),
   detach=new("unitizerShimDat", exit=.unitizer.tracer)
@@ -70,18 +70,19 @@ unitizerGlobal$methods(
       any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))
     ) {
       err.extra <- "they are already traced"
-    } else if(  # Make sure funs are unchanged
+    } else if(  # Make sure funs are unchanged; note as.character needed b/c of `covr`
       !all(
         fun.identical <- unlist(
           Map(
-            function(x, y) identical(body(x), body(y)),
+            function(x, y)
+              identical(as.character(body(x)), as.character(body(y))),
             .unitizer.base.funs[funs],
             .unitizer.base.funs.ref[funs]
       ) ) )
     ) {
       err.extra <- paste0(
         "base functions ",paste0("`", funs[!fun.identical], "`", collapse=", "),
-        "do not have the definitions they had when this package was ",
+        " do not have the definitions they had when this package was ",
         "developed"
       )
     }

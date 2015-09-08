@@ -365,38 +365,24 @@ infer_unitizer_location.character <- function(
 #' @keywords internal
 #' @param name a directory to check for package-ness
 #' @param has.tests whether to require that the package have tests to qualify
+#' @param DESCRIPTION the DESCRIPTION file path
 #' @return TRUE if criteria met, character vector explaining first failure
 #'   otherwise
 
 is_package_dir <- function(name, has.tests=FALSE) {
   stopifnot(file_test("-d", name), is.TF(has.tests))
+  pkg.name <- try(get_package_name(name), silent=TRUE)
+  if(inherits(pkg.name, "try-error"))
+    return(conditionMessage(attr(pkg.name, "condition")))
 
-  # DESCRIPTION file matches directory?
+  # # this is not actually a requirement
+  # if(!identical(tolower(dir.name), tolower(pkg.name)))
+  #   return(
+  #     paste0(
+  #       "DESCRIPTION package name (", pkg.name,
+  #       ") does not match dir name (", dir.name, ")"
+  #   ) )
 
-  if(!file_test("-f", file.path(name, "DESCRIPTION")))
-    return("No DESCRIPTION file")
-  desc <- try(readLines(file.path(name, "DESCRIPTION")))
-  if(inherits(desc, "try-error"))
-    return("Unable to read DESCRIPTION file")
-
-  pkg.pat <- "^\\s*package:\\s+(\\S+)\\s*$"
-  desc.pkg <- grep(pkg.pat, desc, value=T, perl=T, ignore.case=TRUE)
-  if(length(desc.pkg) != 1L)
-    return(
-      paste0(
-        "DESCRIPTION file ",
-        if(length(desc.pkg)) "had more than one" else "did not have a",
-        " package name entry"
-    ) )
-  desc.pkg.name <- sub(pkg.pat, "\\1", desc.pkg, perl=T, ignore.case=TRUE)
-  dir.name <- if(identical(dirname(name), ".")) name else basename(name)
-
-  if(!identical(tolower(dir.name), tolower(desc.pkg.name)))
-    return(
-      paste0(
-        "DESCRIPTION package name (", desc.pkg.name,
-        ") does not match dir name (", dir.name, ")"
-    ) )
   # Has requisite directories?
 
   if(!file_test("-d", file.path(name, "R")))
@@ -417,7 +403,7 @@ get_package_dir <- function(name=getwd(), has.tests=FALSE) {
     is.TF(has.tests)
   )
   if(file_test("-f", name)) name <- dirname(name)
-  if(!file_test("-d", name)) return(FALSE)
+  if(!file_test("-d", name)) return(character(0L))
   is.package <- FALSE
   prev.dir <- par.dir <- name
 
@@ -426,9 +412,29 @@ get_package_dir <- function(name=getwd(), has.tests=FALSE) {
     if(nchar(par.dir <- dirname(prev.dir)) >= nchar(prev.dir)) break
     prev.dir <- par.dir
   }
-  character()
+  character(0L)
 }
+#' @rdname is_package_dir
 
+get_package_name <- function(pkg.dir) {
+  stopifnot(is.chr1(pkg.dir))
+
+  DESCRIPTION <- file.path(pkg.dir, "DESCRIPTION")
+  if(!file_test("-f", DESCRIPTION)) stop("No DESCRIPTION file")
+  desc <- try(readLines(DESCRIPTION))
+  if(inherits(desc, "try-error")) stop("Unable to read DESCRIPTION file")
+
+  pkg.pat <- "^\\s*package:\\s+(\\S+)\\s*$"
+  desc.pkg <- grep(pkg.pat, desc, value=T, perl=T, ignore.case=TRUE)
+  if(length(desc.pkg) != 1L)
+    stop(
+      "DESCRIPTION file ",
+      if(length(desc.pkg)) "had more than one" else "did not have a",
+      " package name entry"
+    )
+  desc.pkg.name <- sub(pkg.pat, "\\1", desc.pkg, perl=T, ignore.case=TRUE)
+  return(desc.pkg.name)
+}
 #' Check Whether a Directory as a Unitizer Data Directory
 #'
 #' Just checks that it \emph{could} be a data directory, the test ultimately is

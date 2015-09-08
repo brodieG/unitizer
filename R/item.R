@@ -157,7 +157,15 @@ setClass("unitizerItems", contains="unitizerList",
   validity=function(object) {
     if(!all(vapply(object@.items, is, logical(1L), "unitizerItem")))
       return("slot `items` may only contain objects \"unitizerItem\"")
-    TRUE
+    if(!(obj.len <- length(object))) return(TRUE)
+    # Need to test items in addition to what the unitizerList validity does
+    # because we cannot actually have a validity method attached to
+    # each unitizer item (way too slow)
+    idx.to.test <- unique(
+      c(1L, max(1L, as.integer(floor(obj.len / 2))), obj.len))
+    test <- lapply(as.list(object[idx.to.test]), isValid)
+    success <- vapply(test, isTRUE, logical(1L))
+    if(all(success)) TRUE else unlist(test[!success])
 } )
 setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 

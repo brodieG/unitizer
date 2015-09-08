@@ -67,16 +67,21 @@ identical_fun <- function(x, y) {
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
   invokeRestart("unitizerQuitExit", list(save=save, status=status, runLast=runLast))
 }
+# nocov start
+# can't test this without quitting R!
 #' @keywords internal
 
 unitizer_quit_handler <- function(quitArgs) {
-  message(
-    "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
-    "quitting type `Q` (without quotes) at the unitizer prompt, or avoid using ",
-    "test code that involves calls to `quit()`/`q()`."
+  word_msg(
+    paste0(
+      "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
+      "quitting type `Q` (without quotes) at the unitizer prompt, or avoid using ",
+      "test code that involves calls to `quit()`/`q()`."
+    )
   )
   do.call("quit", quitArgs)
 }
+# nocov end
 
 #' Cleans a Path to be In Standard Format
 #'
@@ -139,30 +144,59 @@ history_capt <- function(hist.file=NULL) {
     loadhistory(showConnections()[as.character(hist.con), "description"]),
     silent=TRUE
   )
-  if(inherits(hist.try, "try-error"))
+  if(inherits(hist.try, "try-error")) {
     warning(conditionMessage(attr(hist.try, "condition")))
+    attr(hist.con, "no.hist") <- TRUE
+  }
   list(con=hist.con, file=hist.file)
 }
 history_release <- function(hist.obj) {
   if(all(vapply(hist.obj, is.null, logical(1L))))
     return(invisible(TRUE))
+  no.hist <- attr(hist.obj$con, "no.hist")
   close(hist.obj$con)
-  file.remove(hist.obj$file)
-  hist.try <- try(loadhistory(), silent=TRUE)
-  if(inherits(hist.try, "try-error"))
-    warning(conditionMessage(attr(hist.try, "condition")))
+  if(isTRUE(attr(hist.obj$file, "hist.tmp"))) file.remove(hist.obj$file)
+  if(!isTRUE(no.hist)) {
+    # nocov start
+    # covr runs non-interactively; can't have history
+    hist.try <- try(loadhistory(), silent=TRUE)
+    if(inherits(hist.try, "try-error"))
+      warning(conditionMessage(attr(hist.try, "condition")))
+    # nocov end
+  }
 }
 history_write <- function(hist.con, data) {
   stopifnot(is.open_con(hist.con), is.character(data))
   if(is.open_con(hist.con)) {
     cat(data, file=hist.con, sep="\n")
-    loadhistory(showConnections()[as.character(hist.con), "description"])
-  }
+    if(!isTRUE(attr(hist.con, "no.hist"))) {
+      # nocov start
+      # covr runs non-interactively; can't have history
+      hist.save <-
+        try(
+          loadhistory(showConnections()[as.character(hist.con), "description"]),
+          silent=TRUE
+        )
+      if(inherits(hist.save, "try-error"))
+        warning(attr(hist.save, "condition"), immediate.=TRUE)
+      # nocov end
+  } }
 }
 #' Simplify a Path As Much as Possible to Working Directory
 #'
+#' \itemize{
+#'   \item \code{relativize_path} returns a path that can actually be used
+#'     to access an actual file from the current working directory
+#'   \item \code{pretty_path} (not really used currently) returns the most
+#'     readable path that we can produce, but may not usable to access an actual
+#'     file, main difference with \code{relativize_path} is that it will
+#'     figure out if a file is in a package and return a path relative to the
+#'     package directory if it turns out that one is shorter than the one
+#'     produced with relativize path
+#' }
+#'
 #' @param wd NULL or character(1L) resolving to a directory, if NULL will be
-#'   resolved to \code{getwd};
+#'   resolved to \code{getwd}; used primarily for testing
 #' @param only.if.shorter logical(1L) whether to relativize only if the
 #'   resulting \code{path} is shorter than the input
 #' @keywords internal
@@ -207,17 +241,35 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
           end <- min(up.to, first.diff)
           c(rep("..", length(wd.pieces) - end), x[-(1:end)])
         }
-        do.call(file.path, as.list(path))
+        if(length(path)) do.call(file.path, as.list(path)) else ""
       },
       character(1L)
     )
     norm[to.norm] <- reled
     norm
   } else path
+  if(!nchar(res)) res <- "."
   if(only.if.shorter) {
     ifelse(nchar(res) < nchar(path), res, path)
   } else res
 }
+#' @rdname relativize_path
+
+pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
+  rel.path <- relativize_path(path, wd, only.if.shorter)
+  pkg.dir <- get_package_dir(path)
+  if(!length(pkg.dir) || !identical(substr(path, 1L, nchar(pkg.dir)), pkg.dir))
+    return(rel.path)
+
+  pkg.name <- try(get_package_name(pkg.dir))
+  if(inherits(pkg.name, "try-error"))
+    stop("Logic Error: failed getting package name; contact maintainer")
+  pkg.path <- file.path(
+    paste0("package:", pkg.name), substr(path, nchar(pkg.dir) + 2L, nchar(path))
+  )
+  if(nchar(rel.path) <= nchar(pkg.path)) rel.path else pkg.path
+}
+
 #' Merge Two Lists
 #'
 #' Values in \code{y} ovewrite existing values in \code{x}.  This is similar to
