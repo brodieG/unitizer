@@ -335,7 +335,7 @@ read_line <- function(prompt="") {
   } else if(!length(.global$prompt.vals)) {
     # Need dedicated condition so `unitizer_prompt` can catch it
     cond <- simpleCondition(
-      "Logic Error: ran out of predifined readline input; contact maintainer."
+      "Logic Error: ran out of predefined readline input; contact maintainer."
     )
     class(cond) <- c("readError", "error", class(cond))
     stop(cond)
