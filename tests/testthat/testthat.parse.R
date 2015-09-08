@@ -263,7 +263,6 @@ local( {
     cat(txt, "\n", sep="", file=f)
     expect_error(unitizer:::parse_tests(f), "Unable to parse test file")
     unlink(f)
-    expect_error(unitizer:::parse_tests(text=txt, comment=FALSE), "Unable to parse test file")
-
+    expect_error(unitizer:::parse_tests(text=txt, comment=FALSE), "Error in parse")
   })
 } )

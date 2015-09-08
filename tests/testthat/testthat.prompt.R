@@ -29,7 +29,7 @@ test_that("simple prompts", {
   )
   expect_output(
     try(unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE)),
-    "hello\nInvalid input, please select one of: Y, N"
+    "hello\n.*Invalid input, please select one of: Y, N"
   )
   expect_error(
     unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE),
@@ -84,7 +84,7 @@ test_that("unitizer prompt", {
   unitizer:::read_line_set_vals(character())
   expect_error(
     unitizer:::unitizer_prompt("hello", valid.opts=c(Y="[Y]es", N="[N]o")),
-    "Error: Logic Error: ran out of predifined readline input"
+    "Error : Logic Error: ran out of predefined readline input"
   )
   unitizer:::read_line_set_vals("1L")
   expect_error(
@@ -92,7 +92,7 @@ test_that("unitizer prompt", {
       "hello", valid.opts=c(Y="[Y]es", N="[N]o"),
       exit.condition=unitizer:::exit_fun, valid.vals=2:3
     ),
-    "Error : Logic Error: ran out of predifined readline input"
+    "Error : Logic Error: ran out of predefined readline input"
   )
   unitizer:::read_line_set_vals("2L")
   expect_equal(

@@ -262,9 +262,10 @@ unitizer:::read_line_set_vals(c("3", "ref(res)", "Y", "Y", "B", "1", "B", "U", "
 txt20 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 test_that("multi-sect", {
-  expect_equal_to_reference(
-    txt20, file.path("helper", "refobjs", "unitize_multisect1.rds")
-  )
+  txt20$output <- gsub("^<\\w+: .*?>", "", txt20$output)
+  txt20.rds <- readRDS(file.path("helper", "refobjs", "unitize_multisect1.rds"))
+  txt20.rds$output <- gsub("^<\\w+: .*?>", "", txt20.rds$output)
+  expect_identical(txt20, txt20.rds)
 })
 
 unitizer_cleanup_demo()

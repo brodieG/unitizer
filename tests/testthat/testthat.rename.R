@@ -15,7 +15,7 @@ test_that("Rename Works", {
   expect_true(
     identical(
       x.edit@items.ref.calls.deparse,
-      gsub("^x ", "y ", x@items.ref.calls.deparse)
+      gsub("\\bx\\b", "y", x@items.ref.calls.deparse)
     )
   )
 })
