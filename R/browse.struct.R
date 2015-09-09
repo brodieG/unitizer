@@ -307,6 +307,23 @@ setMethod("show", "unitizerBrowse", function(object) {
   invisible(obj.rendered)
 } )
 
+setGeneric("getIdOrder", function(object, ...) standardGeneric("getIdOrder"))
+setMethod(
+  "getIdOrder", "unitizerBrowse",
+  function(object, ...) {
+    # Figure out order as stuff showed up in original file; reference ids are
+    # put at the end.  Note the implicit assumption here is that the stuff in
+    # sections is in the same order in file and here, which is almost certainly
+    # true except for stuff outside of sections
+
+    ids <- object@mapping@item.id.orig
+    max.id.orig <- max(c(0, ids[!object@mapping@item.ref]))
+    ids[object@mapping@item.ref] <-
+      rank(ids[object@mapping@item.ref]) + max.id.orig
+    ids
+  }
+)
+
 #' Create a Text Representation of an Object
 #'
 #' @keywords internal
@@ -332,15 +349,6 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     out.sec <- character(length(unique(x@mapping@sec.id[tests.to.show])))
     out.sec.idx <- integer(length(out.sec))
     out <- character(length(out.calls) + length(out.sec))
-
-    # Figure out order as stuff showed up in original file; reference ids are
-    # put at the end.  Note the implicit assumption here is that the stuff in
-    # sections is in the same order in file and here, which is almost certainly
-    # true except for stuff outside of sections
-
-    ids <- x@mapping@item.id.orig
-    max.id.orig <- max(c(0, ids[!x@mapping@item.ref]))
-    ids[x@mapping@item.ref] <- rank(ids[x@mapping@item.ref]) + max.id.orig
 
     # Work on figuring out all the various display lengths
 
@@ -368,9 +376,10 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       paste0(rep(".  ", ceiling(disp.len / 3)), collapse=""), 1L, disp.len
     )
     # Display in order tests appear in file; note this is not in same order
-    # as they show up in review
+    # as they show up in review (also, we're still really ordering by section)
+    # first, and only then by original id
 
-    for(i in x@mapping@item.id[order(x@mapping@sec.id, ids)]) {
+    for(i in x@mapping@item.id[order(x@mapping@sec.id, getIdOrder(x))]) {
       if(!tests.to.show[[i]]) next
       j <- j + 1L
       l <- l + 1L
@@ -411,6 +420,30 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
 
     if(length(out.sec) == 1L) out[-out.sec.idx] else out
 } )
+
+setMethod(
+  "as.data.frame", "unitizerBrowse",
+  function(x, row.names = NULL, optional = FALSE, ...) {
+    id.order <- getIdOrder(x)
+    calls.dep <- deparseCalls(x)
+    sec.titles <-
+      vapply(x@mapping@sec.id, function(y) x[[y]]@section.title, character(1L))
+
+    res <- data.frame(
+      id=x@mapping@item.id,
+      call=calls.dep,
+      section=sec.titles,
+      ignored=factor(ifelse(x@mapping@ignored, "*", ""), levels=c("", "*")),
+      status=x@mapping@review.type,
+      user=factor(
+        ifelse(!x@mapping@reviewed, "-", x@mapping@review.val),
+        levels=c("Y", "N", "-")
+      )
+    )[order(x@mapping@sec.id, id.order), ]
+    rownames(res) <- NULL
+    res
+  }
+)
 #' Indicate Whether to Exit Review Loop
 #'
 #' @keywords internal
@@ -747,9 +780,7 @@ setMethod("deparseCalls", "unitizerBrowseSubSection",
 )
 setMethod("deparseCalls", "unitizerItems",
   function(x, ...) {
-    vapply(
-      as.list(x),
-      function(x) paste0(deparse(x@call, width.cutoff=500L), collapse=""), character(1L)
+    vapply(as.list(x), slot, character(1L), "call.dep"
 ) } )
 #' Pull out items from unitizerBrowse objects
 #'
