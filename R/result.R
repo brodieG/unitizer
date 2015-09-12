@@ -1,3 +1,7 @@
+#' @include unitizer.R
+
+NULL
+
 #' Print Methods For \code{unitizer} Results
 #'
 #' @export
@@ -113,7 +117,7 @@ is.unitizer_result <- function(x) {
   if(!inherits(x, "unitizer_result"))
     return("does not inherit from \"unitizer_result\"")
   if(is.null(attr(x, "test.file")) || is.null(attr(x, "store.id")))
-    return("is missing \"test.file\" and/or "\"store.id\" attributes")
+    return("is missing \"test.file\" and/or \"store.id\" attributes")
   if(!isTRUE(dat.err <- is.unitizer_result_data(x)))
     return(paste0("data ", dat.err))
   TRUE
@@ -131,10 +135,28 @@ is.unitizer_result_data <- function(x) {
     return(paste0("does not have names expected columns"))
   if(
     !identical(
-      unname(vapply(object@data, class, character(1L))),
+      unname(vapply(x, class, character(1L))),
       c("integer", "character", "character", "factor", "factor",  "factor")
     )
   )
     return(paste0("does not have the expected column classes"))
   TRUE
 }
+
+setGeneric("extractResults", function(x, ...) standardGeneric("extractResults"))
+setMethod(
+  "extractResults", "unitizerObjectList",
+  function(x, ...)
+    structure(lapply(as.list(x), extractResults), class="unitizer_results")
+)
+setMethod(
+  "extractResults", "unitizer",
+  function(x, ...)
+    structure(
+      x@res.data, class=unique(c("unitizer_result", class(x@res.data))),
+      test.file=x@test.file.loc,
+      store.id=x@id, updated=x@updated
+    )
+)
+setMethod("extractResults", "unitizerLoadFail", function(x, ...) x)
+
