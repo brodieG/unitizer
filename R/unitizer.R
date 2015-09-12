@@ -111,7 +111,7 @@ setClass(
     version="character",          # should really be 'package_version', but want to avoid setOldClass, so use `as.character(packageVersion())` to populate
     zero.env="environment",       # keep functions and stuff here
     base.env="environment",
-    test.file.loc="character",    # location of teset file that produced `unitizer`
+    test.file.loc="character",    # location of test file that produced `unitizer`
     eval="logical",               # internal used during browsing to determine a re-eval instruction by user
     eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
     updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
