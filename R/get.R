@@ -370,7 +370,9 @@ infer_unitizer_location.character <- function(
 #'   otherwise
 
 is_package_dir <- function(name, has.tests=FALSE) {
-  stopifnot(file_test("-d", name), is.TF(has.tests))
+  stopifnot(is.character(name), is.TF(has.tests))
+  if(!is.character(name)) return("not character so cannot be a directory")
+  if(!file_test("-d", name)) return("not an existing directory")
   pkg.name <- try(get_package_name(name), silent=TRUE)
   if(inherits(pkg.name, "try-error"))
     return(conditionMessage(attr(pkg.name, "condition")))
@@ -386,9 +388,9 @@ is_package_dir <- function(name, has.tests=FALSE) {
   # Has requisite directories?
 
   if(!file_test("-d", file.path(name, "R")))
-    return("Missing 'R' directory")
+    return("missing 'R' directory")
   if(has.tests && !file_test("-d", file.path(name, "tests")))
-    return("Missing 'tests' directory")
+    return("missing 'tests' directory")
 
   # Woohoo
 
@@ -398,12 +400,8 @@ is_package_dir <- function(name, has.tests=FALSE) {
 
 get_package_dir <- function(name=getwd(), has.tests=FALSE) {
   stopifnot(
-    is.chr1(name),
-    file_test("-d", name) || file_test("-f", name),
-    is.TF(has.tests)
+    is.chr1(name), is.TF(has.tests)
   )
-  if(file_test("-f", name)) name <- dirname(name)
-  if(!file_test("-d", name)) return(character(0L))
   is.package <- FALSE
   prev.dir <- par.dir <- name
 
