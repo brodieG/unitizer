@@ -529,6 +529,9 @@ unitize_browse <- function(
       }
       if(auto.accepted) untz.browsers[[i]]@auto.accept <- TRUE
   } }
+  # Generate default browse data for all unitizers; the unitizers that are
+  # actually reviewed will get further updated later
+
   # Browse, or fail depending on interactive mode
 
   reviewed <- int.error <- logical(test.len)

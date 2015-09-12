@@ -153,7 +153,8 @@ setClass(
     state.new="unitizerGlobalTrackingStore",  # "compressed" versions of the tracking data in @global
     state.ref="unitizerGlobalTrackingStore",
 
-    changes="unitizerChanges"              # Summary of user changes
+    changes="unitizerChanges",                # Summary of user changes
+    res.data="data.frameOrNULL"               # details of test evaluation and user review
   ),
   prototype(
     version=as.character(packageVersion("unitizer")),

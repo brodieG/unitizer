@@ -255,6 +255,10 @@ store_unitizer <- function(unitizer) {
   }
   rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
 
+  # Get rid of res.data
+
+  unitizer@res.data <- NULL
+
   # blow away calls; these should be memorialized as deparsed versions and the
   # original ones take up a lot of room to store
 
