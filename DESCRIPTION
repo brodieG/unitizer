@@ -60,6 +60,7 @@ Collate:
     'parse.R'
     'rename.R'
     'repairenvs.R'
+    'result.R'
     'shims.R'
     'size.R'
     'state.R'

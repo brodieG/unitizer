@@ -438,7 +438,8 @@ setMethod(
       user=factor(
         ifelse(!x@mapping@reviewed, "-", x@mapping@review.val),
         levels=c("Y", "N", "-")
-      )
+      ),
+      stringsAsFactors=FALSE
     )[order(x@mapping@sec.id, id.order), ]
     rownames(res) <- NULL
     res
@@ -925,7 +926,7 @@ setClass(
   "unitizerBrowseResult",
   slots=c(
     unitizer="unitizer", re.eval="integer", updated="logical",
-    interactive.error="logical"
+    interactive.error="logical", data="data.frame"
   ),
   validity=function(object) {
     if(
@@ -940,6 +941,17 @@ setClass(
       !identical(object@interactive.error, FALSE)
     )
       return("slot `interactive.error` must be TRUE or FALSE")
+    if(
+      !identical(
+        names(object@data),
+        c("id", "call", "section", "ignored", "status", "user")
+      ) ||
+      !identical(
+        unname(vapply(object@data, class, character(1L))),
+        c("integer", "character", "character", "factor", "factor",  "factor")
+      )
+    )
+      return("slot `data` does not have the expected columns or column formats")
     TRUE
   }
 )

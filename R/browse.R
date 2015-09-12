@@ -357,7 +357,8 @@ setMethod(
 
     new(
       "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
-      updated=update, interactive.error=y@interactive.error
+      updated=update, interactive.error=y@interactive.error,
+      data=as.data.frame(y)
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
