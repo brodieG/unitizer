@@ -105,25 +105,36 @@ print.unitizer_results <- function(x, ...) {
   return(invisible(NULL))
 
 }
+# Check whether an object is of type "unitizer_result"
+#
+# returns TRUE on success and character string on failure
 
 is.unitizer_result <- function(x) {
   if(!inherits(x, "unitizer_result"))
-    return("Argument `x` must inherit from \"unitizer_result\"")
-  if(!is.data.frame(x))
-    return(
-      "Argument `x` must be a data.frame and inherit from \"unitizer_result\""
-    )
-  if(!is.character(x$call) || !is.character(x$section))
-    return(
-      paste0(
-        "Argument `x` must be a data.frame, inherit from \"unitizer_result\", ",
-        "and have character columns \"call\" and \"section\""
-    ) )
+    return("does not inherit from \"unitizer_result\"")
   if(is.null(attr(x, "test.file")) || is.null(attr(x, "store.id")))
-    return(
-      paste0(
-        "Argument `x` must be a \"unitizer_result\" with \"test.file\" and ",
-        "\"store.id\" attributes"
-    ) )
+    return("is missing \"test.file\" and/or "\"store.id\" attributes")
+  if(!isTRUE(dat.err <- is.unitizer_result_data(x)))
+    return(paste0("data ", dat.err))
+  TRUE
+}
+# Check whether an object conforms to the data frame structure expected of
+# the data component of a "unitizer_result" object
+#
+# returns TRUE on success and character string on failure
+
+is.unitizer_result_data <- function(x) {
+  if(!is.data.frame(x))
+    return("is not a data.frame")
+  names.valid <- c("id", "call", "section", "ignored", "status", "user")
+  if(!identical(names(x), names.valid))
+    return(paste0("does not have names expected columns"))
+  if(
+    !identical(
+      unname(vapply(object@data, class, character(1L))),
+      c("integer", "character", "character", "factor", "factor",  "factor")
+    )
+  )
+    return(paste0("does not have the expected column classes"))
   TRUE
 }

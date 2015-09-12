@@ -941,17 +941,8 @@ setClass(
       !identical(object@interactive.error, FALSE)
     )
       return("slot `interactive.error` must be TRUE or FALSE")
-    if(
-      !identical(
-        names(object@data),
-        c("id", "call", "section", "ignored", "status", "user")
-      ) ||
-      !identical(
-        unname(vapply(object@data, class, character(1L))),
-        c("integer", "character", "character", "factor", "factor",  "factor")
-      )
-    )
-      return("slot `data` does not have the expected columns or column formats")
+    if(!isTRUE(dat.err <- is.unitizer_result_data(object@data)))
+      return(paste0("slot `data` in unexpected format: ", dat.err))
     TRUE
   }
 )
