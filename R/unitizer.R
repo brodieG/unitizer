@@ -388,22 +388,8 @@ setMethod("show", "unitizerObjectListSummary",
     # full name of the directory that they correspond to (as much as possible
     # anyway)
 
-    dirs <- dirname(object@test.files)
-    uniq.dir <- str_reduce_unique(dirs)
-    com.dir <- substr(dirs[[1L]], 1L, nchar(dirs[[1L]]) - nchar(uniq.dir[[1L]]))
-    full.dir <- dirs[[1L]]
-
-    repeat {
-      dir.tmp <- dirname(full.dir)
-      if(
-        nchar(dir.tmp) < nchar(com.dir) || !nchar(dir.tmp)
-        || identical(dir.tmp, ".")
-      ) break
-      full.dir <- dir.tmp
-    }
-    test.files.trim <- if(sum(nchar(uniq.dir))) {
-      file.path(uniq.dir, basename(object@test.files))
-    } else basename(object@test.files)
+    test.files.trim <- unique_path(object@test.files)
+    full.dir <- attr(test.files.trim, "common_dir")
 
     # Ignore any columns with zero totals other than pass/fail
 
