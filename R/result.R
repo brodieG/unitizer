@@ -11,10 +11,10 @@ NULL
 
 print.unitizer_result <- function(x, ...) {
   if(!isTRUE(fail <- is.unitizer_result(x))) stop(fail)
-#x <- readRDS("helper/refobjs/browse_df1.rds")
 
-  x$call <- strtrunc(x$call, 20L)
-  x$section <- strtrunc(x$section, 15L)
+  x$call <- strtrunc(x$call, 30L)
+  x$section <- if(length(unique(x$section)) > 1L) strtrunc(x$section, 15L)
+  x$ignored <- factor(ifelse(x$ignored, "*", ""), levels=c("", "*"))
 
   store.char <- if(is.chr1plain(attr(x, "store.id"))) {
     pretty_path(attr(x, "store.id"))
@@ -23,7 +23,7 @@ print.unitizer_result <- function(x, ...) {
     if(inherits(att, "try-error")) "<untranslateable store.id>" else att
   }
   word_cat("Test File: ", pretty_path(attr(x, "test.file")), "\n", sep="")
-  word_cat("Store ID: ", store.char, "\n", sep="")
+  word_cat("Store ID: ", store.char, "\n\n", sep="")
 
   NextMethod(x, ...)
 }
@@ -37,7 +37,7 @@ print.unitizer_results <- function(x, ...) {
     !all(
       vapply(
         x,
-        function(y) is(x, "unitizerLoadFail") || isTRUE(is.unitizer_result(x)),
+        function(y) is(y, "unitizerLoadFail") || isTRUE(is.unitizer_result(y)),
         logical(1L)
   ) ) )
     stop(
@@ -56,26 +56,26 @@ print.unitizer_results <- function(x, ...) {
     vals <- vapply(
       x[which.pass],
       function(y) {
-        y2 <- y[!nchar(y$ignored), ]
+        y2 <- y[!y$ignored, ]
         counts <- tapply(y2$status, y2$status, length)
         yesses <- tapply(y2$user == "Y", y2$status, sum)
         counts[is.na(counts)] <- 0L
         yesses[is.na(yesses)] <- 0L
-        rbind(counts=counts, yesses=yesses)
+        rbind(yesses=yesses, counts=counts)
       },
-      matrix(integer(), 2L, length(levels(x$status)))
+      matrix(integer(1L), 2L, length(levels(x[[which.pass[[1L]]]]$status)))
     )
     # Compute which columns to display (always show first column); note we reduce
     # vals to a matrix by selecting only the "counts" values of the first dim
 
-    to.show <- unique(c(1L, which(rowSums(vals["counts", , ,drop=TRUE]))))
+    to.show <- unique(c(1L, which(!!rowSums(vals["counts", , ,drop=TRUE]))))
 
     # Now collapse into string form
 
     as.frac <- function(y) {
       setNames(
         c(
-          paste0(y["yesses"], "/", y["counts"]),
+          paste0(y["yesses",], "/", y["counts",]),
           paste0(rowSums(y), collapse="/")
         ),
         c(colnames(y), "Totals")
@@ -86,18 +86,19 @@ print.unitizer_results <- function(x, ...) {
     # Combine with file names and totals
 
     file.names <- vapply(
-      x[which.pass], function(y) pretty_name(attr(y, "test.file")),
+      x[which.pass], function(y) pretty_path(attr(y, "test.file")),
       character(1L)
     )
     fin.mx <- cbind(
       test.file=c(file.names, "Totals"),
-      rbind(
-        vals.char,
-        tots.char
-      )
-    )
+      t(
+        cbind(
+          vals.char,
+          if(ncol(vals.char) > 1L) tots.char,
+          deparse.level=0L
+    ) ) )
     fin.df <- cbind(id=c(which.pass, 0L), as.data.frame(fin.mx))
-    fin.out <- capture.output(format(DF))
+    fin.out <- capture.output(format(fin.df))
     cat(
       head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
       tail(fin.out, 1L), sep="\n"
@@ -136,7 +137,7 @@ is.unitizer_result_data <- function(x) {
   if(
     !identical(
       unname(vapply(x, class, character(1L))),
-      c("integer", "character", "character", "factor", "factor",  "factor")
+      c("integer", "character", "character", "logical", "factor",  "factor")
     )
   )
     return(paste0("does not have the expected column classes"))

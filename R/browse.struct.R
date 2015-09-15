@@ -433,7 +433,7 @@ setMethod(
       id=x@mapping@item.id,
       call=calls.dep,
       section=sec.titles,
-      ignored=factor(ifelse(x@mapping@ignored, "*", ""), levels=c("", "*")),
+      ignored=x@mapping@ignored,
       status=x@mapping@review.type,
       user=factor(
         ifelse(!x@mapping@reviewed, "-", x@mapping@review.val),
