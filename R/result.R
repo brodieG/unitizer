@@ -7,7 +7,6 @@ NULL
 #' @export
 #' @param x object to display
 #' @return NULL, invisibly
-#'
 
 print.unitizer_result <- function(x, ...) {
   if(!isTRUE(fail <- is.unitizer_result(x))) stop(fail)
@@ -44,12 +43,19 @@ print.unitizer_results <- function(x, ...) {
       "Argument `x` must be a \"unitizer_results\" list containing only ",
       "`unitizerLoadFail` or `unitizer_result` objects"
     )
+  if(!length(x)) {
+    word_cat("No unitizers")
+    return(invisible(NULL))
+  }
   failed <- vapply(x, is, logical(1L), "unitizerLoadFail")
   which.fail <- which(failed)
   which.pass <- which(!failed)
+  files <- # extract both S4 slot and S3 attribute...
+    vapply(x, function(y) pretty_path(attr(y, "test.file")), character(1L))
+  files.short <- unique_path(files)
+  files.dir <- attr(files.short, "common_dir")
 
   if(length(which.pass)) {
-    word_cat("Unitizer Results:\n")
     # Looking at non-ignored only, compute counts in each category, and how many
     # of them the user selected Y for; vals will be a 3D Array
 
@@ -75,7 +81,7 @@ print.unitizer_results <- function(x, ...) {
     as.frac <- function(y) {
       setNames(
         c(
-          paste0(y["yesses",], "/", y["counts",]),
+          paste0(y["yesses", ,drop=F], "/", y["counts", , drop=F]),
           paste0(rowSums(y), collapse="/")
         ),
         c(colnames(y), "Totals")
@@ -83,32 +89,53 @@ print.unitizer_results <- function(x, ...) {
     vals.char <- apply(vals[, to.show, ,drop=FALSE], 3L, as.frac)
     tots.char <- as.frac(apply(vals[, to.show, ,drop=FALSE], 1L:2L, sum))
 
+    count.mx <- t(
+      cbind(
+        vals.char, tots.char,
+        deparse.level=0L
+    ) )
+    # drop totals if superflous
+
+    if(ncol(count.mx) == 2L) count.mx <- count.mx[, -2L, drop=FALSE]
+    if(nrow(count.mx) == 2L) count.mx <- count.mx[-2L, , drop=FALSE]
+
+    # pad col names for equal width
+
+    max.width <- max(c(nchar(count.mx), nchar(dimnames(vals)[[2L]])))
+    colnames(count.mx) <-
+      sprintf(paste0("%", max.width, "s"), colnames(count.mx))
+
     # Combine with file names and totals
 
-    file.names <- vapply(
-      x[which.pass], function(y) pretty_path(attr(y, "test.file")),
-      character(1L)
-    )
     fin.mx <- cbind(
-      test.file=c(file.names, "Totals"),
-      t(
-        cbind(
-          vals.char,
-          if(ncol(vals.char) > 1L) tots.char,
-          deparse.level=0L
-    ) ) )
+      test.file=c(files.short[which.pass], "Totals"),
+      count.mx
+    )
     fin.df <- cbind(id=c(which.pass, 0L), as.data.frame(fin.mx))
-    fin.out <- capture.output(format(fin.df))
+    fin.out <- capture.output(print(fin.df, row.names=FALSE))
+    word_cat("Summary of tests (accepted/rejected):\n\n")
     cat(
       head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
       tail(fin.out, 1L), sep="\n"
     )
   }
+  if(length(which.fail)) {
+    test.files <- vapply(x[which.fail], slot, character(1L), "test.file")
+    fail.reason <- vapply(x[which.fail], slot, character(1L), "reason")
+    file.names.short <- unique_path(test.files)
 
-  message("MUST ADD FAILED SUMMARY IF RELEVENT")
-
+    word_cat(
+      "Unitizers for the following files could not be loaded:\n\n"
+    )
+    cat(
+      as.character(
+        UL(
+          paste0(
+            "id: ", which.fail, "; ", files.short[which.fail], ": ", fail.reason
+    ) ) ) )
+  }
+  word_cat("\nTest files in common directory '", files.dir, "'", sep="")
   return(invisible(NULL))
-
 }
 # Check whether an object is of type "unitizer_result"
 #
@@ -131,14 +158,17 @@ is.unitizer_result <- function(x) {
 is.unitizer_result_data <- function(x) {
   if(!is.data.frame(x))
     return("is not a data.frame")
-  names.valid <- c("id", "call", "section", "ignored", "status", "user")
+  names.valid <-
+    c("id", "call", "section", "ignored", "status", "user", "reviewed")
   if(!identical(names(x), names.valid))
     return(paste0("does not have names expected columns"))
   if(
     !identical(
       unname(vapply(x, class, character(1L))),
-      c("integer", "character", "character", "logical", "factor",  "factor")
-    )
+      c(
+        "integer", "character", "character", "logical", "factor",  "factor",
+        "logical"
+    ) )
   )
     return(paste0("does not have the expected column classes"))
   TRUE
