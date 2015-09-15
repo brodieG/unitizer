@@ -435,10 +435,8 @@ setMethod(
       section=sec.titles,
       ignored=x@mapping@ignored,
       status=x@mapping@review.type,
-      user=factor(
-        ifelse(!x@mapping@reviewed, "-", x@mapping@review.val),
-        levels=c("Y", "N", "-")
-      ),
+      user=factor(x@mapping@review.val, levels=c("Y", "N")),
+      reviewed=x@mapping@reviewed,
       stringsAsFactors=FALSE
     )[order(x@mapping@sec.id, id.order), ]
     rownames(res) <- NULL
