@@ -7,7 +7,6 @@ NULL
 #' @export
 #' @param x object to display
 #' @return NULL, invisibly
-#'
 
 print.unitizer_result <- function(x, ...) {
   if(!isTRUE(fail <- is.unitizer_result(x))) stop(fail)
@@ -75,7 +74,8 @@ print.unitizer_results <- function(x, ...) {
     # Compute which columns to display (always show first column); note we reduce
     # vals to a matrix by selecting only the "counts" values of the first dim
 
-    to.show <- unique(c(1L, which(!!rowSums(vals["counts", , ,drop=TRUE]))))
+    to.show <- unique(which(!!rowSums(vals["counts", , ,drop=TRUE])))
+    if(!length(to.show)) to.show <- 1L
 
     # Now collapse into string form
 
@@ -135,12 +135,7 @@ print.unitizer_results <- function(x, ...) {
             "id: ", which.fail, "; ", files.short[which.fail], ": ", fail.reason
     ) ) ) )
   }
-  word_cat(
-    "Test files in common directory '", files.dir, "'. To access individual ",
-    "resuls use the `id` to index the results object (e.g. `res[[i]]`). ",
-    "To load the actual unitizer, use ...", sep=""
-  )
-
+  word_cat("\nTest files in common directory '", files.dir, "'", sep="")
   return(invisible(NULL))
 }
 # Check whether an object is of type "unitizer_result"
