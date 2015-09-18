@@ -74,7 +74,8 @@ print.unitizer_results <- function(x, ...) {
     # Compute which columns to display (always show first column); note we reduce
     # vals to a matrix by selecting only the "counts" values of the first dim
 
-    to.show <- unique(c(1L, which(!!rowSums(vals["counts", , ,drop=TRUE]))))
+    to.show <- unique(which(!!rowSums(vals["counts", , ,drop=TRUE])))
+    if(!length(to.show)) to.show <- 1L
 
     # Now collapse into string form
 
