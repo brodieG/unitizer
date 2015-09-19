@@ -23,8 +23,12 @@ print.unitizer_result <- function(x, ...) {
   }
   word_cat("Test File: ", pretty_path(attr(x, "test.file")), "\n", sep="")
   word_cat("Store ID: ", store.char, "\n\n", sep="")
-
-  NextMethod(x, ...)
+  res <- NextMethod(x, ...)
+  if(!isTRUE(attr(x, "updated")))
+    word_cat(
+      "\nYou chose NOT to save these changes to the unitizer store\n"
+    )
+  invisible(res)
 }
 
 #' @rdname print.unitizer_result
