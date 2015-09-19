@@ -56,6 +56,12 @@
 #' \code{\link{get_unitizer}} methods so that you can retrieve the stored
 #' \code{unitizer} objects.
 #'
+#' Please note that with \code{unitize_dir} the return values are those produced
+#' by the last review of a \code{unitizer}, and may be misleading if you
+#' re-reviewed a unitizer multiple times.  For example, if you accepted changes
+#' to a \code{unitizer} in the first review, but did not in the second, the
+#' return value would wrongly indicate the \code{unitizer} was not updated.
+#'
 #' @export
 #' @aliases unitize review unitize_dir
 #' @param test.file path to the file containing tests, if supplied path does not
