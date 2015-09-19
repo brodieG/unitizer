@@ -143,7 +143,7 @@ test_that("unitize_dir", {
   expect_equal_to_reference(untz3a.cpy, file.path("helper", "refobjs", "unitize_res1.rds"))
   expect_equal(untz3a.get.all, c("unitizer", "unitizer", "logical"))
 
-  expect_equal_to_reference(untz3a.all, file.path("helper", "refobjs", "unitize_resprint3.rds"))
+  expect_equal_to_reference(untz3b.all, file.path("helper", "refobjs", "unitize_resprint3.rds"))
   expect_equal(untz3b.get.all, c("unitizer", "unitizer", "unitizer"))
 })
 # Namespace conflicts; unfortunately if either `covr` or `data.table` are loaded
@@ -313,6 +313,22 @@ test_that("multi-sect", {
   txt20.rds <- readRDS(file.path("helper", "refobjs", "unitize_multisect1.rds"))
   txt20.rds$output <- gsub("^<\\w+: .*?>", "", txt20.rds$output)
   expect_identical(txt20, txt20.rds)
+})
+# Purposefully mess up one of the unitizers to see if the load fail stuff works
+
+saveRDS(list(1, 2, 3), file.path(test.dir, "fastlm.unitizer", "data.rds"))
+txt21 <- unitizer:::capture_output(
+  untz21 <- unitize_dir(test.dir, interactive.mode=TRUE)
+)
+txt21a <- capture.output(print(untz21))
+test_that("Load Fail", {
+  expect_equal(
+    vapply(untz21, function(x) class(x)[[1L]], character(1L)),
+    c("unitizerLoadFail", "unitizer_result", "unitizer_result")
+  )
+  expect_equal_to_reference(
+    txt21a, file.path("helper", "refobjs", "unitize_loadfailprint1.rds")
+  )
 })
 
 unitizer_cleanup_demo()

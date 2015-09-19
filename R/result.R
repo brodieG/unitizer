@@ -181,8 +181,12 @@ print.unitizer_results <- function(x, ...) {
       head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
       tail(fin.out, 1L), sep="\n"
     )
+    if(any(updated < 3L)) cat("\n")
+    if(any(updated == 1L)) word_cat("* unitizer was not saved")
+    if(any(updated == 2L)) word_cat("$ unitizer was saved in prior evaluation")
   }
   if(length(which.fail)) {
+    if(length(which.pass)) cat("\n")
     test.files <- vapply(x[which.fail], slot, character(1L), "test.file")
     fail.reason <- vapply(x[which.fail], slot, character(1L), "reason")
     file.names.short <- unique_path(test.files)
@@ -190,7 +194,7 @@ print.unitizer_results <- function(x, ...) {
     word_cat(
       "Unitizers for the following files could not be loaded:\n\n"
     )
-    cat(
+    cat(sep="\n",
       as.character(
         UL(
           paste0(
@@ -198,8 +202,6 @@ print.unitizer_results <- function(x, ...) {
     ) ) ) )
   }
   word_cat("\nTest files in common directory '", files.dir, "'", sep="")
-  if(any(updated == 1L)) word_cat("* unitizer was not saved")
-  if(any(updated == 2L)) word_cat("$ unitizer was saved in prior evaluation")
   return(invisible(x))
 }
 # Check whether an object is of type "unitizer_result"
