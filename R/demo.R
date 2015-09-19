@@ -171,6 +171,10 @@ unitizer_cleanup_demo <- function() {
   vars <- c(".unitizer.fastlm", ".unitizer.test.file")
   detach("package:unitizer.fastlm", unload=TRUE)
   remove.packages("unitizer.fastlm", .libPaths()[[1L]])
-  unlink(.unitizer.fastlm, recursive=TRUE)
+  pkg.dir <- try(get(".unitizer.fastlm", envir=parent.frame()))
+  if(
+    !inherits(pkg.dir, "try-error") && is.chr1plain(pkg.dir) &&
+    file_test("-d", pkg.dir) && grepl("unitizer\\.fastlm$", pkg.dir)
+  ) unlink(pkg.dir, recursive=TRUE)
   rm(list=vars, envir=parent.frame())
 }
