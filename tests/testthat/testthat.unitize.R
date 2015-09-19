@@ -1,4 +1,4 @@
-
+# devtools::install(); library(testthat); library(unitizer); setwd("tests/testthat")
 
 if(!file_test("-d", file.path("helper", "refobjs")))
   stop("Make sure wd is set to tests/testthat")
@@ -9,6 +9,7 @@ library(testthat)
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R")
 .unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.unitizer")
+test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
 
 # Random history file
 
@@ -48,19 +49,18 @@ test_that("bad seed", {
 # Unitizers in different directories that don't exist; also test using a
 # function to generate those directories
 
-test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
 get_store_id <- function(x) {
   file <- basename(x)
   dir <- dirname(dirname(x))
-  file.path(dir, "unitizer2", sub("(.*)\\.R", "\\1", file))
+  file.path(dir, "unitizer2", sub("(.*)\\.R", "\\1.unitizer", file))
 }
 unitizer:::read_line_set_vals(c("N"))
 txt1 <- unitizer:::capture_output(
-  try(unitize_dir(test.dir, get_store_id, interactive.mode=TRUE))
+  untz1 <- try(unitize_dir(test.dir, get_store_id, interactive.mode=TRUE))
 )
 unitizer:::read_line_set_vals(c("Y", "Q"))
 txt2 <- unitizer:::capture_output(
-  unitize_dir(test.dir, get_store_id, interactive.mode=TRUE)
+  untz2 <- unitize_dir(test.dir, get_store_id, interactive.mode=TRUE)
 )
 # Some of the text must be ablated
 
@@ -83,31 +83,69 @@ test_that("create dir", {
     txt2, file.path("helper", "refobjs", "unitize_txtcd2.rds")
   )
 })
-
-# Now test `unitize_dir`; currently only testing output, once we finalize the
-# return value we will need to add tests for that
+# Now test `unitize_dir`; we are testing all different combination of whether
+# a unitizer is accepted and updated
 
 unitizer:::read_line_set_vals(
   c(
-    "Y",                            # Create folders
     "A",                            # Review all
-    "Y", "Y", "Y", "Y", "Y",        # Accept all new
-    "Y", "Y",                       # Accept all new
-    "Y", "Y", "Y", "Y",             # Accept all new
-    "R"                             # Re-evalute, and exit on success (not sure R should exit...)
+    "Y", "Y", "Y", "Y", "Y",        # Accept all
+    "Q",                            # Quit
+    "Q",                            # Quit
+    "R",                            # Re-evalute
+    "A",                            # Review remaining
+    "Y", "Y",                       # Accept all
+    "Q",                            # Quit from review
+    "Q"                             # Quit completely
   )
 )
-txt3 <- unitizer:::capture_output(
-  untz3 <- unitize_dir(test.dir, interactive.mode=TRUE)
+txt3a <- unitizer:::capture_output(
+  untz3a <- unitize_dir(test.dir, interactive.mode=TRUE)
 )
-# Need to add tests for contents of `untz2`
+untz3a.get.all <- vapply(get_unitizer(untz3a), class, character(1L))
+untz3a.cpy <- untz3a
+for(i in seq_along(untz3a.cpy)) {  # need to drop temp file attributes for tests
+  attr(untz3a.cpy[[i]], "test.file") <- basename(attr(untz3a.cpy[[i]], "test.file"))
+  attr(untz3a.cpy[[i]], "store.id") <- basename(attr(untz3a.cpy[[i]], "store.id"))
+}
+untz3a.all <- capture.output(print(untz3a))
+untz3a.first <- capture.output(print(untz3a[[1L]]))
+
+# Now accept the last remaining tests
+# unlink(list.files(test.dir, pattern="\\.unitizer$", full.names=TRUE), recursive=TRUE)
+
+unitizer:::read_line_set_vals(
+  c(
+    "3",                            # Review third unitizer
+    "Y", "Y", "Y", "Y",             # Accept all
+    "R"                             # Re-eval and exit (again, not clear this is right thing to do)
+  )
+)
+txt3b <- unitizer:::capture_output(
+  untz3b <- unitize_dir(test.dir, interactive.mode=TRUE)
+)
+untz3b.all <- capture.output(print(untz3b))
+untz3b.get.all <- vapply(get_unitizer(untz3b), class, character(1L))
 
 test_that("unitize_dir", {
   expect_equal_to_reference(
-    txt3, file.path("helper", "refobjs", "unitize_txtdir.rds")
+    txt3a, file.path("helper", "refobjs", "unitize_txtdir.rds")
   )
-})
+  expect_identical(
+    class(untz3a), "unitizer_results"
+  )
+  expect_identical(
+    lapply(untz3a, class), replicate(3L, c("unitizer_result", "data.frame"), simplify=FALSE)
+  )
+  expect_equal_to_reference(untz3a.all, file.path("helper", "refobjs", "unitize_resprint1.rds"))
+  expect_equal_to_reference(untz3a.first, file.path("helper", "refobjs", "unitize_resprint2.rds"))
 
+  expect_equal_to_reference(untz3a.cpy, file.path("helper", "refobjs", "unitize_res1.rds"))
+  expect_equal(untz3a.get.all, c("unitizer", "unitizer", "logical"))
+
+  expect_equal_to_reference(untz3b.all, file.path("helper", "refobjs", "unitize_resprint3.rds"))
+  expect_equal(untz3b.get.all, c("unitizer", "unitizer", "unitizer"))
+})
 # Namespace conflicts; unfortunately if either `covr` or `data.table` are loaded
 # this may not work quite right
 
@@ -150,11 +188,18 @@ devtools::install(.unitizer.fastlm)
 # Try navigating through the unitizer
 
 unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N", "N", "B", "U", "Q"))
-txt7a <- unitizer:::capture_output(unitize(.unitizer.test.file, interactive.mode=TRUE))
+txt7a <- unitizer:::capture_output(
+  untz7a <- unitize(.unitizer.test.file, interactive.mode=TRUE)
+)
+attr(untz7a, "test.file") <- basename(attr(untz7a, "test.file"))
+attr(untz7a, "store.id") <- basename(attr(untz7a, "store.id"))
 
 test_that("navigate", {
   expect_equal_to_reference(
     txt7a, file.path("helper", "refobjs", "unitize_nav1.rds")
+  )
+  expect_equal_to_reference(
+    untz7a, file.path("helper", "refobjs", "unitize_res7a.rds")
   )
 })
 # list help, review first item, but do nothing
@@ -213,7 +258,9 @@ txt13b <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE)
 # means we're accepting tests that are not correct
 
 unitizer:::read_line_set_vals(c("A", "Y", "Y", "Y", "Y", "Y", "Y", "RR"))
-txt11 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+txt11 <- unitizer:::capture_output(
+  untz11 <- unitize_dir(test.dir, interactive.mode=TRUE)
+)
 
 test_that("review dir", {
   expect_equal_to_reference(
@@ -266,6 +313,22 @@ test_that("multi-sect", {
   txt20.rds <- readRDS(file.path("helper", "refobjs", "unitize_multisect1.rds"))
   txt20.rds$output <- gsub("^<\\w+: .*?>", "", txt20.rds$output)
   expect_identical(txt20, txt20.rds)
+})
+# Purposefully mess up one of the unitizers to see if the load fail stuff works
+
+saveRDS(list(1, 2, 3), file.path(test.dir, "fastlm.unitizer", "data.rds"))
+txt21 <- unitizer:::capture_output(
+  untz21 <- unitize_dir(test.dir, interactive.mode=TRUE)
+)
+txt21a <- capture.output(print(untz21))
+test_that("Load Fail", {
+  expect_equal(
+    vapply(untz21, function(x) class(x)[[1L]], character(1L)),
+    c("unitizerLoadFail", "unitizer_result", "unitizer_result")
+  )
+  expect_equal_to_reference(
+    txt21a, file.path("helper", "refobjs", "unitize_loadfailprint1.rds")
+  )
 })
 
 unitizer_cleanup_demo()

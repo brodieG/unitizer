@@ -137,6 +137,12 @@ upgrade_internal <- function(object) {
   if(ver < "1.0.4") {
     object <- addSlot(object, "cons", NULL)
   }
+  if(ver < "1.0.6") {
+    object <- addSlot(object, "res.data", NULL)
+  }
+  if(ver < "1.0.7") {
+    object <- addSlot(object, "updated.at.least.once", FALSE)
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always

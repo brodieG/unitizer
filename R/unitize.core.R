@@ -282,6 +282,7 @@ unitize_core <- function(
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
   valid <- rep(TRUE, length(eval.which))
+  updated <- rep(FALSE, length(eval.which)) # Track which unitizers were updated
   unitizers <- new("unitizerObjectList")
 
   # - Evaluate / Browse --------------------------------------------------------
@@ -334,12 +335,23 @@ unitize_core <- function(
       history=history,
       global=global
     )
+    # Track whether updated, valid, etc.
+
+    updated.new <-
+      vapply(as.list(unitizers[valid]), slot, logical(1L), "updated")
+    updated[valid][updated.new] <- TRUE
+
     eval.which.valid <- which(
       vapply(as.list(unitizers[valid]), slot, logical(1L), "eval")
     )
     eval.which <- which(valid)[eval.which.valid]
     if(identical(mode, "review")) break
   }
+  # since we reload the unitizer, we need to note whether it was updated at
+  # least once since that info is lost
+
+  for(i in which(updated)) unitizers[[i]]@updated.at.least.once <- TRUE
+
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
@@ -351,51 +363,18 @@ unitize_core <- function(
       "`unitizer` evaluation succeed, but `post` steps had errors:",
       post.res
     )
-  # We need to reload the unitizers now since we can't directly return the
-  # `unitizers` that are available at this level since they are not the ones
-  # that actually get stored (necessary for re-eval purposes); some question
-  # whether this is necessary as it is potentially slow.
+  # need to pull out the result data to returns as part of result, and assemble
+  # it into final result object; we're not able to do that earlier in the
+  # process due to issues with how S4 classes deal with S3 classes in their
+  # slots (don't want to use setOldClass, and inheritance not recognized)
 
-  unitizer.reload <- try(
-    load_unitizers(
-      store.ids[valid], test.files[valid], par.frame=util.frame,
-      interactive.mode=FALSE, mode=mode, global=global
-  ) )
-  if(inherits(unitizer.reload, "try-error"))
-    stop(
-      "Logic Error: unitizer completed, but is unable to reload unitizer ",
-      "stores to return them; this should not happen, contact maintainer."
-    )
-  reload.valid <- vapply(as.list(unitizer.reload), is, logical(1L), "unitizer")
-  reload.invalid <- which(!reload.valid)
-  # nocov start
-  # really shouldn't happen, so can't be tested
-  if(length(reload.invalid)) {
-    reload.fail.names <- character(length(reload.invalid))
-    for(i in reload.invalid) {
-      if(!is(unitizer.reload[[i]], "unitizerLoadFail"))
-        stop(
-          "Logic Error: unitizer list may only contain untizers or ",
-          "unitizerLoadFail objects; found object of class `",
-          deparse(class(unitizer.reload[[i]]), width=500), "` at index ", i,
-          "; contact maintainer."
-        )
-      reload.fail.names[[i]] <- best_file_name(unitizer.reload[[i]]@test.file)
-    }
-    word_cat(
-      "The following unitizers ran successfully, but could not be reloaded ",
-      "for return:",
-      as.character(UL(reload.fail.names))
-    )
-  }
-  # nocov end
-  unitizers[valid] <- as.list(unitizer.reload)
-  return(as.list(unitizers))
+  extractResults(unitizers)
 }
 #' Evaluate User Tests
 #'
 #' @param tests.parsed a list of expressions
-#' @param unitizers a list of \code{unitizer} objects of same length as \code{tests.parsed}
+#' @param unitizers a list of \code{unitizer} objects of same length as
+#'   \code{tests.parsed}
 #' @param which integer which of \code{unitizer}s to actually eval, all get
 #'   summary status displayed to screen
 #' @return a list of unitizers
@@ -440,7 +419,8 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
     }
     unitizers[[i]]@eval <- FALSE
     glob.opts <- Filter(Negate(is.null), lapply(global$tracking@options, names))
-    glob.opts <- if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
+    glob.opts <-
+      if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
 
     no.track <- c(
       unlist(
@@ -529,6 +509,12 @@ unitize_browse <- function(
       }
       if(auto.accepted) untz.browsers[[i]]@auto.accept <- TRUE
   } }
+  # Generate default browse data for all unitizers; the unitizers that are
+  # actually reviewed will get further updated later
+
+  for(i in seq_along(unitizers)) {
+    unitizers[[i]]@res.data <- as.data.frame(untz.browsers[[i]])
+  }
   # Browse, or fail depending on interactive mode
 
   reviewed <- int.error <- logical(test.len)
@@ -683,6 +669,7 @@ unitize_browse <- function(
           )
           summaries@updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer
+          unitizers[[i]]@res.data <- browse.res@data
           int.error[[i]] <- browse.res@interactive.error
 
           # Check to see if any need to be re-evaled, and if so, mark unitizers
