@@ -1,4 +1,4 @@
-
+# devtools::install(); library(testthat); library(unitizer); setwd("tests/testthat")
 
 if(!file_test("-d", file.path("helper", "refobjs")))
   stop("Make sure wd is set to tests/testthat")
@@ -9,6 +9,7 @@ library(testthat)
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R")
 .unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.unitizer")
+test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
 
 # Random history file
 
@@ -48,19 +49,18 @@ test_that("bad seed", {
 # Unitizers in different directories that don't exist; also test using a
 # function to generate those directories
 
-test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
 get_store_id <- function(x) {
   file <- basename(x)
   dir <- dirname(dirname(x))
-  file.path(dir, "unitizer2", sub("(.*)\\.R", "\\1", file))
+  file.path(dir, "unitizer2", sub("(.*)\\.R", "\\1.unitizer", file))
 }
 unitizer:::read_line_set_vals(c("N"))
 txt1 <- unitizer:::capture_output(
-  try(unitize_dir(test.dir, get_store_id, interactive.mode=TRUE))
+  untz1 <- try(unitize_dir(test.dir, get_store_id, interactive.mode=TRUE))
 )
 unitizer:::read_line_set_vals(c("Y", "Q"))
 txt2 <- unitizer:::capture_output(
-  unitize_dir(test.dir, get_store_id, interactive.mode=TRUE)
+  untz2 <- unitize_dir(test.dir, get_store_id, interactive.mode=TRUE)
 )
 # Some of the text must be ablated
 
@@ -100,12 +100,21 @@ unitizer:::read_line_set_vals(
 txt3 <- unitizer:::capture_output(
   untz3 <- unitize_dir(test.dir, interactive.mode=TRUE)
 )
-# Need to add tests for contents of `untz2`
+untz3.all <- capture.output(print(untz3))
+untz3.first <- capture.output(print(untz3[[1L]]))
 
 test_that("unitize_dir", {
   expect_equal_to_reference(
     txt3, file.path("helper", "refobjs", "unitize_txtdir.rds")
   )
+  expect_identical(
+    class(untz3), "unitizer_results"
+  )
+  expect_identical(
+    lapply(untz3, class), replicate(3L, c("unitizer_result", "data.frame"), simplify=FALSE)
+  )
+  expect_equal_to_reference(untz3.all, file.path("helper", "refobjs", "unitize_resprint1.rds"))
+  expect_equal_to_reference(untz3.first, file.path("helper", "refobjs", "unitize_resprint2.rds"))
 })
 
 # Namespace conflicts; unfortunately if either `covr` or `data.table` are loaded
@@ -150,7 +159,7 @@ devtools::install(.unitizer.fastlm)
 # Try navigating through the unitizer
 
 unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N", "N", "B", "U", "Q"))
-txt7a <- unitizer:::capture_output(unitize(.unitizer.test.file, interactive.mode=TRUE))
+txt7a <- unitizer:::capture_output(untz7a <- unitize(.unitizer.test.file, interactive.mode=TRUE))
 
 test_that("navigate", {
   expect_equal_to_reference(
