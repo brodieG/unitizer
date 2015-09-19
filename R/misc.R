@@ -193,6 +193,8 @@ history_write <- function(hist.con, data) {
 #'     figure out if a file is in a package and return a path relative to the
 #'     package directory if it turns out that one is shorter than the one
 #'     produced with relativize path
+#'   \item \code{unique_path} is used to separate out a common path from a list
+#'     of files
 #' }
 #'
 #' @param wd NULL or character(1L) resolving to a directory, if NULL will be
@@ -269,6 +271,27 @@ pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   )
   if(nchar(rel.path) <= nchar(pkg.path)) rel.path else pkg.path
 }
+#' @rdname relativize_path
+
+unique_path <- function(files) {
+  dirs <- dirname(files)
+  uniq.dir <- str_reduce_unique(dirs)
+  com.dir <- substr(dirs[[1L]], 1L, nchar(dirs[[1L]]) - nchar(uniq.dir[[1L]]))
+  full.dir <- dirs[[1L]]
+
+  repeat {
+    dir.tmp <- dirname(full.dir)
+    if(
+      nchar(dir.tmp) < nchar(com.dir) || !nchar(dir.tmp)
+      || identical(dir.tmp, ".")
+    ) break
+    full.dir <- dir.tmp
+  }
+  test.files.trim <- if(sum(nchar(uniq.dir))) {
+    file.path(uniq.dir, basename(files))
+  } else basename(files)
+  structure(test.files.trim, common_dir=full.dir)
+}
 
 #' Merge Two Lists
 #'
@@ -288,4 +311,7 @@ merge_lists <- function(x, y, keep.null=TRUE) {
   x[names(y)] <- y
   x
 }
+
+
+
 

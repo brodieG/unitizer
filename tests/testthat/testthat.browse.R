@@ -68,6 +68,13 @@ local( {
   # we moved ignored tests to be in the same sub-section as the subsequent non-
   # ignored tests
 
+  test_that("Can convert to data.frame", {
+    expect_equal_to_reference(
+      unitizer:::as.data.frame(unitizer.prepped),
+      file.path("helper", "refobjs", "browse_df1.rds")
+    )
+  })
+
   test_that("unitizerBrowse correctly processes unitizer for display", {
     # force all tests to be reviewed so they will be shown
     unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))

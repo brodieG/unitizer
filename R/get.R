@@ -1,7 +1,7 @@
 #' Set and Retrieve Store Contents
 #'
 #' These functions are not used directly; rather, they are used by
-#' \code{`\link{unitize}`} to get and set the \code{unitizer} objects.
+#' \code{\link{unitize}} to get and set the \code{unitizer} objects.
 #' You should only need to understand these functions if you are
 #' looking to implement a special storage mechanism for the \code{unitizer}
 #' objects.
@@ -11,11 +11,11 @@
 #'
 #' You may write your own methods for special storage situations (
 #' e.g SQL database, ftp server, etc) with the understanding that the
-#' getting method may only accept one argument, the \code{`store.id`}, and
-#' the setting method only two arguments, the \code{`store.id`} and the
+#' getting method may only accept one argument, the \code{store.id}, and
+#' the setting method only two arguments, the \code{store.id} and the
 #' \code{unitizer}.
 #'
-#' S3 dispatch will be on \code{`store.id`}, and \code{`store.id`} may
+#' S3 dispatch will be on \code{store.id}, and \code{store.id} may
 #' be any R object that identifies the unitizer.  For example, a potential
 #' SQL implementation where the unitizers get stored in blobs may look
 #' like so:
@@ -38,28 +38,33 @@
 #' produce a human readable identifying string.
 #'
 #' For inspirations for the bodies of the _store functions look at the source
-#' code for \code{`unitizer:::get_unitizer.character`} and \code{`unitizer:::set_unitizer.character`}.
-#' Expectations for the functions are as follows.  \code{`get_unitizer`} must:
+#' code for \code{unitizer:::get_unitizer.character} and
+#' \code{unitizer:::set_unitizer.character}.
+#' Expectations for the functions are as follows.  \code{get_unitizer} must:
 #' \itemize{
-#'   \item return a \code{`\link{unitizer-class}`} object if \code{`store.id`} exists and contains a valid object
-#'   \item return FALSE if the object doesn't exist (e.g. first time run-through, so reference copy doesn't exist yet)
-#'   \item \code{`\link{stop}`} on error
+#'   \item return a \code{\link{unitizer-class}} object if \code{store.id}
+#'      exists and contains a valid object
+#'   \item return FALSE if the object doesn't exist (e.g. first time
+#'     run-through, so reference copy doesn't exist yet)
+#'   \item \code{\link{stop}} on error
 #' }
-#' \code{`set_unitizer`} must:
+#' \code{set_unitizer} must:
 #' \itemize{
 #'   \item return TRUE on success
-#'   \item \code{`\link{stop}`} on error
+#'   \item \code{\link{stop}} on error
 #' }
 #'
 #' @aliases get_unitizer
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
-#' @param unitizer a \code{`\link{unitizer-class}`} object containing the store data
+#' @param unitizer a \code{\link{unitizer-class}} object containing the store
+#'   data
 #' @return
 #'   \itemize{
 #'     \item set_unitizer TRUE if unitizer storing worked, error otherwise
-#'     \item get_unitizer a \code{`\link{unitizer-class}`} object, FALSE
-#'       if \code{`store.id`} doesn't exist yet , or error otherwise
+#'     \item get_unitizer a \code{\link{unitizer-class}} object, FALSE
+#'       if \code{store.id} doesn't exist yet, or error otherwise; note that
+#'       the \code{unitizer_results} method returns a list
 #'   }
 
 set_unitizer <- function(store.id, unitizer) {
@@ -82,7 +87,10 @@ set_unitizer.character <- function(store.id, unitizer) {
   new.file <- FALSE
   if(!file.exists(store.id)) {
     if(!isTRUE(dir.create(store.id)))
-      stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")
+      stop(
+        "Could not create `store.id`; make sure it is a valid file name; see ",
+        "warning for details"
+      )
   } else if (!file_test("-d", store.id)) {
     stop("'", store.id, "' is not a directory.")
   }
@@ -97,6 +105,7 @@ set_unitizer.character <- function(store.id, unitizer) {
 get_unitizer <- function(store.id) {
   UseMethod("get_unitizer")
 }
+#' @rdname set_unitizer
 #' @export
 
 get_unitizer.character <- function(store.id) {
@@ -138,10 +147,24 @@ get_unitizer.character <- function(store.id) {
   # } }
   unitizer
 }
+#' @rdname set_unitizer
 #' @export
 
 get_unitizer.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
+}
+#' @rdname set_unitizer
+#' @export
+
+get_unitizer.unitizer_result <- function(store.id) {
+  store.id <- attr(store.id, "store.id")
+  get_unitizer(store.id)
+}
+#' @rdname set_unitizer
+#' @export
+
+get_unitizer.unitizer_results <- function(store.id) {
+  lapply(store.id, get_unitizer)
 }
 
 #' Infers Possible Unitizer Path From Context
@@ -370,7 +393,9 @@ infer_unitizer_location.character <- function(
 #'   otherwise
 
 is_package_dir <- function(name, has.tests=FALSE) {
-  stopifnot(file_test("-d", name), is.TF(has.tests))
+  stopifnot(is.character(name), is.TF(has.tests))
+  if(!is.character(name)) return("not character so cannot be a directory")
+  if(!file_test("-d", name)) return("not an existing directory")
   pkg.name <- try(get_package_name(name), silent=TRUE)
   if(inherits(pkg.name, "try-error"))
     return(conditionMessage(attr(pkg.name, "condition")))
@@ -386,9 +411,9 @@ is_package_dir <- function(name, has.tests=FALSE) {
   # Has requisite directories?
 
   if(!file_test("-d", file.path(name, "R")))
-    return("Missing 'R' directory")
+    return("missing 'R' directory")
   if(has.tests && !file_test("-d", file.path(name, "tests")))
-    return("Missing 'tests' directory")
+    return("missing 'tests' directory")
 
   # Woohoo
 
@@ -398,12 +423,8 @@ is_package_dir <- function(name, has.tests=FALSE) {
 
 get_package_dir <- function(name=getwd(), has.tests=FALSE) {
   stopifnot(
-    is.chr1(name),
-    file_test("-d", name) || file_test("-f", name),
-    is.TF(has.tests)
+    is.chr1(name), is.TF(has.tests)
   )
-  if(file_test("-f", name)) name <- dirname(name)
-  if(!file_test("-d", name)) return(character(0L))
   is.package <- FALSE
   prev.dir <- par.dir <- name
 
