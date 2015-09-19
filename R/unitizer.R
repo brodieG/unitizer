@@ -108,15 +108,16 @@ setClass(
   "unitizer",
   representation(
     id="ANY",
-    version="character",          # should really be 'package_version', but want to avoid setOldClass, so use `as.character(packageVersion())` to populate
-    zero.env="environment",       # keep functions and stuff here
+    version="character",            # should really be 'package_version', but want to avoid setOldClass, so use `as.character(packageVersion())` to populate
+    zero.env="environment",         # keep functions and stuff here
     base.env="environment",
-    test.file.loc="character",    # location of test file that produced `unitizer`
-    eval="logical",               # internal used during browsing to determine a re-eval instruction by user
-    eval.time="numeric",          # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
-    updated="logical",            # whether this unitizer has been queued for update; not entirely sure if this is actually needed, seems like not and that this is all handled via unitizerBrowserResult@updated and unitizerSummaryObjectLis@updated (or some such)
-    global="unitizerGlobalOrNULL",# Global object used to track state
-    cons="unitizerCaptConsOrNULL",# Track connections for text/msg capture
+    test.file.loc="character",      # location of test file that produced `unitizer`
+    eval="logical",                 # internal used during browsing to determine a re-eval instruction by user
+    eval.time="numeric",            # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
+    updated="logical",              # whether this unitizer has been queued for update
+    updated.at.least.once="logical",# should reflect whether a unitizer was modified at least once so that we can report this in return values
+    global="unitizerGlobalOrNULL",  # Global object used to track state
+    cons="unitizerCaptConsOrNULL",  # Track connections for text/msg capture
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -164,6 +165,7 @@ setClass(
     eval=FALSE,
     eval.time=0,
     updated=FALSE,
+    updated.at.least.once=FALSE,
     global=unitizerGlobal$new(enable.which=character())  # dummy so tests will run
   ),
   validity=function(object) {
@@ -185,7 +187,9 @@ setClass(
       object@eval.time < 0L
     )
       return("slot `eval.time` must be length 1L, positive, and not NA")
-    if(!isTRUE(object@updated) && !identical(FALSE, object@updated))
+    if(!is.TF(object@updated.at.least.once))
+      return("slot `updated.at.least.once` must be TRUE or FALSE")
+    if(!is.TF(object@updated))
       return("slot `updated` must be TRUE or FALSE")
     TRUE
   }

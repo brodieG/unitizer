@@ -2,11 +2,54 @@
 
 NULL
 
-#' Print Methods For \code{unitizer} Results
+#' Return Values and Related Methods for \code{unitize} Functions
 #'
+#' \code{unitize} and related functions are run primarily for the interactive
+#' environment they provide and for their side effects (updating stored
+#' \code{unitizer} objects), but the return values may be useful under some
+#' circumstances if you need to retrieve test status, user selections, etc..
+#'
+#' \code{unitize} and \code{review} return a \code{unitizer_result} S3 object.
+#' This is a data frame that contains details about the status of each test.
+#' \code{unitize_dir} returns a \code{unitize_results} S3 object, which is a
+#' list of \code{unitize_result}  objects.
+#'
+#' Both \code{unitize_results} and \code{unitize_result} have \code{print}
+#' methods documented here. In addition to the \code{print} methods, both of
+#' the result objects have \code{\link{get_unitizer}} methods so that you can
+#' retrieve the stored \code{unitizer} objects.
+#'
+#' Please note that with \code{unitize_dir} you can re-review a single
+#' \code{unitizer} several times during during a single call to
+#' \code{unitize_dir}.  This is to allow you to re-evaluate specific
+#' \code{unitizers} easily without having to re-run the entire directory again.
+#' Unfortunately, as a result of this feature, the return values of
+#' \code{unitize_dir} can be misleading because they only report the result of
+#' the last review cycle.
+#'
+#' Additionally, \code{unitize_dir} will report user selections during the last
+#' review even if in the end the user chose not to save the modified
+#' \code{unitizer}.  You will be alerted to this by an onscreen message from the
+#' \code{print} method (this is tracked in the "updated" attribute of the
+#' \code{unitizer_result} object).  Finally, if in the last iteration before
+#' exit you did not save the \code{unitizer}, but you did save it in  previous
+#' review cycles in the same \code{unitize_dir} call, the displayed selections
+#' and test outcomes will correspond to the last unsaved iteration, not the
+#' one that was saved.  You will be alerted to this by an on-screen message
+#' (this is tracked through the "updated.at.least.once" attribute of the
+#' \code{unitizer_result} object).
+#'
+#' @name unitizer_result
+#' @rdname unitizer_result
+#' @aliases unitizer_results
+#' @seealso \code{\link{unitize}}, \code{\link{get_unitizer}}
+#' @param x the object to print
+#' @return \code{x}, invisibly
+
+NULL
+
 #' @export
-#' @param x object to display
-#' @return NULL, invisibly
+#' @rdname unitizer_result
 
 print.unitizer_result <- function(x, ...) {
   if(!isTRUE(fail <- is.unitizer_result(x))) stop(fail)
@@ -30,9 +73,8 @@ print.unitizer_result <- function(x, ...) {
     )
   invisible(res)
 }
-
-#' @rdname print.unitizer_result
 #' @export
+#' @rdname unitizer_result
 
 print.unitizer_results <- function(x, ...) {
   if(
@@ -123,12 +165,18 @@ print.unitizer_results <- function(x, ...) {
     # Mark any non-updated tests
 
     updated <-
-      vapply(x[which.pass], function(x) isTRUE(attr(x, "updated")), logical(1L))
+      vapply(
+        x[which.pass],
+        function(x)
+        if(isTRUE(attr(x, "updated"))) 3L else
+        if(isTRUE(attr(x, "updated.at.least.once"))) 2L else 1L,
+        integer(1L)
+      )
+    updated.mark <- c("*", "$", " ")
+    if(any(updated < 3L)) fin.out[-c(1L, length(fin.out))] <-
+      paste(fin.out[-c(1L, length(fin.out))], updated.mark[updated])
 
-    if(any(!updated)) fin.out[-c(1L, length(fin.out))] <-
-      paste0(fin.out[-c(1L, length(fin.out))], ifelse(!updated, " *", " "))
-
-    word_cat("Summary of tests (update/total):\n\n")
+    word_cat("Summary of tests (accept/total):\n\n")
     cat(
       head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
       tail(fin.out, 1L), sep="\n"
@@ -150,8 +198,9 @@ print.unitizer_results <- function(x, ...) {
     ) ) ) )
   }
   word_cat("\nTest files in common directory '", files.dir, "'", sep="")
-  if(!all(updated)) word_cat("* User chose NOT to save these unitizers")
-  return(invisible(NULL))
+  if(any(updated == 1L)) word_cat("* unitizer was not saved")
+  if(any(updated == 2L)) word_cat("$ unitizer was saved in prior evaluation")
+  return(invisible(x))
 }
 # Check whether an object is of type "unitizer_result"
 #
@@ -202,7 +251,8 @@ setMethod(
     structure(
       x@res.data, class=unique(c("unitizer_result", class(x@res.data))),
       test.file=x@test.file.loc,
-      store.id=x@id, updated=x@updated
+      store.id=x@id, updated=x@updated,
+      updated.at.least.once=x@updated.at.least.once
     )
 )
 setMethod("extractResults", "unitizerLoadFail", function(x, ...) x)

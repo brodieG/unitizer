@@ -39,29 +39,6 @@
 #' and \code{error} options; these are always set to \code{1} and \code{NULL}
 #' respectively during test evaluation.
 #'
-#' @section Return Values:
-#'
-#' \code{unitize} and related functions are run primarily for the interactive
-#' environment they provide and for their side effects (updating stored
-#' \code{unitizer} objects), but the return values may be useful under some
-#' circumstances.
-#'
-#' \code{unitize} and \code{review} return a \code{unitizer_result} S3 object.
-#' This is a data frame that contains details about the status of each test.
-#' \code{unitize_dir} returns a \code{unitize_results} S3 object, which is a
-#' list of \code{unitize_result}  objects.  Both \code{unitize_results} and
-#' \code{unitize_result} have \code{print} methods.
-#'
-#' In addition to the \code{print} methods, both of the result objects have
-#' \code{\link{get_unitizer}} methods so that you can retrieve the stored
-#' \code{unitizer} objects.
-#'
-#' Please note that with \code{unitize_dir} the return values are those produced
-#' by the last review of a \code{unitizer}, and may be misleading if you
-#' re-reviewed a unitizer multiple times.  For example, if you accepted changes
-#' to a \code{unitizer} in the first review, but did not in the second, the
-#' return value would wrongly indicate the \code{unitizer} was not updated.
-#'
 #' @export
 #' @aliases unitize review unitize_dir
 #' @param test.file path to the file containing tests, if supplied path does not
@@ -121,10 +98,15 @@
 #'   specify which type(s) of test you wish to auto accept (i.e. same as typing
 #'   \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
 #'   off (default)
-#' @return a \code{unitizer_result} object, or for \code{unitize_dir} a
-#'   \code{unitizer_results} object, invisbly.  See details.
+#' @return \code{unitize} and company are intended to be used primarily for
+#'   the interactive environment and side effects.  The functions do return
+#'   summary data about test outcomes and user input as
+#'   \code{unitizer_result} objects, or for \code{unitize_dir} as
+#'   \code{unitizer_results} objects, invisbly.  See
+#'   \code{\link{unitizer_result}}.
 #' @seealso \code{\link{unitizerState}}, \code{\link{unitizer.opts}},
-#'   \code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}}
+#'   \code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}},
+#'   \code{\link{unitizer_result}}
 
 unitize <- function(
   test.file, store.id=NULL,

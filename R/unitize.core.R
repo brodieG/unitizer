@@ -282,6 +282,7 @@ unitize_core <- function(
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
   valid <- rep(TRUE, length(eval.which))
+  updated <- rep(FALSE, length(eval.which)) # Track which unitizers were updated
   unitizers <- new("unitizerObjectList")
 
   # - Evaluate / Browse --------------------------------------------------------
@@ -334,12 +335,23 @@ unitize_core <- function(
       history=history,
       global=global
     )
+    # Track whether updated, valid, etc.
+
+    updated.new <-
+      vapply(as.list(unitizers[valid]), slot, logical(1L), "updated")
+    updated[valid][updated.new] <- TRUE
+
     eval.which.valid <- which(
       vapply(as.list(unitizers[valid]), slot, logical(1L), "eval")
     )
     eval.which <- which(valid)[eval.which.valid]
     if(identical(mode, "review")) break
   }
+  # since we reload the unitizer, we need to note whether it was updated at
+  # least once since that info is lost
+
+  for(i in which(updated)) unitizers[[i]]@updated.at.least.once <- TRUE
+
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
@@ -361,7 +373,8 @@ unitize_core <- function(
 #' Evaluate User Tests
 #'
 #' @param tests.parsed a list of expressions
-#' @param unitizers a list of \code{unitizer} objects of same length as \code{tests.parsed}
+#' @param unitizers a list of \code{unitizer} objects of same length as
+#'   \code{tests.parsed}
 #' @param which integer which of \code{unitizer}s to actually eval, all get
 #'   summary status displayed to screen
 #' @return a list of unitizers
@@ -406,7 +419,8 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
     }
     unitizers[[i]]@eval <- FALSE
     glob.opts <- Filter(Negate(is.null), lapply(global$tracking@options, names))
-    glob.opts <- if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
+    glob.opts <-
+      if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
 
     no.track <- c(
       unlist(
