@@ -58,6 +58,7 @@ print.unitizer_results <- function(x, ...) {
     vapply(x, function(y) pretty_path(attr(y, "test.file")), character(1L))
   files.short <- unique_path(files)
   files.dir <- attr(files.short, "common_dir")
+  updated <- TRUE
 
   if(length(which.pass)) {
     # Looking at non-ignored only, compute counts in each category, and how many
@@ -118,7 +119,16 @@ print.unitizer_results <- function(x, ...) {
     )
     fin.df <- cbind(id=c(which.pass, 0L), as.data.frame(fin.mx))
     fin.out <- capture.output(print(fin.df, row.names=FALSE))
-    word_cat("Summary of tests (accepted/rejected):\n\n")
+
+    # Mark any non-updated tests
+
+    updated <-
+      vapply(x[which.pass], function(x) isTRUE(attr(x, "updated")), logical(1L))
+
+    if(any(!updated)) fin.out[-c(1L, length(fin.out))] <-
+      paste0(fin.out[-c(1L, length(fin.out))], ifelse(!updated, " *", " "))
+
+    word_cat("Summary of tests (update/total):\n\n")
     cat(
       head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
       tail(fin.out, 1L), sep="\n"
@@ -140,6 +150,7 @@ print.unitizer_results <- function(x, ...) {
     ) ) ) )
   }
   word_cat("\nTest files in common directory '", files.dir, "'", sep="")
+  if(!all(updated)) word_cat("* User chose NOT to save these unitizers")
   return(invisible(NULL))
 }
 # Check whether an object is of type "unitizer_result"
