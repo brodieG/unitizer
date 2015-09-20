@@ -149,8 +149,8 @@ local({
       unitizer:::is_package_dir(file.path(system.file(package="stats"), "R")),  # just picked some folder we know will not work
       "No DESCRIPTION file"
     )
-    expect_error(
-      unitizer:::is_package_dir("ASDFASDF"), "file_test\\(\"-d\", name\\) is not TRUE"
+    expect_equal(
+      unitizer:::is_package_dir("ASDFASDF"), "not an existing directory"
     )
     expect_match(
       unitizer:::is_package_dir(
@@ -170,9 +170,7 @@ local({
     cat("helloworld", file=f)
     expect_true(length(unitizer:::get_package_dir(f)) == 0L)
     unlink(f)
-    expect_error(unitizer:::get_package_dir(f))
-
-
+    expect_equal(unitizer:::get_package_dir(f), character(0L))
   } )
   test_that("is_unitizer_dir", {
     base.dir <- file.path(
