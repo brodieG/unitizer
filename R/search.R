@@ -2,9 +2,9 @@
 
 NULL
 
-#' Class To Track History Changes
-#'
-#' @keywords internal
+# Class To Track History Changes
+#
+# @keywords internal
 
 setClass(
   "unitizerNsListData", contains="unitizerList",
@@ -74,41 +74,41 @@ setMethod(
     res
   }
 )
-#' Search Path Management Functions
-#'
-#' Set of functions used to manage search path state.  Strategy is to
-#' keep track of every different search path state encountered which is done
-#' with \code{.global}, and then allow restoring to previous states with these
-#' functions.
-#'
-#' While we believe the strategy used here is mostly robust, users can defeat
-#' by changing search paths multiple times withing a single test, which we will
-#' not journal properly, though this is not likely to be a major issue.
-#'
-#' \code{search_path_trim} attempts to recreate a clean environment by
-#' unloading all packages and objects that are not loaded by default in the
-#' default R configuration. This also unloads namespaces so that packages can
-#' be reloaded with all corresponding hooks evaluating as with a normal load.
-#' As documented in \code{?detach}, it is likely there may be some issues with
-#' some packages with this approach.  This function is intended to be called
-#' after journaling has been enabled.
-#'
-#' \code{`tools:rstudio`} is kept in search path as the default argument because
-#' it is not possible to cleanly unload and reload it because \code{`attach`}
-#' actually attaches a copy of it's argument, not the actual object, and that
-#' causes problems for that search path item.
-#'
-#' @keywords internal
-#' @rdname search_path
-#' @param keep character names of packages/objects to keep in search path;
-#'   note that base packages (see .unitizer.base.packages) that come typically
-#'   pre attached are always kept.  The \code{`keep`} packages are an addition
-#'   to those.
-#' @param id integer(1L) what recorded state to revert to
-#' @param global reference object of class "unitizerGlobal" that holds the
-#'   global settings
-#' @keywords internal
-#' @rdname search_path
+# Search Path Management Functions
+#
+# Set of functions used to manage search path state.  Strategy is to
+# keep track of every different search path state encountered which is done
+# with \code{.global}, and then allow restoring to previous states with these
+# functions.
+#
+# While we believe the strategy used here is mostly robust, users can defeat
+# by changing search paths multiple times withing a single test, which we will
+# not journal properly, though this is not likely to be a major issue.
+#
+# \code{search_path_trim} attempts to recreate a clean environment by
+# unloading all packages and objects that are not loaded by default in the
+# default R configuration. This also unloads namespaces so that packages can
+# be reloaded with all corresponding hooks evaluating as with a normal load.
+# As documented in \code{?detach}, it is likely there may be some issues with
+# some packages with this approach.  This function is intended to be called
+# after journaling has been enabled.
+#
+# \code{`tools:rstudio`} is kept in search path as the default argument because
+# it is not possible to cleanly unload and reload it because \code{`attach`}
+# actually attaches a copy of it's argument, not the actual object, and that
+# causes problems for that search path item.
+#
+# @keywords internal
+# @rdname search_path
+# @param keep character names of packages/objects to keep in search path;
+#   note that base packages (see .unitizer.base.packages) that come typically
+#   pre attached are always kept.  The \code{`keep`} packages are an addition
+#   to those.
+# @param id integer(1L) what recorded state to revert to
+# @param global reference object of class "unitizerGlobal" that holds the
+#   global settings
+# @keywords internal
+# @rdname search_path
 
 search_path_update <- function(id, global) {
   stopifnot(
@@ -251,8 +251,8 @@ search_path_update <- function(id, global) {
   on.exit(NULL)
   invisible(TRUE)
 }
-#' @keywords internal
-#' @rdname search_path
+# @keywords internal
+# @rdname search_path
 
 search_path_trim <- function(
   keep.path=union(
@@ -296,13 +296,13 @@ search_path_trim <- function(
   unload_namespaces(loadedNamespaces(), global=global, keep.ns=keep.ns)
   invisible(TRUE)
 }
-#' Unload Namespaces
-#'
-#' Attempts to unload namespaces in an order that avoids dependency issues
-#' based on data from \code{getNamespaceImports}
-#'
-#' Needs to be thought through a bit more in terms of how integrated it should
-#' be with the functions that use it.
+# Unload Namespaces
+#
+# Attempts to unload namespaces in an order that avoids dependency issues
+# based on data from \code{getNamespaceImports}
+#
+# Needs to be thought through a bit more in terms of how integrated it should
+# be with the functions that use it.
 
 unload_namespaces <- function(
   unload=loadedNamespaces(), global, keep.ns=union(
@@ -451,14 +451,14 @@ unload_namespaces <- function(
   }
   NULL
 }
-#' Check Whether a Package Is Loaded
-#'
-#' A package is considered loaded if it is in the search path and there is a
-#' namespace loaded with the same name as the package
-#'
-#' @keywords internal
-#' @param pkg.name character(1L) must be in format "package:pkgname"
-#' @return TRUE if it is a loaded package
+# Check Whether a Package Is Loaded
+#
+# A package is considered loaded if it is in the search path and there is a
+# namespace loaded with the same name as the package
+#
+# @keywords internal
+# @param pkg.name character(1L) must be in format "package:pkgname"
+# @return TRUE if it is a loaded package
 
 is.loaded_package <- function(pkg.name) {
   if(!is.character(pkg.name) || length(pkg.name) != 1L)
@@ -469,11 +469,11 @@ is.loaded_package <- function(pkg.name) {
   pkg.name %in% search() && just.name %in% loadedNamespaces()
 }
 
-#' Path manipulation functions
-#'
-#' Reattaches a previously detached package to the search path
-#'
-#' @keywords internal
+# Path manipulation functions
+#
+# Reattaches a previously detached package to the search path
+#
+# @keywords internal
 
 reattach <- function(pos, name, type, data, extra=NULL, global) {
   stopifnot(
@@ -500,8 +500,8 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
     attach(data, pos=pos, name=name, warn.conflicts=FALSE)
   }
 }
-#' @keywords internal
-#' @rdname reattach
+# @keywords internal
+# @rdname reattach
 move_on_path <- function(new.pos, old.pos, global=unitizerGlobal$new()) {
   stopifnot(
     is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos),
@@ -553,11 +553,11 @@ setMethod(
     )
   }
 )
-#' Generate An Identifier out of SP objects
-#'
-#' Not perfect, by any means, but necessary because we can't directly compare
-#' the search path environments as they change on detach / re-attach
-#' @keywords internal
+# Generate An Identifier out of SP objects
+#
+# Not perfect, by any means, but necessary because we can't directly compare
+# the search path environments as they change on detach / re-attach
+# @keywords internal
 
 get_namespace_data <- function() {
   sapply(

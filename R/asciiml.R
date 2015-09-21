@@ -1,25 +1,23 @@
-#' Text Representations of HTML Objects
-#'
-#' Functions defined here should ultimately be extended into a more
-#' comprehensive stand alone library for ASCII structured objects (banners,
-#' tables, etc.).
-#'
-#' Blah b
-#'
-#' @name asciiml
-#' @keywords internal
-#' @include list.R
+# Text Representations of HTML Objects
+#
+# Functions defined here should ultimately be extended into a more
+# comprehensive stand alone library for ASCII structured objects (banners,
+# tables, etc.).
+#
+# Blah b
+#
+# @keywords internal
+# @include list.R
 
 NULL
 
-#' Print a header
-#'
-#' @keywords internal
-#' @aliases print.H2, print.H3, print.header
-#' @param x a 1 length character vector
-#' @param margin one of "both", "top", "bottom", "none", whether to add newlines at top or bottom
-#' @return 1 length character vector
-#' @export
+# Print a header
+#
+# @aliases print.H2, print.H3, print.header
+# @param x a 1 length character vector
+# @param margin one of "both", "top", "bottom", "none", whether to add newlines at top or bottom
+# @return 1 length character vector
+# @export
 
 print.header <- function(x, margin="bottom", ...) {
   y <- as.character(x, margin, ...)
@@ -71,14 +69,12 @@ as.character.H1 <- function(x, margin="bottom", width=getOption("width"), ...) {
   )
   NextMethod()
 }
-
-#' Helper function for single line headers
-#'
-#' @keywords internal
-#' @param x the contents of the header
-#' @param width how wide we want the header to display
-#' @param ... unused, for compatibility with print generic
-#' @param pad.char which character to use to form the header structure
+# Helper function for single line headers
+#
+# @param x the contents of the header
+# @param width how wide we want the header to display
+# @param ... unused, for compatibility with print generic
+# @param pad.char which character to use to form the header structure
 
 header_help <- function(x, width, ..., pad.char="-") {
   par.call <- sys.call(-1L)
@@ -93,17 +89,16 @@ header_help <- function(x, width, ..., pad.char="-") {
     paste0(rep_len(pad.char, width - 3L - nchar(x)), collapse=""), collapse=""
   )
 }
-#' Create Header Objects
-#'
-#' Header objects are 1 length character vectors that are printed with text
-#' formatting that highlight their "headerness".
-#'
-#' @keywords internal
-#' @seealso \code{`\link{print.header}`}
-#' @aliases H1, H2, H3
-#' @param x 1 length character vector to turn into a header
-#' @param level 1 length integer, what level to make a header
-#' @return header object
+# Create Header Objects
+#
+# Header objects are 1 length character vectors that are printed with text
+# formatting that highlight their "headerness".
+#
+# @seealso \code{`\link{print.header}`}
+# @aliases H1, H2, H3
+# @param x 1 length character vector to turn into a header
+# @param level 1 length integer, what level to make a header
+# @return header object
 
 header <- function(x, level) {
   if(!is.character(x) || length(x) != 1L) stop("Argument `x` must be a one length character vector")
@@ -117,18 +112,17 @@ H1 <- function(x) header(x, 1L)
 H2 <- function(x) header(x, 2L)
 H3 <- function(x) header(x, 3L)
 
-#' Create List Objects
-#'
-#' Similar to UL and OL objects from HTML.  These can be nested.  \code{OL}
-#' supports \code{c("numbers", "letters", "LETTERS")} as bullet types.
-#'
-#' Ultimately should implement this as S4 classes as assembly of lists is
-#' annoying since the UL object is itself a list.
-#'
-#' @keywords internal
-#' @aliases OL
-#' @param x character vector of items to make a list out of
-#' @return OL/UL object
+# Create List Objects
+#
+# Similar to UL and OL objects from HTML.  These can be nested.  \code{OL}
+# supports \code{c("numbers", "letters", "LETTERS")} as bullet types.
+#
+# Ultimately should implement this as S4 classes as assembly of lists is
+# annoying since the UL object is itself a list.
+#
+# @aliases OL
+# @param x character vector of items to make a list out of
+# @return OL/UL object
 
 UL <- function(x, style="-", offset=0L) {
   stopifnot(is.chr1(style) && nchar(style) == 1L)

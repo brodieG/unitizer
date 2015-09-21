@@ -372,25 +372,25 @@ infer_unitizer_location.character <- function(
   if(cand.len == 1L) inf_msg(file.final)
   file.final
 }
-#' Check Whether Directories Are Likely R Package Source Directories
-#'
-#' Heuristic check to see whether a directory contains what likely could be
-#' built into an R package.  This is based on the DESCRIPTION file and directory
-#' structure.
-#'
-#' \code{is_package_dir} checks whether a directory is the top level directory
-#' of a package.
-#'
-#' \code{get_package_dir} checks whether a directory or any of its parents is the
-#' top level directory of a package, and returns the top level package directory
-#' or character(0L) if not
-#'
-#' @keywords internal
-#' @param name a directory to check for package-ness
-#' @param has.tests whether to require that the package have tests to qualify
-#' @param DESCRIPTION the DESCRIPTION file path
-#' @return TRUE if criteria met, character vector explaining first failure
-#'   otherwise
+# Check Whether Directories Are Likely R Package Source Directories
+#
+# Heuristic check to see whether a directory contains what likely could be
+# built into an R package.  This is based on the DESCRIPTION file and directory
+# structure.
+#
+# \code{is_package_dir} checks whether a directory is the top level directory
+# of a package.
+#
+# \code{get_package_dir} checks whether a directory or any of its parents is the
+# top level directory of a package, and returns the top level package directory
+# or character(0L) if not
+#
+# @keywords internal
+# @param name a directory to check for package-ness
+# @param has.tests whether to require that the package have tests to qualify
+# @param DESCRIPTION the DESCRIPTION file path
+# @return TRUE if criteria met, character vector explaining first failure
+#   otherwise
 
 is_package_dir <- function(name, has.tests=FALSE) {
   stopifnot(is.character(name), is.TF(has.tests))
@@ -419,8 +419,6 @@ is_package_dir <- function(name, has.tests=FALSE) {
 
   TRUE
 }
-#' @rdname is_package_dir
-
 get_package_dir <- function(name=getwd(), has.tests=FALSE) {
   stopifnot(
     is.chr1(name), is.TF(has.tests)
@@ -435,8 +433,6 @@ get_package_dir <- function(name=getwd(), has.tests=FALSE) {
   }
   character(0L)
 }
-#' @rdname is_package_dir
-
 get_package_name <- function(pkg.dir) {
   stopifnot(is.chr1(pkg.dir))
 
@@ -456,31 +452,31 @@ get_package_name <- function(pkg.dir) {
   desc.pkg.name <- sub(pkg.pat, "\\1", desc.pkg, perl=T, ignore.case=TRUE)
   return(desc.pkg.name)
 }
-#' Check Whether a Directory as a Unitizer Data Directory
-#'
-#' Just checks that it \emph{could} be a data directory, the test ultimately is
-#' to attempt a \code{\link{get_unitizer}} call and see if we actually resurrect
-#' a working \code{unitizer}
-#'
-#' @keywords internal
-#' @param dir character(1L) directory to check
-#' @return logical(1L)
+# Check Whether a Directory as a Unitizer Data Directory
+#
+# Just checks that it \emph{could} be a data directory, the test ultimately is
+# to attempt a \code{\link{get_unitizer}} call and see if we actually resurrect
+# a working \code{unitizer}
+#
+# @keywords internal
+# @param dir character(1L) directory to check
+# @return logical(1L)
 
 is_unitizer_dir <- function(dir)
   is.character(dir) && length(dir) == 1L && !is.na(dir) &&
   file_test("-d", dir) && file_test("-f", file.path(dir, "data.rds"))
 
-#' Run \code{sys.source} On All Provided Files
-#'
-#' Sorts them before sourcing on the paths as specified in \code{files}, returns
-#' an environment containing any objects created by the code in the source
-#' files.  If a file is a directory, the files in that directory are sourced,
-#' though only top level files in that directory are sourced.
-#'
-#' @keywords internal
-#' @param files character() pointing to files or directories
-#' @param env an environment
-#' @return environment, or a character message explaining why it failed
+# Run \code{sys.source} On All Provided Files
+#
+# Sorts them before sourcing on the paths as specified in \code{files}, returns
+# an environment containing any objects created by the code in the source
+# files.  If a file is a directory, the files in that directory are sourced,
+# though only top level files in that directory are sourced.
+#
+# @keywords internal
+# @param files character() pointing to files or directories
+# @param env an environment
+# @return environment, or a character message explaining why it failed
 
 source_files <- function(files, env.par, pattern="\\.[rR]$") {
   stopifnot(

@@ -27,10 +27,10 @@ Suggests:
 License: GPL-3
 LazyData: true
 Collate:
-    'class_unions.R'
-    'list.R'
     'asciiml.R'
     'text.R'
+    'class_unions.R'
+    'list.R'
     'is.R'
     'global.R'
     'conditions.R'

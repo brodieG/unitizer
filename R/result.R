@@ -44,6 +44,7 @@ NULL
 #' @aliases unitizer_results
 #' @seealso \code{\link{unitize}}, \code{\link{get_unitizer}}
 #' @param x the object to print
+#' @param ... extra arguments for print generic
 #' @return \code{x}, invisibly
 
 NULL

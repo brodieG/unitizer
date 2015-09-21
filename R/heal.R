@@ -76,7 +76,7 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #' @param y \code{\link{unitizer-class}} object \code{x} was generated from
 #' @param ... unused, here for inheriting methods
 #' @return \code{unitizerItems-class}
-#' @name healEnvs
+#' @rdname healEnvs
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"),
   valueClass="unitizerItems",
@@ -324,33 +324,33 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
 } )
 setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 
-#' Compare The Objects In Environment for Ref vs. New Item
-#'
-#' Makes sure that when we call \code{`ls`} when browsing its environment
-#' the information reflecting any limitations on what objects are actually
-#' available to browse is properly reflected.
-#'
-#' The status of environment objects is tracked in \code{`x@@ls$status`},
-#' where objects of different status are marked like so:
-#' \itemize{
-#'   \item ': object exists in browsing environment, but not the same as
-#'      it was when test was evalaluated
-#'   \item *: object was present during test evaluation but is not
-#'      available in unitizer anymore
-#'   \item **: object was not present during test evaluation, but exists
-#'      in current environment
-#' }
-#'
-#' This could definitely be optimized for new items.  It actually represents
-#' a substantial portion of total evaluation time and does a lot of repetitive
-#' stuff that could easily be avoided if we put some work into it.
-#'
-#' @keywords internal
-#' @param x the \code{`\link{unitizerItem-class}`}
-#' @param base.env the last environment to search through for objects
-#' @return \code{`\link{unitizerItem-class}`} object with updated
-#'   \code{`ls`} field and environment reference parent, or FALSE if the item
-#'   has a corrupted environment history
+# Compare The Objects In Environment for Ref vs. New Item
+#
+# Makes sure that when we call \code{ls} when browsing its environment
+# the information reflecting any limitations on what objects are actually
+# available to browse is properly reflected.
+#
+# The status of environment objects is tracked in \code{x@@ls$status},
+# where objects of different status are marked like so:
+# \itemize{
+#   \item ': object exists in browsing environment, but not the same as
+#      it was when test was evalaluated
+#   \item *: object was present during test evaluation but is not
+#      available in unitizer anymore
+#   \item **: object was not present during test evaluation, but exists
+#      in current environment
+# }
+#
+# This could definitely be optimized for new items.  It actually represents
+# a substantial portion of total evaluation time and does a lot of repetitive
+# stuff that could easily be avoided if we put some work into it.
+#
+# @keywords internal
+# @param x the \code{\link{unitizerItem-class}}
+# @param base.env the last environment to search through for objects
+# @return \code{\link{unitizerItem-class}} object with updated
+#   \code{ls} field and environment reference parent, or FALSE if the item
+#   has a corrupted environment history
 
 setMethod("updateLs", "unitizerItem",
   function(x, base.env, new.par.env=NULL,  ...) {

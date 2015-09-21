@@ -39,7 +39,8 @@
 #' @rdname demo
 #' @name demo
 #' @param f path to a file
-#' @param width display width in charcters
+#' @param dir path to the temporary package
+#' @param width display width in characters
 #' @param version one of "0.1.0", "0.1.1", "0.1.2"
 #' @return character(1L)
 

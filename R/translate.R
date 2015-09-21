@@ -604,9 +604,7 @@ testthat_translate_name <- function(
     )
   file.path(target.dir, base.new)
 }
-#' Determine if a Function Meets Translatable Profile
-#'
-#' @keywords internal
+# Determine if a Function Meets Translatable Profile
 
 testthat_translatable_fun <- function(x) {
   # Look at non default formals
@@ -631,10 +629,9 @@ testthat_translatable_fun <- function(x) {
     return(TRUE)
   return(FALSE)
 }
-#' Pull out parameter from call
-#'
-#' @param target.params parameters required in the matched call
-#' @keywords internal
+# Pull out parameter from call
+#
+# @param target.params parameters required in the matched call
 
 testthat_match_call <- function(call, fun, target.params) {
   call.matched <- try(match.call(definition=fun, call), silent=TRUE)
@@ -660,13 +657,11 @@ testthat_match_call <- function(call, fun, target.params) {
   }
   list(call=call.matched, msg=fail.msg)
 }
-#' Confirm that `testthat` Is Attached
-#'
-#' Would normally do this via NAMESPACE, but do not want to introduce an
-#' explicit dependency to \code{testthat} since it is only required for the
-#' conversion to \code{unitizer}
-#'
-#' @keywords internal
+# Confirm that `testthat` Is Attached
+#
+# Would normally do this via NAMESPACE, but do not want to introduce an
+# explicit dependency to \code{testthat} since it is only required for the
+# conversion to \code{unitizer}
 
 is_testthat_attached <- function() {
   if(inherits(try(as.environment("package:testthat"), silent=TRUE), "try-error"))

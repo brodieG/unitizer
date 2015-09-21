@@ -7,40 +7,40 @@ setGeneric(
   "browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer")
 )
 
-#' Browse unitizer
-#'
-#' Here we are reviewing all the tests in the unitizer under three different
-#' lenses
-#' \enumerate{
-#'   \item tests that don't match the stored reference tests
-#'   \item tests that don't exist in the reference tests
-#'   \item tests that exist in the reference tests but no the new file
-#'   \item tests that passed (these are omitted )
-#' }
-#' Because a lot of the logic for browsing these three types of situations is
-#' shared, that logic has been split off into
-#' \code{\link{reviewNext,unitizerBrowse-method}}. The key is that that function
-#' will return the items that are supposed to be stored in the unitizer.  These
-#' items will either be new or reference ones based on user decisions.
-#'
-#' Unfortunately, in order to be able to use the same logic for tasks that are
-#' not quite the same, a bit of contortion was needed.  In particular, the
-#' user is always asked to input either Y, N, or Q, but the corresponding output
-#' from \code{\link{reviewNext,unitizerBrowse-method}} is very different
-#' depending on what situation we're dealing with.
-#'
-#' One important point is that by default the user input is defined as N.  In
-#' all cases N means no change to the store, though again the interpretation is
-#' different depending on the situation.  For example, if we add a test to the
-#' test script, N means don't add it to the store.  If we remove a test, N means
-#' keep it in the store.
-#'
-#' @keywords internal
-#' @param x the object to browse
-#' @param y the derivative unitizerBrowse object of x; this needs to be passed
-#'   in as an argument because the logic for generating it is different
-#'   depending on whether we are using `unitize` or `review`.
-#' @return a unitizer if the unitizer was modified, FALSE otherwise
+# Browse unitizer
+#
+# Here we are reviewing all the tests in the unitizer under three different
+# lenses
+# \enumerate{
+#   \item tests that don't match the stored reference tests
+#   \item tests that don't exist in the reference tests
+#   \item tests that exist in the reference tests but no the new file
+#   \item tests that passed (these are omitted )
+# }
+# Because a lot of the logic for browsing these three types of situations is
+# shared, that logic has been split off into
+# \code{\link{reviewNext,unitizerBrowse-method}}. The key is that that function
+# will return the items that are supposed to be stored in the unitizer.  These
+# items will either be new or reference ones based on user decisions.
+#
+# Unfortunately, in order to be able to use the same logic for tasks that are
+# not quite the same, a bit of contortion was needed.  In particular, the
+# user is always asked to input either Y, N, or Q, but the corresponding output
+# from \code{\link{reviewNext,unitizerBrowse-method}} is very different
+# depending on what situation we're dealing with.
+#
+# One important point is that by default the user input is defined as N.  In
+# all cases N means no change to the store, though again the interpretation is
+# different depending on the situation.  For example, if we add a test to the
+# test script, N means don't add it to the store.  If we remove a test, N means
+# keep it in the store.
+#
+# @keywords internal
+# @param x the object to browse
+# @param y the derivative unitizerBrowse object of x; this needs to be passed
+#   in as an argument because the logic for generating it is different
+#   depending on whether we are using `unitize` or `review`.
+# @return a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
@@ -362,15 +362,15 @@ setMethod(
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
-#' Bring up Review of Next test
-#'
-#' Generally we will go from one test to the next, where the next test is
-#' determined by the value of \code{x@@last.id}.  This means it is possible
-#' to affect the browsing order by modifying \code{x@@last.id}.
-#'
-#' This method is in charge of displaying all the output for review.
-#'
-#' @keywords internal
+# Bring up Review of Next test
+#
+# Generally we will go from one test to the next, where the next test is
+# determined by the value of \code{x@@last.id}.  This means it is possible
+# to affect the browsing order by modifying \code{x@@last.id}.
+#
+# This method is in charge of displaying all the output for review.
+#
+# @keywords internal
 
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
@@ -760,8 +760,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     x
   }
 )
-#' Re-eval toggling, only b/c we need to do it in a couple of places'
-#' @keywords internal
+# Re-eval toggling, only b/c we need to do it in a couple of places'
+# @keywords internal
 
 setGeneric("toggleReeval", function(x, ...) standardGeneric("toggleReeval"))
 setMethod("toggleReeval", "unitizerBrowse",

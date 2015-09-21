@@ -1,11 +1,10 @@
-#' Alter Older unitizer Versions So They Pass Validation in Latest Version
-#'
-#' Sequentially applies all applicable patches
-#'
-#' @keywords internal
-#' @param object an unitizer object
-#' @param ... other arguments
-#' @return an upgraded unitizer object
+# Alter Older unitizer Versions So They Pass Validation in Latest Version
+#
+# Sequentially applies all applicable patches
+#
+# @param object an unitizer object
+# @param ... other arguments
+# @return an upgraded unitizer object
 
 setMethod("upgrade", "unitizer", valueClass="unitizer",
   function(object, ...) {
@@ -25,9 +24,7 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
     }
     object
 } )
-#' Helper function to actually do upgrade
-#'
-#' @keywords internal
+# Helper function to actually do upgrade
 
 upgrade_internal <- function(object) {
 
@@ -154,9 +151,9 @@ upgrade_internal <- function(object) {
 
   object
 }
-#' Helper Function To Add A Slot to An Out-of-date S4 Object
-#'
-#' @keywords internal
+# Helper Function To Add A Slot to An Out-of-date S4 Object
+#
+# @keywords internal
 
 addSlot <- function(object, slot.name, slot.value) {
   if(!isS4(object))
@@ -177,11 +174,9 @@ addSlot <- function(object, slot.name, slot.value) {
   }
   new.object
 }
-#' Rename a slot
-#'
-#' Basically assumes old name exists in object, but not in new class definition
-#'
-#' @keywords internal
+# Rename a slot
+#
+# Basically assumes old name exists in object, but not in new class definition
 
 renameSlot <- function(object, old.name, new.name) {
   stopifnot( isS4(object), is.chr1(old.name), is.chr1(new.name))
@@ -198,11 +193,9 @@ renameSlot <- function(object, old.name, new.name) {
   )
   do.call("new", args.final)
 }
-#' Removes Slots
-#'
-#' Ignores slots that are already missing
-#'
-#' @keywords internal
+# Removes Slots
+#
+# Ignores slots that are already missing
 
 removeSlots <- function(object, slots.to.remove) {
   stopifnot(isS4(object))

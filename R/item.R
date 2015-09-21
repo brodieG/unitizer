@@ -9,30 +9,27 @@ NULL
 
 # - Validity ------------------------------------------------------------------
 
-#' Used to run "validity" methods
-#'
-#' This is to avoid having to automatically run validity on object
-#' instantiation as is the case with actual built-in validity objects.  We can
-#' create a bunch of objects, and then only run validity when
-#'
-#' @keywords internal
-#' @param object object to validate
-#' @param ... additional arguments
-#' @return TRUE on success, character vector explaining failure otherwise
+# Used to run "validity" methods
+#
+# This is to avoid having to automatically run validity on object
+# instantiation as is the case with actual built-in validity objects.  We can
+# create a bunch of objects, and then only run validity when
+#
+# @param object object to validate
+# @param ... additional arguments
+# @return TRUE on success, character vector explaining failure otherwise
 
 setGeneric("isValid", function(object, ...) standardGeneric("isValid"))
 
 # - Classes -------------------------------------------------------------------
 
-#' Data Produced During Evaluation of \code{`unitizer`} Test
-#'
-#' Kept separate from the \code{`\link{unitizerItem-class}`} because these
-#' are the slots that get compared from the new item to the reference items
-#' which means there are a whole bunch of other classes that need to have the
-#' same structure as this and by definining it we let those other classes
-#' confirm they have the correct structure.
-#'
-#' @keywords internal
+# Data Produced During Evaluation of \code{`unitizer`} Test
+#
+# Kept separate from the \code{`\link{unitizerItem-class}`} because these
+# are the slots that get compared from the new item to the reference items
+# which means there are a whole bunch of other classes that need to have the
+# same structure as this and by definining it we let those other classes
+# confirm they have the correct structure.
 
 setClass(
   "unitizerItemData",
@@ -43,22 +40,21 @@ setClass(
     message="character",
     aborted="logical"      # more generally, should this be a withRestarts slot?
 ) )
-#' Full Representation Of an Evaluated \code{`unitizer`} Test
-#'
-#' Note we have both a `call` and `call.dep` object due to the
-#'
-#' @keywords internal
-#' @slot call the call that is tested
-#' @slot call.dep deparsed version of the call
-#' @slot reference whether this is a reference or new \code{`unitizerItem`}
-#' @slot ignore whether this test should be treated as a test or just a step
-#'   towards compiling a test
-#' @slot environment the environment the test was evaluated in, should contain
-#'   all relevant objects
-#' @slot data the container for the results of the evaluation of \code{`call`}
-#' @slot the \code{`unitizer_sect`} from the newly added items this test item
-#'   corresponds to; can be NA if section not known; this is used primarily to
-#'   keep track of original sections when storing reference tests.
+# Full Representation Of an Evaluated \code{`unitizer`} Test
+#
+# Note we have both a `call` and `call.dep` object due to the
+#
+# @slot call the call that is tested
+# @slot call.dep deparsed version of the call
+# @slot reference whether this is a reference or new \code{`unitizerItem`}
+# @slot ignore whether this test should be treated as a test or just a step
+#   towards compiling a test
+# @slot environment the environment the test was evaluated in, should contain
+#   all relevant objects
+# @slot data the container for the results of the evaluation of \code{`call`}
+# @slot the \code{`unitizer_sect`} from the newly added items this test item
+#   corresponds to; can be NA if section not known; this is used primarily to
+#   keep track of original sections when storing reference tests.
 
 setClass(
   "unitizerItem",
@@ -108,12 +104,10 @@ setMethod("isValid", "unitizerItem",
 } )
 setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 
-#' Initialize A \code{`\link{unitizerItem-class}`}
-#'
-#' Makes the fact that most of the data needs to be part of a
-#' \code{`\link{unitizerItemData-class}`} object transparent to the user.
-#'
-#' @keywords internal
+# Initialize A \code{`\link{unitizerItem-class}`}
+#
+# Makes the fact that most of the data needs to be part of a
+# \code{`\link{unitizerItemData-class}`} object transparent to the user.
 
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
@@ -171,11 +165,9 @@ setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 
 # - Single Object Methods -----------------------------------------------------
 
-#' Display a \code{`\link{unitizerItem-class}`} Object
-#'
-#' Highly summarized view of the unitizer object.
-#'
-#' @keywords internal
+# Display a \code{`\link{unitizerItem-class}`} Object
+#
+# Highly summarized view of the unitizer object.
 
 setMethod("show", "unitizerItem",
   function(object) {
@@ -229,16 +221,15 @@ setMethod("show", "unitizerItem",
       "see `help(\"$\", \"unitizer\")`"
     )
 } )
-#' Methods to Track Whether a \code{`\link{unitizerItem-class}`} Object is New Or Reference
-#'
-#' Necessitated due to the awkward structure around \code{`\link{reviewNext,unitizerBrowse-method}`},
-#' where the only return value is a \code{`\link{unitizerItems-class}`} object and there is
-#' no easy way to tell which objects have been kept from reference vs which ones are
-#' new.
-#'
-#' @keywords internal
-#' @aliases itemType,unitizerItem-method, itemType<-,unitizerItem-method, itemsitemType,unitizerItems-method,
-#'   itemsType<-,unitizerItems-method
+# Methods to Track Whether a \code{`\link{unitizerItem-class}`} Object is New Or Reference
+#
+# Necessitated due to the awkward structure around \code{`\link{reviewNext,unitizerBrowse-method}`},
+# where the only return value is a \code{`\link{unitizerItems-class}`} object and there is
+# no easy way to tell which objects have been kept from reference vs which ones are
+# new.
+#
+# @aliases itemType,unitizerItem-method, itemType<-,unitizerItem-method, itemsitemType,unitizerItems-method,
+#   itemsType<-,unitizerItems-method
 
 setGeneric("itemType", function(x, ...) standardGeneric("itemType"))
 setMethod("itemType", "unitizerItem", function(x) if(x@reference) "reference" else "new")
@@ -273,21 +264,18 @@ setReplaceMethod("itemsType", c("unitizerItems", "character"),
 } )
 setGeneric("ignored", function(x, ...) standardGeneric("ignored"))
 
-#' Determines Which Items In \code{`\link{unitizerItems-class}`} Are Not Full Tests
-#'
-#' In order to simplify user interaction, some statements are not considered
-#' to be tests, rather, they are set up steps for the actual test.  At the
-#' time of this writing, top level assignments are included in this group.
-#'
-#' @keywords internal
+# Determines Which Items In \code{`\link{unitizerItems-class}`} Are Not Full Tests
+#
+# In order to simplify user interaction, some statements are not considered
+# to be tests, rather, they are set up steps for the actual test.  At the
+# time of this writing, top level assignments are included in this group.
 
 setMethod("ignored", "unitizerItems", function(x, ...) vapply(as.list(x), function(y) y@ignore, logical(1L)))
 setMethod("ignored", "unitizerItem", function(x, ...) x@ignore)
 
 # - Multi Object Methods -------------------------------------------------------
 
-#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
-#' @keywords internal
+# Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
 
 setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
   function(e1, e2) {
@@ -295,8 +283,7 @@ setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
     e1 <- append(e1, list(e2))
     e1
 } )
-#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
-#' @keywords internal
+# Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
 
 setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, e2))
 
