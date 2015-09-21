@@ -38,7 +38,7 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
     e1@sections <- append(e1@sections, list(e2))
     e1
 } )
-#' Adds Expressions to unitizer
+# Adds Expressions to unitizer
 #
 # Expressions can be added as \code{`\link{unitizerTests-class}`} object
 # or a straight up expression, though in most cases it should be the

@@ -15,7 +15,8 @@ NULL
 #
 # @aliases print.H2, print.H3, print.header
 # @param x a 1 length character vector
-# @param margin one of "both", "top", "bottom", "none", whether to add newlines at top or bottom
+# @param margin one of "both", "top", "bottom", "none", whether to add newlines
+#   at top or bottom
 # @return 1 length character vector
 # @export
 
@@ -94,7 +95,7 @@ header_help <- function(x, width, ..., pad.char="-") {
 # Header objects are 1 length character vectors that are printed with text
 # formatting that highlight their "headerness".
 #
-# @seealso \code{`\link{print.header}`}
+# @seealso \code{\link{print.header}}
 # @aliases H1, H2, H3
 # @param x 1 length character vector to turn into a header
 # @param level 1 length integer, what level to make a header
@@ -171,7 +172,7 @@ bullet_obj <- function(x, type, style, offset) {
 validate_bullet <- function(x)
   (is.character(x) && length(x) == 1L) || inherits(x, "bullet")
 
-#' Print Methods for \code{`\link{UL}`} and \code{`\link{OL}`} objects
+#' Print Methods for \code{UL} and \code{OL} objects
 #'
 #' @keywords internal
 #' @export

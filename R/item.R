@@ -165,9 +165,10 @@ setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 
 # - Single Object Methods -----------------------------------------------------
 
-# Display a \code{`\link{unitizerItem-class}`} Object
-#
-# Highly summarized view of the unitizer object.
+#' Display a \code{`\link{unitizerItem-class}`} Object
+#'
+#' Highly summarized view of the unitizer object.
+#' @keywords internal
 
 setMethod("show", "unitizerItem",
   function(object) {
@@ -275,7 +276,8 @@ setMethod("ignored", "unitizerItem", function(x, ...) x@ignore)
 
 # - Multi Object Methods -------------------------------------------------------
 
-# Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
+#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
+#' @keywords internal
 
 setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
   function(e1, e2) {
@@ -283,7 +285,8 @@ setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
     e1 <- append(e1, list(e2))
     e1
 } )
-# Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
+#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
+#' @keywords internal
 
 setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, e2))
 

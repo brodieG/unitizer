@@ -148,7 +148,7 @@ setMethod(
 #' @param target unitizerGlobalState object
 #' @param current unitizerGlobalState object
 #' @param width how many characters wide the display should be
-#' @param connection to output to
+#' @param file connection to output to
 #' @return NULL
 #' @examples
 #' \dontrun{

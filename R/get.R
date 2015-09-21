@@ -42,7 +42,7 @@
 #' \code{unitizer:::set_unitizer.character}.
 #' Expectations for the functions are as follows.  \code{get_unitizer} must:
 #' \itemize{
-#'   \item return a \code{\link{unitizer-class}} object if \code{store.id}
+#'   \item return a \code{unitizer-class} object if \code{store.id}
 #'      exists and contains a valid object
 #'   \item return FALSE if the object doesn't exist (e.g. first time
 #'     run-through, so reference copy doesn't exist yet)
@@ -57,12 +57,12 @@
 #' @aliases get_unitizer
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
-#' @param unitizer a \code{\link{unitizer-class}} object containing the store
+#' @param unitizer a \code{unitizer-class} object containing the store
 #'   data
 #' @return
 #'   \itemize{
 #'     \item set_unitizer TRUE if unitizer storing worked, error otherwise
-#'     \item get_unitizer a \code{\link{unitizer-class}} object, FALSE
+#'     \item get_unitizer a \code{unitizer-class} object, FALSE
 #'       if \code{store.id} doesn't exist yet, or error otherwise; note that
 #'       the \code{unitizer_results} method returns a list
 #'   }

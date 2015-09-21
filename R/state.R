@@ -102,7 +102,7 @@ NULL
 #'     called
 #'   \item 2 track and set state to what you would typically find in a clean
 #'     R session, with the exception of \code{random.seed}, which is
-#'     set to \code{\link{getOption("unitizer.seed")}} (of kind "Wichmann-Hill"
+#'     set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
 #'     as that seed is substantially smaller than the R default).
 #' }
 #' @note \code{\link{unitize_dir}} and \code{\link{unitize}} can accept
@@ -119,10 +119,10 @@ NULL
 #' ## No options tracking, and in `dplyr` package namespace environment
 #' unitize(..., state=unitizerStateNoOpt(par.env="dplyr"))
 #' }
-#' @slot search.path one of \code{\link{0:2}}
-#' @slot options one of \code{\link{0:2}}
-#' @slot working.directory one of \code{\link{0:2}}
-#' @slot random.seed one of \code{\link{0:2}}
+#' @slot search.path one of \code{0:2}
+#' @slot options one of \code{0:2}
+#' @slot working.directory one of \code{0:2}
+#' @slot random.seed one of \code{0:2}
 #' @slot par.env \code{NULL} to use the special \code{unitizer} parent
 #'   environment, or an environment to use as the parent environment, or
 #'   the name of a package as a character string to use that packages'
