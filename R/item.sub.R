@@ -214,7 +214,9 @@ setMethod("summary", "unitizerItemTestsErrors",
 #' @name unitizerItemTestsFuns
 #' @export unitizerItemTestsFuns
 #' @examples
+#' \dontrun{
 #' unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
+#' }
 
 unitizerItemTestsFuns <- setClass(
   "unitizerItemTestsFuns", contains="unitizerItemTests",
