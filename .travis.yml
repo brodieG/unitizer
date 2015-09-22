@@ -5,6 +5,8 @@ language: r
 r_binary_packages:
   - testthat
   - devtools
+  - knitr
+  - markdown
 
 warnings_are_errors: true
 
