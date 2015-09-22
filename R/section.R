@@ -138,6 +138,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' @param compare a function or a \code{\link{unitizerItemTestsFuns}}
 #'   object
 #' @examples
+#' \dontrun{
 #' unitizer_sect("Custom Tests", {
 #'   my_fun("a", FALSE)
 #'   my_fun(845, TRUE)
@@ -163,6 +164,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #'   },
 #'   compare=unitizerItemTestsFuns(value=identical, output=identical)
 #' )
+#' }
 unitizer_sect <- function(title=NULL, expr=expression(), details=character(), compare=new("unitizerItemTestsFuns")) {
   if(!is(compare, "unitizerItemTestsFuns") & !is.function(compare)) stop("Argument `compare` must be \"unitizerItemTestsFuns\" or a function")
   if(!is.character(details)) stop("Argument `details` must be character")
