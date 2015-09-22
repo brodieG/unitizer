@@ -295,6 +295,8 @@ setClass("unitizerBrowse", contains="unitizerList",
 # that we did not want to support (need to check that eventually all tests
 # are reviewed, etc.)
 
+#' @rdname unitizer_s4method_doc
+
 setMethod("show", "unitizerBrowse", function(object) {
   obj.rendered <- as.character(object)
   cat(obj.rendered, "\n", sep="")
@@ -328,6 +330,8 @@ setMethod(
 # @param ... not used
 # @return character vector, one element per line, for use with e.g.
 #   \code{`cat(x, sep=\n`)}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("as.character", "unitizerBrowse", valueClass="character",
   function(x, width=0L, ...) {
@@ -413,6 +417,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
 
     if(length(out.sec) == 1L) out[-out.sec.idx] else out
 } )
+#' @rdname unitizer_s4method_doc
 
 setMethod(
   "as.data.frame", "unitizerBrowse",
@@ -498,6 +503,8 @@ setClass("unitizerBrowseSection", contains="unitizerList",
 # slots in \code{`mapping`} does.
 #
 # Also, some more discussion of this issue in the docs for \code{`\link{unitizer-class}`}.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitizerBrowse",
   function(e1, e2) {
@@ -635,7 +642,9 @@ setClass("unitizerBrowseSubSection",
     TRUE
   }
 )
-# Compute Length of a \code{`\link{unitizerBrowseSubSection-class}`}
+# Compute Length of a \code{\link{unitizerBrowseSubSection-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("length", "unitizerBrowseSubSection", valueClass="logical",
   function(x) max(length(x@items.new), length(x@items.ref))
@@ -663,6 +672,8 @@ setMethod("ignored", "unitizerBrowseSubSection", valueClass="logical",
 # order implied by \code{ubobj@@mapping}, whereas in the latter we're directly
 # pulling out an entire section.  Obviously not ideal, but since this is
 # internal we're going to ignore the problem for now.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod(
   "[",
@@ -704,8 +715,8 @@ setMethod(
     ub.new
 } )
 # Subset a \code{unitizerBrowseSubSection} Object
-#
-# @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("[",
   signature(
@@ -738,7 +749,7 @@ setMethod("[",
 # Pull Out Deparsed Calls From Objects
 #
 # Used primarily as a debugging tool, should probably be migrated to use
-# \code{`\link{extractItems}`}
+# \code{\link{extractItems}}
 #
 # @return character the deparsed calls
 
@@ -885,6 +896,8 @@ setClass("unitizerBrowseSubSectionPassed", contains="unitizerBrowseSubSection",
 # @param e1 a \code{\link{unitizerBrowseSection-class}}
 # @param e2 a \code{\link{unitizerBrowseSubSection-class}}
 # @return a \code{\link{unitizerBrowseSection-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizerBrowseSection", "unitizerBrowseSubSection"),
   valueClass="unitizerBrowseSection",

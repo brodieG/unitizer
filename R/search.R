@@ -49,6 +49,8 @@ setMethod(
     pkg.ver
   }
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "all.equal", c("unitizerSearchData", "unitizerSearchData"),
   function(target, current, ...) {
@@ -579,7 +581,8 @@ get_package_data <- function() {
   sapply(
     search(),
     function(x) {
-      loc <- try(package.path(x))
+      loc <- if(grepl("^package:.+", x))
+        try(path.package(sub("^package:(.*)", "\\1", x))) else ""
       ver <- try(getNamespaceVersion(x))
       new(
         "unitizerNamespaceData",

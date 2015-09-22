@@ -539,7 +539,9 @@ unitize_browse <- function(
         paste0("test file \"", global$ns.opt.conflict@file, "\""),
       " because the following namespace", if(many > 1L) "s", " could not be ",
       "unloaded: ",
-      paste0(deparse(global$ns.opt.conflict@namespaces, width=500L), sep=""),
+      paste0(
+        deparse(global$ns.opt.conflict@namespaces, width.cutoff=500L), sep=""
+      ),
       ".", sep=""
     )
     if(interactive.mode) {

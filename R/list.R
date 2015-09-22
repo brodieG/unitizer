@@ -39,33 +39,32 @@ setClass(
 )
 # - Methods -------------------------------------------------------------------
 
-#' Compute Number of Items in \code{`\link{unitizerList-class}`}
-#'
-#' @keywords internal
+# Compute Number of Items in \code{\link{unitizerList-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("length", "unitizerList", function(x) length(x@.items))
 
-#' Subsetting Method for \code{`\link{unitizerList-class}`}
-#'
-#' @keywords internal
+# Subsetting Method for \code{\link{unitizerList-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("[", signature(x="unitizerList", i="subIndex", j="missing", drop="missing"),
   function(x, i) {
     x@.items <- x@.items[i]
     x
 } )
-#' Subsetting Method for \code{`\link{unitizerList-class}`}
-#'
-#' @keywords internal
+# Subsetting Method for \code{\link{unitizerList-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("[[", signature(x="unitizerList", i="subIndex"),
   function(x, i) {
     x@.items[[i]]
 } )
-#' Replace Method for \code{`\link{unitizerList-class}`}
-#'
-#' @name [<-,unitizerList,subIndex-method
-#' @keywords internal
+# Replace Method for \code{\link{unitizerList-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setReplaceMethod("[", signature(x="unitizerList", i="subIndex"),
   function(x, i, value) {
@@ -78,10 +77,9 @@ setReplaceMethod("[", signature(x="unitizerList", i="subIndex"),
     if(pointer.reset) x@.pointer <- x@.pointer - lt
     x
 } )
-#' Replace Method for \code{`\link{unitizerList-class}`}
-#'
-#' @name [[<-,unitizerList,subIndex-method
-#' @keywords internal
+# Replace Method for \code{\link{unitizerList-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setReplaceMethod("[[", signature(x="unitizerList", i="subIndex"),
   function(x, i, value) {
@@ -93,16 +91,17 @@ setReplaceMethod("[[", signature(x="unitizerList", i="subIndex"),
     if(pointer.reset) x@.pointer <- x@.pointer - 1L
     x
 } )
-#' Coerce to list by returning items
-#' @keywords internal
+# Coerce to list by returning items
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("as.list", "unitizerList", function(x, ...) x@.items)
 
 #' Coerce to expression by returning items coerced to expressions
 #'
-#' Really only meaningful for classes that implement the \code{`.items`}
+#' Really only meaningful for classes that implement the \code{.items}
 #' slot as an expression, but works for others to the extent
-#' \code{`.items`} contents are coercible to expressions
+#' \code{.items} contents are coercible to expressions
 #'
 #' @keywords internal
 
@@ -110,26 +109,26 @@ setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.ite
 
 setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 
-#' Iterate through items of a \code{`\link{unitizerList-class}`} Object
+#' Iterate through items of a \code{\link{unitizerList-class}} Object
 #'
 #' Extraction process is a combination of steps:
 #' \enumerate{
-#'   \item Move Internal pointer with \code{`nextItem`} or \code{`prevItem`}
-#'   \item Retrieve item \code{`getItem`}
-#'   \item Check whether we're done iterating with \code{`done`}
+#'   \item Move Internal pointer with \code{nextItem} or \code{prevItem}
+#'   \item Retrieve item \code{getItem}
+#'   \item Check whether we're done iterating with \code{done}
 #' }
-#' \code{`done`} will return TRUE if the pointer is on either the
+#' \code{done} will return TRUE if the pointer is on either the
 #' first or last entry depending on what direction you are iterating.
 #' If you wish to iterate from the last item forward, you should either
-#' \code{`reset`} with parameter \code{`reverse`} set to TRUE, or re-order
+#' \code{reset} with parameter \code{reverse} set to TRUE, or re-order
 #' the items.
 #'
 #' @aliases nextItem,unitizerList-method, prevItem,unitizerList-method,
 #'   getItem,unitizerList-method, reset,unitizerList-method, done,unitizerList-method
 #' @keywords internal
 #'
-#' @param x a \code{`\link{unitizerList-class}`} object
-#' @return \code{`\link{unitizerList-class}`} for \code{`getItem`},
+#' @param x a \code{\link{unitizerList-class}} object
+#' @return \code{\link{unitizerList-class}} for \code{getItem},
 #'   an item from the list, which could be anything
 
 setMethod("nextItem", "unitizerList", valueClass="unitizerList",
@@ -196,18 +195,19 @@ setMethod("done", "unitizerList",
 
 setGeneric("append")
 
-#' Append To a \code{\link{unitizerList-class}} Object
-#'
-#' \code{values} is coerced to list or expression depending on
-#' type of \code{x} \code{.items} slot.
-#'
-#' The resulting object is not tested for validity as this is too expensive
-#' on a regular basis.  You should check validity with \code{validObject}
-#'
-#' @keywords internal
-#' @param x the object to append to
-#' @param values the object to append
-#' @param after a subscript, after which the values are to be appended.
+# Append To a \code{\link{unitizerList-class}} Object
+#
+# \code{values} is coerced to list or expression depending on
+# type of \code{x} \code{.items} slot.
+#
+# The resulting object is not tested for validity as this is too expensive
+# on a regular basis.  You should check validity with \code{validObject}
+#
+# @param x the object to append to
+# @param values the object to append
+# @param after a subscript, after which the values are to be appended.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("append", c("unitizerList", "ANY"),
   function(x, values, after=length(x)) {
@@ -231,21 +231,24 @@ setMethod("append", c("unitizerList", "ANY"),
     # validObject(y) # too expensive, commented
     y
 } )
-#' Concatenate to a \code{`\link{unitizerList-class}`}
+#' Concatenate to a \code{\link{unitizerList-class}}
 #'
 #' @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("c", c("unitizerList"),
   function(x, ..., recursive=FALSE) {
     stop("This method is not implemented yet")
 } )
+# Append Factors
+#
+# Note this is not related to \code{\link{append,unitizerList,ANY-method}}
+# except in as much as it is the same generic, so it just got thrown in here.
+#
+# @keywords internal
 
-#' Append Factors
-#'
-#' Note this is not related to \code{`\link{append,unitizerList,ANY-method}`}
-#' except in as much as it is the same generic, so it just got thrown in here.
-#'
-#' @keywords internal
+#' @rdname unitizer_s4method_doc
 
 setMethod("append", c("factor", "factor"),
   function(x, values, after=length(x)) {
@@ -264,7 +267,12 @@ setMethod("append", c("factor", "factor"),
     x
   }
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod("names", "unitizerList", function(x) names(x@.items))
+
+#' @rdname unitizer_s4method_doc
+
 setMethod("names<-", "unitizerList",
   function(x, value) names(x@.items) <- value
 )

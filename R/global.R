@@ -102,6 +102,9 @@ setClass(
 #' @keywords internal
 
 setClass("unitizerDummy", slots=c(.="NULL"))
+
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "show", "unitizerDummy", function(object) cat("<object not recorded>\n")
 )

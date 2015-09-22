@@ -33,7 +33,7 @@ NULL
 #'     default packages that are loaded when you run your tests are unloaded
 #'     prior to running your tests.  If you want to use the same libraries
 #'     across multiple tests you can load them with the \code{pre} argument to
-#'     \code{\link{unitize}} or \code{\link{unitizes_dir}}.
+#'     \code{\link{unitize}} or \code{\link{unitize_dir}}.
 #'   \item Options (\bold{disabled} by default): same as search path
 #' }
 #'
@@ -261,6 +261,8 @@ unitizerStateOff <- setClass(
     par.env=.GlobalEnv
   )
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "show", "unitizerState",
   function(object) {

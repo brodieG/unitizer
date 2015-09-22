@@ -1,31 +1,33 @@
-#' Compare State Between Reference and New Tests
-#'
-#' These functions were implemented before \code{\link{diff_state}}, and we
-#' recommend you use \code{\link{diff_state}} to get a high level view of
-#' state differences instead of these.
-#'
-#' Designed to compare the state snapshots as stored and recorded in a
-#' \code{unitizer}.  These approximate various aspects of global state.
-#' The approximation is because state objects that are too large are not kept,
-#' so we are not always certain whether some parts of state changed or not.
-#'
-#' We report several levels of differences between state values:
-#' \itemize{
-#'    \item affirmative difference, when we know with certainty the state values
-#'      are different
-#'    \item probable difference, when we have one known value and one unknown
-#'      value, typically because one was too large to store
-#'    \item possible difference, when both values are unknown
-#' }
-#' Additionally, it is possible that the state tracking settings change between
-#' \code{unitizer} runs.  If that happens, then:
-#' \itemize{
-#'   \item if state type is not tracked in new (current), then we assume state
-#'     is unchanged
-#'   \item if state is tracked in new, but was not in reference (target), then
-#'     we report a probable difference
-#' }
-#' @keywords internal
+# Compare State Between Reference and New Tests
+#
+# These functions were implemented before \code{\link{diff_state}}, and we
+# recommend you use \code{\link{diff_state}} to get a high level view of
+# state differences instead of these.
+#
+# Designed to compare the state snapshots as stored and recorded in a
+# \code{unitizer}.  These approximate various aspects of global state.
+# The approximation is because state objects that are too large are not kept,
+# so we are not always certain whether some parts of state changed or not.
+#
+# We report several levels of differences between state values:
+# \itemize{
+#    \item affirmative difference, when we know with certainty the state values
+#      are different
+#    \item probable difference, when we have one known value and one unknown
+#      value, typically because one was too large to store
+#    \item possible difference, when both values are unknown
+# }
+# Additionally, it is possible that the state tracking settings change between
+# \code{unitizer} runs.  If that happens, then:
+# \itemize{
+#   \item if state type is not tracked in new (current), then we assume state
+#     is unchanged
+#   \item if state is tracked in new, but was not in reference (target), then
+#     we report a probable difference
+# }
+# @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod(
   "all.equal",
@@ -118,10 +120,14 @@ state_item_compare <- function(tar, cur) {
 } }
 # \code{all.equal} methods involving dummy
 
+#' @rdname unitizer_s4method_doc
+
 setMethod(  # We could just drop this altogether, but leaving it for future use
   "all.equal", c("unitizerDummy", "unitizerDummy"),
   function(target, current, ...) TRUE
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "all.equal", c("unitizerDummy", "ANY"),
   function(target, current, ...)
@@ -130,6 +136,8 @@ setMethod(
       "different"
     )
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "all.equal", c("ANY", "unitizerDummy"),
   function(target, current, ...)

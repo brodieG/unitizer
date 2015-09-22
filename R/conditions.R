@@ -24,10 +24,10 @@ setClass("conditionList", contains="unitizerList")
 #' attribute on each conditions which indicate that the condition occurred
 #' in the print/show methods as applied to the result of a call.
 #'
-#' @keywords internal
 #' @export
 #' @param target the list of conditions that we are matching against
 #' @param current the list of conditions we are checking
+#' @param ... provided for compatibility with generic
 #' @return TRUE if the lists of conditions are equivalent, an character vector explaining
 #'   why they are not otherwise
 
@@ -66,11 +66,12 @@ setMethod("all.equal", "conditionList",
 } )
 #' Compare Conditions
 #'
-#' @keywords internal
 #' @export
 #' @param target a condition
 #' @param current another condition to compare
-#' @return TRUE if conditions match, character vector describing differences otherwise
+#' @param ... provided for compatibility with generic
+#' @return TRUE if conditions match, character vector describing differences
+#'   otherwise
 
 all.equal.condition <- function(target, current, ...) {
   if(!inherits(target, "condition") || !inherits(current, "condition"))
@@ -114,7 +115,6 @@ all.equal.condition <- function(target, current, ...) {
 }
 #' Prints A list of Conditions
 #'
-#' @keywords internal
 #' @export
 #' @param object a \code{`conditionList`} object (list of conditions)
 #' @return object, invisibly
@@ -167,13 +167,13 @@ setMethod("show", "conditionList",
     return(invisible(object))
   }
 )
-#' Extracts Condition Type From Condition Classes
-#'
-#' Type (e.g. Error, Warning), is taken to be the second to last class.
-#'
-#' @keywords internal
-#' @param x a condition
-#' @return character 1 length the type of condition
+# Extracts Condition Type From Condition Classes
+#
+# Type (e.g. Error, Warning), is taken to be the second to last class.
+#
+# @keywords internal
+# @param x a condition
+# @return character 1 length the type of condition
 
 get_condition_type <- function(x) {
   if(!inherits(x, "condition")) stop("Argument `x` must be a condition")

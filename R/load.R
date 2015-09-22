@@ -250,7 +250,7 @@ store_unitizer <- function(unitizer) {
     close_and_clear(unitizer@cons)
     unitizer@cons <- NULL
   }
-  rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
+  rm(list=ls(unitizer@base.env, all.names=TRUE), envir=unitizer@base.env)
 
   # Reset other fields
 
@@ -319,6 +319,8 @@ setClass(
     TRUE
   }
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "show", "unitizerLoadFail",
   function(object) {

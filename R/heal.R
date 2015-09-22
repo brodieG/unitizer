@@ -72,10 +72,10 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   the item index, and column 2 whether it originated from "new" or "ref"
 #'
 #' @seealso \code{updateLs,unitizerItem-method}
-#' @param x \code{\link{unitizerItems-class}} object
-#' @param y \code{\link{unitizer-class}} object \code{x} was generated from
+#' @param x \code{unitizerItems} object
+#' @param y \code{unitizer} object \code{x} was generated from
 #' @param ... unused, here for inheriting methods
-#' @return \code{unitizerItems-class}
+#' @return \code{unitizerItems}
 #' @rdname healEnvs
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"),

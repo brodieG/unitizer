@@ -109,6 +109,8 @@ setClassUnion("unitizerItemOrNULL", c("unitizerItem", "NULL"))
 # Makes the fact that most of the data needs to be part of a
 # \code{`\link{unitizerItemData-class}`} object transparent to the user.
 
+#' @rdname unitizer_s4method_doc
+
 setMethod("initialize", "unitizerItem", function(.Object, ...) {
   dots.all <- list(...)
   dots.names <- names(dots.all)
@@ -140,9 +142,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
-#' Collection of \code{`\link{unitizerItem-class}`} Objects
-#'
-#' @keywords internal
+# Collection of \code{\link{unitizerItem-class}} Objects
 
 setClass("unitizerItems", contains="unitizerList",
   representation(
@@ -165,10 +165,11 @@ setClassUnion("unitizerItemsOrNULL", c("unitizerItems", "NULL"))
 
 # - Single Object Methods -----------------------------------------------------
 
-#' Display a \code{`\link{unitizerItem-class}`} Object
-#'
-#' Highly summarized view of the unitizer object.
-#' @keywords internal
+# Display a \code{`\link{unitizerItem-class}`} Object
+#
+# Highly summarized view of the unitizer object.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerItem",
   function(object) {
@@ -222,15 +223,13 @@ setMethod("show", "unitizerItem",
       "see `help(\"$\", \"unitizer\")`"
     )
 } )
-# Methods to Track Whether a \code{`\link{unitizerItem-class}`} Object is New Or Reference
+# Methods to Track Whether a \code{\link{unitizerItem-class}} Object is New Or Reference
 #
-# Necessitated due to the awkward structure around \code{`\link{reviewNext,unitizerBrowse-method}`},
-# where the only return value is a \code{`\link{unitizerItems-class}`} object and there is
-# no easy way to tell which objects have been kept from reference vs which ones are
+# Necessitated due to the awkward structure around
+# \code{\link{reviewNext,unitizerBrowse-method}}, where the only return value is
+# a \code{\link{unitizerItems-class}} object and there is no easy way to tell
+# which objects have been kept from reference vs which ones are
 # new.
-#
-# @aliases itemType,unitizerItem-method, itemType<-,unitizerItem-method, itemsitemType,unitizerItems-method,
-#   itemsType<-,unitizerItems-method
 
 setGeneric("itemType", function(x, ...) standardGeneric("itemType"))
 setMethod("itemType", "unitizerItem", function(x) if(x@reference) "reference" else "new")
@@ -265,7 +264,7 @@ setReplaceMethod("itemsType", c("unitizerItems", "character"),
 } )
 setGeneric("ignored", function(x, ...) standardGeneric("ignored"))
 
-# Determines Which Items In \code{`\link{unitizerItems-class}`} Are Not Full Tests
+# Determines Which Items In \code{\link{unitizerItems-class}} Are Not Full Tests
 #
 # In order to simplify user interaction, some statements are not considered
 # to be tests, rather, they are set up steps for the actual test.  At the
@@ -276,8 +275,9 @@ setMethod("ignored", "unitizerItem", function(x, ...) x@ignore)
 
 # - Multi Object Methods -------------------------------------------------------
 
-#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
-#' @keywords internal
+# Add a \code{\link{unitizerItem-class}} to a \code{\link{unitizerItems-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
   function(e1, e2) {
@@ -285,8 +285,9 @@ setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
     e1 <- append(e1, list(e2))
     e1
 } )
-#' Add a \code{`\link{unitizerItem-class}`} to a \code{`\link{unitizerItems-class}`}
-#' @keywords internal
+# Add a \code{\link{unitizerItem-class}} to a \code{\link{unitizerItems-class}}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, e2))
 

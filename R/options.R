@@ -265,7 +265,7 @@ validate_options <- function(opts.to.validate) {
   if(any(missing.opts <- !names.def %in% names(opts.to.validate)))
     stop(
       "The following options must be set in order for `unitizer` to work: ",
-      deparse(names(.unitizer.opts.default)[missing.opts], width=500L)
+      deparse(names(.unitizer.opts.default)[missing.opts], width.cutoff=500L)
     )
   with(
     opts.to.validate,

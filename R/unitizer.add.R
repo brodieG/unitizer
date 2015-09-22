@@ -8,6 +8,8 @@ NULL
 #
 # Registers the section, and the mapping of items to section.
 
+#' @rdname unitizer_s4method_doc
+
 setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
   function(e1, e2) {
     # the map is index (item) to value (section), id auto-increments
@@ -40,11 +42,13 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
 } )
 # Adds Expressions to unitizer
 #
-# Expressions can be added as \code{`\link{unitizerTests-class}`} object
+# Expressions can be added as \code{\link{unitizerTests-class}} object
 # or a straight up expression, though in most cases it should be the
 # latter.
 #
-# @note you can only do this once for a `unitizer`.
+# NOTE: you can only do this once for a \code{unitizer}.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer",
   function(e1, e2) {
@@ -149,6 +153,8 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
 # section copying is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.
 # This is something that we should clean-up eventually.
 
+#' @rdname unitizer_s4method_doc
+
 setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
   function(e1, e2) {
     itemsType(e2) <- "reference"
@@ -219,6 +225,8 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
 #
 # @seealso \code{`\link{registerItem,unitizer,unitizerItem-method}`}
 
+#' @rdname unitizer_s4method_doc
+
 setMethod("+", c("unitizer", "unitizerItem"),
   function(e1, e2) {
     e2 <- try(updateLs(e2, e1@items.new@base.env))
@@ -229,6 +237,8 @@ setMethod("+", c("unitizer", "unitizerItem"),
     e1
 } )
 # Add Test Errors to \code{`\link{unitizer-class}`}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerItemTestsErrors"),
   function(e1, e2) {

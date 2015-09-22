@@ -258,6 +258,8 @@ setClass(
 # @param object the object to show
 # @return NULL
 
+#' @rdname unitizer_s4method_doc
+
 setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
@@ -276,6 +278,8 @@ setGeneric("passed", function(object, ...) standardGeneric("passed"))
 setMethod("passed", "unitizerSummary",
   function(object, ...) !as.logical(sum(object@totals[-1L]))
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
     .Object <- callNextMethod()
@@ -293,8 +297,8 @@ setMethod("initialize", "unitizer",
     .Object
 } )
 # Compute Length of a \code{\link{unitizer-class}} Object
-#
-# @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("length", "unitizer",
   function(x) {
@@ -317,6 +321,8 @@ setMethod("length", "unitizer",
 # @param silent whether to suppress display of summary object
 # @return a unitizerSummary object
 # @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("summary", "unitizer",
   function(object, silent=FALSE, ...) {
@@ -355,8 +361,8 @@ setMethod("summary", "unitizer",
     obj
 } )
 # Summary method
-#
-# @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("summary", "unitizerObjectList",
   function(object, silent=FALSE, ...) {
@@ -378,8 +384,8 @@ setMethod("summary", "unitizerObjectList",
     res
 } )
 # Display method
-#
-# @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerObjectListSummary",
   function(object) {
@@ -561,7 +567,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           if(!length(test.cond)) test.cond <- "<unknown>"
           err.tpl@value <- paste0(
             err.msg, " signaled a condition of class `",
-            deparse(test.cond, width=500), "`",
+            deparse(test.cond, width.cutoff=500), "`",
             ", with message \"", test.res$msg, "\" and call `",
             paste0(deparse(test.res$call), collapse=""), "`."
           )

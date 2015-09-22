@@ -137,8 +137,9 @@ setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors",
 #     } }
 #     chr
 # } )
-#' Display Test Errors
-#' @keywords internal
+
+# Display Test Errors
+#' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerItemTestsErrors",
   function(object) {

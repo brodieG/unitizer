@@ -92,7 +92,8 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     if(res$aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
       stop(
-        "Failed instantiating a unitizer section:\n", paste0(capt$message, "\n")
+        "Failed instantiating a unitizer section:\n",
+        paste0(capt.cons$message, "\n")
       )
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
