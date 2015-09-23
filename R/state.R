@@ -61,6 +61,10 @@ NULL
 #' it is listed in \code{getOption("unitizer.namespace.keep")}, \code{unitizer}
 #' will turn off \code{options} state tracking from that point onwards.
 #'
+#' Additionally, note that \code{warn} and \code{error} options are always set
+#' to \code{1} and \code{NULL} respectively during test evaluation, irrespective
+#' of what option state tracking level you select.
+#'
 #' @section State Presets:
 #'
 #' You can use these classes for detailed control of how \code{unitizer} tracks
@@ -104,6 +108,17 @@ NULL
 #'     R session, with the exception of \code{random.seed}, which is
 #'     set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
 #'     as that seed is substantially smaller than the R default).
+#' }
+#' @sections Known Untracked State Elements:
+#'
+#' \itemize{
+#'   \item system time: tests involving functions such as \code{\link{date}}
+#'     will inevitably fail
+#'   \item locale: is not tracked because it so specific to the system and so
+#'     unlikely be be changed by user action; if you have tests that depend on
+#'     locale be sure to set the locale via the \code{pre} argument to
+#'     \code{\link{unitize}}, and also to reset it to the original value in
+#'     \code{post}.
 #' }
 #' @note \code{\link{unitize_dir}} and \code{\link{unitize}} can accept
 #'   character values instead of the classes here; these are just translated to

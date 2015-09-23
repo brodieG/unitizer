@@ -357,7 +357,7 @@ unitize_core <- function(
   on.exit(NULL)
   reset_and_unshim(global)
 
-  post.res <- source_files(post, gpar.frame)  # return env on success, char on error
+  post.res <- source_files(post, pre.load.frame)  # return env on success, char on error
   if(!is.environment(post.res))
     word_msg(
       "`unitizer` evaluation succeed, but `post` steps had errors:",

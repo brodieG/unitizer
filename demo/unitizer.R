@@ -23,7 +23,7 @@ devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 
 # And in our sources is the test file, which we will `unitize`:
 
-.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R")
+.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.R")
 show_file(.unitizer.test.file)
 
 # Here we copied `untizer.fastlm` sources to a temporary "package directory"
