@@ -48,7 +48,7 @@ old.width <- options(width=80)
 library(unitizer)
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
-.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.R")
+.unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.R")
 .unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.unitizer")
 
 unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))

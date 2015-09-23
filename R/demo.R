@@ -121,7 +121,7 @@ update_fastlm <- function(dir, version) {
     file_test("-f", file.path(dir, "DESCRIPTION")),
     file_test("-f", file.path(dir, "R", "fastlm.R")),
     file_test("-d", file.path(dir, "tests", "unitizer")),
-    file_test("-f", file.path(dir, "tests", "unitizer", "fastlm.R")),
+    file_test("-f", file.path(dir, "tests", "unitizer", "fastlm1.R")),
     file_test("-f", file.path(dir, "tests", "unitizer", "fastlm2.R")),
     file_test("-f", file.path(dir, "tests", "unitizer", "unitizer.fastlm.R"))
 
@@ -134,7 +134,7 @@ update_fastlm <- function(dir, version) {
   lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir)
   cpy.files <- c(
     "DESCRIPTION", file.path("R", "fastlm.R"),
-    file.path("tests", "unitizer", "fastlm.R"),
+    file.path("tests", "unitizer", "fastlm1.R"),
     file.path("tests", "unitizer", "fastlm2.R"),
     file.path("tests", "unitizer", "unitizer.fastlm.R")
   )
