@@ -35,9 +35,7 @@
 #'
 #' You can modify all aspects of state control with the \code{state} parameter.
 #' See the \code{\link{unitizerState}} documentation and the \code{state}
-#' vignette for more details.  One exception to this control are the \code{warn}
-#' and \code{error} options; these are always set to \code{1} and \code{NULL}
-#' respectively during test evaluation.
+#' vignette for more details.
 #'
 #' @export
 #' @aliases unitize review unitize_dir
@@ -81,14 +79,18 @@
 #'   will have not direct way to check whether these objects changed across
 #'   \code{unitizer} runs.  Additionally, typing \code{ls} from the review
 #'   prompt will not list these objects.
-#' @param history file name to use to store history during interactive unitizer
-#'   sessions.
 #' @param post NULL, or a character vector pointing to files and/or directories.
 #'   See \code{pre}.  If NULL will look for a directory named "_post" in the
 #'   directory containing the first test file.  Scripts are run just prior to
-#'   existing \code{unitizer}.  Keep in mind that \code{unitizer} can manage
-#'   most aspects of global state, so you should not need to use this parameter
-#'   to unload packages, remove objects, etc.  See details.
+#'   exiting \code{unitizer}. \code{post} code will be run in an environment
+#'   with the environment used to run \code{pre} as the parent.  This means that
+#'   any objects created in \code{pre} will be available to \code{post}, which
+#'   you can use to your advantage if there are some things you do in \code{pre}
+#'   you wish to undo in \code{post}. Keep in mind that \code{unitizer} can
+#'   manage most aspects of global state, so you should not need to use this
+#'   parameter to unload packages, remove objects, etc.  See details.
+#' @param history file name to use to store history during interactive unitizer
+#'   sessions.
 #' @param interactive.mode logical(1L) whether to run in interactive mode (
 #'   request user input when needed) or not (error if user input is required,
 #'   e.g. if all tests do not pass).
