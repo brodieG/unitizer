@@ -1,8 +1,8 @@
-#' Retrieves Environment Ancestry
-#'
-#' @keywords internal
-#' @param env the environment to start with
-#' @param stop.env the environment to stop with
+# Retrieves Environment Ancestry
+#
+# @keywords internal
+# @param env the environment to start with
+# @param stop.env the environment to stop with
 
 env_ancestry <- function(env, stop.env=globalenv()) {
   if(!is.environment(env) || !is.environment(stop.env)) stop("Arguments `env` and `stop.env` must both be environments")
@@ -15,33 +15,33 @@ env_ancestry <- function(env, stop.env=globalenv()) {
   }
   out
 }
-#' Gets Environment Name / Memory Code
-#'
-#' Captures the name that \code{`\link{print.default}`} displays when one
-#' prints and environment
-#'
-#' @keywords internal
-#' @param env an environemnt
-#' @return character 1 length
+# Gets Environment Name / Memory Code
+#
+# Captures the name that \code{`\link{print.default}`} displays when one
+# prints and environment
+#
+# @keywords internal
+# @param env an environemnt
+# @return character 1 length
 
 env_name <- function(env) {
   if(!is.environment(env)) stop("Argument `env` must be an environment")
   sub("<environment: (.*)>", "\\1", capture.output(print.default(env))[[1]])
 }
 
-#' Functions To Ignore
-#'
-#' DEPRECATED.  Now handled by visibility status.
-#'
-#' Ignored functions are not considered tests if they are called from
-#' the top level.
-#'
-#' Also, provide a function to compare functions even when traced.
-#'
-#' @keywords internal
-#' @param x the reference function, if is traced then y must be identical
-#' @param y the current function, if \code{`x`} is not traced and \code{`y`}
-#'   is traced, will compare using \code{`y@@original`} instead of \code{`y`}
+# Functions To Ignore
+#
+# DEPRECATED.  Now handled by visibility status.
+#
+# Ignored functions are not considered tests if they are called from
+# the top level.
+#
+# Also, provide a function to compare functions even when traced.
+#
+# @keywords internal
+# @param x the reference function, if is traced then y must be identical
+# @param y the current function, if \code{`x`} is not traced and \code{`y`}
+#   is traced, will compare using \code{`y@@original`} instead of \code{`y`}
 
 funs.ignore <- list(base::`<-`, base::library, base::`=`, base::set.seed)
 identical_fun <- function(x, y) {
@@ -54,22 +54,21 @@ identical_fun <- function(x, y) {
   }
   identical(x, y)
 }
-#' Overrides Default quit() Behavior
-#'
-#' Necessary because quit short circuits the `on.exit` clean-up functions and
-#' would leave stuff in a weird state (history not reset, etc.).
-#'
-#' This is used in \code{`\link{unitize}`}.
-#'
-#' @aliases unitizer_quit_handler
-#' @keywords internal
+# Overrides Default quit() Behavior
+#
+# Necessary because quit short circuits the `on.exit` clean-up functions and
+# would leave stuff in a weird state (history not reset, etc.).
+#
+# This is used in \code{`\link{unitize}`}.
+#
+# @aliases unitizer_quit_handler
+# @keywords internal
 
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
   invokeRestart("unitizerQuitExit", list(save=save, status=status, runLast=runLast))
 }
 # nocov start
 # can't test this without quitting R!
-#' @keywords internal
 
 unitizer_quit_handler <- function(quitArgs) {
   word_msg(
@@ -83,15 +82,15 @@ unitizer_quit_handler <- function(quitArgs) {
 }
 # nocov end
 
-#' Cleans a Path to be In Standard Format
-#'
-#' Uses \code{`\link{dirname}`} to convert paths on windows machines with back
-#' slasshes to forward slash based names, and then removed excess forward
-#' slashes.
-#'
-#' @keywords internal
-#' @param path character the path name to clean up
-#' @return the cleaned up path
+# Cleans a Path to be In Standard Format
+#
+# Uses \code{`\link{dirname}`} to convert paths on windows machines with back
+# slasshes to forward slash based names, and then removed excess forward
+# slashes.
+#
+# @keywords internal
+# @param path character the path name to clean up
+# @return the cleaned up path
 
 path_clean <- function(path) {
   if(!is.character(path)) stop("Argument `path` must be character")
@@ -121,9 +120,9 @@ filename_to_storeid <- function(x) {
     )
   NULL
 }
-#' History Management Funs
-#'
-#' @keywords internal
+# History Management Funs
+#
+# @keywords internal
 
 history_capt <- function(hist.file=NULL) {
   # set up local history
@@ -182,26 +181,26 @@ history_write <- function(hist.con, data) {
       # nocov end
   } }
 }
-#' Simplify a Path As Much as Possible to Working Directory
-#'
-#' \itemize{
-#'   \item \code{relativize_path} returns a path that can actually be used
-#'     to access an actual file from the current working directory
-#'   \item \code{pretty_path} (not really used currently) returns the most
-#'     readable path that we can produce, but may not usable to access an actual
-#'     file, main difference with \code{relativize_path} is that it will
-#'     figure out if a file is in a package and return a path relative to the
-#'     package directory if it turns out that one is shorter than the one
-#'     produced with relativize path
-#'   \item \code{unique_path} is used to separate out a common path from a list
-#'     of files
-#' }
-#'
-#' @param wd NULL or character(1L) resolving to a directory, if NULL will be
-#'   resolved to \code{getwd}; used primarily for testing
-#' @param only.if.shorter logical(1L) whether to relativize only if the
-#'   resulting \code{path} is shorter than the input
-#' @keywords internal
+# Simplify a Path As Much as Possible to Working Directory
+#
+# \itemize{
+#   \item \code{relativize_path} returns a path that can actually be used
+#     to access an actual file from the current working directory
+#   \item \code{pretty_path} (not really used currently) returns the most
+#     readable path that we can produce, but may not usable to access an actual
+#     file, main difference with \code{relativize_path} is that it will
+#     figure out if a file is in a package and return a path relative to the
+#     package directory if it turns out that one is shorter than the one
+#     produced with relativize path
+#   \item \code{unique_path} is used to separate out a common path from a list
+#     of files
+# }
+#
+# @param wd NULL or character(1L) resolving to a directory, if NULL will be
+#   resolved to \code{getwd}; used primarily for testing
+# @param only.if.shorter logical(1L) whether to relativize only if the
+#   resulting \code{path} is shorter than the input
+# @keywords internal
 
 relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   if(!is.character(path) || any(is.na(path)))
@@ -255,8 +254,6 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     ifelse(nchar(res) < nchar(path), res, path)
   } else res
 }
-#' @rdname relativize_path
-
 pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   rel.path <- relativize_path(path, wd, only.if.shorter)
   pkg.dir <- get_package_dir(path)
@@ -271,8 +268,6 @@ pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   )
   if(nchar(rel.path) <= nchar(pkg.path)) rel.path else pkg.path
 }
-#' @rdname relativize_path
-
 unique_path <- function(files) {
   dirs <- dirname(files)
   uniq.dir <- str_reduce_unique(dirs)
@@ -292,15 +287,14 @@ unique_path <- function(files) {
   } else basename(files)
   structure(test.files.trim, common_dir=full.dir)
 }
-
-#' Merge Two Lists
-#'
-#' Values in \code{y} ovewrite existing values in \code{x}.  This is similar to
-#' \code{modifyList} but is non-recursive
-#'
-#' @keywords internal
-#' @param x a list
-#' @param y a list
+# Merge Two Lists
+#
+# Values in \code{y} ovewrite existing values in \code{x}.  This is similar to
+# \code{modifyList} but is non-recursive
+#
+# @keywords internal
+# @param x a list
+# @param y a list
 
 merge_lists <- function(x, y, keep.null=TRUE) {
   stopifnot(

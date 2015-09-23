@@ -45,64 +45,64 @@ setMethod("initialize", "unitizerCaptCons", function(.Object, ...) {
 } )
 setClassUnion("unitizerCaptConsOrNULL", c("unitizerCaptCons", "NULL"))
 
-#' Contains All The Data for Our Tests!
-#'
-#' Generally is populated through the \code{+} methods, with the exception of
-#' \code{items.ref}, which is added on creation.  I guess ideally all would be
-#' done through different \code{+} methods, but that would complicate the
-#' process a bit as that would require being able to distinguish between
-#' reference item lists and new item lists (and the latter should never really
-#' be added as that should happen item by item).  Maybe some day this will be
-#' cleaned up.
-#'
-#' One of the challenges when maintaining this is the tension between wanting to
-#' keep all the item/test data in sub-objects, and the difficulty in extracting
-#' summary data across all items/tests in that structure.  As a result of this,
-#' a compromise solution has been to extract some of the relevant meta data
-#' into vectors/matrices available at the top level (e.g. the @@tests.*
-#' objects).
-#'
-#' Ultimately, we need far more specialized accessor functions that don't
-#' require understanding what those meta data mean exactly, and how they need
-#' to be used.  An example is the \code{ignored} function.
-#'
-#' Things get particularly complicated with the \code{browse} objects, which
-#' basically rehash a lot of this data, but split into groups and sub-groups,
-#' and at this point with meta-data stored in a \code{unitizerBrowseMapping}
-#' object that replicates the role of the aforementioned @@tests.* objects in
-#' \code{unitizer}.
-#'
-#' @keywords internal
-#' @slot id the identifier for the unitizer, typically a file name, but can be
-#'   anything
-#' @slot items.new a list of all the tests in the new file
-#' @slot items.ref a list of all the previously saved tests
-#' @slot items.new.map a vector that maps the entries in \code{items.new} to
-#'   those in \code{items.ref}, where position in vector is id/position in
-#'   slot \code{items.new}, and value is id/position in \code{items.ref}
-#'   new items will show up as NA here
-#' @slot items.new.calls.deparse a character vector of the deparsed calls in
-#'   \code{items.new}
-#' @slot items.envs contains the environments for each call
-#' @slot tests.fail vector highlighting which tests failed
-#' @slot tests.new vector highlighting which tests did not exist in reference
-#' @slot test.status a vector that contains the result of the test ("pass",
-#'   "fail", "new", "indeterminable")
-#'   for every item in \code{items.new}
-#' @slot tests.result a logical matrix with a row for each item in
-#'   \code{items.new} where each column represents the result of each sub tests
-#' @slot tests.errorDetails an S4 object with a slot for each sub test, where
-#'   the slot contains a \code{\link{unitizerItemTestError-class}} object
-#'   either NULL or a character vector describing the test failure reason for
-#'   every item in \code{items.new}
-#' @slot items.ref.calls.deparse like \code{items.new.calls.deparse}, but for
-#'   the reference items
-#' @slot items.ref.map maps reference items to the new items; deleted items will
-#'   show up as NA here, where position in vector is id/position in slot
-#'   \code{items.ref}, and value is id/position in \code{items.new}
-#' @slot sections a list of \code{\link{unitizerSection-class}}
-#' @slot section.map a map of every item in \code{items.new} to a section
-#' @slot changes contains summary data on the test results
+# Contains All The Data for Our Tests!
+#
+# Generally is populated through the \code{+} methods, with the exception of
+# \code{items.ref}, which is added on creation.  I guess ideally all would be
+# done through different \code{+} methods, but that would complicate the
+# process a bit as that would require being able to distinguish between
+# reference item lists and new item lists (and the latter should never really
+# be added as that should happen item by item).  Maybe some day this will be
+# cleaned up.
+#
+# One of the challenges when maintaining this is the tension between wanting to
+# keep all the item/test data in sub-objects, and the difficulty in extracting
+# summary data across all items/tests in that structure.  As a result of this,
+# a compromise solution has been to extract some of the relevant meta data
+# into vectors/matrices available at the top level (e.g. the @@tests.*
+# objects).
+#
+# Ultimately, we need far more specialized accessor functions that don't
+# require understanding what those meta data mean exactly, and how they need
+# to be used.  An example is the \code{ignored} function.
+#
+# Things get particularly complicated with the \code{browse} objects, which
+# basically rehash a lot of this data, but split into groups and sub-groups,
+# and at this point with meta-data stored in a \code{unitizerBrowseMapping}
+# object that replicates the role of the aforementioned @@tests.* objects in
+# \code{unitizer}.
+#
+# @keywords internal
+# @slot id the identifier for the unitizer, typically a file name, but can be
+#   anything
+# @slot items.new a list of all the tests in the new file
+# @slot items.ref a list of all the previously saved tests
+# @slot items.new.map a vector that maps the entries in \code{items.new} to
+#   those in \code{items.ref}, where position in vector is id/position in
+#   slot \code{items.new}, and value is id/position in \code{items.ref}
+#   new items will show up as NA here
+# @slot items.new.calls.deparse a character vector of the deparsed calls in
+#   \code{items.new}
+# @slot items.envs contains the environments for each call
+# @slot tests.fail vector highlighting which tests failed
+# @slot tests.new vector highlighting which tests did not exist in reference
+# @slot test.status a vector that contains the result of the test ("pass",
+#   "fail", "new", "indeterminable")
+#   for every item in \code{items.new}
+# @slot tests.result a logical matrix with a row for each item in
+#   \code{items.new} where each column represents the result of each sub tests
+# @slot tests.errorDetails an S4 object with a slot for each sub test, where
+#   the slot contains a \code{\link{unitizerItemTestError-class}} object
+#   either NULL or a character vector describing the test failure reason for
+#   every item in \code{items.new}
+# @slot items.ref.calls.deparse like \code{items.new.calls.deparse}, but for
+#   the reference items
+# @slot items.ref.map maps reference items to the new items; deleted items will
+#   show up as NA here, where position in vector is id/position in slot
+#   \code{items.ref}, and value is id/position in \code{items.new}
+# @slot sections a list of \code{\link{unitizerSection-class}}
+# @slot section.map a map of every item in \code{items.new} to a section
+# @slot changes contains summary data on the test results
 
 setClass(
   "unitizer",
@@ -248,15 +248,17 @@ setClass(
 } )
 # - Methods -------------------------------------------------------------------
 
-#' Display Unitizer Summary
-#'
-#' Unfortunately no choice but to use \code{getOptions("width")} from within
-#' here.  Maybe could pre-compute in one of earlier stages and stuff into
-#' \code{object}?  Not a big deal
-#'
-#' @keywords internal
-#' @param object the object to show
-#' @return NULL
+# Display Unitizer Summary
+#
+# Unfortunately no choice but to use \code{getOptions("width")} from within
+# here.  Maybe could pre-compute in one of earlier stages and stuff into
+# \code{object}?  Not a big deal
+#
+# @keywords internal
+# @param object the object to show
+# @return NULL
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerSummary",
   function(object) {
@@ -266,16 +268,18 @@ setMethod("show", "unitizerSummary",
     invisible(NULL)
 } )
 
-#' Determine if a \code{unitizer} Passed Based On Summary
-#'
-#' @keywords internal
-#' @param object object to test for passing
-#' @return logical(1L)
+# Determine if a \code{unitizer} Passed Based On Summary
+#
+# @keywords internal
+# @param object object to test for passing
+# @return logical(1L)
 
 setGeneric("passed", function(object, ...) standardGeneric("passed"))
 setMethod("passed", "unitizerSummary",
   function(object, ...) !as.logical(sum(object@totals[-1L]))
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod("initialize", "unitizer",
   function(.Object, ...) {
     .Object <- callNextMethod()
@@ -292,9 +296,9 @@ setMethod("initialize", "unitizer",
     parent.env(.Object@items.ref@base.env) <- .Object@base.env
     .Object
 } )
-#' Compute Length of a \code{\link{unitizer-class}} Object
-#'
-#' @keywords internal
+# Compute Length of a \code{\link{unitizer-class}} Object
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("length", "unitizer",
   function(x) {
@@ -309,14 +313,16 @@ setMethod("length", "unitizer",
       )
     len.vec
 } )
-#' Summarize Results
-#'
-#' Also prints to screen, but only if \code{level == 1L}
-#'
-#' @param object the object to summarize
-#' @param silent whether to suppress display of summary object
-#' @return a unitizerSummary object
-#' @keywords internal
+# Summarize Results
+#
+# Also prints to screen, but only if \code{level == 1L}
+#
+# @param object the object to summarize
+# @param silent whether to suppress display of summary object
+# @return a unitizerSummary object
+# @keywords internal
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("summary", "unitizer",
   function(object, silent=FALSE, ...) {
@@ -354,9 +360,9 @@ setMethod("summary", "unitizer",
     if(!silent) show(obj)
     obj
 } )
-#' Summary method
-#'
-#' @keywords internal
+# Summary method
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("summary", "unitizerObjectList",
   function(object, silent=FALSE, ...) {
@@ -377,9 +383,9 @@ setMethod("summary", "unitizerObjectList",
     if(!silent) show(res)
     res
 } )
-#' Display method
-#'
-#' @keywords internal
+# Display method
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerObjectListSummary",
   function(object) {
@@ -438,11 +444,11 @@ setGeneric(
   "registerItem", function(e1, e2, ...) standardGeneric("registerItem")
 )
 
-#' Helper Methods for Adding Items to \code{\link{unitizer-class}} Object
-#'
-#' @aliases testItem,unitizer,unitizerItem-method
-#' @seealso \code{\link{+,unitizer,unitizerItem-method}}
-#' @keywords internal
+# Helper Methods for Adding Items to \code{\link{unitizer-class}} Object
+#
+# @aliases testItem,unitizer,unitizerItem-method
+# @seealso \code{\link{+,unitizer,unitizerItem-method}}
+# @keywords internal
 
 setMethod("registerItem", c("unitizer", "unitizerItem"),
   function(e1, e2, ...) {
@@ -561,7 +567,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           if(!length(test.cond)) test.cond <- "<unknown>"
           err.tpl@value <- paste0(
             err.msg, " signaled a condition of class `",
-            deparse(test.cond, width=500), "`",
+            deparse(test.cond, width.cutoff=500), "`",
             ", with message \"", test.res$msg, "\" and call `",
             paste0(deparse(test.res$call), collapse=""), "`."
           )
@@ -619,11 +625,11 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
 setGeneric("getTarget", function(object, ...) standardGeneric("getTarget"))
 setGeneric("getName", function(object, ...) standardGeneric("getName"))
 
-#' Create A Human Readable Names for a \code{unitizer}
-#'
-#' @keywords internal
-#' @param object a unitizer
-#' @return character(1L) a descriptive name
+# Create A Human Readable Names for a \code{unitizer}
+#
+# @keywords internal
+# @param object a unitizer
+# @return character(1L) a descriptive name
 
 setMethod("getTarget", "unitizer",
   function(object, ...) {
@@ -633,7 +639,7 @@ setMethod("getTarget", "unitizer",
     }
     relativize_path(as.store_id_chr(id))
 } )
-#' @rdname getTarget,unitizer-method
+# @rdname getTarget,unitizer-method
 
 setMethod("getName", "unitizer",
   function(object, ...) {

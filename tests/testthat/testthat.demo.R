@@ -68,18 +68,23 @@ unitizer:::read_line_set_vals(c("N", "N", "Y"))
 txt3 <- unitizer:::capture_output(
   untz3 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
 )
+untz.clean <- lapply(
+  list(untz, untz2, untz3), function(x) {
+    attr(x, "test.file") <- basename(attr(x, "test.file"))
+    attr(x, "store.id") <- basename(attr(x, "store.id"))
+    x
+} )
 test_that("demo create worked", {
-  expect_is(untz, "unitizer")
-  expect_equal(
-    untz@items.ref.calls.deparse,
-    c("library(unitizer.fastlm)", "dat <- data.frame(x = 1:100, y = (1:100)^2)", "res <- fastlm(dat$x, dat$y)", "res", "get_slope(res)", "get_rsq(res)", "fastlm(1:100, 1:10)")
+  expect_is(untz, "unitizer_result")
+  expect_equal_to_reference(
+    untz.clean[[3]], file.path("helper", "refobjs", "demo_res1.rds")
   )
-  expect_equal(
-    lapply(unitizer:::as.list(untz@items.ref[4:7]), function(x) x@data@value),
-    list(structure(c(-1717, 101, 0.938678984853783), .Names = c("intercept", "slope", "rsq"), class = "fastlm"), 101, 0.938678984853783, NULL)
+  expect_equal_to_reference(
+    untz.clean[[1]], file.path("helper", "refobjs", "demo_res2.rds")
   )
-  expect_equal(untz, untz2)
-  expect_equal(untz, untz3)
+  expect_equal_to_reference(
+    untz.clean[[2]], file.path("helper", "refobjs", "demo_res3.rds")
+  )
   expect_match(
     paste0(txt1$output, collapse=""),
     "\\+-+\\+| unitizer for: tests/unitizer/fastlm\\.R.*Pass Fail  New  1\\. <untitled>     -    -    4.*= Finalize Unitizer.*- Adding 4 out of 4 new tests"

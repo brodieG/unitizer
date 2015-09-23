@@ -1,6 +1,7 @@
 # unitizeR - Easy R Unit Tests
 
 [![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png?branch=master)](https://travis-ci.org/brodieG/unitizer)
+[![codecov.io](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
 
 ## Quick Start
 

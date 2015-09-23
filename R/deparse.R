@@ -1,12 +1,11 @@
-#' Returns a Character Function Name From A Language Object
-#'
-#' Note this doesn't really try to check too hard whether the \code{`x`} is
-#' indeed a function.
-#'
-#' @keywords internal
-#' @param x a call or a symbol
-#' @return character 1 length if a function name, NA if an anonymous function, or
-#'   character(0L) if neither
+# Returns a Character Function Name From A Language Object
+#
+# Note this doesn't really try to check too hard whether the \code{`x`} is
+# indeed a function.
+#
+# @param x a call or a symbol
+# @return character 1 length if a function name, NA if an anonymous function, or
+#   character(0L) if neither
 
 deparse_fun <- function(x) {
   if(is.symbol(x)) {
@@ -17,11 +16,10 @@ deparse_fun <- function(x) {
     character(0L)
   }
 }
-#' Deparse, But Make It Look Like It Would On Prompt
-#'
-#' @keywords internal
-#' @param expr an expression or call
-#' @return character vector
+# Deparse, But Make It Look Like It Would On Prompt
+#
+# @param expr an expression or call
+# @return character vector
 
 deparse_prompt <- function(expr) {
   # if(!is.call(expr) || !is.expression(expr)) stop("Argument `expr` must be an expression ")
@@ -35,14 +33,12 @@ deparse_prompt <- function(expr) {
   prompt.vec <- c(prompt, rep(continue, length(expr.deparsed) - 1L))
   paste0(prompt.vec, expr.deparsed)
 }
-#' Remove any comment attributes
-#'
-#' Used by the internal deparse functions.  Really removes all attributes.
-#' Resorting to desperate measures due to the reference like behavior of
-#' expressions and messing with their attributes, most likely due to the
-#' srcref style environment attributes.
-#'
-#' @keywords internal
+# Remove any comment attributes
+#
+# Used by the internal deparse functions.  Really removes all attributes.
+# Resorting to desperate measures due to the reference like behavior of
+# expressions and messing with their attributes, most likely due to the
+# srcref style environment attributes.
 
 uncomment <- function(lang) {
   if(is.expression(lang))
@@ -57,13 +53,11 @@ uncomment <- function(lang) {
     }
   lang.new
 }
-
-#' Deparse, but only provide first X characters
-#'
-#' @keywords internal
-#' @param expr a language object
-#' @param len int a one length integer noting how many characters we want
-#' @param width passed on to
+# Deparse, but only provide first X characters
+#
+# @param expr a language object
+# @param len int a one length integer noting how many characters we want
+# @param width passed on to
 
 deparse_peek <- function(expr, len, width=500L) {
   if(!is.integer(len) || length(len) != 1L || len < 4L)
@@ -77,26 +71,23 @@ deparse_peek <- function(expr, len, width=500L) {
     chr
   }
 }
-#' Used to generate character values to store in cached deparse list
-#'
-#' @keywords internal
-#' @param expr language to deparse
-#' @return character(1L)
+# Used to generate character values to store in cached deparse list
+#
+# @param expr language to deparse
+# @return character(1L)
 
 deparse_call <- function(expr) paste0(deparse(uncomment(expr)), collapse="\n")
 
-#' Special Deparse
-#'
-#' Required to deal with language objects that contain non-language objects
-#' that have attributes.
-#'
-#' Not completely fool proof since you can probably created an object that nests
-#' call and non-call stuff repeatedly that would confuse this thing.
-#'
-#' This is just used to generate objects for tests, not actually part of
-#' \code{unitizer} proper
-#'
-#' @keywords internal
+# Special Deparse
+#
+# Required to deal with language objects that contain non-language objects
+# that have attributes.
+#
+# Not completely fool proof since you can probably created an object that nests
+# call and non-call stuff repeatedly that would confuse this thing.
+#
+# This is just used to generate objects for tests, not actually part of
+# \code{unitizer} proper
 
 deparse_mixed <- function(expr, width.cutoff = 500L, control = "all", ...) {
 

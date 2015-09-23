@@ -81,6 +81,8 @@
 #'   will have not direct way to check whether these objects changed across
 #'   \code{unitizer} runs.  Additionally, typing \code{ls} from the review
 #'   prompt will not list these objects.
+#' @param history file name to use to store history during interactive unitizer
+#'   sessions.
 #' @param post NULL, or a character vector pointing to files and/or directories.
 #'   See \code{pre}.  If NULL will look for a directory named "_post" in the
 #'   directory containing the first test file.  Scripts are run just prior to
@@ -179,9 +181,10 @@ unitize_dir <- function(
 
   test.files <- Filter(
     function(x) file_test("-f", x),
-    list.files(
-      path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
-  ) )
+    sort(
+      list.files(
+        path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
+  ) ) )
   if(!length(test.files))
     stop("No files to test in '", test.dir, "'")
 

@@ -2,9 +2,11 @@
 
 language: r
 
-r_packages:
+r_binary_packages:
   - testthat
   - devtools
+  - knitr
+  - markdown
 
 warnings_are_errors: true
 

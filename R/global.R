@@ -102,6 +102,9 @@ setClass(
 #' @keywords internal
 
 setClass("unitizerDummy", slots=c(.="NULL"))
+
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "show", "unitizerDummy", function(object) cat("<object not recorded>\n")
 )
@@ -199,14 +202,12 @@ setMethod(
     )
   res
 } )
-#' Get Current Search Path as List of Environments
-#'
-#' This has to be in this file, and not in R/search.R for the setClass for the
-#' state funs object.  Note there are some weird dependency circularities,
-#' and we're relying on this function not being called until once the full
-#' package is loaded.
-#'
-#' @keywords internal
+# Get Current Search Path as List of Environments
+#
+# This has to be in this file, and not in R/search.R for the setClass for the
+# state funs object.  Note there are some weird dependency circularities,
+# and we're relying on this function not being called until once the full
+# package is loaded.
 
 search_as_envs <- function() {
   sp <- search()
@@ -250,11 +251,9 @@ setClass(
     TRUE
   }
 )
-#' Objects / Methods used to Track Global Settings and the Like
-#'
-#' Implemented as Reference Class
-#'
-#' @keywords internal
+# Objects / Methods used to Track Global Settings and the Like
+#
+# Implemented as Reference Class
 
 unitizerGlobal <- setRefClass(
   "unitizerGlobal",

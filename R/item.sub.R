@@ -11,9 +11,9 @@ NULL
 
 unitizerItemDataSlots <- slotNames("unitizerItemData")  # cache this for validity
 
-#' Virtual Class To Enforce Slots on Subclasses
-#'
-#' @keywords internal
+# Virtual Class To Enforce Slots on Subclasses
+#
+# @keywords internal
 
 setClass("unitizerItemTests", contains="VIRTUAL",
   validity=function(object) {
@@ -22,8 +22,8 @@ setClass("unitizerItemTests", contains="VIRTUAL",
     TRUE
   }
 )
-#' Validates Functions for Use in New vs. Reference Object Comparison
-#' @keywords internal
+# Validates Functions for Use in New vs. Reference Object Comparison
+# @keywords internal
 
 setClass(
   "unitizerItemTestFun",
@@ -51,18 +51,18 @@ setMethod("initialize", "unitizerItemTestFun", function(.Object, ...) {
   return(callNextMethod())
 } )
 
-#' Stores Errors from Evaluating New vs. Ref Comparisons
-#'
-#' There various nested objects involved:
-#' \itemize{
-#'   \item \code{`unitizerItemTestError`} contains the error produced from a comparison
-#'   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot of an item
-#'   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the
-#'      \code{`\link{unitizer-class}`} object
-#' }
-#'
-#' @aliases unitizerItemsTestsErrors-class, unitizerItemTestsErrors-class
-#' @keywords internal
+# Stores Errors from Evaluating New vs. Ref Comparisons
+#
+# There various nested objects involved:
+# \itemize{
+#   \item \code{`unitizerItemTestError`} contains the error produced from a comparison
+#   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot of an item
+#   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the
+#      \code{`\link{unitizer-class}`} object
+# }
+#
+# @aliases unitizerItemsTestsErrors-class, unitizerItemTestsErrors-class
+# @keywords internal
 
 setClass("unitizerItemTestError",
   representation(
@@ -137,8 +137,9 @@ setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors",
 #     } }
 #     chr
 # } )
-#' Display Test Errors
-#' @keywords internal
+
+# Display Test Errors
+#' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerItemTestsErrors",
   function(object) {
@@ -213,7 +214,9 @@ setMethod("summary", "unitizerItemTestsErrors",
 #' @name unitizerItemTestsFuns
 #' @export unitizerItemTestsFuns
 #' @examples
+#' \dontrun{
 #' unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
+#' }
 
 unitizerItemTestsFuns <- setClass(
   "unitizerItemTestsFuns", contains="unitizerItemTests",
@@ -232,12 +235,12 @@ unitizerItemTestsFuns <- setClass(
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)
 ) )
 
-#' Ensures Functions are In Correct Format
-#'
-#' Also, allows the user to specify functions directly instead of having
-#' to instantiate \code{`\link{unitizerItemTestFun-class}`} for each function.
-#' Finally, recovers the deparsed passed function name.
-#' @keywords internal
+# Ensures Functions are In Correct Format
+#
+# Also, allows the user to specify functions directly instead of having
+# to instantiate \code{`\link{unitizerItemTestFun-class}`} for each function.
+# Finally, recovers the deparsed passed function name.
+# @keywords internal
 
 setMethod("initialize", "unitizerItemTestsFuns", function(.Object, ...) {
   dots <- list(...)

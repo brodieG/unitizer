@@ -1,19 +1,19 @@
-#' Store Retrieve Unitizer
-#'
-#' If this errors, calling function should abort
-#'
-#' @keywords internal
-#' @param unitizer a \code{\link{unitizer-class}} object
-#' @param store.id anything for which there is a defined \code{`\link{get_unitizer}`}
-#'   method; by default should be the path to a unitizer; if \code{`\link{get_unitizer}`}
-#'   returns \code{`FALSE`} then this will create a new unitizer
-#' @param par.frame the environment to use as the parent frame for the \code{unitizer}
-#' @param test.file the R file associated with the store id
-#' @param force.upgrade whether to allow upgrades in non-interactive mode, for
-#'   testing purposes
-#' @param global the global tracking object
-#' @return a \code{unitizer} object, or anything, in which case the calling
-#'   code should exit
+# Store Retrieve Unitizer
+#
+# If this errors, calling function should abort
+#
+# @keywords internal
+# @param unitizer a \code{\link{unitizer-class}} object
+# @param store.id anything for which there is a defined \code{`\link{get_unitizer}`}
+#   method; by default should be the path to a unitizer; if \code{`\link{get_unitizer}`}
+#   returns \code{`FALSE`} then this will create a new unitizer
+# @param par.frame the environment to use as the parent frame for the \code{unitizer}
+# @param test.file the R file associated with the store id
+# @param force.upgrade whether to allow upgrades in non-interactive mode, for
+#   testing purposes
+# @param global the global tracking object
+# @return a \code{unitizer} object, or anything, in which case the calling
+#   code should exit
 
 load_unitizers <- function(
   store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE,
@@ -227,17 +227,14 @@ load_unitizers <- function(
   new("unitizerObjectList", .items=unitizers)
 }
 
-#' Need to make sure we do not unintentionally store a bunch of references to
-#' objects or namespaces we do not want:
-#'
-#' \itemize{
-#'   \item reset parent env to be base
-#'   \item remove all contents of base.env (otherwise we get functions with
-#'     environments that reference namespaces)
-#' }
-#'
-#' @keywords internal
-#' @rdname load_unitizers
+# Need to make sure we do not unintentionally store a bunch of references to
+# objects or namespaces we do not want:
+#
+# \itemize{
+#   \item reset parent env to be base
+#   \item remove all contents of base.env (otherwise we get functions with
+#     environments that reference namespaces)
+# }
 
 store_unitizer <- function(unitizer) {
   if(!is(unitizer, "unitizer")) return(invisible(TRUE))
@@ -253,7 +250,7 @@ store_unitizer <- function(unitizer) {
     close_and_clear(unitizer@cons)
     unitizer@cons <- NULL
   }
-  rm(list=ls(unitizer@base.env, all=TRUE), envir=unitizer@base.env)
+  rm(list=ls(unitizer@base.env, all.names=TRUE), envir=unitizer@base.env)
 
   # Reset other fields
 
@@ -275,8 +272,6 @@ store_unitizer <- function(unitizer) {
   }
   return(invisible(TRUE))
 }
-#' @rdname load_unitizers
-
 unitizer_valid <- function(x, curr.version=packageVersion("unitizer")) {
   if(!is(x, "unitizer")) {
     if(!is.chr1plain(x) || nchar(x) < 1L)
@@ -324,6 +319,8 @@ setClass(
     TRUE
   }
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "show", "unitizerLoadFail",
   function(object) {
@@ -344,36 +341,32 @@ setMethod(
   }
 )
 
-#' Manipulate \code{unitizer} Store and File Names
-#'
-#' Used to provide display friendly or absolute versions of \code{unitizer}
-#' test file or store identifiers.
-#'
-#' @section \code{norm_store_id}, \code{norm_file}:
-#'
-#' Loosely related to \code{getTarget,unitizer-method} and
-#' \code{getName,unitizer-method} although these are not trying to convert to
-#' character or check anything, just trying to normalize if possible.
-#'
-#' @section \code{best_store_name}, \code{best_file_name}:
-#'
-#' Generate the most intuitive names possible for either the store or the test
-#' file.
-#'
-#' @section \code{as.store_id_chr}:
-#'
-#' Converts as store ID to character
-#'
-#' @rdname best_store_name
-#' @keywords internal
-#' @param store.id a \code{unitizer} store id
-#' @param test.file the location of the R test file
-#' @return character(1L), except for \code{as.store_id_chr}, which returns FALSE
-#'   on failure
+# Manipulate \code{unitizer} Store and File Names
+#
+# Used to provide display friendly or absolute versions of \code{unitizer}
+# test file or store identifiers.
+#
+# @section \code{norm_store_id}, \code{norm_file}:
+#
+# Loosely related to \code{getTarget,unitizer-method} and
+# \code{getName,unitizer-method} although these are not trying to convert to
+# character or check anything, just trying to normalize if possible.
+#
+# @section \code{best_store_name}, \code{best_file_name}:
+#
+# Generate the most intuitive names possible for either the store or the test
+# file.
+#
+# @section \code{as.store_id_chr}:
+#
+# Converts as store ID to character
+#
+# @param store.id a \code{unitizer} store id
+# @param test.file the location of the R test file
+# @return character(1L), except for \code{as.store_id_chr}, which returns FALSE
+#   on failure
 
 norm_store_id <- function(x) if(is.default_unitizer_id(x)) norm_file(x) else x
-
-#' @rdname best_store_name
 
 norm_file <- function(x) {
   if(
@@ -383,8 +376,6 @@ norm_file <- function(x) {
     )
   ) normed else x
 }
-#' @rdname best_store_name
-
 as.store_id_chr <- function(x) {
   if(is.chr1plain(x)){
     return(relativize_path(x))
@@ -401,8 +392,6 @@ as.store_id_chr <- function(x) {
 
 as.character.untz_stochrerr <- function(x, ...) stop("I am an error")
 
-#' @rdname best_store_name
-
 best_store_name <- function(store.id, test.file) {
   stopifnot(is.chr1plain(test.file))
   chr.store <- try(as.store_id_chr(store.id), silent=TRUE)
@@ -414,8 +403,6 @@ best_store_name <- function(store.id, test.file) {
   }
   chr.store
 }
-#' @rdname best_store_name
-
 best_file_name <- function(store.id, test.file) {
   stopifnot(is.chr1plain(test.file))
   if(!is.na(test.file)) return(relativize_path(test.file))

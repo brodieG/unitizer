@@ -8,7 +8,7 @@ NULL
 #'
 #' \code{unitizerSectionExpression-class} contains the actual expressions that
 #' belong to the section, whereas \code{unitizerSection-class} only contains
-#' the meta data.  The latter objects are used within \code{\link{unitizer-class}},
+#' the meta data.  The latter objects are used within \code{]unitizer-class},
 #' whereas the former is really just a temporary object until we can generate
 #' the latter.
 #'
@@ -20,7 +20,7 @@ NULL
 #' @aliases unitizerSectionExpression-class unitizerSectionNA-class
 #' @slot title 1 lenght character, the name of the section
 #' @slot details character vector containing additional info on the section
-#' @slot compare functions to compare the various aspects of a \code{\link{unitizerItem-class}}
+#' @slot compare functions to compare the various aspects of a \code{unitizerItem-class}
 #' @slot length tracks size of the section
 
 setClass(
@@ -65,7 +65,7 @@ setClass("unitizerSectionExpression", contains="unitizerList",
 )
 setClassUnion("unitizerSectionExpressionOrExpression", c("unitizerSectionExpression", "unitizerSection", "expression"))
 
-#' Compute Length of a \code{\link{unitizerSection-class}}
+#' Compute Length of a \code{unitizerSection-class}
 #'
 #' @keywords internal
 #' @param x a \code{unitizerSection} object
@@ -138,6 +138,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' @param compare a function or a \code{\link{unitizerItemTestsFuns}}
 #'   object
 #' @examples
+#' \dontrun{
 #' unitizer_sect("Custom Tests", {
 #'   my_fun("a", FALSE)
 #'   my_fun(845, TRUE)
@@ -163,6 +164,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #'   },
 #'   compare=unitizerItemTestsFuns(value=identical, output=identical)
 #' )
+#' }
 unitizer_sect <- function(title=NULL, expr=expression(), details=character(), compare=new("unitizerItemTestsFuns")) {
   if(!is(compare, "unitizerItemTestsFuns") & !is.function(compare)) stop("Argument `compare` must be \"unitizerItemTestsFuns\" or a function")
   if(!is.character(details)) stop("Argument `details` must be character")

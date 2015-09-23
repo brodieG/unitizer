@@ -1,25 +1,25 @@
-#' Runs The Basic Stuff
-#'
-#' Used by both \code{\link{unitize}} and \code{\link{review}}
-#' to launch the interactive interface for reviewing tests.
-#'
-#' Right now we distinguish in what mode we're running based on whether
-#' \code{test.file} is NULL (review mode) vs. not (unitize mode), which isn't
-#' very elegant, but whatevs.  This has implications for the parsing / evaluation
-#' step, as well as how the \code{unitizerBrowse} object is constructed.  Otherwise
-#' stuff is mostly the same.
-#'
-#' Cleary there is a trade-off in increased code complexity to handle both types
-#' of code, vs duplication.  Not ideal, but tasks are so closely related and
-#' there is so much common overhead, that the central function makes sense.
-#' Also, since unfortunately we're relying on side-effects for some features, and
-#' \code{on.exit} call for safe operation, it is difficult to truly modularize.
-#'
-#' @keywords internal
-#' @inheritParams unitize
-#' @param mode character(1L) one of "review" or "unitize"
-#' @param test.files character location of test files
-#' @param store.ids list of store ids, same length as \code{test.files}
+# Runs The Basic Stuff
+#
+# Used by both \code{\link{unitize}} and \code{\link{review}}
+# to launch the interactive interface for reviewing tests.
+#
+# Right now we distinguish in what mode we're running based on whether
+# \code{test.file} is NULL (review mode) vs. not (unitize mode), which isn't
+# very elegant, but whatevs.  This has implications for the parsing / evaluation
+# step, as well as how the \code{unitizerBrowse} object is constructed.  Otherwise
+# stuff is mostly the same.
+#
+# Cleary there is a trade-off in increased code complexity to handle both types
+# of code, vs duplication.  Not ideal, but tasks are so closely related and
+# there is so much common overhead, that the central function makes sense.
+# Also, since unfortunately we're relying on side-effects for some features, and
+# \code{on.exit} call for safe operation, it is difficult to truly modularize.
+#
+# @keywords internal
+# @inheritParams unitize
+# @param mode character(1L) one of "review" or "unitize"
+# @param test.files character location of test files
+# @param store.ids list of store ids, same length as \code{test.files}
 
 unitize_core <- function(
   test.files, store.ids, state, pre, post, history, interactive.mode,
@@ -370,15 +370,15 @@ unitize_core <- function(
 
   extractResults(unitizers)
 }
-#' Evaluate User Tests
-#'
-#' @param tests.parsed a list of expressions
-#' @param unitizers a list of \code{unitizer} objects of same length as
-#'   \code{tests.parsed}
-#' @param which integer which of \code{unitizer}s to actually eval, all get
-#'   summary status displayed to screen
-#' @return a list of unitizers
-#' @keywords internal
+# Evaluate User Tests
+#
+# @param tests.parsed a list of expressions
+# @param unitizers a list of \code{unitizer} objects of same length as
+#   \code{tests.parsed}
+# @param which integer which of \code{unitizer}s to actually eval, all get
+#   summary status displayed to screen
+# @return a list of unitizers
+# @keywords internal
 
 unitize_eval <- function(tests.parsed, unitizers, global) {
   test.len <- length(tests.parsed)
@@ -447,12 +447,12 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
   }
   unitizers
 }
-#' Run User Interaction And \code{unitizer} Storage
-#'
-#' @keywords internal
-#' @inheritParams unitize_core
-#' @param unitizers list of \code{unitizer} objects
-#' @param force.update whether to store unitizer
+# Run User Interaction And \code{unitizer} Storage
+#
+# @keywords internal
+# @inheritParams unitize_core
+# @param unitizers list of \code{unitizer} objects
+# @param force.update whether to store unitizer
 
 unitize_browse <- function(
   unitizers, mode, interactive.mode, force.update, auto.accept, history, global
@@ -539,7 +539,9 @@ unitize_browse <- function(
         paste0("test file \"", global$ns.opt.conflict@file, "\""),
       " because the following namespace", if(many > 1L) "s", " could not be ",
       "unloaded: ",
-      paste0(deparse(global$ns.opt.conflict@namespaces, width=500L), sep=""),
+      paste0(
+        deparse(global$ns.opt.conflict@namespaces, width.cutoff=500L), sep=""
+      ),
       ".", sep=""
     )
     if(interactive.mode) {
@@ -737,14 +739,14 @@ unitize_browse <- function(
 
   unitizers
 }
-#' Check Not Running in Undesirable Environments
-#'
-#' Make sure not running inside withCallingHandlers / withRestarts / tryCatch
-#' or other potential issues; of course this isn't foolproof if someone is using
-#' a variation on those functions, but also not the end of the world if it isn't
-#' caught
-#'
-#' @keywords internal
+# Check Not Running in Undesirable Environments
+#
+# Make sure not running inside withCallingHandlers / withRestarts / tryCatch
+# or other potential issues; of course this isn't foolproof if someone is using
+# a variation on those functions, but also not the end of the world if it isn't
+# caught
+#
+# @keywords internal
 
 check_call_stack <- function() {
   call.stack <- sys.calls()
@@ -812,13 +814,11 @@ validate_pre_post <- function(what, test.dir) {
     what
   } else character(0L)
 }
-
-
-#' Helper function for global state stuff
-#'
-#' Maybe this should be a global method?
-#'
-#' @keywords internal
+# Helper function for global state stuff
+#
+# Maybe this should be a global method?
+#
+# @keywords internal
 
 reset_and_unshim <- function(global) {
   stopifnot(is(global, "unitizerGlobal"))
@@ -840,8 +840,8 @@ reset_and_unshim <- function(global) {
     )
   success.clear && success.unshim
 }
-#' Prompt to Quit if Enough Time Spent on Evaluation
-#' @keywords internal
+# Prompt to Quit if Enough Time Spent on Evaluation
+# @keywords internal
 
 confirm_quit <- function(unitizers) {
   stopifnot(is(unitizers, "unitizerList"))

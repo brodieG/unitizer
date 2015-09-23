@@ -4,11 +4,11 @@
 
 NULL
 
-#' Add a \code{`\link{unitizerSection-class}`} to a \code{`\link{unitizer-class}`}
-#'
-#' Registers the section, and the mapping of items to section.
-#'
-#' @keywords internal
+# Add a \code{`\link{unitizerSection-class}`} to a \code{`\link{unitizer-class}`}
+#
+# Registers the section, and the mapping of items to section.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
   function(e1, e2) {
@@ -40,15 +40,15 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
     e1@sections <- append(e1@sections, list(e2))
     e1
 } )
+# Adds Expressions to unitizer
+#
+# Expressions can be added as \code{\link{unitizerTests-class}} object
+# or a straight up expression, though in most cases it should be the
+# latter.
+#
+# NOTE: you can only do this once for a \code{unitizer}.
 
-#' Adds Expressions to unitizer
-#'
-#' Expressions can be added as \code{`\link{unitizerTests-class}`} object
-#' or a straight up expression, though in most cases it should be the
-#' latter.
-#'
-#' @note you can only do this once for a `unitizer`.
-#' @keywords internal
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer",
   function(e1, e2) {
@@ -141,19 +141,19 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     e1@cons <- NULL
     e1
 } )
-#' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
-#'
-#' Any added \code{`\link{unitizerItems-class}`} objects are treated as
-#' reference items.  The only way to add new items is by adding each
-#' item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
-#'
-#' One aspect of copying reference items which isn't handled here is moving
-#' over the section data because this is kept at the \code{`\link{unitizer-class}`}
-#' level, not at the \code{`\link{unitizerItems-class}`} level.  The
-#' section copying is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.
-#' This is something that we should clean-up eventually.
-#'
-#' @keywords internal
+# Adds \code{`\link{unitizerItems-class}`} objects to unitizer
+#
+# Any added \code{`\link{unitizerItems-class}`} objects are treated as
+# reference items.  The only way to add new items is by adding each
+# item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
+#
+# One aspect of copying reference items which isn't handled here is moving
+# over the section data because this is kept at the \code{`\link{unitizer-class}`}
+# level, not at the \code{`\link{unitizerItems-class}`} level.  The
+# section copying is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.
+# This is something that we should clean-up eventually.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
   function(e1, e2) {
@@ -170,19 +170,18 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
   }
 )
 setGeneric("refSections", function(x, y) standardGeneric("refSections"))
-#' Extract Reference Section Data
-#'
-#' Using one unitizer with existing new items, and another unitizer that we
-#' just created from it by pulling out the tests we intend to keep, recreate
-#' the sections for the tests we intend to keep.
-#'
-#' This isn't super robust as we're not ensuring that the two unitizers used
-#' here are related in any way.  Would be better to have something that does
-#' this properly...
-#'
-#' @keywords internal
-#' @param x the new unitizer that will be stored with the reference tests
-#' @param y the unitizer that will be used to generate the sections
+# Extract Reference Section Data
+#
+# Using one unitizer with existing new items, and another unitizer that we
+# just created from it by pulling out the tests we intend to keep, recreate
+# the sections for the tests we intend to keep.
+#
+# This isn't super robust as we're not ensuring that the two unitizers used
+# here are related in any way.  Would be better to have something that does
+# this properly...
+#
+# @param x the new unitizer that will be stored with the reference tests
+# @param y the unitizer that will be used to generate the sections
 
 setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
   function(x, y) {
@@ -219,13 +218,14 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
     x
   }
 )
-#' Adds \code{`\link{unitizerItem-class}`} to \code{`\link{unitizer-class}`}
-#'
-#' All tests are run on addition, and mapping information between reference and
-#' new tests is also recored.
-#'
-#' @seealso \code{`\link{registerItem,unitizer,unitizerItem-method}`}
-#' @keywords internal
+# Adds \code{`\link{unitizerItem-class}`} to \code{`\link{unitizer-class}`}
+#
+# All tests are run on addition, and mapping information between reference and
+# new tests is also recored.
+#
+# @seealso \code{`\link{registerItem,unitizer,unitizerItem-method}`}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerItem"),
   function(e1, e2) {
@@ -236,8 +236,9 @@ setMethod("+", c("unitizer", "unitizerItem"),
     e1 <- testItem(e1, e2)
     e1
 } )
-#' Add Test Errors to \code{`\link{unitizer-class}`}
-#' @keywords internal
+# Add Test Errors to \code{`\link{unitizer-class}`}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerItemTestsErrors"),
   function(e1, e2) {

@@ -1,9 +1,7 @@
-#' List of functions we intend to shim, original values so we can make sure they
-#' haven't changed before we try to shim them.
-#'
-#' Code is copied directly from R 3.2.2
-#'
-#' @keywords internal
+# List of functions we intend to shim, original values so we can make sure they
+# haven't changed before we try to shim them.
+#
+# Code is copied directly from R 3.2.2
 
 .unitizer.base.funs.ref <- list(
 

@@ -40,20 +40,19 @@
 # not if we process it all in one go?)
 
 
-#' Searches Through Generations Until it Finds Top Level
-#'
-#' Returns the id of the ancestor that is just before \code{`top.level`},
-#' or \code{`top.level`} if the parent already is \code{`top.level`}. The
-#' idea is to reduce the set of parents for all elements to just the top
-#' level parents as this allows us to split the parse data into sections,
-#' including the calls that were direct children of top level, as well as
-#' the children to those sections.
-#'
-#' @keywords internal
-#' @param ids integer the ids to look through
-#' @param par.ids integer the parenthood relationships
-#' @param top.level the id of the top level
-#' @return integer the top level parent ids for \code{`ids`}
+# Searches Through Generations Until it Finds Top Level
+#
+# Returns the id of the ancestor that is just before \code{`top.level`},
+# or \code{`top.level`} if the parent already is \code{`top.level`}. The
+# idea is to reduce the set of parents for all elements to just the top
+# level parents as this allows us to split the parse data into sections,
+# including the calls that were direct children of top level, as well as
+# the children to those sections.
+#
+# @param ids integer the ids to look through
+# @param par.ids integer the parenthood relationships
+# @param top.level the id of the top level
+# @return integer the top level parent ids for \code{`ids`}
 
 top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   if(!is.integer(ids) || !is.integer(par.ids) || !identical(length(ids), length(par.ids)))
@@ -95,14 +94,12 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   }
   res
 }
-#' For Each ID Determines Generation
-#'
-#' @param ids integer() the object ids
-#' @param par.ids integer() the parents of each \code{ids}
-#' @param id integer() the first parent
-#' @return matrix containing ids and corresponding generation for the ids
-#'
-#' @keywords internal
+# For Each ID Determines Generation
+#
+# @param ids integer() the object ids
+# @param par.ids integer() the parents of each \code{ids}
+# @param id integer() the first parent
+# @return matrix containing ids and corresponding generation for the ids
 
 ancestry_descend <- function(ids, par.ids, id, level=0L) {
   # Initialize result matrix, can be no bigger than ids
@@ -143,24 +140,23 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("token", "col1", "line1"))
 
-#' Assign Comments From Parse Data to Expression Elements
-#'
-#' Based on parse data from \code{`\link{getParseData}`}, figures
-#' out what comments belong to what expression.  If a comment is
-#' on the same line as an expression, the comment is assigned to that
-#' expression (or whatever the nearest expression is on that line if
-#' there is more than one).  If a comment is on it's own line,
-#' then the match is done to the next expression.
-#'
-#' The expectation is that only "top level" expressions will
-#' be submitted as part of `comment.dat` (i.e. they all have
-#' the same parent, they don't strictly have to be top.level).
-#'
-#' @keywords internal
-#' @param expr and expression
-#' @param comment.dat a data frame derived from \code{`\link{getParseData}`}
-#' @return an expression with comments attached as attributes to each
-#'   expression component
+# Assign Comments From Parse Data to Expression Elements
+#
+# Based on parse data from \code{`\link{getParseData}`}, figures
+# out what comments belong to what expression.  If a comment is
+# on the same line as an expression, the comment is assigned to that
+# expression (or whatever the nearest expression is on that line if
+# there is more than one).  If a comment is on it's own line,
+# then the match is done to the next expression.
+#
+# The expectation is that only "top level" expressions will
+# be submitted as part of `comment.dat` (i.e. they all have
+# the same parent, they don't strictly have to be top.level).
+#
+# @param expr and expression
+# @param comment.dat a data frame derived from \code{`\link{getParseData}`}
+# @return an expression with comments attached as attributes to each
+#   expression component
 
 comments_assign <- function(expr, comment.dat) {
   if(!identical(length(unique(comment.dat$parent)), 1L))
@@ -278,56 +274,56 @@ comments_assign <- function(expr, comment.dat) {
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token", "line2"))
 
-#' Recursively Descends Through a Parsed Expression and Assigns Comments
-#'
-#' In order to implement this we had to make several assumptions about the
-#' behaviour of \code{`\link{getParseData}`}.  In particular:
-#' \itemize{
-#'   \item Top level comments show up with negative ids, but are top level
-#'     for all intents and purposes
-#'   \item All content tokens (i.e. anything other than brackets, commas,
-#'     etc.) are contained inside an \code{`expr`}, even if the only thing the
-#'     `expr` contains is a simple constant (note some exceptions exist to
-#'     this (search for FUCK in the source).
-#'   \item Comments are not content tokens and can exist on the top level
-#'     without being wrapped in an \code{`expr`}
-#'   \item The only tokens that count as elements in an expression are
-#'     opening brackets and \code{`expr`}; this assumption is necessary
-#'     to allow mapping the parsed data back to the expression.  What
-#'     confuses the issue a bit is that operators show up at the top level,
-#'     but you can actually
-#'     ignore them.  Also, parentheses should only be kept if they are the
-#'     topmost item, as otherwise they are part of a function call and
-#'     should be ignored.
-#'   \item Comments inside function formals are not assigned to the formals
-#'     proper
-#'   \item `exprlist` tokens are removed completely b/c as far as we can
-#'     tell they are not part of the parsed object (but exist in parse
-#'     data).
-#'   \item known issue: comments in formals after a line break are assigned
-#'     to the body of the function as opposed to \code{`function`}, but this
-#'     should not be apparent in common use.
-#'   \item you cannot attach comments to \code{`NULL`}, if you must use
-#'     \code{`(NULL)`}.  This is a feature, as it proivdes a way to put
-#'     comments in the file without them showing up during \code{`unitizer`}
-#'     use.
-#' }
-#' Note that as a result of this trial and error interpretation of
-#' \code{`\link{getParseData}`} it is likely that comment parsing is
-#' not 100 percent robust.
-#'
-#' Due to some reference weirdness going on when dealing directly with
-#' expressions had to change this function to accept text/file rather
-#' than an expression as an input (but even that didn't fix it!!!)
-#'
-#' @keywords internal
-#' @aliases parse_tests
-#' @seealso comments_assign, getParseData, parse
-#' @param file containing code to parse with comments
-#' @param text optional, text to parse if \code{`file`} is not specified
-#' @param comment logical(1L) whether to try to get comments
-#' @return an expression with comments retrieved from the parse attached
-#'   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
+# Recursively Descends Through a Parsed Expression and Assigns Comments
+#
+# In order to implement this we had to make several assumptions about the
+# behaviour of \code{`\link{getParseData}`}.  In particular:
+# \itemize{
+#   \item Top level comments show up with negative ids, but are top level
+#     for all intents and purposes
+#   \item All content tokens (i.e. anything other than brackets, commas,
+#     etc.) are contained inside an \code{`expr`}, even if the only thing the
+#     `expr` contains is a simple constant (note some exceptions exist to
+#     this (search for FUCK in the source).
+#   \item Comments are not content tokens and can exist on the top level
+#     without being wrapped in an \code{`expr`}
+#   \item The only tokens that count as elements in an expression are
+#     opening brackets and \code{`expr`}; this assumption is necessary
+#     to allow mapping the parsed data back to the expression.  What
+#     confuses the issue a bit is that operators show up at the top level,
+#     but you can actually
+#     ignore them.  Also, parentheses should only be kept if they are the
+#     topmost item, as otherwise they are part of a function call and
+#     should be ignored.
+#   \item Comments inside function formals are not assigned to the formals
+#     proper
+#   \item `exprlist` tokens are removed completely b/c as far as we can
+#     tell they are not part of the parsed object (but exist in parse
+#     data).
+#   \item known issue: comments in formals after a line break are assigned
+#     to the body of the function as opposed to \code{`function`}, but this
+#     should not be apparent in common use.
+#   \item you cannot attach comments to \code{`NULL`}, if you must use
+#     \code{`(NULL)`}.  This is a feature, as it proivdes a way to put
+#     comments in the file without them showing up during \code{`unitizer`}
+#     use.
+# }
+# Note that as a result of this trial and error interpretation of
+# \code{`\link{getParseData}`} it is likely that comment parsing is
+# not 100 percent robust.
+#
+# Due to some reference weirdness going on when dealing directly with
+# expressions had to change this function to accept text/file rather
+# than an expression as an input (but even that didn't fix it!!!)
+#
+# @keywords internal
+# @aliases parse_tests
+# @seealso comments_assign, getParseData, parse
+# @param file containing code to parse with comments
+# @param text optional, text to parse if \code{`file`} is not specified
+# @param comment logical(1L) whether to try to get comments
+# @return an expression with comments retrieved from the parse attached
+#   to the appropriate sub-expressions/calls as a \dQuote{comment} \code{`\link{attr}`}
 
 parse_with_comments <- function(file, text=NULL) {
   # Looping to deal with issue #41
@@ -466,10 +462,8 @@ parse_with_comments <- function(file, text=NULL) {
   }
   prsdat_recurse(expr, parse.dat, top.level=0L)
 }
-#' Handle the issues with needing to run parse twice due to weird getParseData
-#' output
-#'
-#' @keywords internal
+# Handle the issues with needing to run parse twice due to weird getParseData
+# output
 
 parse_dat_get <- function(file, text) {
   parse.dat.raw <- NULL
@@ -510,9 +504,6 @@ parse_dat_get <- function(file, text) {
   list(expr=expr, dat=parse.dat.raw)
 }
 
-#' @rdname parse_with_comments
-#' @keywords internal
-
 parse_tests <- function(file, comments=TRUE, text=NULL) {
 
   if(!isTRUE(comments) && !identical(comments, FALSE))
@@ -550,16 +541,15 @@ parse_tests <- function(file, comments=TRUE, text=NULL) {
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("token"))
 
-#' Reduce Parsed Data to Just the Things That should Exist In Expression
-#'
-#' additionally, special handling due to function and formals not getting wrapped
-#' in their own `expr` (why the FUCK!!!!)
-#'
-#' @keywords internal
-#' @aliases prsdat_remove_fun
-#' @param parse.dat top level parse data
-#' @return parse data reduced to key elements, ordered so that infix operators
-#'   show up first instead of in middle
+# Reduce Parsed Data to Just the Things That should Exist In Expression
+#
+# additionally, special handling due to function and formals not getting wrapped
+# in their own `expr` (why the FUCK!!!!)
+#
+# @aliases prsdat_remove_fun
+# @param parse.dat top level parse data
+# @return parse data reduced to key elements, ordered so that infix operators
+#   show up first instead of in middle
 
 prsdat_reduce <- function(parse.dat) {
   parse.dat.red <- subset(
@@ -600,32 +590,30 @@ prsdat_reduce <- function(parse.dat) {
 
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "token"))
 
-#' Functions to Adjust Parse Data To Match Expression
-#'
-#' \itemize{
-#'   \item \code{`prsdat_fix_fun`} extract all comments from formals and brings them
-#'     up a level, and then removes formals
-#'   \item \code{`prsdat_fix_for`} brings contents of `forcond` to same level as
-#'     `for` to match up with expression
-#'   \item \code{`prsdat_fix_for`} extracts expression from the condition (though
-#'     apparently not from `ifcond`)
-#'   \item \code{`prsdat_fix_exprlist`} excises the \code{`exprlist`} portions of
-#'     \code{`exprlist`} as those don't exist in the expressions proper; they
-#'     don't do anything, and have extraneous semi colons.  We need to remove
-#'     them, and then make sure all their children become children of the
-#'     parent of the exprlist
-#' parent
-#'   \item \code{`prsdat_find_paren`} returns locations of first set
-#'     of open and close parens
-#' }
-#'
-#' @keywords internal
-#' @aliases prsdat_fix_for, prsdat_find_paren, prsdat_fix_exprlist
-#' @param parse.dat a data frame of the type produced by \code{`\link{getParseData}`}
-#' @return \itemize{
-#'   \item for \code{`parsdat_fix*`}, a data frame of the type produced by \code{`\link{getParseData}`}
-#'   \item for \code{`parsdat_find_paren`}, a length two integer vector with the ids of the parens
-#' }
+# Functions to Adjust Parse Data To Match Expression
+#
+# \itemize{
+#   \item \code{`prsdat_fix_fun`} extract all comments from formals and brings them
+#     up a level, and then removes formals
+#   \item \code{`prsdat_fix_for`} brings contents of `forcond` to same level as
+#     `for` to match up with expression
+#   \item \code{`prsdat_fix_for`} extracts expression from the condition (though
+#     apparently not from `ifcond`)
+#   \item \code{`prsdat_fix_exprlist`} excises the \code{`exprlist`} portions of
+#     \code{`exprlist`} as those don't exist in the expressions proper; they
+#     don't do anything, and have extraneous semi colons.  We need to remove
+#     them, and then make sure all their children become children of the
+#     parent of the exprlist
+# parent
+#   \item \code{`prsdat_find_paren`} returns locations of first set
+#     of open and close parens
+# }
+# @aliases prsdat_fix_for, prsdat_find_paren, prsdat_fix_exprlist
+# @param parse.dat a data frame of the type produced by \code{`\link{getParseData}`}
+# @return \itemize{
+#   \item for \code{`parsdat_fix*`}, a data frame of the type produced by \code{`\link{getParseData}`}
+#   \item for \code{`parsdat_find_paren`}, a length two integer vector with the ids of the parens
+# }
 
 prsdat_fix_fun <- function(parse.dat) {
   if(!identical(parse.dat$token[[1L]], "FUNCTION"))
@@ -754,9 +742,7 @@ prsdat_fix_exprlist <- function(parse.dat, ancestry) {
     stop("Logic Error: `exprlist` excision did not work!")
   parse.dat.mod
 }
-#' Removes Symbol Marker Used To Hold Comments
-#'
-#' @keywords internal
+# Removes Symbol Marker Used To Hold Comments
 
 symb_mark_rem <- function(x) {
   if(isTRUE(attr(x, "unitizer_parse_symb"))) {
@@ -769,19 +755,16 @@ symb_mark_rem <- function(x) {
   }
   x
 }
-
-#' Utility Function to Extract Comments From Expression
-#'
-#' Note that when dealing with expressions the very first item will typically
-#' be NULL to allow for logic that works with nested structures.
-#'
-#' \code{comm_and_call_extract} also pulls out a cleaned up version of the call
-#' along with the comments, but the comments come out in a vector instead of a
-#' list showing the structure where the comments were pulled from.
-#'
-#' Used mostly for testing purposes.
-#'
-#' @keywords internal
+# Utility Function to Extract Comments From Expression
+#
+# Note that when dealing with expressions the very first item will typically
+# be NULL to allow for logic that works with nested structures.
+#
+# \code{comm_and_call_extract} also pulls out a cleaned up version of the call
+# along with the comments, but the comments come out in a vector instead of a
+# list showing the structure where the comments were pulled from.
+#
+# Used mostly for testing purposes.
 
 comm_extract <- function(x) {
 
@@ -819,14 +802,11 @@ comm_and_call_extract <- function(x) {
   }
   list(call=rec(x), comments=comments)
 }
-
-#' Utility Function to Reset Comments
-#'
-#' Required due to bizarre behavior (bug?) where some expression attributes
-#' appear to have reference like behavior even when they are re-generated
-#' from scratch from a text expression (wtf, really).
-#'
-#' @keywords internal
+# Utility Function to Reset Comments
+#
+# Required due to bizarre behavior (bug?) where some expression attributes
+# appear to have reference like behavior even when they are re-generated
+# from scratch from a text expression (wtf, really).
 
 comm_reset <- function(x) {
   if(is.null(x) || is.name(x) && !nchar(x)) return(x)
@@ -836,26 +816,24 @@ comm_reset <- function(x) {
     for(i in seq_along(x)) if(!is.null(x[[i]])) x[[i]] <- Recall(x[[i]])
   x
 }
-#' Listing on known tokens
-#'
-#' As of this writing, the following tokens from \file{src/main/gram.c} are
-#' not handled:
-#'
-#'      [,1]           [,2]             [,3]                [,4]
-#' [1,] "'\\n'"        "cr"             "ifcond"            "sub"
-#' [2,] "'%'"          "END_OF_INPUT"   "INCOMPLETE_STRING" "sublist"
-#' [3,] "$accept"      "equal_assign"
-#' [4,] "$end"         "error"          "LINE_DIRECTIVE"    "TILDE"
-#' [5,] "$undefined"   "ERROR"          "LOW"               "UMINUS"
-#' [6,] "COLON_ASSIGN" "expr_or_assign" "NOT"               "UNOT"
-#' [7,] "cond"         "formlist"       "prog"              "UPLUS"
-#'
-#' So far, we have not been able to produce \code{`getParseData`} data frames
-#' that contain them.  It may not be possible to do so for all of them.  For
-#' example, \code{`INCOMPLETE_STRING`} shows up during a parse error, so could
-#' never be part of a fully parsed expression.
-#'
-#' @keywords internal
+# Listing on known tokens
+#
+# As of this writing, the following tokens from \file{src/main/gram.c} are
+# not handled:
+#
+#      [,1]           [,2]             [,3]                [,4]
+# [1,] "'\\n'"        "cr"             "ifcond"            "sub"
+# [2,] "'%'"          "END_OF_INPUT"   "INCOMPLETE_STRING" "sublist"
+# [3,] "$accept"      "equal_assign"
+# [4,] "$end"         "error"          "LINE_DIRECTIVE"    "TILDE"
+# [5,] "$undefined"   "ERROR"          "LOW"               "UMINUS"
+# [6,] "COLON_ASSIGN" "expr_or_assign" "NOT"               "UNOT"
+# [7,] "cond"         "formlist"       "prog"              "UPLUS"
+#
+# So far, we have not been able to produce \code{`getParseData`} data frames
+# that contain them.  It may not be possible to do so for all of them.  For
+# example, \code{`INCOMPLETE_STRING`} shows up during a parse error, so could
+# never be part of a fully parsed expression.
 
 tk.lst <- list(
   comment="COMMENT",
