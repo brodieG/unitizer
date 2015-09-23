@@ -8,7 +8,7 @@ library(testthat)
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.R")
-.unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm.unitizer")
+.unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.unitizer")
 test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
 
 # Random history file
@@ -126,6 +126,11 @@ txt3b <- unitizer:::capture_output(
 )
 untz3b.all <- capture.output(print(untz3b))
 untz3b.get.all <- vapply(get_unitizer(untz3b), class, character(1L))
+
+# x <- untz3b.all
+# y <- readRDS(file.path("helper", "refobjs", "unitize_resprint3.rds"))
+# cat(capture.output(print(x)), sep="\n", file=(f1 <- tempfile())); cat(capture.output(print(y)), sep="\n", file=(f2 <- tempfile())); tools::Rdiff(f1, f2);
+# unlink(paste0("f", 1:2))
 
 test_that("unitize_dir", {
   expect_equal_to_reference(
@@ -310,13 +315,14 @@ txt20 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 test_that("multi-sect", {
   txt20$output <- gsub("^<\\w+: .*?>", "", txt20$output)
+  # saveRDS(txt20, file.path("helper", "refobjs", "unitize_multisect1.rds"))
   txt20.rds <- readRDS(file.path("helper", "refobjs", "unitize_multisect1.rds"))
   txt20.rds$output <- gsub("^<\\w+: .*?>", "", txt20.rds$output)
   expect_identical(txt20, txt20.rds)
 })
 # Purposefully mess up one of the unitizers to see if the load fail stuff works
 
-saveRDS(list(1, 2, 3), file.path(test.dir, "fastlm.unitizer", "data.rds"))
+saveRDS(list(1, 2, 3), file.path(test.dir, "fastlm1.unitizer", "data.rds"))
 txt21 <- unitizer:::capture_output(
   untz21 <- unitize_dir(test.dir, interactive.mode=TRUE)
 )
