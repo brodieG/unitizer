@@ -1,6 +1,6 @@
 # unitizeR - Easy R Unit Tests
 
-**Branch** | **Travis-CI **                                | ** Codecov **                             |
+**Branch** | **Travis-CI**                                 | **Codecov**                               |
 -----------|:---------------------------------------------:|:-----------------------------------------:|
 Master     | [![Travis CI Build Status][t master]][t link] | [![Codecov Coverage][c master]][c link m] |
 RC         | [![Travis CI Build Status][t rc]][t link]     | [![Codecov Coverage][c rc]][c link rc]    |
