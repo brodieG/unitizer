@@ -3,8 +3,6 @@
 NULL
 
 # Class To Track History Changes
-#
-# @keywords internal
 
 setClass(
   "unitizerNsListData", contains="unitizerList",
@@ -95,8 +93,8 @@ setMethod(
 # some packages with this approach.  This function is intended to be called
 # after journaling has been enabled.
 #
-# \code{`tools:rstudio`} is kept in search path as the default argument because
-# it is not possible to cleanly unload and reload it because \code{`attach`}
+# \code{tools:rstudio} is kept in search path as the default argument because
+# it is not possible to cleanly unload and reload it because \code{attach}
 # actually attaches a copy of it's argument, not the actual object, and that
 # causes problems for that search path item.
 #
@@ -104,7 +102,7 @@ setMethod(
 # @rdname search_path
 # @param keep character names of packages/objects to keep in search path;
 #   note that base packages (see .unitizer.base.packages) that come typically
-#   pre attached are always kept.  The \code{`keep`} packages are an addition
+#   pre attached are always kept.  The \code{keep} packages are an addition
 #   to those.
 # @param id integer(1L) what recorded state to revert to
 # @param global reference object of class "unitizerGlobal" that holds the
@@ -253,9 +251,6 @@ search_path_update <- function(id, global) {
   on.exit(NULL)
   invisible(TRUE)
 }
-# @keywords internal
-# @rdname search_path
-
 search_path_trim <- function(
   keep.path=union(
     getOption("unitizer.search.path.keep.base"),
@@ -474,8 +469,6 @@ is.loaded_package <- function(pkg.name) {
 # Path manipulation functions
 #
 # Reattaches a previously detached package to the search path
-#
-# @keywords internal
 
 reattach <- function(pos, name, type, data, extra=NULL, global) {
   stopifnot(
@@ -499,7 +492,7 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
       global$state()
     }
   } else {
-    attach(data, pos=pos, name=name, warn.conflicts=FALSE)
+    base::attach(data, pos=pos, name=name, warn.conflicts=FALSE)
   }
 }
 # @keywords internal
@@ -531,12 +524,10 @@ move_on_path <- function(new.pos, old.pos, global=unitizerGlobal$new()) {
     global=global
   )
 }
-#' Make Unique IDs For Search Path Object
-#'
-#' adds ".1", ".2" etc if there are non-unique values, but first occurence is
-#' not modified so we can match between a list with duplicates and one without.
-#'
-#' @keywords internal
+# Make Unique IDs For Search Path Object
+#
+# adds ".1", ".2" etc if there are non-unique values, but first occurence is
+# not modified so we can match between a list with duplicates and one without.
 
 setGeneric(
   "unitizerUniqueNames", function(x, ...)
