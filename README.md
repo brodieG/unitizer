@@ -1,7 +1,22 @@
 # unitizeR - Easy R Unit Tests
 
-[![Travis-CI Build Status](https://travis-ci.org/brodieG/unitizer.png?branch=master)](https://travis-ci.org/brodieG/unitizer)
-[![codecov.io](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
+**Branch** | **Travis-CI **       | ** Codecov **          |
+-----------|:--------------------:|:----------------------:|
+Master     | [[t master]][t link] | [[c master]][c link m] |
+RC         | [[t rc]][t link]     | [[c rc]][c link rc]    |
+Devel      | [[t dev]][t link]    | [[c dev]][c link dev]  |
+
+[t master]: https://travis-ci.org/brodieG/unitizer.png?branch=master
+[t rc]: https://travis-ci.org/brodieG/unitizer.png?branch=rc
+[t dev]: https://travis-ci.org/brodieG/unitizer.png?branch=development
+[t link]: https://travis-ci.org/brodieG/unitizer
+
+[c master]: https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master
+[c rc]: https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=rc
+[c dev]: https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=development
+[c link m]: https://codecov.io/github/brodieG/unitizer?branch=master
+[c link rc]: https://codecov.io/github/brodieG/unitizer?branch=rc
+[c link dev]: https://codecov.io/github/brodieG/unitizer?branch=dev
 
 ## Quick Start
 
