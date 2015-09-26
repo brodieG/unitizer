@@ -1,6 +1,6 @@
 # unitizeR - Easy R Unit Tests
               | Master                                        | RC                                        | Development                                |
---------------|:---------------------------------------------:|:-----------------------------------------:|:------------------------------------------:|
+--------------|-----------------------------------------------|-------------------------------------------|--------------------------------------------|
 Build Status  | [![Travis CI Build Status][t master]][t link] | [![Travis CI Build Status][t rc]][t link] | [![Travis CI Build Status][t dev]][t link] |
 Test Coverage | [![Codecov Coverage][c master]][c link m]     | [![Codecov Coverage][c rc]][c link rc]    | [![Codecov Coverage][c dev]][c link dev]   |
 
