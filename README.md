@@ -1,10 +1,10 @@
 # unitizeR - Easy R Unit Tests
 
-**Branch** | **Travis-CI **       | ** Codecov **          |
------------|:--------------------:|:----------------------:|
-Master     | [[t master]][t link] | [[c master]][c link m] |
-RC         | [[t rc]][t link]     | [[c rc]][c link rc]    |
-Devel      | [[t dev]][t link]    | [[c dev]][c link dev]  |
+**Branch** | **Travis-CI **                                | ** Codecov **                             |
+-----------|:---------------------------------------------:|:-----------------------------------------:|
+Master     | [![Travis CI Build Status][t master]][t link] | [![Codecov Coverage][c master]][c link m] |
+RC         | [![Travis CI Build Status][t rc]][t link]     | [![Codecov Coverage][c rc]][c link rc]    |
+Devel      | [![Travis CI Build Status][t dev]][t link]    | [![Codecov Coverage][c dev]][c link dev]  |
 
 [t master]: https://travis-ci.org/brodieG/unitizer.png?branch=master
 [t rc]: https://travis-ci.org/brodieG/unitizer.png?branch=rc
