@@ -38,20 +38,30 @@ when none was actually set}
 }
 }
 \description{
-\code{`set_text_capture`} sets the sinks, while \code{`get_text_capture`}
-retrieves the captured tests and releases the sinks with \code{`release_sinks`}.
-\code{`get_capture`} is just a wrapper around \code{`get_text_capture`}.
+\code{set} functions set sinks, and \code{get} functions retrieve the
+captured output. There are two types of functions here:
 }
 \details{
-A lot of the logic here is devoted to detecting whether users set their
-own sinks in the course of execution.
-
+\itemize{
+  \item \code{set_text_capture} and \code{get_text_capture} are intended for
+    use in situations we know the code to be evaluated will not be setting
+    sinks of its own; note that \code{get_text_capture} undoes any sinks set
+    by \code{set_text_capture}
+  \item \code{set_capture} and \code{get_capture} are meant for use when
+    evaluating the tests as both stdout and stderr are handled
+    \code{get_capture} does *not* undo the sinks since we need to check after
+    getting the text that the sinks are still in a reasonable state
+    with \code{unsink_cons}
+}
 All output to \code{stdout} and \code{stderr} is capture in a single file for
 each of those streams.  The captures happen sequentially, and are read off
 by \code{\link{readChar}}.  It is important to note this method implies that
 the files grow throughout the entire test evaluation process, and are only
 dumped at the very end.  This is to avoid overhead from repeatedly creating
 and opening new connections.
+
+\code{set} functions will not actually set the sinks if the connections have
+a "waive" attribute set to TRUE.
 }
 \keyword{internal}
 
