@@ -22,7 +22,9 @@ are carried out as follows (i.e. this is what the default
 }
 }
 \examples{
+\dontrun{
 unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
+}
 }
 \seealso{
 \code{`\link{unitizer_sect}`}

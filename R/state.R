@@ -109,7 +109,7 @@ NULL
 #'     set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
 #'     as that seed is substantially smaller than the R default).
 #' }
-#' @sections Known Untracked State Elements:
+#' @section Known Untracked State Elements:
 #'
 #' \itemize{
 #'   \item system time: tests involving functions such as \code{\link{date}}

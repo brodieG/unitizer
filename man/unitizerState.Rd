@@ -94,6 +94,10 @@ If you run \code{unitizer} with options and search path tracking and you run
 into a namespace that cannot be unloaded, or should not be unloaded because
 it is listed in \code{getOption("unitizer.namespace.keep")}, \code{unitizer}
 will turn off \code{options} state tracking from that point onwards.
+
+Additionally, note that \code{warn} and \code{error} options are always set
+to \code{1} and \code{NULL} respectively during test evaluation, irrespective
+of what option state tracking level you select.
 }
 
 \section{State Presets}{
@@ -142,6 +146,20 @@ setting (see examples).  For \code{par.env} that setting is either
     R session, with the exception of \code{random.seed}, which is
     set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
     as that seed is substantially smaller than the R default).
+}
+}
+
+\section{Known Untracked State Elements}{
+
+
+\itemize{
+  \item system time: tests involving functions such as \code{\link{date}}
+    will inevitably fail
+  \item locale: is not tracked because it so specific to the system and so
+    unlikely be be changed by user action; if you have tests that depend on
+    locale be sure to set the locale via the \code{pre} argument to
+    \code{\link{unitize}}, and also to reset it to the original value in
+    \code{post}.
 }
 }
 \examples{

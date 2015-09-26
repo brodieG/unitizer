@@ -55,12 +55,17 @@ prompt will not list these objects.}
 \item{post}{NULL, or a character vector pointing to files and/or directories.
 See \code{pre}.  If NULL will look for a directory named "_post" in the
 directory containing the first test file.  Scripts are run just prior to
-existing \code{unitizer}.  Keep in mind that \code{unitizer} can manage
-most aspects of global state, so you should not need to use this parameter
-to unload packages, remove objects, etc.  See details.}
+exiting \code{unitizer}. \code{post} code will be run in an environment
+with the environment used to run \code{pre} as the parent.  This means that
+any objects created in \code{pre} will be available to \code{post}, which
+you can use to your advantage if there are some things you do in \code{pre}
+you wish to undo in \code{post}. Keep in mind that \code{unitizer} can
+manage most aspects of global state, so you should not need to use this
+parameter to unload packages, remove objects, etc.  See details.}
 
-\item{history}{file name to use to store history during interactive unitizer
-sessions.}
+\item{history}{character path to file to use to store history generated
+during interactive unitizer session; the default is an empty string, which
+leads to \code{unitizer} using a temporary file}
 
 \item{interactive.mode}{logical(1L) whether to run in interactive mode (
 request user input when needed) or not (error if user input is required,
@@ -100,8 +105,8 @@ off (default)}
   \code{\link{unitizer_result}}.
 }
 \description{
-Turn standard R scripts into unit tests by evaluating the expressions and
-storing them along with their resuls.
+Turn standard R scripts into unit tests by storing the expressions therein
+along with the results of their evaluation.
 }
 \details{
 \code{unitize} creates unit tests from a single R file, and
@@ -139,9 +144,7 @@ setting options in their \code{.Rprofile} file.
 
 You can modify all aspects of state control with the \code{state} parameter.
 See the \code{\link{unitizerState}} documentation and the \code{state}
-vignette for more details.  One exception to this control are the \code{warn}
-and \code{error} options; these are always set to \code{1} and \code{NULL}
-respectively during test evaluation.
+vignette for more details.
 }
 \seealso{
 \code{\link{unitizerState}}, \code{\link{unitizer.opts}},
