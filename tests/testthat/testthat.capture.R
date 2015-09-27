@@ -110,5 +110,15 @@ test_that("connection capture works", {
     capt, list(output = "woohoo\n", message = "yohooo\n")
   )
   unitizer:::close_and_clear(cons)
+})
 
+test_that("eval with capt", {
+  expect_identical(
+    unitizer:::eval_with_capture(quote(1+1)),
+    list(value = 2, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "[1] 2\n", message = "")
+  )
+  expect_identical(
+    unitizer:::eval_with_capture(message("wow")),
+    list(value = NULL, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "", message = "wow\n")
+  )
 })

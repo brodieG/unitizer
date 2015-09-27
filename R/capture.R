@@ -271,7 +271,7 @@ failsafe_con <- function(cons) {
   }
   word_msg(
     "Problems managing stdout/stderr streams, so we have reset all sinks, ",
-    "even those that may have been set prior to calling `unitizer`", sep=""
+    "even those that may have been set prior to calling `unitizer`.", sep=""
   )
   invisible(NULL)
 }

@@ -165,16 +165,11 @@ eval_with_capture <- function(
 
   res <- eval_user_exp(x, test.env)
 
-  on.exit(NULL)
-  options(warn=warn.opt)
-  options(error=err.opt)
-
   # Revert settings, get captured messages, if any and if user isn't capturing
   # already; do.call so we can rely on default get_capture settings if those
   # in `unitizer.opts` are NULL
 
   get_args <- list(capt.cons)
-  get_args[["display"]] <- global$unitizer.opts[["unitizer.show.output"]]
   get_args[["chrs.max"]] <-
     global$unitizer.opts[["unitizer.max.capture.chars"]]
   capt <- do.call(get_capture, get_args)
@@ -183,6 +178,10 @@ eval_with_capture <- function(
     cat(c(capt$message, "\n"), file=stderr(), sep="\n")
     cat(c(capt$output, "\n"), sep="\n")
   }
+  on.exit(NULL)
+  options(warn=warn.opt)
+  options(error=err.opt)
+
   # Need to make sure we either close the connections or return the updated
   # values since we might be changing connections depending on sink status, etc
 
