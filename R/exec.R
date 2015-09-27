@@ -145,8 +145,7 @@ eval_with_capture <- function(
   on.exit({
     options(warn=warn.opt)
     options(error=err.opt)
-    capt.try <- try(get_capture(capt.cons, display=TRUE))
-    if(inherits(capt.try, "try-error")) release_sinks()
+    failsafe_con(cons)  # deal with sinks, etc
     if(!came.with.capts) close_and_clear(capt.cons)
     word_msg(
       "Unexpectedly exited evaluation attempt when executing test ",
@@ -189,7 +188,7 @@ eval_with_capture <- function(
 
   if(!came.with.capts) close_and_clear(capt.cons) else global$cons <- capt.cons
 
-  # Cleanup and return
+  # Cleanup and
 
   res[c("output", "message")] <- lapply(
     capt[c("output", "message")], function(x) if(!length(x)) "" else x

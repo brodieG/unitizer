@@ -164,8 +164,6 @@ set_capture <- function(
   if(!identical(out.level, cons@stdout.level)) attr(cons@out.c, "waive") <- TRUE
   if(!identical(err.con, cons@stderr.con)) attr(cons@err.c, "waive") <- TRUE
 
-  set_args <- list()
-  set_args[["capt.disabled"]] <- global$unitizer.opts[["unitizer.disable.capt"]]
   cons@err.c <-
     set_text_capture(cons@err.c, "message", capt.disabled=capt.disabled)
   cons@out.c <-
@@ -222,7 +220,11 @@ get_text <- function(
 # attempts.
 
 unsink_cons <- function(cons) {
-  stopifnot(is(cons, "unitizerCaptCons"), is.TF(capt.disabled))
+  on.exit({
+    failsafe_con(cons)
+
+  })
+  stopifnot(is(cons, "unitizerCaptCons"))
   out.level <- sink.number()
   err.level <- sink.number(type="message")
   err.con <- try(getConnection(err.level))
@@ -232,7 +234,7 @@ unsink_cons <- function(cons) {
 
   if(
     !identical(out.level, cons@stdout.level + 1L) ||
-    (!inherits(con, "file") && isOpen(con))
+    (!inherits(cons@out.c, "file") && isOpen(cons@out.c))
   ) {
     attr(cons@out.c, "waive") <- TRUE
   } else {
@@ -242,18 +244,36 @@ unsink_cons <- function(cons) {
     cat(test.str)
     test.str.echo <- get_text(cons@out.c)
     if(!identical(test.str, test.str.echo)) {
-      atr(cons@out.c, "waive") <- TRUE
+      attr(cons@out.c, "waive") <- TRUE
     } else sink()
   }
   # stderr check is pretty simple
 
-  if(!identical(err.con, cons@stderr.con)) {
+  if(!identical(err.con, cons@err.c)) {
     attr(cons@err.c, "waive") <- TRUE
   } else sink(type="message")
 
   # Return possibly modified cons (waived)
 
+  on.exit(NULL)
   cons
+}
+# Try to Deal With Sinks Gracefully on Failure
+#
+failsafe_con <- function(cons) {
+  capt.try <- try(get_capture(cons))
+  release_sinks()
+  if(inherits(capt.try, "try-error")) {
+    signalCondition(attr(capt.try, "condition"))
+  } else {
+    cat(capt.try$output, "\n", sep="")
+    cat(capt.try$message, "\n", sep="", file=stderr())
+  }
+  word_msg(
+    "Problems managing stdout/stderr streams, so we have reset all sinks, ",
+    "even those that may have been set prior to calling `unitizer`", sep=""
+  )
+  invisible(NULL)
 }
 close_and_clear <- function(cons) {
   close(cons@err.c)

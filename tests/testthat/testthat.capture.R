@@ -1,3 +1,5 @@
+library(unitizer)
+
 old.max <- getOption("unitizer.max.capture.chars")
 options(unitizer.max.capture.chars=100L)
 
@@ -43,3 +45,70 @@ test_that("get_capture", {
 close(con)
 unlink(f)
 options(unitizer.max.capture.chars=old.max)
+
+test_that("connection capture works", {
+  out.num <- as.integer(stdout())
+  err.num <- as.integer(stderr())
+  err.con <- getConnection(sink.number(type="message"))
+
+  cons <- new("unitizerCaptCons")
+  cons <- unitizer:::set_capture(cons)
+  cat("hello there\n")
+  message("goodbye there")
+  capt <- unitizer:::get_capture(cons)
+  cons <- unitizer:::unsink_cons(cons)
+  expect_identical(
+    capt, structure(list(output = "hello there\n", message = "goodbye there\n")
+  ))
+  expect_identical(as.integer(stdout()), out.num)
+  expect_identical(as.integer(stderr()), err.num)
+  unitizer:::close_and_clear(cons)
+
+  # Now, test errors, here we add an extra stdout sink, so we need to blow away
+  # two, and also need to reset the stderr sink.  In both cases unsink_cons will
+  # not touch the sinks since we're not in an expected state
+
+  cons <- new("unitizerCaptCons")
+  cons <- unitizer:::set_capture(cons)
+  cat("there hello\n")
+  message("there goodbye")
+  f1 <- tempfile()
+  f2 <- tempfile()
+  c2 <- file(f2, "w")
+  sink(f1)
+  sink(c2, type="message")
+  capt <- unitizer:::get_capture(cons)
+  cons <- unitizer:::unsink_cons(cons)
+  sink()
+  sink()
+  sink(err.con, type="message")
+  close(c2)
+  unlink(c(f1, f2))
+  expect_true(attr(cons@out.c, "waive"))
+  expect_true(attr(cons@err.c, "waive"))
+  expect_identical(
+    capt, list(output = "there hello\n", message = "there goodbye\n")
+  )
+  unitizer:::close_and_clear(cons)
+
+  # Test the more pernicious error where we substitute the stdout sink
+
+  cons <- new("unitizerCaptCons")
+  cons <- unitizer:::set_capture(cons)
+  cat("woohoo\n")
+  message("yohooo")
+  f1 <- tempfile()
+  sink()
+  sink(f1)
+  capt <- unitizer:::get_capture(cons)
+  cons <- unitizer:::unsink_cons(cons)
+  sink()
+  unlink(f1)
+  expect_true(attr(cons@out.c, "waive"))
+  expect_true(is.null(attr(cons@err.c, "waive")))
+  expect_identical(
+    capt, list(output = "woohoo\n", message = "yohooo\n")
+  )
+  unitizer:::close_and_clear(cons)
+
+})
