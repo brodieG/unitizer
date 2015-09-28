@@ -50,14 +50,6 @@ set_text_capture <- function(
     type %in% c("output", "message"),
     is.TF(capt.disabled)
   )
-  if(identical(type, "message")) {
-    sink.num <- sink.number(type="message")
-    if(!identical(sink.num, 2L))
-      attr(con, "old.con") <- getConnection(sink.num)
-  } else if (identical(type, "output")) {
-    sink.num <- sink.number()
-    if(!identical(sink.num, 0L)) attr(con, "old.sink.num") <- sink.num
-  }
   if(!capt.disabled) sink(con, type=type)
   return(con)
 
@@ -222,7 +214,6 @@ get_text <- function(
 unsink_cons <- function(cons) {
   on.exit({
     failsafe_con(cons)
-
   })
   stopifnot(is(cons, "unitizerCaptCons"))
   out.level <- sink.number()
