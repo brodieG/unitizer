@@ -71,7 +71,7 @@ test_that("connection capture works", {
   cons <- new("unitizerCaptCons")
   cons <- unitizer:::set_capture(cons)
   cat("there hello\n")
-  cat("there goodbye", file=stderr())  # message does not work with testthat
+  cat("there goodbye\n", file=stderr())  # message does not work with testthat
   f1 <- tempfile()
   f2 <- tempfile()
   c2 <- file(f2, "w")

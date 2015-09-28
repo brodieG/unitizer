@@ -225,7 +225,7 @@ unsink_cons <- function(cons) {
 
   if(
     !identical(out.level, cons@stdout.level + 1L) ||
-    (!inherits(cons@out.c, "file") && isOpen(cons@out.c))
+    !(inherits(cons@out.c, "file") && isOpen(cons@out.c))
   ) {
     attr(cons@out.c, "waive") <- TRUE
   } else {
@@ -240,7 +240,7 @@ unsink_cons <- function(cons) {
   }
   # stderr check is pretty simple
 
-  if(!all.equal(err.con, cons@err.c, check.attributes=FALSE)) {
+  if(!isTRUE(all.equal(err.con, cons@err.c, check.attributes=FALSE))) {
     attr(cons@err.c, "waive") <- TRUE
   } else sink(type="message")
 
