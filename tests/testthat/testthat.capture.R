@@ -54,7 +54,7 @@ test_that("connection capture works", {
   cons <- new("unitizerCaptCons")
   cons <- unitizer:::set_capture(cons)
   cat("hello there\n")
-  message("goodbye there")
+  cat("goodbye there\n", file=stderr())
   capt <- unitizer:::get_capture(cons)
   cons <- unitizer:::unsink_cons(cons)
   expect_identical(
@@ -71,7 +71,7 @@ test_that("connection capture works", {
   cons <- new("unitizerCaptCons")
   cons <- unitizer:::set_capture(cons)
   cat("there hello\n")
-  message("there goodbye")
+  cat("there goodbye", file=stderr())  # message does not work with testthat
   f1 <- tempfile()
   f2 <- tempfile()
   c2 <- file(f2, "w")
@@ -96,7 +96,7 @@ test_that("connection capture works", {
   cons <- new("unitizerCaptCons")
   cons <- unitizer:::set_capture(cons)
   cat("woohoo\n")
-  message("yohooo")
+  cat("yohooo\n", file=stderr())
   f1 <- tempfile()
   sink()
   sink(f1)

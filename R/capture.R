@@ -240,7 +240,7 @@ unsink_cons <- function(cons) {
   }
   # stderr check is pretty simple
 
-  if(!identical(err.con, cons@err.c)) {
+  if(!all.equal(err.con, cons@err.c, check.attributes=FALSE)) {
     attr(cons@err.c, "waive") <- TRUE
   } else sink(type="message")
 
