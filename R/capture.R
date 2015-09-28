@@ -267,6 +267,26 @@ failsafe_con <- function(cons) {
   invisible(NULL)
 }
 close_and_clear <- function(cons) {
+  stopifnot(is(cons, "unitizerCaptCons"))
+  err.reset <- try(sink(cons@stderr.con, type="message"))
+  if(inherits(err.reset, "try-error")) sink(type="message")
+
+  if(isTRUE(attr(cons@out.c, "waive"))) {
+    # if waived, we have not unsunk our original connection, so need to ensure
+    # it is still around
+
+    out.level <- sink.number()
+    level.extra <- out.level - cons@stdout.level
+
+    if(level.extra > 0) replicate(level.extra, sink())
+    test.str <- "\n\n<unitizer sink test>\n\n"
+    cat(test.str)
+    test.str.echo <- get_text(cons@out.c)
+    if(!identical(test.str, test.str.echo)) {
+      replicate(sink.number(), sink())
+      word_msg("Tests corrupted stdout sink stack; all stdout sinks cleared.")
+    } else sink()
+  }
   close(cons@err.c)
   close(cons@out.c)
   file.remove(cons@err.f, cons@out.f)
