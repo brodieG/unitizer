@@ -267,11 +267,21 @@ failsafe_con <- function(cons) {
   )
   invisible(NULL)
 }
+# Cleanup sink connections if possible
+#
+# @return logical(2L) indicating success in normal resetting of sinks
+
 close_and_clear <- function(cons) {
   stopifnot(is(cons, "unitizerCaptCons"))
+  status <- c(output=TRUE, message=TRUE)
   err.reset <- try(sink(cons@stderr.con, type="message"))
-  if(inherits(err.reset, "try-error")) sink(type="message")
-
+  if(inherits(err.reset, "try-error")) {
+    status[["message"]] <- FALSE
+    sink(type="message")
+    word_msg(
+      "Unable to restore original message sink, setting back to normal stderr"
+    )
+  }
   if(isTRUE(attr(cons@out.c, "waive"))) {
     # if waived, we have not unsunk our original connection, so need to ensure
     # it is still around, @stdout.level refers to the level before we sunk it
@@ -287,11 +297,13 @@ close_and_clear <- function(cons) {
     if(!identical(test.str, test.str.echo)) {
       replicate(sink.number(), sink())
       word_msg("Tests corrupted stdout sink stack; all stdout sinks cleared.")
+      status[["output"]] <- FALSE
     } else sink()
   }
   close(cons@err.c)
   close(cons@out.c)
   file.remove(cons@err.f, cons@out.f)
+  invisible(status)
 }
 # Connection Tracking Objects
 

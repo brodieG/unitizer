@@ -62,11 +62,13 @@ test_that("connection capture works", {
   ))
   expect_identical(as.integer(stdout()), out.num)
   expect_identical(as.integer(stderr()), err.num)
-  unitizer:::close_and_clear(cons)
-
-  # Now, test errors, here we add an extra stdout sink, so we need to blow away
-  # two, and also need to reset the stderr sink.  In both cases unsink_cons will
-  # not touch the sinks since we're not in an expected state
+  expect_identical(
+    unitizer:::close_and_clear(cons),
+    structure(c(TRUE, TRUE), .Names = c("output", "message"))
+  )
+  # Now, here we add an extra stdout sink. In both cases unsink_cons will not
+  # touch the sinks since we're not in an expected state, leaving
+  # close_and_clear to cleanup
 
   err.con <- getConnection(sink.number(type="message"))
   cons <- new("unitizerCaptCons")
@@ -82,19 +84,52 @@ test_that("connection capture works", {
   cat("12 there goodbye\n", file=stderr())  # message does not work with testthat
   capt <- unitizer:::get_capture(cons)
   cons <- unitizer:::unsink_cons(cons)
-  sink()
-  sink()
-  sink(err.con, type="message")
-  close(c2)
-  expect_equal(readLines(f1), "12 there hello")
-  expect_equal(readLines(f2), "12 there goodbye")
-  unlink(c(f1, f2))
+  expect_identical(
+    unitizer:::close_and_clear(cons),
+    structure(c(TRUE, TRUE), .Names = c("output", "message"))
+  )
   expect_true(attr(cons@out.c, "waive"))
   expect_true(attr(cons@err.c, "waive"))
   expect_identical(
     capt, list(output = "there hello\n", message = "there goodbye\n")
   )
-  unitizer:::close_and_clear(cons)
+  expect_equal(readLines(f1), "12 there hello")
+  expect_equal(readLines(f2), "12 there goodbye")
+  close(c2)
+  unlink(c(f1, f2))
+
+  # Same, but this time close the sinks properly, so the connections should not
+  # be waived
+
+  err.con <- getConnection(sink.number(type="message"))
+  cons <- new("unitizerCaptCons")
+  cons <- unitizer:::set_capture(cons)
+  cat("there hello\n")
+  cat("there goodbye\n", file=stderr())  # message does not work with testthat
+  f1 <- tempfile()
+  f2 <- tempfile()
+  c2 <- file(f2, "w")
+  sink(f1)
+  sink(c2, type="message")
+  cat("12 there hello\n")
+  cat("12 there goodbye\n", file=stderr())  # message does not work with testthat
+  sink()
+  sink(cons@err.c, type="message")
+  capt <- unitizer:::get_capture(cons)
+  cons <- unitizer:::unsink_cons(cons)
+  expect_null(attr(cons@out.c, "waive"))
+  expect_null(attr(cons@err.c, "waive"))
+  expect_identical(
+    capt, list(output = "there hello\n", message = "there goodbye\n")
+  )
+  expect_identical(
+    unitizer:::close_and_clear(cons),
+    structure(c(TRUE, TRUE), .Names = c("output", "message"))
+  )
+  expect_equal(readLines(f1), "12 there hello")
+  expect_equal(readLines(f2), "12 there goodbye")
+  close(c2)
+  unlink(c(f1, f2))
 
   # Test the more pernicious error where we substitute the stdout sink
 
@@ -110,20 +145,22 @@ test_that("connection capture works", {
   sink()
   unlink(f1)
   expect_true(attr(cons@out.c, "waive"))
-  expect_true(is.null(attr(cons@err.c, "waive")))
+  expect_null(attr(cons@err.c, "waive"))
   expect_identical(
     capt, list(output = "woohoo\n", message = "yohooo\n")
   )
-  unitizer:::close_and_clear(cons)
+  expect_identical(
+    unitizer:::close_and_clear(cons),
+    structure(c(FALSE, TRUE), .Names = c("output", "message"))
+  )
 })
-
 test_that("eval with capt", {
   expect_identical(
     unitizer:::eval_with_capture(quote(1+1)),
     list(value = 2, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "[1] 2\n", message = "")
   )
   expect_identical(
-    unitizer:::eval_with_capture(message("wow")),
+    unitizer:::eval_with_capture(cat("wow\n", file=stderr())),
     list(value = NULL, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "", message = "wow\n")
   )
 })
