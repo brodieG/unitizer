@@ -274,10 +274,11 @@ close_and_clear <- function(cons) {
 
   if(isTRUE(attr(cons@out.c, "waive"))) {
     # if waived, we have not unsunk our original connection, so need to ensure
-    # it is still around
+    # it is still around, @stdout.level refers to the level before we sunk it
+    # ourselves, so we need the -1L to test that sink
 
     out.level <- sink.number()
-    level.extra <- out.level - cons@stdout.level
+    level.extra <- out.level - cons@stdout.level - 1L
 
     if(level.extra > 0) replicate(level.extra, sink())
     test.str <- "\n\n<unitizer sink test>\n\n"

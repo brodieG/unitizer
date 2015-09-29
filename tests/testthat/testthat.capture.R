@@ -68,6 +68,7 @@ test_that("connection capture works", {
   # two, and also need to reset the stderr sink.  In both cases unsink_cons will
   # not touch the sinks since we're not in an expected state
 
+  err.con <- getConnection(sink.number(type="message"))
   cons <- new("unitizerCaptCons")
   cons <- unitizer:::set_capture(cons)
   cat("there hello\n")
@@ -77,12 +78,16 @@ test_that("connection capture works", {
   c2 <- file(f2, "w")
   sink(f1)
   sink(c2, type="message")
+  cat("12 there hello\n")
+  cat("12 there goodbye\n", file=stderr())  # message does not work with testthat
   capt <- unitizer:::get_capture(cons)
   cons <- unitizer:::unsink_cons(cons)
   sink()
   sink()
   sink(err.con, type="message")
   close(c2)
+  expect_equal(readLines(f1), "12 there hello")
+  expect_equal(readLines(f2), "12 there goodbye")
   unlink(c(f1, f2))
   expect_true(attr(cons@out.c, "waive"))
   expect_true(attr(cons@err.c, "waive"))
