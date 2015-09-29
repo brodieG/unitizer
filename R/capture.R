@@ -257,8 +257,9 @@ failsafe_con <- function(cons) {
   if(inherits(capt.try, "try-error")) {
     signalCondition(attr(capt.try, "condition"))
   } else {
-    cat(capt.try$output, "\n", sep="")
-    cat(capt.try$message, "\n", sep="", file=stderr())
+    if(sum(nchar(capt.try$output))) cat(capt.try$output, "\n", sep="")
+    if(sum(nchar(capt.try$message)))
+      cat(capt.try$message, "\n", sep="", file=stderr())
   }
   word_msg(
     "Problems managing stdout/stderr streams, so we have reset all sinks, ",
