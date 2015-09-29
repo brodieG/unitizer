@@ -11,7 +11,7 @@ unitizer_check_demo_state()
 # 2. v0.1.1: initial (flawed) attempt at optimizing our functions
 # 2. v0.1.2: fixes to regressions introduced in v0.1.1
 #
-# See Also: `?unitizer::demo`, `?unitize`, `?vignette("unitizer")`
+# See Also: `?unitizer::demo`, `?unitize`, `vignette("unitizer")`
 
 `[Press ENTER to Continue]`()
 
