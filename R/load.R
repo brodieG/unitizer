@@ -67,8 +67,7 @@ load_unitizers <- function(
           new(
             "unitizer", id=norm_store_id(store.ids[[x]]),
             zero.env=new.env(parent=par.frame),
-            test.file.loc=norm_file(test.files[[x]]),
-            cons=NULL
+            test.file.loc=norm_file(test.files[[x]])
       ) ) }
       return(
         "`get_unitizer` returned something other than a `unitizer` or FALSE"
