@@ -40,7 +40,7 @@ test_that("bad seed", {
     txtopt1, file.path("helper", "refobjs", "unitize_txtop1.rds")
   )
   # supplied seed not valid int
-  # unexpectedly exited
+  # unexpectedly exited; not clear why all stderr is not being captured by capture_output...
   expect_equal_to_reference(
     txtopt2, file.path("helper", "refobjs", "unitize_txtop2.rds")
   )
