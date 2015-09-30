@@ -738,13 +738,14 @@ capture_output <- function(expr, env=parent.frame()) {
   std.out <- tempfile()
   std.err <- tempfile()
   std.err.con <- file(std.err, "w")
+  old.err.con <- getConnection(sink.number(type="message"))
   files <- c(output=std.out, message=std.err)
   success <- FALSE
   sink(std.out)
   sink(std.err.con, type="message")
   on.exit({
     sink()
-    sink(type="message")
+    sink(old.err.con, type="message")
     close(std.err.con)
     if(!success) {
       try({
