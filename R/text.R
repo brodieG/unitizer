@@ -23,7 +23,7 @@ screen_out <- function(
 #' This will print two objects to screen in a faux git diff look, focusing on a
 #' snippet of the object.
 #'
-#' @keywords internal
+#' @export
 #' @param obj.rem object to compare
 #' @param obj.add object to compare
 #' @param obj.rem.name object to compare
@@ -36,13 +36,7 @@ screen_out <- function(
 #' @param file whether to show to stdout or stderr
 #' @param frame what frame to capture in, relevant mostly if looking for a print
 #'   method
-#' @return
-#'   \itemize{
-#'      \item for \code{char_diff} a list with two vectors, each of same length
-#'        as inputs, where FALSE indicates value is the same as in the other
-#'        vector, and TRUE indicates it is different
-#'   }
-#' @aliases obj_capt obj_screen_out
+#' @return character, invisibly, the text representation of the diff
 
 diff_obj_out <- function(
   obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
@@ -94,6 +88,43 @@ diff_obj_out <- function(
       width=tar.width, pad=pad.add
   ) )
   if(!is.null(file)) cat(sep="\n", res, file=file)
+  invisible(res)
+}
+#' Do a \code{\link{tools::Rdiff}} Between R Objects
+#'
+#' Just a wrapper that saves the \code{print} / \code{show} representation of an
+#' object to a temp file and then runs \code{\link{tools::Rdiff}} on them.  For
+#' each of \code{from}, \code{to}, will check if they are 1 length character
+#' vectors referencing an RDS file, and will use the contents of that RDS file
+#' as the object to compare.
+#'
+#' @export
+#' @seealso \code{\link{tools::Rdiff}}
+#' @param from an R object (see details)
+#' @param to another R object (see details)
+#' @param ... passed on to \code{Rdiff}
+#' @return whatever \code{Rdiff} returns
+
+Rdiff_obj <- function(from, to, ...) {
+  dummy.env <- new.env()  # used b/c unique object
+  files <- try(
+    vapply(
+      list(from, to),
+      function(x) {
+        if(is.chr1(x) && file_test("-f", x)) {
+          rdstry <- tryCatch(readRDS(x), error=function(x) dummy.env)
+          if(!identical(rdstry, dummy.env)) x <- rdstry
+        }
+        f <- tempfile()
+        capture.output(if(isS4(x)) show(x) else print(x), file=f)
+        f
+      },
+      character(1L)
+  ) )
+  if(inherits(files, "try-error"))
+    stop("Unable to store text representation of objects")
+  res <- tools::Rdiff(files[[1L]], files[[2L]], ...)
+  unlink(files)
   invisible(res)
 }
 # @rdname diff_obj_out
