@@ -1,97 +1,77 @@
-#' Helper Functions to Capture and Process stdout/err Output
-#'
-#' \code{set} functions set sinks, and \code{get} functions retrieve the
-#' captured output. There are two types of functions here:
-#'
-#' \itemize{
-#'   \item \code{set_text_capture} and \code{get_text_capture} are intended for
-#'     use in situations we know the code to be evaluated will not be setting
-#'     sinks of its own; note that \code{get_text_capture} undoes any sinks set
-#'     by \code{set_text_capture}
-#'   \item \code{set_capture} and \code{get_capture} are meant for use when
-#'     evaluating the tests as both stdout and stderr are handled
-#'     \code{get_capture} does *not* undo the sinks since we need to check after
-#'     getting the text that the sinks are still in a reasonable state
-#'     with \code{unsink_cons}
-#' }
-#' All output to \code{stdout} and \code{stderr} is capture in a single file for
-#' each of those streams.  The captures happen sequentially, and are read off
-#' by \code{\link{readChar}}.  It is important to note this method implies that
-#' the files grow throughout the entire test evaluation process, and are only
-#' dumped at the very end.  This is to avoid overhead from repeatedly creating
-#' and opening new connections.
-#'
-#' \code{set} functions will not actually set the sinks if the connections have
-#' a "waive" attribute set to TRUE.
-#'
-#' @param con either a file name or an open connection; make sure that you use
-#'   a \code{con} created by \code{set_text_capture} for \code{get_text_capture}
-#'   since \code{set_text_capture} detects whether sinking is already in process
-#'   and returns FALSE if it is, which then tells \code{get_text_capture} not to
-#'   undo the sink
-#' @param type charcter(1L) in \code{c("output", "message")}
-#' @param file.name character(1L) file location corresponding to \code{con}
-#' @param no.unsink logical(1L) for testing purposes so we don't release a sink
-#'   when none was actually set
-#' @return \itemize{
-#'   \item \code{set_text_capture}: a connection, with attribute "waive" set to
-#'     TRUE if the sink was already sunk and we did not sink it again
-#'   \item \code{get_text_capture}: character
-#' }
-#' @keywords internal
-#' @aliases get_text_capture, get_capture, release_sinks, release_stdout_sink,
-#'   release_stderr_sink
+# Helper Functions to Capture and Process stdout/err Output
+#
+# \code{set} functions set sinks, and \code{get} functions retrieve the
+# captured output. There are two types of functions here:
+#
+# \itemize{
+#   \item \code{set_text_capture} and \code{get_text_capture} are intended for
+#     use in situations we know the code to be evaluated will not be setting
+#     sinks of its own; note that \code{get_text_capture} undoes any sinks set
+#     by \code{set_text_capture}
+#   \item \code{set_capture} and \code{get_capture} are meant for use when
+#     evaluating the tests as both stdout and stderr are handled
+#     \code{get_capture} does *not* undo the sinks since we need to check after
+#     getting the text that the sinks are still in a reasonable state
+#     with \code{unsink_cons}
+# }
+# All output to \code{stdout} and \code{stderr} is capture in a single file for
+# each of those streams.  The captures happen sequentially, and are read off
+# by \code{\link{readChar}}.  It is important to note this method implies that
+# the files grow throughout the entire test evaluation process, and are only
+# dumped at the very end.  This is to avoid overhead from repeatedly creating
+# and opening new connections.
+#
+# \code{set} functions will not actually set the sinks if the connections have
+# a "waive" attribute set to TRUE.
+#
+# \code{get_text_capture} and set companion are kind of half-assed updated to
+# use the new version of the \code{cons} argument.  The used to just take a
+# simple connection, but the need to reset stderr output to the original error
+# connection required the change, and it's a bit confusing because \code{cons}
+# contains both connections, whereas these functions operate on one connection
+# at a time.
+#
+# @param con either a file name or an open connection; make sure that you use
+#   a \code{con} created by \code{set_text_capture} for \code{get_text_capture}
+#   since \code{set_text_capture} detects whether sinking is already in process
+#   and returns FALSE if it is, which then tells \code{get_text_capture} not to
+#   undo the sink
+# @param type charcter(1L) in \code{c("output", "message")}
+# @param file.name character(1L) file location corresponding to \code{con}
+# @param no.unsink logical(1L) for testing purposes so we don't release a sink
+#   when none was actually set
+# @return \itemize{
+#   \item \code{set_text_capture}: a connection, with attribute "waive" set to
+#     TRUE if the sink was already sunk and we did not sink it again
+#   \item \code{get_text_capture}: character
+# }
+# @keywords internal
 
 set_text_capture <- function(
-  con, type, capt.disabled=getOption("unitizer.disable.capt", FALSE)
+  cons, type, capt.disabled=
+    getOption("unitizer.disable.capt", c(output=FALSE, message=FALSE))
 ) {
   stopifnot(
-    inherits(con, "file") && isOpen(con),
+    is(cons, "unitizerCaptCons"),
     type %in% c("output", "message"),
-    is.TF(capt.disabled)
+    is.valid_capt_setting(capt.disabled)
   )
-  if(!capt.disabled) sink(con, type=type)
-  return(con)
-
-  # Deal with different scenarios
-  # message: easy, we have the old connection
-  # output: a bit tougher, variations
-  # - sink_num greater than expected: undo sinks back to our number, check that
-  #   our number is what we think it is
-  # - sink_num expected: check that our sink is what it should be
-  # - sink_num less than expected: freak out?
-  # Gets more complicated since we have to account that this can all change
-  # between tests.  Do we not respect sinks established by tests across multiple
-  # test expressions?
-  # - If we don't respect, then process is pretty simple, mostly, just pull
-  #   back to original sink level
-  #
-  # Either way:
-  # - track original sink level and sink message file
-  # - if sink level increases or sink message connection changes:
-  #     - engage waive mode
-  #     - when test file complete, restore originals
-  #     - for output sink, confirm that once we get back to original sink number
-  #       file is what we think it is
-  #     - if not issue warning, after restoring sink message
-  #
-  # So, when we first create connections, we have to record sink num and prev
-  # sink file.
+  con <- slot(cons, if(type=="message") "err.c" else "out.c")
+  if(!capt.disabled[[type]]) {
+    sink(con, type=type)
+  } else if(type == "output") sink(con, split=TRUE)
+  return(cons)
 }
-#' @rdname set_text_capture
-#' @keywords internal
 
 get_text_capture <- function(
-  con, file.name, type, no.unsink=FALSE,
+  cons, type, no.unsink=FALSE,
   chrs.max=getOption("unitizer.max.capture.chars", 200000L)
 ) {
-  if(
-    !isTRUE(type %in% c("message", "output")) || !is.character(file.name) ||
-    length(file.name) != 1L || !(inherits(con, "file") && isOpen(con) ||
-    identical(con, FALSE))
-  ) {
-    stop("Logic Error: invalid arguments; contact maintainer.")
-  }
+  stopifnot(
+    isTRUE(type %in% c("message", "output")),
+    is(cons, "unitizerCaptCons"),
+    is.TF(no.unsink)
+  )
   if(
     !is.numeric(chrs.max) || length(chrs.max) != 1L || is.na(chrs.max) ||
     chrs.max < 100L
@@ -100,19 +80,16 @@ get_text_capture <- function(
       "Argument `chrs.max` must be integer(1L) and greater ",
       "than 100L; using 200000L for now", immediate.=TRUE
   ) }
-  if(inherits(con, "file") && isOpen(con)) {
-    if(identical(type, "message")) {
-      if(!no.unsink) sink(type="message")
-    } else if (identical(type, "output")) {
-      if(!no.unsink) sink()
-    } else {
-      stop("Logic Error: unexpected connection type; contact maintainer.")
+  if(identical(type, "message")) {
+    if(!no.unsink) {
+      sink(cons@stderr.con, type="message")
     }
-    return(get_text(con))
+  } else if (identical(type, "output")) {
+    if(!no.unsink) sink()
   } else {
-    stop("Logic Error: argument `con` must be an open file connection or FALSE")
+    stop("Logic Error: unexpected connection type; contact maintainer.")
   }
-  return("") # used to be character()
+  return(get_text(slot(cons, if(type=="message") "err.c" else "out.c")))
 }
 release_sinks <- function(silent=FALSE) {
   release_stdout_sink(FALSE)
@@ -147,19 +124,18 @@ get_capture <- function(
   list(output=output, message=message)
 }
 set_capture <- function(
-  cons, capt.disabled=getOption("unitizer.disable.capt", FALSE)
+  cons, capt.disabled=
+    getOption("unitizer.disable.capt", c(output=FALSE, message=FALSE))
 ) {
-  stopifnot(is(cons, "unitizerCaptCons"), is.TF(capt.disabled))
+  stopifnot(is(cons, "unitizerCaptCons"), is.valid_capt_setting(capt.disabled))
   out.level <- sink.number()
   err.level <- sink.number(type="message")
   err.con <- try(getConnection(err.level))
   if(!identical(out.level, cons@stdout.level)) attr(cons@out.c, "waive") <- TRUE
   if(!identical(err.con, cons@stderr.con)) attr(cons@err.c, "waive") <- TRUE
 
-  cons@err.c <-
-    set_text_capture(cons@err.c, "message", capt.disabled=capt.disabled)
-  cons@out.c <-
-    set_text_capture(cons@out.c, "output", capt.disabled=capt.disabled)
+  set_text_capture(cons, "message", capt.disabled=capt.disabled)
+  set_text_capture(cons, "output", capt.disabled=capt.disabled)
   cons
 }
 # Just Pull Text From A Connection
@@ -242,7 +218,7 @@ unsink_cons <- function(cons) {
 
   if(!isTRUE(all.equal(err.con, cons@err.c, check.attributes=FALSE))) {
     attr(cons@err.c, "waive") <- TRUE
-  } else sink(type="message")
+  } else sink(cons@stderr.con, type="message")
 
   # Return possibly modified cons (waived)
 
