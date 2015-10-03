@@ -148,7 +148,6 @@ eval_with_capture <- function(
   on.exit({
     options(warn=warn.opt)
     options(error=err.opt)
-    yy <- sink.number()
     get.try <- try(capt <- do.call(get_capture, get_args))
     unsink.try <- try(capt.cons <- unsink_cons(capt.cons))
     if(!inherits(get.try, "try-error")) {
