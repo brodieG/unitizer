@@ -274,7 +274,7 @@ close_and_clear <- function(cons) {
       replicate(sink.number(), sink())
       word_msg("Tests corrupted stdout sink stack; all stdout sinks cleared.")
       status[["output"]] <- FALSE
-    } else sink()
+    } else if(sink.number()) sink()
   }
   close(cons@err.c)
   close(cons@out.c)

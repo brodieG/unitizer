@@ -756,7 +756,7 @@ capture_output <- function(expr, env=parent.frame()) {
     unlink(files)
   })
   eval(expr, env)
-  res <- lapply(files, readLines)
+  res <- suppressWarnings(lapply(files, readLines))
   success <- TRUE
   invisible(structure(res, class="captured_output"))
 }

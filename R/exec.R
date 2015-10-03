@@ -139,13 +139,23 @@ eval_with_capture <- function(
   set_args <- list()
   set_args[["capt.disabled"]] <- global$unitizer.opts[["unitizer.disable.capt"]]
   capt.cons <- do.call(set_capture, c(list(capt.cons), set_args))
+  get_args <- list(capt.cons)
+  get_args[["chrs.max"]] <-
+    global$unitizer.opts[["unitizer.max.capture.chars"]]
 
   # Manage unexpected outcomes
 
   on.exit({
     options(warn=warn.opt)
     options(error=err.opt)
-    failsafe_con(cons)  # deal with sinks, etc
+    yy <- sink.number()
+    get.try <- try(capt <- do.call(get_capture, get_args))
+    unsink.try <- try(capt.cons <- unsink_cons(capt.cons))
+    if(!inherits(get.try, "try-error")) {
+      cat(c(capt$message, "\n"), file=stderr(), sep="\n")
+      cat(c(capt$output, "\n"), sep="\n")
+    }
+    if(inherits(unsink.try, "try-error")) failsafe_con(capt.cons)
     if(!came.with.capts) close_and_clear(capt.cons)
     word_msg(
       "Unexpectedly exited evaluation attempt when executing test ",
@@ -169,9 +179,6 @@ eval_with_capture <- function(
   # already; do.call so we can rely on default get_capture settings if those
   # in `unitizer.opts` are NULL
 
-  get_args <- list(capt.cons)
-  get_args[["chrs.max"]] <-
-    global$unitizer.opts[["unitizer.max.capture.chars"]]
   capt <- do.call(get_capture, get_args)
   capt.cons <- unsink_cons(capt.cons)
   if(getOption("unitizer.show.output", TRUE)) {
