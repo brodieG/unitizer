@@ -58,14 +58,13 @@ To use `unitizer`:
 
 ## Documentation
 
-* `help(package="unitizer")` for major user facing functions, in particular `?unitize`
-* `demo(package="unitizer")` for a demo (and `?unitizer::demo`)
-* Vignettes:
-    * [Introduction Vignette]() (Recommended)
-    * [Test details]() how to modify how new tests are compared to reference values, how to organize your tests into sections, and what aspects of expression evaluation can be tested (e.g. stdout, stderr, etc.).
-    * [Interactive Environment]() reviews the `unitizer` interactive environments, highlights differences with the standard R prompt, explains the different unitizer commands, discusses the .new/.NEW and .ref/.REF `unitizer` objects, and introduces some of the complexities of unitizer evaluation environments.
-    * [Reproducible Tests]() reviews how `unitizer` tracks and manages different aspects of session state to insulate tests from variability in user workspace state
-    * [Esoteric Topics]() more details on test environment structure, how `unitizer`s are stored (and alteranatives), version control issues, troubleshooting tips, and other miscellaneous topics
+In addition to `help(package="unitizer")` (in particular `?unitize`), `demo(package="unitizer")`, there are several vignettes:
+
+  * [Introduction](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html) An overview of `unitizer`, including a comparison to existing unit testing frameworks.
+  * [Test details](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_tests.html) how to modify how new tests are compared to reference values, how to organize your tests into sections, and what aspects of expression evaluation can be tested.
+  * [Interactive Environment](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_interactive_env.html) reviews the `unitizer` interactive environments, highlights differences with the standard R prompt, explains the different unitizer commands, discusses the .new/.NEW and .ref/.REF `unitizer` objects, and more.
+  * [Reproducible Tests](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_reproducible_tests.html) reviews how `unitizer` tracks and manages different aspects of session state to insulate tests from variability in user workspace state
+  * [Esoteric Topics](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_miscellaneous.html) more details on test environment structure, how `unitizer`s are stored (and alteranatives), version control issues, troubleshooting tips, and more
 
 ## Acknowledgments
 

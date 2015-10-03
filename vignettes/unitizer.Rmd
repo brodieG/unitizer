@@ -55,13 +55,12 @@ To use `unitizer`:
 
 ### Documentation
 
-* `help(package="unitizer")` for major user facing functions, in particular `?unitize`
-* `demo(package="unitizer")` for a demo (and `?unitizer::demo`)
-* Vignettes:
-    * [Test details]() how to modify how new tests are compared to reference values, how to organize your tests into sections, and what aspects of expression evaluation can be tested (e.g. stdout, stderr, etc.).
-    * [Interactive Environment]() reviews the `unitizer` interactive environments, highlights differences with the standard R prompt, explains the different unitizer commands, discusses the .new/.NEW and .ref/.REF `unitizer` objects, and introduces some of the complexities of unitizer evaluation environments.
-    * [Reproducible Tests]() reviews how `unitizer` tracks and manages different aspects of session state to insulate tests from variability in user workspace state
-    * [Esoteric Topics]() more details on test environment structure, how `unitizer`s are stored (and alteranatives), version control issues, troubleshooting tips, and other miscellaneous topics
+In addition to `help(package="unitizer")` (in particular `?unitize`), `demo(package="unitizer")`, there are several vignettes:
+
+  * [Test details](unitizer_tests.html) how to modify how new tests are compared to reference values, how to organize your tests into sections, and what aspects of expression evaluation can be tested.
+  * [Interactive Environment](unitizer_interactive_env.html) reviews the `unitizer` interactive environments, highlights differences with the standard R prompt, explains the different unitizer commands, discusses the .new/.NEW and .ref/.REF `unitizer` objects, and more.
+  * [Reproducible Tests](unitizer_reproducible_tests.html) reviews how `unitizer` tracks and manages different aspects of session state to insulate tests from variability in user workspace state
+  * [Esoteric Topics](unitizer_miscellaneous.html) more details on test environment structure, how `unitizer`s are stored (and alteranatives), version control issues, troubleshooting tips, and more
 
 ## How Does `unitizer` Differ from `testthat`?
 
@@ -132,11 +131,11 @@ Remember to include `unitizer` as a "suggests" package in your DESCRIPTION file.
 
 ### `unitizer` Writes To Your Filesystem
 
-The `unitize`d tests need to be saved someplace, and the default action is to save to the same directory as the test file.  You will always be prompted by `unitizer` before it writes to your file system.  See [storing `unitized` tests](vgn06nittygritty.html#storing-unitized-tests) for implications and alternatives.
+The `unitize`d tests need to be saved someplace, and the default action is to save to the same directory as the test file.  You will always be prompted by `unitizer` before it writes to your file system.  See [storing `unitized` tests](unitizer_miscellaneous.html#storing-unitized-tests) for implications and alternatives.
 
 ### Tests Pass If They `all.equal` Stored Reference Values
 
-Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](vgn03tests.html)).
+Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](unitizer_tests.html)).
 
 ### State and Side Effects
 
@@ -148,7 +147,7 @@ Once you have created your first `unitizer` with `unitize`, subsequent calls to 
 * Random seed
 * Working directory
 
-Additionally, `unitizer` is able to control the search path and global options, though these last two features are disabled by default.  For more details, see `?unitizerState` and the [reproducible tests vignette](vgn05reproducibletests.html).
+Additionally, `unitizer` is able to control the search path and global options, though these last two features are disabled by default.  For more details, see `?unitizerState` and the [reproducible tests vignette](unitizer_reproducible_tests.html).
 
 #### Reference Objects
 
@@ -158,11 +157,11 @@ Tests that modify objects by reference are not perfectly suited for use with `un
 
 In order to re-create the feel of the R prompt within `unitizer` we resorted to a fair bit of trickery.  For the most part this should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it.  Here is a non-exhaustive list of some of the tricky things we do:
 
-* `library`, `require`, `attach`, and `detach` are `trace`d during `unitize` evaluation (see [reproducible tests vignette](vgn05reproducibletests.html))
-* Each tests is evaluated in its own environment, a child of the previous test's environment; because `R` looks up objects in parent environments it appears that all tests are evaluated in one environment (see [interactive environment vignette](vgn04interactiveenvironment.html))
-* We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics vignette](vgn06nittygritty.html)) at the `unitizer` prompt
+* `library`, `require`, `attach`, and `detach` are `trace`d during `unitize` evaluation (see [reproducible tests vignette](unitizer_reproducible_tests.html))
+* Each tests is evaluated in its own environment, a child of the previous test's environment; because `R` looks up objects in parent environments it appears that all tests are evaluated in one environment (see [interactive environment vignette](unitizer_interactive_env.html))
+* We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics vignette](unitizer_miscellaneous.html)) at the `unitizer` prompt
 * `traceback` should work when reviewing tests that produce errors, but only because we capture the trace with `sys.calls` and write it to `base::.Traceback` during review
-* We sink `stdout` and `stderr` during test evaluation to capture those streams (see [details on tests vignette](vgn03tests.html)), though we take care to do so responsibly
+* We sink `stdout` and `stderr` during test evaluation to capture those streams (see [details on tests vignette](unitizer_tests.html)), though we take care to do so responsibly
 * We parse the test file and extract comments so that they can be attached to the correct test for review
 * The history file is temporary replaced so that your `unitizer` interactions do not pollute it
 
@@ -172,7 +171,7 @@ In particular, you should avoid evaluating tests that invoke `debug`ged function
 
 ### Avoid running `unitize` within `try` / `tryCatch` Blocks
 
-Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](vgn06nittygritty.html#error-handling).
+Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](unitizer_miscellaneous.html#error-handling).
 
 ## About the Author
 
