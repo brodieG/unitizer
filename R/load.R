@@ -67,8 +67,7 @@ load_unitizers <- function(
           new(
             "unitizer", id=norm_store_id(store.ids[[x]]),
             zero.env=new.env(parent=par.frame),
-            test.file.loc=norm_file(test.files[[x]]),
-            cons=NULL
+            test.file.loc=norm_file(test.files[[x]])
       ) ) }
       return(
         "`get_unitizer` returned something other than a `unitizer` or FALSE"
@@ -242,14 +241,15 @@ store_unitizer <- function(unitizer) {
   old.par.env <- parent.env(unitizer@zero.env)
   on.exit(parent.env(unitizer@zero.env) <- old.par.env)
   parent.env(unitizer@zero.env) <- baseenv()
-  unitizer@global <- NULL  # to avoid taking up a bunch of storage on large object
 
   # zero out connections we'v been using
 
-  if(!is.null(unitizer@cons)) {
-    close_and_clear(unitizer@cons)
-    unitizer@cons <- NULL
-  }
+  if(!is.null(unitizer@global$cons)) close_and_clear(unitizer@global$cons)
+
+  # to avoid taking up a bunch of storage on large object
+
+  unitizer@global <- NULL
+
   rm(list=ls(unitizer@base.env, all.names=TRUE), envir=unitizer@base.env)
 
   # Reset other fields

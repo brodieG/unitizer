@@ -1,3 +1,4 @@
+library(unitizer)
 local({
   mx.1 <- matrix(1:9, nrow=3)
   mx.2 <- matrix(1:100, ncol=2)
@@ -195,6 +196,30 @@ local({
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "d")),
       list(c(FALSE, FALSE, TRUE), c(FALSE, FALSE, TRUE))
     )
+  })
+  test_that("Rdiff_obj", {
+    a <- matrix(1:3, ncol=1)
+    b <- matrix(c(1, 3, 2), ncol=1)
+    expect_identical(
+      capture.output(res <- Rdiff_obj(a, b)),
+      c("", "3c3", "< [2,]    2", "---", "> [2,]    3", "4c4", "< [3,]    3",  "---", "> [3,]    2")
+    )
+    expect_equal(res, 1)
+    expect_identical(capture.output(Rdiff_obj(a, a)), character())
+    expect_equal(Rdiff_obj(a, a), 0)
+
+    # Try with RDS object
+
+    f <- tempfile()
+    saveRDS(a, f)
+    expect_identical(
+      capture.output(res <- Rdiff_obj(f, b)),
+      c("", "3c3", "< [2,]    2", "---", "> [2,]    3", "4c4", "< [3,]    3",  "---", "> [3,]    2")
+    )
+    expect_equal(res, 1)
+    expect_identical(capture.output(Rdiff_obj(f, f)), character())
+    expect_equal(Rdiff_obj(a, a), 0)
+    unlink(f)
   })
   test_that("let_comb_fun",{
     expect_identical(

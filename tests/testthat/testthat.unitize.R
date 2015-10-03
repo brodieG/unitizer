@@ -40,7 +40,7 @@ test_that("bad seed", {
     txtopt1, file.path("helper", "refobjs", "unitize_txtop1.rds")
   )
   # supplied seed not valid int
-  # unexpectedly exited
+  # unexpectedly exited; not clear why all stderr is not being captured by capture_output...
   expect_equal_to_reference(
     txtopt2, file.path("helper", "refobjs", "unitize_txtop2.rds")
   )
@@ -315,10 +315,9 @@ txt20 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 test_that("multi-sect", {
   txt20$output <- gsub("^<\\w+: .*?>", "", txt20$output)
-  # saveRDS(txt20, file.path("helper", "refobjs", "unitize_multisect1.rds"))
   txt20.rds <- readRDS(file.path("helper", "refobjs", "unitize_multisect1.rds"))
   txt20.rds$output <- gsub("^<\\w+: .*?>", "", txt20.rds$output)
-  expect_identical(txt20, txt20.rds)
+  expect_equal_to_reference(txt20, file.path("helper", "refobjs", "unitize_multisect1.rds"))
 })
 # Purposefully mess up one of the unitizers to see if the load fail stuff works
 

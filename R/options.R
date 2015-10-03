@@ -108,8 +108,10 @@ NULL
 #'     but for \code{stderr output}
 #'   \item \code{unitizer.show.output}: TRUE or FALSE, whether to display test
 #'     \code{stdout} and \code{stderr} output as it is evaluated.
-#'   \item \code{unitizer.disable.capt}: TRUE or FALSE, whether to prevent
-#'     \code{unitizer} from capturing \code{stdout} and \code{stderr}
+#'   \item \code{unitizer.disable.capt}: logical(2L), not NA, with names
+#'     \code{c("output", "message")} where each value indicates whether the
+#'     corresponding stream should be captured or not.  For \code{stdout} the
+#'     stream is still captured but setting the value to FALSE tees it.
 #'   \item \code{unitizer.max.capture.chars}: integer(1L) maximum number of
 #'     characters to allow capture of per test
 #' }
@@ -227,7 +229,8 @@ options_update <- function(tar.opts) {
 .unitizer.opts.default <- list(
   unitizer.par.env=NULL,                   # NULL means use the special unitizer environment
   unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
-  unitizer.disable.capt=FALSE,             # Will prevent capture
+  unitizer.disable.capt=
+    c(output=FALSE, message=FALSE),        # Will prevent capture
   unitizer.test.out.lines=c(50L, 15L),     # How many lines to display when showing test values, or truncate to if exceeds
   unitizer.test.fail.out.lines=c(10L, 5L), # How many lines to display when showing failed objects (note banner means one more line than this displayed)
   unitizer.test.msg.lines=c(10L, 3L),      # How many lines to display when showing test errors, or truncate to if exceeds
@@ -272,8 +275,8 @@ validate_options <- function(opts.to.validate) {
     {
       if(!is.TF(unitizer.show.output))
         stop("Option `unitizer.show.output` must be TRUE or FALSE")
-      if(!is.TF(unitizer.disable.capt))
-        stop("Option `unitizer.disable.capt` must be TRUE or FALSE")
+      if(!is.valid_capt_setting(unitizer.disable.capt))
+        stop("Option `unitizer.disable.capt` is invalid (see prior message)")
       if(!is.int.pos.2L(unitizer.test.out.lines))
         stop(
           "Option `unitizer.test.out.lines` must be integer(2L), strictly ",

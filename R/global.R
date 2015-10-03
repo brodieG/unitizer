@@ -1,4 +1,5 @@
 #' @include is.R
+#' @include capture.R
 
 NULL
 
@@ -263,7 +264,8 @@ unitizerGlobal <- setRefClass(
     status="unitizerGlobalStatus",
     disabled="unitizerGlobalDisabled",
     tracking="unitizerGlobalTracking",
-    ns.opt.conflict="unitizerGlobalNsOptConflict",    # Allow us to remember if an error happened on state reset
+    ns.opt.conflict="unitizerGlobalNsOptConflict",  # Allow us to remember if an error happened on state reset
+    cons="unitizerCaptConsOrNULL",                  # Connections for stdout and stderr capture
 
     unitizer.opts="list",   # store original unitizer options before they get zeroed out
 

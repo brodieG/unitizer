@@ -23,6 +23,11 @@ To use `unitizer`:
 
 * Write up test expressions for your functions as you would when informally testing them on the command line, and save them to a file (e.g. "my_file_name.R")
 * Run `unitize("my_file_name.R")`
+* Follow prompts to review the values produced by your test expressions
+* Continue developing your package
+* Re-run `unitize("my_file_name.R")`; if there are regressions you will be dropped into an interactive prompt to review each failing test with the environment set as it was when the test was evaluated
+
+
 
 `unitize` will step through the tests in an interactive environment for you to review and accept as unit tests.  Subsequently, any time you make changes to your project you can re-run `unitize`.  `unitizer` will detect any changes to the results of your expressions so you will be alerted to any regressions you introduce.  `unitizer` is compatible with `R CMD check` and travis.
 
