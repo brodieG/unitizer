@@ -98,12 +98,12 @@ release_sinks <- function(silent=FALSE) {
   NULL
 }
 release_stdout_sink <- function(silent=FALSE) {
-  if(!isTRUE(silent)) message("All stdout sinks released, even those established by test expressions.")
   replicate(sink.number(), sink())
+  if(!isTRUE(silent)) message("All stdout sinks released, even those established by test expressions.")
 }
 release_stderr_sink <- function(silent=FALSE) {
-  if(!isTRUE(silent)) message("Stderr sink released.")
   if(!identical(sink.number(type="message"), 2L)) sink(type="message")
+  if(!isTRUE(silent)) message("Stderr sink released.")
 }
 # Wrappers Around Capture functions
 #
