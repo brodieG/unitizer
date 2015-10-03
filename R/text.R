@@ -28,8 +28,6 @@ screen_out <- function(
 #' @param obj.add object to compare
 #' @param obj.rem.name object to compare
 #' @param obj.add.name object to compare
-#' @param x a character vector
-#' @param y another character vector to compare to
 #' @param width at what width to wrap output
 #' @param max.len 2 length integer vector with first value threshold at which we
 #'   start trimming output and the second the length we tri to
@@ -90,16 +88,16 @@ diff_obj_out <- function(
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
-#' Do a \code{\link{tools::Rdiff}} Between R Objects
+#' Do a \code{tools::Rdiff} Between R Objects
 #'
 #' Just a wrapper that saves the \code{print} / \code{show} representation of an
-#' object to a temp file and then runs \code{\link{tools::Rdiff}} on them.  For
+#' object to a temp file and then runs \code{tools::Rdiff} on them.  For
 #' each of \code{from}, \code{to}, will check if they are 1 length character
 #' vectors referencing an RDS file, and will use the contents of that RDS file
 #' as the object to compare.
 #'
 #' @export
-#' @seealso \code{\link{tools::Rdiff}}
+#' @seealso \code{tools::Rdiff}
 #' @param from an R object (see details)
 #' @param to another R object (see details)
 #' @param ... passed on to \code{Rdiff}

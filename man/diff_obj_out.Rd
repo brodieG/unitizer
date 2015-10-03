@@ -28,10 +28,6 @@ start trimming output and the second the length we tri to}
 
 \item{frame}{what frame to capture in, relevant mostly if looking for a print
 method}
-
-\item{x}{a character vector}
-
-\item{y}{another character vector to compare to}
 }
 \value{
 character, invisibly, the text representation of the diff
