@@ -32,7 +32,7 @@
 #' displays the contents of a source code file, \code{update_fastlm} changes the
 #' source code of \code{unitizer.fastlm}, and \code{unitizer_check_demo_state}
 #' and \code{unitizer_cleanup_demo} perform janitorial functions.  None of
-#' these functions are not for use outside of the unitizer demo.
+#' these functions are intended for use outside of the unitizer demo.
 #'
 #' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
 #'   `[Press ENTER to Continue]`

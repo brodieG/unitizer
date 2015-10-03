@@ -1,4 +1,4 @@
-unitizer 1.0.3
+unitizer 1.0.0-1.0.8
 --------------------------------------------------------------------------------
 
 Improvement / Changes:
@@ -8,8 +8,7 @@ Improvement / Changes:
     * state is reset when reviewing tests as well as when executing them
     * you are alerted off state differences between new and reference tests
       on error
-    * see state vignette for more details
-* Streamlining of state control parameters into one (`state`); API breaking
+    * State control parameters are streamlined; API breaking
 * Whether an expression is ignored or not is now a function of whether the
   expression returns visibly or not
 * Pre and post test scripts

@@ -7,7 +7,7 @@ unitizer_check_demo_state()
 #
 # The package versions are:
 #
-# 1. v0.1.0: a slow version that is know to produce the correct results
+# 1. v0.1.0: a slow version that is known to produce the correct results
 # 2. v0.1.1: initial (flawed) attempt at optimizing our functions
 # 2. v0.1.2: fixes to regressions introduced in v0.1.1
 #
