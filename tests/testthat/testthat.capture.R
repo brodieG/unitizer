@@ -19,13 +19,12 @@ options(unitizer.max.capture.chars=100L)
 # readLines(f)
 # unlink(f)
 
-f <- tempfile()
-con <- file(f, "w+b")
 test_that("get_capture", {
+  cons <- new("unitizerCaptCons")
   base.char <- paste(rep(letters, 10), collapse=" ")
-  writeChar(base.char, con)
+  writeChar(base.char, cons@out.c)
   expect_warning(
-    cpt0 <- unitizer:::get_text_capture(con, f, "output", TRUE),
+    cpt0 <- unitizer:::get_text_capture(cons, "output", TRUE),
     "Reached maximum text capture"
   )
   expect_equal(cpt0, substr(base.char, 1, 100))
@@ -35,15 +34,14 @@ test_that("get_capture", {
   # writeChar("xxxxxx", con)
   # cpt2 <- unitizer:::get_text_capture(con, f, "output", TRUE)
   # expect_equal("xxxxxx", cpt2)
-  writeChar(paste0(rep("yyyyyyy", 20L), collapse=""), con)
+  writeChar(paste0(rep("yyyyyyy", 20L), collapse=""), cons@out.c)
   expect_warning(
-    cpt1 <- unitizer:::get_text_capture(con, f, "output", TRUE),
+    cpt1 <- unitizer:::get_text_capture(cons, "output", TRUE),
     "Reached maximum text capture"
   )
   expect_equal(paste0(rep("y", 100), collapse=""), cpt1)
+  unitizer:::close_and_clear(cons)
 } )
-close(con)
-unlink(f)
 options(unitizer.max.capture.chars=old.max)
 
 test_that("connection capture works", {
@@ -130,30 +128,34 @@ test_that("connection capture works", {
   expect_equal(readLines(f2), "12 there goodbye")
   close(c2)
   unlink(c(f1, f2))
-
-  # Test the more pernicious error where we substitute the stdout sink
-
-  cons <- new("unitizerCaptCons")
-  cons <- unitizer:::set_capture(cons)
-  cat("woohoo\n")
-  cat("yohooo\n", file=stderr())
-  f1 <- tempfile()
-  sink()
-  sink(f1)
-  capt <- unitizer:::get_capture(cons)
-  cons <- unitizer:::unsink_cons(cons)
-  sink()
-  unlink(f1)
-  expect_true(attr(cons@out.c, "waive"))
-  expect_null(attr(cons@err.c, "waive"))
-  expect_identical(
-    capt, list(output = "woohoo\n", message = "yohooo\n")
-  )
-  expect_identical(
-    unitizer:::close_and_clear(cons),
-    structure(c(FALSE, TRUE), .Names = c("output", "message"))
-  )
 })
+# # These tests cannot be run as they blow away the entire sink stack which can
+# # mess up any testing done under capture
+#
+# test_that("connection breaking tests", {
+#   # Test the more pernicious error where we substitute the stdout sink
+#
+#   cons <- new("unitizerCaptCons")
+#   cons <- unitizer:::set_capture(cons)
+#   cat("woohoo\n")
+#   cat("yohooo\n", file=stderr())
+#   f1 <- tempfile()
+#   sink()
+#   sink(f1)
+#   capt <- unitizer:::get_capture(cons)
+#   cons <- unitizer:::unsink_cons(cons)
+#   sink()
+#   unlink(f1)
+#   expect_true(attr(cons@out.c, "waive"))
+#   expect_null(attr(cons@err.c, "waive"))
+#   expect_identical(
+#     capt, list(output = "woohoo\n", message = "yohooo\n")
+#   )
+#   expect_identical(
+#     unitizer:::close_and_clear(cons),
+#     structure(c(FALSE, TRUE), .Names = c("output", "message"))
+#   )
+# })
 test_that("eval with capt", {
   expect_identical(
     unitizer:::eval_with_capture(quote(1+1)),
