@@ -7,7 +7,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{04 - Interactive Environment}
+  %\VignetteIndexEntry{Interactive Environment}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---

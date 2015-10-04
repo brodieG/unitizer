@@ -7,7 +7,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{03 - Unitizer Tests}
+  %\VignetteIndexEntry{Unitizer Tests}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---

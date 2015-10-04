@@ -8,7 +8,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{01 - Introduction / Quick Start}
+  %\VignetteIndexEntry{Introduction}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
@@ -35,7 +35,7 @@ library(unitizer)
 unitize("my_file_name.R")
 ```
 
-### Usage
+### Description and Usage
 
 `unitizer` stores R expressions and the result of evaluating them so that it can detect code regressions.  This is similar to saving test output to a `.Rout.save` file as documented in [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories), except that:
 

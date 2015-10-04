@@ -23,7 +23,7 @@
 #' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
 #' (see \code{state} parameter).
 #'
-#' See \code{unitizer} vignettes and demo for details and examples.
+#' See \code{vignette("unitizer")} and demo for details and examples.
 #'
 #' @section Default Settings:
 #'
@@ -34,8 +34,8 @@
 #' @section State:
 #'
 #' You can modify all aspects of state control with the \code{state} parameter.
-#' See the \code{\link{unitizerState}} documentation and the \code{state}
-#' vignette for more details.
+#' See the \code{\link{unitizerState}} documentation and
+#' \code{vignette("unitizer_reproducible_tests")} vignette for more details.
 #'
 #' @export
 #' @aliases unitize review unitize_dir
