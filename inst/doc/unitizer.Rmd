@@ -1,5 +1,5 @@
 ---
-title: "unitizeR - Vignette Guide"
+title: "unitizeR - Easy R Unit Tests"
 author: "Brodie Gaslam"
 output:
     rmarkdown::html_vignette:
@@ -7,47 +7,164 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{Vignette Guide}
+  %\VignetteIndexEntry{Introduction}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
 
-## Prologue (TL;DR)
+## Introduction
 
-`unitizer` bakes in a lot of contextual help so you can use it without wading into this rather lengthy set of vignettes. The best way to get started is to review the interactive demo (and the [companion vignette](vgn02democompanion.html) if you are into documentation):
+### TL;DR
+
+`unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
+```
+library(devtools)
+install_github("brodieg/unitizer")
+```
+We will release to CRAN once version 1.0.x is more thoroughly tested.
+
+`unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
 ```
 library(unitizer)
 demo(unitizer)
 ```
-Or alternative, review the [introduction vignette](vgn01introduction.html).
+Or just save some R expressions to a file and run:
+```
+library(unitizer)
+unitize("my_file_name.R")
+```
 
-## Vignettes
+### Description and Usage
 
-### Introduction
+`unitizer` stores R expressions and the result of evaluating them so that it can detect code regressions.  This is similar to saving test output to a `.Rout.save` file as documented in [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories), except that:
 
-The [introduction vignette](vgn01introduction.html) explains the motivation for developing `unitizer`, compares it to other unit testing frameworks, provides a quick start guide, and highlights some issues you should be aware of when using `unitizer`.
+* Result objects and signaled conditions are automatically saved
+* You can review each test separately before it is stored
+* When a test fails, you can immediately review it interactively with all variables set to the same values they had when the test was run
+* You can easily add, remove, and modify tests
 
-### Demo Companion
+To use `unitizer`:
 
-The [demo companion vignette](vgn02democompanion.html) provides additional details and documentation for the included interactive demo.
+* Write test expressions as you would when informally testing code on the command line, and save them to a file (e.g. "my_file_name.R")
+* Run `unitize("my_file_name.R")` and follow the prompts
+* Continue developing your package
+* Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to review and debug them in an interactive prompt
 
-### Details on Tests
+`unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
-The [details on tests vignette](vgn03tests.html) delves into the details of what constitutes a test in `unitizer`, how to modify how new tests are compared to reference values, how to organize your tests into sections, and how to test different aspects of expression evaluation (e.g. stdout, stderr, etc.).
+### Documentation
 
-### Interactive Environment
+* `help(package="unitizer")`, in particular `?unitize`
+* `demo(package="unitizer")`
+* [`vignette("unitizer_index")` for a list of vignettes](unitizer_index.html)
 
-The [interactive environment vignette](vgn04interactiveenvironment.html) reviews the `unitizer` prompt, highlights differences with the standard R prompt, explains the different `unitizer` commands, discussing the `.new` and `.ref` `unitizer` objects, and introduces some of the complexities of `unitizer` evaluation environments.
+## How Does `unitizer` Differ from `testthat`?
 
-### Reproducible Tests
+### Testing Style
 
-By default `unitizer` runs expressions in an environment that does not inherit from `.GlobalEnv` and with a search path reduced to the standard search path of a fresh R session.  The [reproducible tests vignette](vgn05reproducibletests.html) discusses how this is done and potential implications for your tests.
+`unitizer` requires you to review test outputs and confirm they are as expected.  `testthat` requires you to assert what the test outputs should be beforehand.  There are trade-offs between these strategies that we illustrate here, first with `testthat`:
+```
+vec <- c(10, -10, 0, .1, Inf, NA)
+expect_error(
+  log10(letters),
+  "Error in log10\\(letters\\) : non-numeric argument to mathematical function\n"
+)
+expect_equal(log10(vec), c(1, NaN, -Inf, -1, Inf, NA))
+expect_warning(log10(vec), "NaNs produced")
+```
+And with `unitizer`:
+```
+vec <- c(10, -10, 0, .1, Inf, NA)
+log10(letters)                            # input error
+log10(vec)                                # succeed with warnings
+```
+These two unit test implementations are functionally equivalent.  There are benefits to both approaches.  In favor of `unitizer`:
 
-### Esoteric Topics
+* Tests are easy to write
+* Conditions are captured automatically, with no need for special handling
 
-The [esoteric topics vignette](vgn06nittygritty.html) covers a number of miscellaneous topics, including:
+In favor of `testthat`:
 
-* More details on `unitizer` environment structure
-* How `unitizer`s are stored, and implications thereof
-* Overridden functionality
-* `unitizer` and version control
+* The tests are self documenting; expected results are obvious
+* Once you write the test you are done; with `unitizer` you still need to `unitize` and review the tests
+
+`unitizer` is particularly convenient when the tests return complex objects (e.g as `lm` does) or produce conditions.  There is no need for complicated assertions involving deparsed objects.
+
+Additionally, `unitizer` provides an interactive environment that allows you to immediately review each failing test _in that test's evaluation environment_.  It is also trivial to update tests if the test result changes are legitimate.
+
+### Converting `testthat` tests to `unitizer`
+
+If you have a stable set of tests it is probably not worth trying to convert them to `unitizer` unless you expect the code those tests cover to change substantially.  If you do decide to convert tests you can use the provided `testthat_translate*` functions (see `?testthat_translate_file`).
+
+## `unitizer` and Packages
+
+The simplest way to use `unitizer` as part of your package development process is to create a `tests/unitizer` folder for all your `unitizer` test scripts.  Here is a sample test structure from the demo package:
+```
+unitizer.fastlm/         # top level package directory
+    R/
+    tests/
+        run.R            # <- calls `unitize` or `unitize_dir`
+        unitizer/
+            fastlm.R
+            cornerCases.R
+```
+And this is what the `tests/run.R` file would look like
+```
+library(unitizer)
+unitize("unitizer/fastlm.R")
+unitize("unitizer/cornerCases.R")
+```
+or equivalently
+```
+library(unitizer)
+unitize_dir("unitizer")
+```
+The path specification for test files should be relative to the `tests` directory as that is what `R CMD check` uses.  When `unitize` is run by `R CMD check` it will run in a non-interactive mode that will succeed only if all tests pass.
+
+Remember to include `unitizer` as a "suggests" package in your DESCRIPTION file.
+
+## Things You Should Know About `unitizer`
+
+### `unitizer` Writes To Your Filesystem
+
+The `unitize`d tests need to be saved someplace, and the default action is to save to the same directory as the test file.  You will always be prompted by `unitizer` before it writes to your file system.  See [storing `unitized` tests](unitizer_miscellaneous.html#storing-unitized-tests) for implications and alternatives.
+
+### Tests Pass If They `all.equal` Stored Reference Values
+
+Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](unitizer_tests.html)).
+
+### State and Reference Objects
+
+`unitizer` tracks and manages many aspects of state so that it can be reproduced later, and so that your workspace is restored to its original state after running the tests.  The following aspects of state are actively tracked and managed:
+
+* Parent environment (objects in your workspace will not be visible to tests)
+* Random seed
+* Working directory
+
+Additionally, `unitizer` is able to control the search path and global options, though these last two features are disabled by default.  For more details, see `?unitizerState` and the [reproducible tests vignette](unitizer_reproducible_tests.html).
+
+Tests that modify objects by reference are not perfectly suited for use with `unitizer`.  The tests will work fine, but `unitizer` will only be able to show you the most recent version of the reference object when you review a test, not what it was like when the test was evaluated.  This is only an issue with reference objects that are modified (e.g. environments, RC objects, `data.table` modified with `:=` or `set*`).
+
+### `unitizer` Is Complex
+
+In order to re-create the feel of the R prompt within `unitizer` we resorted to a fair bit of trickery.  For the most part this should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it.  Here is a non-exhaustive list of some of the tricky things we do:
+
+* `library`, `require`, `attach`, and `detach` are `trace`d during `unitize` evaluation (see [reproducible tests vignette](unitizer_reproducible_tests.html))
+* Each tests is evaluated in its own environment, a child of the previous test's environment; because `R` looks up objects in parent environments it appears that all tests are evaluated in one environment (see [interactive environment vignette](unitizer_interactive_env.html))
+* We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics vignette](unitizer_miscellaneous.html)) at the `unitizer` prompt
+* `traceback` should work when reviewing tests that produce errors, but only because we capture the trace with `sys.calls` and write it to `base::.Traceback` during review
+* We sink `stdout` and `stderr` during test evaluation to capture those streams (see [details on tests vignette](unitizer_tests.html)), though we take care to do so responsibly
+* We parse the test file and extract comments so that they can be attached to the correct test for review
+* The history file is temporary replaced so that your `unitizer` interactions do not pollute it
+
+### Avoid Tests That Require User Input
+
+In particular, you should avoid evaluating tests that invoke `debug`ged functions, or introducing interactivity by using something like `options(error=recover)`, or `readline`, or some such.  Tests will work, but the interaction will be challenging because you will have to do it with `stderr` and `stdout` captured...
+
+### Avoid running `unitize` within `try` / `tryCatch` Blocks
+
+Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](unitizer_miscellaneous.html#running-unitize-within-error-handling-blocks).
+
+## About the Author
+
+Brodie Gaslam is a hobbyist programmer based in the US East Coast.

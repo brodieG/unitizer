@@ -11,7 +11,7 @@
 <meta name="author" content="Brodie Gaslam" />
 
 
-<title>unitizeR - Esoteric Topics</title>
+<title>unitizeR - Miscellanea</title>
 
 
 
@@ -25,99 +25,52 @@
 
 
 <div id="header">
-<h1 class="title">unitizeR - Esoteric Topics</h1>
+<h1 class="title">unitizeR - Miscellanea</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
 </div>
 
 <div id="TOC">
 <ul>
-<li><a href="#subtleties-of-the-interactive-environment">Subtleties Of The Interactive Environment</a></li>
-<li><a href="#issues-with-reference-objects">Issues With Reference Objects</a></li>
-<li><a href="#patchwork-reference-environments">Patchwork Reference Environments</a></li>
-<li><a href="#overridden-functionality">Overridden Functionality</a></li>
 <li><a href="#storing-unitized-tests">Storing <code>unitize</code>d Tests</a><ul>
-<li><a href="#unitizer-writes-to-your-file-system"><code>unitizer</code> Writes to Your File System</a></li>
+<li><a href="#default-mode-is-to-store-tests-in-rds-files">Default Mode is to Store Tests in <code>rds</code> Files</a></li>
+<li><a href="#file-space-considerations">File Space Considerations</a></li>
+<li><a href="#backup-your-unitizer-stores">Backup Your <code>unitizer</code> Stores</a></li>
+<li><a href="#alternate-store-locations">Alternate Store Locations</a></li>
+</ul></li>
 <li><a href="#version-control-and-unitizer">Version Control and Unitizer</a></li>
-</ul></li>
-<li><a href="#error-handling">Error Handling</a></li>
-<li><a href="#other-issues">Other Issues</a><ul>
-<li><a href="#ancillary-unitizer-packages">Ancillary <code>unitizer</code> Packages</a></li>
-</ul></li>
 <li><a href="#modifying-an-existing-unitizer">Modifying an Existing Unitizer</a><ul>
 <li><a href="#review"><code>review</code></a></li>
 <li><a href="#editcalls"><code>editCalls</code></a></li>
 <li><a href="#split"><code>split</code></a></li>
 </ul></li>
 <li><a href="#troubleshooting">Troubleshooting</a><ul>
+<li><a href="#after-running-unitizer-output-no-longer-shows-on-screen">After Running <code>unitizer</code> Output No Longer Shows on Screen</a></li>
 <li><a href="#unitizer-freezes-and-pops-up-selection"><code>unitizer</code> Freezes and Pops up “Selection:”</a></li>
 <li><a href="#running-unitizer-crashes-r">Running <code>unitizer</code> Crashes R</a></li>
 <li><a href="#different-outcomes-in-interactive-vs.non-interactive">Different Outcomes in Interactive vs. Non Interactive</a></li>
 </ul></li>
+<li><a href="#other-topics">Other Topics</a><ul>
+<li><a href="#running-unitize-within-error-handling-blocks">Running <code>unitize</code> Within Error Handling Blocks</a></li>
+<li><a href="#overridden-functions">Overridden Functions</a></li>
+</ul></li>
 </ul>
 </div>
 
-<div id="subtleties-of-the-interactive-environment" class="section level2">
-<h2>Subtleties Of The Interactive Environment</h2>
-<p>Clearly the <code>unitizer</code> prompt environment is not as straightforward as the standard R console environment, or even the <code>browser</code> environment. In reality it is even more complex than we have shown so far.</p>
-<p><code>unitizer</code> batch processes all the tests when it is first run before it breaks into interactive mode. It does this for two reasons:</p>
-<ol style="list-style-type: decimal">
-<li>this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly,</li>
-<li>it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.</li>
-</ol>
-<p>While there are good reasons for batch processing the tests, it means that the review process is complicated substantially. If we used a single evaluation environment it would be cluttered by all the objects created throughout the whole test script, so when we started reviewing the first test we would be seeing all the objects, even objects that did not exist when the first test was run. Much worse, it is entirely possible for a symbol to be re-used several times in a file, adopting different values for different tests, with the implication that objects used by our first test may have values that are different to what they were when the test was originally run.</p>
-<p>To get around this problem each test is run in its own environment. Each of these environments has for parent the environment of the previous test. This means that a test has access to all the objects created/used by earlier tests, but not objects created/used by subsequent tests. When a later test “modifies” an existing object, the existing object is not really modified; rather, the test creates a new object of the same name in the child environment which masks the object in the earlier test. This is functionally equivalent to overwriting the object as far as the later test is concerned.</p>
-<p>For the most part this environment trickery should be transparent to the user. The <code>ls</code> function is specially modified to, among other things, list objects in all the parent test environments. But there are exceptions to this “transparency”. The simplest exception is that you can not actually remove an object created in an earlier test (well, it is possible, but the how isn’t documented and you are advised not to attempt it). Here is a more complex exception:</p>
-<pre><code>a &lt;- function() b()
-b &lt;- function() TRUE
-a()</code></pre>
-<p>In this case, when we evaluate <code>a()</code> we must step back two environments to find <code>a</code>, but that’s okay. The problem is that once inside <code>a</code>, we must now evaluate <code>b()</code>, but <code>b</code> is defined in a child environment, not a parent environment so R’s object lookup fails.</p>
-<p>It turns out the above example actually works because as noted in <a href="vgn03tests.html">details on tests vignette</a>, environments are only defined for tests, an neither the <code>a</code> or <code>b</code> assignments are tests, so both <code>a</code> and <code>b</code> are assigned to the environment of the <code>a()</code> call. However, this really breaks:</p>
-<pre><code>a &lt;- function() b()
-NULL
-b &lt;- function() TRUE
-a()</code></pre>
-<p>Since NULL is a valid test, <code>a</code> is assigned to the environment associated with the <code>NULL</code> line, and <code>b</code> is assigned to the <code>a()</code> test environment, and the illusion is shattered.</p>
-<p>If you are getting weird “object not found” errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you. In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.</p>
-<p>One other point to keep in mind is that the <code>unitizer</code> prompt environment is different for each test you review, so if you assign any variables at the prompt, they will not be available at subsequent prompts.</p>
-</div>
-<div id="issues-with-reference-objects" class="section level2">
-<h2>Issues With Reference Objects</h2>
-<p>For the most part R is a copy-on-modify language, which allows us to employ the trickery described above. There are however “reference” objects that are not copied when they are modified. Notable examples include environments, reference classes, and <code>data.table</code>. Since our trickery requires us to keep copies of each object in different environments as they are modified, it does not work with reference objects since they are not automatically duplicated.</p>
-<p>The main consequence of this is that when you are reviewing a test that involves a reference object, the value of that reference object during review will be the value after the last reference modification, which may have been made after the test you are reviewing. The tests will still work as they should, passing if you did not introduce regressions, and failing otherwise. However if you review a failed test you may have a hard time making sense of what happened since the objects you review will may not have the values they had when the test was actually run.</p>
-</div>
-<div id="patchwork-reference-environments" class="section level2">
-<h2>Patchwork Reference Environments</h2>
-<p>When we review <code>unitizer</code> tests, it is possible to end up in a situation where we wish to update our store by keeping a mix of the new tests as well as some of the old ones. This leads to some complications because in order to faithfully reproduce the environments associated with both the reference and the new tests we would potentially have to store the entire set of environments produced by the test script for both the new and reference tests. Even worse, if we re-run unitizer again, we run the risk of having to store yet another set of environments (the old reference environments, what were new environments but became reference ones on this additional run, and the new environments created by this third run). The problem continues to grow with as each incremental run of the <code>unitizer</code> script potentially creates the need to store yet another set of environments.</p>
-<p>As a work-around to this problem <code>unitizer</code> only keeps the environment associated with the actual reference tests you chose to keep (e.g. when you type <code>N</code> at the <code>unitizer</code> prompt when reviewing a failed test). <code>unitizer</code> then grafts that test and its environment to the environment chain from the newly evaluated tests (note that for all tests that pass, we keep the new version of the tests, not the reference one). This means that in future <code>unitizer</code> runs where you examine this same reference test, the other “reference” objects available for inspection may not be from the same evaluation that produced the test. The <code>ls</code> command will highlight which objects are from the same evaluation vs which ones are not (see the <a href="vgn04interactiveenvironment.html#ls">discussion on <code>ls</code></a>).</p>
-<p>Clearly this is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing <code>unitizer</code> stores. For more details see <code>?&quot;healEnvs,unitizerItems,unitizer-method&quot;</code>.</p>
-</div>
-<div id="overridden-functionality" class="section level2">
-<h2>Overridden Functionality</h2>
-<p>In order to perpetuate the R console prompt illusion, <code>unitizer</code> needs to override some buit-in functionality, including:</p>
-<ul>
-<li><code>ls</code> is replaced by a special version that can explore the <code>unitizerItem</code> environments</li>
-<li><code>quit</code> and <code>q</code> are wrappers around the base functions that allow <code>unitizer</code> to quit gracefully</li>
-<li><code>traceback</code> while not replaced, is supported by a fair bit of voodoo involving among other things assigning to <code>base::.Traceback</code></li>
-<li>History is replaced during <code>unitizer</code> prompt evaluations with a temporary version of the history file containing only commands evaluated at the <code>unitizer</code> prompt. The normal history file is restored on exit.</li>
-</ul>
-</div>
 <div id="storing-unitized-tests" class="section level2">
 <h2>Storing <code>unitize</code>d Tests</h2>
-<div id="unitizer-writes-to-your-file-system" class="section level3">
-<h3><code>unitizer</code> Writes to Your File System</h3>
-<div id="default-mode-is-to-store-tests-in-rds-files" class="section level4">
-<h4>Default Mode is to Store Tests in <code>rds</code> Files</h4>
+<div id="default-mode-is-to-store-tests-in-rds-files" class="section level3">
+<h3>Default Mode is to Store Tests in <code>rds</code> Files</h3>
 <p><code>unitizer</code> stores unit tests and their results. By default, it stores them in <code>rds</code> files in your filesystem. You will be prompted before a file is saved to your filesystem.</p>
 <p>The <code>rds</code> file is placed in a directory with the same name as your test file, but with “unitizer” appended. For example, if your tests are in “my_file_name.R”, then <code>unitizer</code> will create a folder called “my_file_name.unitizer/” and put an <code>rds</code> file in it.</p>
 <p>See <code>?get_unitizer</code> for potential alternatives to saving to your file system.</p>
 </div>
-<div id="file-space-considerations" class="section level4">
-<h4>File Space Considerations</h4>
+<div id="file-space-considerations" class="section level3">
+<h3>File Space Considerations</h3>
 <p>If your tests produce massive objects, the <code>unitizer</code> <code>rds</code> file will be massive. Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.</p>
 <p>Additionally, note that the <code>rds</code> files are binary, which needs to be accounted for when using them in <a href="#version-control-and-unitizer">version controlled projects</a>.</p>
 </div>
-<div id="backup-your-unitizer-stores" class="section level4">
-<h4>Backup Your <code>unitizer</code> Stores</h4>
+<div id="backup-your-unitizer-stores" class="section level3">
+<h3>Backup Your <code>unitizer</code> Stores</h3>
 <p><code>unitizer</code> does not backup the <code>rds</code> beyond the single copy in the aforementioned folder. Unit tests are valuable, and without the <code>rds</code> file <code>unitizer</code> tests become a lot less useful. To the extent you backup your R test files, you should also backup the corresponding “.unitizer/” folder. You could lose / corrupt your <code>unitizer</code> store in many ways. Some non-exhaustive examples:</p>
 <ul>
 <li>Standard file system SNAFU</li>
@@ -126,16 +79,14 @@ a()</code></pre>
 </ul>
 <p>Backup your <code>unitizer</code> stores!</p>
 </div>
-<div id="alternate-store-locations" class="section level4">
-<h4>Alternate Store Locations</h4>
+<div id="alternate-store-locations" class="section level3">
+<h3>Alternate Store Locations</h3>
 <p><code>unitize</code> stores and loads <code>unitizer</code>s using the <code>set_unitizer</code> and <code>get_unitizer</code> S3 generics . This means you can implement your own S3 methods for those generics to store the <code>unitizer</code> object off-filesystem (e.g. MySQL databse, etc). See <code>?get_unitizer</code> for more details, though note this feature is untested.</p>
 <p>If you only wish to save your <code>unitizer</code> to a different location in your filesystem than the default, you do not need to resort to these methods as you can provide the target directory with <code>unitize(..., store.id=)</code>.</p>
 </div>
 </div>
-<div id="version-control-and-unitizer" class="section level3">
-<h3>Version Control and Unitizer</h3>
-<div id="handling-binary-files" class="section level4">
-<h4>Handling Binary Files</h4>
+<div id="version-control-and-unitizer" class="section level2">
+<h2>Version Control and Unitizer</h2>
 <p>The main issue with using <code>unitizer</code> with a version controlled package is that you have to decide whether you want to include the binary <code>rds</code> files in the version control history. Some options:</p>
 <ul>
 <li>do not track the binary files at all (but they are valuable and now not backed up)</li>
@@ -143,9 +94,6 @@ a()</code></pre>
 <li>Use a backed-up, non-file system store (see “Alternate Store Locations” above)</li>
 <li>Track the binary files, but only commit them for major releases</li>
 </ul>
-</div>
-<div id="suggested-workflow-with-git" class="section level4">
-<h4>Suggested Workflow with Git</h4>
 <p>The approach we suggest is the last one above: just commit your <code>rds</code> files for major releases. Also, note that to the extent you have a lot of test files that aren’t changing, this should minimize how much binary data you commit. One possible way to handle this with Git is to use the following command (adapted from twalberg’s <a href="http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory">SO answer</a>).</p>
 <p><strong>Warning</strong>: be careful when you reset your working directory as your <code>rds</code> files will get reset to the last version that you committed (i.e. <code>git checkout -- .</code> will replace your currend <code>rds</code> with the one in the repo). If you update your <code>rds</code> within a branch and then merge the branch back, make sure you either commit or stash the <code>rds</code> before the merge.</p>
 <p>To implement:</p>
@@ -153,22 +101,6 @@ a()</code></pre>
 <p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Just make sure you still commit your <code>rds</code> at key release points so you have backups of them. Once you reach the major release point, you can:</p>
 <pre><code>git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged</code></pre>
 <p>If you <code>--assume-unchanged</code> other files such as <code>.o</code> or <code>.so</code> files, you may need to remove those after a checkout as well so that <code>devtools::install</code> will recreate them from current sources.</p>
-</div>
-</div>
-</div>
-<div id="error-handling" class="section level2">
-<h2>Error Handling</h2>
-<p>Because <code>unitize</code> evaluates test expressions within a call to <code>withCallingHandlers</code>, there are some limitations on successfully running <code>unitize</code> inside your own error handling calls. In particular, <code>unitize</code> will not work properly if run inside a <code>tryCatch</code> or <code>try</code> statement. If test expressions throw conditions, the internal <code>withCallingHandlers</code> will automatically hand over control to your <code>tryCatch</code>/<code>try</code> statement without an opportunity to complete <code>unitize</code> computations. Unfortunately there does not seem to be a way around this since we have to use <code>withCallingHandlers</code> so that test statements after non-aborting conditions are run.</p>
-</div>
-<div id="other-issues" class="section level2">
-<h2>Other Issues</h2>
-<div id="ancillary-unitizer-packages" class="section level3">
-<h3>Ancillary <code>unitizer</code> Packages</h3>
-<p><code>unitizer</code> uses anscillary packages in examples and tests. These are are in <code>inst/example.pkgs</code> in the <code>unitizer</code> sources. You should not have a need to use these, but if you do:</p>
-<pre><code>unitizer.path &lt;- system.file(package=&quot;unitizer&quot;)
-library(devtools)
-install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # one of several dummy packages</code></pre>
-</div>
 </div>
 <div id="modifying-an-existing-unitizer" class="section level2">
 <h2>Modifying an Existing Unitizer</h2>
@@ -196,6 +128,15 @@ install(paste0(unitizer.path, &quot;/example.pkgs/unitizerdummypkg1&quot;))  # o
 </div>
 <div id="troubleshooting" class="section level2">
 <h2>Troubleshooting</h2>
+<div id="after-running-unitizer-output-no-longer-shows-on-screen" class="section level3">
+<h3>After Running <code>unitizer</code> Output No Longer Shows on Screen</h3>
+<p><code>unitizer</code> sinks <code>stdout</code> and <code>stderr</code> during test evaluation, so it is possible that in some corner cases <code>unitizer</code> exits without releasing sinks. We have put substantial effort in trying to avoid this eventuality, but should it occur, here are some things you can do:</p>
+<ul>
+<li>run: <code>while(sink.number()) sink()</code> and <code>sink(type=&quot;message&quot;)</code> to reset the output stream sinks</li>
+<li>or, restart the R session (type <code>q()</code> followed by ENTER, then “y” or “n” (without quotes) depending on whether you want to save your workspace or not)</li>
+</ul>
+<p>Either way, please contact the maintainer as this should not happen.</p>
+</div>
 <div id="unitizer-freezes-and-pops-up-selection" class="section level3">
 <h3><code>unitizer</code> Freezes and Pops up “Selection:”</h3>
 <p>This is almost certainly a result of an R crash. Unfortunately the normal mechanisms to restore <code>stderr</code> don’t seem to work completely with full R crashes, so when you see things like:</p>
@@ -228,6 +169,24 @@ Possible actions:
 <p>Watch out for functions that have default arguments of the type:</p>
 <pre><code>fun &lt;- function(x, y=getOption('blahblah'))</code></pre>
 <p>as those options may be different depending on whether you are running whether you are running R interactively or not. One prime example is <code>parse(..., keep.source = getOption(&quot;keep.source&quot;))</code>.</p>
+</div>
+</div>
+<div id="other-topics" class="section level2">
+<h2>Other Topics</h2>
+<div id="running-unitize-within-error-handling-blocks" class="section level3">
+<h3>Running <code>unitize</code> Within Error Handling Blocks</h3>
+<p>Because <code>unitize</code> evaluates test expressions within a call to <code>withCallingHandlers</code>, there are some limitations on successfully running <code>unitize</code> inside your own error handling calls. In particular, <code>unitize</code> will not work properly if run inside a <code>tryCatch</code> or <code>try</code> statement. If test expressions throw conditions, the internal <code>withCallingHandlers</code> will automatically hand over control to your <code>tryCatch</code>/<code>try</code> statement without an opportunity to complete <code>unitize</code> computations. Unfortunately there does not seem to be a way around this since we have to use <code>withCallingHandlers</code> so that test statements after non-aborting conditions are run.</p>
+<p>See this <a href="http://stackoverflow.com/questions/20572288/capture-arbitrary-conditions-with-withcallinghandlers">SO Q/A</a> for more details on the problem.</p>
+</div>
+<div id="overridden-functions" class="section level3">
+<h3>Overridden Functions</h3>
+<p>In order to perpetuate the R console prompt illusion, <code>unitizer</code> needs to override some buit-in functionality, including:</p>
+<ul>
+<li><code>ls</code> is replaced by a special version that can explore the <code>unitizerItem</code> environments</li>
+<li><code>quit</code> and <code>q</code> are wrappers around the base functions that allow <code>unitizer</code> to quit gracefully</li>
+<li><code>traceback</code> while not replaced, is supported by a fair bit of voodoo involving among other things assigning to <code>base::.Traceback</code></li>
+<li>History is replaced during <code>unitizer</code> prompt evaluations with a temporary version of the history file containing only commands evaluated at the <code>unitizer</code> prompt. The normal history file is restored on exit.</li>
+</ul>
 </div>
 </div>
 

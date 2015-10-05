@@ -32,13 +32,13 @@ We will release to CRAN once version 1.0.x is more thoroughly tested.
 library(unitizer)
 demo(unitizer)
 ```
-Or just write up some test expressions in a file, and run:
+Or just save some R expressions to a file and run:
 ```
 library(unitizer)
 unitize("my_file_name.R")
 ```
 
-## Usage
+## Description and Usage
 
 `unitizer` stores R expressions and the result of evaluating them so that it can detect code regressions.  This is similar to saving test output to a `.Rout.save` file as documented in [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories), except that:
 
@@ -58,13 +58,9 @@ To use `unitizer`:
 
 ## Documentation
 
-In addition to `help(package="unitizer")` (in particular `?unitize`), `demo(package="unitizer")`, there are several vignettes:
-
-  * [Introduction](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html) An overview of `unitizer`, including a comparison to existing unit testing frameworks.
-  * [Test details](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_tests.html) how to modify how new tests are compared to reference values, how to organize your tests into sections, and what aspects of expression evaluation can be tested.
-  * [Interactive Environment](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_interactive_env.html) reviews the `unitizer` interactive environments, highlights differences with the standard R prompt, explains the different unitizer commands, discusses the .new/.NEW and .ref/.REF `unitizer` objects, and more.
-  * [Reproducible Tests](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_reproducible_tests.html) reviews how `unitizer` tracks and manages different aspects of session state to insulate tests from variability in user workspace state
-  * [Esoteric Topics](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_miscellaneous.html) more details on test environment structure, how `unitizer`s are stored (and alteranatives), version control issues, troubleshooting tips, and more
+* `help(package="unitizer")`, in particular `?unitize`
+* `demo(package="unitizer")`
+* [`vignette("unitizer_index")` for a list of vignettes](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html), or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
 
 ## Acknowledgments
 

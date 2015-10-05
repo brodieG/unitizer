@@ -68,13 +68,13 @@
 <p>You can force assignments to become tests by wrapping them in parentheses:</p>
 <pre><code>a &lt;- my_fun(25)     # this is not a test
 (a &lt;- my_fun(42))   # this is a test</code></pre>
-<p>In addition to assignments, some expressions are not considered tests. At this time, another expression that is ignored is <code>library(...)</code>, as the return value for that function varies depending on the currently loaded libraries.</p>
+<p>The actual rule <code>unitizer</code> uses to decide whether an expression is a test or not is whether it returns invisibly. Wrapping parentheses around an expression that returns invisibly makes it visible, which is why assignments in parentheses become tests. Conversely, you can wrap an expression in <code>invisible(...)</code> to prevent it from being treated as a test.</p>
 </div>
 <div id="unitizer-test-components" class="section level3">
 <h3><code>unitizer</code> Test Components</h3>
 <p>The following aspects of a unitizer tests are recorded for future comparison:</p>
 <ul>
-<li>Value (whether invisible or not)</li>
+<li>Value</li>
 <li>Conditions</li>
 <li>Screen (stdout) output</li>
 <li>Message (stderr) output</li>
@@ -92,34 +92,35 @@
 <div id="untizer_sect" class="section level3">
 <h3><code>untizer_sect</code></h3>
 <p>Often it is useful to group tests in sections for the sake of documentation and clarity. Here is a slghtly modified version of the original demo file with sections:</p>
-<pre><code>library(unitizer.fastlm)
-
-unitizer_sect(&quot;Create Fastlm Object&quot;, {
-  x &lt;- 1:100
-  y &lt;- x ^ 2
+<pre><code>unitizer_sect(&quot;Basic Tests&quot;, {
+  library(unitizer.fastlm)
+  x &lt;- 1:10
+  y &lt;- x ^ 3
   res &lt;- fastlm(x, y)
-  res
-})
-unitizer_sect(&quot;Accessor Functions&quot;, {
-  get_slope(res)
-  get_rsq(res)
-  get_intercept(res)
-})
-unitizer_sect(&quot;Error Handling&quot;, {
-  fastlm(x, head(y))
-  get_rsq(&quot;cabbage&quot;)
-})</code></pre>
-<p>Now re-running <code>unitizer</code> segments everything by section:</p>
-<pre><code>unitize(&quot;inst/example.pkgs/fastlm.2/tests/unitizer/fastlm.R&quot;)
-+-----------------------------------------------------------------------------+
-| unitizer for: inst/example.pkgs/fastlm.2/tests/unitizer/fastlm.R            |
-+-----------------------------------------------------------------------------+
 
-                      Pass  Fail   New
-Create Fastlm Object     0     0     1
-Accessor Functions       0     0     3
-Error Handling           0     0     2
-**Total**                0     0     6</code></pre>
+  get_slope(res)
+})
+
+unitizer_sect(&quot;Advanced Tests&quot;, {
+  2 * get_slope(res) + get_intercept(res)
+  get_rsq(res)
+})</code></pre>
+<p>Now re-running <code>unitizer</code> segments everything by section (note, first few lines are set-up):</p>
+<pre><code>(.unitizer.fastlm &lt;- copy_fastlm_to_tmpdir())
+update_fastlm(.unitizer.fastlm, version=&quot;0.1.2&quot;)
+devtools::install(.unitizer.fastlm, quiet=TRUE)
+unitize(file.path(.unitizer.fastlm, &quot;tests&quot;, &quot;unitizer&quot;, &quot;unitizer.fastlm.R&quot;))
+
++------------------------------------------------------------------------------+
+| unitizer for: tests/unitizer/unitizer.fastlm.R                               |
++------------------------------------------------------------------------------+
+
+                    Pass Fail  New
+ 1.    Basic Tests     -    -    1
+ 2. Advanced Tests     -    -    2
+..................................
+                       -    -    3
+</code></pre>
 <p>If there are tests that require reviewing, each section will be reviewed in turn.</p>
 <p>Note that <code>unitizer_sect</code> does not create separate evaluation environments for each section. Any created object will be available to all lexically subsequent tests, regardless of whether they are in the same section or not.</p>
 <p>It is possible to have nested sections, though at this point in time <code>unitizer</code> only explicitly reports information at the outermost section level.</p>
@@ -166,12 +167,12 @@ Error Handling           0     0     2
 <p>In order to properly capture output, <code>unitizer</code> will modify streams and options. In particular, it will do the following:</p>
 <ul>
 <li>temporarily set <code>options(warn=1L)</code> during expression evaluation</li>
-<li>temporarily set <code>options(error=null)</code> during expression evaluation</li>
+<li>temporarily set <code>options(error=NULL)</code> during expression evaluation</li>
 <li>use <code>sink()</code> to capture any output to <code>stdout</code></li>
 <li>use <code>sink(type=&quot;message&quot;)</code> to capture output to <code>stderr</code></li>
 </ul>
 <p>This should all be transparent to the user, unless the user is also attempting to modify these settings in the test expressions. The problematic interaction are around the <code>options</code> function. If the user sets <code>options(warn=1)</code> with the hopes that setting will persist beyond the execution of the test scripts, that will not happen. If the user sets <code>options(error=recover)</code> or some such in a test expression, and that expression throws an error, you will be thrown into recovery mode with no visibility of <code>stderr</code> or <code>stdout</code>, which will make for pretty challenging debugging. Similarly, <code>unitize</code>ing <code>debug</code>ged functions, or interactive functions, is unlikely to work well.</p>
-<p>If <code>unitize</code> is run with <code>sdtderr</code> sunk, then it will not capture any <code>stderr</code> produced by the test expressions. If one of the test expressions enables <code>stderr</code> capture, then <code>unitize</code> will stop capturing messages from that point on. If after this another test expression disables message capture, this function will start capturing messages starting with the subsequent test expression.</p>
+<p>If <code>unitize</code> is run with <code>sdtderr</code> or <code>stdout</code> sunk, then it will subvert the sink during test evaluation and reset it to the same sinks on exit. If a test expression sinks either stream, <code>unitizer</code> will stop capturing output from that point on until the end of the test file. At that point, it will attempt to reset the sinks to what they were when <code>unitizer</code> started. Sometimes this is not actually possible. If such a situation occurs, <code>unitizer</code> will release all sinks to try to avoid a situation where control is returned to the user with output streams still captured.</p>
 <p>To reduce the odds of storing massive and mostly useless <code>stdout</code>, <code>unitize</code> limits how much output is stored by default. If you exceed the limit you will be warned. You may modify this setting with <code>options(&quot;unitizer.max.capture.chars&quot;)</code>.</p>
 </div>
 </div>

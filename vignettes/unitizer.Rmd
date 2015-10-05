@@ -1,7 +1,6 @@
 ---
 title: "unitizeR - Easy R Unit Tests"
 author: "Brodie Gaslam"
-date: "`r Sys.Date()`"
 output:
     rmarkdown::html_vignette:
         toc: true
@@ -29,7 +28,7 @@ We will release to CRAN once version 1.0.x is more thoroughly tested.
 library(unitizer)
 demo(unitizer)
 ```
-Or just write up some test expressions in a file, and run:
+Or just save some R expressions to a file and run:
 ```
 library(unitizer)
 unitize("my_file_name.R")
@@ -55,12 +54,9 @@ To use `unitizer`:
 
 ### Documentation
 
-In addition to `help(package="unitizer")` (in particular `?unitize`), `demo(package="unitizer")`, there are several vignettes:
-
-  * [Test details](unitizer_tests.html) how to modify how new tests are compared to reference values, how to organize your tests into sections, and what aspects of expression evaluation can be tested.
-  * [Interactive Environment](unitizer_interactive_env.html) reviews the `unitizer` interactive environments, highlights differences with the standard R prompt, explains the different unitizer commands, discusses the .new/.NEW and .ref/.REF `unitizer` objects, and more.
-  * [Reproducible Tests](unitizer_reproducible_tests.html) reviews how `unitizer` tracks and manages different aspects of session state to insulate tests from variability in user workspace state
-  * [Esoteric Topics](unitizer_miscellaneous.html) more details on test environment structure, how `unitizer`s are stored (and alteranatives), version control issues, troubleshooting tips, and more
+* `help(package="unitizer")`, in particular `?unitize`
+* `demo(package="unitizer")`
+* [`vignette("unitizer_index")` for a list of vignettes](unitizer_index.html)
 
 ## How Does `unitizer` Differ from `testthat`?
 
@@ -137,9 +133,7 @@ The `unitize`d tests need to be saved someplace, and the default action is to sa
 
 Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](unitizer_tests.html)).
 
-### State and Side Effects
-
-#### State
+### State and Reference Objects
 
 `unitizer` tracks and manages many aspects of state so that it can be reproduced later, and so that your workspace is restored to its original state after running the tests.  The following aspects of state are actively tracked and managed:
 
@@ -148,8 +142,6 @@ Once you have created your first `unitizer` with `unitize`, subsequent calls to 
 * Working directory
 
 Additionally, `unitizer` is able to control the search path and global options, though these last two features are disabled by default.  For more details, see `?unitizerState` and the [reproducible tests vignette](unitizer_reproducible_tests.html).
-
-#### Reference Objects
 
 Tests that modify objects by reference are not perfectly suited for use with `unitizer`.  The tests will work fine, but `unitizer` will only be able to show you the most recent version of the reference object when you review a test, not what it was like when the test was evaluated.  This is only an issue with reference objects that are modified (e.g. environments, RC objects, `data.table` modified with `:=` or `set*`).
 
@@ -171,7 +163,7 @@ In particular, you should avoid evaluating tests that invoke `debug`ged function
 
 ### Avoid running `unitize` within `try` / `tryCatch` Blocks
 
-Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](unitizer_miscellaneous.html#error-handling).
+Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](unitizer_miscellaneous.html#running-unitize-within-error-handling-blocks).
 
 ## About the Author
 

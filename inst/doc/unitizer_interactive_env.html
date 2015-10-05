@@ -47,6 +47,7 @@
 <li><a href="#new-and-.ref"><code>.new</code> and <code>.ref</code></a></li>
 <li><a href="#ls"><code>ls</code></a></li>
 </ul></li>
+<li><a href="#unitize_dir"><code>unitize_dir</code></a></li>
 </ul>
 </div>
 
@@ -54,14 +55,14 @@
 <h2>Overview</h2>
 <div id="unitize-vs-review" class="section level3">
 <h3><code>unitize</code> vs <code>review</code></h3>
-<p><code>unitizer</code> offers two functions to access the interactive review environment: <code>unitize</code> and <code>review</code>. <code>unitize</code> is used when you either want to generate a <code>unitizer</code> from a test file, or when you want to compare the re-evaluation of a test file to an existing <code>unitizer</code>.</p>
+<p><code>unitizer</code> offers three functions to access the interactive review environment: <code>unitize</code>, <code>unitize_dir</code>, and <code>review</code>. <code>unitize</code> is used when you either want to generate a <code>unitizer</code> from a test file, or when you want to compare the re-evaluation of a test file to an existing <code>unitizer</code>. <code>untize_dir</code> does what <code>unitize</code> does, except for a whole directory at a time.</p>
 <p><code>review</code> is a helper function used when you want to review the contents of an existing <code>unitizer</code>. This is useful if you grow uncertain about tests that you previously approved and want to ensure they actually do what you want them to. You can review and potentially remove items from a <code>unitizer</code> with <code>review</code>.</p>
 <p>Both these functions use the same interactive environment, though rules therein are slightly different. For example, in <code>review</code>, all the tests are considered passed since there is nothing to compare them to, and the interactive environment will step you through all the passed tests. <code>unitize</code> will normally omit passed tests from the review process.</p>
-<p>We will focus on <code>unitize</code> for the rest of this vignette since most of the commentary about it applies equally to <code>review</code>.</p>
+<p>We will focus on <code>unitize</code> for the rest of this vignette since most of the commentary about it applies equally to <code>unitize_dir</code> and <code>review</code>.</p>
 </div>
 <div id="example-set-up" class="section level3">
 <h3>Example Set-up</h3>
-<p>To examine the interactive environment more thoroughly we will go back to the demo. This is the <code>unitizer</code> prompt right after our first failed test when our <code>unitizer.fastlm</code> implementation was returning the wrong values:</p>
+<p>To examine the interactive environment more thoroughly we will go back to the demo (you can run it with <code>demo(unitizer)</code>). This is the <code>unitizer</code> prompt right after our first failed test when our <code>unitizer.fastlm</code> implementation was returning the wrong values:</p>
 <pre><code>&gt; get_slope(res)
 unitizer test fails on value mismatch:
 *value* mismatch: Mean relative difference: 6943055624
@@ -74,17 +75,18 @@ unitizer test fails on value mismatch:
 <div id="unitizer-commands" class="section level2">
 <h2><code>unitizer</code> Commands</h2>
 <p>Much like the <code>browser()</code> prompt, the <code>unitizer</code> prompt accepts several special expressions that allow you to control <code>unitizer</code> behavior. What the expressions are and what they do depends on context. We will review them in the context of the failed test described above. Look at what the <code>unitizer</code> prompt stated before we started reviewing our failed tests:</p>
-<pre><code>- Failed ----------------------------------------------------------------------
+<pre><code>- Failed -----------------------------------------------------------------------
 
-Reference test does not match new test from test script (compare `.new` and
-`.ref` to see differences). Overwrite item in store with new value ([Y]es, [N]o,
-[B]ack, [R]eview, [Q]uit, [H]elp)?</code></pre>
+The 2 tests in this section failed because the new evaluations do not match the
+reference values from the store. Overwrite with new results ([Y]es, [N]o,
+[P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?</code></pre>
 <p>This clearly lays out all the special commands available to us:</p>
 <ul>
 <li><code>Y</code> will accept the new value as the correct reference value to use for a test</li>
 <li><code>N</code> will keep the previous reference value as the reference value for future tests</li>
-<li><code>B</code> takes us back to the previously reviewed test (see “Test Navigation” next)</li>
-<li><code>R</code> allows us to navigate to any previously reviewed test (see “Test Navigation” next)</li>
+<li><code>P</code> takes us back to the previously reviewed test (see “Test Navigation” next)</li>
+<li><code>B</code> allows us to navigate to any previously reviewed test (see “Test Navigation” next)</li>
+<li><code>R</code> toggles re-run mode; when you complete review or exit, <code>unitizer</code> will re-run the tests, which is useful if you made changes to your source code and re-installed your package from the <code>unitizer</code> prompt</li>
 <li><code>Q</code> quits <code>unitizer</code> (see “Quitting <code>unitizer</code>”)</li>
 <li><code>H</code> provides contextual help</li>
 </ul>
@@ -102,60 +104,68 @@ Reference test does not match new test from test script (compare `.new` and
 <h2>Test Navigation</h2>
 <div id="selecting-a-test-to-review" class="section level3">
 <h3>Selecting A Test to Review</h3>
-<p><code>unitize</code> will present to you all the tests that require review, but if you wish to review a specific test you can use the <code>B</code> (for Back) and <code>R</code> (for Review) commands. These commands can come in handy if you realize that you incorrectly accepted or rejected an earlier test, but do not wish to quit <code>unitizer</code> completely and lose all the other properly reviewed tests. <code>B</code> just steps you back to the previous test. <code>R</code> gives you the option to go back to any previously reviewed test.</p>
-<p><code>B</code> is trivially straightforward, so we will not discuss it further. We will type <code>R</code> at the prompt of our second failed test to examine what it does:</p>
-<pre><code>unitizer&gt; R
-    *4. library(unitizer.fastlm)   .  .  .  .  .  .  .  .  .  .  .  .       -:-
-    *5. x &lt;- 1:100  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .       -:-
-    *6. y &lt;- x^2 .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .       -:-
-    *1. res &lt;- fastlm(x, y)  .  .  .  .  .  .  .  .  .  .  .  .  .  .       -:-
-     2. res   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:N
-     3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
-     7. get_rsq(res)   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
-     8. fastlm(x, head(y))   .  .  .  .  .  .  .  .  .  .  .  .  .  .  Passed:-
+<p><code>unitize</code> will present to you all the tests that require review, but if you wish to review a specific test you can use the <code>P</code> (for Previous) and <code>B</code> (for Browse) commands. These commands can come in handy if you realize that you incorrectly accepted or rejected an earlier test, but do not wish to quit <code>unitizer</code> completely and lose all the other properly reviewed tests. <code>P</code> just steps you back to the previous test. <code>B</code> gives you the option to go back to any previously reviewed test.</p>
+<p><code>P</code> is trivially straightforward, so we will not discuss it further. We will type <code>B</code> at the prompt of our second failed test to examine what it does:</p>
+<pre><code>unitizer&gt; B
+    *1. library(unitizer.fastlm)   .  .  .  .  .  .  .  .  .  .  .  .        -:-
+    *2. dat &lt;- data.frame(x = 1:100, y = (1:100)^2)  .  .  .  .  .  .        -:-
+    *3. res &lt;- fastlm(dat$x, dat$y)   .  .  .  .  .  .  .  .  .  .  .        -:-
+     4. res   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:N
+     5. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:-
+     6. get_rsq(res)   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+     7. fastlm(1:100, 1:10)  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
 
 What test do you wish to review (input a test number, [U]nreviewed)?
 unitizer&gt;</code></pre>
-<p>The <code>[R]eview</code> option produces a list of all the tests in the order in which they appear in the test file. You can type the number of a test to review it, or U to go to the first test that hasn’t been reviewed (more on this in a minute). We will examine the line for test #3 in more detail:</p>
-<pre><code>     3. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  Failed:-
-     ^   ^                                                                ^   ^
-     |   |                                                                |   |
-     |   +--  Deparsed test expression                    Test status ----+   |
-     |                                                                        |
-     +- Test ID                                                    User Input +</code></pre>
-<p>The value and order of the test IDs shouldn’t mean anything to you other than being the number to type in if you wish to review that test. Tests that have a <code>*</code> to the left of the test id are expessions that are not reviewed or checked by <code>unitizer</code> (we call these <a href="vgn03tests.html#what-constitutes-a-test">ignored tests</a>).</p>
-<p>The test status (see <a href="vgn03tests.html#test-outcomes">tests outcomes</a>) indicates the outcome of comparison of the reference test in the <code>unitizer</code> store to the newly evaluated ones. The first four tests are ignored tests, so they do not have a status. The User Input column marks which tests have been reviewed and what the user decision was. In this case we had reviewed test #2 and decided not to keep it (hence the “N”). Typically neither ignored tests nor passed tests require user input so they will typically have a “-” as the user input, as will tests that would be reviewed, but haven’t been yet.</p>
+<p>The <code>[B]rowse</code> option produces a list of all the tests in the order in which they appear in the test file. You can type the number of a test to review it, or U to go to the first test that hasn’t been reviewed (more on this in a minute). We will examine the line for test #5 in more detail:</p>
+<pre><code>     5. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:-
+     ^   ^                                                                ^    ^
+     |   |                                                                |    |
+     |   +--  Deparsed test expression                    Test status ----+    |
+     |                                                                         |
+     +- Test ID                                                    User Input -+</code></pre>
+<p>The value and order of the test IDs shouldn’t mean anything to you other than being the number to type in if you wish to review that test. Tests that have a <code>*</code> to the left of the test id are expessions that are not reviewed or checked by <code>unitizer</code> (we call these <a href="unitizer_tests.html#what-constitutes-a-test">ignored tests</a>).</p>
+<p>The test status (see <a href="unitizer_tests.html#test-outcomes">tests outcomes</a>) indicates the outcome of comparison of the reference test in the <code>unitizer</code> store to the newly evaluated ones. The first four tests are ignored tests, so they do not have a status. The User Input column marks which tests have been reviewed and what the user decision was. In this case we had reviewed test #2 and decided not to keep it (hence the “N”). Typically neither ignored tests nor passed tests require user input so they will typically have a “-” as the user input, as will tests that would be reviewed, but haven’t been yet.</p>
 <p>Typing <code>U</code> at the review prompt will take you to the first unreviewed test. Since ignored tests and passed tests are not typically reviewed, <code>U</code> will take you to the first unreviewed test that is neither passed nor ignored.</p>
-<p>If we type 2 at the prompt, we get:</p>
-<pre><code>unitizer&gt; 2
-You are re-reviewing a test; previous selection was: &quot;N&quot;
-# first reviewable expression
+<p>If we type 4 at the prompt, we get:</p>
+<pre><code>You are re-reviewing a test; previous selection was: &quot;N&quot;
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
 &gt; res
 unitizer test fails on value mismatch:
-*value* mismatch: Mean relative difference: 19864853591
+*value* mismatch: mean relative difference: 19854602162
 @@ .ref @@
--       intercept        slope          rsq
--    -1717.000000   101.000000     0.938679
--    attr(,&quot;class&quot;)
--    [1] &quot;fastlm&quot;
+-     intercept        slope          rsq
+-  -1717.000000   101.000000     0.938679
+   attr(,&quot;class&quot;)
+   [1] &quot;fastlm&quot;
 @@ .new @@
-+        intercept         slope           rsq
-+    -3.541306e+13  7.012486e+11  9.386790e-01
-+    attr(,&quot;class&quot;)
-+    [1] &quot;fastlm&quot;
++      intercept         slope           rsq
++  -3.541306e+13  7.012486e+11  9.386790e-01
+   attr(,&quot;class&quot;)
+   [1] &quot;fastlm&quot;
 unitizer&gt;</code></pre>
-<p><code>unitizer</code> tells us we are re-reviewing this test and that previously we had chosen not to keep the new version. At this point we could re-examine the test, and potentially change our previous selection.</p>
+<p><code>unitizer</code> tells us we are re-reviewing this test and that previously we had chosen not to keep the new version. At this point we could re-examine the test, and potentially change our previous selection. <code>unitizer</code> also re-displays any comments that were in the source file either ahead of the test or on the same line as the test. We used this feature to document the demo.</p>
 <p>You can jump ahead to any test from the review menu, even tests that are typically not reviewed (i.e. ignored or passed, though if you go to those you will be brought back to the review menu once you complete the review because those tests are not part of the normal review flow).</p>
 <p>If you skip ahead some tests and then get to the end of the review cycle <code>unitizer</code> will warn you about unreviewed tests.</p>
 </div>
 <div id="finalizing-unitizer" class="section level3">
 <h3>Finalizing <code>unitizer</code></h3>
-<p>Once you review all reviewable tests you will be asked to finalize the <code>unitizer</code>:</p>
-<pre><code>= Finalize Unitizer ===========================================================
+<p>Let’s accept the 5th test, which brings us to this prompt:</p>
+<pre><code>unitizer&gt; Y
 
-You are about to IRREVERSIBLY:
-- Replace 1 out of 2 failed tests
-Update unitizer ([Y]es, [N]o, [B]ack, [R]eview)?
+= Finalize Unitizer ============================================================
+
+You will IRREVERSIBLY modify 'tests/unitizer/fastlm1.unitizer' by:
+- Replacing 1 out of 2 failed tests
+
+Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
 unitizer&gt;</code></pre>
 <p>In this case we were reviewing a <code>unitizer</code> with two failed tests, one of which we chose to update with the newer value. <code>unitizer</code> will summarize for you all the changes that it is about to make to the <code>unitizer</code> store. If you type <code>Y</code> at the prompt, the existing <code>unitizer</code> store will be overwritten with the new version you just reviewed.</p>
 <p>If you are unsure about the changes you just approved for the <code>unitizer</code>, you can re-review them with <code>R</code> or <code>B</code>. You can also quit without saving your changes by typing <code>N</code>, but once you do so you will no longer be able to recover your changes.</p>
@@ -183,9 +193,10 @@ unitizer&gt;</code></pre>
 <ul>
 <li>Even though you can see objects produced by tests, you can not actually remove them with <code>rm</code></li>
 <li>Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts</li>
-<li>Other subtle issues discussed at length in the (<a href="vgn06nittygritty.html">esoteric topics vignette</a>)</li>
+<li>Other subtle issues discussed at length in the (<a href="unitizer_reproducible_tests.html#test-environments">reproducible tests vignette</a>)</li>
 <li>There are special <code>unitizer</code> objects <code>.new</code>, <code>.NEW</code>, <code>.ref</code>, and <code>.REF</code> that let you review the results of tests (we will discuss these next)</li>
 <li><code>ls</code> is over-ridden by a special <code>unitizer</code> version (we will also dicuss this next)</li>
+<li>You will have access to any objects created through the <code>pre</code> argument to <code>unitize</code>, though they will not show up in a call to <code>ls</code></li>
 </ul>
 </div>
 <div id="new-and-.ref" class="section level3">
@@ -242,6 +253,60 @@ attr(,&quot;class&quot;)
 <p>For more discussion see <code>?&quot;healEnvs,unitizerItems,unitizer-method&quot;</code> and the discussion of <a href="vgn06nittygritty.html#patchwork-reference-environments">patchwork reference environments</a>.</p>
 <p>Objects assigned right before a test are part of that test’s environment so will always be available.</p>
 </div>
+</div>
+<div id="unitize_dir" class="section level2">
+<h2><code>unitize_dir</code></h2>
+<p><code>unitize_dir</code> adds a layer of navigation. Here is what you see after running it on the demo package directory test directory:</p>
+<pre><code>&gt; (.unitizer.fastlm &lt;- copy_fastlm_to_tmpdir())    # package directory
+&gt; unitize_dir(.unitizer.fastlm)
+Inferred test directory location: private/var/folders/56/qcx6p6f94695mh7yw-
+q9m6z_80000gq/T/RtmpJO7kjd/file43ac57df6164/unitizer.fastlm/tests/unitizer
+
+Summary of files in common directory 'tests/unitizer':
+                       Pass Fail  New
+*1.         fastlm1.R     -    -    4
+*2.         fastlm2.R     -    -    1
+*3. unitizer.fastlm.R     -    -    3
+.....................................
+                          -    -    8
+Legend:
+* `unitizer` requires review
+
+Type number of unitizer to review, 'A' to review all that require review
+unitizer&gt;</code></pre>
+<p>Each listing corresponds to a test file. If you were to type <code>1</code> at the prompt then you would see the equivalent of the <code>unitize</code> process in the demo, since “fastlm1.R” is the file we <code>unitize</code> in the demo. The <code>*</code> ahead of each file indicates that the file has tests that require review. In this case, all the files have new tests. After we type <code>1</code> and go through the <code>unitize</code> process for “fastlm1.R” we are returned to the <code>unitize_dir</code> prompt:</p>
+<pre><code>unitizer updated
+
+Summary of files in common directory 'tests/unitizer':
+                       Pass Fail  New
+$1.         fastlm1.R     ?    ?    ?
+*2.         fastlm2.R     -    -    1
+*3. unitizer.fastlm.R     -    -    3
+.....................................
+                          ?    ?    ?
+Legend:
+* `unitizer` requires review
+$ `unitizer` has been updated and needs to be re-evaluted to recompute summary
+
+Type number of unitizer to review, 'A' to review all that require review, 'R' to
+re-run all updated
+unitizer&gt;</code></pre>
+<p>Because we updated “fastlm.R”, the statistics <code>unitize_dir</code> collected when it first ran all the tests are out of date, which is why they show up as question marks. The <code>$</code> also indicates that “fastlm1.R” stats are out of date. There is nothing wrong with this, and you do not need to do anything about it, but if you want you can re-run any unitizers that need to be updated by typing “R” at the prompt. This is what happens if we do so:</p>
+<pre><code>unitizer&gt; R
+
+Summary of files in common directory 'tests/unitizer':
+                       Pass Fail  New
+ 1.         fastlm1.R     4    -    -
+*2.         fastlm2.R     -    -    1
+*3. unitizer.fastlm.R     -    -    3
+.....................................
+                          4    -    4
+* `unitizer` requires review
+
+Type number of unitizer to review, 'A' to review all that require review
+unitizer&gt;</code></pre>
+<p>You can now see that we added all the tests, and upon re-running, they all passed since the source code for <code>unitizer.fastlm</code> has not changed. Notice how there is no <code>*</code> ahead of the first test anymore.</p>
+<p>Another option for reviewing tests is to type “A” at the prompt, which would cause <code>unitize_dir</code> to put you through each test file that requires review in sequence.</p>
 </div>
 
 
