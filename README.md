@@ -1,22 +1,24 @@
 # unitizeR - Easy R Unit Tests
-<table style="border:none;">
-  <tr>
-    <td>Build:<td>[![Travis CI Build Status][t master]][t link], RC: [![Travis CI Build Status][t rc]][t link], Dev: [![Travis CI Build Status][t dev]][t link]
-  <tr>
-    <td>Coverage:<td>[![Codecov Coverage][c master]][c link m], RC: [![Codecov Coverage][c rc]][c link rc], Dev: [![Codecov Coverage][c dev]][c link dev]
+<table style="border: none; background-color: transparent; vertical-align: middle;">
+  <tr style="border: none; background-color: transparent; padding: 2px;">
+    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 25px;">
+      <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=master'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">RC:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=rc'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=development'></a>
+  <tr style="border: none; background-color: transparent; padding: 2px;">
+    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 25px;">
+      <a href='https://codecov.io/github/brodieG/unitizer?branch=master'><img src='https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">RC:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://codecov.io/github/brodieG/unitizer?branch=rc'><img src='https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=rc'></a>
+    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
+    <td style="border: none; background-color: transparent; padding: 2px;">
+      <a href='https://codecov.io/github/brodieG/unitizer?branch=dev'><img src='https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=development'></a>
 </table>
-
-[t master]: https://travis-ci.org/brodieG/unitizer.png?branch=master
-[t rc]: https://travis-ci.org/brodieG/unitizer.png?branch=rc
-[t dev]: https://travis-ci.org/brodieG/unitizer.png?branch=development
-[t link]: https://travis-ci.org/brodieG/unitizer
-
-[c master]: https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master
-[c rc]: https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=rc
-[c dev]: https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=development
-[c link m]: https://codecov.io/github/brodieG/unitizer?branch=master
-[c link rc]: https://codecov.io/github/brodieG/unitizer?branch=rc
-[c link dev]: https://codecov.io/github/brodieG/unitizer?branch=dev
 
 ## TL;DR
 
