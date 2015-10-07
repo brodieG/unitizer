@@ -1,7 +1,7 @@
 # unitizeR - Easy R Unit Tests
 <table style="border: none; background-color: transparent; vertical-align: middle;">
   <tr style="border: none; background-color: transparent; padding: 2px;">
-    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 25px;">
+    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
       <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=master'></a>
     <td style="border: none; background-color: transparent; padding: 2px;">RC:
     <td style="border: none; background-color: transparent; padding: 2px;">
@@ -10,7 +10,7 @@
     <td style="border: none; background-color: transparent; padding: 2px;">
       <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=development'></a>
   <tr style="border: none; background-color: transparent; padding: 2px;">
-    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 25px;">
+    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
       <a href='https://codecov.io/github/brodieG/unitizer?branch=master'><img src='https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master'></a>
     <td style="border: none; background-color: transparent; padding: 2px;">RC:
     <td style="border: none; background-color: transparent; padding: 2px;">
