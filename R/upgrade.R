@@ -140,6 +140,9 @@ upgrade_internal <- function(object) {
   if(ver < "1.0.7") {
     object <- addSlot(object, "updated.at.least.once", FALSE)
   }
+  if(ver < "1.0.8") {
+    object <- removeSlots(object, "cons")
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
@@ -158,6 +161,14 @@ upgrade_internal <- function(object) {
 addSlot <- function(object, slot.name, slot.value) {
   if(!isS4(object))
     stop("Argument `object` must be an S4 object")
+  slot.names <- slotNames(getClassDef(class(object)))
+  if(!slot.name %in% slot.names) {
+    warning(
+      "Slot `", slot.name, "` does not exist in current version of `",
+      class(object), "` so not added to object.", immediate. = TRUE
+    )
+    return(object)
+  }
   slots <- slotNames(object)
   slot.vals <- list()
   for(i in slots) {

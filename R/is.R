@@ -108,4 +108,18 @@ is.valid_state <- function(x) {
   return(x)
 }
 
+is.valid_capt_setting <- function(x) {
+  if(
+    !is.logical(x) || length(x) != 2L || any(is.na(x)) ||
+    !identical(names(x), c("output", "message"))
+  ) {
+    word_msg(
+      "value must be logical(2L) containing TRUE ",
+      "/ FALSE and with names `c(\"output\", \"message\")"
+    )
+    return(FALSE)
+  }
+  TRUE
+}
+
 

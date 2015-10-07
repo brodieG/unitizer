@@ -119,8 +119,10 @@ results, etc.
     but for \code{stderr output}
   \item \code{unitizer.show.output}: TRUE or FALSE, whether to display test
     \code{stdout} and \code{stderr} output as it is evaluated.
-  \item \code{unitizer.disable.capt}: TRUE or FALSE, whether to prevent
-    \code{unitizer} from capturing \code{stdout} and \code{stderr}
+  \item \code{unitizer.disable.capt}: logical(2L), not NA, with names
+    \code{c("output", "message")} where each value indicates whether the
+    corresponding stream should be captured or not.  For \code{stdout} the
+    stream is still captured but setting the value to FALSE tees it.
   \item \code{unitizer.max.capture.chars}: integer(1L) maximum number of
     characters to allow capture of per test
 }

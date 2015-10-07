@@ -5,7 +5,7 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-Version: 1.0.7
+Version: 1.0.8
 Authors@R: c(
     person(
     "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
@@ -32,6 +32,7 @@ Collate:
     'class_unions.R'
     'list.R'
     'is.R'
+    'capture.R'
     'global.R'
     'conditions.R'
     'item.R'
@@ -45,7 +46,6 @@ Collate:
     'prompt.R'
     'browse.struct.R'
     'browse.R'
-    'capture.R'
     'demo.R'
     'faux_prompt.R'
     'fun.ref.R'

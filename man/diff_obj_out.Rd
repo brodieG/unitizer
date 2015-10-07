@@ -2,8 +2,6 @@
 % Please edit documentation in R/text.R
 \name{diff_obj_out}
 \alias{diff_obj_out}
-\alias{obj_capt}
-\alias{obj_screen_out}
 \title{Show a Faux Diff Between Two Objects}
 \usage{
 diff_obj_out(obj.rem, obj.add,
@@ -30,22 +28,13 @@ start trimming output and the second the length we tri to}
 
 \item{frame}{what frame to capture in, relevant mostly if looking for a print
 method}
-
-\item{x}{a character vector}
-
-\item{y}{another character vector to compare to}
 }
 \value{
-\itemize{
-     \item for \code{char_diff} a list with two vectors, each of same length
-       as inputs, where FALSE indicates value is the same as in the other
-       vector, and TRUE indicates it is different
-  }
+character, invisibly, the text representation of the diff
 }
 \description{
 The idea is to save the user the need to print out the objects to screen.
 This will print two objects to screen in a faux git diff look, focusing on a
 snippet of the object.
 }
-\keyword{internal}
 

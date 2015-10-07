@@ -1,0 +1,163 @@
+---
+title: "unitizeR - Miscellanea"
+author: "Brodie Gaslam"
+output:
+    rmarkdown::html_vignette:
+        toc: true
+        css: styles.css
+
+vignette: >
+  %\VignetteIndexEntry{Miscellaneous Topics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\usepackage[utf8]{inputenc}
+---
+
+## Storing `unitize`d Tests
+
+### Default Mode is to Store Tests in `rds` Files
+
+`unitizer` stores unit tests and their results.  By default, it stores them in `rds` files in your filesystem.  You will be prompted before a file is saved to your filesystem.
+
+ The `rds` file is placed in a directory with the same name as your test file, but with "unitizer" appended.  For example, if your tests are in "my_file_name.R", then `unitizer` will create a folder called "my_file_name.unitizer/" and put an `rds` file in it.
+
+ See `?get_unitizer` for potential alternatives to saving to your file system.
+
+### File Space Considerations
+
+If your tests produce massive objects, the `unitizer` `rds` file will be massive.  Try designing your tests so they will produce the smallest representative data structures needed for your tests to be useful.
+
+Additionally, note that the `rds` files are binary, which needs to be accounted for when using them in [version controlled projects](#version-control-and-unitizer).
+
+### Backup Your `unitizer` Stores
+
+`unitizer` does not backup the `rds` beyond the single copy in the aforementioned folder.  Unit tests are valuable, and without the `rds` file `unitizer` tests become a lot less useful.  To the extent you backup your R test files, you should also backup the corresponding ".unitizer/" folder.  You could lose / corrupt your `unitizer` store in many ways.  Some non-exhaustive examples:
+
+- Standard file system SNAFU
+- Careless updates to existing `unitizer`
+- `unitizer` developer accidentally introduces a bug that destroys your `unitizer`
+
+Backup your `unitizer` stores!
+
+### Alternate Store Locations
+
+`unitize` stores and loads `unitizer`s using the `set_unitizer` and `get_unitizer` S3 generics .  This means you can implement your own S3 methods for those generics to store the `unitizer` object off-filesystem (e.g. MySQL databse, etc).  See `?get_unitizer` for more details, though note this feature is untested.
+
+If you only wish to save your `unitizer` to a different location in your filesystem than the default, you do not need to resort to these methods as you can provide the target directory with `unitize(..., store.id=)`.
+
+## Version Control and Unitizer
+
+The main issue with using `unitizer` with a version controlled package is that you have to decide whether you want to include the binary `rds` files in the version control history.  Some options:
+
+* do not track the binary files at all (but they are valuable and now not backed up)
+* do not track the binary files at all, but implement a secondary back-up system (this sounds really annoying)
+* Use a backed-up, non-file system store (see "Alternate Store Locations" above)
+* Track the binary files, but only commit them for major releases
+
+The approach we suggest is the last one above: just commit your `rds` files for major releases.  Also, note that to the extent you have a lot of test files that aren't changing, this should minimize how much binary data you commit.  One possible way to handle this with Git is to use the following command (adapted from twalberg's [SO answer](http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory)).
+
+**Warning**: be careful when you reset your working directory as your `rds` files will get reset to the last version that you committed (i.e. `git checkout -- .` will replace your currend `rds` with the one in the repo).  If you update your `rds` within a branch and then merge the branch back, make sure you either commit or stash the `rds` before the merge.
+
+To implement:
+
+```
+git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged
+```
+This will prevent the `rds` files as showing up as being modified when you run `git status`.  Just make sure you still commit your `rds` at key release points so you have backups of them.  Once you reach the major release point, you can:
+```
+git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged
+```
+
+If you `--assume-unchanged` other files such as `.o` or `.so` files, you may need to remove those after a checkout as well so that `devtools::install` will recreate them from current sources.
+
+## Modifying an Existing Unitizer
+
+### `review`
+
+`review` allows you to review all tests in a unitizer rds with the option of dropping tests from it.  See `?review`.
+
+### `editCalls`
+
+*Warning*: this is experimental.
+
+`editCalls` allows you to modify the calls calls stored in a `unitizer`.  This is useful when you decide to change the call (e.g. a function name), but otherwise leave the behavior of the call unchanged.  You can then upate your test script and the renamed calls will be matched against the correct values in the `unitizer` store.  Without this you would have to re-review and re-store every test since `unitizer` identifies tests by the deparsed call.
+
+### `split`
+
+There is currently no direct way to split a `unitizer` into pieces (see [issue #44](https://github.com/brodieG/unitizer/issues/44)), but the current work around is to:
+
+1. copy the test file and the corresponding `unitizer` to a new location
+2. edit the original test file to remove the tests we want to split off
+3. run unitizer and agree to drop all removed tests (hint: this is a good time to use `YY`)
+4. edit the new test file and remove the tests that are still in the old test file
+5. run unitizer and agree to drop all removed tests
+
+The net result will be two new `unitizer`, each with a portion of the tests from the original `unitizer`.  Clearly less than ideal, but will work in a pinch.
+
+## Troubleshooting
+
+### After Running `unitizer` Output No Longer Shows on Screen
+
+`unitizer` sinks `stdout` and `stderr` during test evaluation, so it is possible that in some corner cases `unitizer` exits without releasing sinks.  We have put substantial effort in trying to avoid this eventuality, but should it occur, here are some things you can do:
+
+* run: `while(sink.number()) sink()` and `sink(type="message")` to reset the output stream sinks
+* or, restart the R session (type `q()` followed by ENTER, then "y" or "n" (without quotes) depending on whether you want to save your workspace or not)
+
+Either way, please contact the maintainer as this should not happen.
+
+### `unitizer` Freezes and Pops up "Selection:"
+
+This is almost certainly a result of an R crash.  Unfortunately the normal mechanisms to restore `stderr` don't seem to work completely with full R crashes, so when you see things like:
+```
++------------------------------------------------------------------------------+
+| unitizer for: tests/unitizer/alike.R                                         |
++------------------------------------------------------------------------------+
+
+Running: alike(data.frame(a = integer(), b = factor()), data.frame(a = 1:3, Selection:
+```
+what you are not seeing is:
+```
+ *** caught segfault ***
+address 0x7fdc20000010, cause 'memory not mapped'
+
+Traceback:
+ 1: .Call(ALIKEC_alike, target, current, int.mode, int.tol, attr.mode)
+ 2: alike(data.frame(a = factor(), b = factor()), data.frame(a = 1:3,     b = letters[1:3]))
+
+Possible actions:
+1: abort (with core dump, if enabled)
+2: normal R exit
+3: exit R without saving workspace
+4: exit R saving workspace
+```
+The "Selection:" bit is prompting you to type 1-4 as per above.  We will investigate to see if there is a way to address this problem, but the solution likely is not simple since the R crash circumvents the `on.exit` handlers used to reset the stream redirects.  Also, note that in this case the crash is caused by `alike`, not `unitizer` (see below).
+
+### Running `unitizer` Crashes R
+
+Every R crash we have discovered while using `unitizer` was eventually traced to a third party package.  Some of the crashes were linked to issues attaching/detaching packages.  If you think you might be having an issue with this you can always run with `clean.search.path=FALSE` and `clean.env=FALSE` to avoid search path manipulation.
+
+### Different Outcomes in Interactive vs. Non Interactive
+
+Watch out for functions that have default arguments of the type:
+```
+fun <- function(x, y=getOption('blahblah'))
+```
+as those options may be different depending on whether you are running whether you are running R interactively or not.  One prime example is `parse(..., keep.source = getOption("keep.source"))`.
+
+## Other Topics
+
+### Running `unitize` Within Error Handling Blocks
+
+Because `unitize` evaluates test expressions within a call to `withCallingHandlers`, there are some limitations on successfully running `unitize` inside your own error handling calls.  In particular, `unitize` will not work properly if run inside a `tryCatch` or `try` statement. If test expressions throw conditions, the internal `withCallingHandlers` will automatically hand over control to your `tryCatch`/`try` statement without an opportunity to complete `unitize` computations.  Unfortunately there does not seem to be a way around this since we have to use `withCallingHandlers` so that test statements after non-aborting conditions are run.
+
+See this [SO Q/A](http://stackoverflow.com/questions/20572288/capture-arbitrary-conditions-with-withcallinghandlers) for more details on the problem.
+
+### Overridden Functions
+
+In order to perpetuate the R console prompt illusion, `unitizer` needs to override some buit-in functionality, including:
+
+* `ls` is replaced by a special version that can explore the `unitizerItem` environments
+* `quit` and `q` are wrappers around the base functions that allow `unitizer` to quit gracefully
+* `traceback` while not replaced, is supported by a fair bit of voodoo involving among other things assigning to `base::.Traceback`
+* History is replaced during `unitizer` prompt evaluations with a temporary version of the history file containing only commands evaluated at the `unitizer` prompt.  The normal history file is restored on exit.
+
+

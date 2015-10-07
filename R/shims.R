@@ -104,17 +104,14 @@ unitizerGlobal$methods(
 
     # Suppress std.err because of "Tracing Function..." messages produced by trace
 
-    std.err <- tempfile()
-    std.err.con <- file(std.err, "w+b")
+    capt.cons <- new("unitizerCaptCons")
     on.exit({
-      txt <- try(get_text_capture(std.err.con, std.err, type="message"))
-      release_sinks()
-      close(std.err.con)
-      unlink(std.err)
+      txt <- try(get_text_capture(capt.cons, type="message"))
+      close_and_clear(capt.cons)
       if(!inherits(txt, "try-error")) word_msg(txt)
       stop("Failed attempting to shim `", name, "`")
     } )
-    capt.con <- set_text_capture(std.err.con, "message")
+    capt.cons <- set_text_capture(capt.cons, "message")
 
     # Now shim
 
@@ -129,10 +126,9 @@ unitizerGlobal$methods(
     ) )
     # Process std.err to make sure nothing untoward happened
 
-    shim.out <- get_text_capture(capt.con, std.err, "message")
+    shim.out <- get_text_capture(capt.cons, "message")
     on.exit(NULL)
-    close(std.err.con)
-    unlink(std.err)
+    close_and_clear(capt.cons)
 
     if(
       !identical(
@@ -157,13 +153,10 @@ unitizerGlobal$methods(
   },
   unshimFuns=function() {
     parent.env(par.env) <<- .GlobalEnv
-    std.err <- tempfile()
-    std.err.con <- file(std.err, "w+b")
+    capt.cons <- new("unitizerCaptCons")
     on.exit({
-      txt <- try(get_text_capture(std.err.con, std.err, type="message"))
-      release_sinks()
-      close(std.err.con)
-      unlink(std.err)
+      txt <- try(get_text_capture(capt.cons, type="message"))
+      close_and_clear(capt.cons)
       if(!inherits(txt, "try-error")) word_msg(txt)
       stop(
         "Failed attempting to unshim `", i, "`; you should consider ",
@@ -171,7 +164,7 @@ unitizerGlobal$methods(
         "restore function to original value."
       )
     } )
-    capt.con <- set_text_capture(std.err.con, "message")
+    set_text_capture(capt.cons, "message")
     untraced <- character()
 
     for(i in names(shim.funs)) {
@@ -181,10 +174,9 @@ unitizerGlobal$methods(
       }
       shim.funs[[i]] <<- NULL
     }
-    unshim.out <- get_text_capture(capt.con, std.err, "message")
+    unshim.out <- get_text_capture(capt.cons, "message")
     on.exit(NULL)
-    close(std.err.con)
-    unlink(std.err)
+    close_and_clear(capt.cons)
 
     if(
       !identical(

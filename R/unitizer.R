@@ -9,42 +9,6 @@ NULL
 
 .unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
 
-setClass(
-  "unitizerCaptCons",
-  slots=
-    c(err.f="ANY", err.c="ANY", out.f="ANY", out.c="ANY"),  # setOldClass issues
-  validity=function(object) {
-    # Allow NULLs since that is how the con object is stored
-
-    if(!is.null(object@err.f) && !is.chr1(object@err.f))
-      return("Slot `err.f` must be character(1L)")
-    if(
-      !is.null(object@err.f) &&
-      (!inherits(object@err.c, "file") || !isOpen(object@err.c))
-    )
-       return("Slot `err.c` must be an open file connection")
-    if(!is.null(object@out.f) && !is.chr1(object@out.f))
-      return("Slot `out.f` must be character(1L)")
-    if(
-      !is.null(object@out.f) &&
-      (!inherits(object@out.c, "file") || !isOpen(object@out.c))
-    )
-       return("Slot `out.c` must be an open file connection")
-    TRUE
-  }
-)
-setMethod("initialize", "unitizerCaptCons", function(.Object, ...) {
-  dots <- list(...)
-  if(length(dots)) callNextMethod() else {
-    .Object@err.f <- tempfile()
-    .Object@err.c <- file(.Object@err.f, "w+b")
-    .Object@out.f <- tempfile()
-    .Object@out.c <- file(.Object@out.f, "w+b")
-    .Object
-  }
-} )
-setClassUnion("unitizerCaptConsOrNULL", c("unitizerCaptCons", "NULL"))
-
 # Contains All The Data for Our Tests!
 #
 # Generally is populated through the \code{+} methods, with the exception of
@@ -117,7 +81,6 @@ setClass(
     updated="logical",              # whether this unitizer has been queued for update
     updated.at.least.once="logical",# should reflect whether a unitizer was modified at least once so that we can report this in return values
     global="unitizerGlobalOrNULL",  # Global object used to track state
-    cons="unitizerCaptConsOrNULL",  # Track connections for text/msg capture
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
@@ -537,7 +500,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         # this is a bit roundabout b/c we added this hack in long after the
         # code was initially written
 
-        res.tmp <- eval_with_capture(test.call, e2@env, e1@global, e1@cons)
+        res.tmp <- eval_with_capture(test.call, e2@env, e1@global)
         cond <- res.tmp$conditions
         test.res <- if(length(cond)) {
           structure(

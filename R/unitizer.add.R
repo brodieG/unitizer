@@ -69,14 +69,14 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     test.env <- new.env(parent=e1@items.new@base.env)
     chr.width <- getOption("width")
 
-    e1@cons <- new("unitizerCaptCons")
-    on.exit(close_and_clear(e1@cons))
+    e1@global$cons <- new("unitizerCaptCons")
+    on.exit(close_and_clear(e1@global$cons))
 
     repeat {
       if(done(e2 <- nextItem(e2))) break
 
       item <- withRestarts(
-        exec(getItem(e2), test.env, e1@cons, e1@global),
+        exec(getItem(e2), test.env, e1@global),
         unitizerQuitExit=unitizer_quit_handler
       )
       # If item is a section, added to the store and update the tests with the contents of
@@ -137,8 +137,8 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     over_print("")
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
     on.exit()
-    close_and_clear(e1@cons)
-    e1@cons <- NULL
+    close_and_clear(e1@global$cons)
+    e1@global$cons <- NULL
     e1
 } )
 # Adds \code{`\link{unitizerItems-class}`} objects to unitizer

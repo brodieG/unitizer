@@ -9,7 +9,8 @@ NULL
 #' While R generally adheres to a "functional" programming style, there are
 #' several aspects of session state that can affect the results of code
 #' evaluation.  \code{unitizer} attempts to make tests as reproducible as
-#' controlling session state so that it is the same every time a test is run.
+#' possible by controlling session state so that it is the same every time a
+#' test is run.
 #'
 #' @section Overview:
 #'
@@ -20,7 +21,7 @@ NULL
 #'   \item Workspace (enabled by default): all tests are evaluated in
 #'      environments that are children of a special environment that does not
 #'      inherit from \code{.GlobalEnv}.  This prevents objects that are
-#'      laying around in your workspace from interfering with your tests.
+#'      lying around in your workspace from interfering with your tests.
 #'   \item Random Seed (enabled by default): is set to a specific value at the
 #'     beginning of each test file so that tests using random values get the
 #'     same value at every test iteration. If you change the order of  your
@@ -36,7 +37,6 @@ NULL
 #'     \code{\link{unitize}} or \code{\link{unitize_dir}}.
 #'   \item Options (\bold{disabled} by default): same as search path
 #' }
-#'
 #' State is reset after running each test file when running multiple test
 #' files with \code{unitize_dir}, which means state changes in one test file
 #' will not affect the next one.
@@ -51,10 +51,10 @@ NULL
 #' you know the packages you typically load in your sessions can be unloaded,
 #' you can turn this functionality on by setting
 #' \code{options(unitizer.state="pristine")} either in your session, in your
-#' \code{.Rprofile} file, or in each call to \code{unitize} or
-#' \code{unitize_dir}.  If you have packages that cannot be unloaded, but
-#' you still want to enable these features, see the "Search Path and Namespace
-#' State Options" section of \code{\link{unitizer.opts}} docs.
+#' \code{.Rprofile} file, or using \code{state="prisitine"} in each call to
+#' \code{unitize} or \code{unitize_dir}.  If you have packages that cannot be
+#' unloaded, but you still want to enable these features, see the "Search Path
+#' and Namespace State Options" section of \code{\link{unitizer.opts}} docs.
 #'
 #' If you run \code{unitizer} with options and search path tracking and you run
 #' into a namespace that cannot be unloaded, or should not be unloaded because
@@ -107,9 +107,9 @@ NULL
 #'   \item 2 track and set state to what you would typically find in a clean
 #'     R session, with the exception of \code{random.seed}, which is
 #'     set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
-#'     as that seed is substantially smaller than the R default).
+#'     as that seed is substantially smaller than the R default seed).
 #' }
-#' @sections Known Untracked State Elements:
+#' @section Known Untracked State Elements:
 #'
 #' \itemize{
 #'   \item system time: tests involving functions such as \code{\link{date}}

@@ -1,4 +1,4 @@
-unitizer 1.0.3
+unitizer 1.0.0-1.0.8
 --------------------------------------------------------------------------------
 
 Improvement / Changes:
@@ -8,8 +8,7 @@ Improvement / Changes:
     * state is reset when reviewing tests as well as when executing them
     * you are alerted off state differences between new and reference tests
       on error
-    * see state vignette for more details
-* Streamlining of state control parameters into one (`state`); API breaking
+    * State control parameters are streamlined; API breaking
 * Whether an expression is ignored or not is now a function of whether the
   expression returns visibly or not
 * Pre and post test scripts
@@ -20,6 +19,7 @@ Improvement / Changes:
     * Contextual help tweaks
 * Vignette updates
 * Demo update
+* Added `Rdiff_obj` to run a `tools::Rdiff` directly on two R objects
 
 Internal:
 
@@ -27,9 +27,10 @@ Internal:
     * No longer storing assignments both as test value and object in environment
     * Calls recorded deparsed instead of as call objects
 * Shimming used for search path tracking is more lightweight
+* Text capture much more robust
 
 Issues Fixed:
-  107, 106, 104, 103, 101, 99, 98, 94, 93, 90, 85, 84, 77, 74, 71, 67
+  107, 106, 104, 103, 101, 99, 98, 94, 93, 90, 85, 84, 77, 74, 71, 67, 127, 115
 
 unitizer 0.9.0
 --------------------------------------------------------------------------------

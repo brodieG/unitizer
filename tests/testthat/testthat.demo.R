@@ -45,6 +45,7 @@ test_that("show_file", {
 old.width <- options(width=80)
 
 # devtools::install()
+# options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
 library(unitizer)
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
@@ -52,9 +53,16 @@ devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.unitizer")
 
 unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
+# unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "N"))
+# message("remember to sereset to correct values")
+# untz <- unitize(.unitizer.test.file, interactive.mode=TRUE)
+# trace(sink, quote(cat("Resetting", type[[1L]], "to", if(is.null(file)) "NULL" else if(inherits(file, "file")) as.integer(file) else file, "\n")))
+
 txt1 <- unitizer:::capture_output(
   untz <- unitize(.unitizer.test.file, interactive.mode=TRUE)
 )
+
+
 # Re-running doesn't change unitizer
 
 txt2 <- unitizer:::capture_output(

@@ -1,7 +1,7 @@
 #' Unitize an R Test Script
 #'
-#' Turn standard R scripts into unit tests by evaluating the expressions and
-#' storing them along with their resuls.
+#' Turn standard R scripts into unit tests by storing the expressions therein
+#' along with the results of their evaluation.
 #'
 #' \code{unitize} creates unit tests from a single R file, and
 #' \code{unitize_dir} creates tests from all the R files in the specified
@@ -23,7 +23,7 @@
 #' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
 #' (see \code{state} parameter).
 #'
-#' See \code{unitizer} vignettes and demo for details and examples.
+#' See \code{vignette("unitizer")} and demo for details and examples.
 #'
 #' @section Default Settings:
 #'
@@ -34,8 +34,8 @@
 #' @section State:
 #'
 #' You can modify all aspects of state control with the \code{state} parameter.
-#' See the \code{\link{unitizerState}} documentation and the \code{state}
-#' vignette for more details.
+#' See the \code{\link{unitizerState}} documentation and
+#' \code{vignette("unitizer_reproducible_tests")} vignette for more details.
 #'
 #' @export
 #' @aliases unitize review unitize_dir
@@ -89,8 +89,9 @@
 #'   you wish to undo in \code{post}. Keep in mind that \code{unitizer} can
 #'   manage most aspects of global state, so you should not need to use this
 #'   parameter to unload packages, remove objects, etc.  See details.
-#' @param history file name to use to store history during interactive unitizer
-#'   sessions.
+#' @param history character path to file to use to store history generated
+#'   during interactive unitizer session; the default is an empty string, which
+#'   leads to \code{unitizer} using a temporary file
 #' @param interactive.mode logical(1L) whether to run in interactive mode (
 #'   request user input when needed) or not (error if user input is required,
 #'   e.g. if all tests do not pass).

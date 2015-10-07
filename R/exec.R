@@ -63,11 +63,9 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 # @param test.env the environment to evaluate the \code{test} in
 
 setMethod("exec", "ANY", valueClass="unitizerItem",
-  function(x, test.env, capt.cons, global) {
+  function(x, test.env, global) {
     if(!is.environment(test.env))
       stop("Argument `test.env` must be an environment.")
-    if(!is(capt.cons, "unitizerCaptCons"))
-      stop("Argument `capt.cons` must be a 'unitizerCaptCons' object")
 
     # Check whether we are dealing with a unitizer_sect
 
@@ -88,12 +86,12 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     }
     x.to.eval <- `attributes<-`(x, NULL)
 
-    res <- eval_with_capture(x.to.eval, test.env, global, capt.cons)
+    res <- eval_with_capture(x.to.eval, test.env, global)
 
     if(res$aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
       stop(
         "Failed instantiating a unitizer section:\n",
-        paste0(capt.cons$message, "\n")
+        paste0(res$message, "\n")
       )
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
@@ -122,46 +120,53 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
   c(list(value=res$value$value, visible=res$value$visible), res[-1L])
 }
 eval_with_capture <- function(
-  x, test.env=new.env(), global=unitizerGlobal$new(), capt.cons=NULL
+  x, test.env=new.env(), global=unitizerGlobal$new()
 ) {
   warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
   err.opt <- getOption("error")
 
   # Setup text capture; a bit messy due to funny way we have to pull in
-  # unitize specific options
+  # unitize specific options; do.call business is to use default arguments
+  # if options are NULL
 
   came.with.capts <- TRUE
-  if(is.null(capt.cons)) {
+  if(is.null(global$cons)) {
     capt.cons <- new("unitizerCaptCons")
     came.with.capts <- FALSE
+  } else {
+    capt.cons <- global$cons
   }
   set_args <- list()
-  set_args[["capt.disabled"]] <-
-    global$unitizer.opts[["unitizer.disable.capt"]]
-  capt.cons@err.c <- do.call(
-    set_text_capture, c(list(capt.cons@err.c, "message"), set_args)
-  )
-  capt.cons@out.c <- do.call(
-    set_text_capture, c(list(capt.cons@out.c, "output"), set_args)
-  )
+  set_args[["capt.disabled"]] <- global$unitizer.opts[["unitizer.disable.capt"]]
+  capt.cons <- do.call(set_capture, c(list(capt.cons), set_args))
+  get_args <- list(capt.cons)
+  get_args[["chrs.max"]] <-
+    global$unitizer.opts[["unitizer.max.capture.chars"]]
+
   # Manage unexpected outcomes
 
   on.exit({
-      options(warn=warn.opt)
-      options(error=err.opt)
-      capt.try <- try(get_capture(capt.cons, display=TRUE))
-      if(inherits(capt.try, "try-error")) release_sinks()
-      if(!came.with.capts) close_and_clear(capt.cons)
-      word_msg(
-        "Unexpectedly exited evaluation attempt when executing test expression:\n> ",
-        paste0(deparse(x), collapse=""),
-        "\nMake sure you are not calling `unitize` inside a `tryCatch`/`try` block, ",
-        "invoking a restart defined outside `unitize`, evaluating an expression that ",
-        "calls `quit()`/`q()`, or quitting from a `browser()`/`debug()`/`trace()`. ",
-        "If none of these apply yet you are seeing this message please contact ",
-        "package maintainer."
-      )
-  } )
+    options(warn=warn.opt)
+    options(error=err.opt)
+    get.try <- try(capt <- do.call(get_capture, get_args))
+    unsink.try <- try(capt.cons <- unsink_cons(capt.cons))
+    if(!inherits(get.try, "try-error")) {
+      cat(c(capt$message, "\n"), file=stderr(), sep="\n")
+      cat(c(capt$output, "\n"), sep="\n")
+    }
+    if(inherits(unsink.try, "try-error")) failsafe_con(capt.cons)
+    if(!came.with.capts) close_and_clear(capt.cons)
+    word_msg(
+      "Unexpectedly exited evaluation attempt when executing test ",
+      "expression:\n> ", paste0(deparse(x), collapse=""), "\nMake sure you ",
+      "are not calling `unitize` inside a `tryCatch`/`try` block, invoking a ",
+      "restart defined outside `unitize`, evaluating an expression that ",
+      "calls `quit()`/`q()`, or quitting from a `browser()`/`debug()`/",
+      "`trace()`. If none of these apply yet you are seeing this message ",
+      "please contact package maintainer.",
+      sep=""
+    )
+  })
   # Evaluate expression
 
   options(warn=1L)
@@ -169,20 +174,27 @@ eval_with_capture <- function(
 
   res <- eval_user_exp(x, test.env)
 
-  on.exit(NULL)
-  options(warn=warn.opt)
-  options(error=err.opt)
-
   # Revert settings, get captured messages, if any and if user isn't capturing
   # already; do.call so we can rely on default get_capture settings if those
   # in `unitizer.opts` are NULL
 
-  get_args <- list(capt.cons)
-  get_args[["display"]] <- global$unitizer.opts[["unitizer.show.output"]]
-  get_args[["chrs.max"]] <-
-    global$unitizer.opts[["unitizer.max.capture.chars"]]
   capt <- do.call(get_capture, get_args)
-  if(!came.with.capts) close_and_clear(capt.cons)
+  capt.cons <- unsink_cons(capt.cons)
+  if(getOption("unitizer.show.output", TRUE)) {
+    cat(c(capt$message, "\n"), file=stderr(), sep="\n")
+    cat(c(capt$output, "\n"), sep="\n")
+  }
+  on.exit(NULL)
+  options(warn=warn.opt)
+  options(error=err.opt)
+
+  # Need to make sure we either close the connections or return the updated
+  # values since we might be changing connections depending on sink status, etc
+
+  if(!came.with.capts) close_and_clear(capt.cons) else global$cons <- capt.cons
+
+  # Cleanup and
+
   res[c("output", "message")] <- lapply(
     capt[c("output", "message")], function(x) if(!length(x)) "" else x
   )
