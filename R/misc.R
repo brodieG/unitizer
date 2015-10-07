@@ -205,7 +205,7 @@ history_write <- function(hist.con, data) {
 relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   if(!is.character(path) || any(is.na(path)))
     stop("Argument `path` must be character and may not contain NAs")
-  if(!isTRUE(only.if.shorter) && !identical(only.if.shorter))
+  if(!is.TF(only.if.shorter))
     stop("Argument `only.if.shorter` must be TRUE or FALSE")
   if(
     !is.null(wd) && !is.character(wd) && !identical(length(wd), 1L) &&
@@ -221,12 +221,17 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     norm <- normalizePath(path, mustWork=FALSE)
     to.norm <- TRUE  # used to be only for existing files, but can't recall why
 
+    # Break up into pieces; we re-append "" to make sure the root shows up if
+    # appropriate
+
     path.pieces <- lapply(
-      strsplit(norm[to.norm], .Platform$file.sep, fixed=TRUE), Filter, f=nchar
+      strsplit(norm[to.norm], .Platform$file.sep, fixed=TRUE),
+      function(x) c("", Filter(x, f=nchar))
     )
-    wd.pieces <- Filter(
-      nchar, unlist(strsplit(wd, .Platform$file.sep, fixed=TRUE))
-    )
+    wd.pieces <- c("",
+      Filter(
+        nchar, unlist(strsplit(wd, .Platform$file.sep, fixed=TRUE))
+    ) )
     # /a/b/c/d/e
     # /a/b/c/F/G
     reled <- vapply(

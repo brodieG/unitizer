@@ -213,6 +213,19 @@ test_that("relativize_path", {
     unitizer:::relativize_path(c(p1, p2, file.path("notarealpath", "foo")), wd),
     c("R", "../unitizerdummypkg1", file.path("notarealpath", "foo"))
   )
+  expect_equal(
+    unitizer:::relativize_path("/a/b/c/d/e/x.txt"),
+    "/a/b/c/d/e/x.txt"
+  )
+  expect_equal(
+    unitizer:::relativize_path("/a/b/c/d/e/x.txt", only.if.shorter=FALSE),
+    do.call(
+      file.path,
+      c(
+        as.list(rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)),
+        list("a/b/c/d/e/x.txt")
+  ) ) )
+
 })
 test_that("path_clean", {
   expect_error(unitizer:::path_clean(list()), "must be character")
