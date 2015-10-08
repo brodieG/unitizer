@@ -219,15 +219,17 @@ unitize_core <- function(
   if(identical(global$status@search.path, 2L))
     search_path_trim(
       global=global,
-      keep.ns=union(
-        global$unitizer.opts[["unitizer.namespace.keep.base"]],
-        global$unitizer.opts[["unitizer.namespace.keep"]]
-      ),
       keep.path=union(
         global$unitizer.opts[["unitizer.search.path.keep.base"]],
         global$unitizer.opts[["unitizer.search.path.keep"]]
-      )
-    )
+    ) )
+  if(identical(global$status@namespaces, 2L))
+    namespace_trim(
+      global=global,
+      keep.ns=union(
+        global$unitizer.opts[["unitizer.namespace.keep.base"]],
+        global$unitizer.opts[["unitizer.namespace.keep"]]
+    ) )
   if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""  # indicate conflict happened prior to test eval
 
   if(identical(global$status@options, 2L)) options_zero()

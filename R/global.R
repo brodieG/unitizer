@@ -4,7 +4,7 @@
 NULL
 
 .unitizer.global.settings.names <-
-  c("search.path", "options", "working.directory", "random.seed")
+  c("search.path", "options", "working.directory", "random.seed", "namespaces")
 
 #' Structures For Tracking Global Options
 #'
@@ -53,11 +53,12 @@ setClass(
     search.path="integer",
     options="integer",
     working.directory="integer",
-    random.seed="integer"
+    random.seed="integer",
+    namespaces="integer"
   ),
   prototype=list(
     search.path=0L, working.directory=0L, options=0L,
-    random.seed=0L
+    random.seed=0L, namespaces=0L
   ),
   validity=function(object) {
     for(i in slotNames(object))
@@ -75,11 +76,12 @@ setClass(
     search.path="logical",
     options="logical",
     working.directory="logical",
-    random.seed="logical"
+    random.seed="logical",
+    namespaces="logical"
   ),
   prototype=list(
     search.path=FALSE, working.directory=FALSE, options=FALSE,
-    random.seed=FALSE
+    random.seed=FALSE, namespaces=FALSE
   ),
   validity=function(object) {
     for(i in slotNames(object)) if(!is.TF(slot(object, i)))
@@ -96,7 +98,8 @@ setClass(
     search.path="list",
     options="list",
     working.directory="list",
-    random.seed="list"
+    random.seed="list",
+    namespaces="list"
   )
 )
 #' @rdname global_structures
@@ -117,6 +120,7 @@ setClassUnion("integerOrNULLOrDummy", c("integer", "NULL", "unitizerDummy"))
 #' @keywords internal
 
 setClass("unitizerGlobalTrackingStore", contains="unitizerGlobalTracking")
+
 #' @rdname global_structures
 #' @keywords internal
 
@@ -126,7 +130,8 @@ setClass(
     search.path="characterOrNULLOrDummy",
     options="listOrNULLOrDummy",
     working.directory="characterOrNULLOrDummy",
-    random.seed="integerOrNULLOrDummy"
+    random.seed="integerOrNULLOrDummy",
+    namespaces="characterOrNULLOrDummy"
   )
 )
 #' @rdname global_structures
@@ -150,7 +155,6 @@ setClass(
     TRUE
   }
 )
-
 # Pull out a single state from a tracking object
 
 setGeneric(
@@ -180,6 +184,7 @@ setMethod(
     stopifnot(is.character(opts.ignore))
     res <- new("unitizerGlobalTrackingStore")
     res@search.path <- lapply(x@search.path, unitizerCompressTracking)
+    res@namespaces <- stop("Define Namespace Stuff")
 
     # Don't store stuff with environments or stuff that is too big
     # (size cut-off should be an option?), or stuff that is part of the base or
@@ -203,22 +208,43 @@ setMethod(
     )
   res
 } )
-# Get Current Search Path as List of Environments
+# Get Current Search Path And Namespace Data
 #
-# This has to be in this file, and not in R/search.R for the setClass for the
+# These have to be in this file, and not in R/search.R for the setClass for the
 # state funs object.  Note there are some weird dependency circularities,
 # and we're relying on this function not being called until once the full
 # package is loaded.
+#
+# Also, while we track namespaces separately, we need to store them here as well
+# as they contain the the package version info we ultimately want to retain;
+# this could possibly be improved by just attaching package version, but too
+# much work to retrofit existing behavior that blended namespaces and
+# search path
 
 search_as_envs <- function() {
   sp <- search()
   res <- setNames(lapply(seq_along(sp), as.environment), sp)
 
+  new("unitizerSearchData", .items=res, ns.dat=get_namespace_data())
+}
+get_namespace_data <- function() {
   new(
-    "unitizerSearchData",
-    .items=res,
-    ns.dat=new("unitizerNsListData", .items=get_namespace_data())
-) }
+    "unitizerNsListData",
+    .items=sapply(
+      loadedNamespaces(),
+      function(x) {
+        loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
+        ver <- try(getNamespaceVersion(x))
+        new(
+          "unitizerNamespaceData",
+          name=x,
+          lib.loc=if(!inherits(loc, "try-error")) loc else "",
+          version=if(!inherits(ver, "try-error")) ver else ""
+        )
+      },
+      simplify=FALSE
+  ) )
+}
 #' @rdname global_structures
 #' @keywords internal
 
@@ -235,7 +261,8 @@ setClass(
     random.seed=function()
       mget(
         ".Random.seed", envir=.GlobalEnv, inherits=FALSE, ifnotfound=list(NULL)
-      )[[1L]]
+      )[[1L]],
+    namespaces=get_namespace_data
   )
 )
 #' @rdname global_structures
@@ -367,6 +394,8 @@ unitizerGlobal <- setRefClass(
 
       if(status@search.path && to@search.path)
         search_path_update(to@search.path, .self)
+      if(status@namespaces && to@namespaces)
+        namespace_update(to@namespaces, .self)
       if(status@options && to@options)
         options_update(tracking@options[[to@options]])
       if(status@working.directory && to@working.directory)
@@ -399,7 +428,7 @@ unitizerGlobal <- setRefClass(
       reset(
         new(
           "unitizerGlobalIndices", search.path=1L, options=1L,
-          working.directory=1L, random.seed=1L
+          working.directory=1L, random.seed=1L, namespaces=1L
         )
       )
     }

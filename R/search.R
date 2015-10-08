@@ -64,6 +64,16 @@ setMethod(
     if(length(res)) res else TRUE
   }
 )
+setClass(
+  "unitizerNamespaceData",
+  slots=c(
+    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
+) )
+setClass(
+  "unitizerPackageData",
+  slots=c(
+    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
+) )
 setMethod(
   "unitizerCompressTracking", "unitizerSearchData",
   function(x, ...) {
@@ -73,6 +83,14 @@ setMethod(
     res[res.pkg] <- paste0(res[res.pkg],  " (v", ver[res.pkg], ")")
     res
   }
+)
+setMethod(
+  "unitizerCompressTracking", "unitizerNamespaceData",
+  function(x, ...) paste0(x@name, " (v", x@version, ")")
+)
+setMethod(
+  "unitizerCompressTracking", "unitizerNsListData",
+  function(x, ...) vapply(as.list(x), unitizerCompressTracking, character(1L))
 )
 # Search Path Management Functions
 #
@@ -87,11 +105,9 @@ setMethod(
 #
 # \code{search_path_trim} attempts to recreate a clean environment by
 # unloading all packages and objects that are not loaded by default in the
-# default R configuration. This also unloads namespaces so that packages can
-# be reloaded with all corresponding hooks evaluating as with a normal load.
-# As documented in \code{?detach}, it is likely there may be some issues with
-# some packages with this approach.  This function is intended to be called
-# after journaling has been enabled.
+# default R configuration.
+#
+# This function is intended to be called after journaling has been enabled.
 #
 # \code{tools:rstudio} is kept in search path as the default argument because
 # it is not possible to cleanly unload and reload it because \code{attach}
@@ -107,15 +123,9 @@ setMethod(
 # @param id integer(1L) what recorded state to revert to
 # @param global reference object of class "unitizerGlobal" that holds the
 #   global settings
-# @keywords internal
-# @rdname search_path
 
 search_path_update <- function(id, global) {
-  stopifnot(
-    is(global, "unitizerGlobal"),
-    is.integer(id), length(id) == 1L,
-    !is.na(id)
-  )
+  stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
   if(!id %in% seq_along(global$tracking@search.path))
     stop(
       "Logic Error: attempt to reset state to unknown index; contact maintainer"
@@ -227,12 +237,43 @@ search_path_update <- function(id, global) {
   if(!isTRUE(all.equal(search_as_envs(), search.target)))
     stop("Logic Error: path reorder failed at last step; contact maintainer.")
 
+  on.exit(NULL)
+  invisible(TRUE)
+}
+# This also unloads namespaces so that packages can
+# be reloaded with all corresponding hooks evaluating as with a normal load.
+# As documented in \code{?detach}, it is likely there may be some issues with
+# some packages with this approach.
+#
+# This function is intended to be called after journaling has been enabled.
+#
+# @param id integer(1L) what recorded state to revert to
+# @param global reference object of class "unitizerGlobal" that holds the
+#   global settings
+
+namespace_update <- function(id, global) {
+  stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
+  if(!id %in% seq_along(global$tracking@namespaces))
+    stop(
+      "Logic Error: attempt to reset namespaces to unknown index; contact ",
+      "maintainer"
+    )
+  ns.target <- global$tracking@namespaces[[id]]
+  ns.curr <- global$tracking@namespaces[[global$indices.last@namespaces]]  # should this be get_namespace_data()?
+
+  ns.in.common <- intersect(names(ns.target), names(ns.curr))
+  ns.extra <- setdiff(names(ns.curr), ns.in.common)
+
+  if(!all(ns.extra %in% global$unitizer.opts[["unitizer.namespace.keep"]])) {
+    # not entirely sure this check is needed, or might be too stringent
+    # new version of comparing entire object not tested
+    stop("Logic Error: mismatch between actual and tracked namespaces")
+  }
   # Line up the namespaces
 
-  tar.lns.dat <- search.target@ns.dat
   cur.lns <- loadedNamespaces()
-  tar.lns.loc <- sapply(as.list(tar.lns.dat), slot, "lib.loc", simplify=FALSE)  # may contain nulls
-  tar.lns <- names(search.target@ns.dat)
+  tar.lns.loc <- sapply(as.list(ns.target), slot, "lib.loc", simplify=FALSE)  # may contain nulls
+  tar.lns <- names(ns.target)
   to.unload <- setdiff(cur.lns, tar.lns)
 
   unload_namespaces(
@@ -248,17 +289,12 @@ search_path_update <- function(id, global) {
         immediate.=TRUE
       )
   }
-  on.exit(NULL)
   invisible(TRUE)
 }
 search_path_trim <- function(
   keep.path=union(
     getOption("unitizer.search.path.keep.base"),
     getOption("unitizer.search.path.keep")
-  ),
-  keep.ns=union(
-    getOption("unitizer.namespace.keep.base"),
-    getOption("unitizer.namespace.keep")
   ),
   global=unitizerGlobal$new()
 ) {
@@ -287,9 +323,18 @@ search_path_trim <- function(
       stop("Logic Error: invalid search path token; contact maintainer.")
     detach(pack, character.only=TRUE)
   }
-  # Now attempt to unload namespaces; note 'unload_namespaces' won't unload
-  # namespaces or imported namespaces for attached packages
-
+  invisible(TRUE)
+}
+namespace_trim <- function(
+  keep.ns=union(
+    getOption("unitizer.namespace.keep.base"),
+    getOption("unitizer.namespace.keep")
+  ),
+  global=unitizerGlobal$new()
+) {
+  stopifnot(
+    is.character(keep.ns) && !any(is.na(keep.ns)), is(global, "unitizerGlobal")
+  )
   unload_namespaces(loadedNamespaces(), global=global, keep.ns=keep.ns)
   invisible(TRUE)
 }
@@ -552,22 +597,6 @@ setMethod(
 # the search path environments as they change on detach / re-attach
 # @keywords internal
 
-get_namespace_data <- function() {
-  sapply(
-    loadedNamespaces(),
-    function(x) {
-      loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
-      ver <- try(getNamespaceVersion(x))
-      new(
-        "unitizerNamespaceData",
-        name=x,
-        lib.loc=if(!inherits(loc, "try-error")) loc else "",
-        version=if(!inherits(ver, "try-error")) ver else ""
-      )
-    },
-    simplify=FALSE
-  )
-}
 get_package_data <- function() {
   sapply(
     search(),
@@ -585,13 +614,3 @@ get_package_data <- function() {
     simplify=FALSE
   )
 }
-setClass(
-  "unitizerNamespaceData",
-  slots=c(
-    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
-) )
-setClass(
-  "unitizerPackageData",
-  slots=c(
-    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
-) )
