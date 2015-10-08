@@ -143,7 +143,8 @@ setClass(
     search.path="integer",
     options="integer",
     working.directory="integer",
-    random.seed="integer"
+    random.seed="integer",
+    namespaces="integer"
   ),
   prototype=list(
     search.path=0L, options=0L, working.directory=0L, random.seed=0L
@@ -184,7 +185,7 @@ setMethod(
     stopifnot(is.character(opts.ignore))
     res <- new("unitizerGlobalTrackingStore")
     res@search.path <- lapply(x@search.path, unitizerCompressTracking)
-    res@namespaces <- stop("Define Namespace Stuff")
+    res@namespaces <- lapply(x@namespaces, unitizerCompressTracking)
 
     # Don't store stuff with environments or stuff that is too big
     # (size cut-off should be an option?), or stuff that is part of the base or

@@ -300,7 +300,6 @@ search_path_trim <- function(
 ) {
   stopifnot(
     is.character(keep.path) && !any(is.na(keep.path)),
-    is.character(keep.ns) && !any(is.na(keep.ns)),
     is(global, "unitizerGlobal")
   )
   # detach each object, but make sure we do so in an order that doesn't cause
