@@ -134,19 +134,8 @@ search_path_update <- function(id, global) {
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
   curr.env.check <- search_as_envs()
-  ns.in.common <- intersect(
-    names(search.curr@ns.dat), names(curr.env.check@ns.dat)
-  )
-  ns.extra <- setdiff(names(search.curr@ns.dat), ns.in.common)
 
-  if(
-    !isTRUE(all.equal(curr.env.check, search.curr)) ||
-    !all(ns.extra %in% global$unitizer.opts[["unitizer.namespace.keep"]]) ||
-    !identical(
-      curr.env.check@ns.dat[ns.in.common],
-      search.curr@ns.dat[ns.in.common]
-    )
-  ) {
+  if(!isTRUE(all.equal(curr.env.check, search.curr))) {
     # not entirely sure this check is needed, or might be too stringent
     # new version of comparing entire object not tested
     stop("Logic Error: mismatch between actual search path and tracked path")
