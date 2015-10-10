@@ -398,8 +398,9 @@ unitizerGlobal <- setRefClass(
       '
       stopifnot(is(to, "unitizerGlobalIndices"))
 
-      if(status@search.path && to@search.path)
+      if(status@search.path && to@search.path){
         search_path_update(to@search.path, .self)
+      }
       if(status@namespaces && to@namespaces)
         namespace_update(to@namespaces, .self)
       if(status@options && to@options)

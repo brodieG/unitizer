@@ -289,6 +289,8 @@ search_path_trim <- function(
     is.character(keep.path) && !any(is.na(keep.path)),
     is(global, "unitizerGlobal")
   )
+  on.exit(global$state())
+
   # detach each object, but make sure we do so in an order that doesn't cause
   # issues with namespace dependencies
 
