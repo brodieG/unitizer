@@ -323,6 +323,7 @@ namespace_trim <- function(
   stopifnot(
     is.character(keep.ns) && !any(is.na(keep.ns)), is(global, "unitizerGlobal")
   )
+  on.exit(global$state())
   unload_namespaces(loadedNamespaces(), global=global, keep.ns=keep.ns)
   invisible(TRUE)
 }
