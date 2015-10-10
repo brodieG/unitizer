@@ -147,7 +147,8 @@ setClass(
     namespaces="integer"
   ),
   prototype=list(
-    search.path=0L, options=0L, working.directory=0L, random.seed=0L
+    search.path=0L, options=0L, working.directory=0L, random.seed=0L,
+    namespaces=0L
   ),
   validity=function(object){
     for(i in slotNames(object))
@@ -374,11 +375,15 @@ unitizerGlobal <- setRefClass(
       stopifnot(is.chr1(mode), mode %in% c("normal", "init"))
 
       for(i in slotNames(tracking)) {
-        if(!slot(status, i)) next             # Don't record statuses that aren't being tracked
-        new.obj <- slot(state.funs, i)()      # Get state with pre-defined function
-        ref.obj <- if(slot(indices.last, i))
-          slot(tracking, i)[[slot(indices.last, i)]] else
-            new.env()  # this can't possibly be identical to anything other than itself
+        # Don't record statuses that aren't being tracked
+        if(!slot(status, i)) next
+        # Get state with pre-defined function
+        new.obj <- slot(state.funs, i)()
+        ref.obj <- if(slot(indices.last, i)) {
+          slot(tracking, i)[[slot(indices.last, i)]]
+        } else {
+          new.env()  # guaranteed unique
+        }
         if(!identical(new.obj, ref.obj))
           slot(tracking, i) <<- append(slot(tracking, i), list(new.obj))
         if(identical(mode, "init"))

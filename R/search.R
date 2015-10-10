@@ -253,15 +253,13 @@ namespace_update <- function(id, global) {
   ns.in.common <- intersect(names(ns.target), names(ns.curr))
   ns.extra <- setdiff(names(ns.curr), ns.in.common)
 
-  if(!all(ns.extra %in% global$unitizer.opts[["unitizer.namespace.keep"]])) {
-    # not entirely sure this check is needed, or might be too stringent
-    # new version of comparing entire object not tested
-    stop("Logic Error: mismatch between actual and tracked namespaces")
-  }
   # Line up the namespaces
 
   cur.lns <- loadedNamespaces()
-  tar.lns.loc <- sapply(as.list(ns.target), slot, "lib.loc", simplify=FALSE)  # may contain nulls
+
+  # may contain nulls
+
+  tar.lns.loc <- sapply(as.list(ns.target), slot, "lib.loc", simplify=FALSE)
   tar.lns <- names(ns.target)
   to.unload <- setdiff(cur.lns, tar.lns)
 

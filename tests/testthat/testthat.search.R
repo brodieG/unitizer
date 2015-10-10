@@ -49,7 +49,9 @@ test_that("Moving Objects on Search Path Works", {
   expect_error(unitizer:::move_on_path(1L, 2L))
   unitizer:::move_on_path(2L, 5L)
   cat("start path compare\n")
-  expect_equal(  # can't compare actual environments as they change when detached and re-attached
+  # can't compare actual environments as they change when detached and
+  # re-attached
+  expect_equal(
     names(unitizer:::search_as_envs()@.items),
     names(search.init[c(1L, 5L, 2L:4L, 6L:length(search.init))]@.items)
   )
@@ -82,7 +84,7 @@ test_that("Search Path Journaling Works", {
     untz.glob$status,
     new(
       "unitizerGlobalStatus", search.path=2L, working.directory=2L,
-      options=2L, random.seed=2L
+      options=2L, random.seed=2L, namespaces=2L
     )
   )
   # state should only be recorded if it changes
@@ -93,7 +95,7 @@ test_that("Search Path Journaling Works", {
     st.0,
     new(
       "unitizerGlobalIndices", search.path=1L, working.directory=1L,
-      options=1L, random.seed=1L
+      options=1L, random.seed=1L, namespaces=1L
     )
   )
   expect_identical(st.0, st.1)
@@ -253,7 +255,9 @@ test_that("Loaded Namespaces don't cause issues", {
   keep.more <- c(
     "package:testthat", getOption("unitizer.search.path.keep.base")
   )
+  keep.more.ns <- sub("^package:", "", keep.more)
   unitizer:::search_path_trim(keep.more, global=untz.glob)
+  unitizer:::namespace_trim(keep.more.ns, global=untz.glob)
   untz.glob$state()
   loadNamespace("unitizerdummypkg2")
   untz.glob$state()
