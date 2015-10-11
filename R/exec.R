@@ -81,13 +81,20 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 
     if(!is_unitizer_sect) {
       x.extracted <- comm_and_call_extract(x)
-      x.comments <- x.extracted$comments      # need to recover comments from container since we can't attach comments directly to name
+      # need to recover comments from container since we can't attach comments
+      # directly to name
+
+      x.comments <- x.extracted$comments
       x <- x.extracted$call                   # get rid of comment container
     }
     x.to.eval <- `attributes<-`(x, NULL)
 
-    res <- eval_with_capture(x.to.eval, test.env, global)
-
+    res <- eval_with_capture(
+      x.to.eval, test.env,
+      cons=global$cons,
+      disable.capt=global$unitizer.opts[["unitizer.disable.capt"]],
+      max.capt.chars=global$unitizer.opts[["unitizer.max.capture.chars"]]
+    )
     if(res$aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
       stop(
         "Failed instantiating a unitizer section:\n",
@@ -120,9 +127,13 @@ eval_user_exp <- function(unitizerUSEREXP, env) {
   c(list(value=res$value$value, visible=res$value$visible), res[-1L])
 }
 eval_with_capture <- function(
-  x, test.env=new.env(), global=unitizerGlobal$new()
+  x, test.env=new.env(), cons=NULL,
+  disable.capt=getOption("unitizer.disable.capt"),
+  max.capt.chars=getOption("unitizer.max.capture.chars")
 ) {
-  warn.opt <- getOption("warn")     # Need to ensure warn=1 so that things work properly
+  # Need to ensure warn=1 so that things work properly
+
+  warn.opt <- getOption("warn")
   err.opt <- getOption("error")
 
   # Setup text capture; a bit messy due to funny way we have to pull in
@@ -130,18 +141,17 @@ eval_with_capture <- function(
   # if options are NULL
 
   came.with.capts <- TRUE
-  if(is.null(global$cons)) {
+  if(is.null(cons)) {
     capt.cons <- new("unitizerCaptCons")
     came.with.capts <- FALSE
   } else {
-    capt.cons <- global$cons
+    capt.cons <- cons
   }
   set_args <- list()
-  set_args[["capt.disabled"]] <- global$unitizer.opts[["unitizer.disable.capt"]]
+  set_args[["capt.disabled"]] <- disable.capt
   capt.cons <- do.call(set_capture, c(list(capt.cons), set_args))
   get_args <- list(capt.cons)
-  get_args[["chrs.max"]] <-
-    global$unitizer.opts[["unitizer.max.capture.chars"]]
+  get_args[["chrs.max"]] <- max.capt.chars
 
   # Manage unexpected outcomes
 
