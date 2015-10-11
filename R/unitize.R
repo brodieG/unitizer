@@ -186,7 +186,8 @@ unitize_dir <- function(
     function(x) file_test("-f", x),
     sort(
       list.files(
-        path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
+        path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE,
+        no..=TRUE
   ) ) )
   if(!length(test.files))
     stop("No files to test in '", test.dir, "'")
