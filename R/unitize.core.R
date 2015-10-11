@@ -687,7 +687,7 @@ unitize_browse <- function(
               } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
           ) )
         }
-        # - Non-interactive Issues -----------------------------------------------
+        # - Non-interactive Issues ---------------------------------------------
         if(any(int.error)) {
           if(interactive.mode)
             stop(
@@ -723,7 +723,7 @@ unitize_browse <- function(
                   "); see above for more info, or run in interactive mode"
           ) ) ) )
         }
-        # - Simple Outcomes / no-review ------------------------------------------
+        # - Simple Outcomes / no-review -----------------------------------------
 
         if(identical(test.len, 1L) || length(eval.which) || !interactive.mode)
           break
