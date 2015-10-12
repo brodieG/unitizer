@@ -95,6 +95,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       disable.capt=global$unitizer.opts[["unitizer.disable.capt"]],
       max.capt.chars=global$unitizer.opts[["unitizer.max.capture.chars"]]
     )
+    global$cons <- res$cons  # Need to recover connections
     if(res$aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
       stop(
         "Failed instantiating a unitizer section:\n",
@@ -201,13 +202,14 @@ eval_with_capture <- function(
   # Need to make sure we either close the connections or return the updated
   # values since we might be changing connections depending on sink status, etc
 
-  if(!came.with.capts) close_and_clear(capt.cons) else global$cons <- capt.cons
+  if(!came.with.capts) close_and_clear(capt.cons)
 
   # Cleanup and
 
   res[c("output", "message")] <- lapply(
     capt[c("output", "message")], function(x) if(!length(x)) "" else x
   )
+  res[["cons"]] <- capt.cons
   clean_message(res)
 }
 user_exp_display <- function(value, env, expr) {

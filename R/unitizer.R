@@ -510,6 +510,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           disable.capt=e1@global$unitizer.opts[["unitizer.disable.capt"]],
           max.capt.chars=e1@global$unitizer.opts[["unitizer.max.capture.chars"]]
         )
+        e1@global$cons <- res.tmp$cons # In case cons was modified
         cond <- res.tmp$conditions
         test.res <- if(length(cond)) {
           structure(
