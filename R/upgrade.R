@@ -143,6 +143,10 @@ upgrade_internal <- function(object) {
   if(ver < "1.0.8") {
     object <- removeSlots(object, "cons")
   }
+  if(ver < "1.0.9") {
+    object@state.new <- addSlot(object@state.new, "namespaces", list())
+    object@state.ref <- addSlot(object@state.ref, "namespaces", list())
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
