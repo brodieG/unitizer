@@ -37,7 +37,7 @@ test_that("Parent Env Stays on Top", {
     environmentName(parent.env(my.env)), "package:unitizerdummypkg1"
   )
 
-  detach("package:unitizerdummypkg1")
+  detach("package:unitizerdummypkg1", unload=TRUE)
   expect_identical(environmentName(parent.env(my.env)), curr2)
 
   expect_true(untz.glob$checkShims())

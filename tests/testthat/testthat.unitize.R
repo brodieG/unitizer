@@ -169,7 +169,6 @@ txt7 <- unitizer:::capture_output(
   try(unitize(file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE))
 )
 options(old.keep.ns)
-browser()
 test_that("namespace conflict", {
   expect_equal_to_reference(
     txt4, file.path("helper", "refobjs", "unitize_nsconf1.rds")
