@@ -131,7 +131,6 @@ untz3b.get.all <- vapply(get_unitizer(untz3b), class, character(1L))
 # y <- readRDS(file.path("helper", "refobjs", "unitize_resprint3.rds"))
 # cat(capture.output(print(x)), sep="\n", file=(f1 <- tempfile())); cat(capture.output(print(y)), sep="\n", file=(f2 <- tempfile())); tools::Rdiff(f1, f2);
 # unlink(paste0("f", 1:2))
-
 test_that("unitize_dir", {
   expect_equal_to_reference(
     txt3a, file.path("helper", "refobjs", "unitize_txtdir.rds")
@@ -170,7 +169,7 @@ txt7 <- unitizer:::capture_output(
   try(unitize(file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE))
 )
 options(old.keep.ns)
-
+browser()
 test_that("namespace conflict", {
   expect_equal_to_reference(
     txt4, file.path("helper", "refobjs", "unitize_nsconf1.rds")
