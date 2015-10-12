@@ -315,8 +315,6 @@ txt20 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 test_that("multi-sect", {
   txt20$output <- gsub("^<\\w+: .*?>", "", txt20$output)
-  txt20.rds <- readRDS(file.path("helper", "refobjs", "unitize_multisect1.rds"))
-  txt20.rds$output <- gsub("^<\\w+: .*?>", "", txt20.rds$output)
   expect_equal_to_reference(txt20, file.path("helper", "refobjs", "unitize_multisect1.rds"))
 })
 # Purposefully mess up one of the unitizers to see if the load fail stuff works
