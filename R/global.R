@@ -297,6 +297,7 @@ unitizerGlobal <- setRefClass(
     # Implement global object as locked so that it doesn't get overwritten
 
     locked="logical",
+    set.global="logical",
 
     # Allow us to remember if an error happened on state reset
 
@@ -318,9 +319,12 @@ unitizerGlobal <- setRefClass(
       ..., disabled=FALSE, enable.which=integer(0L),
       par.env=new.env(parent=baseenv()),
       unitizer.opts=options()[grep("^unitizer\\.", names(options()))],
-      set.global=FALSE, locked=FALSE
+      set.global=FALSE
     ) {
-      obj <- callSuper(..., par.env=par.env, unitizer.opts=unitizer.opts)
+      obj <- callSuper(
+        ..., par.env=par.env, unitizer.opts=unitizer.opts,
+        locked=FALSE
+      )
       enable(enable.which)
       state()
       ns.opt.conflict@conflict <<- FALSE

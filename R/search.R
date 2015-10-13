@@ -279,11 +279,8 @@ namespace_update <- function(id, global) {
   invisible(TRUE)
 }
 search_path_trim <- function(
-  keep.path=union(
-    getOption("unitizer.search.path.keep.base"),
-    getOption("unitizer.search.path.keep")
-  ),
-  global=unitizerGlobal$new()
+  keep.path=keep_sp_default(options()),
+  global
 ) {
   stopifnot(
     is.character(keep.path) && !any(is.na(keep.path)),
@@ -314,11 +311,8 @@ search_path_trim <- function(
   invisible(TRUE)
 }
 namespace_trim <- function(
-  keep.ns=union(
-    getOption("unitizer.namespace.keep.base"),
-    getOption("unitizer.namespace.keep")
-  ),
-  global=unitizerGlobal$new()
+  keep.ns=keep_ns_default(options()),
+  global
 ) {
   stopifnot(
     is.character(keep.ns) && !any(is.na(keep.ns)), is(global, "unitizerGlobal")
@@ -602,4 +596,34 @@ get_package_data <- function() {
     },
     simplify=FALSE
   )
+}
+# Helper function for loading options
+#
+# @param opts a list of options to look in for the relevant options
+
+keep_ns_default <- function(opts=options()) {
+  ns.opts <- c("unitizer.namespace.keep.base", "unitizer.namespace.keep")
+  valid_sp_np_default(opts, ns.opts)
+  keep.sp <- keep_sp_default(opts)
+  keep.sp.ns <- sub("^package:", "", grep("^package:.+", keep.sp, value=TRUE))
+  unique(c(unlist(opts[ns.opts]), keep.sp.ns))
+}
+keep_sp_default <- function(opts=options()) {
+  sp.opts <- c("unitizer.search.path.keep.base", "unitizer.search.path.keep")
+  valid_sp_np_default(opts, sp.opts)
+  unique(unlist(opts[sp.opts]))
+}
+# Validation function shared by ns and sp funs
+
+valid_sp_np_default <- function(opts, valid.names) {
+  stopifnot(
+    is.list(opts),
+    is.character(valid.names) && !any(is.na(valid.names)),
+    all(valid.names %in% names(opts)),
+    all(
+      vapply(
+        opts[valid.names], function(x) is.character(x) && !any(is.na(x)),
+        logical(1L)
+  ) ) )
+  invisible(TRUE)
 }

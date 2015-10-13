@@ -215,23 +215,21 @@ unitize_core <- function(
   # fragility here since it is possible using these functions could modify
   # global (see `options` example)
 
-  seed.dat <- global$unitizer.opts[["unitizer.seed"]]  # get seed before 'options_zero'
+  # get seed before 'options_zero'
+
+  seed.dat <- global$unitizer.opts[["unitizer.seed"]]
 
   if(identical(global$status@search.path, 2L))
     search_path_trim(
-      global=global,
-      keep.path=union(
-        global$unitizer.opts[["unitizer.search.path.keep.base"]],
-        global$unitizer.opts[["unitizer.search.path.keep"]]
-    ) )
+      global=global, keep.path=keep_sp_default(global$unitizer.opts)
+    )
   if(identical(global$status@namespaces, 2L))
     namespace_trim(
-      global=global,
-      keep.ns=union(
-        global$unitizer.opts[["unitizer.namespace.keep.base"]],
-        global$unitizer.opts[["unitizer.namespace.keep"]]
-    ) )
-  if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""  # indicate conflict happened prior to test eval
+      global=global, keep.ns=keep_ns_default(global$unitizer.opts)
+    )
+  # indicate conflict happened prior to test eval
+
+  if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""
 
   if(identical(global$status@options, 2L)) options_zero()
   if(identical(global$status@random.seed, 2L)) {
@@ -240,7 +238,8 @@ unitize_core <- function(
         paste0(collapse="\n",
           word_wrap(
             paste0(collapse="",
-              "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
+              "Unable to set random seed; make sure ",
+              "`getOption('unitizer.seed')` ",
               "is a list of possible arguments to `set.seed`."
   ) ) ) ) } }
   if(identical(global$status@working.directory, 2L)) {
