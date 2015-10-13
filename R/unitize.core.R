@@ -185,7 +185,8 @@ unitize_core <- function(
 
   global <- unitizerGlobal$new(
     enable.which=reproducible.state,
-    unitizer.opts=opts.untz             # this may no longer be necessary now that we don't unload unitizer options
+    unitizer.opts=opts.untz,  # need to reconcile with normal options
+    set.global=TRUE
   )
   if(is.null(par.env)) {
     global$shimFuns()

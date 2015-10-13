@@ -313,7 +313,8 @@ unitizerGlobal <- setRefClass(
     initialize=function(
       ..., disabled=FALSE, enable.which=integer(0L),
       par.env=new.env(parent=baseenv()),
-      unitizer.opts=options()[grep("^unitizer\\.", names(options()))]
+      unitizer.opts=options()[grep("^unitizer\\.", names(options()))],
+      set.global=FALSE
     ) {
       obj <- callSuper(..., par.env=par.env, unitizer.opts=unitizer.opts)
       enable(enable.which)
@@ -327,7 +328,12 @@ unitizerGlobal <- setRefClass(
           "Logic Error: global tracking object already exists; this should ",
           "never happen; contact maintainer"
         )
-      } else .global$global <- .self
+      } else if(set.global) .global$global <- .self else
+        warning(
+          "Instantiated global object without global namespace registry; ",
+          "this is an internal warning; you should not see it normal unitizer ",
+          "usage; contact maintainer", immediate.=TRUE
+        )
       obj
     },
     enable=function(
@@ -451,18 +457,18 @@ unitizerGlobal <- setRefClass(
           working.directory=1L, random.seed=1L, namespaces=1L
         )
       )
-    }
+    },
     release=function() {
       '
       Blow away the global tracking object so that we can re-use for other
       sessions
       '
       .global$global <- NULL
-    },
+    }
 ) )
- # used purely for traced functions that need access to global object; in most
- # cases should be just our traced functions, note that we just create this
- # object here for test; any time a `unitizer` is instantiated
+# used purely for traced functions that need access to global object; in most
+# cases should be just our traced functions, note that we just create this
+# object here for test; any time a `unitizer` is instantiated
 
 .global <- new.env()
 
