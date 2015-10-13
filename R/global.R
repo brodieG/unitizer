@@ -294,6 +294,10 @@ unitizerGlobal <- setRefClass(
     disabled="unitizerGlobalDisabled",
     tracking="unitizerGlobalTracking",
 
+    # Implement global object as locked so that it doesn't get overwritten
+
+    locked="logical",
+
     # Allow us to remember if an error happened on state reset
 
     ns.opt.conflict="unitizerGlobalNsOptConflict",
@@ -314,7 +318,7 @@ unitizerGlobal <- setRefClass(
       ..., disabled=FALSE, enable.which=integer(0L),
       par.env=new.env(parent=baseenv()),
       unitizer.opts=options()[grep("^unitizer\\.", names(options()))],
-      set.global=FALSE
+      set.global=FALSE, locked=FALSE
     ) {
       obj <- callSuper(..., par.env=par.env, unitizer.opts=unitizer.opts)
       enable(enable.which)
@@ -323,12 +327,15 @@ unitizerGlobal <- setRefClass(
 
       # top level copy for access from other namespaces
 
-      if(!is.null(.global$global)) {
+      if(locked) {
         stop(
           "Logic Error: global tracking object already exists; this should ",
           "never happen; contact maintainer"
         )
-      } else if(set.global) .global$global <- .self else
+      } else if(set.global) {
+        .global$global <- .self
+        locked <<- TRUE
+      } else
         warning(
           "Instantiated global object without global namespace registry; ",
           "this is an internal warning; you should not see it normal unitizer ",
@@ -463,7 +470,7 @@ unitizerGlobal <- setRefClass(
       Blow away the global tracking object so that we can re-use for other
       sessions
       '
-      .global$global <- NULL
+      locked <<- TRUE
     }
 ) )
 # used purely for traced functions that need access to global object; in most
