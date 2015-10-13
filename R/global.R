@@ -293,10 +293,15 @@ unitizerGlobal <- setRefClass(
     status="unitizerGlobalStatus",
     disabled="unitizerGlobalDisabled",
     tracking="unitizerGlobalTracking",
-    ns.opt.conflict="unitizerGlobalNsOptConflict",  # Allow us to remember if an error happened on state reset
-    cons="unitizerCaptConsOrNULL",                  # Connections for stdout and stderr capture
 
-    unitizer.opts="list",   # store original unitizer options before they get zeroed out
+    # Allow us to remember if an error happened on state reset
+
+    ns.opt.conflict="unitizerGlobalNsOptConflict",
+    cons="unitizerCaptConsOrNULL",   # Connections for stdout and stderr capture
+
+    # store original unitizer options before they get zeroed out
+
+    unitizer.opts="list",
 
     state.funs="unitizerGlobalStateFuns",
     shim.funs="list",
@@ -314,7 +319,15 @@ unitizerGlobal <- setRefClass(
       enable(enable.which)
       state()
       ns.opt.conflict@conflict <<- FALSE
-      .global$global <- .self  # top level copy for access from other namespaces
+
+      # top level copy for access from other namespaces
+
+      if(!is.null(.global$global)) {
+        stop(
+          "Logic Error: global tracking object already exists; this should ",
+          "never happen; contact maintainer"
+        )
+      } else .global$global <- .self
       obj
     },
     enable=function(
@@ -439,6 +452,13 @@ unitizerGlobal <- setRefClass(
         )
       )
     }
+    release=function() {
+      '
+      Blow away the global tracking object so that we can re-use for other
+      sessions
+      '
+      .global$global <- NULL
+    },
 ) )
  # used purely for traced functions that need access to global object; in most
  # cases should be just our traced functions, note that we just create this

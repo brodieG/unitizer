@@ -826,8 +826,10 @@ reset_and_unshim <- function(global) {
   stopifnot(is(global, "unitizerGlobal"))
   glob.clear <- try(global$resetFull())
   glob.unshim <- try(global$unshimFuns())
+  glob.release <- try(global$release())
   success.clear <- !inherits(glob.clear, "try-error")
   success.unshim <-  !inherits(glob.unshim, "try-error")
+  success.release <-  !inherits(glob.release, "try-error")
   if(!success.clear)
     word_msg(
       "Failed restoring global settings to original state; you may want",
@@ -839,6 +841,13 @@ reset_and_unshim <- function(global) {
       "Failed unshimming library/detach/attach; you may want to restart",
       "your R session to reset them to their original values (or you",
       "can `untrace` them manually)"
+    )
+  if(!success.release)
+    word_msg(
+      "Failed releasing global tracking object; you will not be able to",
+      "instantiate another `unitizer` session.  This should not happen, ",
+      "please contact the maintainer.  In the meantime, restarting your R",
+      "session should restore functionality"
     )
   success.clear && success.unshim
 }
