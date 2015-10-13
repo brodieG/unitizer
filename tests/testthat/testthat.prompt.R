@@ -1,4 +1,5 @@
 library(unitizer)
+context("Prompt")
 
 test_that("read_line works", {
   unitizer:::read_line_set_vals(letters[1:3])

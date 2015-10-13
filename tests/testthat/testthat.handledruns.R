@@ -1,4 +1,6 @@
 library(unitizer)
+context("Get")
+
 test_that("Ensure we get warning if we try to run in handlers", {
   expect_warning(try(unitize("helper/trivial.R")), "running unitizer inside an error handling function")
   expect_warning(tryCatch(unitize("helper/trivial.R")), "running unitizer inside an error handling function")

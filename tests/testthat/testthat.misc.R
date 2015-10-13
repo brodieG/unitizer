@@ -1,5 +1,6 @@
 library(testthat)
 library(unitizer)
+context("Misc")
 
 test_that("Text wrapping", {
   var <- "humpty dumpty sat on a truck and had a big dump"

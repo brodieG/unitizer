@@ -1,6 +1,7 @@
 library(unitizer)
 library(devtools)
 library(testthat)
+context("Shim")
 
 prev.trace.state <- tracingState(TRUE)
 if(!prev.trace.state) message("Turned on tracing state for tests")

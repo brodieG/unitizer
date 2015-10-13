@@ -1,4 +1,5 @@
 library(unitizer)
+context("Capture")
 
 old.max <- getOption("unitizer.max.capture.chars")
 options(unitizer.max.capture.chars=100L)

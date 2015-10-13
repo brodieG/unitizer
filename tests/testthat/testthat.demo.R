@@ -1,4 +1,5 @@
 library(unitizer)
+context("Demo")
 
 test_that("copy fastlm dir works", {
   x <- copy_fastlm_to_tmpdir()

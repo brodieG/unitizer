@@ -5,6 +5,8 @@ if(!file_test("-d", file.path("helper", "refobjs")))
 
 library(unitizer)
 library(testthat)
+context("Unitize")
+
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.R")

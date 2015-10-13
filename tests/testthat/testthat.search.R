@@ -1,5 +1,6 @@
 library(testthat)
 library(devtools)
+context("Search")
 
 message("\n\nStarting\n\n")
 

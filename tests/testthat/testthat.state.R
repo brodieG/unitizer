@@ -1,4 +1,5 @@
 library(unitizer)
+context("State")
 test_that("Random Seed", {
   old.seed <- if(!exists(".Random.seed")) NULL else .Random.seed
   seed.dat <- getOption("unitizer.seed")
