@@ -331,7 +331,7 @@ unitizerGlobal <- setRefClass(
 
       # top level copy for access from other namespaces
 
-      if(locked) {
+      if(isTRUE(.global$global$locked)) {
         stop(
           "Logic Error: global tracking object already exists; this should ",
           "never happen; contact maintainer"
@@ -342,8 +342,8 @@ unitizerGlobal <- setRefClass(
       } else
         warning(
           "Instantiated global object without global namespace registry; ",
-          "this is an internal warning; you should not see it normal unitizer ",
-          "usage; contact maintainer", immediate.=TRUE
+          "you should only see this warning during package install",
+          immediate.=TRUE
         )
       obj
     },
@@ -474,7 +474,7 @@ unitizerGlobal <- setRefClass(
       Blow away the global tracking object so that we can re-use for other
       sessions
       '
-      locked <<- TRUE
+      locked <<- FALSE
     }
 ) )
 # used purely for traced functions that need access to global object; in most

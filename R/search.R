@@ -194,7 +194,7 @@ search_path_update <- function(id, global) {
 
     swap.id <- min(reord[mismatch])
     swap.pos <- which(reord == swap.id)
-    move_on_path(new.pos=swap.id, old.pos=swap.pos)
+    move_on_path(new.pos=swap.id, old.pos=swap.pos, global=global)
     sc.id.tmp <- unitizerUniqueNames(search_as_envs())
   }
   search.new <- search()
@@ -525,7 +525,7 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
 }
 # @keywords internal
 # @rdname reattach
-move_on_path <- function(new.pos, old.pos, global=unitizerGlobal$new()) {
+move_on_path <- function(new.pos, old.pos, global) {
   stopifnot(
     is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos),
     is.integer(old.pos), length(old.pos) == 1L, !is.na(old.pos),

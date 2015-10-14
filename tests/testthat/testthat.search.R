@@ -48,14 +48,14 @@ test_that("Path Compression", {
     c(".GlobalEnv", "package:unitizerdummypkg2 (v0.1)", "package:unitizerdummypkg1 (v0.1)")
   )
 })
-
 test_that("Moving Objects on Search Path Works", {
   if(length(search.init) < 6L) stop("Unexpetedly short search path")
-
-  expect_error(unitizer:::move_on_path(5L, 2L))
-  expect_error(unitizer:::move_on_path(1L, 2L))
-  unitizer:::move_on_path(2L, 5L)
-  cat("start path compare\n")
+  untz.glob <- unitizer:::unitizerGlobal$new(
+    enable.which=state.set, set.global=TRUE
+  )
+  expect_error(unitizer:::move_on_path(5L, 2L, untz.glob))
+  expect_error(unitizer:::move_on_path(1L, 2L, untz.glob))
+  unitizer:::move_on_path(2L, 5L, untz.glob)
   # can't compare actual environments as they change when detached and
   # re-attached
   expect_equal(
@@ -65,10 +65,12 @@ test_that("Moving Objects on Search Path Works", {
   # Now let's undo the previous move
 
   for(i in rep(5L, 3L))            # Push second pack back to original position
-    unitizer:::move_on_path(2L, 5L)
+    unitizer:::move_on_path(2L, 5L, untz.glob)
 
   # Make sure S4 all.equal method is used
   expect_true(all.equal(unitizer:::search_as_envs(), search.init))
+
+  untz.glob$release()
 })
 try(detach("package:unitizer"), silent=TRUE)
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
