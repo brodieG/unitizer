@@ -23,7 +23,9 @@ NULL
 
 setClass(
   "unitizerList",
-  representation(.items="listOrExpression", .pointer="integer", .seek.fwd="logical"),
+  representation(
+    .items="listOrExpression", .pointer="integer", .seek.fwd="logical"
+  ),
   prototype(.pointer=0L, .seek.fwd=TRUE),
   validity=function(object) {
     obj.len <- length(object)
@@ -32,7 +34,8 @@ setClass(
       c(1L, max(1L, as.integer(floor(obj.len / 2))), obj.len)
     )
     lapply(
-      idx.to.test, function(x) if(isS4(object[[x]])) validObject(object[[x]])
+      idx.to.test,
+      function(x) if(isS4(object[[x]])) validObject(object[[x]], complete=TRUE)
     )
     TRUE
   }
