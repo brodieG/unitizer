@@ -147,6 +147,19 @@ upgrade_internal <- function(object) {
     object@state.new <- addSlot(object@state.new, "namespaces", list())
     object@state.ref <- addSlot(object@state.ref, "namespaces", list())
   }
+  if(ver < "1.0.10") {
+    object@items.ref@.items <- lapply(
+      object@items.ref@.items,
+      function(x) {
+        x@glob.indices <- addSlot(x@glob.indices, "namespaces", 0L)
+        x@state <- addSlot(x@state, "namespaces", NULL)
+        x
+      }
+    )
+    object@items.ref.calls.deparse <- vapply(
+      object@items.ref@.items, slot, character(1L), "call.dep"
+    )
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
