@@ -1,4 +1,5 @@
 library(unitizer)
+context("Capture")
 
 old.max <- getOption("unitizer.max.capture.chars")
 options(unitizer.max.capture.chars=100L)
@@ -158,11 +159,13 @@ test_that("connection capture works", {
 # })
 test_that("eval with capt", {
   expect_identical(
-    unitizer:::eval_with_capture(quote(1+1)),
+    (capt <- unitizer:::eval_with_capture(quote(1+1)))[1:7],
     list(value = 2, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "[1] 2\n", message = "")
   )
+  expect_is(capt[[8]], "unitizerCaptCons")
   expect_identical(
-    unitizer:::eval_with_capture(cat("wow\n", file=stderr())),
+    (capt <- unitizer:::eval_with_capture(cat("wow\n", file=stderr())))[1:7],
     list(value = NULL, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "", message = "wow\n")
   )
+  expect_is(capt[[8]], "unitizerCaptCons")
 })

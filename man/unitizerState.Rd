@@ -5,8 +5,8 @@
 \alias{unitizerState}
 \alias{unitizerStateBasic}
 \alias{unitizerStateBasic-class}
-\alias{unitizerStateNoOpt}
-\alias{unitizerStateNoOpt-class}
+\alias{unitizerStateDefault}
+\alias{unitizerStateDefault-class}
 \alias{unitizerStateOff}
 \alias{unitizerStateOff-class}
 \alias{unitizerStatePristine}
@@ -18,7 +18,8 @@
 While R generally adheres to a "functional" programming style, there are
 several aspects of session state that can affect the results of code
 evaluation.  \code{unitizer} attempts to make tests as reproducible as
-controlling session state so that it is the same every time a test is run.
+possible by controlling session state so that it is the same every time a
+test is run.
 }
 \section{Slots}{
 
@@ -52,7 +53,7 @@ in the following:
   \item Workspace (enabled by default): all tests are evaluated in
      environments that are children of a special environment that does not
      inherit from \code{.GlobalEnv}.  This prevents objects that are
-     laying around in your workspace from interfering with your tests.
+     lying around in your workspace from interfering with your tests.
   \item Random Seed (enabled by default): is set to a specific value at the
     beginning of each test file so that tests using random values get the
     same value at every test iteration. If you change the order of  your
@@ -60,15 +61,18 @@ in the following:
     the file, that will still affect the random seed.
   \item Working Directory (enabled by default): is set to the package
     directory if all test files are  in the same sub-directory of a package.
-  \item Search Path (\bold{disabled} by default): is set to what you would
+  \item Search Path (\bold{enabled} by default): is set to what you would
     typically find in a freshly loaded vanilla R session.  This means any non
     default packages that are loaded when you run your tests are unloaded
     prior to running your tests.  If you want to use the same libraries
     across multiple tests you can load them with the \code{pre} argument to
     \code{\link{unitize}} or \code{\link{unitize_dir}}.
   \item Options (\bold{disabled} by default): same as search path
+  \item Namespaces {\bold{disabled}} by default): same as search path; this
+    option is only made available to support options since many namespaces
+    set options \code{onLoad}, and as such it is necessary to unload and load
+    them to ensure default options are set
 }
-
 State is reset after running each test file when running multiple test
 files with \code{unitize_dir}, which means state changes in one test file
 will not affect the next one.
@@ -77,20 +81,20 @@ will not affect the next one.
 \section{Search Path and Options}{
 
 
-Search path and options state management are turned off by default because
-in order to work they require the ability to fully unload any non-default
-packages and namespaces, and there are some packages that cannot be
-unloaded, or should not be unloaded (e.g.
+Search options and namespace state management are turned off by default
+because in order to work they require the ability to fully unload any
+non-default packages and namespaces, and there are some packages that cannot
+be unloaded, or should not be unloaded (e.g.
 \href{https://github.com/Rdatatable/data.table/issues/990}{data.table}). If
 you know the packages you typically load in your sessions can be unloaded,
 you can turn this functionality on by setting
 \code{options(unitizer.state="pristine")} either in your session, in your
-\code{.Rprofile} file, or in each call to \code{unitize} or
-\code{unitize_dir}.  If you have packages that cannot be unloaded, but
-you still want to enable these features, see the "Search Path and Namespace
-State Options" section of \code{\link{unitizer.opts}} docs.
+\code{.Rprofile} file, or using \code{state="prisitine"} in each call to
+\code{unitize} or \code{unitize_dir}.  If you have packages that cannot be
+unloaded, but you still want to enable these features, see the "Search Path
+and Namespace State Options" section of \code{\link{unitizer.opts}} docs.
 
-If you run \code{unitizer} with options and search path tracking and you run
+If you run \code{unitizer} with options and namespace tracking and you run
 into a namespace that cannot be unloaded, or should not be unloaded because
 it is listed in \code{getOption("unitizer.namespace.keep")}, \code{unitizer}
 will turn off \code{options} state tracking from that point onwards.
@@ -111,15 +115,14 @@ as the \code{state} argument to \code{\link{unitize}} and
 There are several classes defined, though their only purpose is to act as
 presets since they are identical except for their prototype values:
 \itemize{
+  \item \code{unitizerStateDefault} turns off options and namespace tracking,
+    but otherwise enables all other state tracking.  This is the default
+    behavior.
   \item \code{unitizerStateSafe} is the default and turns off tracking for
-    search path and options, which are the two settings most likely to cause
-    problems with poorly behaved packages
+    search path, namespaces and options.  These settings, particularly the
+    last two, are the most likely to cause compatibility problems
   \item \code{unitizerStatePristine} implements the highest level of state
     tracking and control
-  \item \code{unitizerStateNoOpt} turns off options tracking, which makes it
-    a good choice if you have a lot of packages that are added to
-    \code{getOption("unitizer.namespace.keep")} so that you do not need to
-    also add all their options to \code{getOption("unitizer.opts.asis")}
   \item \code{unitizerStateBasic} keeps all tracking, but at a less
     aggressive level; state is reset between each test file to the state
     before you started \code{unitize}ing so that no single test file affects
@@ -145,7 +148,7 @@ setting (see examples).  For \code{par.env} that setting is either
   \item 2 track and set state to what you would typically find in a clean
     R session, with the exception of \code{random.seed}, which is
     set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
-    as that seed is substantially smaller than the R default).
+    as that seed is substantially smaller than the R default seed).
 }
 }
 

@@ -1,4 +1,5 @@
 library(unitizer)
+context("Text")
 local({
   mx.1 <- matrix(1:9, nrow=3)
   mx.2 <- matrix(1:100, ncol=2)

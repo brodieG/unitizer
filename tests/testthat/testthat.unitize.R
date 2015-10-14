@@ -5,6 +5,8 @@ if(!file_test("-d", file.path("helper", "refobjs")))
 
 library(unitizer)
 library(testthat)
+context("Unitize")
+
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.R")
@@ -131,7 +133,6 @@ untz3b.get.all <- vapply(get_unitizer(untz3b), class, character(1L))
 # y <- readRDS(file.path("helper", "refobjs", "unitize_resprint3.rds"))
 # cat(capture.output(print(x)), sep="\n", file=(f1 <- tempfile())); cat(capture.output(print(y)), sep="\n", file=(f2 <- tempfile())); tools::Rdiff(f1, f2);
 # unlink(paste0("f", 1:2))
-
 test_that("unitize_dir", {
   expect_equal_to_reference(
     txt3a, file.path("helper", "refobjs", "unitize_txtdir.rds")
@@ -170,7 +171,6 @@ txt7 <- unitizer:::capture_output(
   try(unitize(file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE))
 )
 options(old.keep.ns)
-
 test_that("namespace conflict", {
   expect_equal_to_reference(
     txt4, file.path("helper", "refobjs", "unitize_nsconf1.rds")
@@ -315,9 +315,9 @@ txt20 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 test_that("multi-sect", {
   txt20$output <- gsub("^<\\w+: .*?>", "", txt20$output)
-  txt20.rds <- readRDS(file.path("helper", "refobjs", "unitize_multisect1.rds"))
-  txt20.rds$output <- gsub("^<\\w+: .*?>", "", txt20.rds$output)
-  expect_equal_to_reference(txt20, file.path("helper", "refobjs", "unitize_multisect1.rds"))
+  expect_equal_to_reference(
+    txt20, file.path("helper", "refobjs", "unitize_multisect1.rds")
+  )
 })
 # Purposefully mess up one of the unitizers to see if the load fail stuff works
 

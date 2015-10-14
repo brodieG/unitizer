@@ -1,5 +1,6 @@
 library(testthat)
 library(unitizer)
+context("List")
 
 local( {
   lst <- new("unitizerList")

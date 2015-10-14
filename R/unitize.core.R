@@ -185,7 +185,8 @@ unitize_core <- function(
 
   global <- unitizerGlobal$new(
     enable.which=reproducible.state,
-    unitizer.opts=opts.untz             # this may no longer be necessary now that we don't unload unitizer options
+    unitizer.opts=opts.untz,  # need to reconcile with normal options
+    set.global=TRUE
   )
   if(is.null(par.env)) {
     global$shimFuns()
@@ -214,21 +215,21 @@ unitize_core <- function(
   # fragility here since it is possible using these functions could modify
   # global (see `options` example)
 
-  seed.dat <- global$unitizer.opts[["unitizer.seed"]]  # get seed before 'options_zero'
+  # get seed before 'options_zero'
+
+  seed.dat <- global$unitizer.opts[["unitizer.seed"]]
 
   if(identical(global$status@search.path, 2L))
     search_path_trim(
-      global=global,
-      keep.ns=union(
-        global$unitizer.opts[["unitizer.namespace.keep.base"]],
-        global$unitizer.opts[["unitizer.namespace.keep"]]
-      ),
-      keep.path=union(
-        global$unitizer.opts[["unitizer.search.path.keep.base"]],
-        global$unitizer.opts[["unitizer.search.path.keep"]]
-      )
+      global=global, keep.path=keep_sp_default(global$unitizer.opts)
     )
-  if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""  # indicate conflict happened prior to test eval
+  if(identical(global$status@namespaces, 2L))
+    namespace_trim(
+      global=global, keep.ns=keep_ns_default(global$unitizer.opts)
+    )
+  # indicate conflict happened prior to test eval
+
+  if(global$ns.opt.conflict@conflict) global$ns.opt.conflict@file <- ""
 
   if(identical(global$status@options, 2L)) options_zero()
   if(identical(global$status@random.seed, 2L)) {
@@ -237,7 +238,8 @@ unitize_core <- function(
         paste0(collapse="\n",
           word_wrap(
             paste0(collapse="",
-              "Unable to set random seed; make sure `getOption('unitizer.seed')` ",
+              "Unable to set random seed; make sure ",
+              "`getOption('unitizer.seed')` ",
               "is a list of possible arguments to `set.seed`."
   ) ) ) ) } }
   if(identical(global$status@working.directory, 2L)) {
@@ -685,7 +687,7 @@ unitize_browse <- function(
               } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
           ) )
         }
-        # - Non-interactive Issues -----------------------------------------------
+        # - Non-interactive Issues ---------------------------------------------
         if(any(int.error)) {
           if(interactive.mode)
             stop(
@@ -721,7 +723,7 @@ unitize_browse <- function(
                   "); see above for more info, or run in interactive mode"
           ) ) ) )
         }
-        # - Simple Outcomes / no-review ------------------------------------------
+        # - Simple Outcomes / no-review -----------------------------------------
 
         if(identical(test.len, 1L) || length(eval.which) || !interactive.mode)
           break
@@ -824,8 +826,10 @@ reset_and_unshim <- function(global) {
   stopifnot(is(global, "unitizerGlobal"))
   glob.clear <- try(global$resetFull())
   glob.unshim <- try(global$unshimFuns())
+  glob.release <- try(global$release())
   success.clear <- !inherits(glob.clear, "try-error")
   success.unshim <-  !inherits(glob.unshim, "try-error")
+  success.release <-  !inherits(glob.release, "try-error")
   if(!success.clear)
     word_msg(
       "Failed restoring global settings to original state; you may want",
@@ -837,6 +841,13 @@ reset_and_unshim <- function(global) {
       "Failed unshimming library/detach/attach; you may want to restart",
       "your R session to reset them to their original values (or you",
       "can `untrace` them manually)"
+    )
+  if(!success.release)
+    word_msg(
+      "Failed releasing global tracking object; you will not be able to",
+      "instantiate another `unitizer` session.  This should not happen, ",
+      "please contact the maintainer.  In the meantime, restarting your R",
+      "session should restore functionality"
     )
   success.clear && success.unshim
 }

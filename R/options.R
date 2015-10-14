@@ -246,7 +246,7 @@ options_update <- function(tar.opts) {
   unitizer.namespace.keep.base=c(          # system namespaces not to auto-unload, no matter what
     .unitizer.namespace.keep
   ),
-  unitizer.state="safe",                   # default reproducible state mode
+  unitizer.state="default",                # default reproducible state mode
   unitizer.opts.init=list(),               # User default option values when running with options state tracking
   unitizer.opts.init.base=.unitizer.opts.base,  # Default option values when running with options state tracking
   unitizer.opts.asis=character(0L),             # User specified options that should not be changed; these are matched as regular expressions

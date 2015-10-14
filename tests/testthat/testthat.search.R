@@ -1,15 +1,22 @@
 library(testthat)
 library(devtools)
+context("Search")
 
 message("\n\nStarting\n\n")
 
+old.opts <- options(
+  unitizer.search.path.keep=c(
+    getOption("unitizer.search.path.keep"), "package:testthat"
+) )
 unitizer.dir <- system.file(package="unitizer")
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg2"))
 unitizer.dummy.list <- list(A=1, B=2, C=3)
 unitizer.dummy.list.2 <- list(A=13, B=24, C=35)
 
-try(detach("package:unitizer"), silent=TRUE)  # can't unload `unitizer`, ruins `covr`
+# can't unload `unitizer`, ruins `covr`
+
+try(detach("package:unitizer"), silent=TRUE)
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
@@ -41,25 +48,29 @@ test_that("Path Compression", {
     c(".GlobalEnv", "package:unitizerdummypkg2 (v0.1)", "package:unitizerdummypkg1 (v0.1)")
   )
 })
-
 test_that("Moving Objects on Search Path Works", {
   if(length(search.init) < 6L) stop("Unexpetedly short search path")
-
-  expect_error(unitizer:::move_on_path(5L, 2L))
-  expect_error(unitizer:::move_on_path(1L, 2L))
-  unitizer:::move_on_path(2L, 5L)
-  cat("start path compare\n")
-  expect_equal(  # can't compare actual environments as they change when detached and re-attached
+  untz.glob <- unitizer:::unitizerGlobal$new(
+    enable.which=state.set, set.global=TRUE
+  )
+  expect_error(unitizer:::move_on_path(5L, 2L, untz.glob))
+  expect_error(unitizer:::move_on_path(1L, 2L, untz.glob))
+  unitizer:::move_on_path(2L, 5L, untz.glob)
+  # can't compare actual environments as they change when detached and
+  # re-attached
+  expect_equal(
     names(unitizer:::search_as_envs()@.items),
     names(search.init[c(1L, 5L, 2L:4L, 6L:length(search.init))]@.items)
   )
   # Now let's undo the previous move
 
   for(i in rep(5L, 3L))            # Push second pack back to original position
-    unitizer:::move_on_path(2L, 5L)
+    unitizer:::move_on_path(2L, 5L, untz.glob)
 
   # Make sure S4 all.equal method is used
   expect_true(all.equal(unitizer:::search_as_envs(), search.init))
+
+  untz.glob$release()
 })
 try(detach("package:unitizer"), silent=TRUE)
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
@@ -73,8 +84,9 @@ library(unitizer)
 search.ref <- NULL # will be modified later
 search.init <- unitizer:::search_as_envs()
 
-untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
-
+untz.glob <- unitizer:::unitizerGlobal$new(
+  enable.which=state.set, set.global=TRUE
+)
 test_that("Search Path Journaling Works", {
   # Note, these are intended to be run without the shimming in place
 
@@ -82,7 +94,7 @@ test_that("Search Path Journaling Works", {
     untz.glob$status,
     new(
       "unitizerGlobalStatus", search.path=2L, working.directory=2L,
-      options=2L, random.seed=2L
+      options=2L, random.seed=2L, namespaces=2L
     )
   )
   # state should only be recorded if it changes
@@ -93,7 +105,7 @@ test_that("Search Path Journaling Works", {
     st.0,
     new(
       "unitizerGlobalIndices", search.path=1L, working.directory=1L,
-      options=1L, random.seed=1L
+      options=1L, random.seed=1L, namespaces=1L
     )
   )
   expect_identical(st.0, st.1)
@@ -215,6 +227,7 @@ test_that("Resetting search path", {
   # Reset to very beginning
 
   untz.glob$resetFull()
+  untz.glob$release()
 
   # compare with all.equal to make sure we use S4 method
   expect_true(all.equal(unitizer:::search_as_envs(), search.init))
@@ -222,23 +235,21 @@ test_that("Resetting search path", {
 
 test_that("Search Path Trim / Restore", {
   search.init <- unitizer:::search_as_envs()
-  untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
-
+  untz.glob <- unitizer:::unitizerGlobal$new(
+    enable.which=state.set, set.global=TRUE
+  )
   library(unitizerdummypkg1)
   library(unitizerdummypkg2)
 
-  keep.more <- c(
-    "package:testthat",
-    getOption("unitizer.search.path.keep.base")
-  )
-  unitizer:::search_path_trim(keep.more, global=untz.glob)
+  unitizer:::search_path_trim(global=untz.glob)
   untz.glob$state()
-
+  sp.keep <- unitizer:::keep_sp_default()
   expect_identical(
     search(),
-    keep.more[match(names(search.init@.items), keep.more, nomatch=0L)]
+    sp.keep[match(names(search.init@.items), sp.keep,  nomatch=0L)]
   )
   untz.glob$resetFull()
+  untz.glob$release()
 
   expect_true(all.equal(unitizer:::search_as_envs(), search.init))
 } )
@@ -249,17 +260,18 @@ while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 test_that("Loaded Namespaces don't cause issues", {
   # had a problem earlier trying to re-attach namespaces
   loadNamespace("unitizerdummypkg1")
-  untz.glob <- unitizer:::unitizerGlobal$new(enable.which=state.set)
-  keep.more <- c(
-    "package:testthat", getOption("unitizer.search.path.keep.base")
+  untz.glob <- unitizer:::unitizerGlobal$new(
+    enable.which=state.set, set.global=TRUE
   )
-  unitizer:::search_path_trim(keep.more, global=untz.glob)
+  unitizer:::search_path_trim(global=untz.glob)
+  unitizer:::namespace_trim(global=untz.glob)
   untz.glob$state()
   loadNamespace("unitizerdummypkg2")
   untz.glob$state()
   expect_false("unitizerdummypkg1" %in% loadedNamespaces())
   expect_true("unitizerdummypkg2" %in% loadedNamespaces())
   untz.glob$resetFull()
+  untz.glob$release()
   expect_true("unitizerdummypkg1" %in% loadedNamespaces())
   expect_false("unitizerdummypkg2" %in% loadedNamespaces())
   unloadNamespace("unitizerdummypkg1")
@@ -267,11 +279,12 @@ test_that("Loaded Namespaces don't cause issues", {
 test_that("Prevent Namespace Unload Works", {
   old.opt <- options(unitizer.namespace.keep="unitizerdummypkg1")
   loadNamespace("unitizerdummypkg1")
-  glb <- unitizer:::unitizerGlobal$new()
+  glb <- unitizer:::unitizerGlobal$new(set.global=TRUE)
   glb$status@options <- 2L
   unitizer:::unload_namespaces("unitizerdummypkg1", global=glb)
   expect_true(glb$ns.opt.conflict@conflict)
   expect_equal(glb$ns.opt.conflict@namespaces, "unitizerdummypkg1")
+  glb$release()
   options(old.opt)
   unloadNamespace("unitizerdummypkg1")
 })
@@ -280,3 +293,4 @@ try(detach("package:unitizer"), silent=TRUE)
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
 remove.packages(c("unitizerdummypkg1", "unitizerdummypkg2"))
+options(old.opts)

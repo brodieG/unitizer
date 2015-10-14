@@ -1,5 +1,6 @@
 library(unitizer)
 library(testthat)
+context("Section")
 
 local({
   expr.1 <- expression(1 + 1, b <- 5, matrix(integer(), nrow=b, ncol=b))
