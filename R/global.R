@@ -4,7 +4,7 @@
 NULL
 
 .unitizer.global.settings.names <-
-  c("search.path", "options", "working.directory", "random.seed")
+  c("search.path", "options", "working.directory", "random.seed", "namespaces")
 
 #' Structures For Tracking Global Options
 #'
@@ -53,11 +53,12 @@ setClass(
     search.path="integer",
     options="integer",
     working.directory="integer",
-    random.seed="integer"
+    random.seed="integer",
+    namespaces="integer"
   ),
   prototype=list(
     search.path=0L, working.directory=0L, options=0L,
-    random.seed=0L
+    random.seed=0L, namespaces=0L
   ),
   validity=function(object) {
     for(i in slotNames(object))
@@ -75,11 +76,12 @@ setClass(
     search.path="logical",
     options="logical",
     working.directory="logical",
-    random.seed="logical"
+    random.seed="logical",
+    namespaces="logical"
   ),
   prototype=list(
     search.path=FALSE, working.directory=FALSE, options=FALSE,
-    random.seed=FALSE
+    random.seed=FALSE, namespaces=FALSE
   ),
   validity=function(object) {
     for(i in slotNames(object)) if(!is.TF(slot(object, i)))
@@ -96,7 +98,8 @@ setClass(
     search.path="list",
     options="list",
     working.directory="list",
-    random.seed="list"
+    random.seed="list",
+    namespaces="list"
   )
 )
 #' @rdname global_structures
@@ -117,6 +120,7 @@ setClassUnion("integerOrNULLOrDummy", c("integer", "NULL", "unitizerDummy"))
 #' @keywords internal
 
 setClass("unitizerGlobalTrackingStore", contains="unitizerGlobalTracking")
+
 #' @rdname global_structures
 #' @keywords internal
 
@@ -126,7 +130,8 @@ setClass(
     search.path="characterOrNULLOrDummy",
     options="listOrNULLOrDummy",
     working.directory="characterOrNULLOrDummy",
-    random.seed="integerOrNULLOrDummy"
+    random.seed="integerOrNULLOrDummy",
+    namespaces="characterOrNULLOrDummy"
   )
 )
 #' @rdname global_structures
@@ -138,10 +143,12 @@ setClass(
     search.path="integer",
     options="integer",
     working.directory="integer",
-    random.seed="integer"
+    random.seed="integer",
+    namespaces="integer"
   ),
   prototype=list(
-    search.path=0L, options=0L, working.directory=0L, random.seed=0L
+    search.path=0L, options=0L, working.directory=0L, random.seed=0L,
+    namespaces=0L
   ),
   validity=function(object){
     for(i in slotNames(object))
@@ -150,7 +157,6 @@ setClass(
     TRUE
   }
 )
-
 # Pull out a single state from a tracking object
 
 setGeneric(
@@ -180,6 +186,7 @@ setMethod(
     stopifnot(is.character(opts.ignore))
     res <- new("unitizerGlobalTrackingStore")
     res@search.path <- lapply(x@search.path, unitizerCompressTracking)
+    res@namespaces <- lapply(x@namespaces, unitizerCompressTracking)
 
     # Don't store stuff with environments or stuff that is too big
     # (size cut-off should be an option?), or stuff that is part of the base or
@@ -203,22 +210,43 @@ setMethod(
     )
   res
 } )
-# Get Current Search Path as List of Environments
+# Get Current Search Path And Namespace Data
 #
-# This has to be in this file, and not in R/search.R for the setClass for the
+# These have to be in this file, and not in R/search.R for the setClass for the
 # state funs object.  Note there are some weird dependency circularities,
 # and we're relying on this function not being called until once the full
 # package is loaded.
+#
+# Also, while we track namespaces separately, we need to store them here as well
+# as they contain the the package version info we ultimately want to retain;
+# this could possibly be improved by just attaching package version, but too
+# much work to retrofit existing behavior that blended namespaces and
+# search path
 
 search_as_envs <- function() {
   sp <- search()
   res <- setNames(lapply(seq_along(sp), as.environment), sp)
 
+  new("unitizerSearchData", .items=res, ns.dat=get_namespace_data())
+}
+get_namespace_data <- function() {
   new(
-    "unitizerSearchData",
-    .items=res,
-    ns.dat=new("unitizerNsListData", .items=get_namespace_data())
-) }
+    "unitizerNsListData",
+    .items=sapply(
+      loadedNamespaces(),
+      function(x) {
+        loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
+        ver <- try(getNamespaceVersion(x))
+        new(
+          "unitizerNamespaceData",
+          name=x,
+          lib.loc=if(!inherits(loc, "try-error")) loc else "",
+          version=if(!inherits(ver, "try-error")) ver else ""
+        )
+      },
+      simplify=FALSE
+  ) )
+}
 #' @rdname global_structures
 #' @keywords internal
 
@@ -235,7 +263,8 @@ setClass(
     random.seed=function()
       mget(
         ".Random.seed", envir=.GlobalEnv, inherits=FALSE, ifnotfound=list(NULL)
-      )[[1L]]
+      )[[1L]],
+    namespaces=get_namespace_data
   )
 )
 #' @rdname global_structures
@@ -264,10 +293,20 @@ unitizerGlobal <- setRefClass(
     status="unitizerGlobalStatus",
     disabled="unitizerGlobalDisabled",
     tracking="unitizerGlobalTracking",
-    ns.opt.conflict="unitizerGlobalNsOptConflict",  # Allow us to remember if an error happened on state reset
-    cons="unitizerCaptConsOrNULL",                  # Connections for stdout and stderr capture
 
-    unitizer.opts="list",   # store original unitizer options before they get zeroed out
+    # Implement global object as locked so that it doesn't get overwritten
+
+    locked="logical",
+    set.global="logical",
+
+    # Allow us to remember if an error happened on state reset
+
+    ns.opt.conflict="unitizerGlobalNsOptConflict",
+    cons="unitizerCaptConsOrNULL",   # Connections for stdout and stderr capture
+
+    # store original unitizer options before they get zeroed out
+
+    unitizer.opts="list",
 
     state.funs="unitizerGlobalStateFuns",
     shim.funs="list",
@@ -279,13 +318,33 @@ unitizerGlobal <- setRefClass(
     initialize=function(
       ..., disabled=FALSE, enable.which=integer(0L),
       par.env=new.env(parent=baseenv()),
-      unitizer.opts=options()[grep("^unitizer\\.", names(options()))]
+      unitizer.opts=options()[grep("^unitizer\\.", names(options()))],
+      set.global=FALSE
     ) {
-      obj <- callSuper(..., par.env=par.env, unitizer.opts=unitizer.opts)
+      obj <- callSuper(
+        ..., par.env=par.env, unitizer.opts=unitizer.opts,
+        locked=FALSE
+      )
       enable(enable.which)
       state()
       ns.opt.conflict@conflict <<- FALSE
-      .global$global <- .self  # top level copy for access from other namespaces
+
+      # top level copy for access from other namespaces
+
+      if(isTRUE(.global$global$locked)) {
+        stop(
+          "Logic Error: global tracking object already exists; this should ",
+          "never happen; contact maintainer"
+        )
+      } else if(set.global) {
+        .global$global <- .self
+        locked <<- TRUE
+      } else
+        warning(
+          "Instantiated global object without global namespace registry; ",
+          "you should only see this warning during package install",
+          immediate.=TRUE
+        )
       obj
     },
     enable=function(
@@ -346,11 +405,15 @@ unitizerGlobal <- setRefClass(
       stopifnot(is.chr1(mode), mode %in% c("normal", "init"))
 
       for(i in slotNames(tracking)) {
-        if(!slot(status, i)) next             # Don't record statuses that aren't being tracked
-        new.obj <- slot(state.funs, i)()      # Get state with pre-defined function
-        ref.obj <- if(slot(indices.last, i))
-          slot(tracking, i)[[slot(indices.last, i)]] else
-            new.env()  # this can't possibly be identical to anything other than itself
+        # Don't record statuses that aren't being tracked
+        if(!slot(status, i)) next
+        # Get state with pre-defined function
+        new.obj <- slot(state.funs, i)()
+        ref.obj <- if(slot(indices.last, i)) {
+          slot(tracking, i)[[slot(indices.last, i)]]
+        } else {
+          new.env()  # guaranteed unique
+        }
         if(!identical(new.obj, ref.obj))
           slot(tracking, i) <<- append(slot(tracking, i), list(new.obj))
         if(identical(mode, "init"))
@@ -365,8 +428,11 @@ unitizerGlobal <- setRefClass(
       '
       stopifnot(is(to, "unitizerGlobalIndices"))
 
-      if(status@search.path && to@search.path)
+      if(status@search.path && to@search.path){
         search_path_update(to@search.path, .self)
+      }
+      if(status@namespaces && to@namespaces)
+        namespace_update(to@namespaces, .self)
       if(status@options && to@options)
         options_update(tracking@options[[to@options]])
       if(status@working.directory && to@working.directory)
@@ -399,14 +465,21 @@ unitizerGlobal <- setRefClass(
       reset(
         new(
           "unitizerGlobalIndices", search.path=1L, options=1L,
-          working.directory=1L, random.seed=1L
+          working.directory=1L, random.seed=1L, namespaces=1L
         )
       )
+    },
+    release=function() {
+      '
+      Blow away the global tracking object so that we can re-use for other
+      sessions
+      '
+      locked <<- FALSE
     }
 ) )
- # used purely for traced functions that need access to global object; in most
- # cases should be just our traced functions, note that we just create this
- # object here for test; any time a `unitizer` is instantiated
+# used purely for traced functions that need access to global object; in most
+# cases should be just our traced functions, note that we just create this
+# object here for test; any time a `unitizer` is instantiated
 
 .global <- new.env()
 

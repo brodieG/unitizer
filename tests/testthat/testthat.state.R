@@ -1,4 +1,5 @@
 library(unitizer)
+context("State")
 test_that("Random Seed", {
   old.seed <- if(!exists(".Random.seed")) NULL else .Random.seed
   seed.dat <- getOption("unitizer.seed")
@@ -18,7 +19,7 @@ test_that("Random Seed", {
 test_that("State Show", {
   expect_equal(
     capture.output(show(unitizerStatePristine())),
-    c("                           Settings Values", "search.path             search.path      2",  "options                     options      2", "working.directory working.directory      2",  "random.seed             random.seed      2", "par.env                     par.env <auto>",  "-----", "0: off", "1: track starting with initial state", "2: track starting with clean state",  "<auto>: use special unitizer environment as 'par.env'", "See `?unitizerState` for more details." )
+    c("                           Settings Values", "search.path             search.path      2", "options                     options      2", "working.directory working.directory      2", "random.seed             random.seed      2", "namespaces               namespaces      2", "par.env                     par.env <auto>", "-----", "0: off", "1: track starting with initial state", "2: track starting with clean state", "<auto>: use special unitizer environment as 'par.env'", "See `?unitizerState` for more details." )
   )
 })
 test_that("All Equal States", {

@@ -62,7 +62,7 @@
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
 #' @param state character(1L) one of
-#'   \code{c("prisitine", "noopt", "basic", "off", "safe")} or an S4 object
+#'   \code{c("prisitine", "default", "basic", "off", "safe")} or an S4 object
 #'   inheriting from \code{unitizerState}; modifies how \code{unitizer} manages
 #'   aspects of session state that could affect test evaluation (see details).
 #' @param pre NULL, or a character vector pointing to files and/or directories.
@@ -186,7 +186,8 @@ unitize_dir <- function(
     function(x) file_test("-f", x),
     sort(
       list.files(
-        path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
+        path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE,
+        no..=TRUE
   ) ) )
   if(!length(test.files))
     stop("No files to test in '", test.dir, "'")

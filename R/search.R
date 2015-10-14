@@ -64,6 +64,16 @@ setMethod(
     if(length(res)) res else TRUE
   }
 )
+setClass(
+  "unitizerNamespaceData",
+  slots=c(
+    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
+) )
+setClass(
+  "unitizerPackageData",
+  slots=c(
+    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
+) )
 setMethod(
   "unitizerCompressTracking", "unitizerSearchData",
   function(x, ...) {
@@ -73,6 +83,14 @@ setMethod(
     res[res.pkg] <- paste0(res[res.pkg],  " (v", ver[res.pkg], ")")
     res
   }
+)
+setMethod(
+  "unitizerCompressTracking", "unitizerNamespaceData",
+  function(x, ...) paste0(x@name, " (v", x@version, ")")
+)
+setMethod(
+  "unitizerCompressTracking", "unitizerNsListData",
+  function(x, ...) vapply(as.list(x), unitizerCompressTracking, character(1L))
 )
 # Search Path Management Functions
 #
@@ -87,11 +105,9 @@ setMethod(
 #
 # \code{search_path_trim} attempts to recreate a clean environment by
 # unloading all packages and objects that are not loaded by default in the
-# default R configuration. This also unloads namespaces so that packages can
-# be reloaded with all corresponding hooks evaluating as with a normal load.
-# As documented in \code{?detach}, it is likely there may be some issues with
-# some packages with this approach.  This function is intended to be called
-# after journaling has been enabled.
+# default R configuration.
+#
+# This function is intended to be called after journaling has been enabled.
 #
 # \code{tools:rstudio} is kept in search path as the default argument because
 # it is not possible to cleanly unload and reload it because \code{attach}
@@ -107,15 +123,9 @@ setMethod(
 # @param id integer(1L) what recorded state to revert to
 # @param global reference object of class "unitizerGlobal" that holds the
 #   global settings
-# @keywords internal
-# @rdname search_path
 
 search_path_update <- function(id, global) {
-  stopifnot(
-    is(global, "unitizerGlobal"),
-    is.integer(id), length(id) == 1L,
-    !is.na(id)
-  )
+  stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
   if(!id %in% seq_along(global$tracking@search.path))
     stop(
       "Logic Error: attempt to reset state to unknown index; contact maintainer"
@@ -124,19 +134,8 @@ search_path_update <- function(id, global) {
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
   curr.env.check <- search_as_envs()
-  ns.in.common <- intersect(
-    names(search.curr@ns.dat), names(curr.env.check@ns.dat)
-  )
-  ns.extra <- setdiff(names(search.curr@ns.dat), ns.in.common)
 
-  if(
-    !isTRUE(all.equal(curr.env.check, search.curr)) ||
-    !all(ns.extra %in% global$unitizer.opts[["unitizer.namespace.keep"]]) ||
-    !identical(
-      curr.env.check@ns.dat[ns.in.common],
-      search.curr@ns.dat[ns.in.common]
-    )
-  ) {
+  if(!isTRUE(all.equal(curr.env.check, search.curr))) {
     # not entirely sure this check is needed, or might be too stringent
     # new version of comparing entire object not tested
     stop("Logic Error: mismatch between actual search path and tracked path")
@@ -195,7 +194,7 @@ search_path_update <- function(id, global) {
 
     swap.id <- min(reord[mismatch])
     swap.pos <- which(reord == swap.id)
-    move_on_path(new.pos=swap.id, old.pos=swap.pos)
+    move_on_path(new.pos=swap.id, old.pos=swap.pos, global=global)
     sc.id.tmp <- unitizerUniqueNames(search_as_envs())
   }
   search.new <- search()
@@ -227,12 +226,41 @@ search_path_update <- function(id, global) {
   if(!isTRUE(all.equal(search_as_envs(), search.target)))
     stop("Logic Error: path reorder failed at last step; contact maintainer.")
 
+  on.exit(NULL)
+  invisible(TRUE)
+}
+# This also unloads namespaces so that packages can
+# be reloaded with all corresponding hooks evaluating as with a normal load.
+# As documented in \code{?detach}, it is likely there may be some issues with
+# some packages with this approach.
+#
+# This function is intended to be called after journaling has been enabled.
+#
+# @param id integer(1L) what recorded state to revert to
+# @param global reference object of class "unitizerGlobal" that holds the
+#   global settings
+
+namespace_update <- function(id, global) {
+  stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
+  if(!id %in% seq_along(global$tracking@namespaces))
+    stop(
+      "Logic Error: attempt to reset namespaces to unknown index; contact ",
+      "maintainer"
+    )
+  ns.target <- global$tracking@namespaces[[id]]
+  ns.curr <- global$tracking@namespaces[[global$indices.last@namespaces]]  # should this be get_namespace_data()?
+
+  ns.in.common <- intersect(names(ns.target), names(ns.curr))
+  ns.extra <- setdiff(names(ns.curr), ns.in.common)
+
   # Line up the namespaces
 
-  tar.lns.dat <- search.target@ns.dat
   cur.lns <- loadedNamespaces()
-  tar.lns.loc <- sapply(as.list(tar.lns.dat), slot, "lib.loc", simplify=FALSE)  # may contain nulls
-  tar.lns <- names(search.target@ns.dat)
+
+  # may contain nulls
+
+  tar.lns.loc <- sapply(as.list(ns.target), slot, "lib.loc", simplify=FALSE)
+  tar.lns <- names(ns.target)
   to.unload <- setdiff(cur.lns, tar.lns)
 
   unload_namespaces(
@@ -248,25 +276,18 @@ search_path_update <- function(id, global) {
         immediate.=TRUE
       )
   }
-  on.exit(NULL)
   invisible(TRUE)
 }
 search_path_trim <- function(
-  keep.path=union(
-    getOption("unitizer.search.path.keep.base"),
-    getOption("unitizer.search.path.keep")
-  ),
-  keep.ns=union(
-    getOption("unitizer.namespace.keep.base"),
-    getOption("unitizer.namespace.keep")
-  ),
-  global=unitizerGlobal$new()
+  keep.path=keep_sp_default(options()),
+  global
 ) {
   stopifnot(
     is.character(keep.path) && !any(is.na(keep.path)),
-    is.character(keep.ns) && !any(is.na(keep.ns)),
     is(global, "unitizerGlobal")
   )
+  on.exit(global$state())
+
   # detach each object, but make sure we do so in an order that doesn't cause
   # issues with namespace dependencies
 
@@ -287,9 +308,16 @@ search_path_trim <- function(
       stop("Logic Error: invalid search path token; contact maintainer.")
     detach(pack, character.only=TRUE)
   }
-  # Now attempt to unload namespaces; note 'unload_namespaces' won't unload
-  # namespaces or imported namespaces for attached packages
-
+  invisible(TRUE)
+}
+namespace_trim <- function(
+  keep.ns=keep_ns_default(options()),
+  global
+) {
+  stopifnot(
+    is.character(keep.ns) && !any(is.na(keep.ns)), is(global, "unitizerGlobal")
+  )
+  on.exit(global$state())
   unload_namespaces(loadedNamespaces(), global=global, keep.ns=keep.ns)
   invisible(TRUE)
 }
@@ -497,7 +525,7 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
 }
 # @keywords internal
 # @rdname reattach
-move_on_path <- function(new.pos, old.pos, global=unitizerGlobal$new()) {
+move_on_path <- function(new.pos, old.pos, global) {
   stopifnot(
     is.integer(new.pos), length(new.pos) == 1L, !is.na(new.pos),
     is.integer(old.pos), length(old.pos) == 1L, !is.na(old.pos),
@@ -552,22 +580,6 @@ setMethod(
 # the search path environments as they change on detach / re-attach
 # @keywords internal
 
-get_namespace_data <- function() {
-  sapply(
-    loadedNamespaces(),
-    function(x) {
-      loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
-      ver <- try(getNamespaceVersion(x))
-      new(
-        "unitizerNamespaceData",
-        name=x,
-        lib.loc=if(!inherits(loc, "try-error")) loc else "",
-        version=if(!inherits(ver, "try-error")) ver else ""
-      )
-    },
-    simplify=FALSE
-  )
-}
 get_package_data <- function() {
   sapply(
     search(),
@@ -585,13 +597,33 @@ get_package_data <- function() {
     simplify=FALSE
   )
 }
-setClass(
-  "unitizerNamespaceData",
-  slots=c(
-    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
-) )
-setClass(
-  "unitizerPackageData",
-  slots=c(
-    name="character", lib.loc="characterOrNULL", version="characterOrNULL"
-) )
+# Helper function for loading options
+#
+# @param opts a list of options to look in for the relevant options
+
+keep_ns_default <- function(opts=options()) {
+  ns.opts <- c("unitizer.namespace.keep.base", "unitizer.namespace.keep")
+  valid_sp_np_default(opts, ns.opts)
+  keep.sp <- keep_sp_default(opts)
+  keep.sp.ns <- sub("^package:", "", grep("^package:.+", keep.sp, value=TRUE))
+  unique(c(unlist(opts[ns.opts]), keep.sp.ns))
+}
+keep_sp_default <- function(opts=options()) {
+  sp.opts <- c("unitizer.search.path.keep.base", "unitizer.search.path.keep")
+  valid_sp_np_default(opts, sp.opts)
+  unique(unlist(opts[sp.opts]))
+}
+# Validation function shared by ns and sp funs
+
+valid_sp_np_default <- function(opts, valid.names) {
+  stopifnot(
+    is.list(opts),
+    is.character(valid.names) && !any(is.na(valid.names)),
+    all(valid.names %in% names(opts)),
+    all(
+      vapply(
+        opts[valid.names], function(x) is.character(x) && !any(is.na(x)),
+        logical(1L)
+  ) ) )
+  invisible(TRUE)
+}

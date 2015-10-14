@@ -1,5 +1,6 @@
 library(unitizer)
 library(testthat)
+context("Browse")
 
 local( {
   zero.env <- parent.env(.GlobalEnv)

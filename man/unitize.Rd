@@ -33,7 +33,7 @@ you to specify non-standard \code{unitizer} storage mechanisms (see
 \code{unitizer} object if you are using \code{review}.}
 
 \item{state}{character(1L) one of
-\code{c("prisitine", "noopt", "basic", "off", "safe")} or an S4 object
+\code{c("prisitine", "default", "basic", "off", "safe")} or an S4 object
 inheriting from \code{unitizerState}; modifies how \code{unitizer} manages
 aspects of session state that could affect test evaluation (see details).}
 
@@ -129,7 +129,7 @@ Because of this, no effort is made to create reproducible state in the
 browsing environments, unlike with \code{unitize} or \code{unitize_dir}
 (see \code{state} parameter).
 
-See \code{unitizer} vignettes and demo for details and examples.
+See \code{vignette("unitizer")} and demo for details and examples.
 }
 \section{Default Settings}{
 
@@ -143,8 +143,8 @@ setting options in their \code{.Rprofile} file.
 
 
 You can modify all aspects of state control with the \code{state} parameter.
-See the \code{\link{unitizerState}} documentation and the \code{state}
-vignette for more details.
+See the \code{\link{unitizerState}} documentation and
+\code{vignette("unitizer_reproducible_tests")} vignette for more details.
 }
 \seealso{
 \code{\link{unitizerState}}, \code{\link{unitizer.opts}},

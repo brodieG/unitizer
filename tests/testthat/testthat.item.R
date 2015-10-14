@@ -1,5 +1,6 @@
 library(unitizer)
 library(testthat)
+context("Item")
 
 # These tests are intended to cover all the functions/classes/methods in:
 # - item.R

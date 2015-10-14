@@ -1,6 +1,7 @@
 library(unitizer)
 library(devtools)
 library(testthat)
+context("Shim")
 
 prev.trace.state <- tracingState(TRUE)
 if(!prev.trace.state) message("Turned on tracing state for tests")
@@ -13,7 +14,8 @@ unitizer.dummy.list <- list(z=23, x=1, y="hello")
 my.env <- new.env()
 state.set <- c(search.path=2L)
 untz.glob <- unitizer:::unitizerGlobal$new(
-  par.env=my.env, enable.which=state.set
+  par.env=my.env, enable.which=state.set,
+  set.global=TRUE  # make sure to unset this at end
 )
 untz.glob$shimFuns()
 
@@ -37,7 +39,7 @@ test_that("Parent Env Stays on Top", {
     environmentName(parent.env(my.env)), "package:unitizerdummypkg1"
   )
 
-  detach("package:unitizerdummypkg1")
+  detach("package:unitizerdummypkg1", unload=TRUE)
   expect_identical(environmentName(parent.env(my.env)), curr2)
 
   expect_true(untz.glob$checkShims())
@@ -70,19 +72,20 @@ test_that("Disable Unshims, etc.", {
         "functionWithTrace"
   ) ) )
 } )
-
+untz.glob$release()
 test_that("Checks, errors, etc.", {
   untz.glob <- unitizer:::unitizerGlobal$new(
-    par.env=my.env, enable.which=state.set
+    par.env=my.env, enable.which=state.set,
+    set.global=TRUE  # make sure to unset this at end
   )
   tracingState(FALSE)
-
   expect_warning(untz.glob$shimFuns(), "tracing state is FALSE")
   expect_identical(parent.env(my.env), .GlobalEnv)
 
   tracingState(TRUE)
 
-  untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env)
+  untz.glob$release()
+  untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env, set.global=TRUE)
   trace("library", quote(cat("I am traced\n")), where=.BaseNamespaceEnv)
   lib.trace <- library
 
@@ -96,7 +99,8 @@ test_that("Checks, errors, etc.", {
 
   untrace("library", where=.BaseNamespaceEnv)
 
-  untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env)
+  untz.glob$release()
+  untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env, set.global=TRUE)
   expect_true(untz.glob$shimFuns())
 
   trace("attach", quote(cat("I am traced\n")), where=.BaseNamespaceEnv)
@@ -111,7 +115,8 @@ test_that("Checks, errors, etc.", {
   expect_identical(attach.trace, attach)
 
   untrace("attach", where=.BaseNamespaceEnv)
-  untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env)
+  untz.glob$release()
+  untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env, set.global=TRUE)
   expect_true(untz.glob$shimFuns())
 
   tracingState(FALSE)
@@ -123,6 +128,7 @@ test_that("Checks, errors, etc.", {
   expect_false(inherits(detach, "functionWithTrace"))
   expect_false(inherits(library, "functionWithTrace"))
   expect_false(inherits(attach, "functionWithTrace"))
+  untz.glob$release()
 } )
 
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)

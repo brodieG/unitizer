@@ -1,4 +1,5 @@
 library(unitizer)
+context("Upgrade")
 test_that("Upgrade works", {
   # this is also now tested as part of load
   unitizer <- get_unitizer("helper/trivial.unitizer.0.4.2")

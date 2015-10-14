@@ -462,13 +462,18 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
     } else {
       e1@items.ref.map[[item.map]] <- length(e1@items.new)
       item.ref <- e1@items.ref[[item.map]]
-      section <- e1@sections[[e1@section.map[[length(e1@items.new)]]]]  # this should be initialized properly, and con probably be corrupted pretty easily
+
+      # this should be initialized properly, and con probably be corrupted
+      # pretty easily
+
+      section <- e1@sections[[e1@section.map[[length(e1@items.new)]]]]
 
       # Test functions and the data to test is organized in objects with
       # the exact same structure as item.new@data, so cycle through the slots.
       # Status is always "Error" if something indeterminable happens,
       # if not and a failure happens, then it is "Fail", and if nothing goes wrong
-      # for any of the slots, it is "Pass" (there is only one status for all slots)
+      # for any of the slots, it is "Pass" (there is only one status for all
+      # slots)
 
       test.status <- "Pass"
       test.result <- test.result.tpl
@@ -500,7 +505,12 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         # this is a bit roundabout b/c we added this hack in long after the
         # code was initially written
 
-        res.tmp <- eval_with_capture(test.call, e2@env, e1@global)
+        res.tmp <- eval_with_capture(
+          test.call, e2@env, cons=e1@global$cons,
+          disable.capt=e1@global$unitizer.opts[["unitizer.disable.capt"]],
+          max.capt.chars=e1@global$unitizer.opts[["unitizer.max.capture.chars"]]
+        )
+        e1@global$cons <- res.tmp$cons # In case cons was modified
         cond <- res.tmp$conditions
         test.res <- if(length(cond)) {
           structure(
