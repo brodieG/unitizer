@@ -23,7 +23,9 @@
 #' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
 #' (see \code{state} parameter).
 #'
-#' See \code{vignette("unitizer")} and demo for details and examples.
+#' You are strongly encouraged to read through \code{vignette("unitizer")}
+#' for details and examples.  The demo (\code{demo("unitizer")}) is also a
+#' good introduction to these functions.
 #'
 #' @section Default Settings:
 #'
@@ -34,8 +36,10 @@
 #' @section State:
 #'
 #' You can modify all aspects of state control with the \code{state} parameter.
-#' See the \code{\link{unitizerState}} documentation and
-#' \code{vignette("unitizer_reproducible_tests")} vignette for more details.
+#' This includes evaluating your tests in a package namespace like
+#' \code{testthat::test_check} does.  See the \code{\link{unitizerState}}
+#' documentation and \code{vignette("unitizer_reproducible_tests")} vignette
+#' for more details.
 #'
 #' @export
 #' @aliases unitize review unitize_dir
