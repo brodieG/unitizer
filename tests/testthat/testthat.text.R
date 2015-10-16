@@ -228,4 +228,9 @@ local({
       c("a.", "b.", "c.", "d.", "e.", "f.", "g.", "h.", "i.", "j.",  "k.", "l.")
     )
   })
+  test_that("cc",{
+    expect_equal(unitizer:::cc("a", "b"), "ab")
+    expect_equal(unitizer:::cc(c("a", "b"), "c"), "abc")
+    expect_equal(unitizer:::cc(c("a", "b"), "c", c=" "), "a b c")
+  })
 })

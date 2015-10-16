@@ -8,7 +8,9 @@ screen_out <- function(
   if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
     stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
   if(out.len <- length(txt)) {
-    txt.proc <- txt[1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)]
+    txt.proc <- txt[
+      1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)
+    ]
     lapply(txt.proc, function(x) word_cat(x, file=file))
     if(out.len > max.len[[1]]) {
       word_cat(
@@ -338,13 +340,15 @@ text_wrap <- function(x, width) {
 #' @rdname text_wrap
 
 word_wrap <- function(
-  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE
+  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE,
+  collapse=NULL
 ) {
   if(!is.character(x) || !is.integer(width) || length(width) != 1L || is.na(width))
     stop("Invalid arguments")
   stopifnot(
     is.integer(tolerance) && length(tolerance) == 1L && !is.na(tolerance) &&
-    tolerance >= 0L
+    tolerance >= 0L,
+    is.null(collapse) || is.chr1(collapse)
   )
   stopifnot(width > 4L && width - tolerance > 2L)
   width <- as.integer(width)
@@ -430,11 +434,23 @@ word_wrap <- function(
   # x.lst workaround required because `strsplit` swallows zero char char items!!
 
   x.lst <- as.list(x)
-  x.lst[nchar(x) > 0] <- strsplit(gsub("\n", "\n\n", x[nchar(x) > 0]), "\n")     # replace new lines with 0 char item
-  #x.exp <- unlist(x.lst)
+
+  # replace new lines with 0 char item
+
+  x.lst[nchar(x) > 0] <- strsplit(gsub("\n", "\n\n", x[nchar(x) > 0]), "\n")
+
   res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
-  if(unlist) unlist(res) else res
+  res.fin <- if(unlist) unlist(res) else res
+  if(!is.null(collapse)) {
+    res.fin <- if(is.list(res.fin))
+      lapply(res.fin, paste0, collapse=collapse) else
+        paste0(res.fin, collapse=collapse)
+  }
+  res.fin
 }
+# Helper function to concatenate strings together
+cc <- function(..., c="") paste0(c(...), collapse=c)
+
 #' @rdname text_wrap
 
 word_cat <- function(
