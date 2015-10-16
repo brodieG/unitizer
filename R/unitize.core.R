@@ -63,12 +63,47 @@ unitize_core <- function(
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
 
-  # Validate state; note that due to legacy code we disassemble state into the
-  # par.env and other components
+  # Check if we want the special "in.pkg" state
 
-  state <- is.valid_state(state)
-  if(!is(state, "unitizerState")) stop("Argument `state` is invalid")
+  if(is.character(state) && identical(state[[1L]], "in.pkg")) {
+    err.inf <- c(
+      "If you want to run tests in a specific namespace you may specify it ",
+      "expicitly by using a `unitizerState` object as the value for ",
+      "the `state` parameter; see `?unitizerState` for details."
+    )
+    pkg.dir <- get_package_dir(test.files[[1L]])
+    if(length(pkg.dir)) {
+      pkg.name <- try(get_package_name(pkg.dir))
+      if(inherits(pkg.name, "try-error"))
+        stop(
+          word_wrap(collapse="\n",
+            cc(
+              "First test file does not appear to be inside an R package so ",
+              "we cannot identify the namespace to run tests in. ", err.inf
+        ) ) )
+      state <- try(unitizerStateDefault(par.env=pkg.name))
+      if(inherits(state, "try-error")) {
+        stop(
+          word_wrap(collapse="\n",
+            cc(
+              "Unable to instantiate state object in '", pkg.name, "' ",
+              "namespace environment."
+        ) ) )
+      }
+    } else stop(
+      word_wrap(collapse="\n",
+        cc(
+          "First test file does not appear to be part of a package, so we ",
+          "cannot run with `state=\"in.pkg\"`. ", err.inf
+      ) )
+    )
+  } else {
+    # Validate state; note that due to legacy code we disassemble state into the
+    # par.env and other components
 
+    state <- is.valid_state(state)
+    if(!is(state, "unitizerState")) stop("Argument `state` is invalid")
+  }
   par.env <- state@par.env
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
@@ -235,13 +270,12 @@ unitize_core <- function(
   if(identical(global$status@random.seed, 2L)) {
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
       stop(
-        paste0(collapse="\n",
-          word_wrap(
-            paste0(collapse="",
-              "Unable to set random seed; make sure ",
-              "`getOption('unitizer.seed')` ",
-              "is a list of possible arguments to `set.seed`."
-  ) ) ) ) } }
+        word_wrap(collapse="\n",
+          cc(
+            "Unable to set random seed; make sure ",
+            "`getOption('unitizer.seed')` ",
+            "is a list of possible arguments to `set.seed`."
+  ) ) ) } }
   if(identical(global$status@working.directory, 2L)) {
     if(
       length(unique(dirname(test.files)) == 1L) &&
@@ -251,19 +285,17 @@ unitize_core <- function(
     } else {
       multi.file <- length(test.files) > 1L
       warning(
-        paste0(
-          collapse="\n",
-          word_wrap(
-            paste0(collapse="",
-              "Working directory state tracking is in mode 2, but test file",
-              if(multi.file) "s do not" else " does not", "appear to be part of a ",
-              "package so instead of setting directory to the package dir ",
-              if(multi.file)
-                paste0(
-                  "prior to running each test file we will set it to ",
-                  "the current working directory."
-                ) else "we will leave it unchanged."
-        ) ) ),
+        word_wrap(collapse="\n",
+          cc(
+            "Working directory state tracking is in mode 2, but test file",
+            if(multi.file) "s do not" else " does not", "appear to be part of a ",
+            "package so instead of setting directory to the package dir ",
+            if(multi.file)
+              paste0(
+                "prior to running each test file we will set it to ",
+                "the current working directory."
+              ) else "we will leave it unchanged."
+        ) ),
         immediate.=TRUE
   ) } }
   # - Parse / Load -------------------------------------------------------------
@@ -565,14 +597,12 @@ unitize_browse <- function(
       if(prompt %in% c("N", "Q") && confirm_quit(unitizers)) quit <- TRUE
     } else {
       stop(
-        paste0(collapse="\n",
-          word_wrap(
-            paste0(
-              collapse="",
-              "Unable to proceed in non-interactive mode; set options state ",
-              "tracking to a value less than or equal to search path state ",
-              "tracking or see vignette for other workarounds."
-  ) ) ) ) } }
+        word_wrap(collapse="\n",
+          cc(
+            "Unable to proceed in non-interactive mode; set options state ",
+            "tracking to a value less than or equal to search path state ",
+            "tracking or see vignette for other workarounds."
+  ) ) ) } }
 
   if(!quit) {
     if(identical(mode, "review") || any(to.review) || force.update) {
@@ -712,16 +742,15 @@ unitize_browse <- function(
             )
           }
           stop(
-            paste0(collapse="\n",
-              word_wrap(
-                paste0(
-                  collapse="",
-                  "Newly evaluated tests do not match unitizer (",
-                  paste(
-                    names(summaries@totals), summaries@totals, sep=": ", collapse=", "
-                  ),
-                  "); see above for more info, or run in interactive mode"
-          ) ) ) )
+            word_wrap(collapse="\n",
+              cc(
+                "Newly evaluated tests do not match unitizer (",
+                paste(
+                  names(summaries@totals), summaries@totals, sep=": ",
+                  collapse=", "
+                ),
+                "); see above for more info, or run in interactive mode"
+          ) ) )
         }
         # - Simple Outcomes / no-review -----------------------------------------
 
@@ -761,33 +790,30 @@ check_call_stack <- function() {
           as.character(x[[1]]) %in%
           c("withCallingHandlers", "withRestarts", "tryCatch")
     ) )
-  ) warning(
-    paste0(
-      collapse="\n",
-      word_wrap(
-        paste0(collapse="",
+  )
+    warning(
+      word_wrap(collapse="\n",
+        cc(
           "It appears you are running unitizer inside an error handling ",
           "function such as `withCallingHanlders`, `tryCatch`, or ",
           "`withRestarts`.  This is strongly discouraged as it may cause ",
           "unpredictable behavior from unitizer in the event tests produce ",
           "conditions / errors.  We strongly recommend you re-run ",
           "your tests outside of such handling functions."
-    ) ) ),
-    immediate.=TRUE
-  )
+      ) ),
+      immediate.=TRUE
+    )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
   if("unitizerQuitExit" %in% restart.names)
     stop(
-      paste0(
-        collapse="\n",
-        word_wrap(
-          paste0(collapse="",
-            "`unitizerQuitExit` restart is already defined; unitizer relies ",
-            "on this restart to restore state prior to exit, so unitizer will ",
-            "not run if it is defined outside of `unitize`.  If you did not ",
-            "define this restart contact maintainer."
-    ) ) ) )
+      word_wrap(collapse="\n",
+        cc(
+          "`unitizerQuitExit` restart is already defined; unitizer relies ",
+          "on this restart to restore state prior to exit, so unitizer will ",
+          "not run if it is defined outside of `unitize`.  If you did not ",
+          "define this restart contact maintainer."
+    ) ) )
 }
 #' Helper function for validations
 #'
