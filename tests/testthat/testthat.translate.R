@@ -27,7 +27,7 @@ test_that("translate a file", {
     c("set.seed(1)", "rev(10:1)", "fun0(a)", "fun1(a, b, c, d, e, f)", "fun1(a)", "stop(\"hello\")", "warning(\"yoyo\")")
   )
   expect_equal(
-    lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value),
+    lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value[[1L]]),
     list(dummy, 1:10, NULL, NULL, NULL, NULL, "yoyo")
   )
 })
@@ -52,7 +52,7 @@ test_that("translate a dir", {
   # file is loaded so `fun0` and `fun1` are actually defined
 
   expect_equal(
-    lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value),
+    lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value[[1L]]),
     list(dummy, 1:10, 42, 24, 24, NULL, "yoyo")
   )
   # Can't do it again since there are files there

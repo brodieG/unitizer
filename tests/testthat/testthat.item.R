@@ -57,12 +57,16 @@ local( {
     expect_equal(as.expression(lapply(unitizer:::as.list(my.unitizer2@items.new), slot, "call")), new.exps)
     expect_equal(as.expression(lapply(unitizer:::as.list(my.unitizer2@items.ref), slot, "call")), ref.exps)
 
-    vals <- lapply(unitizer:::as.list(my.unitizer2@items.new), function(x) x@data@value)
+    vals <- lapply(
+      unitizer:::as.list(my.unitizer2@items.new), function(x) x@data@value[[1L]]
+    )
     vals.ign <- unitizer:::ignored(my.unitizer2@items.new)
     expect_equal(vals[!vals.ign], lapply(new.exps, eval)[!vals.ign])
     expect_true(all(vapply(vals[vals.ign], is, logical(1L), "unitizerDummy")))
 
-    vals <- lapply(unitizer:::as.list(my.unitizer2@items.ref), function(x) x@data@value)
+    vals <- lapply(
+      unitizer:::as.list(my.unitizer2@items.ref), function(x) x@data@value[[1L]]
+    )
     vals.ign <- unitizer:::ignored(my.unitizer2@items.ref)
     expect_equal(vals[!vals.ign], lapply(ref.exps, eval)[!vals.ign])
     expect_true(all(vapply(vals[vals.ign], is, logical(1L), "unitizerDummy")))
@@ -212,9 +216,15 @@ local( {
     env.val <- new.env(parent=my.unitizer5@items.new[[3]]@env)
     env.eval <- new.env(parent=env.val)
     assign(".NEW", my.unitizer5@items.new[[3]], env.val)
-    assign(".new", my.unitizer5@items.new[[3]]@data@value, env.val)
+    assign(".new", my.unitizer5@items.new[[3]]@data@value[[1L]], env.val)
     assign(".REF", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]], env.val)
-    assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]]@data@value, env.val)
+    assign(
+      ".ref",
+      my.unitizer5@items.ref[[
+        my.unitizer5@items.new.map[[3]]
+      ]]@data@value[[1L]],
+      env.val
+    )
     expect_warning(
       ls.res <- evalq(unitizer:::unitizer_ls(), env.eval),
       "The ls output for `.ref` is invalid"
@@ -228,11 +238,22 @@ local( {
     env.val <- new.env(parent=my.unitizer5@items.new[[9]]@env)
     env.eval <- new.env(parent=env.val)
     assign(".NEW", my.unitizer5@items.new[[9]], env.val)
-    assign(".new", my.unitizer5@items.new[[9]]@data@value, env.val)
-    assign(".REF", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]], env.val)
-    assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]]@data@value, env.val)
+    assign(".new", my.unitizer5@items.new[[9]]@data@value[[1L]], env.val)
+    assign(
+      ".REF", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]], env.val
+    )
+    assign(
+      ".ref",
+      my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]]@data@value[[1L]],
+      env.val
+    )
     expect_equal(
-      structure(list(new = c("a", "b", "e", "f", "howdy"), ref = c("a", "b", "e", "f", "howdy"), tests = c(".new", ".NEW", ".ref", ".REF")), .Names = c("new", "ref", "tests"), class = "unitizer_ls", mods = character(0)),
+      structure(
+        list(new = c("a", "b", "e", "f", "howdy"),
+        ref = c("a", "b", "e", "f", "howdy"),
+        tests = c(".new", ".NEW", ".ref", ".REF")),
+        .Names = c("new", "ref", "tests"), class = "unitizer_ls",
+        mods = character(0)),
       evalq(unitizer:::unitizer_ls(), env.eval)
     )
     expect_equal(

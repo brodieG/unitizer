@@ -5,10 +5,11 @@ context("Browse")
 local( {
   zero.env <- parent.env(.GlobalEnv)
   obj.item <- new("unitizerItem", call=quote(1 + 1), env=new.env())
-  obj.item@data@value <- 2
+  obj.item@data@value <- list(2)
   obj.item@data@output <- c("two", "dos", "due")
   obj.item@data@conditions <- new(
-    "conditionList", .items=list(simpleError("hello"), simpleWarning("What a warning"))
+    "conditionList",
+    .items=list(simpleError("hello"), simpleWarning("What a warning"))
   )
   obj.item@data@message <- vapply(
     unitizer:::as.list(obj.item@data@conditions), conditionMessage, character(1L)
@@ -16,7 +17,7 @@ local( {
   obj.item@data@aborted <- TRUE
 
   test_that("unitizerItem accessor functions work", {
-    expect_equal(obj.item$value, obj.item@data@value)
+    expect_equal(obj.item$value, obj.item@data@value[[1L]])
     expect_equal(obj.item$output, obj.item@data@output)
     expect_equal(obj.item$conditions, obj.item@data@conditions)
   } )

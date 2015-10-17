@@ -60,11 +60,17 @@ local({
       interactive.mode=TRUE, mode="unitize"
     )
     unitizer:::read_line_set_vals(NULL)
-    expect_true(all(vapply(unitizer:::as.list(untzs0), is, logical(1L), "unitizerLoadFail")))
     expect_true(
       all(
-        vapply(unitizer:::as.list(untzs0[-(1:2)]), slot, character(1L), "reason") ==
-          "User elected not to upgrade unitizers"
+        vapply(
+          unitizer:::as.list(untzs0), is, logical(1L), "unitizerLoadFail"
+    ) ) )
+    expect_true(
+      all(
+        vapply(
+          unitizer:::as.list(untzs0[-(1:2)]),
+          slot, character(1L), "reason"
+        ) == "User elected not to upgrade unitizers"
       )
     )
     untzs <- unitizer:::load_unitizers(
