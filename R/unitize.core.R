@@ -277,27 +277,41 @@ unitize_core <- function(
             "is a list of possible arguments to `set.seed`."
   ) ) ) } }
   if(identical(global$status@working.directory, 2L)) {
-    if(
-      length(unique(dirname(test.files)) == 1L) &&
-      length(par.dir <- get_package_dir(test.files[[1L]]))
-    ) {
-      setwd(par.dir)
+    if(length(unique(dirname(test.files)) == 1L)) {
+      path <- dirname(test.files[[1L]])
+      pat <- sprintf("(.*\\%s).*", file.path(".Rcheck", "tests", ""))
+      test.dir <- if(grepl(pat, path)) {
+        sub(pat, "\\1", path)
+      } else if(
+        length(par.dir <- get_package_dir(test.files[[1L]])) &&
+        file_test("-d", file.path(par.dir, "tests"))
+      ) {
+        file.path(par.dir, "tests")
+      } else {
+        warning(
+          word_wrap(collapse="\n",
+            cc(
+              "Working directory state tracking is in mode 2, but we cannot ",
+              "identify the standard tests directory so we are leaving the ",
+              "working directory unchanged"
+          ) ),
+          immediate.=TRUE
+        )
+        NULL
+      }
+      if(!is.null(test.dir)) setwd(test.dir)
     } else {
-      multi.file <- length(test.files) > 1L
       warning(
         word_wrap(collapse="\n",
           cc(
-            "Working directory state tracking is in mode 2, but test file",
-            if(multi.file) "s do not" else " does not", "appear to be part of a ",
-            "package so instead of setting directory to the package dir ",
-            if(multi.file)
-              paste0(
-                "prior to running each test file we will set it to ",
-                "the current working directory."
-              ) else "we will leave it unchanged."
+            "Working directory state tracking is in mode 2, but we cannot ",
+            "identify the standard tests directory because test files are not ",
+            "all in same directory, so we are leaving the working directory ",
+            "unchanged."
         ) ),
         immediate.=TRUE
-  ) } }
+      )
+  } }
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
