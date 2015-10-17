@@ -157,6 +157,14 @@ upgrade_internal <- function(object) {
       }
     )
   }
+  if(ver < "1.0.11") {
+    # need to make sure we wrap values in list to avoid issues with recursive
+    # validObject attempting to validate S3 objects
+    object@items.ref@.items <- lapply(
+      object@items.ref@.items,
+      function(x) x@data@value <- list(x@data@value)
+    )
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always

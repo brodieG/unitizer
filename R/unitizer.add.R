@@ -83,20 +83,21 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       # the section, and re-loop (this is how we handle nested tests), if not, store the
       # evaluated test
 
-      if(is(item@data@value, "unitizerSectionExpression")) {
+      if(is(item@data@value[[1L]], "unitizerSectionExpression")) {
+        sect.obj <- item@data@value[[1L]]
         if(i <= sect.end) {
-          sect.end <- i + length(item@data@value) - 1L
+          sect.end <- i + length(sect.obj) - 1L
           sect.par <- e1@section.parent[e1@section.map[[i]]]
         } else if (i > sect.end) {
-          sect.end <- i + length(item@data@value) - 1L
+          sect.end <- i + length(sect.obj) - 1L
           sect.par <- NA_integer_
         }
         e1 <- e1 + new(
-          "unitizerSection", title=item@data@value@title,
-          details=item@data@value@details, length=length(item@data@value),
-          parent=sect.par, compare=item@data@value@compare
+          "unitizerSection", title=sect.obj@title,
+          details=sect.obj@details, length=length(sect.obj),
+          parent=sect.par, compare=sect.obj@compare
         )
-        e2 <- e2 + item@data@value
+        e2 <- e2 + sect.obj
         next
       }
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
