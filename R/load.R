@@ -96,7 +96,7 @@ load_unitizers <- function(
   )
   valid.idx <- which(!nchar(valid))
   invalid.idx <- which(nchar(valid) & !version.out.of.date)
-  toup.idx <- which(nchar(valid) & version.out.of.date)
+  toup.idx <- which(version.out.of.date)
   toup.fail.idx <- integer(0L)
 
   # Attempt to resolve failures by upgrading if relevant

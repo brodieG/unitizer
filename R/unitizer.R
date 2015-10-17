@@ -481,7 +481,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         stop("Logic Error: tpl matrix should be one row; contact maintainer.")
 
       get_dat <- function(x, i) {
-        dat <- slot(x, i)
+        dat <- if(identical(i, "value")) slot(x, i)[[1L]] else slot(x, i)
         if(is.call(dat) || is.symbol(dat)) call("quote", dat)
         else dat
       }

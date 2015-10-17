@@ -603,11 +603,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     var.list <- list()
     if(!is.null(item.new)) {
-      var.list <- c(var.list, list(.NEW=item.new, .new=item.new@data@value))
-    }
+      var.list <- c(
+        var.list, list(.NEW=item.new, .new=item.new@data@value[[1L]])
+    ) }
     if(!is.null(item.ref)) {
-      var.list <- c(var.list, list(.REF=item.ref, .ref=item.ref@data@value))
-    }
+      var.list <- c(
+        var.list, list(.REF=item.ref, .ref=item.ref@data@value[[1L]])
+    ) }
     browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)
 
