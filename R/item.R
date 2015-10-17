@@ -34,7 +34,7 @@ setGeneric("isValid", function(object, ...) standardGeneric("isValid"))
 setClass(
   "unitizerItemData",
   representation(
-    value="ANY",
+    value="list",
     conditions="conditionList",
     output="character",
     message="character",
@@ -119,17 +119,6 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
     .Object@call.dep <- deparse_call(dots.all$call)
   } else .Object@call <- NULL
   if("env" %in% dots.names) .Object@env <- dots.all$env
-  # # Old mechanism for marking stuff as ignored
-  # if(
-  #   is.call(.Object@call) &&
-  #   !inherits(
-  #     try(fun <- eval(.Object@call[[1L]], .Object@env), silent=TRUE),
-  #     "try-error"
-  #   ) &&
-  #   any(vapply(funs.ignore, identical_fun, logical(1L), fun))
-  # ) {
-  #   .Object@ignore <- TRUE
-  # }
   if("comment" %in% dots.names) .Object@comment <- dots.all$comment
   if("trace" %in% dots.names) .Object@trace <- dots.all$trace
   if("glob.indices" %in% dots.names)
@@ -139,6 +128,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
     .Object@ignore <- dots.all$ignore
     if(.Object@ignore) dots[["value"]] <- new("unitizerDummy")
   }
+  dots[["value"]] <- list(dots[["value"]])  # to avoid S3 validity issues
   .Object@data <- do.call("new", c(list("unitizerItemData"), dots), quote=TRUE)
   .Object
 } )
@@ -177,8 +167,11 @@ setMethod("show", "unitizerItem",
     if(object@reference) cat("Reference") else cat("New")
     cat(" Test ~~~\n")
     cat(object@call.dep, sep="\n")
-    cat("* value:", paste0(desc(object@data@value, limit=getOption("width") - 7L), "\n"))
-
+    cat(
+      "* value:",
+      paste0(
+        desc(object@data@value[[1L]], limit=getOption("width") - 7L), "\n"
+    ) )
     if(out.len <- sum(nchar(object@data@output)))
       cat("* output:", out.len, "chars\n")
     if(err.len <- sum(nchar(object@data@message)))
@@ -343,5 +336,6 @@ setMethod("$", c("unitizerItem"),
         "Argument `name` must be in ",
         paste0(deparse(valid, width.cutoff=500L), collapse=", ")
     ) }
+    if(identical(what, "value")) return(x@data@value[[1L]])
     slot(x@data, what)
 } )

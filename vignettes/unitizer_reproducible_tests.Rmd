@@ -23,7 +23,7 @@ There are even more subtle factors that can affect test evaluation.  For example
 
 Here is a non-exhaustive list of aspects of state that might affect test outcomes:
 
-1. Workspace
+1. Workspace / Evaluation Environment
 1. Random seed
 1. Working directory
 1. Search path
@@ -76,6 +76,10 @@ TestEnv --> UnitizerEnv
 Clearly overriding such fundamental functions such as `library` / `attach` / `detach` is not good form.  We recognize this, and try to do the overriding in as lightweight a manner as possible.  For `attach` and `detach` we rely primarily on the `exit` parameter to `trace` so that the functions are as close to their original form as possible.  Unfortunately this method is not compatible with `library` since it uses `on.exit`, but again we use an implementation that should be transparent to users.  Additionally, these functions are only traced during `unitizer` execution and are returned to their original state on exit.  The untracing is registered to the `on.exit` of `unitize` so the functions should get untraced even if `unitize` fails.
 
 Aside from the issues raised above, this method is not completely robust.  Any tests that turn tracing off using `tracingState`, or `trace`/`untrace` `library` / `attach` / `detach` will interfere with `unitizer`.  If you must do any of the above you should consider specifying a parent environment for your tests through the `state` parameter to `unitize` (see `?unitize`).
+
+### Package Namespace as Parent Environment
+
+Sometimes it is convenient to BLAH BLAH ON RUNNING IN NAMESPACE, JUST MAKE SURE TO POINT OUT IF YOU DO THIS THEN YOU HAVE NO WAY OF AVOIDING BEING EXPOSED TO GLOBAL WORKSPACE.
 
 ### Test Environments
 
