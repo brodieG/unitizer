@@ -338,7 +338,7 @@ validate_options <- function(opts.to.validate) {
       )
         stop("Option `unitizer.namespace.keep.base` must be character and not NA")
 
-      if(!is(is.valid_state(unitizer.state), "unitizerState"))
+      if(!is(try(as.valid_state(unitizer.state)), "unitizerState"))
         stop("Option `unitizer.state` is invalid; see prior errors")
       if(!is.list(unitizer.opts.init))
         stop("Option `unitizer.opts.init` must be a list")
