@@ -421,8 +421,10 @@ is_package_dir <- function(name, has.tests=FALSE) {
 }
 get_package_dir <- function(name=getwd(), has.tests=FALSE) {
   stopifnot(
-    is.chr1(name), is.TF(has.tests)
+    is.character(name), !any(is.na(name)), is.TF(has.tests),
+    as.logical(length(name))
   )
+  if(length(name) > 1L) name <- attr(unique_path(name), "common_dir")
   is.package <- FALSE
   prev.dir <- par.dir <- name
 

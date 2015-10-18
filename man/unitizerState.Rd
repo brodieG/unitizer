@@ -2,11 +2,12 @@
 % Please edit documentation in R/state.R
 \docType{class}
 \name{unitizerState}
+\alias{state}
+\alias{unitizerInPkg}
+\alias{unitizerInPkg-class}
 \alias{unitizerState}
 \alias{unitizerStateBasic}
 \alias{unitizerStateBasic-class}
-\alias{unitizerStateDefault}
-\alias{unitizerStateDefault-class}
 \alias{unitizerStateOff}
 \alias{unitizerStateOff-class}
 \alias{unitizerStatePristine}
@@ -50,10 +51,12 @@ test is run.
 in the following:
 
 \itemize{
-  \item Workspace (enabled by default): all tests are evaluated in
-     environments that are children of a special environment that does not
-     inherit from \code{.GlobalEnv}.  This prevents objects that are
-     lying around in your workspace from interfering with your tests.
+  \item Workspace / Parent Environment (enabled by default): all tests are
+     evaluated in environments that are children of a special environment
+     that does not inherit from \code{.GlobalEnv}.  This prevents objects
+     that are lying around in your workspace from interfering with your
+     tests.  This also allows you to run your tests in a namespace as with
+     \code{testthat::test_check}.
   \item Random Seed (enabled by default): is set to a specific value at the
     beginning of each test file so that tests using random values get the
     same value at every test iteration. If you change the order of  your
@@ -61,14 +64,14 @@ in the following:
     the file, that will still affect the random seed.
   \item Working Directory (enabled by default): is set to the package
     directory if all test files are  in the same sub-directory of a package.
-  \item Search Path (\bold{enabled} by default): is set to what you would
+  \item Search Path (enabled by default): is set to what you would
     typically find in a freshly loaded vanilla R session.  This means any non
     default packages that are loaded when you run your tests are unloaded
     prior to running your tests.  If you want to use the same libraries
     across multiple tests you can load them with the \code{pre} argument to
     \code{\link{unitize}} or \code{\link{unitize_dir}}.
   \item Options (\bold{disabled} by default): same as search path
-  \item Namespaces {\bold{disabled}} by default): same as search path; this
+  \item Namespaces (\bold{disabled} by default): same as search path; this
     option is only made available to support options since many namespaces
     set options \code{onLoad}, and as such it is necessary to unload and load
     them to ensure default options are set
@@ -78,10 +81,10 @@ files with \code{unitize_dir}, which means state changes in one test file
 will not affect the next one.
 }
 
-\section{Search Path and Options}{
+\section{Namespaces  and Options}{
 
 
-Search options and namespace state management are turned off by default
+Options and namespace state management are turned off by default
 because in order to work they require the ability to fully unload any
 non-default packages and namespaces, and there are some packages that cannot
 be unloaded, or should not be unloaded (e.g.

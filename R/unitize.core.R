@@ -63,48 +63,11 @@ unitize_core <- function(
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
 
-  # Check if we want the special "in.pkg" state
+  # Validate state; note that due to legacy code we disassemble state into the
+  # par.env and other components
 
-  if(is.character(state) && identical(state[[1L]], "in.pkg")) {
-    err.inf <- c(
-      "If you want to run tests in a specific namespace you may specify it ",
-      "expicitly by using a `unitizerState` object as the value for ",
-      "the `state` parameter; see `?unitizerState` for details."
-    )
-    pkg.dir <- get_package_dir(test.files[[1L]])
-    if(length(pkg.dir)) {
-      pkg.name <- try(get_package_name(pkg.dir))
-      if(inherits(pkg.name, "try-error"))
-        stop(
-          word_wrap(collapse="\n",
-            cc(
-              "First test file does not appear to be inside an R package so ",
-              "we cannot identify the namespace to run tests in. ", err.inf
-        ) ) )
-      state <- try(unitizerStateDefault(par.env=pkg.name))
-      if(inherits(state, "try-error")) {
-        stop(
-          word_wrap(collapse="\n",
-            cc(
-              "Unable to instantiate state object in '", pkg.name, "' ",
-              "namespace environment."
-        ) ) )
-      }
-    } else stop(
-      word_wrap(collapse="\n",
-        cc(
-          "First test file does not appear to be part of a package, so we ",
-          "cannot run with `state=\"in.pkg\"`. ", err.inf
-      ) )
-    )
-  } else {
-    # Validate state; note that due to legacy code we disassemble state into the
-    # par.env and other components
-
-    state <- is.valid_state(state)
-    if(!is(state, "unitizerState")) stop("Argument `state` is invalid")
-  }
   par.env <- state@par.env
+  state <- as.state(state)
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
   )

@@ -11,7 +11,7 @@
 text_wrap(x, width)
 
 word_wrap(x, width = getOption("width"), tolerance = 8L, hyphens = TRUE,
-  unlist = TRUE)
+  unlist = TRUE, collapse = NULL)
 
 word_cat(..., sep = " ", width = getOption("width"), tolerance = 8L,
   file = stdout())

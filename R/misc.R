@@ -193,7 +193,8 @@ history_write <- function(hist.con, data) {
 #     package directory if it turns out that one is shorter than the one
 #     produced with relativize path
 #   \item \code{unique_path} is used to separate out a common path from a list
-#     of files
+#     of files, the unique paths are returned as a value, with the common
+#     directory attached as an attribute
 # }
 #
 # @param wd NULL or character(1L) resolving to a directory, if NULL will be
@@ -274,6 +275,7 @@ pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   if(nchar(rel.path) <= nchar(pkg.path)) rel.path else pkg.path
 }
 unique_path <- function(files) {
+  stopifnot(is.character(files), !any(is.na(files)))
   dirs <- dirname(files)
   uniq.dir <- str_reduce_unique(dirs)
   com.dir <- substr(dirs[[1L]], 1L, nchar(dirs[[1L]]) - nchar(uniq.dir[[1L]]))

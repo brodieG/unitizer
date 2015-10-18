@@ -89,3 +89,19 @@ test_that("All Equal States", {
   )
   options(old.width)
 })
+test_that("as.state", {
+  expect_identical(unitizer:::as.state("default"), unitizerState())
+  expect_identical(unitizer:::as.state("pristine"), unitizerStatePristine())
+  expect_identical(
+    unitizer:::as.state(.GlobalEnv), unitizerState(par.env=.GlobalEnv)
+  )
+  expect_identical(
+    unitizer:::as.state(in_pkg("stats")),
+    unitizerState(par.env=getNamespace("stats"))
+  )
+  stats.lib <- file.path(system.file(package="stats"), "R")
+  expect_identical(
+    unitizer:::as.state(in_pkg(), test.files=stats.lib),
+    unitizerState(par.env=getNamespace("stats"))
+  )
+})

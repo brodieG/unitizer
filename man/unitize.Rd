@@ -33,9 +33,10 @@ you to specify non-standard \code{unitizer} storage mechanisms (see
 \code{unitizer} object if you are using \code{review}.}
 
 \item{state}{character(1L) one of
-\code{c("prisitine", "default", "basic", "off", "safe")} or an S4 object
-inheriting from \code{unitizerState}; modifies how \code{unitizer} manages
-aspects of session state that could affect test evaluation (see details).}
+\code{c("prisitine", "default", "basic", "off", "safe")}, an environment,
+or an S4 object inheriting from \code{unitizerState}; modifies how
+\code{unitizer} manages aspects of session state that could affect test
+evaluation (see "State" section in details).}
 
 \item{pre}{NULL, or a character vector pointing to files and/or directories.
 If a character vector, then any files referenced therein will be sourced,
@@ -129,7 +130,9 @@ Because of this, no effort is made to create reproducible state in the
 browsing environments, unlike with \code{unitize} or \code{unitize_dir}
 (see \code{state} parameter).
 
-See \code{vignette("unitizer")} and demo for details and examples.
+You are strongly encouraged to read through \code{vignette("unitizer")}
+for details and examples.  The demo (\code{demo("unitizer")}) is also a
+good introduction to these functions.
 }
 \section{Default Settings}{
 
@@ -143,7 +146,9 @@ setting options in their \code{.Rprofile} file.
 
 
 You can modify all aspects of state control with the \code{state} parameter.
-See the \code{\link{unitizerState}} documentation and
+This includes evaluating your tests in a package namespace like
+\code{testthat::test_check} does by passing an environment.  See the
+\code{\link{unitizerState}} documentation and
 \code{vignette("unitizer_reproducible_tests")} vignette for more details.
 }
 \seealso{

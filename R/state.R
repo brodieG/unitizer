@@ -150,10 +150,11 @@ NULL
 #'
 #' @rdname unitizerState
 #' @export unitizerState
+#' @export state
 #' @name unitizerState
 #' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}}
 
-unitizerState <- setClass(
+state <- unitizerState <- setClass(
   "unitizerState",
   slots=c(
     search.path="integer",
@@ -164,7 +165,7 @@ unitizerState <- setClass(
     par.env="environmentOrNULL"
   ),
   prototype=list(
-    search.path=0L, options=0L, working.directory=0L, random.seed=0L,
+    search.path=2L, options=0L, working.directory=2L, random.seed=2L,
     namespaces=0L, par.env=NULL
   ),
   validity=function(object) {
@@ -224,13 +225,22 @@ setMethod("initialize", "unitizerState",
     dots.base <- dots[!names(dots) %in% "par.env"]
     for(i in names(dots.base))
       if(is.numeric(dots.base[[i]])) dots[[i]] <- as.integer(dots.base[[i]])
-    if("par.env" %in% names(dots))
-      dots[["par.env"]] <- try(getNamespace(dots[["par.env"]]))
-    if(inherits(dots[["par.env"]], "try-error"))
-      stop(
-        "Argument `par.env` must resolve to a package namespace if supplied as ",
-        "character(1L)"
-      )
+    if("par.env" %in% names(dots)) {
+      par.env <- dots[["par.env"]]
+      if(!is.chr1(par.env) && !is.environment(par.env) && !is.null(par.env))
+        stop(
+          "Argument `par.env` must be character(1L), an environment, or NULL"
+        )
+      if(is.chr1(par.env)) {
+        ns.env <- try(getNamespace(par.env))
+        if(inherits(ns.env, "try-error"))
+          stop(
+            "Argument `par.env` must resolve to a package namespace if supplied ",
+            "as character(1L)"
+          )
+      }
+      dots[["par.env"]] <- par.env
+    }
     do.call(callNextMethod, c(.Object, dots))
 } )
 #' @export unitizerStatePristine
@@ -250,16 +260,6 @@ unitizerStateSafe <- setClass(
   "unitizerStateSafe", contains="unitizerState",
   prototype=list(
     search.path=0L, options=0L, working.directory=2L, random.seed=2L,
-    namespaces=0L, par.env=NULL
-  )
-)
-#' @export unitizerStateDefault
-#' @rdname unitizerState
-
-unitizerStateDefault <- setClass(
-  "unitizerStateDefault", contains="unitizerState",
-  prototype=list(
-    search.path=2L, options=0L, working.directory=2L, random.seed=2L,
     namespaces=0L, par.env=NULL
   )
 )
@@ -283,6 +283,48 @@ unitizerStateOff <- setClass(
     namespaces=0L, par.env=.GlobalEnv
   )
 )
+#' @export unitizerInPkg
+#' @rdname unitizerState
+
+unitizerInPkg <- setClass(
+  "unitizerInPkg",
+  slots=c(package="character"),
+  validity=function(object) {
+    if(!is.chr1(object@package))
+     return("Slot `package` must be character(1L) and not NA")
+  },
+  prototype=list(package="")
+)
+setMethod("show", "unitizerInPkg",
+  function(object) {
+    word_cat(
+      sprintf(
+        "Run in %s namespace",
+       if(nchar(object@package)) object@package else "<auto-detect>"
+      ), sep="\n"
+    )
+  }
+)
+#' Tell \code{unitizer} to Run in Package Namespace
+#'
+#' Leave parameter unspecified to have \code{unitizer} attempt to detect the
+#' current package based on the the test file path.  \code{unitizer} will detect
+#' the package based on directory structure, and should be able to do so
+#' provided your test files are in a subdirectory of an R package in standard
+#' R package directory structure.  This function should be robust to running
+#' during testing at the command line as well as with \code{R CMD check}.
+#'
+#' @export
+#' @param package character(1L) or NULL; if character will take the value to
+#'   be the name of the package to use the namespace of as the parent
+#'   environment
+#' @return a \code{unitizerInPkg} S4 object
+
+in_pkg <- function(package=NULL) {
+  if(!is.null(package) && !is.chr1(package))
+    stop("Argument `package` must be character(1L) and not NA, or NULL")
+  unitizerInPkg(package=if(is.null(package)) "" else package)
+}
 #' @rdname unitizer_s4method_doc
 
 setMethod(
@@ -303,4 +345,83 @@ setMethod(
     )
   }
 )
+# Valid State Settings
+#
+# @keywords internal
+# @param x objet to test
+# @return a \code{unitizerState} object
 
+as.state <- function(x, test.files=NULL) {
+  if(
+    !is(x, "unitizerState") &&
+    !(is.chr1(x) && x %in% .unitizer.valid.state.abbr) &&
+    !is.environment(x) &&
+    !is(x, "unitizerInPkg")
+  ) {
+    word_msg(
+      "Argument must be character(1L) %in% ",
+      deparse(.unitizer.valid.state.abbr), ", an environment, or must inherit ",
+      "from S4 classes `unitizerState` or `unitizerInPkg` in order to be ",
+      "interpreted as a unitizer state object.", sep=""
+    )
+    return(FALSE)
+  }
+  stopifnot(is.character(test.files) || is.null(test.files))
+  x <- if(is.character(x)){
+    switch(
+      x, default=new("unitizerState"), pristine=new("unitizerStatePristine"),
+      basic=new("unitizerStateBasic"), off=new("unitizerStateOff"),
+      safe=new("unitizerStateSafe")
+    )
+  } else if(is(x, "unitizerState")) {
+    x
+  } else if(is(x, "unitizerInPkg")) {
+    pkg <- if(nchar(x@package)) {
+      x@package
+    } else {
+      pkg.tmp <- get_package_dir(test.files)
+      if(!length(pkg.tmp)){
+        stop(
+          word_wrap(collapse="\n",
+            cc(
+              "Unable to detect package to use namespace of as parent ",
+              "environment; see `?unitizerState` for how to specify ",
+              "a package namespace explicitly as a parent environment."
+        ) ) )
+      }
+      pkg.name <- try(get_package_name(pkg.tmp))
+      if(inherits(pkg.name, "try-error"))
+        stop("Unable to extract package name from DESCRIPTION.")
+      pkg.name
+    }
+    pkg.env <- try(getNamespace(pkg))
+    if(inherits(pkg.env, "try-error"))
+      stop(
+        word_wrap(collapse="\n",
+          cc(
+            "Unable to load \"", pkg, "\" namespace to use as parent ",
+            "environment; see `?unitizerState` for instructions on how to ",
+            "specify a package namespace as a parent environment for tests."
+      ) ) )
+    state(par.env=pkg.env)
+  } else if(is.environment(x)) {
+    state(par.env=x)
+  }
+  if(x@options > x@namespaces) {
+    stop(
+      word_wrap(collapse="\n",
+        cc(
+          "Options state tracking (", x@options, ") must be less than namespace ",
+          "state tracking (", x@namespaces, ")."
+    ) ) )
+  }
+  if(x@namespaces > x@search.path) {
+    stop(
+      word_wrap(collapse="\n",
+        cc(
+          "Namespace state tracking (", x@namespaces, ") must be less than ",
+          "or equal to search path state tracking (", x@search.path, ")."
+    ) ) )
+  }
+  return(x)
+}
