@@ -39,3 +39,6 @@ get_rsq <- function(x) {
   if(!inherits(x, "fastlm")) stop("Argument `x` must be a fastlm object")
   x[["rsq"]]
 }
+# non-exported to test the in_pkg business
+
+hidden_fun <- function() TRUE
