@@ -66,8 +66,8 @@ unitize_core <- function(
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components
 
-  par.env <- state@par.env
   state <- as.state(state)
+  par.env <- state@par.env
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
   )
