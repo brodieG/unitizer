@@ -104,4 +104,8 @@ test_that("as.state", {
     unitizer:::as.state(in_pkg(), test.files=stats.lib),
     unitizerState(par.env=getNamespace("stats"))
   )
+  expect_error(unitizer:::as.state(200))
+  state <- unitizerStateOff()
+  state@options <- 2L  # bypass validity method
+  expect_error(validObject(state))
 })

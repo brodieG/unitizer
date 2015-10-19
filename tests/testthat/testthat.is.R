@@ -9,13 +9,6 @@ test_that("int.pos.1L", {
   expect_false(unitizer:::is.int.pos.1L(NA_integer_))
 })
 
-test_that("valid_state", {
-  expect_false(unitizer:::is.valid_state(200))
-  state <- unitizerState()
-  state@options <- 2L  # bypass validity method
-  expect_false(unitizer:::is.valid_state(state))
-})
-
 test_that("valid_con", {
   f <- tempfile()
   cat("hello there\n", file=f)
