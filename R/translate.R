@@ -471,7 +471,7 @@ testthat_translate_dir <- function(
   if(!file_test("-d", dir.name))
     stop("Argument `", dir.name, "` is not a directory name")
 
-  state <- try(as.state(state))
+  state <- try(as.state(state, test.files=dir.name))
   if(!is(state, "unitizerState")) stop("Argument `state` is invalid")
 
   # note, parent env below doesn't matter since we're going to change it

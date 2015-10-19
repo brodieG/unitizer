@@ -66,7 +66,9 @@ unitize_core <- function(
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components
 
-  state <- as.state(state)
+  state <- try(as.state(state, test.files))
+  if(inherits(state, "try-error"))
+    stop("Argument `state` could not be evaluated.")
   par.env <- state@par.env
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
@@ -175,7 +177,7 @@ unitize_core <- function(
 
   opts <- options()
   opts.untz <- opts[grep("^unitizer\\.", names(opts))]
-  validate_options(opts.untz)
+  validate_options(opts.untz, test.files)
 
   # Initialize new tracking object; this will also record starting state and
   # store unitizer options; open question of how exposed we want to be to

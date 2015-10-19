@@ -367,7 +367,11 @@ as.state <- function(x, test.files=NULL) {
           "order to be interpreted as a unitizer state object."
     ) ) )
   }
-  stopifnot(is.character(test.files) || is.null(test.files))
+  stopifnot(
+    is.character(test.files) || is.null(test.files),
+    !is(x, "unitizerInPkg") || is.character(test.files) ||
+    !!nchar(x@package)
+  )
   x <- if(is.character(x)){
     switch(
       x, default=new("unitizerState"), pristine=new("unitizerStatePristine"),
