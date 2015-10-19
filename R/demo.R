@@ -170,12 +170,8 @@ unitizer_check_demo_state <- function() {
 
 unitizer_cleanup_demo <- function() {
   vars <- c(".unitizer.fastlm", ".unitizer.test.file")
-  try(
-    {
-      detach("package:unitizer.fastlm")
-      unloadNamespace("unitizer.fasltm")
-    }, silent=TRUE
-  )
+  try(detach("package:unitizer.fastlm"), silent=TRUE)
+  try(unloadNamespace("unitizer.fastlm"), silent=TRUE)
   remove.packages("unitizer.fastlm", .libPaths()[[1L]])
   pkg.dir <- try(get(".unitizer.fastlm", envir=parent.frame()))
   if(
