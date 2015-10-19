@@ -358,13 +358,14 @@ as.state <- function(x, test.files=NULL) {
     !is.environment(x) &&
     !is(x, "unitizerInPkg")
   ) {
-    word_msg(
-      "Argument must be character(1L) %in% ",
-      deparse(.unitizer.valid.state.abbr), ", an environment, or must inherit ",
-      "from S4 classes `unitizerState` or `unitizerInPkg` in order to be ",
-      "interpreted as a unitizer state object.", sep=""
-    )
-    return(FALSE)
+    stop(
+      word_wrap(collapse="\n",
+        cc(
+          "Argument must be character(1L) %in% ",
+          deparse(.unitizer.valid.state.abbr), ", an environment, or must ",
+          "inherit from S4 classes `unitizerState` or `unitizerInPkg` in ",
+          "order to be interpreted as a unitizer state object."
+    ) ) )
   }
   stopifnot(is.character(test.files) || is.null(test.files))
   x <- if(is.character(x)){
