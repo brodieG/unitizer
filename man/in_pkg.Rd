@@ -2,7 +2,7 @@
 % Please edit documentation in R/state.R
 \name{in_pkg}
 \alias{in_pkg}
-\title{Tell \code{unitizer} to Run in Package Namespace}
+\title{Helper Function To Tell \code{unitizer} to Run in Package Namespace}
 \usage{
 in_pkg(package = NULL)
 }
@@ -15,11 +15,25 @@ environment}
 a \code{unitizerInPkg} S4 object
 }
 \description{
-Leave parameter unspecified to have \code{unitizer} attempt to detect the
-current package based on the the test file path.  \code{unitizer} will detect
-the package based on directory structure, and should be able to do so
-provided your test files are in a subdirectory of an R package in standard
-R package directory structure.  This function should be robust to running
-during testing at the command line as well as with \code{R CMD check}.
+Use this function as the value for the \code{state} argument to
+\code{unitize} to tell \code{unitizer} to use a package namespace as
+the parent evaluation environment.
+}
+\details{
+If you use it without specifying the \code{package} parameter \code{unitizer}
+will attempt to detect the current package based on the the test file path.  #' \code{unitizer} will detect the package based on directory structure, and
+should be able to do so provided your test files are in a subdirectory of an
+R package in standard R package directory structure.  This function should be
+robust to running during testing at the command line as well as with
+\code{R CMD check}.
+}
+\examples{
+\dontrun{
+unitize("mytests.R", state=in_pkg()) # assuming mytests.R is part of a pkg
+unitize("mytests.R", state=in_pkge("mypkg"))
+}
+}
+\seealso{
+\code{\link{unitize}}, \code{\link{unitizeState}}
 }
 
