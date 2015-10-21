@@ -205,7 +205,7 @@ state <- function(
       )
     args[["par.env"]] <- par.env
   }
-  state <- try(do.call(unitizerState, args))
+  state <- try(do.call(unitizerStateRaw, args))
   if(inherits(state, "try-error"))
     stop("Unable to create state object; see prior errors.")
   state
@@ -222,9 +222,9 @@ unitizerInPkg <- setClass(
 setMethod("as.character", "unitizerInPkg",
   function(x, ...) {
     sprintf(
-      "Run in %s namespace",
+      "<in: %s>",
       if(nchar(object@package))
-        sprintf("`%s`", object@package) else "<auto-detect>"
+        sprintf("package:%s", object@package) else "auto-detect-pkg"
 ) } )
 setMethod(
   "show", "unitizerInPkg",
@@ -249,11 +249,11 @@ unitizerState <- setClass(
     random.seed="integer",
     namespaces="integer"
   ),
-  contains="VIRTUAL",
   prototype=list(
     search.path=2L, options=0L, working.directory=2L, random.seed=2L,
     namespaces=0L
   ),
+  contains="VIRTUAL",
   validity=function(object) {
     # seemingly superflous used to make sure this object is in concordance with
     # the various others that are similar
@@ -315,34 +315,41 @@ unitizerStateProcessed <- setClass(
 setMethod("initialize", "unitizerState",
   function(.Object, ...) {
     dots <- list(...)
-    dots.base <- dots[!names(dots) %in% "par.env"]
-    for(i in names(dots.base))
-      if(is.numeric(dots.base[[i]])) dots[[i]] <- as.integer(dots.base[[i]])
+    for(i in names(dots))
+      if(is.numeric(dots[[i]])) dots[[i]] <- as.integer(dots[[i]])
     do.call(callNextMethod, c(.Object, dots))
 } )
+unitizerStateDefault <- setClass(
+  "unitizerStateDefault",
+  contains="unitizerStateProcessed",
+  prototype=list(
+    search.path=2L, options=0L, working.directory=2L, random.seed=2L,
+    namespaces=0L, par.env=NULL
+  )
+)
 unitizerStatePristine <- setClass(
-  "unitizerStatePristine", contains="unitizerState",
+  "unitizerStatePristine", contains="unitizerStateProcessed",
   prototype=list(
     search.path=2L, options=2L, working.directory=2L, random.seed=2L,
     namespaces=2L, par.env=NULL
   )
 )
 unitizerStateSafe <- setClass(
-  "unitizerStateSafe", contains="unitizerState",
+  "unitizerStateSafe", contains="unitizerStateProcessed",
   prototype=list(
     search.path=0L, options=0L, working.directory=2L, random.seed=2L,
     namespaces=0L, par.env=NULL
   )
 )
 unitizerStateBasic <- setClass(
-  "unitizerStateBasic", contains="unitizerState",
+  "unitizerStateBasic", contains="unitizerStateProcessed",
   prototype=list(
     search.path=1L, options=1L, working.directory=1L, random.seed=1L,
     par.env=NULL
   )
 )
 unitizerStateOff <- setClass(
-  "unitizerStateOff", contains="unitizerState",
+  "unitizerStateOff", contains="unitizerStateProcessed",
   prototype=list(
     search.path=0L, options=0L, working.directory=0L, random.seed=0L,
     namespaces=0L, par.env=.GlobalEnv
@@ -428,12 +435,15 @@ setMethod(
       sv.extra <-  "<auto>: use special unitizer environment as 'par.env'"
       "<auto>"
     } else if (is(sv.env, "unitizerInPkg")) {
+      sv.extra <- "<in: ???>: run with specified package namespace as parent"
       as.character(sv.env)
     } else if (is.environment(sv.env)) {
       env_name(sv.env)
     } else
       stop("Logic Error: unexpected `par.env` slot type; contact maintainer")
-    print(data.frame(Settings=sn, Values=unlist(sv)))
+    res <- data.frame(Settings=sn, Values=unlist(sv))
+    rownames(res) <- NULL
+    print(res)
     word_cat(
       "-----", "0: off", "1: track starting with initial state",
       "2: track starting with clean state",
@@ -472,7 +482,8 @@ as.state <- function(x, test.files=NULL) {
   )
   x <- if(is.character(x)){
     switch(
-      x, default=new("unitizerState"), pristine=new("unitizerStatePristine"),
+      x, default=new("unitizerStateDefault"),
+      pristine=new("unitizerStatePristine"),
       basic=new("unitizerStateBasic"), off=new("unitizerStateOff"),
       safe=new("unitizerStateSafe")
     )
@@ -484,11 +495,13 @@ as.state <- function(x, test.files=NULL) {
     }
     if(inherits(par.env, "try-error"))
       stop("Unable to convert `par.env` value to a namespace environment")
-    x.fin <- unitizerState(par.env)
+    x.fin <- unitizerStateDefault(par.env)
     for(i in .unitizer.global.settings.names) slot(x.fin, i) <- slot(x, i)
     x.fin
-  } else if(is(x, "unitizerInPkg") || is.environment(x)) {
-    unitizerState(par.env=in_pkg_to_env(x, test.files))
+  } else if(is(x, "unitizerInPkg")){
+    unitizerStateDefault(par.env=in_pkg_to_env(x, test.files))
+  } else if(is.environment(x)){
+    unitizerStateDefault(par.env=x)
   }
   if(x@options > x@namespaces) {
     stop(

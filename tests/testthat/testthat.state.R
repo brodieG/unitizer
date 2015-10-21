@@ -19,8 +19,7 @@ test_that("Random Seed", {
 test_that("State Show", {
   expect_equal(
     capture.output(show(unitizer:::unitizerStatePristine())),
-    c("                           Settings Values", "search.path             search.path      2", "options                     options      2", "working.directory working.directory      2", "random.seed             random.seed      2", "namespaces               namespaces      2", "par.env                     par.env <auto>", "-----", "0: off", "1: track starting with initial state", "2: track starting with clean state", "<auto>: use special unitizer environment as 'par.env'", "See `?unitizerState` for more details." )
-  )
+    c("           Settings Values", "1           par.env <auto>", "2       search.path      2", "3           options      2", "4 working.directory      2", "5       random.seed      2", "6        namespaces      2", "-----", "0: off", "1: track starting with initial state", "2: track starting with clean state", "<auto>: use special unitizer environment as 'par.env'", "See `?unitizerState` for more details."))
 })
 test_that("All Equal States", {
   state.A <- new(
@@ -90,20 +89,23 @@ test_that("All Equal States", {
   options(old.width)
 })
 test_that("as.state", {
-  expect_identical(unitizer:::as.state("default"), unitizer:::unitizerState())
-  expect_identical(unitizer:::as.state("pristine"), unitizer:::unitizerStatePristine())
+  expect_identical(unitizer:::as.state("default"), unitizer:::unitizerStateDefault())
+  expect_identical(
+    unitizer:::as.state("pristine"),
+    unitizer:::unitizerStatePristine()
+  )
   expect_identical(
     unitizer:::as.state(.GlobalEnv),
-    unitizer:::unitizerState(par.env=.GlobalEnv)
+    unitizer:::unitizerStateDefault(par.env=.GlobalEnv)
   )
   expect_identical(
     unitizer:::as.state(in_pkg("stats")),
-    unitizer:::unitizerState(par.env=getNamespace("stats"))
+    unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
   )
   stats.lib <- file.path(system.file(package="stats"), "R")
   expect_identical(
     unitizer:::as.state(in_pkg(), test.files=stats.lib),
-    unitizer:::unitizerState(par.env=getNamespace("stats"))
+    unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
   )
   expect_error(unitizer:::as.state(200))
   state <- unitizer:::unitizerStateOff()
@@ -113,12 +115,14 @@ test_that("as.state", {
 test_that("state", {
   expect_identical(
     state("stats"),
-    unitizer:::unitizerState(par.env=getNamespace("stats"))
+    unitizer:::unitizerStateRaw(par.env=getNamespace("stats"))
   )
   expect_identical(
-    state(in_pkg("stats")), unitizer:::unitizerState(par.env=in_pkg("stats"))
+    state(in_pkg("stats")),
+    unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))
   )
   expect_identical(
-    state(in_pkg()), unitizer:::unitizerState(par.env=getNamespace("unitizer"))
+    state(in_pkg()),
+    unitizer:::unitizerStateRaw(par.env=in_pkg())
   )
 })
