@@ -10,7 +10,8 @@ NULL
 #' several aspects of session state that can affect the results of code
 #' evaluation.  \code{unitizer} attempts to make tests as reproducible as
 #' possible by controlling session state so that it is the same every time a
-#' test is run.
+#' test is run.  You can control how \code{unitizer} manages state via the
+#' state argument to \code{unitize}.
 #'
 #' @section Overview:
 #'
@@ -29,8 +30,9 @@ NULL
 #'     same value at every test iteration. If you change the order of  your
 #'     tests, or add a test that uses a random sampling before the end of
 #'     the file, that will still affect the random seed.
-#'   \item Working Directory (enabled by default): is set to the package
-#'     directory if all test files are  in the same sub-directory of a package.
+#'   \item Working Directory (enabled by default): is set to the tests directory
+#'     inside the package directory provided all test files are in the same
+#'     sub-directory of a package.
 #'   \item Search Path (enabled by default): is set to what you would
 #'     typically find in a freshly loaded vanilla R session.  This means any non
 #'     default packages that are loaded when you run your tests are unloaded
@@ -47,7 +49,59 @@ NULL
 #' files with \code{unitize_dir}, which means state changes in one test file
 #' will not affect the next one.
 #'
-#' @section Namespaces  and Options:
+#' @section State Presets:
+#'
+#' For convenience \code{unitizer} provides several state management presets
+#' that you can specify via the \code{state} parameter to \code{\link{unitize}}.
+#' The simplest method is to specify the preset name as a character value:
+#'
+#' \itemize{
+#'   \item "default" turns off options and namespace tracking,
+#'     but otherwise enables all other state tracking.  This is the default
+#'     behavior.
+#'   \item "safe" turns off tracking for search path, namespaces and options.
+#'     These settings, particularly the last two, are the most likely to cause
+#'     compatibility problems.
+#'   \item "pristine" implements the highest level of state tracking and control
+#'   \item "basic" keeps all tracking, but at a less aggressive level; state is
+#'     reset between each test file to the state before you started
+#'     \code{unitize}ing so that no single test file affects another, but the
+#'     state of your workspace, search path, etc. when you launch
+#'     \code{unitizer} will affect all the tests (see the Custom Control)
+#'     section.
+#'   \item "off" state tracking is turned off
+#' }
+#' @section Custom Control:
+#'
+#' If you want to customize each aspect of state control you can pass a
+#' \code{unitizerState} object as the \code{state} argument.  The simplest way
+#' to do this is by using the \code{\link{state}} constructor function.  Look
+#' at the examples for how to do this.
+#'
+#' For convenience \code{unitize} allows you to directly specify a parent
+#' environment if all you want to change is the parent evaluation environment
+#' but are otherwise satisfied with the defaults.  You can even use the
+#' \code{\link{in_pkg}} function to tell \code{unitizer} to use the namespace
+#' associated with your current project, assuming it is an R package.  See
+#' examples for details.
+#'
+#' If you do chose to modify specific aspects of state control here is a guide
+#' to what the various parameter values for \code{par.env} do:
+#' \itemize{
+#'   \item For \code{par.env}: \code{NULL}, an environment, the name of an
+#'     environment, or a \code{unitizerInPkg} object as produced by
+#'     \code{\link{in_pkg}}.
+#'   \item For all other slots, the settings are in \code{0:2} and mean:
+#'     \enumerate{
+#'       \item 0 turn off state tracking
+#'       \item 1 track, but start with state as it was when \code{unitize} was
+#'         called
+#'       \item 2 track and set state to what you would typically find in a clean
+#'         R session, with the exception of \code{random.seed}, which is
+#'         set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
+#'         as that seed is substantially smaller than the R default seed).
+#' } }
+#' @section Namespaces and Options:
 #'
 #' Options and namespace state management are turned off by default
 #' because in order to work they require the ability to fully unload any
@@ -71,49 +125,6 @@ NULL
 #' to \code{1} and \code{NULL} respectively during test evaluation, irrespective
 #' of what option state tracking level you select.
 #'
-#' @section State Presets:
-#'
-#' You can use these classes for detailed control of how \code{unitizer} tracks
-#' and modifies state during test evaluation and review.  These can be passed
-#' as the \code{state} argument to \code{\link{unitize}} and
-#' \code{\link{unitize_dir}}.
-#'
-#' There are several classes defined, though their only purpose is to act as
-#' presets since they are identical except for their prototype values:
-#' \itemize{
-#'   \item \code{unitizerStateDefault} turns off options and namespace tracking,
-#'     but otherwise enables all other state tracking.  This is the default
-#'     behavior.
-#'   \item \code{unitizerStateSafe} is the default and turns off tracking for
-#'     search path, namespaces and options.  These settings, particularly the
-#'     last two, are the most likely to cause compatibility problems
-#'   \item \code{unitizerStatePristine} implements the highest level of state
-#'     tracking and control
-#'   \item \code{unitizerStateBasic} keeps all tracking, but at a less
-#'     aggressive level; state is reset between each test file to the state
-#'     before you started \code{unitize}ing so that no single test file affects
-#'     another, but the state of your workspace, search path, etc. when you
-#'     launch \code{unitizer} will affect all the tests (see the Custom Control)
-#'     section.
-#'   \item \code{unitizerStateOff} state tracking is turned off
-#' }
-#' Each class has a constructor function of the same name as the class.
-#'
-#' @section Custom Control:
-#'
-#' In addition to the preset classes, you can set any of the slots to any valid
-#' setting (see examples).  For \code{par.env} that setting is either
-#' \code{NULL} or an environment.  for all other slots, the settings are in
-#' \code{0:2} and mean:
-#' \enumerate{
-#'   \item 0 turn off state tracking
-#'   \item 1 track, but start with state as it was when \code{unitize} was
-#'     called
-#'   \item 2 track and set state to what you would typically find in a clean
-#'     R session, with the exception of \code{random.seed}, which is
-#'     set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
-#'     as that seed is substantially smaller than the R default seed).
-#' }
 #' @section Known Untracked State Elements:
 #'
 #' \itemize{
@@ -125,58 +136,128 @@ NULL
 #'     \code{\link{unitize}}, and also to reset it to the original value in
 #'     \code{post}.
 #' }
-#' @note \code{\link{unitize_dir}} and \code{\link{unitize}} can accept
-#'   character values instead of the classes here; these are just translated to
-#'   the corresponding class defined here.  See the docs for the \code{state}
-#'   parameter for those functions.
-#' @examples
-#' \dontrun{
-#' ## use a custom environment as parent env
-#' my.env <- new.env()
-#' unitize(..., state=unitizerStatePrisitine(par.env=my.env))
-#' ## Basic, but do not track options
-#' unitize(..., state=unitizerStateBasic(options=0))
-#' ## No options tracking, and in `dplyr` package namespace environment
-#' unitize(..., state=unitizerStateNoOpt(par.env="dplyr"))
-#' }
-#' @slot search.path one of \code{0:2}
-#' @slot options one of \code{0:2}
-#' @slot working.directory one of \code{0:2}
-#' @slot random.seed one of \code{0:2}
-#' @slot par.env \code{NULL} to use the special \code{unitizer} parent
+#' @param search.path one of \code{0:2}
+#' @param options one of \code{0:2}
+#' @param working.directory one of \code{0:2}
+#' @param random.seed one of \code{0:2}
+#' @param namespaces one of \code{0:2}
+#' @param par.env \code{NULL} to use the special \code{unitizer} parent
 #'   environment, or an environment to use as the parent environment, or
 #'   the name of a package as a character string to use that packages'
-#'   namespace as the parent environment
+#'   namespace as the parent environment, or a \code{unitizerInPkg} object
+#'   as produced by \code{\link{in_pkg}}
 #'
+#' @aliases state
 #' @rdname unitizerState
 #' @export unitizerState
 #' @export state
 #' @name unitizerState
-#' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}}
+#' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}},
+#'   \code{\link{in_pkg}}
+#' @examples
+#' \dontrun{
+#' ## In this example we use `...` to denote other arguments to `unitize` that
+#' ## you should specify.  All examples here apply equally to `unitize_dir`
+#'
+#' ## Turn off state tracking completely
+#' unitize(..., state="off")
+#' ## Manage as much of state as possible
+#' unitize(..., state="pristine")
+#'
+#' ## Use default state management, but evaluate in a custom environment
+#' my.env <- new.env()
+#' unitize(..., state=my.env)
+#' ## use custom environment, and turn off search.path tracking
+#' ## here we must use the `state` function to construct a state
+#' unitize(..., state=state(par.env=my.env, search.path=0))
+#'
+#' # Specify a namespace to run in by name
+#' unitize(..., state="stats")
+#' unitize(..., state=state(par.env="stats")) # equivalent to previous
+#' unitize(..., state=in_pkg("stats"))        # also equivalent
+#' unitize(..., state=in_pkg())    # run in current project namespace
+#' }
 
-state <- unitizerState <- setClass(
+state <- function(
+  par.env=NULL, search.path=2L, options=0L, working.directory=2L,
+  random.seed=2L, namespaces=0L
+) {
+  if(!identical(c("par.env", .unitizer.global.settings.names), names(formals())))
+    stop(
+      "Logic Error: state element mismatch; this should not happen, contact ",
+      "maintainer"
+    )
+  args <- as.list(environment())
+  if(
+    !is.null(par.env) && !is.chr1(par.env) && !is.environment(par.env) &&
+    !is(par.env, "unitizerInPkg")
+  )
+    stop(
+      "Argument `par.env` must be NULL, character(1L), an environment, or ",
+      "a `unitizerInPkg` object"
+    )
+  if(is.chr1(par.env)) {
+    par.env <- try(getNamespace(par.env))
+    if(inherits(par.env, "try-error"))
+      stop(
+        "Unable to retrieve namespace for `", par.env, "`; make sure the ",
+        "value actually refers to an installed package."
+      )
+    args[["par.env"]] <- par.env
+  }
+  state <- try(do.call(unitizerState, args))
+  if(inherits(state, "try-error"))
+    stop("Unable to create state object; see prior errors.")
+  state
+}
+unitizerInPkg <- setClass(
+  "unitizerInPkg",
+  slots=c(package="character"),
+  validity=function(object) {
+    if(!is.chr1(object@package))
+     return("Slot `package` must be character(1L) and not NA")
+  },
+  prototype=list(package="")
+)
+setMethod("as.character", "unitizerInPkg",
+  function(x, ...) {
+    sprintf(
+      "Run in %s namespace",
+      if(nchar(object@package))
+        sprintf("`%s`", object@package) else "<auto-detect>"
+) } )
+setMethod(
+  "show", "unitizerInPkg",
+  function(object) word_cat(as.character(object), sep="\n")
+)
+setClassUnion(
+  "environmentOrNULLOrUnitizerInPkg",
+  c("environment", "NULL", "unitizerInPkg")
+)
+# unitizerState is an abstract class and is not meant to be isntantiated.  It
+# defines basic structure for unitizerStateRaw and unitizerStateProcessed.
+# `as.state` will process a unitizerStateRaw class into a unitizerStateProcessed`
+# objects.  Note that `unitizerState` does not have a `par.env` slot as that is
+# added by the child classes
+
+unitizerState <- setClass(
   "unitizerState",
   slots=c(
     search.path="integer",
     options="integer",
     working.directory="integer",
     random.seed="integer",
-    namespaces="integer",
-    par.env="environmentOrNULL"
+    namespaces="integer"
   ),
+  contains="VIRTUAL",
   prototype=list(
     search.path=2L, options=0L, working.directory=2L, random.seed=2L,
-    namespaces=0L, par.env=NULL
+    namespaces=0L
   ),
   validity=function(object) {
     # seemingly superflous used to make sure this object is in concordance with
     # the various others that are similar
-    if(
-      !identical(
-        slotNames(object),
-        c(.unitizer.global.settings.names, "par.env")
-      )
-    )
+    if(!identical(slotNames(object), .unitizer.global.settings.names))
       paste0(
         "Invalid state object, slots must be ",
         deparse(.unitizer.global.settings.names, width=500)
@@ -219,33 +300,26 @@ state <- unitizerState <- setClass(
     TRUE
   }
 )
+unitizerStateRaw <- setClass(
+  "unitizerStateRaw",
+  slots=c(par.env="environmentOrNULLOrUnitizerInPkg"),
+  contains="unitizerState",
+  prototype=list(par.env=NULL)
+)
+unitizerStateProcessed <- setClass(
+  "unitizerStateProcessed",
+  slots=c(par.env="environmentOrNULL"),
+  contains="unitizerState",
+  prototype=list(par.env=NULL)
+)
 setMethod("initialize", "unitizerState",
   function(.Object, ...) {
     dots <- list(...)
     dots.base <- dots[!names(dots) %in% "par.env"]
     for(i in names(dots.base))
       if(is.numeric(dots.base[[i]])) dots[[i]] <- as.integer(dots.base[[i]])
-    if("par.env" %in% names(dots)) {
-      par.env <- dots[["par.env"]]
-      if(!is.chr1(par.env) && !is.environment(par.env) && !is.null(par.env))
-        stop(
-          "Argument `par.env` must be character(1L), an environment, or NULL"
-        )
-      if(is.chr1(par.env)) {
-        ns.env <- try(getNamespace(par.env))
-        if(inherits(ns.env, "try-error"))
-          stop(
-            "Argument `par.env` must resolve to a package namespace if supplied ",
-            "as character(1L)"
-          )
-      }
-      dots[["par.env"]] <- par.env
-    }
     do.call(callNextMethod, c(.Object, dots))
 } )
-#' @export unitizerStatePristine
-#' @rdname unitizerState
-
 unitizerStatePristine <- setClass(
   "unitizerStatePristine", contains="unitizerState",
   prototype=list(
@@ -253,9 +327,6 @@ unitizerStatePristine <- setClass(
     namespaces=2L, par.env=NULL
   )
 )
-#' @export unitizerStateSafe
-#' @rdname unitizerState
-
 unitizerStateSafe <- setClass(
   "unitizerStateSafe", contains="unitizerState",
   prototype=list(
@@ -263,9 +334,6 @@ unitizerStateSafe <- setClass(
     namespaces=0L, par.env=NULL
   )
 )
-#' @export unitizerStateBasic
-#' @rdname unitizerState
-
 unitizerStateBasic <- setClass(
   "unitizerStateBasic", contains="unitizerState",
   prototype=list(
@@ -273,9 +341,6 @@ unitizerStateBasic <- setClass(
     par.env=NULL
   )
 )
-#' @export unitizerStateOff
-#' @rdname unitizerState
-
 unitizerStateOff <- setClass(
   "unitizerStateOff", contains="unitizerState",
   prototype=list(
@@ -283,48 +348,73 @@ unitizerStateOff <- setClass(
     namespaces=0L, par.env=.GlobalEnv
   )
 )
-#' @export unitizerInPkg
-#' @rdname unitizerState
-
-unitizerInPkg <- setClass(
-  "unitizerInPkg",
-  slots=c(package="character"),
-  validity=function(object) {
-    if(!is.chr1(object@package))
-     return("Slot `package` must be character(1L) and not NA")
-  },
-  prototype=list(package="")
-)
-setMethod("show", "unitizerInPkg",
-  function(object) {
-    word_cat(
-      sprintf(
-        "Run in %s namespace",
-       if(nchar(object@package)) object@package else "<auto-detect>"
-      ), sep="\n"
-    )
-  }
-)
-#' Tell \code{unitizer} to Run in Package Namespace
+#' Helper Function To Tell \code{unitizer} to Run in Package Namespace
 #'
-#' Leave parameter unspecified to have \code{unitizer} attempt to detect the
-#' current package based on the the test file path.  \code{unitizer} will detect
-#' the package based on directory structure, and should be able to do so
-#' provided your test files are in a subdirectory of an R package in standard
-#' R package directory structure.  This function should be robust to running
-#' during testing at the command line as well as with \code{R CMD check}.
+#' Use this function as the value for the \code{state} argument to
+#' \code{unitize} to tell \code{unitizer} to use a package namespace as
+#' the parent evaluation environment.
+#'
+#' If you use it without specifying the \code{package} parameter \code{unitizer}
+#' will attempt to detect the current package based on the the test file path.  #' \code{unitizer} will detect the package based on directory structure, and
+#' should be able to do so provided your test files are in a subdirectory of an
+#' R package in standard R package directory structure.  This function should be
+#' robust to running during testing at the command line as well as with
+#' \code{R CMD check}.
 #'
 #' @export
 #' @param package character(1L) or NULL; if character will take the value to
 #'   be the name of the package to use the namespace of as the parent
 #'   environment
 #' @return a \code{unitizerInPkg} S4 object
+#' @seealso \code{\link{unitize}}, \code{\link{unitizeState}}
+#' @examples
+#' \dontrun{
+#' unitize("mytests.R", state=in_pkg()) # assuming mytests.R is part of a pkg
+#' unitize("mytests.R", state=in_pkge("mypkg"))
+#' }
 
 in_pkg <- function(package=NULL) {
   if(!is.null(package) && !is.chr1(package))
     stop("Argument `package` must be character(1L) and not NA, or NULL")
   unitizerInPkg(package=if(is.null(package)) "" else package)
 }
+in_pkg_to_env <- function(inPkg, test.files) {
+  stopifnot(
+    is(inPkg, "unitizerInPkg"),
+    is.character(test.files) || is.null(test.files)
+  )
+  pkg <- if(nchar(inPkg@package)) {
+    inPkg@package
+  } else {
+    pkg.tmp <- get_package_dir(test.files)
+    if(!length(pkg.tmp)){
+      stop(
+        word_wrap(collapse="\n",
+          cc(
+            "Unable to detect package to use namespace of as parent ",
+            "environment; see `?unitizerState` for how to specify ",
+            "a package namespace explicitly as a parent environment."
+      ) ) )
+    }
+    pkg.name <- try(get_package_name(pkg.tmp))
+    if(inherits(pkg.name, "try-error"))
+      stop("Unable to extract package name from DESCRIPTION.")
+    pkg.name
+  }
+  pkg.env <- try(getNamespace(pkg))
+  if(inherits(pkg.env, "try-error"))
+    stop(
+      word_wrap(collapse="\n",
+        cc(
+          "Unable to load \"", pkg, "\" namespace to use as parent ",
+          "environment; see `?unitizerState` for instructions on how to ",
+          "specify a package namespace as a parent environment for tests."
+    ) ) )
+  pkg.env
+}
+# This method is a bit odd because it has logic for dealin with slots that are
+# not actually defined in the class but are in the child classes that are
+# expected to kick of the method
 #' @rdname unitizer_s4method_doc
 
 setMethod(
@@ -332,14 +422,22 @@ setMethod(
   function(object) {
     sn <- slotNames(object)
     sv <- sapply(sn, slot, object=object, simplify=FALSE)
-    par.env.null <- is.null(sv[["par.env"]])
-    sv[["par.env"]] <- if(par.env.null) "<auto>" else
-      env_name(sv[["par.env"]])
+    sv.env <- sv$par.env
+    sv.extra <- ""
+    sv[["par.env"]] <- if(is.null(sv.env)) {
+      sv.extra <-  "<auto>: use special unitizer environment as 'par.env'"
+      "<auto>"
+    } else if (is(sv.env, "unitizerInPkg")) {
+      as.character(sv.env)
+    } else if (is.environment(sv.env)) {
+      env_name(sv.env)
+    } else
+      stop("Logic Error: unexpected `par.env` slot type; contact maintainer")
     print(data.frame(Settings=sn, Values=unlist(sv)))
     word_cat(
       "-----", "0: off", "1: track starting with initial state",
       "2: track starting with clean state",
-      if(par.env.null) "<auto>: use special unitizer environment as 'par.env'",
+      if(nchar(sv.extra)) sv.extra,
       "See `?unitizerState` for more details.",
       sep="\n"
     )
@@ -353,7 +451,7 @@ setMethod(
 
 as.state <- function(x, test.files=NULL) {
   if(
-    !is(x, "unitizerState") &&
+    !is(x, "unitizerStateRaw") &&
     !(is.chr1(x) && x %in% .unitizer.valid.state.abbr) &&
     !is.environment(x) &&
     !is(x, "unitizerInPkg")
@@ -363,7 +461,7 @@ as.state <- function(x, test.files=NULL) {
         cc(
           "Argument must be character(1L) %in% ",
           deparse(.unitizer.valid.state.abbr), ", an environment, or must ",
-          "inherit from S4 classes `unitizerState` or `unitizerInPkg` in ",
+          "inherit from S4 classes `unitizerStateRaw` or `unitizerInPkg` in ",
           "order to be interpreted as a unitizer state object."
     ) ) )
   }
@@ -378,39 +476,19 @@ as.state <- function(x, test.files=NULL) {
       basic=new("unitizerStateBasic"), off=new("unitizerStateOff"),
       safe=new("unitizerStateSafe")
     )
-  } else if(is(x, "unitizerState")) {
-    x
-  } else if(is(x, "unitizerInPkg")) {
-    pkg <- if(nchar(x@package)) {
-      x@package
-    } else {
-      pkg.tmp <- get_package_dir(test.files)
-      if(!length(pkg.tmp)){
-        stop(
-          word_wrap(collapse="\n",
-            cc(
-              "Unable to detect package to use namespace of as parent ",
-              "environment; see `?unitizerState` for how to specify ",
-              "a package namespace explicitly as a parent environment."
-        ) ) )
-      }
-      pkg.name <- try(get_package_name(pkg.tmp))
-      if(inherits(pkg.name, "try-error"))
-        stop("Unable to extract package name from DESCRIPTION.")
-      pkg.name
+  } else if(is(x, "unitizerStateRaw")) {
+     par.env <- if(is.character(x@par.env)) {
+       try(getNamespace(x@par.env))
+     } else if(is(x, "unitizerInPkg")) {
+       try(in_pkg_to_env(x@par.env, test.files))
     }
-    pkg.env <- try(getNamespace(pkg))
-    if(inherits(pkg.env, "try-error"))
-      stop(
-        word_wrap(collapse="\n",
-          cc(
-            "Unable to load \"", pkg, "\" namespace to use as parent ",
-            "environment; see `?unitizerState` for instructions on how to ",
-            "specify a package namespace as a parent environment for tests."
-      ) ) )
-    state(par.env=pkg.env)
-  } else if(is.environment(x)) {
-    state(par.env=x)
+    if(inherits(par.env, "try-error"))
+      stop("Unable to convert `par.env` value to a namespace environment")
+    x.fin <- unitizerState(par.env)
+    for(i in .unitizer.global.settings.names) slot(x.fin, i) <- slot(x, i)
+    x.fin
+  } else if(is(x, "unitizerInPkg") || is.environment(x)) {
+    unitizerState(par.env=in_pkg_to_env(x, test.files))
   }
   if(x@options > x@namespaces) {
     stop(
