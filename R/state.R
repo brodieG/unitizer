@@ -11,9 +11,15 @@ NULL
 #' evaluation.  \code{unitizer} attempts to make tests as reproducible as
 #' possible by controlling session state so that it is the same every time a
 #' test is run.  You can control how \code{unitizer} manages state via the
-#' state argument to \code{unitize}.
+#' state argument to \code{unitize}.  This help file discusses state management
+#' with \code{unitizer}, and also documents two functions that, in conjunction
+#' with \code{\link{unitize}} or \code{link{unitize_dir}} allow you to control
+#' state management.
 #'
 #' @section Overview:
+#'
+#' \bold{Note}: most of what is written in this page about \code{unitize}
+#' applies equally to \code{unitize_dir}
 #'
 #' \code{unitizer} provides functionality to insulate test code from variability
 #' in the following:
@@ -48,6 +54,13 @@ NULL
 #' State is reset after running each test file when running multiple test
 #' files with \code{unitize_dir}, which means state changes in one test file
 #' will not affect the next one.
+#'
+#' You can modify what aspects of state are managed by using the \code{state}
+#' parameter to \code{\link{unitize}}.  If you are satisfied with basic default
+#' settings you can just use the presets described in the next section.  If you
+#' want more control you can use the return values of the \code{state} and
+#' \code{in_pkg} functions as the values for the \code{state} parameter for
+#' \code{unitize}.
 #'
 #' @section State Presets:
 #'
@@ -89,10 +102,10 @@ NULL
 #' to what the various parameter values for \code{par.env} do:
 #' \itemize{
 #'   \item For \code{par.env}: \code{NULL}, an environment, the name of an
-#'     environment, or a \code{unitizerInPkg} object as produced by
+#'     package, or a \code{unitizerInPkg} object as produced by
 #'     \code{\link{in_pkg}}.
 #'   \item For all other slots, the settings are in \code{0:2} and mean:
-#'     \enumerate{
+#'     \itemize{
 #'       \item 0 turn off state tracking
 #'       \item 1 track, but start with state as it was when \code{unitize} was
 #'         called
@@ -146,17 +159,26 @@ NULL
 #'   the name of a package as a character string to use that packages'
 #'   namespace as the parent environment, or a \code{unitizerInPkg} object
 #'   as produced by \code{\link{in_pkg}}
+#' @param package character(1L) or NULL; if NULL will tell \code{unitize}
+#'   to attempt to identify if the test file is inside an R package folder
+#'   structure and if so run tests in that package's namespace.  This should
+#'   work with R CMD check tests as well as in normal usage.  If character will
+#'   take the value to be the name of the package to use the namespace of as
+#'   the parent environment.  Note that \code{in_pkg} does not retrieve the
+#'   environment, it just tells \code{unitize} to do so.
+#' @return for \code{state} a \code{unitizerStateRaw} object, for \code{in_pkg}
+#'   a \code{unitizerInPkg} object, both of which are suitable as values for
+#'   the \code{state} paramter for \code{\link{unitize}}.
 #'
-#' @aliases state
+#' @aliases state, in_pkg
 #' @rdname unitizerState
-#' @export unitizerState
 #' @export state
 #' @name unitizerState
 #' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}},
 #'   \code{\link{in_pkg}}
 #' @examples
 #' \dontrun{
-#' ## In this example we use `...` to denote other arguments to `unitize` that
+#' ## In this examples we use `...` to denote other arguments to `unitize` that
 #' ## you should specify.  All examples here apply equally to `unitize_dir`
 #'
 #' ## Turn off state tracking completely
@@ -168,14 +190,17 @@ NULL
 #' my.env <- new.env()
 #' unitize(..., state=my.env)
 #' ## use custom environment, and turn off search.path tracking
-#' ## here we must use the `state` function to construct a state
+#' ## here we must use the `state` function to construct a state object
 #' unitize(..., state=state(par.env=my.env, search.path=0))
 #'
-#' # Specify a namespace to run in by name
+#' ## Specify a namespace to run in by name
 #' unitize(..., state="stats")
 #' unitize(..., state=state(par.env="stats")) # equivalent to previous
-#' unitize(..., state=in_pkg("stats"))        # also equivalent
-#' unitize(..., state=in_pkg())    # run in current project namespace
+#'
+#' ## Let `unitizer` figure out the namespace from the test file location;
+#' ## assumes test file is inside package folder structure
+#' unitize("mytests.R", state=in_pkg()) # assuming mytests.R is part of a pkg
+#' unitize("mytests.R", state=in_pkg("mypkg")) # also works
 #' }
 
 state <- function(
@@ -355,30 +380,8 @@ unitizerStateOff <- setClass(
     namespaces=0L, par.env=.GlobalEnv
   )
 )
-#' Helper Function To Tell \code{unitizer} to Run in Package Namespace
-#'
-#' Use this function as the value for the \code{state} argument to
-#' \code{unitize} to tell \code{unitizer} to use a package namespace as
-#' the parent evaluation environment.
-#'
-#' If you use it without specifying the \code{package} parameter \code{unitizer}
-#' will attempt to detect the current package based on the the test file path.  #' \code{unitizer} will detect the package based on directory structure, and
-#' should be able to do so provided your test files are in a subdirectory of an
-#' R package in standard R package directory structure.  This function should be
-#' robust to running during testing at the command line as well as with
-#' \code{R CMD check}.
-#'
+#' @rdname unitizerState
 #' @export
-#' @param package character(1L) or NULL; if character will take the value to
-#'   be the name of the package to use the namespace of as the parent
-#'   environment
-#' @return a \code{unitizerInPkg} S4 object
-#' @seealso \code{\link{unitize}}, \code{\link{unitizeState}}
-#' @examples
-#' \dontrun{
-#' unitize("mytests.R", state=in_pkg()) # assuming mytests.R is part of a pkg
-#' unitize("mytests.R", state=in_pkge("mypkg"))
-#' }
 
 in_pkg <- function(package=NULL) {
   if(!is.null(package) && !is.chr1(package))
