@@ -23,15 +23,14 @@ txt3 <- unitizer:::capture_output(
 )
 
 test_that("in_pkg", {
-
   expect_equal_to_reference(
-    txt1, file.path("helper", "refobjs", "unitize_inpkg1.rds")
+    txt1, file.path("helper", "refobjs", "inpkg_txt1.rds")
   )
   expect_equal_to_reference(
-    txt2, file.path("helper", "refobjs", "unitize_inpkg2.rds")
+    txt2, file.path("helper", "refobjs", "inpkg_txt2.rds")
   )
   expect_equal_to_reference(
-    txt3, file.path("helper", "refobjs", "unitize_inpkg3.rds")
+    txt3, file.path("helper", "refobjs", "inpkg_txt3.rds")
   )
 })
 
