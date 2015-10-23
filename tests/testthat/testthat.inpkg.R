@@ -12,16 +12,19 @@ test.dir <- file.path(.unitizer.fastlm, "tests", "extra")
 old.width <- options(width=80L)
 
 unitizer:::read_line_set_vals(c("Q"))
-txt1 <- unitizer:::capture_output(unitize(.unitizer.test.file))
-
+txt1 <- unitizer:::capture_output(
+  unitize(.unitizer.test.file, interactive.mode=TRUE)
+)
 unitizer:::read_line_set_vals(c("Q"))
-txt2 <- unitizer:::capture_output(unitize(.unitizer.test.file, state=in_pkg()))
-
+txt2 <- unitizer:::capture_output(
+  unitize(.unitizer.test.file, state=in_pkg(), interactive.mode=TRUE)
+)
 unitizer:::read_line_set_vals(c("Q"))
 txt3 <- unitizer:::capture_output(
-  try(unitize(.unitizer.test.file, state=in_pkg("ASDFASDFA")))
-)
-
+  try(
+    unitize(
+      .unitizer.test.file, state=in_pkg("ASDFASDFA"), interactive.mode=TRUE
+) ) )
 test_that("in_pkg", {
   expect_equal_to_reference(
     txt1, file.path("helper", "refobjs", "inpkg_txt1.rds")
