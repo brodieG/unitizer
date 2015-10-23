@@ -33,14 +33,6 @@
 #' to allow the user to "permanently" set them to their prefered modes by
 #' setting options in their \code{.Rprofile} file.
 #'
-#' @section State:
-#'
-#' You can modify all aspects of state control with the \code{state} parameter.
-#' This includes evaluating your tests in a package namespace like
-#' \code{testthat::test_check} does by passing an environment.  See the
-#' \code{\link{unitizerState}} documentation and
-#' \code{vignette("unitizer_reproducible_tests")} vignette for more details.
-#'
 #' @export
 #' @aliases unitize review unitize_dir
 #' @param test.file path to the file containing tests, if supplied path does not
@@ -67,9 +59,11 @@
 #' }
 #' @param state character(1L) one of
 #'   \code{c("prisitine", "default", "basic", "off", "safe")}, an environment,
-#'   or an S4 object inheriting from \code{unitizerState}; modifies how
-#'   \code{unitizer} manages aspects of session state that could affect test
-#'   evaluation (see "State" section in details).
+#'   or a state object produced by \code{\link{state}} or \code{\link{in_pkg}};
+#'   modifies how \code{unitizer} manages aspects of session state that could
+#'   affect test evaluation, including the parent evaluation environment.  For
+#'   more details see \code{\link{unitizerState}} documentation and
+#'   \code{vignette("unitizer_reproducible_tests")}
 #' @param pre NULL, or a character vector pointing to files and/or directories.
 #'   If a character vector, then any files referenced therein will be sourced,
 #'   and any directories referenced therein will be scanned non-recursively for

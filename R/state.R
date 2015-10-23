@@ -13,7 +13,7 @@ NULL
 #' test is run.  You can control how \code{unitizer} manages state via the
 #' state argument to \code{unitize}.  This help file discusses state management
 #' with \code{unitizer}, and also documents two functions that, in conjunction
-#' with \code{\link{unitize}} or \code{link{unitize_dir}} allow you to control
+#' with \code{\link{unitize}} or \code{\link{unitize_dir}} allow you to control
 #' state management.
 #'
 #' @section Overview:
@@ -29,8 +29,7 @@ NULL
 #'      evaluated in environments that are children of a special environment
 #'      that does not inherit from \code{.GlobalEnv}.  This prevents objects
 #'      that are lying around in your workspace from interfering with your
-#'      tests.  This also allows you to run your tests in a namespace as with
-#'      \code{testthat::test_check}.
+#'      tests.
 #'   \item Random Seed (enabled by default): is set to a specific value at the
 #'     beginning of each test file so that tests using random values get the
 #'     same value at every test iteration. If you change the order of  your
@@ -48,8 +47,8 @@ NULL
 #'   \item Options (\bold{disabled} by default): same as search path
 #'   \item Namespaces (\bold{disabled} by default): same as search path; this
 #'     option is only made available to support options since many namespaces
-#'     set options \code{onLoad}, and as such it is necessary to unload and load
-#'     them to ensure default options are set
+#'     set options \code{onLoad}, and as such it is necessary to unload and
+#'     re-load them to ensure default options are set.
 #' }
 #' State is reset after running each test file when running multiple test
 #' files with \code{unitize_dir}, which means state changes in one test file
@@ -99,11 +98,21 @@ NULL
 #' examples for details.
 #'
 #' If you do chose to modify specific aspects of state control here is a guide
-#' to what the various parameter values for \code{par.env} do:
+#' to what the various parameter values for \code{state} do:
 #' \itemize{
-#'   \item For \code{par.env}: \code{NULL}, an environment, the name of an
-#'     package, or a \code{unitizerInPkg} object as produced by
-#'     \code{\link{in_pkg}}.
+#'   \item For \code{par.env}: any of the following:
+#'     \itemize{
+#'       \item: \code{NULL} to use the special \code{unitizer} parent
+#'         environment as the parent environment; this environment has for
+#'         parent the parent of \code{.GlobalEnv}, so any tests evaluated
+#'         therein will not be affected by objects in \code{.GlobalEnv}
+#'         see (\code{vignette("unitizer_reproducible_state")}).
+#'       \item: an environment to use as the parent evaluation environment
+#'       \item: the name of a package to use that package's namespace
+#'         environment as the parent environment
+#'       \item: the return value of \code{in_pkg}; used primarily to autodetect
+#'         what package namespace to use based on package directory structure
+#'     }
 #'   \item For all other slots, the settings are in \code{0:2} and mean:
 #'     \itemize{
 #'       \item 0 turn off state tracking
@@ -174,8 +183,7 @@ NULL
 #' @rdname unitizerState
 #' @export state
 #' @name unitizerState
-#' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}},
-#'   \code{\link{in_pkg}}
+#' @seealso \code{\link{unitize}}, \code{\link{unitizer.opts}}
 #' @examples
 #' \dontrun{
 #' ## In this examples we use `...` to denote other arguments to `unitize` that
