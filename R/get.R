@@ -438,19 +438,19 @@ is_rcmdcheck_dir <- function(name, has.tests=FALSE) {
   dir <- basename(name)
   if(grepl(".*\\.Rcheck", dir)) {
     pkg.name <- sub("(.*)\\.Rcheck", "\\1", dir)
-    if(identical(pkg.name, dir)) 
+    if(identical(pkg.name, dir))
       stop(
         "Logic error; failed extracting package name from Rcheck dir; ",
         "contact maintianer"
       )
     if(isTRUE(is.pd <- is_package_dir(file.path(dir, pkg.name), has.tests))) {
       return(TRUE)
-    } else return(pd)
+    } else return(is.pd)
   } else return("not a .Rcheck directory")
 }
 # Extracts the Source Directory from an R CMD check directory
 
-get_rcmdcheck_pkg_dir <- function(name, has.tests=FALSE) {
+get_rcmdcheck_dir <- function(name, has.tests=FALSE) {
   stopifnot(is.chr1(name), is.TF(has.tests))
   if(isTRUE(chk.dir <- is_rcmdcheck_dir(name, has.tests))) {
     pkg.name <- sub("(.*)\\.Rcheck", "\\1", name)
@@ -458,7 +458,7 @@ get_rcmdcheck_pkg_dir <- function(name, has.tests=FALSE) {
   } else stop("Logic Error: not an R CMD check dir")
 }
 # Pulls Out Package Name from DESCRIPTION File
-# 
+#
 # Dir must be a package directory, check with is_package_dir first
 
 get_package_name <- function(pkg.dir) {

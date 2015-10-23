@@ -252,13 +252,15 @@ unitizerInPkg <- setClass(
   },
   prototype=list(package="")
 )
+#' @rdname unitizer_s4method_doc
 setMethod("as.character", "unitizerInPkg",
   function(x, ...) {
     sprintf(
       "<in: %s>",
-      if(nchar(object@package))
-        sprintf("package:%s", object@package) else "auto-detect-pkg"
+      if(nchar(x@package))
+        sprintf("package:%s", x@package) else "auto-detect-pkg"
 ) } )
+#' @rdname unitizer_s4method_doc
 setMethod(
   "show", "unitizerInPkg",
   function(object) word_cat(as.character(object), sep="\n")
