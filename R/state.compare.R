@@ -146,6 +146,16 @@ setMethod(
       "different"
     )
 )
+# To force recognizing the S4 method when called from inside another package
+# which happens when we're doing `in_pkg`; will only work if the first argument
+# is `unitizerDummy`, which should be the most common use case
+
+#' @export
+
+all.equal.unitizerDummy <- function(target, current, ...) {
+  all.equal(target, current, ...)
+}
+
 #' Display State Differences Between New and Reference Tests
 #'
 #' Intended to be called primarily from \code{unitizer} prompt where it can
