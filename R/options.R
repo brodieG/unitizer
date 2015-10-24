@@ -259,7 +259,7 @@ options_update <- function(tar.opts) {
 #' @rdname options_extra
 #' @keywords internal
 
-validate_options <- function(opts.to.validate) {
+validate_options <- function(opts.to.validate, test.files=NULL) {
   stopifnot(
     is.list(opts.to.validate),
     all(grep("^unitizer\\.", names(opts.to.validate)))
@@ -338,7 +338,7 @@ validate_options <- function(opts.to.validate) {
       )
         stop("Option `unitizer.namespace.keep.base` must be character and not NA")
 
-      if(!is(is.valid_state(unitizer.state), "unitizerState"))
+      if(!is(try(as.state(unitizer.state, test.files)), "unitizerState"))
         stop("Option `unitizer.state` is invalid; see prior errors")
       if(!is.list(unitizer.opts.init))
         stop("Option `unitizer.opts.init` must be a list")

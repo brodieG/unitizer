@@ -75,39 +75,6 @@ is.int.1L <- function(x)
 
 is.default_unitizer_id <- function(x) is.chr1plain(x) && !is.na(x)
 
-# Valid State Settings
-#
-# @keywords internal
-# @param x objet to test
-# @return a \code{unitizerState} object
-
-is.valid_state <- function(x) {
-  if(
-    !is(x, "unitizerState") &&
-    !(is.chr1(x) && x %in% .unitizer.valid.state.abbr)
-  ) {
-    word_msg(
-      "Argument `x` must be character(1L) %in% ",
-      deparse(.unitizer.valid.state.abbr), " or must inherit from S4 class ",
-      " `unitizerState`", sep=""
-    )
-    return(FALSE)
-  }
-  if(is.character(x)) x <- switch(
-    x, pristine=new("unitizerStatePristine"), default=new("unitizerStateDefault"),
-    basic=new("unitizerStateBasic"), off=new("unitizerStateOff"),
-    safe=new("unitizerStateSafe")
-  )
-  if(x@options > x@search.path) {
-    word_msg(
-      "Options state tracking (", x@options, ") must be less than search path ",
-      "state tracking (", x@search.path, ").", sep=""
-    )
-    return(FALSE)
-  }
-  return(x)
-}
-
 is.valid_capt_setting <- function(x) {
   if(
     !is.logical(x) || length(x) != 2L || any(is.na(x)) ||

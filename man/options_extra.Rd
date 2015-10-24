@@ -13,7 +13,7 @@ options_zero(base = merge_lists(getOption("unitizer.opts.init.base"),
 
 options_update(tar.opts)
 
-validate_options(opts.to.validate)
+validate_options(opts.to.validate, test.files = NULL)
 }
 \description{
 Set Options to Initial Zero State
