@@ -443,7 +443,7 @@ is_rcmdcheck_dir <- function(name, has.tests=FALSE) {
         "Logic error; failed extracting package name from Rcheck dir; ",
         "contact maintianer"
       )
-    if(isTRUE(is.pd <- is_package_dir(file.path(dir, pkg.name), has.tests))) {
+    if(isTRUE(is.pd <- is_package_dir(file.path(name, pkg.name), has.tests))) {
       return(TRUE)
     } else return(is.pd)
   } else return("not a .Rcheck directory")
@@ -453,7 +453,7 @@ is_rcmdcheck_dir <- function(name, has.tests=FALSE) {
 get_rcmdcheck_dir <- function(name, has.tests=FALSE) {
   stopifnot(is.chr1(name), is.TF(has.tests))
   if(isTRUE(chk.dir <- is_rcmdcheck_dir(name, has.tests))) {
-    pkg.name <- sub("(.*)\\.Rcheck", "\\1", name)
+    pkg.name <- sub("(.*)\\.Rcheck", "\\1", basename(name))
     return(file.path(name, pkg.name))
   } else stop("Logic Error: not an R CMD check dir")
 }
