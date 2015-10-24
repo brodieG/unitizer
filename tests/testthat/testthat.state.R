@@ -21,6 +21,28 @@ test_that("State Show", {
     capture.output(show(unitizer:::unitizerStatePristine())),
     c("           Settings Values", "1           par.env <auto>", "2       search.path      2", "3           options      2", "4 working.directory      2", "5       random.seed      2", "6        namespaces      2", "-----", "0: off", "1: track starting with initial state", "2: track starting with clean state", "<auto>: use special unitizer environment as 'par.env'", "See `?unitizerState` for more details."))
 })
+test_that("all.equal.unitizerDummy", {
+  dummy <- new("unitizerDummy")
+  blah <- "hello"
+  ref.txt <- "`.REF` value was not recorded, but `.NEW` value was; they are likely different"
+  expect_equal(all.equal(dummy, blah), ref.txt)
+  expect_true(all.equal(dummy, dummy))
+  expect_equal(
+    all.equal(blah, dummy),
+    "`.NEW` value was not recorded, but `.REF` value was; they are likely different"
+  )
+  # testing S4 / S3 methods, first works, second doesn't since we can't
+  # have an S3 generic with dispatch on 2nd arg
+  expect_equal(
+    evalq(all.equal(dummy, blah), getNamespace("stats")), ref.txt
+  )
+  expect_equal(
+    evalq(all.equal(blah, dummy), getNamespace("stats")),
+    c(
+      "Modes: character, S4", "Attributes: < target is NULL, current is list >",
+      "target is character, current is unitizerDummy"
+  ) )
+})
 test_that("All Equal States", {
   state.A <- new(
     "unitizerGlobalState",
