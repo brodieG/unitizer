@@ -45,6 +45,9 @@ Package in Depends field not imported from: ‘methods’
 * checking Rd contents ... OK
 * checking for unstated dependencies in examples ... OK
 * checking examples ... NONE
+* checking for unstated dependencies in ‘tests’ ... OK
+* checking tests ... OK
+  Running ‘tests.R’
 * checking PDF version of manual ... OK
 * DONE
 Status: 1 NOTE
