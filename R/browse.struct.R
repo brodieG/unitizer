@@ -65,10 +65,11 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
       # Add sub-sections
 
       rem.count.all <- 0L
-
-      for(i in sort(unique(x@section.parent))) {          # Loop through parent sections
+      # Loop through parent sections
+      for(i in sort(unique(x@section.parent))) {
         sect.par <- which(x@section.parent == i)
-        sect.map <- x@section.map %in% sect.par           # all items in parent section
+        # all items in parent section
+        sect.map <- x@section.map %in% sect.par
         sect.map.ref <- which(
           is.na(x@items.ref.map) & !ignored(x@items.ref) &
           x@section.ref.map == i
@@ -87,7 +88,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         # Note: anything querying reference items has to go through items.new.map
         # since order isn't same.
 
-        browse.sect <- browse.sect + new(                            # Failed tests
+        # Failed tests
+
+        browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionFailed",
           items.new=x@items.new[x@tests.fail & sect.map],
           show.fail=x@tests.errorDetails[x@tests.fail & sect.map],
@@ -95,14 +98,18 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           new.conditions=x@tests.conditions.new[x@tests.fail & sect.map],
           tests.result=x@tests.result[x@tests.fail & sect.map, , drop=FALSE]
         )
-        browse.sect <- browse.sect + new(                            # New tests
+        # New tests
+
+        browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionNew",
           show.msg=TRUE, show.out=TRUE,
           items.new=x@items.new[x@tests.new & sect.map],
           new.conditions=x@tests.conditions.new[x@tests.new & sect.map],
           tests.result=x@tests.result[x@tests.new & sect.map, , drop=FALSE]
         )
-        browse.sect <- browse.sect + new(                            # Corrupted tests
+        # Corrupted tests
+
+        browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionCorrupted",
           items.new=x@items.new[x@tests.error & sect.map],
           show.fail=x@tests.errorDetails[x@tests.error & sect.map],
@@ -110,20 +117,27 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           new.conditions=x@tests.conditions.new[x@tests.error & sect.map],
           tests.result=x@tests.result[x@tests.error & sect.map, , drop=FALSE]
         )
-        browse.sect <- browse.sect + new(                            # Passed tests
+        # Passed tests
+
+        browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionPassed",
           items.new=x@items.new[x@tests.status == "Pass" & sect.map],
+          items.ref=x@items.ref[
+            x@items.new.map[x@tests.status == "Pass"  & sect.map]
+          ],
           show.fail=FALSE,
           new.conditions=rep(F, sum(x@tests.status == "Pass" & sect.map)),
-          tests.result=x@tests.result[x@tests.status == "Pass" & sect.map, , drop=FALSE]
+          tests.result=x@tests.result[
+            x@tests.status == "Pass" & sect.map, , drop=FALSE
+          ]
         )
         # Removed tests are a little funky b/c they are not part of the main
-        # data array
+        # data array; by definition can't have new conditions on removed test
 
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionRemoved",
           items.ref=x@items.ref[sect.map.ref],
-          new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
+          new.conditions=rep(FALSE, rem.item.count),
           tests.result=tests_result_mat(rem.item.count)
         )
         # Add entire section
