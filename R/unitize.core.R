@@ -675,10 +675,14 @@ unitize_browse <- function(
               paste0(
                 "unitizer for: ", getName(unitizers[[i]]), collapse=""
           ) ) )
-          if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])  # summaries don't really work well in review mode if the tests are not evaluated
+          # summaries don't really work well in review mode if the tests are 
+          # not evaluated
+          if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])  
+          # annoyingly we need to force update here as well as for 
+          # the unreviewed unitizers
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]],
-            force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers
+            force.update=force.update,  
           )
           summaries@updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer
