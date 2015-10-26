@@ -350,7 +350,7 @@ unitize_core <- function(
         history=history,
         global=global
       ),
-      unitizerInteractiveFail=function(e) interative.fail <<- TRUE
+      unitizerInteractiveFail=function(e) interactive.fail <<- TRUE
     )
     if(interactive.fail) { # blergh, cop out
       on.exit(NULL)
