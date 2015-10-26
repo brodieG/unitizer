@@ -128,7 +128,13 @@ history_capt <- function(hist.file=NULL) {
   # set up local history
 
   if(is.null(hist.file)) return(list(con=NULL, file=NULL))
-
+  if(!interactive()) {
+    warning(
+      "Unable to capture history in non-interactive mode.",
+      immediate.=TRUE
+    )
+    return(list(con=NULL, file=NULL))
+  }
   hist.try <- try(savehistory(), silent=TRUE)
   if(inherits(hist.try, "try-error"))
     warning(conditionMessage(attr(hist.try, "condition")))
@@ -165,6 +171,7 @@ history_release <- function(hist.obj) {
   }
 }
 history_write <- function(hist.con, data) {
+  if(is.null(hist.con)) return(invisible(NULL)) # probably in non-interactive
   stopifnot(is.open_con(hist.con), is.character(data))
   if(is.open_con(hist.con)) {
     cat(data, file=hist.con, sep="\n")
