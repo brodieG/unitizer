@@ -339,15 +339,24 @@ unitize_core <- function(
     # Gather user input, and store tests as required.  Any unitizers that
     # the user marked for re-evaluation will be re-evaluated in this loop
 
-    unitizers[valid] <- unitize_browse(
-      unitizers=unitizers[valid],
-      mode=mode,
-      interactive.mode=interactive.mode,
-      force.update=force.update,
-      auto.accept=auto.accept,
-      history=history,
-      global=global
+    interactive.fail <- FALSE
+    withRestarts(
+      unitizers[valid] <- unitize_browse(
+        unitizers=unitizers[valid],
+        mode=mode,
+        interactive.mode=interactive.mode,
+        force.update=force.update,
+        auto.accept=auto.accept,
+        history=history,
+        global=global
+      ),
+      unitizerInteractiveFail=function(e) interative.fail <<- TRUE
     )
+    if(interactive.fail) { # blergh, cop out
+      on.exit(NULL)
+      reset_and_unshim(global)
+      stop("Cannot proceed in non-interactive mode.")
+    }
     # Track whether updated, valid, etc.
 
     updated.new <-
@@ -724,16 +733,15 @@ unitize_browse <- function(
               sep=""
             )
           }
-          stop(
-            word_wrap(collapse="\n",
-              cc(
-                "Newly evaluated tests do not match unitizer (",
-                paste(
-                  names(summaries@totals), summaries@totals, sep=": ",
-                  collapse=", "
-                ),
-                "); see above for more info, or run in interactive mode"
-          ) ) )
+          word_msg(sep="\n",
+            "Newly evaluated tests do not match unitizer (",
+            paste(
+              names(summaries@totals), summaries@totals, sep=": ",
+              collapse=", "
+            ),
+            "); see above for more info, or run in interactive mode."
+          ) 
+          invokeRestart("unitizerInteractiveFail")
         }
         # - Simple Outcomes / no-review -----------------------------------------
 
@@ -788,15 +796,20 @@ check_call_stack <- function() {
     )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
-  if("unitizerQuitExit" %in% restart.names)
+  reserved.restarts <- c("unitizerQuitExit", "unitizerInteractiveFail")
+  if(any(res.err <- reserved.restarts %in% restart.names)) {
+    many <- sum(res.err) > 1L
     stop(
       word_wrap(collapse="\n",
         cc(
-          "`unitizerQuitExit` restart is already defined; unitizer relies ",
-          "on this restart to restore state prior to exit, so unitizer will ",
-          "not run if it is defined outside of `unitize`.  If you did not ",
-          "define this restart contact maintainer."
-    ) ) )
+          deparse(reserved.restarts[res.err], width.cutoff=500L),
+          "restart", if(many) "s are" else "  is", " already defined; ",
+          "unitizer relies on ", if(many) "these restarts" else "this restart",
+          "to manage evaluation so unitizer will not run if ",
+          if(many) "they are" else "it is", "defined outside of `unitize`.  ",
+          "If you did not define ", if(many) "these restarts" else
+          "this restart", " contact maintainer."
+  ) ) ) }
 }
 #' Helper function for validations
 #'
