@@ -733,14 +733,15 @@ unitize_browse <- function(
               sep=""
             )
           }
-          word_msg(sep="\n",
+          non.zero <- which(summaries@totals > 0)
+          word_msg(sep="",
             "Newly evaluated tests do not match unitizer (",
             paste(
-              names(summaries@totals), summaries@totals, sep=": ",
-              collapse=", "
+              names(summaries@totals[non.zero]), summaries@totals[non.zero],
+              sep=": ", collapse=", "
             ),
             "); see above for more info, or run in interactive mode."
-          ) 
+          )
           invokeRestart("unitizerInteractiveFail")
         }
         # - Simple Outcomes / no-review -----------------------------------------
