@@ -25,16 +25,21 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
       # If not initial section add, then must be a nested section, so have to
       # remove value
 
-      e1@sections[[e1@section.map[start]]]@length <-      # reduce length of section with nested unitizer section
+      # reduce length of section with nested unitizer section
+      e1@sections[[e1@section.map[start]]]@length <-
         e1@sections[[e1@section.map[start]]]@length - 1L
-      e1@section.map <- e1@section.map[-start]  # remove mapping for the unitizer section element that we are expanding
-      e1@section.map <- append(e1@section.map, rep(id, length(e2)), start - 1L) # add mapping for the now expanded section
-
+      # remove mapping for the unitizer section element that we are expanding
+      e1@section.map <- e1@section.map[-start]
+      # add mapping for the now expanded section
+      e1@section.map <- append(e1@section.map, rep(id, length(e2)), start - 1L)
     }
     e1@section.parent <- c(
       e1@section.parent, if(isTRUE(is.na(e2@parent))) id else e2@parent
     )
-    if(e2@title %in% (titles <- vapply(e1@sections, function(x) x@title, character(1L)))) {
+    if(
+      e2@title %in%
+        (titles <- vapply(e1@sections, function(x) x@title, character(1L)))
+    ) {
       e2@title <- tail(make.unique(c(titles, e2@title)), 1L)
     }
     e1@sections <- append(e1@sections, list(e2))
@@ -100,8 +105,10 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         e2 <- e2 + sect.obj
         next
       }
-      item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
-      item@section.name <- e1@sections[[item@section.id]]@title    # record name for attempting to match deleted tests to section
+      # record parent section id for when we create reference sections
+      item@section.id <- e1@section.parent[[e1@section.map[[i]]]]
+      # record name for attempting to match deleted tests to section
+      item@section.name <- e1@sections[[item@section.id]]@title
       over_print(deparse(item@call)[[1L]], append=TRUE)
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
