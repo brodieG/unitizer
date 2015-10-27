@@ -146,8 +146,14 @@ test_that("as.state", {
     unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
   )
   expect_identical(
-    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg())),
+    unitizer:::as.state(
+      unitizer:::unitizerStateRaw(par.env=in_pkg()), test.files="."
+    ),
     unitizer:::unitizerStateDefault(par.env=getNamespace("unitizer"))
+  )
+  expect_error(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg())),
+    "Unable to convert"
   )
   expect_identical(
     unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))),
@@ -160,7 +166,9 @@ test_that("as.state", {
     "Unable to convert"
   )
   expect_error(
-    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg(""))),
+    unitizer:::as.state(
+      unitizer:::unitizerStateRaw(par.env=in_pkg("")), test.files="."
+    ),
     "Unable to convert"
   )
 })
@@ -179,6 +187,7 @@ test_that("state", {
   )
 })
 test_that("in_pkg", {
+  expect_error(in_pkg(""), "Argument `package` may not be an empty string")
   expect_identical(as.character(in_pkg()), "<in: auto-detect-pkg>")
   expect_identical(as.character(in_pkg("stats")), "<in: package:stats>")
   expect_identical(capture.output(show(in_pkg())), "<in: auto-detect-pkg>")
