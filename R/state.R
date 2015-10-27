@@ -335,6 +335,7 @@ unitizerState <- setClass(
     TRUE
   }
 )
+
 unitizerStateRaw <- setClass(
   "unitizerStateRaw",
   slots=c(par.env="environmentOrNULLOrUnitizerInPkg"),
@@ -508,7 +509,7 @@ as.state <- function(x, test.files=NULL) {
     }
     if(inherits(par.env, "try-error"))
       stop("Unable to convert `par.env` value to a namespace environment")
-    x.fin <- unitizerStateDefault(par.env)
+    x.fin <- unitizerStateDefault(par.env=par.env)
     for(i in .unitizer.global.settings.names) slot(x.fin, i) <- slot(x, i)
     x.fin
   } else if(is(x, "unitizerInPkg")){
