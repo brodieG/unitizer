@@ -24,6 +24,10 @@ test_that("get_capture", {
   cons <- new("unitizerCaptCons")
   base.char <- paste(rep(letters, 10), collapse=" ")
   writeChar(base.char, cons@out.c)
+  expect_error(
+    cpt0 <- unitizer:::get_text_capture(cons, "output", TRUE, chrs.max="howdy"),
+    "Argument `chrs.max`"
+  )
   expect_warning(
     cpt0 <- unitizer:::get_text_capture(cons, "output", TRUE),
     "Reached maximum text capture"
@@ -129,6 +133,47 @@ test_that("connection capture works", {
   expect_equal(readLines(f2), "12 there goodbye")
   close(c2)
   unlink(c(f1, f2))
+
+  # Try to mess up sink counter by replacing the real sink with a fake sink
+  # should lead to a waived connection
+
+  cons <- new("unitizerCaptCons")
+  cons <- unitizer:::set_capture(cons)
+
+  f1 <- tempfile()
+  sink()
+  sink(f1)
+
+  capt <- unitizer:::get_capture(cons)
+  cons <- unitizer:::unsink_cons(cons)
+  expect_true(attr(cons@out.c, "waive"))
+  expect_null(attr(cons@err.c, "waive"))
+  expect_identical(
+    capt, list(output = "", message = "")
+  )
+  # Try to fix so that we don't get a full stack release error
+
+  sink()
+  sink(cons@out.c)
+
+  expect_identical(
+    unitizer:::close_and_clear(cons),
+    structure(c(TRUE, TRUE), .Names = c("output", "message"))
+  )
+  unlink(f1)
+
+  # helper function
+
+  f1 <- tempfile()
+  c1 <- file(f1,  "w+b")
+
+  expect_false(unitizer:::is_stdout_sink(c1))
+  expect_error(unitizer:::is_stdout_sink(f1))
+  sink(c1)
+  expect_true(unitizer:::is_stdout_sink(c1))
+  sink()
+  close(c1)
+  unlink(f1)
 })
 # # These tests cannot be run as they blow away the entire sink stack which can
 # # mess up any testing done under capture

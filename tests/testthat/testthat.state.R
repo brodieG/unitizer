@@ -171,6 +171,17 @@ test_that("as.state", {
     ),
     "Argument `package` may not be"
   )
+  # impossible states
+
+  state.obj <- unitizer:::unitizerStateRaw()
+  state.obj@options <- 2L
+
+  expect_error(unitizer:::as.state(state.obj), "Options state tracking")
+
+  state.obj@namespaces <- 2L
+  state.obj@search.path <- 1L
+
+  expect_error(unitizer:::as.state(state.obj), "Namespace state tracking")
 })
 test_that("state", {
   expect_identical(
