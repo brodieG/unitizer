@@ -281,4 +281,10 @@ test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
 })
+test_that("quit restart", {
+  expect_equal(
+    withRestarts(unitizer:::unitizer_quit(), unitizerQuitExit=function(e) e),
+    list(save="default", status=0, runLast=TRUE)
+  )
+}
 

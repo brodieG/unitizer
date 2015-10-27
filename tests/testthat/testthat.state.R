@@ -134,6 +134,35 @@ test_that("as.state", {
   state <- unitizer:::unitizerStateOff()
   state@options <- 2L  # bypass validity method
   expect_error(validObject(state))
+
+  # state raw conversions
+
+  expect_identical(
+    unitizer:::as.state(unitizer:::unitizerStateRaw()),
+    unitizer:::unitizerStateDefault()
+  )
+  expect_identical(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env="stats")),
+    unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+  )
+  expect_identical(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg())),
+    unitizer:::unitizerStateDefault(par.env=getNamespace("unitizer"))
+  )
+  expect_identical(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))),
+    unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+  )
+  expect_error(
+    unitizer:::as.state(
+      unitizer:::unitizerStateRaw(par.env=in_pkg("asdfalkdfasd"))
+    ),
+    "Unable to convert"
+  )
+  expect_error(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg(""))),
+    "Unable to convert"
+  )
 })
 test_that("state", {
   expect_identical(
@@ -147,5 +176,14 @@ test_that("state", {
   expect_identical(
     state(in_pkg()),
     unitizer:::unitizerStateRaw(par.env=in_pkg())
+  )
+})
+test_that("in_pkg", {
+  expect_identical(as.character(in_pkg()), "<in: auto-detect-pkg>")
+  expect_identical(as.character(in_pkg("stats")), "<in: package:stats>")
+  expect_identical(capture.output(in_pkg(), "<in: auto-detect-pkg>\n"))
+  expect_error(
+    in_pkg_to_env(in_pkg(), "/"),
+    "Unable to detect package"
   )
 })
