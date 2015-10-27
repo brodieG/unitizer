@@ -64,6 +64,12 @@ setMethod("all.equal", "conditionList",
     }
     if(err.len) return(err.msg)
 } )
+# So that S3 dispatch works
+#' @export
+
+all.equal.conditionList <- function(target, current, ...)
+  all.equal(target, current, ...)
+
 #' Compare Conditions
 #'
 #' @export

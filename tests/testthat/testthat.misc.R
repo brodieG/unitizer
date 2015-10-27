@@ -170,6 +170,25 @@ test_that("Compare Functions With Traces", {
   expect_error(unitizer:::identical_fun(1, base::library))
   expect_error(unitizer:::identical_fun(base::library, 1))
   expect_true(unitizer:::identical_fun(base::print, base::print))
+  # make sure all.equal dispatches properly out of namespace
+  expect_equal(
+    evalq(
+      all.equal(
+        new("conditionList", .items=list(
+            simpleWarning("warning", quote(yo + yo)),
+            simpleWarning("warning2", quote(yo2 + yo)),
+            simpleWarning("warning3", quote(yo3 + yo)),
+            simpleError("error1", quote(make_an_error()))
+        ) ),
+        new("conditionList", .items=list(
+            simpleWarning("warning", quote(yo + yo)),
+            simpleWarning("warning2", quote(yo2 + yo)),
+            simpleError("error1", quote(make_an_error()))
+      ) ) ),
+      envir=getNamespace("stats")
+    ),
+    "Condition count mismatch; expected 4 (got 3)"
+  )
 } )
 test_that("word_cat", {
   str <- "Humpty dumpty sat on a wall and took a big fall.  All the kings horses and men couldn't put humpty dumpty together again"

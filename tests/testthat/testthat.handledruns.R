@@ -15,6 +15,9 @@ test_that("Ensure we get warning if we try to run in handlers", {
 err <- withRestarts(
   try(unitize("helper/trivial.R")), unitizerQuitExit=function() NULL
 )
+err2 <- withRestarts(
+  try(unitize("helper/trivial.R")), unitizerInteractiveFail=function() NULL
+)
 test_that("Ensure we get error if we try to do something stupid...", {
   expect_is(err, "try-error")
 } )

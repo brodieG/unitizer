@@ -185,11 +185,11 @@ setMethod(
 
         if(y@interactive.error) {
           word_msg(
-            "Unable to resolve unitizer without user input, but we are in",
-            "non-interactive mode"
+            "User input required to proceed, but we are in non-interactive mode."
           )
           break
-        } else if(!y@human && !user.quit && y@auto.accept) {  # quitting user doesn't allow us to register humanity...
+        } else if(!y@human && !user.quit && y@auto.accept) {
+          # quitting user doesn't allow us to register humanity...
           if(y@navigating || y@re.eval)
             stop(
               "Logic Error: should only get here in `auto.accept` mode, ",
