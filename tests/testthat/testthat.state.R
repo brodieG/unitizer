@@ -147,7 +147,7 @@ test_that("as.state", {
   )
   expect_identical(
     unitizer:::as.state(
-      unitizer:::unitizerStateRaw(par.env=in_pkg()), test.files="."
+      unitizer:::unitizerStateRaw(par.env=in_pkg()), test.files=getwd()
     ),
     unitizer:::unitizerStateDefault(par.env=getNamespace("unitizer"))
   )
@@ -167,9 +167,9 @@ test_that("as.state", {
   )
   expect_error(
     unitizer:::as.state(
-      unitizer:::unitizerStateRaw(par.env=in_pkg("")), test.files="."
+      unitizer:::unitizerStateRaw(par.env=in_pkg("")), test.files=getwd()
     ),
-    "Unable to convert"
+    "Argument `package` may not be"
   )
 })
 test_that("state", {

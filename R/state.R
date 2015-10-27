@@ -401,6 +401,8 @@ unitizerStateOff <- setClass(
 in_pkg <- function(package=NULL) {
   if(!is.null(package) && !is.chr1(package))
     stop("Argument `package` must be character(1L) and not NA, or NULL")
+  if(is.character(package) && !nchar(package))
+    stop("Argument `package` may not be an empty string")
   unitizerInPkg(package=if(is.null(package)) "" else package)
 }
 in_pkg_to_env <- function(inPkg, test.files) {
