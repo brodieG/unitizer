@@ -181,9 +181,9 @@ test_that("state", {
 test_that("in_pkg", {
   expect_identical(as.character(in_pkg()), "<in: auto-detect-pkg>")
   expect_identical(as.character(in_pkg("stats")), "<in: package:stats>")
-  expect_identical(capture.output(in_pkg(), "<in: auto-detect-pkg>\n"))
+  expect_identical(capture.output(show(in_pkg())), "<in: auto-detect-pkg>")
   expect_error(
-    in_pkg_to_env(in_pkg(), "/"),
+    unitizer:::in_pkg_to_env(in_pkg(), "/"),
     "Unable to detect package"
   )
 })
