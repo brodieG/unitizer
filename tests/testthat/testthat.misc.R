@@ -93,6 +93,9 @@ test_that("deparse_mixed", {
   x <- quote(1 + b)
   x[[3]] <- b
   expect_equal(unitizer:::deparse_mixed(x), "quote(1 + 1:3)")
+  y <- quote(1 + 3 + b)
+  y[[3]] <- b
+  expect_equal(unitizer:::deparse_mixed(y), "quote(1 + 3 + 1:3)")
 })
 
 test_that("(Un)ordered Lists", {

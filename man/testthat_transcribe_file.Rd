@@ -5,7 +5,8 @@
 \title{Transcribes a \code{testtaht} File Into \code{unitizer} Format}
 \usage{
 testthat_transcribe_file(file.name, target.dir = file.path(dirname(file.name),
-  "..", "unitizer"), keep.testthat.call = TRUE, prompt = "always", ...)
+  "..", "unitizer"), keep.testthat.call = TRUE, prompt = "always",
+  interactive.mode, ...)
 }
 \arguments{
 \item{file.name}{a path to the \code{testthat} test file to convert}
@@ -23,6 +24,12 @@ was converted, as a comment}
   \item "overwrite" only prompt if existing file is about to be overwritten
   \item "never" never prompt
 }}
+
+\item{interactive.mode}{logical(1L) primarily for testing purposes, allows
+us to force prompting in non-interactive mode; note that \code{unitize}
+and \code{unitize_dir} are always called in non-interactive mode by these
+functions, this parameter only controls prompts generated directly by these
+functions.}
 
 \item{...}{params to pass on to \code{testthat_translate_name}}
 }

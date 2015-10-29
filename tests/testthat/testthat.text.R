@@ -233,4 +233,31 @@ local({
     expect_equal(unitizer:::cc(c("a", "b"), "c"), "abc")
     expect_equal(unitizer:::cc(c("a", "b"), "c", c=" "), "a b c")
   })
+  test_that("screen_out", {
+    string <-
+      "once upon a time in a fairy land very far away lived a green dragon"
+    expect_equal(
+      capture.output(
+        unitizer:::screen_out(string, max.len=c(3L, 2L), width=13L)
+      ),
+      c("once upon a ", "time in a ", "... truncated 4 lines")
+    )
+
+  })
+  test_that("text_wrap", {
+    expect_error(text_wrap(list(1, 2, 3), 5), "must be")
+    expect_error(text_wrap(letters, 5), "multiple")
+  })
+  test_that("capture_output", {
+    capt <- unitizer:::capture_output(
+      {cat("hello"); cat("goodbye", file=stderr())}
+    )
+    expect_equal(
+      capt,
+      structure(
+        list(output="hello", message="goodbye"), class="captured_output"
+    ) )
+    capt2 <- unitizer:::capture_output(print(capt))
+    expect_equal(capt, capt2)
+  })
 })

@@ -25,6 +25,7 @@
 \alias{all.equal,unitizerSearchData,unitizerSearchData-method}
 \alias{append,factor,factor-method}
 \alias{append,unitizerList,ANY-method}
+\alias{as.character,unitizer-method}
 \alias{as.character,unitizerBrowse-method}
 \alias{as.character,unitizerInPkg-method}
 \alias{as.data.frame,unitizerBrowse-method}
@@ -135,6 +136,8 @@
 \S4method{summary}{unitizerObjectList}(object, silent = FALSE, ...)
 
 \S4method{show}{unitizerObjectListSummary}(object)
+
+\S4method{as.character}{unitizer}(x, ...)
 
 \S4method{+}{unitizer,unitizerSection}(e1, e2)
 

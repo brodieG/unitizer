@@ -5,4 +5,4 @@ library(testthat)
 
 unitize("unitizer/tests2.R")
 unitize("unitizer/sectionsRCMDCHECK.R")
-unitize("unitizer/translate.R", state="off")
+unitize("unitizer/translate.R")
