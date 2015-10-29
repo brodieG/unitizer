@@ -165,6 +165,11 @@
 #'   \code{testthat_translate_dir} runs \code{testthat_translate_file})
 #' @param state what state control to use (see same argument for
 #'   \code{\link{unitize}})
+#' @param interactive.mode logical(1L) primarily for testing purposes, allows
+#'   us to force prompting in non-interactive mode; note that \code{unitize}
+#'   and \code{unitize_dir} are always called in non-interactive mode by these
+#'   functions, this parameter only controls prompts generated directly by these
+#'   functions.
 #' @return a file path or a character vector (see \code{target.dir})
 #' @examples
 #' \dontrun{
@@ -193,10 +198,12 @@
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
   state=getOption("unitizer.state"),
-  keep.testthat.call=TRUE, prompt="always", ...
+  keep.testthat.call=TRUE, prompt="always", interactive.mode=interactive(),
+  ...
 ) {
   untz.file <- testthat_transcribe_file(
-    file.name, target.dir, keep.testthat.call, prompt, ...
+    file.name, target.dir, keep.testthat.call, prompt,
+    interactive.mode=interactive.mode, ...
   )
   if(!is.null(target.dir)) {
     unitize(
@@ -217,7 +224,7 @@ testthat_translate_file <- function(
 
 testthat_transcribe_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  keep.testthat.call=TRUE, prompt="always", ...
+  keep.testthat.call=TRUE, prompt="always", interactive.mode, ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
@@ -237,10 +244,13 @@ testthat_transcribe_file <- function(
   # Get function list to extract
 
   tt.env <- as.environment("package:testthat")
-  funs.special <- c("test_that", "context")  # functions that shouldn't be simply replaced
+  # functions that shouldn't be simply replaced
+  funs.special <- c("test_that", "context")
   obj.names <- ls(tt.env)
   obj.list <- mget(obj.names, tt.env)
-  obj.funs <- vapply(obj.list, function(x) is.function(x) && ! isS4(x), logical(1L))
+  obj.funs <- vapply(
+    obj.list, function(x) is.function(x) && ! isS4(x), logical(1L)
+  )
   fun.list <- obj.list[obj.funs]
   fun.names <- obj.names[obj.funs]
 
@@ -261,6 +271,7 @@ testthat_transcribe_file <- function(
 
   testthat_extract_all <- function(expr, mode="all") {
 
+    stopifnot(mode %in% c("all", "sub"))
     result.final <- character()
 
     for(i in seq_along(expr)) {
@@ -287,8 +298,8 @@ testthat_transcribe_file <- function(
           if(!identical(mode, "all")) {  # check we don't have nested `test_that`
             result <- c(
               result, paste0(
-                "# [ERROR: testthat -> unitizer] cannot extract nested `test_that` ",
-                "calls"
+                "# [ERROR: testthat -> unitizer] cannot extract nested ",
+                "`test_that` calls"
             ) )
             result <- c(result, deparse(expr[[i]]))
           } else {
@@ -401,7 +412,7 @@ testthat_transcribe_file <- function(
     }
     if(!file.exists(target.dir)) {
       if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
-        u.inp <- if(interactive_mode()) {
+        u.inp <- if(interactive.mode) {
           simple_prompt(
             paste0("Create directory ", target.dir," for unitizer tests?")
           )
@@ -422,7 +433,7 @@ testthat_transcribe_file <- function(
     # prompt if file already exists
 
     if(!identical(prompt, "never") && file.exists(untz.test)) {
-      u.inp <- if(interactive_mode()) {
+      u.inp <- if(interactive.mode) {
         simple_prompt(
           paste0("Overwrite file '", normalizePath(untz.test), "'?")
         )
@@ -449,7 +460,7 @@ testthat_transcribe_file <- function(
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
   filter="^test.*\\.[rR]", state=getOption("unitizer.state"),
-  keep.testthat.call=TRUE, force=FALSE,
+  keep.testthat.call=TRUE, force=FALSE, interactive.mode=interactive(),
   ...
 ) {
   is_testthat_attached()
@@ -514,7 +525,8 @@ testthat_translate_dir <- function(
       # awry
 
       untz.file <- testthat_transcribe_file(
-        files.test[[i]], target.dir, keep.testthat.call, prompt="never", ...
+        files.test[[i]], target.dir, keep.testthat.call, prompt="never",
+        interactive.mode=interactive.mode, ...
       )
       res[[i]] <- untz.file
       if(inherits(try(parse(untz.file)), "try-error")) {
