@@ -54,6 +54,19 @@ local({
       ),
       "Cannot upgrade .* in non-interactive"
     )
+    # try weird store ids
+
+    invalid.store.return <- unitizer:::load_unitizers(
+      list(structure("hello", class="unitizer_error_store")), NA_character_,
+      par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
+      force.upgrade=FALSE
+    )
+    expect_is(invalid.store.return[[1L]], "unitizerLoadFail")
+    expect_match(
+      invalid.store.return[[1L]]@reason, "returned something other than"
+    )
+    # don't agree to upgrade in interactive mode
+
     unitizer:::read_line_set_vals("N")
     untzs0 <- unitizer:::load_unitizers(
       store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
@@ -73,6 +86,8 @@ local({
         ) == "User elected not to upgrade unitizers"
       )
     )
+    # Load mix of loadable and not loadable objects
+
     untzs <- unitizer:::load_unitizers(
       store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
       interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
@@ -94,6 +109,19 @@ local({
       txt2, "Failed Loading Unitizer:;- Test file.*;- Store.*;- Reason: Upgrade failed: no slot of name \"items.ref\" for this object"
     )
     options(old.width)
+    # Try reloading already loaded unitisers
+
+    reload <- unitizer:::as.list(untzs)[untzs.classes == "unitizer"]
+    untzs1a <- unitizer:::load_unitizers(
+      reload, rep(NA_character_, length(reload)),
+      par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
+      force.upgrade=FALSE
+    )
+    expect_true(
+      all(vapply(unitizer:::as.list(untzs1a), is, logical(1L), "unitizer"))
+    )
+    # misc tests
+
     untzs2 <- unitizer:::load_unitizers(
       list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
       mode="unitize", force.upgrade=FALSE

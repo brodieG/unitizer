@@ -87,24 +87,35 @@ get_text_capture <- function(
   } else if (identical(type, "output")) {
     if(!no.unsink) sink()
   } else {
+    # nocov start
     stop("Logic Error: unexpected connection type; contact maintainer.")
+    # nocov end
   }
   return(get_text(slot(cons, if(type=="message") "err.c" else "out.c")))
 }
+# nocov start
+# this stuff is all emergency sink release that can't be tested without messing
+# up whatever test framework sink capture exists
+
 release_sinks <- function(silent=FALSE) {
   release_stdout_sink(FALSE)
   release_stderr_sink(FALSE)
-  if(!isTRUE(silent)) message("All sinks released, even those established by test expressions.")
+  if(!isTRUE(silent))
+    message("All sinks released, even those established by test expressions.")
   NULL
 }
 release_stdout_sink <- function(silent=FALSE) {
   replicate(sink.number(), sink())
-  if(!isTRUE(silent)) message("All stdout sinks released, even those established by test expressions.")
+  if(!isTRUE(silent))
+    message(
+      "All stdout sinks released, even those established by test expressions."
+    )
 }
 release_stderr_sink <- function(silent=FALSE) {
   if(!identical(sink.number(type="message"), 2L)) sink(type="message")
   if(!isTRUE(silent)) message("Stderr sink released.")
 }
+# nocov end
 # Wrappers Around Capture functions
 #
 # These are intended specifically for calling during test evaluation since in
@@ -189,7 +200,9 @@ get_text <- function(
 
 unsink_cons <- function(cons) {
   on.exit({
+    # nocov start
     failsafe_con(cons)
+    # nocov end
   })
   stopifnot(is(cons, "unitizerCaptCons"))
   out.level <- sink.number()
@@ -205,12 +218,7 @@ unsink_cons <- function(cons) {
   ) {
     attr(cons@out.c, "waive") <- TRUE
   } else {
-    # Verify still sunk to proper file
-
-    test.str <- "\n\n<unitizer sink test>\n\n"
-    cat(test.str)
-    test.str.echo <- get_text(cons@out.c)
-    if(!identical(test.str, test.str.echo)) {
+    if(!is_stdout_sink(cons@out.c)) {
       attr(cons@out.c, "waive") <- TRUE
     } else sink()
   }
@@ -226,7 +234,7 @@ unsink_cons <- function(cons) {
   cons
 }
 # Try to Deal With Sinks Gracefully on Failure
-#
+# nocov start
 failsafe_con <- function(cons) {
   capt.try <- try(get_capture(cons))
   release_sinks()
@@ -243,6 +251,8 @@ failsafe_con <- function(cons) {
   )
   invisible(NULL)
 }
+# nocov end
+
 # Cleanup sink connections if possible
 #
 # @return logical(2L) indicating success in normal resetting of sinks
@@ -267,19 +277,31 @@ close_and_clear <- function(cons) {
     level.extra <- out.level - cons@stdout.level - 1L
 
     if(level.extra > 0) replicate(level.extra, sink())
-    test.str <- "\n\n<unitizer sink test>\n\n"
-    cat(test.str)
-    test.str.echo <- get_text(cons@out.c)
-    if(!identical(test.str, test.str.echo)) {
+    if(!is_stdout_sink(cons@out.c)){
+      # nocov start
       replicate(sink.number(), sink())
       word_msg("Tests corrupted stdout sink stack; all stdout sinks cleared.")
       status[["output"]] <- FALSE
+      # nocov end
     } else if(sink.number()) sink()
   }
   close(cons@err.c)
   close(cons@out.c)
   file.remove(cons@err.f, cons@out.f)
   invisible(status)
+}
+# Check whether provided connection is active stdout capture stream
+# note this writes to the connection to check, though it shouldn't matter
+# in our typical use case since `get_text` should advance the pointer by
+# what we write so when we retrieve the value our junk write should not be
+# visible
+
+is_stdout_sink <- function(con) {
+  stopifnot(inherits(con,  "file") && isOpen(con))
+  test.str <- "\n\n<unitizer sink test>\n\n"
+  cat(test.str)
+  test.str.echo <- get_text(con)
+  identical(test.str, test.str.echo)
 }
 # Connection Tracking Objects
 
@@ -288,7 +310,7 @@ setClass(
   slots=c(
     err.f="ANY", err.c="ANY", out.f="ANY", out.c="ANY",
     stdout.level="integer", stderr.level="integer",
-    stderr.con="ANY"  # this is whatever connection was set for sink #2 prior to running
+    stderr.con="ANY"  # whatever connection was set for sink #2 prior to running
   ),
   validity=function(object) {
     # Allow NULLs since that is how the con object is stored

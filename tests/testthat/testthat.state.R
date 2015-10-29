@@ -75,6 +75,23 @@ test_that("All Equal States", {
     options=list(a=list(1, 2, 3), b=new("unitizerDummy"), c="hello"),
     working.directory="a/b/c"
   )
+  state.E <- new(
+    "unitizerGlobalState", options=setNames(as.list(1:20), head(letters, 20))
+  )
+  state.F <- new(
+    "unitizerGlobalState", options=setNames(as.list(1:20), tail(letters, 20))
+  )
+  # This one is supposed to return something non-character or TRUE when used
+  # with the provided all.equal
+
+  state.G <- new(
+    "unitizerGlobalState",
+    options=list(a=structure(TRUE, class="unitizer_glob_state_test"), b=0)
+  )
+  state.H <- new(
+    "unitizerGlobalState",
+    options=list(a=structure(FALSE, class="unitizer_glob_state_test"), b=2)
+  )
   # all.equal tests are really legacy since we don't expect to use them going
   # forwards
 
@@ -109,6 +126,17 @@ test_that("All Equal States", {
     diff_state(state.A, state.D, file=NULL),
     c("`options` state mismatch:", "    @@ .REF$state@options[[\"a\"]] @@", "    -  [1] 5 6 7", "    @@ .NEW$state@options[[\"a\"]] @@", "    +  [[1]]", "    +  [1] 1", "    +  ", "    +  [[2]]", "    +  [1] 2", "    +  ", "    +  [[3]]", "    +  [1] 3", "    +  ", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
   )
+  # These have big enough options differences to kick off the condensed
+  # options comparison
+
+  expect_equal(
+    diff_state(state.E, state.F, file=NULL),
+    c("`options` state mismatch:", "    The following options have mismatches: ", "     [1] \"g\" \"h\" \"i\" \"j\" \"k\" \"l\" \"m\" \"n\" \"o\" \"p\" \"q\" \"r\" \"s\" \"t\"", "    The following options are missing from `.NEW`: ", "    [1] \"a\" \"b\" \"c\" \"d\" \"e\" \"f\"", "    The following options are missing from `.REF`: ", "    [1] \"u\" \"v\" \"w\" \"x\" \"y\" \"z\"", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ",  "reported here as state tracking is incomplete.  See vignette for details.")
+  )
+  expect_equal(
+    diff_state(state.G, state.H, file=NULL),
+    c("`options` state mismatch:", "    - a: <unknown difference>", "    - b: Mean absolute difference: 2", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
+  )
   options(old.width)
 })
 test_that("as.state", {
@@ -134,6 +162,54 @@ test_that("as.state", {
   state <- unitizer:::unitizerStateOff()
   state@options <- 2L  # bypass validity method
   expect_error(validObject(state))
+
+  # state raw conversions
+
+  expect_identical(
+    unitizer:::as.state(unitizer:::unitizerStateRaw()),
+    unitizer:::unitizerStateDefault()
+  )
+  expect_identical(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env="stats")),
+    unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+  )
+  expect_identical(
+    unitizer:::as.state(
+      unitizer:::unitizerStateRaw(par.env=in_pkg()), test.files=getwd()
+    ),
+    unitizer:::unitizerStateDefault(par.env=getNamespace("unitizer"))
+  )
+  expect_error(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg())),
+    "Unable to convert"
+  )
+  expect_identical(
+    unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))),
+    unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+  )
+  expect_error(
+    unitizer:::as.state(
+      unitizer:::unitizerStateRaw(par.env=in_pkg("asdfalkdfasd"))
+    ),
+    "Unable to convert"
+  )
+  expect_error(
+    unitizer:::as.state(
+      unitizer:::unitizerStateRaw(par.env=in_pkg("")), test.files=getwd()
+    ),
+    "Argument `package` may not be"
+  )
+  # impossible states
+
+  state.obj <- unitizer:::unitizerStateRaw()
+  state.obj@options <- 2L
+
+  expect_error(unitizer:::as.state(state.obj), "Options state tracking")
+
+  state.obj@namespaces <- 2L
+  state.obj@search.path <- 1L
+
+  expect_error(unitizer:::as.state(state.obj), "Namespace state tracking")
 })
 test_that("state", {
   expect_identical(
@@ -147,5 +223,15 @@ test_that("state", {
   expect_identical(
     state(in_pkg()),
     unitizer:::unitizerStateRaw(par.env=in_pkg())
+  )
+})
+test_that("in_pkg", {
+  expect_error(in_pkg(""), "Argument `package` may not be an empty string")
+  expect_identical(as.character(in_pkg()), "<in: auto-detect-pkg>")
+  expect_identical(as.character(in_pkg("stats")), "<in: package:stats>")
+  expect_identical(capture.output(show(in_pkg())), "<in: auto-detect-pkg>")
+  expect_error(
+    unitizer:::in_pkg_to_env(in_pkg(), "/"),
+    "Unable to detect package"
   )
 })

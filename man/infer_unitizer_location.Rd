@@ -14,8 +14,8 @@ infer_unitizer_location(store.id, ...)
   interactive.mode = interactive(), ...)
 }
 \arguments{
-\item{store.id}{character(1L) file or directory name, the file name portion (i.e
-after the last slash) may be partially specified}
+\item{store.id}{character(1L) file or directory name, the file name portion
+(i.e after the last slash) may be partially specified}
 
 \item{...}{arguments to pass on to other methods}
 

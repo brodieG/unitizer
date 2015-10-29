@@ -200,11 +200,28 @@ options_zero <- function(
   curr.opts.nms <- names(curr.opts)
   curr.opts.asis <- unlist(lapply(as.is, grep, curr.opts.nms, value=TRUE))
 
-  # Drop unneeded options
+  # Drop unneeded options; need to do 1 by 1 as some options cannot be easily
+  # reset
 
   null.opts <- setdiff(names(curr.opts), c(nms, curr.opts.asis))
-  options(setNames(vector("list", length(null.opts)), null.opts))
-
+  all.opts <- c(
+    setNames(vector("list", length(null.opts)), null.opts), base
+  )
+  opt.success <- vapply(names(all.opts),
+    function(opt.name) {
+      opt.attempt <- try(options(all.opts[opt.name]))
+      return(!inherits(opt.attempt, "try-error"))
+    },
+    logical(1L)
+  )
+  if(!all(opt.success)) {
+    warning(
+      word_wrap(
+        cc(
+          "Unable to reset following options: ",
+          cat(deparse(names(all.opts)[!opt.success]), width.cutoff=500L)
+    ) ) )
+  }
   # Reset others
 
   options(base)

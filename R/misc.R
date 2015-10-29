@@ -65,8 +65,9 @@ identical_fun <- function(x, y) {
 # @keywords internal
 
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
-  invokeRestart("unitizerQuitExit", list(save=save, status=status, runLast=runLast))
-}
+  invokeRestart(
+    "unitizerQuitExit", list(save=save, status=status, runLast=runLast)
+) }
 # nocov start
 # can't test this without quitting R!
 
@@ -74,8 +75,8 @@ unitizer_quit_handler <- function(quitArgs) {
   word_msg(
     paste0(
       "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
-      "quitting type `Q` (without quotes) at the unitizer prompt, or avoid using ",
-      "test code that involves calls to `quit()`/`q()`."
+      "quitting type `Q` (without quotes) at the unitizer prompt, or avoid ",
+      "using test code that involves calls to `quit()`/`q()`."
     )
   )
   do.call("quit", quitArgs)
@@ -128,6 +129,7 @@ history_capt <- function(hist.file=NULL) {
   # set up local history
 
   if(is.null(hist.file)) return(list(con=NULL, file=NULL))
+  # nocov start
   if(!interactive()) {
     warning(
       "Unable to capture history in non-interactive mode.",
@@ -154,30 +156,30 @@ history_capt <- function(hist.file=NULL) {
     attr(hist.con, "no.hist") <- TRUE
   }
   list(con=hist.con, file=hist.file)
+  # nocov end
 }
 history_release <- function(hist.obj) {
   if(all(vapply(hist.obj, is.null, logical(1L))))
     return(invisible(TRUE))
+  # nocov start
   no.hist <- attr(hist.obj$con, "no.hist")
   close(hist.obj$con)
   if(isTRUE(attr(hist.obj$file, "hist.tmp"))) file.remove(hist.obj$file)
   if(!isTRUE(no.hist)) {
-    # nocov start
     # covr runs non-interactively; can't have history
     hist.try <- try(loadhistory(), silent=TRUE)
     if(inherits(hist.try, "try-error"))
       warning(conditionMessage(attr(hist.try, "condition")))
-    # nocov end
   }
+  # nocov end
 }
 history_write <- function(hist.con, data) {
   if(is.null(hist.con)) return(invisible(NULL)) # probably in non-interactive
+  # nocov start
   stopifnot(is.open_con(hist.con), is.character(data))
   if(is.open_con(hist.con)) {
     cat(data, file=hist.con, sep="\n")
     if(!isTRUE(attr(hist.con, "no.hist"))) {
-      # nocov start
-      # covr runs non-interactively; can't have history
       hist.save <-
         try(
           loadhistory(showConnections()[as.character(hist.con), "description"]),
@@ -185,8 +187,8 @@ history_write <- function(hist.con, data) {
         )
       if(inherits(hist.save, "try-error"))
         warning(attr(hist.save, "condition"), immediate.=TRUE)
-      # nocov end
   } }
+  # nocov end
 }
 # Simplify a Path As Much as Possible to Working Directory
 #

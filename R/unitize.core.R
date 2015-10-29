@@ -149,10 +149,14 @@ unitize_core <- function(
     if(!identical(pick, "Y"))
       stop("Cannot proceed without creating directories.")
     if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
+      # nocov start
+      # no good way to test
       stop(
         "Cannot proceed, failed to create the following directories:\n",
         paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
-  ) } }
+      )
+      # nocov end
+  } }
   # Ensure directory names are normalized, but only if dealing with char objects
 
   norm.attempt <- try(
@@ -266,6 +270,9 @@ unitize_core <- function(
       }
       if(!is.null(test.dir)) setwd(test.dir)
     } else {
+      # nocov start
+      # currently no way to get here since there is no way to specify multiple
+      # files other than by directory
       warning(
         word_wrap(collapse="\n",
           cc(
@@ -276,6 +283,11 @@ unitize_core <- function(
         ) ),
         immediate.=TRUE
       )
+      stop(
+        "Logic Error: shouldn't be able to evaluate this code; ",
+        "contact maintainer"
+      )
+      # nocov end
   } }
   # - Parse / Load -------------------------------------------------------------
 
@@ -684,14 +696,14 @@ unitize_browse <- function(
               paste0(
                 "unitizer for: ", getName(unitizers[[i]]), collapse=""
           ) ) )
-          # summaries don't really work well in review mode if the tests are 
+          # summaries don't really work well in review mode if the tests are
           # not evaluated
-          if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])  
-          # annoyingly we need to force update here as well as for 
+          if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])
+          # annoyingly we need to force update here as well as for
           # the unreviewed unitizers
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]],
-            force.update=force.update,  
+            force.update=force.update,
           )
           summaries@updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer

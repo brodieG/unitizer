@@ -5,7 +5,7 @@
 \title{Display helper function}
 \usage{
 screen_out(txt, max.len = getOption("unitizer.test.out.lines"),
-  file = stdout())
+  file = stdout(), width = getOption("width"))
 }
 \description{
 Display helper function

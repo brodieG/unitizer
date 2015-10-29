@@ -93,6 +93,9 @@ test_that("deparse_mixed", {
   x <- quote(1 + b)
   x[[3]] <- b
   expect_equal(unitizer:::deparse_mixed(x), "quote(1 + 1:3)")
+  y <- quote(1 + 3 + b)
+  y[[3]] <- b
+  expect_equal(unitizer:::deparse_mixed(y), "quote(1 + 3 + 1:3)")
 })
 
 test_that("(Un)ordered Lists", {
@@ -242,7 +245,9 @@ test_that("relativize_path", {
     do.call(
       file.path,
       c(
-        as.list(rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)),
+        as.list(
+          rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)
+        ),
         list("a/b/c/d/e/x.txt")
   ) ) )
 
@@ -280,5 +285,11 @@ test_that("is", {
 test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
+})
+test_that("quit restart", {
+  expect_equal(
+    withRestarts(unitizer:::unitizer_quit(), unitizerQuitExit=function(e) e),
+    list(save="default", status=0, runLast=TRUE)
+  )
 })
 

@@ -266,8 +266,8 @@ setMethod(
   function(object) word_cat(as.character(object), sep="\n")
 )
 setClassUnion(
-  "environmentOrNULLOrUnitizerInPkg",
-  c("environment", "NULL", "unitizerInPkg")
+  "environmentOrNULLOrCharacterUnitizerInPkg",
+  c("environment", "NULL", "character", "unitizerInPkg")
 )
 # unitizerState is an abstract class and is not meant to be isntantiated.  It
 # defines basic structure for unitizerStateRaw and unitizerStateProcessed.
@@ -337,9 +337,14 @@ unitizerState <- setClass(
 )
 unitizerStateRaw <- setClass(
   "unitizerStateRaw",
-  slots=c(par.env="environmentOrNULLOrUnitizerInPkg"),
+  slots=c(par.env="environmentOrNULLOrCharacterUnitizerInPkg"),
   contains="unitizerState",
-  prototype=list(par.env=NULL)
+  prototype=list(par.env=NULL),
+  validity=function(object){
+    if(is.character(object@par.env) && !is.chr1(object@par.env))
+     return("Slot `par.env` must be 1 long and not NA if it is character")
+    TRUE
+  }
 )
 unitizerStateProcessed <- setClass(
   "unitizerStateProcessed",
@@ -396,6 +401,8 @@ unitizerStateOff <- setClass(
 in_pkg <- function(package=NULL) {
   if(!is.null(package) && !is.chr1(package))
     stop("Argument `package` must be character(1L) and not NA, or NULL")
+  if(is.character(package) && !nchar(package))
+    stop("Argument `package` may not be an empty string")
   unitizerInPkg(package=if(is.null(package)) "" else package)
 }
 in_pkg_to_env <- function(inPkg, test.files) {
@@ -406,8 +413,7 @@ in_pkg_to_env <- function(inPkg, test.files) {
   pkg <- if(nchar(inPkg@package)) {
     inPkg@package
   } else {
-    pkg.tmp <- get_package_dir(test.files)
-    if(!length(pkg.tmp)){
+    if(is.null(test.files) || !length(pkg.tmp <- get_package_dir(test.files))){
       stop(
         word_wrap(collapse="\n",
           cc(
@@ -503,12 +509,12 @@ as.state <- function(x, test.files=NULL) {
   } else if(is(x, "unitizerStateRaw")) {
      par.env <- if(is.character(x@par.env)) {
        try(getNamespace(x@par.env))
-     } else if(is(x, "unitizerInPkg")) {
+     } else if(is(x@par.env, "unitizerInPkg")) {
        try(in_pkg_to_env(x@par.env, test.files))
     }
     if(inherits(par.env, "try-error"))
       stop("Unable to convert `par.env` value to a namespace environment")
-    x.fin <- unitizerStateDefault(par.env)
+    x.fin <- unitizerStateDefault(par.env=par.env)
     for(i in .unitizer.global.settings.names) slot(x.fin, i) <- slot(x, i)
     x.fin
   } else if(is(x, "unitizerInPkg")){
