@@ -13,12 +13,13 @@ screen_out <- function(
     )
   stopifnot(is.int.pos.1L(width))
   if(length(txt)) {
-    txt.wrap <- word_wrap(txt, width=width)
+    txt.trim <- sub("\n$", "", txt)
+    txt.wrap <- word_wrap(txt.trim, width=width)
     out.len <- length(txt.wrap)
     txt.proc <- txt.wrap[
       1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)
     ]
-    cat(txt.proc, sep="\n", file=file)
+    if(sum(nchar(txt.proc))) cat(txt.proc, sep="\n", file=file)
     if(out.len > max.len[[1]]) {
       word_cat(
         "... truncated ", out.len - max.len[[2]],
