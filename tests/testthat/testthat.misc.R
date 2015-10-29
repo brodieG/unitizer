@@ -242,7 +242,9 @@ test_that("relativize_path", {
     do.call(
       file.path,
       c(
-        as.list(rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)),
+        as.list(
+          rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)
+        ),
         list("a/b/c/d/e/x.txt")
   ) ) )
 
@@ -286,5 +288,5 @@ test_that("quit restart", {
     withRestarts(unitizer:::unitizer_quit(), unitizerQuitExit=function(e) e),
     list(save="default", status=0, runLast=TRUE)
   )
-}
+})
 

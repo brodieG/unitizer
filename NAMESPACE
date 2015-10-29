@@ -3,6 +3,7 @@
 S3method(all,equal.condition)
 S3method(all,equal.conditionList)
 S3method(all,equal.unitizerDummy)
+S3method(all,equal.unitizer_glob_state_test)
 S3method(as.character,H1)
 S3method(as.character,H2)
 S3method(as.character,H3)

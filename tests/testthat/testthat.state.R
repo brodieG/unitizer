@@ -75,6 +75,23 @@ test_that("All Equal States", {
     options=list(a=list(1, 2, 3), b=new("unitizerDummy"), c="hello"),
     working.directory="a/b/c"
   )
+  state.E <- new(
+    "unitizerGlobalState", options=setNames(as.list(1:20), head(letters, 20))
+  )
+  state.F <- new(
+    "unitizerGlobalState", options=setNames(as.list(1:20), tail(letters, 20))
+  )
+  # This one is supposed to return something non-character or TRUE when used
+  # with the provided all.equal
+
+  state.G <- new(
+    "unitizerGlobalState",
+    options=list(a=structure(TRUE, class="unitizer_glob_state_test"), b=0)
+  )
+  state.H <- new(
+    "unitizerGlobalState",
+    options=list(a=structure(FALSE, class="unitizer_glob_state_test"), b=2)
+  )
   # all.equal tests are really legacy since we don't expect to use them going
   # forwards
 
@@ -108,6 +125,17 @@ test_that("All Equal States", {
   expect_equal(
     diff_state(state.A, state.D, file=NULL),
     c("`options` state mismatch:", "    @@ .REF$state@options[[\"a\"]] @@", "    -  [1] 5 6 7", "    @@ .NEW$state@options[[\"a\"]] @@", "    +  [[1]]", "    +  [1] 1", "    +  ", "    +  [[2]]", "    +  [1] 2", "    +  ", "    +  [[3]]", "    +  [1] 3", "    +  ", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
+  )
+  # These have big enough options differences to kick off the condensed
+  # options comparison
+
+  expect_equal(
+    diff_state(state.E, state.F, file=NULL),
+    c("`options` state mismatch:", "    The following options have mismatches: ", "     [1] \"g\" \"h\" \"i\" \"j\" \"k\" \"l\" \"m\" \"n\" \"o\" \"p\" \"q\" \"r\" \"s\" \"t\"", "    The following options are missing from `.NEW`: ", "    [1] \"a\" \"b\" \"c\" \"d\" \"e\" \"f\"", "    The following options are missing from `.REF`: ", "    [1] \"u\" \"v\" \"w\" \"x\" \"y\" \"z\"", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ",  "reported here as state tracking is incomplete.  See vignette for details.")
+  )
+  expect_equal(
+    diff_state(state.G, state.H, file=NULL),
+    c("`options` state mismatch:", "    - a: <unknown difference>", "    - b: Mean absolute difference: 2", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
   )
   options(old.width)
 })
