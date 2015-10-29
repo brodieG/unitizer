@@ -156,6 +156,13 @@ all.equal.unitizerDummy <- function(target, current, ...) {
   all.equal(target, current, ...)
 }
 
+# specifically an all.equal that returns garbage for testing; unfortunately
+# this needs to be exported to be useable (blergh)
+#' @export
+
+all.equal.unitizer_glob_state_test <- function(target, current, ...)
+  list(1, 2, list("woohoo"))
+
 #' Display State Differences Between New and Reference Tests
 #'
 #' Intended to be called primarily from \code{unitizer} prompt where it can
