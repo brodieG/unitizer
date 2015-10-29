@@ -391,7 +391,6 @@ local( {
   my.unitizer8 <- new("unitizer", id=3, zero.env=new.env())
   new.exps5 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
   my.unitizer9 <- new("unitizer", id=4, zero.env=new.env())
-  try(stop("Flushing warnings"))
   x <- my.unitizer9 + new.exps5
 
   test_that("Misc", {
