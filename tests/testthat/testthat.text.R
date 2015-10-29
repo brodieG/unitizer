@@ -245,8 +245,8 @@ local({
 
   })
   test_that("text_wrap", {
-    expect_error(text_wrap(list(1, 2, 3), 5), "must be")
-    expect_error(text_wrap(letters, 5), "multiple")
+    expect_error(unitizer:::text_wrap(list(1, 2, 3), 5), "must be")
+    expect_error(unitizer:::text_wrap(letters, 1:3), "multiple")
   })
   test_that("capture_output", {
     capt <- unitizer:::capture_output(

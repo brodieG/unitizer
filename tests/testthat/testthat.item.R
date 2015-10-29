@@ -48,12 +48,12 @@ local( {
 
   test_that("item funs", {
     item <- my.unitizer@items.new[[1L]]
-    expect_equal(itemType(item), "new")
-    expect_error(itemType(item) <- "asdfasd", "must be in")
-    itemType(item) <- "reference"
-    expect_equal(itemType(item), "reference")
+    expect_equal(unitizer:::itemType(item), "new")
+    expect_error(unitizer:::itemType(item) <- "asdfasd", "must be in")
+    unitizer:::itemType(item) <- "reference"
+    expect_equal(unitizer:::itemType(item), "reference")
     expect_error(
-      itemsType(my.unitizer@items.new) <- as.character(1:1000),
+      unitizer:::itemsType(my.unitizer@items.new) <- as.character(1:1000),
       "have same length"
     )
     expect_error(item$booboo, "must be in")
