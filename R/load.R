@@ -22,7 +22,7 @@ load_unitizers <- function(
   if(!is.character(test.files))
     stop("Argument `test.files` must be character")
   if(!is.environment(par.frame))
-    stop("Argumetn `par.frame` must be an environment")
+    stop("Argument `par.frame` must be an environment")
   if(!is.list(store.ids) || !identical(length(store.ids), length(test.files)))
     stop(
       "Argument `store.ids` must be a list of the same length as `test.files`"
@@ -220,7 +220,8 @@ load_unitizers <- function(
     invalid.idx,
     function(x)
       new(
-        "unitizerLoadFail", test.file=test.files[[x]], store.id=store.ids[[x]],
+        "unitizerLoadFail", test.file=test.files[[x]],
+        store.id=list(store.ids[[x]]), # this is a list b/c could be S3
         reason=valid[[x]]
   ) )
   new("unitizerObjectList", .items=unitizers)
@@ -308,7 +309,7 @@ setClass(
   "unitizerLoadFail",
   slots=c(
     test.file="character",
-    store.id="ANY",
+    store.id="list",
     reason="character"
   ),
   validity=function(object) {
@@ -333,7 +334,8 @@ setMethod(
               "Test file: ", best_file_name(object@store.id, object@test.file)
             ),
             paste0(
-              "Store: ", best_store_name(object@store.id, object@test.file)
+              "Store: ",
+              best_store_name(object@store.id[[1L]], object@test.file)
             ),
             paste0("Reason: ", object@reason)
     ) ) ) )

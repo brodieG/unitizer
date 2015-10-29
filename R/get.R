@@ -160,6 +160,12 @@ get_unitizer.unitizer_result <- function(store.id) {
   store.id <- attr(store.id, "store.id")
   get_unitizer(store.id)
 }
+# used purely for testing, but has to be exported
+#' @export
+
+get_unitizer.unitizer_error_store <- function(store.id)
+  structure("error", class="unitizer_store_error")
+
 #' @rdname set_unitizer
 #' @export
 
@@ -200,8 +206,8 @@ get_unitizer.unitizer_results <- function(store.id) {
 #' @export
 #' @seealso \code{\link{get_unitizer}} for discussion of alternate
 #'   \code{store.id} objects
-#' @param store.id character(1L) file or directory name, the file name portion (i.e
-#'   after the last slash) may be partially specified
+#' @param store.id character(1L) file or directory name, the file name portion
+#'   (i.e after the last slash) may be partially specified
 #' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test file,
 #'   \code{"d"} for a directory, \code{"u"} for a \code{unitizer} directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
