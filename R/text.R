@@ -774,14 +774,17 @@ capture_output <- function(expr, env=parent.frame()) {
     sink(old.err.con, type="message")
     close(std.err.con)
     if(!success) {
+      # nocov start
+      # can't really test this easily
       try({
         cat(readLines(std.out), sep="\n")
         cat(readLines(std.err), sep="\n", file=stderr())
       })
+      # nocov end
     }
     unlink(files)
   })
-  eval(expr, env)
+  eval(substitute(expr), env)
   res <- suppressWarnings(lapply(files, readLines))
   success <- TRUE
   invisible(structure(res, class="captured_output"))
