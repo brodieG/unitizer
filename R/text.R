@@ -13,7 +13,7 @@ screen_out <- function(
     )
   stopifnot(is.int.pos.1L(width))
   if(length(txt)) {
-    txt.trim <- sub("\n$", "", txt)
+    txt.trim <- unlist(strsplit(txt, "\n"))
     txt.wrap <- word_wrap(txt.trim, width=width)
     out.len <- length(txt.wrap)
     txt.proc <- txt.wrap[
