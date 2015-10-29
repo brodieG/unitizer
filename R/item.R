@@ -19,7 +19,11 @@ NULL
 # @param ... additional arguments
 # @return TRUE on success, character vector explaining failure otherwise
 
-setGeneric("isValid", function(object, ...) standardGeneric("isValid"))
+setGeneric(
+  # nocov start
+  "isValid", function(object, ...) standardGeneric("isValid")
+  # nocov end
+)
 
 # - Classes -------------------------------------------------------------------
 
@@ -224,27 +228,38 @@ setMethod("show", "unitizerItem",
 # which objects have been kept from reference vs which ones are
 # new.
 
+# nocov start
 setGeneric("itemType", function(x, ...) standardGeneric("itemType"))
-setMethod("itemType", "unitizerItem", function(x) if(x@reference) "reference" else "new")
 setGeneric("itemType<-", function(x, value) standardGeneric("itemType<-"))
+setGeneric("itemsType<-", function(x, value) standardGeneric("itemsType<-"))
+setGeneric("itemsType", function(x, ...) standardGeneric("itemsType"))
+# nocov end
+setMethod(
+  "itemType", "unitizerItem",
+  function(x) if(x@reference) "reference" else "new"
+)
 setReplaceMethod("itemType", c("unitizerItem", "character"),
   function(x, value) {
-    if(!(value %in% c("new", "reference"))) stop("Argument `value` must be in ", deparse(c("new", "reference")))
+    if(!(value %in% c("new", "reference")))
+      stop("Argument `value` must be in ", deparse(c("new", "reference")))
     x@reference <- identical(value, "reference")
     x
 } )
-setGeneric("itemsType", function(x, ...) standardGeneric("itemsType"))
 setMethod("itemsType", "unitizerItems",
   function(x) {
-    vapply(as.list(x), function(y) if(y@reference) "reference" else "new", character(1L))
+    vapply(
+      as.list(x),
+      function(y) if(y@reference) "reference" else "new", character(1L)
+    )
 } )
-setGeneric("itemsType<-", function(x, value) standardGeneric("itemsType<-"))
 setReplaceMethod("itemsType", c("unitizerItems", "character"),
   function(x, value) {
     if(length(value) != 1L & !identical(length(x), length(value))) {
-      stop("Argument `value` must be length 1L or have same length as argument `x`")
+      stop(
+        "Argument `value` must be length 1L or have same length as argument `x`")
     }
-    if(!all(value %in% c("reference", "new"))) stop("Argument `value` may only contain ", deparse(c("new", "reference")))
+    if(!all(value %in% c("reference", "new")))
+      stop("Argument `value` may only contain ", deparse(c("new", "reference")))
     if(length(x)) {
       x@.items <- mapply(function(y, z) {
           y@reference <- identical(z, "reference")
@@ -263,7 +278,10 @@ setGeneric("ignored", function(x, ...) standardGeneric("ignored"))
 # to be tests, rather, they are set up steps for the actual test.  At the
 # time of this writing, top level assignments are included in this group.
 
-setMethod("ignored", "unitizerItems", function(x, ...) vapply(as.list(x), function(y) y@ignore, logical(1L)))
+setMethod(
+  "ignored", "unitizerItems",
+  function(x, ...) vapply(as.list(x), function(y) y@ignore, logical(1L))
+)
 setMethod("ignored", "unitizerItem", function(x, ...) x@ignore)
 
 # - Multi Object Methods -------------------------------------------------------
@@ -282,7 +300,10 @@ setMethod("+", c("unitizerItems", "unitizerItemOrNULL"),
 
 #' @rdname unitizer_s4method_doc
 
-setMethod("+", c("unitizerItems", "unitizerItems"), function(e1, e2) append(e1, e2))
+setMethod("+",
+  c("unitizerItems", "unitizerItems"),
+  function(e1, e2) append(e1, e2)
+)
 
 #' Retrieve Test Contents From Test Item
 #'

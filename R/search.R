@@ -23,14 +23,18 @@ setClass(
   }
 )
 setGeneric(
+  # nocov start
   "unitizerGetPaths", function(x, ...) StandardGeneric("unitizerGetPaths")
+  # nocov end
 )
 setMethod(
   "unitizerGetPaths", "unitizerSearchData",
   function(x, ...) lapply(as.list(x), attr, "path")
 )
 setGeneric(
+  # nocov start
   "unitizerGetVersions", function(x, ...) StandardGeneric("unitizerGetVersions")
+  # nocov end
 )
 setMethod(
   "unitizerGetVersions", "unitizerSearchData",
@@ -429,10 +433,13 @@ unload_namespaces <- function(
         unloaded.try <- c(unloaded.try, i)
         attempt <- try(unloadNamespace(tar.ns))
         if(inherits(attempt, "try-error")) {
+          # nocov start
+          # no good way to test this
           warning(
             "Error while attempting to unload namespace `", tar.ns, "`",
             immediate.=TRUE
           )
+          # nocov end
         } else {
           unloaded.success <- c(unloaded.success, tar.ns)
         }
@@ -454,10 +461,13 @@ unload_namespaces <- function(
   for(i in names(dls.to.ul)) library.dynam.unload(i, dls.to.ul[i])
 
   if(length(lns)) {
+    # nocov start
+    # no good way to test this
     warning(
       "Unable to unload the following namespaces:\n", deparse(names(lns)),
       immediate.=TRUE
     )
+    # nocov end
   }
   # Warn if some namespaces could not be unloaded (likely due to dependency),
   # and register the conflict if we're tracking options
@@ -558,8 +568,10 @@ move_on_path <- function(new.pos, old.pos, global) {
 # not modified so we can match between a list with duplicates and one without.
 
 setGeneric(
+  # nocov start
   "unitizerUniqueNames", function(x, ...)
   StandardGeneric("unitizerUniqueNames")
+  # nocov end
 )
 setMethod(
   "unitizerUniqueNames", "unitizerSearchData",

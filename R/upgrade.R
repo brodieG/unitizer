@@ -212,7 +212,7 @@ addSlot <- function(object, slot.name, slot.value) {
 # Basically assumes old name exists in object, but not in new class definition
 
 renameSlot <- function(object, old.name, new.name) {
-  stopifnot( isS4(object), is.chr1(old.name), is.chr1(new.name))
+  stopifnot(isS4(object), is.chr1(old.name), is.chr1(new.name))
   slots <- slotNames(object)
   stopifnot(!old.name %in% slots, new.name %in% slots)
   old.slot <- try(slot(object, old.name))
