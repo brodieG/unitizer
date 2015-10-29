@@ -3,20 +3,27 @@
 #' @keywords internal
 
 screen_out <- function(
-  txt, max.len=getOption("unitizer.test.out.lines"), file=stdout()
+  txt, max.len=getOption("unitizer.test.out.lines"), file=stdout(),
+  width=getOption("width")
 ) {
   if(!is.numeric(max.len) || !length(max.len) == 2 || max.len[[1]] < max.len[[2]])
-    stop("Argument `max.len` must be a two length numeric vector with first value greater than second")
-  if(out.len <- length(txt)) {
-    txt.proc <- txt[
+    stop(
+      "Argument `max.len` must be a two length numeric vector with first value ",
+      "greater than second"
+    )
+  stopifnot(is.int.pos.1L(width))
+  if(length(txt)) {
+    txt.wrap <- word_wrap(txt, width=width)
+    out.len <- length(txt.wrap)
+    txt.proc <- txt.wrap[
       1L:min(out.len, if(out.len > max.len[[1]]) max.len[[2]] else Inf)
     ]
-    lapply(txt.proc, function(x) word_cat(x, file=file))
+    cat(txt.proc, sep="\n", file=file)
     if(out.len > max.len[[1]]) {
       word_cat(
-        "... truncated", out.len - max.len[[2]],
-        "line", if(out.len - max.len[[2]] > 1) "s",
-        file=file
+        "... truncated ", out.len - max.len[[2]],
+        " line", if(out.len - max.len[[2]] > 1) "s",
+        file=file, sep=""
       )
 } } }
 #' Show a Faux Diff Between Two Objects
@@ -343,14 +350,19 @@ word_wrap <- function(
   x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE,
   collapse=NULL
 ) {
-  if(!is.character(x) || !is.integer(width) || length(width) != 1L || is.na(width))
-    stop("Invalid arguments")
   stopifnot(
+    is.character(x), is.int.pos.1L(width),
     is.integer(tolerance) && length(tolerance) == 1L && !is.na(tolerance) &&
     tolerance >= 0L,
     is.null(collapse) || is.chr1(collapse)
   )
-  stopifnot(width > 4L && width - tolerance > 2L)
+  if(!(width > 4L && width - tolerance > 2L)) {
+    warning(
+      "Display width too narrow to properly wrap text; setting to 80L"
+    )
+    width <- 80L
+    tolerance <- 8L
+  }
   width <- as.integer(width)
 
   # Define patterns, should probably be done outside of function
