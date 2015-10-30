@@ -5,7 +5,7 @@ test_that("copy fastlm dir works", {
   x <- copy_fastlm_to_tmpdir()
   expect_identical(
     list.files(x),
-    c("DESCRIPTION", "man", "NAMESPACE", "R", "tests")
+    c("DESCRIPTION", "man", "NAMESPACE", "R", "tests", "unitizer.fastlm.Rcheck")
   )
   expect_identical(
     readLines(file.path(x, "DESCRIPTION"))[[5L]],

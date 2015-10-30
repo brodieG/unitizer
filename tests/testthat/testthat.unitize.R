@@ -118,6 +118,7 @@ untz3a.first <- capture.output(print(untz3a[[1L]]))
 
 unitizer:::read_line_set_vals(
   c(
+    "3000",                         # Invalid input
     "3",                            # Review third unitizer
     "Y", "Y", "Y", "Y",             # Accept all
     "R"                             # Re-eval and exit (again, not clear this is right thing to do)
@@ -136,6 +137,9 @@ untz3b.get.all <- vapply(get_unitizer(untz3b), class, character(1L))
 test_that("unitize_dir", {
   expect_equal_to_reference(
     txt3a, file.path("helper", "refobjs", "unitize_txtdir.rds")
+  )
+  expect_equal_to_reference(
+    txt3b, file.path("helper", "refobjs", "unitize_txtdir1.rds")
   )
   expect_identical(
     class(untz3a), "unitizer_results"
@@ -168,8 +172,10 @@ txt6 <- unitizer:::capture_output(
   try(unitize_dir(test.dir, state="pristine", interactive.mode=FALSE))
 )
 txt7 <- unitizer:::capture_output(
-  try(unitize(file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE))
-)
+  try(
+    unitize(
+      file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE
+) ) )
 options(old.keep.ns)
 test_that("namespace conflict", {
   expect_equal_to_reference(
@@ -183,6 +189,30 @@ test_that("namespace conflict", {
   )
   expect_equal_to_reference(
     txt7, file.path("helper", "refobjs", "unitize_nsconf3.rds")
+  )
+})
+# Removing tests; del2 has the same tests as del1, but with some removed
+
+extra.dir <- file.path(test.dir,"..", "extra")
+"YYYY"
+txt7aa <- unitizer:::capture_output(
+  unitize(
+    file.path(extra.dir, "del1.R"), auto.accept="new", interactive.mode=FALSE
+  )
+)
+unitizer:::read_line_set_vals(c("Y", "YY", "Y", "Y"))
+txt7ab <- unitizer:::capture_output(
+  unitize(
+    file.path(extra.dir, "del2.R"),
+    store.id=file.path(extra.dir, "del1.unitizer"),
+    interactive.mode=TRUE
+) )
+test_that("Removing Tests", {
+  expect_equal_to_reference(
+    txt7aa, file.path("helper", "refobjs", "unitize_rem1.rds")
+  )
+  expect_equal_to_reference(
+    txt7aa, file.path("helper", "refobjs", "unitize_rem2.rds")
   )
 })
 # Update `fastlm` to cause unitizers to fail, and go through the errors

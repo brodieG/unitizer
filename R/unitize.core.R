@@ -63,47 +63,12 @@ unitize_core <- function(
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
 
-  # Check if we want the special "in.pkg" state
+  # Validate state; note that due to legacy code we disassemble state into the
+  # par.env and other components
 
-  if(is.character(state) && identical(state[[1L]], "in.pkg")) {
-    err.inf <- c(
-      "If you want to run tests in a specific namespace you may specify it ",
-      "expicitly by using a `unitizerState` object as the value for ",
-      "the `state` parameter; see `?unitizerState` for details."
-    )
-    pkg.dir <- get_package_dir(test.files[[1L]])
-    if(length(pkg.dir)) {
-      pkg.name <- try(get_package_name(pkg.dir))
-      if(inherits(pkg.name, "try-error"))
-        stop(
-          word_wrap(collapse="\n",
-            cc(
-              "First test file does not appear to be inside an R package so ",
-              "we cannot identify the namespace to run tests in. ", err.inf
-        ) ) )
-      state <- try(unitizerStateDefault(par.env=pkg.name))
-      if(inherits(state, "try-error")) {
-        stop(
-          word_wrap(collapse="\n",
-            cc(
-              "Unable to instantiate state object in '", pkg.name, "' ",
-              "namespace environment."
-        ) ) )
-      }
-    } else stop(
-      word_wrap(collapse="\n",
-        cc(
-          "First test file does not appear to be part of a package, so we ",
-          "cannot run with `state=\"in.pkg\"`. ", err.inf
-      ) )
-    )
-  } else {
-    # Validate state; note that due to legacy code we disassemble state into the
-    # par.env and other components
-
-    state <- is.valid_state(state)
-    if(!is(state, "unitizerState")) stop("Argument `state` is invalid")
-  }
+  state <- try(as.state(state, test.files))
+  if(inherits(state, "try-error"))
+    stop("Argument `state` could not be evaluated.")
   par.env <- state@par.env
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
@@ -184,10 +149,14 @@ unitize_core <- function(
     if(!identical(pick, "Y"))
       stop("Cannot proceed without creating directories.")
     if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
+      # nocov start
+      # no good way to test
       stop(
         "Cannot proceed, failed to create the following directories:\n",
         paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
-  ) } }
+      )
+      # nocov end
+  } }
   # Ensure directory names are normalized, but only if dealing with char objects
 
   norm.attempt <- try(
@@ -212,7 +181,7 @@ unitize_core <- function(
 
   opts <- options()
   opts.untz <- opts[grep("^unitizer\\.", names(opts))]
-  validate_options(opts.untz)
+  validate_options(opts.untz, test.files)
 
   # Initialize new tracking object; this will also record starting state and
   # store unitizer options; open question of how exposed we want to be to
@@ -301,6 +270,9 @@ unitize_core <- function(
       }
       if(!is.null(test.dir)) setwd(test.dir)
     } else {
+      # nocov start
+      # currently no way to get here since there is no way to specify multiple
+      # files other than by directory
       warning(
         word_wrap(collapse="\n",
           cc(
@@ -311,6 +283,11 @@ unitize_core <- function(
         ) ),
         immediate.=TRUE
       )
+      stop(
+        "Logic Error: shouldn't be able to evaluate this code; ",
+        "contact maintainer"
+      )
+      # nocov end
   } }
   # - Parse / Load -------------------------------------------------------------
 
@@ -374,15 +351,24 @@ unitize_core <- function(
     # Gather user input, and store tests as required.  Any unitizers that
     # the user marked for re-evaluation will be re-evaluated in this loop
 
-    unitizers[valid] <- unitize_browse(
-      unitizers=unitizers[valid],
-      mode=mode,
-      interactive.mode=interactive.mode,
-      force.update=force.update,
-      auto.accept=auto.accept,
-      history=history,
-      global=global
+    interactive.fail <- FALSE
+    withRestarts(
+      unitizers[valid] <- unitize_browse(
+        unitizers=unitizers[valid],
+        mode=mode,
+        interactive.mode=interactive.mode,
+        force.update=force.update,
+        auto.accept=auto.accept,
+        history=history,
+        global=global
+      ),
+      unitizerInteractiveFail=function(e) interactive.fail <<- TRUE
     )
+    if(interactive.fail) { # blergh, cop out
+      on.exit(NULL)
+      reset_and_unshim(global)
+      stop("Cannot proceed in non-interactive mode.")
+    }
     # Track whether updated, valid, etc.
 
     updated.new <-
@@ -710,10 +696,14 @@ unitize_browse <- function(
               paste0(
                 "unitizer for: ", getName(unitizers[[i]]), collapse=""
           ) ) )
-          if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])  # summaries don't really work well in review mode if the tests are not evaluated
+          # summaries don't really work well in review mode if the tests are
+          # not evaluated
+          if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])
+          # annoyingly we need to force update here as well as for
+          # the unreviewed unitizers
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]],
-            force.update=force.update,  # annoyingly we need to force update here as well as for the unreviewed unitizers
+            force.update=force.update,
           )
           summaries@updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer
@@ -755,16 +745,16 @@ unitize_browse <- function(
               sep=""
             )
           }
-          stop(
-            word_wrap(collapse="\n",
-              cc(
-                "Newly evaluated tests do not match unitizer (",
-                paste(
-                  names(summaries@totals), summaries@totals, sep=": ",
-                  collapse=", "
-                ),
-                "); see above for more info, or run in interactive mode"
-          ) ) )
+          non.zero <- which(summaries@totals > 0)
+          word_msg(sep="",
+            "Newly evaluated tests do not match unitizer (",
+            paste(
+              names(summaries@totals[non.zero]), summaries@totals[non.zero],
+              sep=": ", collapse=", "
+            ),
+            "); see above for more info, or run in interactive mode."
+          )
+          invokeRestart("unitizerInteractiveFail")
         }
         # - Simple Outcomes / no-review -----------------------------------------
 
@@ -819,15 +809,20 @@ check_call_stack <- function() {
     )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
-  if("unitizerQuitExit" %in% restart.names)
+  reserved.restarts <- c("unitizerQuitExit", "unitizerInteractiveFail")
+  if(any(res.err <- reserved.restarts %in% restart.names)) {
+    many <- sum(res.err) > 1L
     stop(
       word_wrap(collapse="\n",
         cc(
-          "`unitizerQuitExit` restart is already defined; unitizer relies ",
-          "on this restart to restore state prior to exit, so unitizer will ",
-          "not run if it is defined outside of `unitize`.  If you did not ",
-          "define this restart contact maintainer."
-    ) ) )
+          deparse(reserved.restarts[res.err], width.cutoff=500L),
+          "restart", if(many) "s are" else "  is", " already defined; ",
+          "unitizer relies on ", if(many) "these restarts" else "this restart",
+          "to manage evaluation so unitizer will not run if ",
+          if(many) "they are" else "it is", "defined outside of `unitize`.  ",
+          "If you did not define ", if(many) "these restarts" else
+          "this restart", " contact maintainer."
+  ) ) ) }
 }
 #' Helper function for validations
 #'

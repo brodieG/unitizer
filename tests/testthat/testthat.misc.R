@@ -93,6 +93,9 @@ test_that("deparse_mixed", {
   x <- quote(1 + b)
   x[[3]] <- b
   expect_equal(unitizer:::deparse_mixed(x), "quote(1 + 1:3)")
+  y <- quote(1 + 3 + b)
+  y[[3]] <- b
+  expect_equal(unitizer:::deparse_mixed(y), "quote(1 + 3 + 1:3)")
 })
 
 test_that("(Un)ordered Lists", {
@@ -170,6 +173,25 @@ test_that("Compare Functions With Traces", {
   expect_error(unitizer:::identical_fun(1, base::library))
   expect_error(unitizer:::identical_fun(base::library, 1))
   expect_true(unitizer:::identical_fun(base::print, base::print))
+  # make sure all.equal dispatches properly out of namespace
+  expect_equal(
+    evalq(
+      all.equal(
+        new("conditionList", .items=list(
+            simpleWarning("warning", quote(yo + yo)),
+            simpleWarning("warning2", quote(yo2 + yo)),
+            simpleWarning("warning3", quote(yo3 + yo)),
+            simpleError("error1", quote(make_an_error()))
+        ) ),
+        new("conditionList", .items=list(
+            simpleWarning("warning", quote(yo + yo)),
+            simpleWarning("warning2", quote(yo2 + yo)),
+            simpleError("error1", quote(make_an_error()))
+      ) ) ),
+      envir=getNamespace("stats")
+    ),
+    "Condition count mismatch; expected 4 (got 3)"
+  )
 } )
 test_that("word_cat", {
   str <- "Humpty dumpty sat on a wall and took a big fall.  All the kings horses and men couldn't put humpty dumpty together again"
@@ -223,7 +245,9 @@ test_that("relativize_path", {
     do.call(
       file.path,
       c(
-        as.list(rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)),
+        as.list(
+          rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)
+        ),
         list("a/b/c/d/e/x.txt")
   ) ) )
 
@@ -261,5 +285,11 @@ test_that("is", {
 test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
+})
+test_that("quit restart", {
+  expect_equal(
+    withRestarts(unitizer:::unitizer_quit(), unitizerQuitExit=function(e) e),
+    list(save="default", status=0, runLast=TRUE)
+  )
 })
 

@@ -160,6 +160,12 @@ get_unitizer.unitizer_result <- function(store.id) {
   store.id <- attr(store.id, "store.id")
   get_unitizer(store.id)
 }
+# used purely for testing, but has to be exported
+#' @export
+
+get_unitizer.unitizer_error_store <- function(store.id)
+  structure("error", class="unitizer_store_error")
+
 #' @rdname set_unitizer
 #' @export
 
@@ -200,8 +206,8 @@ get_unitizer.unitizer_results <- function(store.id) {
 #' @export
 #' @seealso \code{\link{get_unitizer}} for discussion of alternate
 #'   \code{store.id} objects
-#' @param store.id character(1L) file or directory name, the file name portion (i.e
-#'   after the last slash) may be partially specified
+#' @param store.id character(1L) file or directory name, the file name portion
+#'   (i.e after the last slash) may be partially specified
 #' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test file,
 #'   \code{"d"} for a directory, \code{"u"} for a \code{unitizer} directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
@@ -400,14 +406,6 @@ is_package_dir <- function(name, has.tests=FALSE) {
   if(inherits(pkg.name, "try-error"))
     return(conditionMessage(attr(pkg.name, "condition")))
 
-  # # this is not actually a requirement
-  # if(!identical(tolower(dir.name), tolower(pkg.name)))
-  #   return(
-  #     paste0(
-  #       "DESCRIPTION package name (", pkg.name,
-  #       ") does not match dir name (", dir.name, ")"
-  #   ) )
-
   # Has requisite directories?
 
   if(!file_test("-d", file.path(name, "R")))
@@ -421,18 +419,54 @@ is_package_dir <- function(name, has.tests=FALSE) {
 }
 get_package_dir <- function(name=getwd(), has.tests=FALSE) {
   stopifnot(
-    is.chr1(name), is.TF(has.tests)
+    is.character(name), !any(is.na(name)), is.TF(has.tests),
+    as.logical(length(name))
   )
+  if(length(name) > 1L) name <- attr(unique_path(name), "common_dir")
   is.package <- FALSE
   prev.dir <- par.dir <- name
 
   repeat {
-    if(isTRUE(is_package_dir(par.dir, has.tests))) return(par.dir)
+    if(isTRUE(is_package_dir(par.dir, has.tests))) {
+      return(par.dir)
+    } else if (isTRUE(is_rcmdcheck_dir(par.dir, has.tests))) {
+      return(get_rcmdcheck_dir(par.dir, has.tests))
+    }
     if(nchar(par.dir <- dirname(prev.dir)) >= nchar(prev.dir)) break
     prev.dir <- par.dir
   }
   character(0L)
 }
+# Checks Whether a Directory Could be of the Type Used by R CMD check
+
+is_rcmdcheck_dir <- function(name, has.tests=FALSE) {
+  stopifnot(is.chr1(name), is.TF(has.tests))
+  dir <- basename(name)
+  if(grepl(".*\\.Rcheck", dir)) {
+    pkg.name <- sub("(.*)\\.Rcheck", "\\1", dir)
+    if(identical(pkg.name, dir))
+      stop(
+        "Logic error; failed extracting package name from Rcheck dir; ",
+        "contact maintianer"
+      )
+    if(isTRUE(is.pd <- is_package_dir(file.path(name, pkg.name), has.tests))) {
+      return(TRUE)
+    } else return(is.pd)
+  } else return("not a .Rcheck directory")
+}
+# Extracts the Source Directory from an R CMD check directory
+
+get_rcmdcheck_dir <- function(name, has.tests=FALSE) {
+  stopifnot(is.chr1(name), is.TF(has.tests))
+  if(isTRUE(chk.dir <- is_rcmdcheck_dir(name, has.tests))) {
+    pkg.name <- sub("(.*)\\.Rcheck", "\\1", basename(name))
+    return(file.path(name, pkg.name))
+  } else stop("Logic Error: not an R CMD check dir")
+}
+# Pulls Out Package Name from DESCRIPTION File
+#
+# Dir must be a package directory, check with is_package_dir first
+
 get_package_name <- function(pkg.dir) {
   stopifnot(is.chr1(pkg.dir))
 

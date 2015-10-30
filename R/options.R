@@ -200,11 +200,28 @@ options_zero <- function(
   curr.opts.nms <- names(curr.opts)
   curr.opts.asis <- unlist(lapply(as.is, grep, curr.opts.nms, value=TRUE))
 
-  # Drop unneeded options
+  # Drop unneeded options; need to do 1 by 1 as some options cannot be easily
+  # reset
 
   null.opts <- setdiff(names(curr.opts), c(nms, curr.opts.asis))
-  options(setNames(vector("list", length(null.opts)), null.opts))
-
+  all.opts <- c(
+    setNames(vector("list", length(null.opts)), null.opts), base
+  )
+  opt.success <- vapply(names(all.opts),
+    function(opt.name) {
+      opt.attempt <- try(options(all.opts[opt.name]))
+      return(!inherits(opt.attempt, "try-error"))
+    },
+    logical(1L)
+  )
+  if(!all(opt.success)) {
+    warning(
+      word_wrap(
+        cc(
+          "Unable to reset following options: ",
+          cat(deparse(names(all.opts)[!opt.success]), width.cutoff=500L)
+    ) ) )
+  }
   # Reset others
 
   options(base)
@@ -259,7 +276,7 @@ options_update <- function(tar.opts) {
 #' @rdname options_extra
 #' @keywords internal
 
-validate_options <- function(opts.to.validate) {
+validate_options <- function(opts.to.validate, test.files=NULL) {
   stopifnot(
     is.list(opts.to.validate),
     all(grep("^unitizer\\.", names(opts.to.validate)))
@@ -338,7 +355,7 @@ validate_options <- function(opts.to.validate) {
       )
         stop("Option `unitizer.namespace.keep.base` must be character and not NA")
 
-      if(!is(is.valid_state(unitizer.state), "unitizerState"))
+      if(!is(try(as.state(unitizer.state, test.files)), "unitizerState"))
         stop("Option `unitizer.state` is invalid; see prior errors")
       if(!is.list(unitizer.opts.init))
         stop("Option `unitizer.opts.init` must be a list")

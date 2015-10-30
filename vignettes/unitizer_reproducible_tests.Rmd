@@ -79,7 +79,9 @@ Aside from the issues raised above, this method is not completely robust.  Any t
 
 ### Package Namespace as Parent Environment
 
-Sometimes it is convenient to BLAH BLAH ON RUNNING IN NAMESPACE, JUST MAKE SURE TO POINT OUT IF YOU DO THIS THEN YOU HAVE NO WAY OF AVOIDING BEING EXPOSED TO GLOBAL WORKSPACE.
+Sometimes it is convenient to use the namespace of a package as the parent environment.  This allows you to write tests that use internal package functions without having to resort to `:::`.  You can set the parent evaluation environment with the `state` argument to `unitize` / `unitize_dir`.  See `?unitize` and `?unitizeState`.
+
+If you do use this feature keep in mind that your tests will be exposed to the global environment as well since R looks through the search path after looking in the package namespace and imports.
 
 ### Test Environments
 

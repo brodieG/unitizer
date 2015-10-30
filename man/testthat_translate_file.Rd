@@ -9,12 +9,13 @@
 \usage{
 testthat_translate_file(file.name, target.dir = file.path(dirname(file.name),
   "..", "unitizer"), state = getOption("unitizer.state"),
-  keep.testthat.call = TRUE, prompt = "always", ...)
+  keep.testthat.call = TRUE, prompt = "always",
+  interactive.mode = interactive(), ...)
 
 testthat_translate_dir(dir.name, target.dir = file.path(dir.name, "..",
   "unitizer"), filter = "^test.*\\\\.[rR]",
   state = getOption("unitizer.state"), keep.testthat.call = TRUE,
-  force = FALSE, ...)
+  force = FALSE, interactive.mode = interactive(), ...)
 
 testthat_translate_name(file.name, target.dir = file.path(dirname(file.name),
   "..", "unitizer"), name.new = NULL,
@@ -40,6 +41,12 @@ was converted, as a comment}
   \item "overwrite" only prompt if existing file is about to be overwritten
   \item "never" never prompt
 }}
+
+\item{interactive.mode}{logical(1L) primarily for testing purposes, allows
+us to force prompting in non-interactive mode; note that \code{unitize}
+and \code{unitize_dir} are always called in non-interactive mode by these
+functions, this parameter only controls prompts generated directly by these
+functions.}
 
 \item{...}{params to pass on to \code{testthat_translate_name}}
 

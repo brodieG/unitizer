@@ -42,9 +42,22 @@ local( {
   my.unitizer <- new("unitizer", id=1, zero.env=new.env())
   my.unitizer <- my.unitizer + ref.exps   # add ref.exps as new items
   my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
-  my.unitizer2 <- my.unitizer2 + my.unitizer@items.new    # now convert them to reference items
+  # now convert them to reference items
+  my.unitizer2 <- my.unitizer2 + my.unitizer@items.new
   my.unitizer2 <- my.unitizer2 + new.exps   # now test against new.exps
 
+  test_that("item funs", {
+    item <- my.unitizer@items.new[[1L]]
+    expect_equal(unitizer:::itemType(item), "new")
+    expect_error(unitizer:::itemType(item) <- "asdfasd", "must be in")
+    unitizer:::itemType(item) <- "reference"
+    expect_equal(unitizer:::itemType(item), "reference")
+    expect_error(
+      unitizer:::itemsType(my.unitizer@items.new) <- as.character(1:1000),
+      "have same length"
+    )
+    expect_error(item$booboo, "must be in")
+  })
   test_that("unitizer creation worked as expected", {
     expect_true(validObject(my.unitizer, complete=TRUE))
     expect_equal(
@@ -54,9 +67,20 @@ local( {
     expect_equal(length(my.unitizer2), length(new.exps))
     expect_equal(length(my.unitizer2@items.new), length(new.exps))
     expect_equal(length(my.unitizer2@items.ref), length(ref.exps))
-    expect_equal(as.expression(lapply(unitizer:::as.list(my.unitizer2@items.new), slot, "call")), new.exps)
-    expect_equal(as.expression(lapply(unitizer:::as.list(my.unitizer2@items.ref), slot, "call")), ref.exps)
-
+    expect_equal(
+      as.expression(
+        lapply(
+          unitizer:::as.list(my.unitizer2@items.new), slot, "call"
+      ) ),
+      new.exps
+    )
+    expect_equal(
+      as.expression(
+        lapply(
+          unitizer:::as.list(my.unitizer2@items.ref), slot, "call"
+      ) ),
+      ref.exps
+    )
     vals <- lapply(
       unitizer:::as.list(my.unitizer2@items.new), function(x) x@data@value[[1L]]
     )
@@ -367,7 +391,6 @@ local( {
   my.unitizer8 <- new("unitizer", id=3, zero.env=new.env())
   new.exps5 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
   my.unitizer9 <- new("unitizer", id=4, zero.env=new.env())
-  try(stop("Flushing warnings"))
   x <- my.unitizer9 + new.exps5
 
   test_that("Misc", {

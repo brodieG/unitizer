@@ -25,7 +25,9 @@
 \alias{all.equal,unitizerSearchData,unitizerSearchData-method}
 \alias{append,factor,factor-method}
 \alias{append,unitizerList,ANY-method}
+\alias{as.character,unitizer-method}
 \alias{as.character,unitizerBrowse-method}
+\alias{as.character,unitizerInPkg-method}
 \alias{as.data.frame,unitizerBrowse-method}
 \alias{as.list,unitizerList-method}
 \alias{c,unitizerList-method}
@@ -38,6 +40,7 @@
 \alias{names<-,unitizerList-method}
 \alias{show,unitizerBrowse-method}
 \alias{show,unitizerDummy-method}
+\alias{show,unitizerInPkg-method}
 \alias{show,unitizerItem-method}
 \alias{show,unitizerItemTestsErrors-method}
 \alias{show,unitizerLoadFail-method}
@@ -105,6 +108,10 @@
 \S4method{all.equal}{unitizerSearchData,unitizerSearchData}(target, current,
   ...)
 
+\S4method{as.character}{unitizerInPkg}(x, ...)
+
+\S4method{show}{unitizerInPkg}(object)
+
 \S4method{show}{unitizerState}(object)
 
 \S4method{all.equal}{unitizerGlobalState,unitizerGlobalState}(target, current,
@@ -129,6 +136,8 @@
 \S4method{summary}{unitizerObjectList}(object, silent = FALSE, ...)
 
 \S4method{show}{unitizerObjectListSummary}(object)
+
+\S4method{as.character}{unitizer}(x, ...)
 
 \S4method{+}{unitizer,unitizerSection}(e1, e2)
 

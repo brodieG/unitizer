@@ -2,33 +2,63 @@ library("testthat")
 library("unitizer")
 context("Translate")
 
+if(!file_test("-d", file.path("helper", "refobjs")))
+  stop("Make sure wd is set to tests/testthat")
+
 test.file <- "helper/translate/testthat/test-translate2.R"
 target.dir.base <- tempfile()
 target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
-res1 <- testthat_translate_file(test.file, target.dir, prompt="overwrite")  # has to be outside of `testthat`
+
+# Must prompt to create directory when promp = "always"
+
+test_that("Prompt to create dir", {
+  expect_error(
+    testthat_translate_file(
+      test.file, target.dir, prompt="always", interactive.mode=FALSE
+    ),
+    "Unable to proceed"
+  )
+})
+# translations have to be outside of `testthat`; second translation should fail
+# except we allow manual input
+
+unitizer:::read_line_set_vals(c("Y"))
+res1 <- testthat_translate_file(
+  test.file, target.dir, prompt="always", interactive.mode=TRUE
+)
+res1.txt <- readLines(res1)
+unitizer:::read_line_set_vals(c("Y"))
+res2 <- testthat_translate_file(
+  test.file, target.dir, prompt="overwrite", interactive.mode=TRUE
+)
+res2.txt <- readLines(res2)
+unitizer:::read_line_set_vals(NULL)
+
 dummy <- new("unitizerDummy")
 
 test_that("translate a file", {
-  expect_equal(
-    readLines(res1),
-    c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "# expect_equal(rev(10:1), 1:10)", "rev(10:1)", "# test_that(\"simple tests\", {", "#     expect_equal(fun0(a), 1:10)", "#     expect_equal(fun1(a, b, c, d, e, f), runif(20))", "#     expect_true(fun1(a))", "# })", "unitizer_sect(\"simple tests\", {", "    # first internal", "    # expect_equal(fun0(a), 1:10)", "    fun0(a)", "    # internal comment", "    # expect_equal(fun1(a, b, c, d, e, f), runif(20))", "    fun1(a, b, c, d, e, f)", "    # \"external\" comment", "    # expect_true(fun1(a))", "    fun1(a)", "})", "# a test for errors", "# test_that(\"errors\", {", "#     expect_error(stop(\"hello\"))", "#     expect_warning(warning(\"yoyo\"))", "# })", "unitizer_sect(\"errors\", {", "    # Making up sections", "    # expect_error(stop(\"hello\"))", "    stop(\"hello\")", "    # expect_warning(warning(\"yoyo\"))", "    warning(\"yoyo\")", "})")
+  expect_equal_to_reference(
+    res1.txt, file.path("helper", "refobjs", "translate_res1.rds")
   )
-  # Can't do this twice in a row without prompting in non-interactive mode
+  expect_equal(res1.txt, res2.txt)
 
-  if(!interactive()) {
-    expect_error(
-      testthat_translate_file(test.file, target.dir, prompt="always"),
-      "Unable to proceed"
-    )
-  }
+  # Can't do this twice in a row without prompting in non-interactive mode
+  # note test above does work because we use interactive mode to accept prompt
+
+  expect_error(
+    testthat_translate_file(
+      test.file, target.dir, prompt="always", interactive.mode=FALSE
+    ),
+    "Unable to proceed"
+  )
   untz <- get_unitizer(file.path(target.dir, "translate2.unitizer"))
-  expect_equal(
+  expect_equal_to_reference(
     untz@items.ref.calls.deparse,
-    c("set.seed(1)", "rev(10:1)", "fun0(a)", "fun1(a, b, c, d, e, f)", "fun1(a)", "stop(\"hello\")", "warning(\"yoyo\")")
+    file.path("helper", "refobjs", "translate_res2.rds")
   )
   expect_equal(
     lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value[[1L]]),
-    list(dummy, 1:10, NULL, NULL, NULL, NULL, "yoyo")
+    list(dummy, 1:10, NULL, NULL, NULL, NULL, "yoyo", NULL)
   )
 })
 unlink(target.dir, recursive=TRUE)
@@ -38,22 +68,22 @@ target.dir <- file.path(target.dir.base, "helper/translate/unitizer")
 res2 <- testthat_translate_dir(test.dir, target.dir)  # has to be outside of `testthat`
 
 test_that("translate a dir", {
-  expect_equal(
+  expect_equal_to_reference(
     lapply(res2, readLines),
-    list(c("# for translate unitizer tests", "# blah blah", "# expect_equal(fun0(a), 1:10)", "fun0(a)", "# expect_true(fun1(a))", "fun1(a)", "# a test for errors", "# expect_error(stop(\"hello\"))", "stop(\"hello\")", "random_function()"), c("# for translate unitizer tests", "set.seed(1)", "# context(\"testthat to unitizer\")", "# random non-sectioned", "# blah blah", "# expect_equal(rev(10:1), 1:10)", "rev(10:1)", "# test_that(\"simple tests\", {", "#     expect_equal(fun0(a), 1:10)", "#     expect_equal(fun1(a, b, c, d, e, f), runif(20))", "#     expect_true(fun1(a))", "# })", "unitizer_sect(\"simple tests\", {", "    # first internal", "    # expect_equal(fun0(a), 1:10)", "    fun0(a)", "    # internal comment", "    # expect_equal(fun1(a, b, c, d, e, f), runif(20))", "    fun1(a, b, c, d, e, f)", "    # \"external\" comment", "    # expect_true(fun1(a))", "    fun1(a)", "})", "# a test for errors", "# test_that(\"errors\", {", "#     expect_error(stop(\"hello\"))", "#     expect_warning(warning(\"yoyo\"))", "# })", "unitizer_sect(\"errors\", {", "    # Making up sections", "    # expect_error(stop(\"hello\"))", "    stop(\"hello\")", "    # expect_warning(warning(\"yoyo\"))", "    warning(\"yoyo\")", "})"))
+    file.path("helper", "refobjs", "translate_res3.rds")
   )
   untz <- get_unitizer(file.path(target.dir, "translate2.unitizer"))
 
-  expect_equal(
+  expect_equal_to_reference(
     untz@items.ref.calls.deparse,
-    c("set.seed(1)", "rev(10:1)", "fun0(a)", "fun1(a, b, c, d, e, f)", "fun1(a)", "stop(\"hello\")", "warning(\"yoyo\")")
+    file.path("helper", "refobjs", "translate_res4.rds")
   )
   # Note not the same as when we did just the single file because the helper
   # file is loaded so `fun0` and `fun1` are actually defined
 
   expect_equal(
     lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value[[1L]]),
-    list(dummy, 1:10, 42, 24, 24, NULL, "yoyo")
+    list(dummy, 1:10, 42, 24, 24, NULL, "yoyo", NULL)
   )
   # Can't do it again since there are files there
 

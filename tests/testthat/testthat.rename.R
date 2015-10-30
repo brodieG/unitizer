@@ -1,9 +1,8 @@
 library(unitizer)
 context("Rename")
 
-x <- readRDS("helper/trivial.unitizer/data.rds")
-
 test_that("Rename Works", {
+  x <- readRDS("helper/trivial.unitizer/data.rds")
   x.edit <- editCalls(x, quote(x), quote(y), interactive.only=FALSE)
 
   expect_identical(
@@ -18,5 +17,11 @@ test_that("Rename Works", {
       x.edit@items.ref.calls.deparse,
       gsub("\\bx\\b", "y", x@items.ref.calls.deparse)
     )
+  )
+  unitizer:::read_line_set_vals("Y")
+  x.edit2 <- editCalls(x, quote(x), quote(y), interactive.only=TRUE)
+  unitizer:::read_line_set_vals(NULL)
+  expect_identical(
+    x.edit@items.ref.calls.deparse, x.edit2@items.ref.calls.deparse
   )
 })

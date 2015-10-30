@@ -38,20 +38,16 @@ setMethod("editCalls", c("unitizer", "language", "language"),
       "This is an experimental function; make sure you backup any unitizers ",
       "before you edit them", immediate.=TRUE
     )
-    if(!interactive() && interactive.only)
+    if(!interactive_mode() && interactive.only)
       stop("Set interactive.only to FALSE to run in non-interactive mode")
     i <- 0L
     if(interactive.only) {
-      repeat {
-        ans <- read_line("Do you wish to proceed ([Y]es/[N]o)? ")
-        if(tolower(ans) %in% c("y", "yes")) break
-        else if(tolower(ans) %in% c("n", "no")) {
-          message("Exiting without edits")
-          return(x)
-        } else {
-          message("Invalid input, should be \"Y\" or \"N\"")
-        }
-        if((i <- i + 1L) > 2L) stop("You are not making sense; I give up!")
+      u.inp <-simple_prompt(
+        "Do you wish to proceed ([Y]es/[N]o)? "
+      )
+      if(!identical(u.inp, "Y")){
+        message("Exiting without edits")
+        return(x)
       }
     }
     call_sub <- function(call, old.name, new.name) {

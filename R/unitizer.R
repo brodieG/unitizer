@@ -626,3 +626,13 @@ setMethod("getName", "unitizer",
     relativize_path(f.name)
 } )
 
+#' @rdname unitizer_s4method_doc
+
+setMethod("as.character", "unitizer",
+  function(x, ...) {
+    name <- try(getName(x))
+    name.fin <- if(inherits(name, "try-error")) "<name retrieval failure>" else
+      name
+    sprintf("unitizer for '%s'", name)
+} )
+
