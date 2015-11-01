@@ -2,6 +2,9 @@ library(testthat)
 library(unitizer)
 context("Misc")
 
+if(!file_test("-d", file.path("helper", "refobjs")))
+  stop("Make sure wd is set to tests/testthat")
+
 test_that("Text wrapping", {
   var <- "humpty dumpty sat on a truck and had a big dump"
   expect_true(all(nchar(unlist(unitizer:::text_wrap(var, 10))) <= 10))
@@ -161,6 +164,32 @@ test_that("Compare Conditions", {
     "There is one condition mismatch at index [[2]]",
     all.equal(lst2, lst1[c(1L:2L, 4L)])
   )
+  # single condition display with a more complex condition
+
+  large.cond <- simpleWarning(
+    paste0(collapse="\n",
+      c(
+        "This is a complicated warning:",
+        as.character(
+          unitizer:::UL(c("one warning", "two warning", "three warning"))
+      ) )
+    ),
+    quote(make_a_warning())
+  )
+  lst3 <- new("conditionList", .items=list(large.cond))
+  show1 <- capture.output(show(lst3))
+  expect_equal_to_reference(
+    show1,
+    file.path("helper", "refobjs", "misc_cndlistshow1.rds")
+  )
+  attr(lst3[[1L]], "unitizer.printed") <- TRUE
+  show2 <- capture.output(show(lst3))
+  expect_equal_to_reference(
+    show2,
+    file.path("helper", "refobjs", "misc_cndlistshow2.rds")
+  )
+  # empty condition
+  expect_equal(capture.output(show(lst3[0])), "Empty condition list")
 } )
 test_that("Compare Functions With Traces", {
   fun.a <- base::library

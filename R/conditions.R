@@ -132,7 +132,7 @@ setMethod("show", "conditionList",
     width=getOption("width")
     cond.len <- length(object)
     if(!cond.len) {
-      cat("Empty condition list\n")
+      word_cat("Empty condition list")
       return(invisible(object))
     } else {
       word_cat(
@@ -140,43 +140,58 @@ setMethod("show", "conditionList",
         paste0("condition", if(cond.len > 1) "s", ":")
       )
     }
-    cond.calls <- vapply(
-      as.list(object), function(x) !is.null(conditionCall(x)), logical(1L)
-    )
-    out <- paste0(
-      format(seq_along(object)), ": ",
-      ifelse(
-        print.show <- vapply(
-          as.list(object),
-          function(y) isTRUE(attr(y, "unitizer.printed")), logical(1L)
+    if(cond.len == 1L) {
+      old.width <- options(width=width - 2L)
+      on.exit(options(old.width))
+      cond.out <- capture.output(print(object[[1L]]))
+      options(old.width)
+      on.exit(NULL)
+      word_cat(paste0("  ", cond.out), sep="\n")
+      if(isTRUE(attr(object[[1L]], "unitizer.printed")))
+        word_cat(
+          cc(
+            "Condition issued during print/show method rather than during ",
+            "actual evaluation."
+        ) )
+    } else {
+      cond.calls <- vapply(
+        as.list(object), function(x) !is.null(conditionCall(x)), logical(1L)
+      )
+      out <- paste0(
+        format(seq_along(object)), ": ",
+        ifelse(
+          print.show <- vapply(
+            as.list(object),
+            function(y) isTRUE(attr(y, "unitizer.printed")), logical(1L)
+          ),
+          "[print] ", ""
         ),
-        "[print] ", ""
-      ),
-      vapply(as.list(object), get_condition_type, character(1L)),
-      ifelse(cond.calls, " in ", "")
-    )
-    desc.chars <- max(width - nchar(out), 20L)
-    cond.detail <- vapply(
-      as.list(object), FUN.VALUE=character(1L),
-      function(y) {
-        if(is.null(conditionCall(y))) {
-          paste0(": ", conditionMessage(y))
-        } else {
-          paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
-        }
-    } )
-    out <- paste0(out, substr(cond.detail, 1, desc.chars))
-    if(any(print.show)) {
-      out <- c(
-        out,
-        paste0(
-          "[print] means condition was issued in print/show method rather ",
-          "than in actual evaluation."
-    ) ) }
-    out <- c(out)
-    cat(out, sep="\n")
+        vapply(as.list(object), get_condition_type, character(1L)),
+        ifelse(cond.calls, " in ", "")
+      )
+      desc.chars <- max(width - nchar(out), 20L)
+      cond.detail <- vapply(
+        as.list(object), FUN.VALUE=character(1L),
+        function(y) {
+          if(is.null(conditionCall(y))) {
+            paste0(": ", conditionMessage(y))
+          } else {
+            paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
+          }
+      } )
+      out <- paste0(out, substr(cond.detail, 1, desc.chars))
+      if(any(print.show)) {
+        out <- c(
+          out,
+          paste0(
+            "[print] means condition was issued in print/show method rather ",
+            "than in actual evaluation."
+      ) ) }
+      out <- c(out)
+      cat(out, sep="\n")
+    }
     word_cat(
-      "You can access conditions directly (e.g. `.NEW$conditions[[1L]]`)"
+      "You can access conditions directly (e.g. `.NEW$conditions[[1L]]`)."
     )
     return(invisible(object))
   }
