@@ -98,7 +98,7 @@ local( {
   } )
   test_that("List coersion works even inside apply functions", {
     ulist <- new("unitizerList", .items=list("a", 1, 2, "b"))
-    expect_identical(lapply(ulist, identity), ulist@items)
+    expect_identical(lapply(ulist, identity), ulist@.items)
   })
 
 

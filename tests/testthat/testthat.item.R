@@ -153,7 +153,7 @@ local( {
     )
     expect_equal(
       capture.output(show(my.unitizer1a@items.new[[1L]]@data@conditions)),
-      c("Condition list with 1 condition:", "1: Error: boom", "Access a condition directly with `[[` (e.g. `conditions[[1L]]`)")
+      c("Condition list with 1 condition:", "  <simpleError: boom>", "You can access conditions directly (e.g. `.NEW$conditions[[1L]]`).")
     )
   })
   new.exps2 <- expression(
