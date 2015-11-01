@@ -86,8 +86,10 @@ all.equal.condition <- function(target, current, ...) {
   target.printed <- isTRUE(attr(target, "unitizer.printed"))
   current.printed <- isTRUE(attr(current, "unitizer.printed"))
 
-  if(!is.null(attr(target, "unitizer.printed"))) attr(target, "unitizer.printed") <- NULL
-  if(!is.null(attr(current, "unitizer.printed"))) attr(current, "unitizer.printed") <- NULL
+  if(!is.null(attr(target, "unitizer.printed")))
+    attr(target, "unitizer.printed") <- NULL
+  if(!is.null(attr(current, "unitizer.printed")))
+    attr(current, "unitizer.printed") <- NULL
 
   err.msg <- character()
   if(
@@ -165,11 +167,17 @@ setMethod("show", "conditionList",
     } )
     out <- paste0(out, substr(cond.detail, 1, desc.chars))
     if(any(print.show)) {
-      out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
-    }
+      out <- c(
+        out,
+        paste0(
+          "[print] means condition was issued in print/show method rather ",
+          "than in actual evaluation."
+    ) ) }
     out <- c(out)
     cat(out, sep="\n")
-    cat("Access a condition directly with `[[` (e.g. `conditions[[1L]]`)\n")
+    word_cat(
+      "You can access conditions directly (e.g. `.NEW$conditions[[1L]]`)"
+    )
     return(invisible(object))
   }
 )
