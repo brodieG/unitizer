@@ -141,12 +141,9 @@ setMethod("show", "conditionList",
       )
     }
     if(cond.len == 1L) {
-      old.width <- options(width=width - 2L)
-      on.exit(options(old.width))
       cond.out <- capture.output(print(object[[1L]]))
-      options(old.width)
-      on.exit(NULL)
-      word_cat(paste0("  ", cond.out), sep="\n")
+      cond.out.wrap <- word_wrap(cond.out, width=width-2L)
+      cat(paste0("  ", cond.out.wrap), sep="\n")
       if(isTRUE(attr(object[[1L]], "unitizer.printed")))
         word_cat(
           cc(
