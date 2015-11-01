@@ -99,6 +99,10 @@ setReplaceMethod("[[", signature(x="unitizerList", i="subIndex"),
 #' @rdname unitizer_s4method_doc
 
 setMethod("as.list", "unitizerList", function(x, ...) x@.items)
+# So that S3 dispatch works
+#' @export
+
+as.list.unitizerList <- function(x, ...) as.list(x, ...)
 
 #' Coerce to expression by returning items coerced to expressions
 #'
