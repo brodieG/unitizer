@@ -100,6 +100,7 @@ setReplaceMethod("[[", signature(x="unitizerList", i="subIndex"),
 
 setMethod("as.list", "unitizerList", function(x, ...) x@.items)
 # So that S3 dispatch works
+#' @method as.list unitizerList
 #' @export
 
 as.list.unitizerList <- function(x, ...) as.list(x, ...)
