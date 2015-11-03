@@ -155,7 +155,11 @@ local({
   test_that("strtrunc", {
     str1 <- c(paste0(letters, collapse=""), paste0(LETTERS, collapse=""))
     expect_equal(unitizer:::strtrunc(str1, 10L), c("abcdefg...", "ABCDEFG..."))
-    expect_equal(unitizer:::strtrunc(str1, 10L, from="left"), c("...tuvwxyz", "...TUVWXYZ"))
+    expect_equal(
+      unitizer:::strtrunc(str1, 10L, from="left"), c("...tuvwxyz", "...TUVWXYZ")
+    )
+    expect_equal(unitizer:::strtrunc(c("abc", "cab"), 3L), c("abc", "cab"))
+    expect_error(unitizer:::strtrunc(c("abc", "cab"), 2L), "too small")
   })
   test_that("oneline", {
     dep <- c(
