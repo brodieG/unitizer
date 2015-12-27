@@ -230,7 +230,7 @@ user_exp_str <- function(value, env, expr, max.level=NA) {
     if(is.language(value)) enquote(value) else value,
     max.level=max.level
   )
-  user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
+  user_exp_handle(disp.expr, env, print.mode="str", expr.raw=expr)
 }
 # It used to matter what precise value `print.mode`, but now the only thing
 # that matters is whether it is zero char or not
