@@ -222,11 +222,23 @@ user_exp_display <- function(value, env, expr) {
   }
   user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
 }
+# Like `user_exp_display` except that is uses `str` instead of print/show
+
+user_exp_str <- function(value, env, expr, max.level=NA) {
+  disp.expr <- call(
+    "str",
+    if(is.language(value)) enquote(value) else value,
+    max.level=max.level
+  )
+  user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
+}
+# It used to matter what precise value `print.mode`, but now the only thing
+# that matters is whether it is zero char or not
+
 user_exp_handle <- function(expr, env, print.mode, expr.raw) {
   aborted <- FALSE
   conditions <- list()
   trace <- list()
-  print.type <- print.mode
   printed <- nchar(print.mode) > 1
   value <- NULL
 
