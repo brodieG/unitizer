@@ -181,29 +181,51 @@ char_diff <- function(x, y) {
 }
 # @rdname diff_obj_out
 
-obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
+obj_capt <- function(
+  obj, width=getOption("width"), frame=parent.frame(), mode="print",
+  max.level=0L
+) {
   if(!is.numeric(width) || length(width) != 1L)
     stop("Argument `width` must be a one long numeric/integer.")
+  if(!is.chr1(mode) || !mode %in% c("print", "str"))
+    stop("Argument `mode` must be one of \"print\" or \"str\"")
+  # note this forces eval, which is needed
   if(!is.environment(frame))
-    stop("Argument `frame` must be an environment") # note this forces eval, which is needed
+    stop("Argument `frame` must be an environment")
+  if(!is.int.1L(max.level) || max.level < 0)
+    stop("Argument `max.level` must be integer(1L) and positive")
+
   width.old <- getOption("width")
   on.exit(options(width=width.old))
   width <- max(width, 10L)
-
   options(width=width)
-  obj.out <- capture.output(
-    invisible(print.res <- user_exp_display(obj, frame, quote(obj)))
-  )
+
+  if(identical(mode, "print")) {
+    obj.out <- capture.output(
+      invisible(print.res <- user_exp_display(obj, frame, quote(obj)))
+    )
+  } else if(identical(mode, "str")) {
+    obj.out <- capture.output(
+      invisible(
+        print.res <-
+          user_exp_str(obj, frame, quote(obj), if(max.level) max.level else  NA)
+    ) )
+  } else stop("Logic Error: unexpected mode; contact maintainer.")
+
   options(width=width.old)
   on.exit(NULL)
 
   if(print.res$aborted) {  # If failed during eval retrieve conditions
     err.cond <-
       which(vapply(print.res$conditions, inherits, logical(1L), "error"))
+    err.type <- if(identical(mode, "str")) "str"
+      else if(identical(mode, "print"))
+        if(isS4(obj)) "show" else "print"
+      else stop("Logic Error: cannot figure out print mode; contact maintainer.")
     err.cond.msg <- if(length(err.cond)) {
       c(
         paste0(
-          "<Error in print/show",
+          "<Error in ", err.type,
           if(is.object(obj))
             paste0(" method for object of class \"", class(obj)[[1L]], "\""),
           ">"
