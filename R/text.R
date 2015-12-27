@@ -66,39 +66,87 @@ diff_obj_out <- function(
   max.len <- as.integer(max.len)
   frame # force
   tar.width <- width - 4L
-  obj.add.capt <- sub("\\s+$", "", obj_capt(obj.add, tar.width, frame))
-  obj.rem.capt <- sub("\\s+$", "", obj_capt(obj.rem, tar.width, frame))
+  obj.add.capt <- obj_capt(obj.add, tar.width, frame)
+  obj.rem.capt <- obj_capt(obj.rem, tar.width, frame)
 
-  min.len <- min(length(obj.add.capt), length(obj.rem.capt))
-  diffs <-
-    gsub("\\s+", " ", obj.add.capt[1L:min.len]) !=
-    gsub("\\s+", " ", obj.rem.capt[1L:min.len])  # shouldn't have NAs
+  len.min <- min(length(obj.add.capt), length(obj.rem.capt))
+  len.max <- max(length(obj.add.capt), length(obj.rem.capt))
 
-  first.diff <- if(!any(diffs)) 1L else which(diffs)[[1L]]
-  if(first.diff < max.len[[2L]]) first.diff <- 1L   # don't advance if not needed to show first difference
-  if(first.diff > min.len - max.len[[1L]]) {        # could show more error, so will
-    first.diff <- max(1L, min.len - max.len[[1L]] + 1L)
+  # shouldn't have NAs
+
+  diffs <- char_diff(obj.add.capt, obj.rem.capt)
+
+  # If normal print diff doesn't fit, try to see if a str version would
+  # Algorithm is to find lowest max level that shows difference that has
+  # fewer lines than print/show version
+
+  if(any(unlist(diffs)) && len.max > max.len[[2L]]) {
+    obj.add.capt.str.prev <- obj.rem.capt.str.prev <- character()
+    lvl <- 1L
+    repeat{
+      obj.add.capt.str <-
+        obj_capt(obj.add, tar.width, frame, mode="str", max.level=lvl)
+      obj.rem.capt.str <-
+        obj_capt(obj.rem, tar.width, frame, mode="str", max.level=lvl)
+      str.len.min <- min(length(obj.add.capt.str), length(obj.rem.capt.str))
+      str.len.max <- max(length(obj.add.capt.str), length(obj.rem.capt.str))
+
+      diffs.str <- char_diff(obj.add.capt.str, obj.rem.capt.str)
+
+      # Exit conditions
+
+      if(
+        lvl > 100 || # safety valve
+        (
+          identical(obj.add.capt.str.prev, obj.add.capt.str) &&
+          identical(obj.rem.capt.str.prev, obj.rem.capt.str)
+        ) ||
+        any(unlist(diffs.str)) || str.len.max >= len.max
+      )
+        break
+
+      lvl <- lvl + 1
+      obj.add.capt.str.prev <- obj.add.capt.str
+      obj.rem.capt.str.prev <- obj.rem.capt.str
+    }
+  }
+  # Substitute with str message if warranted
+  if(
+    str.len.max < len.max && any(unlist(diffs.str))
+  ) {
+    diffs <- diffs.str
+    obj.add.capt <- obj.add.capt.str
+    obj.rem.capt <- obj.rem.capt.str
+  }
+  # Compute whether we need to scroll forwards or not
+  # - don't advance if not needed to show first difference
+
+  first.diff <- if(!any(unlist(diffs))) 1L
+    else min(which(diffs[[1L]]), which(diffs[[2L]]))
+  if(first.diff < max.len[[2L]]) first.diff <- 1L
+  if(first.diff > len.min - max.len[[1L]]) {
+    # could show more error, so will
+    first.diff <- max(1L, len.min - max.len[[1L]] + 1L)
     max.len <- rep(max.len[[1L]], 2L)
   }
-  diff <- char_diff(obj.rem.capt, obj.add.capt)
   pad.rem <- rep("   ", length(obj.rem.capt))
   pad.add <- rep("   ", length(obj.add.capt))
-  pad.rem[diff[[1L]]] <- "-  "
-  pad.add[diff[[2L]]] <- "+  "
+  pad.rem[diffs[[1L]]] <- "-  "
+  pad.add[diffs[[2L]]] <- "+  "
 
   res <- c(
     obj_screen_chr(
-      obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad=pad.rem
+      obj.rem.capt, obj.rem.name, first.diff=first.diff, diffs=diffs,
+      max.len=max.len, width=tar.width, pad=pad.rem
     ),
     obj_screen_chr(
-      obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad=pad.add
+      obj.add.capt, obj.add.name, first.diff=first.diff, diffs=diffs,
+      max.len=max.len, width=tar.width, pad=pad.add
   ) )
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
 }
-#' Do a \code{tools::Rdiff} Between R Objects
+#' a \code{tools::Rdiff} Between R Objects
 #'
 #' Just a wrapper that saves the \code{print} / \code{show} representation of an
 #' object to a temp file and then runs \code{tools::Rdiff} on them.  For
@@ -238,10 +286,10 @@ obj_capt <- function(
   }
   obj.out
 }
-# @rdname diff_obj_out
+# constructs the full diff message with additional meta information
 
 obj_screen_chr <- function(
-  obj.chr, obj.name, first.diff, max.len, width, pad
+  obj.chr, obj.name, first.diff, max.len, width, pad, diffs
 ) {
   pre <- post <- NULL
   extra <- paste0("; see `", obj.name, "`")
