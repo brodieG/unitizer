@@ -240,7 +240,7 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
         attr(cond, "unitizer.printed") <- printed
         trace.new <- sys.calls()
         trace.net <- get_trace(
-          trace.base, trace.new, printed, print.type, expr.raw
+          trace.base, trace.new, printed, expr.raw
         )
         if(attr(trace.net, "set.trace")) trace <<- c(trace.net)
 
@@ -270,7 +270,7 @@ set_trace <- function(trace) {
   }
   TRUE
 }
-get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
+get_trace <- function(trace.base, trace.new, printed, exp) {
 
   # because withCallingHandlers/withRestarts don't register when calling
   # sys.calls() within them, but do when calling sys.calls() from the handling
