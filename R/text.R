@@ -74,7 +74,7 @@ diff_obj_out <- function(
 
   # shouldn't have NAs
 
-  diffs <- char_diff(obj.add.capt, obj.rem.capt)
+  diffs <- char_diff(obj.rem.capt, obj.add.capt)
 
   # If normal print diff doesn't fit, try to see if a str version would
   # Algorithm is to find lowest max level that shows difference that has
@@ -91,7 +91,7 @@ diff_obj_out <- function(
       str.len.min <- min(length(obj.add.capt.str), length(obj.rem.capt.str))
       str.len.max <- max(length(obj.add.capt.str), length(obj.rem.capt.str))
 
-      diffs.str <- char_diff(obj.add.capt.str, obj.rem.capt.str)
+      diffs.str <- char_diff(obj.rem.capt.str, obj.add.capt.str)
 
       # Exit conditions
 
@@ -136,11 +136,11 @@ diff_obj_out <- function(
 
   res <- c(
     obj_screen_chr(
-      obj.rem.capt, obj.rem.name, first.diff=first.diff, diffs=diffs,
+      obj.rem.capt, obj.rem.name, first.diff=first.diff,
       max.len=max.len, width=tar.width, pad=pad.rem
     ),
     obj_screen_chr(
-      obj.add.capt, obj.add.name, first.diff=first.diff, diffs=diffs,
+      obj.add.capt, obj.add.name, first.diff=first.diff,
       max.len=max.len, width=tar.width, pad=pad.add
   ) )
   if(!is.null(file)) cat(sep="\n", res, file=file)
@@ -289,10 +289,14 @@ obj_capt <- function(
 # constructs the full diff message with additional meta information
 
 obj_screen_chr <- function(
-  obj.chr, obj.name, first.diff, max.len, width, pad, diffs
+  obj.chr, obj.name, first.diff, max.len, width, pad
 ) {
   pre <- post <- NULL
   extra <- paste0("; see `", obj.name, "`")
+  if(first.diff > length(obj.chr)) {
+    pre <- paste0("... omitted ", length(obj.chr), " lines w/o differences")
+    obj.chr <- pad <- character()
+  }
   if(length(obj.chr) > max.len[[1L]] && first.diff > 1L) {
     obj.chr <- tail(obj.chr, -(first.diff - 1L))
     pre <- paste0("... omitted ", first.diff - 1L, " lines")
@@ -303,8 +307,11 @@ obj_screen_chr <- function(
     post <- paste0("... omitted ", len - max.len[[2L]], " lines")
     pad <- head(pad, max.len[[2L]])
   }
-  pad <- format(pad)
-  pad.pre.post <- paste0(rep(" ", nchar(pad[[1L]])), collapse="")
+  if(length(pad)) {
+    pad <- format(pad)
+    pad.pre.post <- paste0(rep(" ", nchar(pad[[1L]])), collapse="")
+  } else pad.pre.post <- character()
+
   if(!is.null(post)) {
     post <- paste0(
       pad.pre.post,
