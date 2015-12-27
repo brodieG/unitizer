@@ -70,7 +70,7 @@ diff_obj_out <- function(
   obj.rem.capt <- obj_capt(obj.rem, tar.width, frame)
 
   len.min <- min(length(obj.add.capt), length(obj.rem.capt))
-  len.max <- max(length(obj.add.capt), length(obj.rem.capt))
+  len.max <- str.len.max <- max(length(obj.add.capt), length(obj.rem.capt))
 
   # shouldn't have NAs
 
@@ -80,7 +80,7 @@ diff_obj_out <- function(
   # Algorithm is to find lowest max level that shows difference that has
   # fewer lines than print/show version
 
-  if(any(unlist(diffs)) && len.max > max.len[[2L]]) {
+  if(any(unlist(diffs)) && len.max > max.len[[1L]]) {
     obj.add.capt.str.prev <- obj.rem.capt.str.prev <- character()
     lvl <- 1L
     repeat{
