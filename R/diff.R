@@ -121,9 +121,13 @@ setMethod("as.character", "unitizerDiff",
 
 diff_obj <- function(target, current, context=NULL) {
   context <- check_context(context)
-  width <- getOption("width")
   frame <- parent.frame()
 
+  diff_obj_internal(
+    target, current, tar.exp=substitute(target),
+    cur.exp=substitute(current), context=context
+    frame=frame
+  )
 }
 #' @rdname diff_obj
 #' @export
