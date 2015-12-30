@@ -39,8 +39,12 @@ screen_out <- function(
 #' @param obj.rem.name object to compare
 #' @param obj.add.name object to compare
 #' @param width at what width to wrap output
-#' @param max.len 2 length integer vector with first value threshold at which we
-#'   start trimming output and the second the length we tri to
+#' @param context 2 length integer vector representing how many lines of context
+#'   are shown on either side of differences.  The first value is the maximum
+#'   before we start trimming output.  The second value is the maximum to show once
+#'   we shown start trimming.  We will always attempt to show as much as
+#'   \code{2 * context + 1} lines of output so context may not be centered if
+#'   objects display as less than \code{2 * context + 1} lines.
 #' @param file whether to show to stdout or stderr
 #' @param frame what frame to capture in, relevant mostly if looking for a print
 #'   method
@@ -49,21 +53,20 @@ screen_out <- function(
 diff_obj_out <- function(
   obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
   obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
-  max.len=NULL, file=stdout(), frame=parent.frame()
+  context=NULL, file=stdout(), frame=parent.frame()
 ) {
-  err.type <- "Argument"
-  if(is.null(max.len)) {
-    max.len <- getOption("unitizer.test.fail.out.lines")
-    err.type <- "Option"
-  }
-  if(
-    !is.numeric(max.len) || !identical(length(max.len), 2L) || any(max.len < 1)
+  err.msg <- cc(
+    "must be integer(2L), positive, non-NA, with first value greater than ",
+    "second"
   )
-    stop(
-      err.type, " `unitizer.test.fail.out.lines` must be integer(2L) and ",
-      "greater than or equal to 1"
-    )
-  max.len <- as.integer(max.len)
+  if(is.null(context)) {
+    context <- getOption("unitizer.test.fail.context.lines")
+    if(!is.context.out.vec(context))
+      stop("`getOption(\"unitizer.test.fail.context.lines\")`", err.msg)
+  }
+  if(!is.context.out.vec(context)) stop("Argument `context` ", err.msg)
+
+  context <- as.integer(context)
   frame # force
   tar.width <- width - 4L
   obj.add.capt <- obj_capt(obj.add, tar.width, frame)
@@ -80,7 +83,7 @@ diff_obj_out <- function(
   # Algorithm is to find lowest max level that shows difference that has
   # fewer lines than print/show version
 
-  if(any(unlist(diffs)) && len.max > max.len[[1L]]) {
+  if(any(unlist(diffs)) && len.max > context[[1L]]) {
     obj.add.capt.str.prev <- obj.rem.capt.str.prev <- character()
     lvl <- 1L
     repeat{
@@ -118,17 +121,18 @@ diff_obj_out <- function(
     obj.add.capt <- obj.add.capt.str
     obj.rem.capt <- obj.rem.capt.str
   }
-  # Compute whether we need to scroll forwards or not
-  # - don't advance if not needed to show first difference
+  # Generally shooting to show as much as we can starting from the front of
+  # the object (i.e. all context is front loaded; perhaps we will add an
+  # option later to center context)
 
-  first.diff <- if(!any(unlist(diffs))) 1L
-    else min(which(diffs[[1L]]), which(diffs[[2L]]))
-  if(first.diff < max.len[[2L]]) first.diff <- 1L
-  if(first.diff > len.min - max.len[[1L]]) {
-    # could show more error, so will
-    first.diff <- max(1L, len.min - max.len[[1L]] + 1L)
-    max.len <- rep(max.len[[1L]], 2L)
-  }
+  first.diff <- if(
+    !any(unlist(diffs)) || len.max < context[[1L]]
+  ) 1L else min(which(diffs[[1L]]), which(diffs[[2L]]))
+
+  # Handle overflow cases
+
+  if(len.max < context[[2L]]first.diff < context[[2L]]) first.diff <- 1L
+
   pad.rem <- rep("   ", length(obj.rem.capt))
   pad.add <- rep("   ", length(obj.add.capt))
   pad.rem[diffs[[1L]]] <- "-  "
@@ -137,11 +141,11 @@ diff_obj_out <- function(
   res <- c(
     obj_screen_chr(
       obj.rem.capt, obj.rem.name, first.diff=first.diff,
-      max.len=max.len, width=tar.width, pad=pad.rem
+      context=context, width=tar.width, pad=pad.rem
     ),
     obj_screen_chr(
       obj.add.capt, obj.add.name, first.diff=first.diff,
-      max.len=max.len, width=tar.width, pad=pad.add
+      context=context, width=tar.width, pad=pad.add
   ) )
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)

@@ -101,11 +101,14 @@ NULL
 #'     maximum number of lines of screen output to show for each test, and
 #'     second value is the number of lines to show if there are more lines than
 #'     allowed by the first value
-#'   \item \code{unitizer.test.fail.out.lines}: like
-#'     \code{unitizer.test.out.lines}, but used for limiting the size of the
-#'     diffs comparing new and reference objects
 #'   \item \code{unitizer.test.msg.lines}: like \code{unitizer.test.out.lines},
 #'     but for \code{stderr output}
+#'   \item \code{unitizer.test.fail.context.lines}: integer(2L), used
+#'     exclusively when comparing new to references tests when test faile; first
+#'     values is maximum number of lines of context to show around a test,
+#'     centered on differences if there are any, and second value is the number
+#'     of context lines to show if using the first value is not sufficient to
+#'     fully display the test results
 #'   \item \code{unitizer.show.output}: TRUE or FALSE, whether to display test
 #'     \code{stdout} and \code{stderr} output as it is evaluated.
 #'   \item \code{unitizer.disable.capt}: logical(2L), not NA, with names
@@ -248,9 +251,13 @@ options_update <- function(tar.opts) {
   unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
   unitizer.disable.capt=
     c(output=FALSE, message=FALSE),        # Will prevent capture
-  unitizer.test.out.lines=c(50L, 15L),     # How many lines to display when showing test values, or truncate to if exceeds
-  unitizer.test.fail.out.lines=c(10L, 5L), # How many lines to display when showing failed objects (note banner means one more line than this displayed)
-  unitizer.test.msg.lines=c(10L, 3L),      # How many lines to display when showing test errors, or truncate to if exceeds
+  # How many lines to display when showing test values, or truncate to if exceeds
+  unitizer.test.out.lines=c(50L, 15L),
+  # How many lines to display when showing test errors, or truncate to if exceeds
+  unitizer.test.msg.lines=c(10L, 3L),
+  # How many lines of context to display when showing failed objects
+  # (note banner means one more line than this displayed)
+  unitizer.test.fail.context.lines=c(10L, 5L),
   unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
   unitizer.history.file="",                # "" is interpreted as tempfile()
@@ -294,20 +301,20 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
         stop("Option `unitizer.show.output` must be TRUE or FALSE")
       if(!is.valid_capt_setting(unitizer.disable.capt))
         stop("Option `unitizer.disable.capt` is invalid (see prior message)")
-      if(!is.int.pos.2L(unitizer.test.out.lines))
+      if(!is.screen.out.vec(unitizer.test.out.lines))
         stop(
           "Option `unitizer.test.out.lines` must be integer(2L), strictly ",
-          "positive, and not NA"
+          "positive, not NA, with first value larger than second"
         )
-      if(!is.int.pos.2L(unitizer.test.fail.out.lines))
+      if(!is.context.out.vec(unitizer.test.fail.context.lines))
         stop(
-          "Option `unitizer.test.fail.out.lines` must be integer(2L), ",
-          "strictly positive, and not NA"
+          "Option `unitizer.test.fail.context.lines` must be integer(2L), "
+          "positive, not NA, with first value larger than second"
         )
-      if(!is.int.pos.2L(unitizer.test.msg.lines))
+      if(!is.screen.out.vec(unitizer.test.msg.lines))
         stop(
-          "Option `unitizer.test.msg.lines` must be integer(2L), strictly ",
-          "positive, and not NA"
+          "Option `unitizer.test.msg` must be integer(2L), strictly ",
+          "positive, not NA, with first value larger than second"
         )
       if(
         !is.numeric(unitizer.prompt.b4.quit.time) ||

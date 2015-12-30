@@ -16,7 +16,9 @@ local({
 
   oc1 <- unitizer:::obj_capt(test.obj.s3)
   oc2 <- unitizer:::obj_capt(test.obj.s4)
-  do1 <- unitizer:::diff_obj_out(test.obj.s3, test.obj.s3, width=60L, max.len=c(10L, 5L), file=stdout())
+  do1 <- unitizer:::diff_obj_out(
+    test.obj.s3, test.obj.s3, width=60L, max.len=c(10L, 5L), file=stdout()
+  )
 
   test_that("capt with print errors", {
     expect_equal(
@@ -41,6 +43,13 @@ local({
       do1,
       c("@@ test.obj.s3 @@", "   <Error in print/show method for object of class \"test_obj\">", "   Error in Print", "@@ test.obj.s3 @@", "   <Error in print/show method for object of class \"test_obj\">", "   Error in Print")
     )
+    # More tests
+    set.seed(1, "Mersenne-Twister")
+    mx.3 <- matrix(runif(100), ncol=2)
+    stop("these tests not fully formulated")
+    diff_obj_out(mx1[1:6, ], mx1[1:5, ])
+    diff_obj_out(mx1[1:6, ], mx1[2:6, ])  # indeces different...
+
   } )
   test_that("cap_first", {
     set.seed(1, "Mersenne-Twister")
