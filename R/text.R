@@ -83,7 +83,7 @@ diff_obj_out <- function(
   # Algorithm is to find lowest max level that shows difference that has
   # fewer lines than print/show version
 
-  if(any(unlist(diffs)) && len.max > context[[1L]]) {
+  if(any(unlist(diffs)) && len.max > context[[1L]] * 2L + 1L) {
     obj.add.capt.str.prev <- obj.rem.capt.str.prev <- character()
     lvl <- 1L
     repeat{
@@ -111,41 +111,48 @@ diff_obj_out <- function(
       lvl <- lvl + 1
       obj.add.capt.str.prev <- obj.add.capt.str
       obj.rem.capt.str.prev <- obj.rem.capt.str
-    }
-  }
+  } }
   # Substitute with str message if warranted
-  if(
-    str.len.max < len.max && any(unlist(diffs.str))
-  ) {
+  if(str.len.max < len.max && any(unlist(diffs.str))) {
     diffs <- diffs.str
     obj.add.capt <- obj.add.capt.str
     obj.rem.capt <- obj.rem.capt.str
   }
-  # Generally shooting to show as much as we can starting from the front of
-  # the object (i.e. all context is front loaded; perhaps we will add an
-  # option later to center context)
+  # If there is an error, we want to show as much of the objects as we can
+  # centered on the error.  If we can show the entire objects without centering
+  # then we do that.
 
-  first.diff <- if(
-    !any(unlist(diffs)) || len.max < context[[1L]]
-  ) 1L else min(which(diffs[[1L]]), which(diffs[[2L]]))
+  first.diff <- if(!any(unlist(diffs))) 1L else min(unlist(lapply(diffs, which)))
+  show.range <- if(len.max < 2 * context[[1L]] + 1) {
+    1:len.max
+  } else {
+    # if first diff is too close to beginning or end, use extra context on
+    # other side of error
 
-  # Handle overflow cases
-
-  if(len.max < context[[2L]]first.diff < context[[2L]]) first.diff <- 1L
+    end.extra <- max(0, context[[2L]] - first.diff)
+    start.extra <- max(0, context[[2L]] - (len.max - first.diff))
+    seq(
+      max(first.diff - context[[2L]] - start.extra, 1),
+      min(first.diff + context[[2L]] + end.extra, len.max)
+    )
+  }
+  # Make padding
 
   pad.rem <- rep("   ", length(obj.rem.capt))
   pad.add <- rep("   ", length(obj.add.capt))
   pad.rem[diffs[[1L]]] <- "-  "
   pad.add[diffs[[2L]]] <- "+  "
 
+  # Display to screen
+
   res <- c(
     obj_screen_chr(
-      obj.rem.capt, obj.rem.name, first.diff=first.diff,
-      context=context, width=tar.width, pad=pad.rem
+      obj.rem.capt, obj.rem.name, obj.diffs=diffs[[1L]], range=show.range,
+      width=tar.width, pad=pad.rem
     ),
     obj_screen_chr(
-      obj.add.capt, obj.add.name, first.diff=first.diff,
-      context=context, width=tar.width, pad=pad.add
+      obj.add.capt, obj.add.name, obj.diffs=diffs[[2L]], range=show.range,
+      width=tar.width, pad=pad.add
   ) )
   if(!is.null(file)) cat(sep="\n", res, file=file)
   invisible(res)
@@ -293,44 +300,43 @@ obj_capt <- function(
 # constructs the full diff message with additional meta information
 
 obj_screen_chr <- function(
-  obj.chr, obj.name, first.diff, max.len, width, pad
+  obj.chr, obj.name, obj.diffs, range, width, pad
 ) {
   pre <- post <- NULL
   extra <- paste0("; see `", obj.name, "`")
-  if(first.diff > length(obj.chr)) {
-    pre <- paste0("... omitted ", length(obj.chr), " lines w/o differences")
-    obj.chr <- pad <- character()
-  }
-  if(length(obj.chr) > max.len[[1L]] && first.diff > 1L) {
-    obj.chr <- tail(obj.chr, -(first.diff - 1L))
-    pre <- paste0("... omitted ", first.diff - 1L, " lines")
-    pad <- tail(pad, -(first.diff - 1L))
-  }
-  if((len <- length(obj.chr)) > max.len[[1L]]) {
-    obj.chr <- head(obj.chr, max.len[[2L]])
-    post <- paste0("... omitted ", len - max.len[[2L]], " lines")
-    pad <- head(pad, max.len[[2L]])
-  }
+  len.obj <- length(obj.chr)
+
   if(length(pad)) {
     pad <- format(pad)
     pad.pre.post <- paste0(rep(" ", nchar(pad[[1L]])), collapse="")
   } else pad.pre.post <- character()
 
-  if(!is.null(post)) {
-    post <- paste0(
-      pad.pre.post,
-      word_wrap(paste0(post, extra, " ..."), width - nchar(pad[[1L]]))
-    )
+  if(len.obj) {
+    omit.first <- max(min(range[[1L]] - 1L, len.obj), 0L)
+    omit.last <- max(len.obj - tail(range, 1L), 0L)
+    diffs.last <- sum(tail(obj.diffs, -tail(range, 1L)))
+
+    if(omit.first)
+      pre <- paste0("... omitted ", omit.first, " lines w/o differences")
+    if(omit.last) {
+      post <- paste0(
+        "... omitted ", omit.first, " lines w/ ", diffs.last, " differences"
+    ) }
+    if(!is.null(post)) {
+      post <- paste0(
+        pad.pre.post,
+        word_wrap(paste0(post, extra, " ..."), width - nchar(pad[[1L]]))
+    ) }
+    if (!is.null(pre)) {
+      pre <- paste0(
+        pad.pre.post,
+        word_wrap(
+          paste0(pre, if(is.null(post)) extra, " ..."), width - nchar(pad[[1L]])
+    ) ) }
   }
-  if (!is.null(pre)) {
-    pre <- paste0(
-      pad.pre.post,
-      word_wrap(
-        paste0(pre, if(is.null(post)) extra, " ..."), width - nchar(pad[[1L]])
-  ) ) }
   c(
     paste0("@@ ", obj.name, " @@"),
-    paste0(c(pre, paste0(pad, obj.chr), post))
+    paste0(c(pre, paste0(pad, obj.chr)[range[range <= len.obj]], post))
   )
 }
 #' Print Only First X characters

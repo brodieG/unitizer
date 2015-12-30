@@ -550,7 +550,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) {
         err.obj <- curr.sub.sec.obj@show.fail[[id.rel]]
         err.obj@.max.out.len <-
-          unitizer@global$unitizer.opts[["unitizer.test.fail.out.lines"]]
+          unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]
         summary(err.obj)
         eval(  # must eval to make sure that correct methods are available when outputing failures to screen
           call("show", err.obj),

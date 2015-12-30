@@ -308,7 +308,7 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
         )
       if(!is.context.out.vec(unitizer.test.fail.context.lines))
         stop(
-          "Option `unitizer.test.fail.context.lines` must be integer(2L), "
+          "Option `unitizer.test.fail.context.lines` must be integer(2L), ",
           "positive, not NA, with first value larger than second"
         )
       if(!is.screen.out.vec(unitizer.test.msg.lines))

@@ -47,8 +47,18 @@ local({
     set.seed(1, "Mersenne-Twister")
     mx.3 <- matrix(runif(100), ncol=2)
     stop("these tests not fully formulated")
-    diff_obj_out(mx1[1:6, ], mx1[1:5, ])
-    diff_obj_out(mx1[1:6, ], mx1[2:6, ])  # indeces different...
+    diff_obj_out(mx3[1:6, ], mx3[1:5, ])
+    diff_obj_out(mx3[1:6, ], mx3[2:6, ])  # indeces different...
+    lst.1 <- list(
+      NULL,
+      z=list(
+        list(letters[1:3]), list(NULL),
+        z=list(1:3, 1, 2, z=list(1, z=list(z=5))),
+        matrix(1:9, 3)
+    ) )
+    lst.2 <- lst.1
+    lst.2$z$z$z$z$z <- 6
+    diff_obj_out(lst.1, lst.2)
 
   } )
   test_that("cap_first", {
