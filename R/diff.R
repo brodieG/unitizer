@@ -253,10 +253,12 @@ diff_str_internal <- function(
 diff_obj_internal <- function(
   target, current, tar.exp=substitute(target),
   cur.exp=substitute(current), context=NULL, width=NULL,
-  frame=parent.frame(), max.level=10L
+  frame=parent.frame(), max.level=10L, file=stdout()
 ) {
   context <- check_context(context)
   width <- check_width(width)
+  if(!isTRUE(file.err <- is.open_con(file, writeable=TRUE)))
+    stop("Argument `file` is not valid because: ", file.err)
   if(!is.environment(frame)) stop("Argument `frame` must be an environment.")
 
   res.print <- diff_print_internal(

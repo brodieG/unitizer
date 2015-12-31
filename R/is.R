@@ -6,24 +6,49 @@
 # @keywords internal
 # @aliases is.open_con
 # @param x object to test
-# @param file.name 1 length character the name of the file that \code{`x`} must point to
+# @param file.name 1 length character the name of the file that \code{`x`}
+#   must point to
+# @param readable/writeable whether file must be readable or writeable NA if
+#   you don't care
 # @return TRUE if valid, 1 length character vector if not explaining why it's not
 
-is.valid_con <- function(x, file.name=NULL) {
-  if(!is.null(file.name)) {
-    if(!is.character(file.name) || length(file.name) != 1L) stop("Argument `file.name` must be NULL or a one length character vector.")
-  }
-  if(!inherits(x, c("file", "connection"))) return("must inherit from \"file\" and \"connection\"")
+is.valid_con <- function(x, file.name=NULL, readable=NA, writeable=NA) {
+  if(!is.null(file.name) && !is.character(file.name) || length(file.name) != 1L)
+      stop("Argument `file.name` must be NULL or a one length character vector.")
+  if(!is.lgl.1L(readable) || !is.lgl.1L(writeable))
+    stop("Arguments `readable` and `writeable` must be logical(1L)")
+
+  # Basic checks
+
+  if(!inherits(x, c("file", "connection")))
+    return("must inherit from \"file\" and \"connection\"")
   if(!is.integer(x)) return("must be an integer")
-  cons <- showConnections()
-  if(!isTRUE(as.character(x) %in% rownames(cons))) return("connection does not exist in `showConnections`")
+  cons <- showConnections(all=TRUE)
+  if(!isTRUE(as.character(x) %in% rownames(cons)))
+    return("connection does not exist in `showConnections`")
+
+  # Check r/w status
+
+  rw <- list(writeable=writeable, readable=readable)
+  for(i in names(rw))
+    if(!is.na(rw[[i]]))
+      if((cons[as.character(x), "can write"] == "yes") != rw[[i]])
+        return(
+          cc(
+            "connection is ", if(rw[[i]]) "not ", "be ", i, " but should ",
+            if(!rw[[i]]) "not ", "be ", i
+        ) )
+
+  # Match file name
+
   if(!is.null(file.name)) {
-    if(!identical(file.name, cons[as.character(x), "description"])) return("file name does not match connection description")
+    if(!identical(file.name, cons[as.character(x), "description"]))
+      return("file name does not match connection description")
   }
   return(TRUE)
 }
-is.open_con <- function(x, file=NULL) {
-  if(!isTRUE(msg <- is.valid_con(x, file))) return(msg)
+is.open_con <- function(x, file=NULL, readable=NA, writeable=NA) {
+  if(!isTRUE(msg <- is.valid_con(x, file, readable, writeable))) return(msg)
   if(!isOpen(x)) return("must be an open connection")
   return(TRUE)
 }
@@ -54,6 +79,11 @@ is.chr1 <- function(x) is.character(x) && length(x) == 1L && !is.na(x)
 # @keywords internal
 
 is.TF <- function(x) isTRUE(x) || identical(x, FALSE)
+
+# @rdname is.simpleobj
+# @keywords internal
+
+is.lgl.1L <- function(x) is.logical(x) && length(x) == 1L
 
 # @rdname is.simpleobj
 # @keywords internal
