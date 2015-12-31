@@ -87,11 +87,11 @@ setMethod("as.character", "unitizerDiff",
 
     c(
       obj_screen_chr(
-        x@tar.capt, x@tar.expr, obj.diffs=x@diffs@target, range=show.range,
+        x@tar.capt, x@tar.exp, obj.diffs=x@diffs@target, range=show.range,
         width=tar.width, pad=pad.rem
       ),
       obj_screen_chr(
-        x@cur.capt, x@cur.expr, obj.diffs=x@diffs@current, range=show.range,
+        x@cur.capt, x@cur.exp, obj.diffs=x@diffs@current, range=show.range,
         width=tar.width, pad=pad.add
     ) )
 } )
@@ -150,7 +150,9 @@ diff_print <- function(target, current, context=NULL) {
       diff_print_internal(
         target, current, tar.exp=substitute(target),
         cur.exp=substitute(current), context=context, width=width
-    ) ),
+      ),
+      context=context
+    ),
     sep="\n"
   )
 }
@@ -166,7 +168,9 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
         target, current, tar.exp=substitute(target),
         cur.exp=substitute(current), context=context, width=width,
         frame=frame, max.lines=-1, max.level=max.level
-    ) ),
+      ),
+      context=context
+    ),
     sep="\n"
   )
 }
@@ -268,7 +272,7 @@ diff_obj_internal <- function(
     frame=frame, max.lines=len.print
   )
   len.max <- context[[1L]] * 2 + 1
-  len.str <- max(length(res.str@tar.capt), (res.str@cur.capt))
+  len.str <- max(length(res.str@tar.capt), length(res.str@cur.capt))
 
   # Chose which display to use; only favor res.str if it really is substantially
   # more compact and it does show an error
@@ -279,7 +283,7 @@ diff_obj_internal <- function(
   )
     res.print else res.str
 
-  res.chr <- as.character(res)
+  res.chr <- as.character(res, context)
   cat(res.chr, file=file, sep="\n")
   invisible(res.char)
 }
