@@ -287,7 +287,7 @@ diff_obj_internal <- function(
 
   res.chr <- as.character(res, context)
   cat(res.chr, file=file, sep="\n")
-  invisible(res.char)
+  invisible(res.chr)
 }
 
 # Function to check arguments that can also be specified as options when set
