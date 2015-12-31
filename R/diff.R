@@ -31,11 +31,10 @@ setClass(
 #' @rdname unitizer_s4method_doc
 
 setMethod("any", "unitizerDiff",
-  function(..., na.rm = FALSE) {
+  function(x, ..., na.rm = FALSE) {
     dots <- list(...)
-    if(length(dots) != 1L)
+    if(length(dots))
       stop("`any` method for `unitizerDiff` supports only one argument")
-    x <- dots[[1L]]
     any(x@diffs@target, x@diffs@current)
 } )
 #' @rdname unitizer_s4method_doc
