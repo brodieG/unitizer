@@ -262,15 +262,14 @@ diff_obj_internal <- function(
   if(!is.environment(frame)) stop("Argument `frame` must be an environment.")
 
   res.print <- diff_print_internal(
-    target, current, tar.exp=substitute(target),
-    cur.exp=substitute(current), context=context, width=width,
-    frame=frame
+    target, current, tar.exp=tar.exp, cur.exp=cur.exp, context=context,
+    width=width, frame=frame
   )
   len.print <- max(length(res.print@tar.capt), length(res.print@cur.capt))
 
   res.str <- diff_str_internal(
-    target, current, tar.exp=substitute(target),
-    cur.exp=substitute(current), context=context, width=width,
+    target, current, tar.exp=tar.exp,
+    cur.exp=cur.exp, context=context, width=width,
     frame=frame, max.lines=len.print
   )
   len.max <- context[[1L]] * 2 + 1
@@ -507,7 +506,7 @@ obj_screen_chr <- function(
     ) ) }
   }
   c(
-    paste0("@@ ", obj.name, " @@"),
+    paste0("@@ ", deparse(obj.name)[[1L]], " @@"),
     paste0(c(pre, paste0(pad, obj.chr)[range[range <= len.obj]], post))
   )
 }
