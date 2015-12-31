@@ -95,17 +95,16 @@ setMethod("as.character", "unitizerDiff",
 #'   \item \code{diff_str} shows the differences in the \code{str} screen output
 #'     of the two objects; will show as few recursive levels as needed to show
 #'     at least one difference (see \code{max.level})
-#'   \item \code(diff_obj) picks between \code{diff_print} and \code{diff_str}
+#'   \item \code{diff_obj} picks between \code{diff_print} and \code{diff_str}
 #'     depending on which one it thinks will provide the most useful diff
 #' }
-#'
 #' @export
 #' @param target the reference object
 #' @param new the object being compared to \code{target}
 #' @param context 2 length integer vector representing how many lines of context
 #'   are shown on either side of differences.  The first value is the maximum
-#'   before we start trimming output.  The second value is the maximum to show once
-#'   we shown start trimming.  We will always attempt to show as much as
+#'   before we start trimming output.  The second value is the maximum to be
+#'   shown before we start trimming.  We will always attempt to show as much as
 #'   \code{2 * context + 1} lines of output so context may not be centered if
 #'   objects display as less than \code{2 * context + 1} lines.
 #' @param max.level integer(1L) up to how many levels to try running \code{str};
@@ -123,9 +122,8 @@ diff_obj <- function(target, current, context=NULL) {
   frame <- parent.frame()
 
   diff_obj_internal(
-    target, current, tar.exp=substitute(target),
-    cur.exp=substitute(current), context=context
-    frame=frame
+    target, current, tar.exp=substitute(target), cur.exp=substitute(current),
+    context=context, frame=frame
   )
 }
 #' @rdname diff_obj
