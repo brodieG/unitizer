@@ -20,6 +20,26 @@ local({
     test.obj.s3, test.obj.s3, width=60L, max.len=c(10L, 5L), file=stdout()
   )
 
+  test_that("S4 objs", {
+    x <- new(
+      "unitizerDiff", tar.capt=letters, cur.capt=letters,
+      tar.exp=quote(letters), cur.exp=quote(letters),
+      diffs=new(
+        "unitizerDiffDiffs",
+        target=c(rep(TRUE, 25), FALSE),
+        current=c(FALSE, rep(TRUE, 25))
+      ), mode="str"
+    )
+    y <- x
+    y@diffs@target <- rep(FALSE, 26)
+    y@diffs@current <- rep(FALSE, 26)
+    expect_true(any(x))
+    expect_false(any(y))
+    x@tar.capt <- letters[1:5]
+    expect_error(validObject(x), "same length")
+    y@cur.capt <- letters[1:5]
+    expect_error(validObject(y), "same length")
+  } )
   test_that("capt with print errors", {
     expect_equal(
       c("<Error in print/show method for object of class \"test_obj\">",  "Error in Print"),
@@ -58,7 +78,7 @@ local({
     ) )
     lst.2 <- lst.1
     lst.2$z$z$z$z$z <- 6
-    diff_obj_out(lst.1, lst.2)
+    diff_obj(lst.1, lst.2)
 
   } )
 } )
