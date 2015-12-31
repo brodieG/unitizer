@@ -161,20 +161,31 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
     sep="\n"
   )
 }
+# Implements the diff_* functions
+#
+# @keywords internal
+# @inheritParams diff_obj
+# @param tar.exp the substituted target expression
+# @param cur.exp the substituted current expression
+# @param width at what width to wrap output
+# @param file whether to show to stdout or stderr
+# @param frame what frame to capture in, relevant mostly if looking for a print
+#   method
+
 diff_print_internal <- function(
   target, current, tar.exp, cur.exp, context, width, frame
 ) {
-  obj.add.capt <- obj_capt(target, width, frame)
-  obj.rem.capt <- obj_capt(current, width, frame)
-  diffs <- char_diff(obj.rem.capt, obj.add.capt)
+  cur.capt <- obj_capt(target, width, frame)
+  tar.capt <- obj_capt(current, width, frame)
+  diffs <- char_diff(tar.capt, cur.capt)
   new(
     "unitizerDiff", tar.capt=tar.capt, cur.capt=cur.capt, tar.exp=tar.exp,
-    cur.exp=cur.exp, diffs=diffs
+    cur.exp=cur.exp, diffs=diffs, mode="print"
   )
 }
 diff_str_internal <- function(
   target, current, tar.exp, cur.exp, context, width, frame, max.lines,
-  max.level
+  max.level=10
 ) {
   context <- check_context(context)
   if(is.null(max.lines)) {
@@ -205,7 +216,7 @@ diff_str_internal <- function(
     # Exit conditions
 
     if(
-      !lvl || any(unlist(diffs.str)) || str.len.max >= max.lines ||
+      !lvl || any(diffs.str) || str.len.max >= max.lines ||
       (
         identical(obj.add.capt.str.prev, obj.add.capt.str) &&
         identical(obj.rem.capt.str.prev, obj.rem.capt.str)
@@ -220,7 +231,7 @@ diff_str_internal <- function(
   diffs <- char_diff(obj.rem.capt.str, obj.add.capt.str)
   new(
     "unitizerDiff", tar.capt=obj.rem.capt.str, cur.capt=obj.add.capt.str,
-    tar.exp=tar.exp, cur.exp=cur.exp, diffs=diffs
+    tar.exp=tar.exp, cur.exp=cur.exp, diffs=diffs, mode="str"
   )
 }
 # Unlike diff_print_internal and diff_str_internal, this one prints to screen
@@ -229,19 +240,18 @@ diff_str_internal <- function(
 diff_obj_internal <- function(
   target, current, tar.exp=substitute(target),
   cur.exp=substitute(current), context=NULL, width=NULL,
-  frame=parent.frame()
+  frame=parent.frame(), max.level=10L
 ) {
   context <- check_context(context)
   width <- check_width(width)
   if(!is.environment(frame)) stop("Argument `frame` must be an environment.")
-  if(!is.int.1L(max.lines)) stop("Argument `max.lines` must be integer(1L).")
 
   res.print <- diff_print_internal(
     target, current, tar.exp=substitute(target),
     cur.exp=substitute(current), context=context, width=width,
     frame=frame
   )
-  len.print <- max(length(res.print@tar.capt), (res.print@cur.capt))
+  len.print <- max(length(res.print@tar.capt), length(res.print@cur.capt))
 
   res.str <- diff_str_internal(
     target, current, tar.exp=substitute(target),
