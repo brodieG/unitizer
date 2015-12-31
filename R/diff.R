@@ -39,7 +39,16 @@ setMethod("any", "unitizerDiff",
     dots <- list(...)
     if(length(dots))
       stop("`any` method for `unitizerDiff` supports only one argument")
-    any(x@diffs@target, x@diffs@current)
+    any(x@diffs)
+} )
+#' @rdname unitizer_s4method_doc
+
+setMethod("any", "unitizerDiffDiffs",
+  function(x, ..., na.rm = FALSE) {
+    dots <- list(...)
+    if(length(dots))
+      stop("`any` method for `unitizerDiffDiffs` supports only one argument")
+    any(x@target, x@current)
 } )
 #' @rdname unitizer_s4method_doc
 
@@ -71,8 +80,8 @@ setMethod("as.character", "unitizerDiff",
 
     pad.rem <- rep("   ", length(x@tar.capt))
     pad.add <- rep("   ", length(x@cur.capt))
-    pad.rem[diffs[[1L]]] <- "-  "
-    pad.add[diffs[[2L]]] <- "+  "
+    pad.rem[x@diffs@target] <- "-  "
+    pad.add[x@diffs@current] <- "+  "
 
     # As Character
 
