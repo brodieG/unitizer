@@ -35,7 +35,7 @@ strip_style <- function(string) {
 has_color <- function() {
   ## Colors forced?
 
-  enabled <- if(getOption("unitizer.color"))
+  enabled <- getOption("unitizer.color")
   if(is.TF(enabled)) return(enabled)
 
   ## Are we in a terminal? No?
@@ -92,17 +92,33 @@ codes <- list(
   bgCyan = c(46, 49),
   bgWhite = c(47, 49)
 )
+codes.mx <- do.call(rbind, codes)
+
+# Wrap ansii color codes around a string.  Color codes must be
+# `%in% names(codes)`.  NA values mean no color.
 
 clr <- function(
   txt, color, use.color=has_color()
 ) {
-  if(!is.chr1(txt)) stop("Argument `txt` must be character(1L) and not NA")
-  if(!is.chr1(color)) stop("Argument `color` is not a valid color code")
-  cc(
-    sprintf('\u001b[%sm', codes[[color]][1]),
-    txt,
-    sprintf('\u001b[%sm', codes[[color]][2])
+  if(!is.TF(use.color))
+    stop("Argument `use.color` must be TRUE or FALSE.")
+  if(!isTRUE(use.color)) return(txt)
+  if(!is.character(txt)) stop("Argument `txt` must be character")
+  color.no.na <- Filter(Negate(is.na), color)
+  if(
+    !is.character(color) || !all(color.no.na %in% rownames(codes.mx)) ||
+    (length(color) != 1L && length(color) != length(txt))
   )
+    stop(
+      "Argument `color` must be character(1L) or the same length as `txt` ",
+      "and may only contain valid color codes."
+    )
+  ifelse(
+    is.na(color), txt,
+    sprintf(
+      "\u001b[%sm%s\u001b[%sm", codes.mx[, 1L][color], txt,
+      codes.mx[, 2L][color]
+  ) )
 }
 # R/utils.r
 # https://github.com/gaborcsardi/crayon/commit/7e2e0963acf414e20bfe40a58e9a3bc6a7fe411f
