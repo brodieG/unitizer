@@ -13,7 +13,11 @@ Authors@R: c(
     person(
     family="R Core Team",
     email="R-core@r-project.org", role="cph",
-    comment="Copy of source for library / attach / detach"))
+    comment="Copy of source for library / attach / detach"),
+    person(
+    "Gábor", "Csárdi", email="csardi.gabor@gmail.com",
+    role=c("cph"),
+    comment="Copied parts of sources of crayon package"))
 Depends:
     R (>= 3.2.2)
 Imports:
@@ -24,7 +28,7 @@ Suggests:
     knitr,
     testthat,
     devtools
-License: GPL-3
+License: GPL-3 + file LICENSE
 LazyData: true
 URL: https://github.com/brodieG/unitizer
 BugReports: https://github.com/brodieG/unitizer/issues

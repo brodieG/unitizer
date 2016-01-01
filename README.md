@@ -70,6 +70,7 @@ Thank you to:
 
 * Hadley Wickham for devoting so much of his life to making the R universe a better place to live in.  `unitizer` borrows several concepts from `testthat`, and uses `testthat` for internal unit tests.
 * Jim Hester for developing `covr` and nudging me to use it.  Seeing line by line test coverage is an eye opening experience.
+* Gábor Csárdi for `crayon` and for adding a new dimension to the R experience
 * R Core for developing such a wonderfully flexible language
 
 ## About the Author
