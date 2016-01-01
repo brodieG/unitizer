@@ -26,6 +26,8 @@ Suggests:
     devtools
 License: GPL-3
 LazyData: true
+URL: https://github.com/brodieG/unitizer
+BugReports: https://github.com/brodieG/unitizer/issues
 Collate:
     'asciiml.R'
     'capture.R'
