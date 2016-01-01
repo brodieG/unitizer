@@ -15,7 +15,7 @@ Authors@R: c(
     email="R-core@r-project.org", role="cph",
     comment="Copy of source for library / attach / detach"),
     person(
-    "Gábor", "Csárdi", email="csardi.gabor@gmail.com",
+    "Gabor", "Csardi", email="csardi.gabor@gmail.com",
     role=c("cph"),
     comment="Copied parts of sources of crayon package"))
 Depends:
