@@ -83,18 +83,39 @@ setMethod("as.character", "unitizerDiff",
     pad.rem[x@diffs@target] <- "-  "
     pad.add[x@diffs@current] <- "+  "
 
+    # Add colors
+
+    tar.clr <- diff_color(
+      txt=x@tar.capt, diffs=x@diffs@target, range=show.range, color="red"
+    )
+    cur.clr <- diff_color(
+      txt=x@cur.capt, diffs=x@diffs@current, range=show.range, color="green"
+    )
+
     # As Character
 
     c(
       obj_screen_chr(
-        x@tar.capt, x@tar.exp, obj.diffs=x@diffs@target, range=show.range,
+        tar.clr,  x@tar.exp, diffs=x@diffs@current, range=show.range,
         width=tar.width, pad=pad.rem
       ),
       obj_screen_chr(
-        x@cur.capt, x@cur.exp, obj.diffs=x@diffs@current, range=show.range,
+        cur.clr,  x@cur.exp, diffs=x@diffs@current, range=show.range,
         width=tar.width, pad=pad.add
     ) )
 } )
+# Apply line colors
+
+diff_color <- function(txt, diffs, range, color) {
+  stopifnot(
+    is.character(txt), is.logical(diffs), !any(is.na(diffs)),
+    length(txt) == length(diffs), is.integer(range), !any(is.na(range)),
+    all(range > 0 & range <= length(txt)), is.chr1(color)
+  )
+  to.color <- diffs & seq_along(diffs) %in% range
+  txt[to.color] <- clr(txt[to.color], color)
+  txt
+}
 #' Show Diffs Between The Display Values of Two Objects
 #'
 #' Designed to highlight at a glance the \bold{display} differences between
@@ -471,7 +492,7 @@ obj_capt <- function(
 # constructs the full diff message with additional meta information
 
 obj_screen_chr <- function(
-  obj.chr, obj.name, obj.diffs, range, width, pad
+  obj.chr, obj.name, diffs, range, width, pad, color=NULL
 ) {
   pre <- post <- NULL
   extra <- paste0("; see `", obj.name, "`")
@@ -485,7 +506,7 @@ obj_screen_chr <- function(
   if(len.obj) {
     omit.first <- max(min(range[[1L]] - 1L, len.obj), 0L)
     omit.last <- max(len.obj - tail(range, 1L), 0L)
-    diffs.last <- sum(tail(obj.diffs, -tail(range, 1L)))
+    diffs.last <- sum(tail(diffs, -tail(range, 1L)))
 
     if(omit.first)
       pre <- paste0("... omitted ", omit.first, " lines w/o differences")
