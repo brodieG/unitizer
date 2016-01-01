@@ -117,8 +117,10 @@ NULL
 #'     stream is still captured but setting the value to FALSE tees it.
 #'   \item \code{unitizer.max.capture.chars}: integer(1L) maximum number of
 #'     characters to allow capture of per test
+#'   \item \code{unitizer.color} whether to use ANSI color escape sequences,
+#'     set to TRUE to force, FALSE to force off, or NULL to attempt to auto
+#'     detect (based on code from package:crayon, thanks Gabor Csardi)
 #' }
-#'
 #' @section Misc Options:
 #'
 #' \itemize{
@@ -249,6 +251,9 @@ options_update <- function(tar.opts) {
 .unitizer.opts.default <- list(
   unitizer.par.env=NULL,                   # NULL means use the special unitizer environment
   unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
+  # Attempt to ANSI colorize output, TRUE to force, FALSE to force off, NULL to
+  # auto-detect based on terminal capability
+  unitizer.color=NULL,
   unitizer.disable.capt=
     c(output=FALSE, message=FALSE),        # Will prevent capture
   # How many lines to display when showing test values, or truncate to if exceeds
@@ -299,6 +304,11 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     {
       if(!is.TF(unitizer.show.output))
         stop("Option `unitizer.show.output` must be TRUE or FALSE")
+      if(
+        exists("unitizer.color", inherits=FALSE) &&
+        !is.TF(unitizer.color) && !is.null(unitizer.color)
+      )
+        stop("Option `unitizer.color` must be TRUE, FALSE, or NULL")
       if(!is.valid_capt_setting(unitizer.disable.capt))
         stop("Option `unitizer.disable.capt` is invalid (see prior message)")
       if(!is.screen.out.vec(unitizer.test.out.lines))
