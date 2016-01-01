@@ -92,6 +92,7 @@ setMethod("as.character", "unitizerDiff",
       txt=x@cur.capt, diffs=x@diffs@current, range=show.range, color="green"
     )
 
+
     # As Character
 
     c(
@@ -104,6 +105,53 @@ setMethod("as.character", "unitizerDiff",
         width=tar.width, pad=pad.add
     ) )
 } )
+# groups characters based on whether they are different or not and colors
+# them
+
+color_words <- function(chrs, diffs, color) {
+  stopifnot(length(chrs) == length(diffs))
+  if(length(chrs)) {
+    grps <- cumsum(c(0, abs(diff(diffs))))
+    chrs.grp <- tapply(chrs, grps, paste0, collapse="")
+    diff.grp <- tapply(diffs, grps, head, 1L)
+    cc(diff_color(chrs.grp, diff.grp, seq_along(chrs.grp), color))
+  } else cc(chrs)
+}
+
+# Apply diff algorithm within lines; need to preselect which lines to line up
+# with each other.
+#
+# For each line, splits into characters and groups them into alike and diff
+# groups, colors them, collapses each back into one character value, and
+# returns a list with target values and current values word colored.  The
+# vectors within the list will have the same # of elements as the inputs
+
+diff_word <- function(target, current) {
+  stopifnot(
+    is.character(target), is.character(current),
+    length(target) == length(current)
+  )
+  # Compute the char by char diffs for each line
+
+  tar.split <- strsplit(target, "")
+  cur.split <- strsplit(current, "")
+  diffs <- Map(char_diff, tar.split, cur.split)
+
+  # Merge the sequences of equal/diff characters and then color them
+
+  words.colored <- vapply(
+    seq_along(diffs),
+    function(i)
+      c(
+        target=color_words(tar.split[[i]], diffs[[i]]@target, "red"),
+        current=color_words(cur.split[[i]], diffs[[i]]@current, "green")
+      ),
+    c(target=character(1L), current=character(1L))
+  )
+  # Restructure for return
+
+  split(words.colored, rownames(words.colored))
+}
 # Apply line colors
 
 diff_color <- function(txt, diffs, range, color) {
@@ -405,8 +453,8 @@ char_diff_int <- function(x, y) {
     eq.so.far <- rep(FALSE, first.diff - 1L)
     eq.extra <- logical(0L)
 
-    # Try to see if difference exists in y, and if not see if any subsequent line
-    # does exit, indicating deletions from x
+    # Try to see if difference exists in y, and if not see if any subsequent
+    # line does exit, indicating deletions from x
 
     diff.found <- FALSE
     for(i in seq(first.diff, length(x), by=1L)) {
