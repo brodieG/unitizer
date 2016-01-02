@@ -67,8 +67,8 @@ local({
     set.seed(1, "Mersenne-Twister")
     mx.3 <- matrix(runif(100), ncol=2)
     stop("these tests not fully formulated")
-    diff_obj_out(mx3[1:6, ], mx3[1:5, ])
-    diff_obj_out(mx3[1:6, ], mx3[2:6, ])  # indeces different...
+    diff_obj(mx.3[1:6, ], mx.3[1:5, ])
+    diff_obj(mx.3[1:6, ], mx.3[2:6, ])  # indeces different...
     lst.1 <- list(
       NULL,
       z=list(
@@ -78,7 +78,8 @@ local({
     ) )
     lst.2 <- lst.1
     lst.2$z$z$z$z$z <- 6
+    lst.2$z[[1L]][[1L]][2L] <- "bananas"
+    lst.2$z[[4L]] <- matrix(9:1, 3)
     diff_obj(lst.1, lst.2)
-
   } )
 } )
