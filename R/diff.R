@@ -365,7 +365,7 @@ diff_str_internal <- function(
 
   lvl <- 1L
   repeat{
-    if(lvl > 100) lvl <- 0 # safety valve
+    if(lvl > 100) lvl <- NA # safety valve
     obj.add.capt.str <-
       obj_capt(current, width, frame, mode="str", max.level=lvl)
     obj.rem.capt.str <-
@@ -384,7 +384,7 @@ diff_str_internal <- function(
     # Other break conditions
 
     if(
-      !lvl || lvl >= max.level ||
+      is.na(lvl) || lvl >= max.level ||
       (
         identical(obj.add.capt.str.prev, obj.add.capt.str) &&
         identical(obj.rem.capt.str.prev, obj.rem.capt.str)
@@ -400,6 +400,8 @@ diff_str_internal <- function(
     obj.rem.capt.str.prev <- obj.rem.capt.str
   }
   diffs <- char_diff(obj.rem.capt.str, obj.add.capt.str)
+  tar.exp <- call("str", tar.exp, max.level=lvl)
+  cur.exp <- call("str", cur.exp, max.level=lvl)
   new(
     "unitizerDiff", tar.capt=obj.rem.capt.str, cur.capt=obj.add.capt.str,
     tar.exp=tar.exp, cur.exp=cur.exp, diffs=diffs, mode="str"
@@ -588,7 +590,7 @@ obj_capt <- function(
   # note this forces eval, which is needed
   if(!is.environment(frame))
     stop("Argument `frame` must be an environment")
-  if(!is.int.1L(max.level) || max.level < 0)
+  if(!is.na(max.level) && (!is.int.1L(max.level) ||  max.level < 0))
     stop("Argument `max.level` must be integer(1L) and positive")
 
   width.old <- getOption("width")
@@ -604,7 +606,7 @@ obj_capt <- function(
     obj.out <- capture.output(
       invisible(
         print.res <-
-          user_exp_str(obj, frame, quote(obj), if(max.level) max.level else  NA)
+          user_exp_str(obj, frame, quote(obj), max.level)
     ) )
   } else stop("Logic Error: unexpected mode; contact maintainer.")
 
@@ -640,7 +642,8 @@ obj_screen_chr <- function(
   obj.chr, obj.name, diffs, range, width, pad, color=NA_character_
 ) {
   pre <- post <- NULL
-  extra <- paste0("; see `", obj.name, "`")
+  obj.name.dep <- deparse(obj.name)[[1L]]
+  extra <- character()
   len.obj <- length(obj.chr)
 
   if(length(pad)) {
@@ -655,19 +658,19 @@ obj_screen_chr <- function(
 
     if(omit.first)
       pre <- paste0(
-        "~~omitted ", omit.first, " line", if(omit.first != 1L) "s",
-        " w/o differences"
+        "~~ omitted ", omit.first, " line", if(omit.first != 1L) "s",
+        " w/o diffs"
       )
     if(omit.last) {
       post <- paste0(
-        "~~omitted ", omit.last, " line", if(omit.last != 1L) "s", " w/ ",
-        diffs.last, " difference", if(diffs.last != 1L) "s"
+        "~~ omitted ", omit.last, " line", if(omit.last != 1L) "s", " w/ ",
+        diffs.last, " diff", if(diffs.last != 1L) "s"
     ) }
     if(!is.null(post)) {
       post <- clr(
         paste0(
           pad.pre.post,
-          word_wrap(paste0(post, extra, "~~"), width - nchar(pad[[1L]]))
+          word_wrap(paste0(post, extra, " ~~"), width - nchar(pad[[1L]]))
         ),
         "silver"
     ) }
@@ -676,13 +679,13 @@ obj_screen_chr <- function(
         paste0(
           pad.pre.post,
           word_wrap(
-            paste0(pre, if(is.null(post)) extra, "~~"), width - nchar(pad[[1L]])
+            paste0(pre, if(is.null(post)) extra, " ~~"), width - nchar(pad[[1L]])
         ) ),
         "silver",
     ) }
   }
   c(
-    clr(paste0("@@ ", deparse(obj.name)[[1L]], " @@"), "cyan"),
+    clr(paste0("@@ ", obj.name.dep, " @@"), "cyan"),
     paste0(
       c(pre, paste0(clr(pad, color), obj.chr)[range[range <= len.obj]], post)
     )
