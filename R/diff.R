@@ -76,33 +76,104 @@ setMethod("as.character", "unitizerDiff",
         min(first.diff + context[[2L]] + end.extra, len.max)
       )
     }
-    # Make padding
+    # Match up the diffs; first step is to match the matches since we know that
+    # there are the exact same number of these in both
+
+    matches <- sum(!x@diffs@target)
+    tar.len <- length(x@diffs@target)
+    tar.ids <- integer(tar.len)
+    cur.ids <- integer(length(x@diffs@current))
+    tar.ids[!x@diffs@target] <- seq.int(matches)
+    cur.ids[!x@diffs@current] <- seq.int(matches)
+
+    # Walk through the target vector and for each mismatch find best mismatch in
+    # current vector to try do the wordiff agains
+
+    index <- 0L
+    safety <- 0L
+
+    repeat {
+      if((safety <- safety + 1L) > tar.len)
+        stop("Logic Error: infinite loop detected; contact maintainer")
+      if(index >= tar.len) break
+      mismatch.next <- which(
+        !if(index) tail(tar.ids, -index) else tar.ids
+      )[[1L]]
+      index <- mismatch.next + 1L
+
+      # most recent matched value
+      prev.match <- if(mismatch.next == 1L) 0L else
+        max(head(tar.ids, mismatch.next - 1L))
+
+      # Need to find the unmatched values in current that are between
+      # `prev.match` and `prev.match + 1`; matches are encoded as negative values
+
+      if(prev.match) {
+        prev.match.cur <- match(c(prev.match, prev.match + 1L), cur.ids)
+      } else {
+        prev.match.cur <- c(1L, match(1L, cur.ids))
+      }
+      if(prev.match > matches) {
+        stop("Logic Error: unexpected matching state, contact maintainer.")
+      } else if (prev.match == matches) {
+        # Special case every remaining value in cur is a mismatch so take first
+        # one if it exists
+
+        if(prev.match.cur[1L] <  length(cur.ids)) {
+          tar.ids[mismatch.next] <- -(prev.match.cur[1L] + 1L)
+          cur.ids[prev.match.cur[1L] + 1L] <- -mismatch.next
+        }
+        break;  # done, nothing else to match
+      } else {
+        match.diff <- diff(prev.match.cur)
+        if(length(match.diff) != 1L || is.na(match.diff) || match.diff < 1L)
+          stop("Logic Error: unexpected matching state 2, contact maintainer.")
+        if(match.diff > 1L) {
+          tar.ids[mismatch.next] <- -(prev.match.cur[1L] + 1L)
+          cur.ids[prev.match.cur[1L] + 1L] <- -mismatch.next
+    } } }
+    # Now extract the corresponding strings to compare
+
+    tar.ids.mismatch <- -cur.ids[cur.ids < 0L & -cur.ids %in% show.range]
+    cur.ids.mismatch <- -tar.ids[tar.ids < 0L & -tar.ids %in% show.range]
+
+    # Add word colors
+
+    tar.txt <- x@tar.capt
+    cur.txt <- x@cur.capt
+
+    word.color <-
+      diff_word(tar.txt[tar.ids.mismatch], cur.txt[cur.ids.mismatch])
+
+    tar.txt[tar.ids.mismatch] <- word.color$target
+    cur.txt[cur.ids.mismatch] <- word.color$current
+
+    # Color lines that were not word colored
+
+    tar.seq <- seq_along(tar.ids)
+    cur.seq <- seq_along(cur.ids)
+    tar.line.diff <- x@diffs@target & !tar.seq %in% tar.ids.mismatch &
+      tar.seq %in% show.range
+    cur.line.diff <- x@diffs@current & !cur.seq %in% cur.ids.mismatch &
+      cur.seq %in% show.range
+
+    tar.txt[tar.line.diff] <- clr(tar.txt[tar.line.diff], color="red")
+    cur.txt[cur.line.diff] <- clr(cur.txt[cur.line.diff], color="red")
+
+    # Add all the display stuff
 
     pad.rem <- rep("   ", length(x@tar.capt))
     pad.add <- rep("   ", length(x@cur.capt))
     pad.rem[x@diffs@target] <- "-  "
     pad.add[x@diffs@current] <- "+  "
-
-    # Add colors
-
-    tar.clr <- diff_color(
-      txt=x@tar.capt, diffs=x@diffs@target, range=show.range, color="red"
-    )
-    cur.clr <- diff_color(
-      txt=x@cur.capt, diffs=x@diffs@current, range=show.range, color="green"
-    )
-
-
-    # As Character
-
     c(
       obj_screen_chr(
-        tar.clr,  x@tar.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.rem
+        tar.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
+        width=tar.width, pad=pad.add
       ),
       obj_screen_chr(
-        cur.clr,  x@cur.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.add
+        cur.txt,  x@tar.exp, diffs=x@diffs@current, range=show.range,
+        width=tar.width, pad=pad.rem
     ) )
 } )
 # groups characters based on whether they are different or not and colors
@@ -433,7 +504,13 @@ Rdiff_obj <- function(from, to, ...) {
 # elements that match and those that don't as a unitizerDiffDiffs object
 
 char_diff <- function(x, y) {
-  do.call("new", c(list("unitizerDiffDiffs"), char_diff_int(x, y)))
+  diffs.int <- char_diff_int(x, y)
+  if(sum(!diffs.int[[1L]]) != sum(!diffs.int[[2L]]))
+    stop(
+      "Logic Error: diff produced unequal number of matching lines; contact ",
+      "maintainer."
+    )
+  do.call("new", c(list("unitizerDiffDiffs"), diffs.int))
 }
 char_diff_int <- function(x, y) {
   stopifnot(
@@ -454,7 +531,9 @@ char_diff_int <- function(x, y) {
     eq.extra <- logical(0L)
 
     # Try to see if difference exists in y, and if not see if any subsequent
-    # line does exit, indicating deletions from x
+    # line does exist, indicating deletions from x.
+    # This grows vectors, but doesn't seem to be a huge performance issue at
+    # the normal scale we run this.
 
     diff.found <- FALSE
     for(i in seq(first.diff, length(x), by=1L)) {
