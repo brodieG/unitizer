@@ -105,11 +105,11 @@ is.int.1L <- function(x)
   is.numeric(x) && length(x) == 1L && !any(is.na(x)) && all.equal(x, round(x))
 
 is.screen.out.vec <- function(x)
-  is.numeric(x) && length(x) == 2L && !any(is.na(x)) && all(x) > 1 &&
+  is.numeric(x) && length(x) == 2L && !any(is.na(x)) && all(x > 1) &&
   x[1] >= x[2] && all.equal(round(x), x)
 
 is.context.out.vec <- function(x)
-  is.numeric(x) && length(x) == 2L && !any(is.na(x)) && all(x) > 0 &&
+  is.numeric(x) && length(x) == 2L && !any(is.na(x)) && all(x > 0) &&
   x[1] >= x[2] && all.equal(round(x), x)
 
 # Check Whether Provided Store ID Is in Default Form
