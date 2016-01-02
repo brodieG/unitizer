@@ -54,6 +54,7 @@ setMethod("any", "unitizerDiffDiffs",
 
 setMethod("as.character", "unitizerDiff",
   function(x, context, ...) {
+    browser()
     context <- check_context(context)
     # If there is an error, we want to show as much of the objects as we can
     # centered on the error.  If we can show the entire objects without centering
@@ -81,8 +82,10 @@ setMethod("as.character", "unitizerDiff",
 
     matches <- sum(!x@diffs@target)
     tar.len <- length(x@diffs@target)
+    tar.seq <- seq.int(tar.len)
     tar.ids <- integer(tar.len)
-    cur.ids <- integer(length(x@diffs@current))
+    cur.len <- length(x@diffs@current)
+    cur.ids <- integer(cur.len)
     tar.ids[!x@diffs@target] <- seq.int(matches)
     cur.ids[!x@diffs@current] <- seq.int(matches)
 
@@ -96,10 +99,7 @@ setMethod("as.character", "unitizerDiff",
       if((safety <- safety + 1L) > tar.len)
         stop("Logic Error: infinite loop detected; contact maintainer")
       if(index >= tar.len) break
-      mismatch.next <- which(
-        !if(index) tail(tar.ids, -index) else tar.ids
-      )[[1L]]
-      index <- mismatch.next + 1L
+      mismatch.next <- which(!tar.ids & tar.seq > index)[[1L]]
 
       # most recent matched value
       prev.match <- if(mismatch.next == 1L) 0L else
@@ -108,30 +108,30 @@ setMethod("as.character", "unitizerDiff",
       # Need to find the unmatched values in current that are between
       # `prev.match` and `prev.match + 1`; matches are encoded as negative values
 
-      if(prev.match) {
-        prev.match.cur <- match(c(prev.match, prev.match + 1L), cur.ids)
+      prev.match.cur <- if(prev.match) {
+        match(c(prev.match, prev.match + 1L), cur.ids)
       } else {
-        prev.match.cur <- c(1L, match(1L, cur.ids))
+        c(1L, match(1L, cur.ids))
       }
-      if(prev.match > matches) {
-        stop("Logic Error: unexpected matching state, contact maintainer.")
-      } else if (prev.match == matches) {
-        # Special case every remaining value in cur is a mismatch so take first
-        # one if it exists
+      # If no more matching values, indicate one index past end of cur vector
+      # since we'll be looking at index values less than that
 
-        if(prev.match.cur[1L] <  length(cur.ids)) {
-          tar.ids[mismatch.next] <- -(prev.match.cur[1L] + 1L)
-          cur.ids[prev.match.cur[1L] + 1L] <- -mismatch.next
-        }
-        break;  # done, nothing else to match
-      } else {
-        match.diff <- diff(prev.match.cur)
-        if(length(match.diff) != 1L || is.na(match.diff) || match.diff < 1L)
-          stop("Logic Error: unexpected matching state 2, contact maintainer.")
-        if(match.diff > 1L) {
-          tar.ids[mismatch.next] <- -(prev.match.cur[1L] + 1L)
-          cur.ids[prev.match.cur[1L] + 1L] <- -mismatch.next
-    } } }
+      if(is.na(prev.match.cur[2L])) prev.match.cur[2L] <- cur.len + 1L
+
+      # There are possible unmatched items in cur we can match to our unmatched
+      # item in tar
+      if(
+        diff(prev.match.cur) > 1 &&
+        length(cur.unmatch <- which(
+          !cur.ids[seq(prev.match.cur[1L] + 1L, prev.match.cur[2L] - 1L)]
+        ) )
+      ) {
+        cur.unm.id <- prev.match.cur[1L] + cur.unmatch[1L]
+        tar.ids[mismatch.next] <- -cur.unm.id
+        cur.ids[cur.unm.id] <- -mismatch.next
+      }
+      index <- mismatch.next
+    }
     # Now extract the corresponding strings to compare
 
     tar.ids.mismatch <- -cur.ids[cur.ids < 0L & -cur.ids %in% show.range]
@@ -288,7 +288,7 @@ diff_print <- function(target, current, context=NULL) {
   cat(
     as.character(
       diff_print_internal(
-        target, current, tar.exp=substitute(target),
+        target, current, tar.exp=substitute(target), frame=frame,
         cur.exp=substitute(current), context=context, width=width
       ),
       context=context
