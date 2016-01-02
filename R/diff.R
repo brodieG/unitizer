@@ -157,7 +157,7 @@ setMethod("as.character", "unitizerDiff",
       cur.seq %in% show.range
 
     tar.txt[tar.line.diff] <- clr(tar.txt[tar.line.diff], color="red")
-    cur.txt[cur.line.diff] <- clr(cur.txt[cur.line.diff], color="red")
+    cur.txt[cur.line.diff] <- clr(cur.txt[cur.line.diff], color="green")
 
     # Add all the display stuff
 
@@ -168,11 +168,11 @@ setMethod("as.character", "unitizerDiff",
     c(
       obj_screen_chr(
         tar.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.add
+        width=tar.width, pad=pad.rem
       ),
       obj_screen_chr(
         cur.txt,  x@tar.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.rem
+        width=tar.width, pad=pad.add
     ) )
 } )
 # groups characters based on whether they are different or not and colors
