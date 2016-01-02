@@ -170,11 +170,11 @@ setMethod("as.character", "unitizerDiff",
     c(
       obj_screen_chr(
         tar.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.rem
+        width=tar.width, pad=pad.rem, color="red"
       ),
       obj_screen_chr(
         cur.txt,  x@tar.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.add
+        width=tar.width, pad=pad.add, color="green"
     ) )
 } )
 # groups characters based on whether they are different or not and colors
@@ -622,7 +622,7 @@ obj_capt <- function(
 # constructs the full diff message with additional meta information
 
 obj_screen_chr <- function(
-  obj.chr, obj.name, diffs, range, width, pad, color=NULL
+  obj.chr, obj.name, diffs, range, width, pad, color=NA_character_
 ) {
   pre <- post <- NULL
   extra <- paste0("; see `", obj.name, "`")
@@ -658,6 +658,8 @@ obj_screen_chr <- function(
   }
   c(
     paste0("@@ ", deparse(obj.name)[[1L]], " @@"),
-    paste0(c(pre, paste0(pad, obj.chr)[range[range <= len.obj]], post))
+    paste0(
+      c(pre, paste0(clr(pad, color), obj.chr)[range[range <= len.obj]], post)
+    )
   )
 }
