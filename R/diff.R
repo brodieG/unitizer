@@ -654,10 +654,14 @@ obj_screen_chr <- function(
     diffs.last <- sum(tail(diffs, -tail(range, 1L)))
 
     if(omit.first)
-      pre <- paste0("... omitted ", omit.first, " lines w/o differences")
+      pre <- paste0(
+        "... omitted ", omit.first, " line", if(omit.first != 1L) "s",
+        " w/o differences"
+      )
     if(omit.last) {
       post <- paste0(
-        "... omitted ", omit.first, " lines w/ ", diffs.last, " differences"
+        "... omitted ", omit.last, " line", if(omit.last != 1L) "s", " w/ ",
+        diffs.last, " difference", if(diffs.last != 1L) "s"
     ) }
     if(!is.null(post)) {
       post <- paste0(
