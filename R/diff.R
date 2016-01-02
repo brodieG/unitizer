@@ -249,8 +249,9 @@ diff_color <- function(txt, diffs, range, color) {
 #'   \item \code{diff_print} shows the differences in the \code{print} or
 #'     \code{show} screen output of the two objects
 #'   \item \code{diff_str} shows the differences in the \code{str} screen output
-#'     of the two objects; will show as few recursive levels as needed to show
-#'     at least one difference (see \code{max.level})
+#'     of the two objects; will show as many recursive levels as possible so
+#'     long as context lines are not exceeded, and if they are, as few as
+#'     possible to show at least one error (see \code{max.level})
 #'   \item \code{diff_obj} picks between \code{diff_print} and \code{diff_str}
 #'     depending on which one it thinks will provide the most useful diff
 #' }
@@ -265,12 +266,12 @@ diff_color <- function(txt, diffs, range, color) {
 #'   objects display as less than \code{2 * context + 1} lines.
 #' @param max.level integer(1L) up to how many levels to try running \code{str};
 #'   \code{str} is run repeatedly starting with \code{max.level=1} and then
-#'   increasing \code{max.level} until a difference appears or the
-#'   \code{max.level} specified here is reached.  If the value is reached then
-#'   will let \code{str} run with \code{max.level} unspecified.  This is
-#'   designed to produce the most compact screen output possible that shows the
-#'   differences between objects, though obviously it comes at a performance
-#'   cost; set to 0 to disable
+#'   increasing \code{max.level} until we fill the context or a difference
+#'   appears or the \code{max.level} specified here is reached.  If the value is
+#'   reached then will let \code{str} run with \code{max.level} unspecified.
+#'   This is designed to produce the most compact screen output possible that
+#'   shows the differences between objects, though obviously it comes at a
+#'   performance cost; set to 0 to disable
 #' @return character, invisibly, the text representation of the diff
 
 diff_obj <- function(target, current, context=NULL) {
@@ -367,12 +368,18 @@ diff_str_internal <- function(
     str.len.min <- min(length(obj.add.capt.str), length(obj.rem.capt.str))
     str.len.max <- max(length(obj.add.capt.str), length(obj.rem.capt.str))
 
-    diffs.str <- char_diff(obj.rem.capt.str, obj.add.capt.str)
+    # Overshot full displayable size; check to see if previous iteration had
+    # differences
 
-    # Exit conditions
+    if(str.len.max > max.lines && lvl > 1L && any(diffs.str)) {
+      obj.add.capt.str <- obj.add.capt.str.prev
+      obj.rem.capt.str <- obj.rem.capt.str.prev
+      break
+    }
+    # Other break conditions
 
     if(
-      !lvl || any(diffs.str) || str.len.max >= max.lines ||
+      !lvl ||
       (
         identical(obj.add.capt.str.prev, obj.add.capt.str) &&
         identical(obj.rem.capt.str.prev, obj.rem.capt.str)
@@ -380,6 +387,9 @@ diff_str_internal <- function(
     )
       break
 
+    # Run differences and iterate
+
+    diffs.str <- char_diff(obj.rem.capt.str, obj.add.capt.str)
     lvl <- lvl + 1
     obj.add.capt.str.prev <- obj.add.capt.str
     obj.rem.capt.str.prev <- obj.rem.capt.str
