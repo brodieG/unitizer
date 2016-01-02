@@ -176,15 +176,17 @@ setMethod("as.character", "unitizerDiff",
     ) )
 } )
 # groups characters based on whether they are different or not and colors
-# them
+# them; assumes that the chrs vector values are words that were previously
+# separated by spaces, and collapses the strings back with the spaces at the
+# end
 
 color_words <- function(chrs, diffs, color) {
   stopifnot(length(chrs) == length(diffs))
   if(length(chrs)) {
     grps <- cumsum(c(0, abs(diff(diffs))))
-    chrs.grp <- tapply(chrs, grps, paste0, collapse="")
+    chrs.grp <- tapply(chrs, grps, paste0, collapse=" ")
     diff.grp <- tapply(diffs, grps, head, 1L)
-    cc(diff_color(chrs.grp, diff.grp, seq_along(chrs.grp), color))
+    cc(diff_color(chrs.grp, diff.grp, seq_along(chrs.grp), color), c=" ")
   } else cc(chrs)
 }
 
@@ -203,8 +205,8 @@ diff_word <- function(target, current) {
   )
   # Compute the char by char diffs for each line
 
-  tar.split <- strsplit(target, "")
-  cur.split <- strsplit(current, "")
+  tar.split <- strsplit(target, " ")
+  cur.split <- strsplit(current, " ")
   diffs <- Map(char_diff, tar.split, cur.split)
 
   # Merge the sequences of equal/diff characters and then color them
