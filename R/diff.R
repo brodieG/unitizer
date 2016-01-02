@@ -64,7 +64,7 @@ setMethod("as.character", "unitizerDiff",
     first.diff <- if(!any(x)) 1L else
       min(which(x@diffs@target), x@diffs@current)
 
-    show.range <- if(len.max < 2 * context[[1L]] + 1) {
+    show.range <- if(len.max <= 2 * context[[1L]] + 1) {
       1:len.max
     } else {
       # if first diff is too close to beginning or end, use extra context on
@@ -315,7 +315,7 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
       diff_str_internal(
         target, current, tar.exp=substitute(target),
         cur.exp=substitute(current), context=context, width=width,
-        frame=frame, max.lines=-1, max.level=max.level
+        frame=frame, max.lines=NULL, max.level=max.level
       ),
       context=context,
       width=width
@@ -384,7 +384,7 @@ diff_str_internal <- function(
     # Other break conditions
 
     if(
-      !lvl ||
+      !lvl || lvl >= max.level ||
       (
         identical(obj.add.capt.str.prev, obj.add.capt.str) &&
         identical(obj.rem.capt.str.prev, obj.rem.capt.str)
