@@ -80,6 +80,7 @@ local({
     lst.2$z$z$z$z$z <- 6
     lst.2$z[[1L]][[1L]][2L] <- "bananas"
     lst.2$z[[4L]] <- matrix(9:1, 3)
-    diff_obj(lst.1, lst.2)
+    diff_obj(lst.1, lst.2, context=c(10, 5))
+    diff_obj(lst.1, lst.2, context=c(2, 1))
   } )
 } )

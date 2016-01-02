@@ -62,7 +62,7 @@ setMethod("as.character", "unitizerDiff",
 
     len.max <- max(length(x@tar.capt), length(x@cur.capt))
     first.diff <- if(!any(x)) 1L else
-      min(which(x@diffs@target), x@diffs@current)
+      min(which(x@diffs@target), which(x@diffs@current))
 
     show.range <- if(len.max <= 2 * context[[1L]] + 1) {
       1:len.max
