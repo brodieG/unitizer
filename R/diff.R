@@ -54,7 +54,6 @@ setMethod("any", "unitizerDiffDiffs",
 
 setMethod("as.character", "unitizerDiff",
   function(x, context, ...) {
-    browser()
     context <- check_context(context)
     # If there is an error, we want to show as much of the objects as we can
     # centered on the error.  If we can show the entire objects without centering
