@@ -53,8 +53,9 @@ setMethod("any", "unitizerDiffDiffs",
 #' @rdname unitizer_s4method_doc
 
 setMethod("as.character", "unitizerDiff",
-  function(x, context, ...) {
+  function(x, context, width, ...) {
     context <- check_context(context)
+    width <- check_width(width)
     # If there is an error, we want to show as much of the objects as we can
     # centered on the error.  If we can show the entire objects without centering
     # then we do that.
@@ -170,11 +171,11 @@ setMethod("as.character", "unitizerDiff",
     c(
       obj_screen_chr(
         tar.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.rem, color="red"
+        width=width, pad=pad.rem, color="red"
       ),
       obj_screen_chr(
         cur.txt,  x@tar.exp, diffs=x@diffs@current, range=show.range,
-        width=tar.width, pad=pad.add, color="green"
+        width=width, pad=pad.add, color="green"
     ) )
 } )
 # groups characters based on whether they are different or not and colors
@@ -277,16 +278,18 @@ diff_color <- function(txt, diffs, range, color) {
 diff_obj <- function(target, current, context=NULL) {
   context <- check_context(context)
   frame <- parent.frame()
+  width <- getOption("width")
 
   diff_obj_internal(
     target, current, tar.exp=substitute(target), cur.exp=substitute(current),
-    context=context, frame=frame
+    context=context, frame=frame, width=width
   )
 }
 #' @rdname diff_obj
 #' @export
 
 diff_print <- function(target, current, context=NULL) {
+  context <- check_context(context)
   width <- getOption("width")
   frame <- parent.frame()
   cat(
@@ -295,7 +298,8 @@ diff_print <- function(target, current, context=NULL) {
         target, current, tar.exp=substitute(target), frame=frame,
         cur.exp=substitute(current), context=context, width=width
       ),
-      context=context
+      context=context,
+      width=width
     ),
     sep="\n"
   )
@@ -313,7 +317,8 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
         cur.exp=substitute(current), context=context, width=width,
         frame=frame, max.lines=-1, max.level=max.level
       ),
-      context=context
+      context=context,
+      width=width
     ),
     sep="\n"
   )
@@ -437,7 +442,7 @@ diff_obj_internal <- function(
   )
     res.print else res.str
 
-  res.chr <- as.character(res, context)
+  res.chr <- as.character(res, context, width=width)
   cat(res.chr, file=file, sep="\n")
   invisible(res.chr)
 }
@@ -456,7 +461,7 @@ check_context <- function(context) {
       stop("`getOption(\"unitizer.test.fail.context.lines\")`", err.msg)
   }
   if(!is.context.out.vec(context)) stop("Argument `context` ", err.msg)
-  context
+  as.integer(context)
 }
 check_width <- function(width) {
   err.msg <- "must be integer(1L) and strictly positive"
