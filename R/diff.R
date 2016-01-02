@@ -655,28 +655,34 @@ obj_screen_chr <- function(
 
     if(omit.first)
       pre <- paste0(
-        "... omitted ", omit.first, " line", if(omit.first != 1L) "s",
+        "~~omitted ", omit.first, " line", if(omit.first != 1L) "s",
         " w/o differences"
       )
     if(omit.last) {
       post <- paste0(
-        "... omitted ", omit.last, " line", if(omit.last != 1L) "s", " w/ ",
+        "~~omitted ", omit.last, " line", if(omit.last != 1L) "s", " w/ ",
         diffs.last, " difference", if(diffs.last != 1L) "s"
     ) }
     if(!is.null(post)) {
-      post <- paste0(
-        pad.pre.post,
-        word_wrap(paste0(post, extra, " ..."), width - nchar(pad[[1L]]))
+      post <- clr(
+        paste0(
+          pad.pre.post,
+          word_wrap(paste0(post, extra, "~~"), width - nchar(pad[[1L]]))
+        ),
+        "silver"
     ) }
     if (!is.null(pre)) {
-      pre <- paste0(
-        pad.pre.post,
-        word_wrap(
-          paste0(pre, if(is.null(post)) extra, " ..."), width - nchar(pad[[1L]])
-    ) ) }
+      pre <- clr(
+        paste0(
+          pad.pre.post,
+          word_wrap(
+            paste0(pre, if(is.null(post)) extra, "~~"), width - nchar(pad[[1L]])
+        ) ),
+        "silver",
+    ) }
   }
   c(
-    paste0("@@ ", deparse(obj.name)[[1L]], " @@"),
+    clr(paste0("@@ ", deparse(obj.name)[[1L]], " @@"), "cyan"),
     paste0(
       c(pre, paste0(clr(pad, color), obj.chr)[range[range <= len.obj]], post)
     )
