@@ -113,6 +113,7 @@ clr <- function(
       "Argument `color` must be character(1L) or the same length as `txt` ",
       "and may only contain valid color codes."
     )
+  if(length(color) == 1L) color <- rep(color, length(txt))
   ifelse(
     is.na(color), txt,
     sprintf(
