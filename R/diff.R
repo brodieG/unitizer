@@ -98,7 +98,9 @@ setMethod("as.character", "unitizerDiff",
       if((safety <- safety + 1L) > tar.len)
         stop("Logic Error: infinite loop detected; contact maintainer")
       if(index >= tar.len) break
-      mismatch.next <- which(!tar.ids & tar.seq > index)[[1L]]
+      mismatches.next <- which(!tar.ids & tar.seq > index)
+      if(!length(mismatches.next)) break
+      mismatch.next <- mismatches.next[[1L]]
 
       # most recent matched value
       prev.match <- if(mismatch.next == 1L) 0L else
