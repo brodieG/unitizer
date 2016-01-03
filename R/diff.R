@@ -260,13 +260,15 @@ diff_color <- function(txt, diffs, range, color) {
   txt[to.color] <- clr(txt[to.color], color)
   txt
 }
-#' Show Diffs Between The Display Values of Two Objects
+#' Show Diffs Between the Screen Display Versions of Two Objects
 #'
 #' Designed to highlight at a glance the \bold{display} differences between
 #' two objects.  Lack of visual differences is not guarantee that the objects
 #' are the same.  These functions are designed to help you quickly understand
 #' the nature of differences between objects when they are known to be different
-#' (e.g. not \code{identical} or \code{all.equal}).
+#' (e.g. not \code{identical} or \code{all.equal}).  The diff algorithms are far
+#' from perfect and in some cases will likely make seemingly odd choices on what
+#' to highlight as being different.
 #'
 #' These functions focus on the first display difference between two objects.
 #' If you want to see the full object diff try \code{\link{Rdiff_obj}}.
