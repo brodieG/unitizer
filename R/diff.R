@@ -663,6 +663,7 @@ obj_capt <- function(
 obj_screen_chr <- function(
   obj.chr, obj.name, diffs, range, width, pad, color=NA_character_
 ) {
+  stopifnot(is.chr1(pad))
   pre <- post <- NULL
   pad.all <- pad.pre.post <- NULL
   obj.name.dep <- deparse(obj.name)[[1L]]
@@ -671,9 +672,13 @@ obj_screen_chr <- function(
 
   if(len.obj) {
     pad.all <- character(length(diffs))
-    pad.all[diffs] <- pad
-    pad.all <- format(pad.all)
-    pad.chars <- nchar(pad[[1L]])
+    pad.chars <- nchar(pad)
+    if(!any(diffs)) {
+      pad.all <- replicate(len.obj, cc(rep(" ", pad.chars)))
+    } else {
+      pad.all[diffs] <- pad
+      pad.all <- format(pad.all)
+    }
     pad.all[diffs] <- clr(pad.all[diffs], color)
     pad.pre.post <- paste0(rep(" ", pad.chars), collapse="")
 
