@@ -61,8 +61,9 @@ setMethod("as.character", "unitizerDiff",
     # then we do that.
 
     len.max <- max(length(x@tar.capt), length(x@cur.capt))
-    first.diff <- if(!any(x)) 1L else
-      min(which(x@diffs@target), which(x@diffs@current))
+    first.diff <- if(!any(x)) {
+      return("No visible differences between objects")
+    } else min(which(x@diffs@target), which(x@diffs@current))
 
     show.range <- if(len.max <= 2 * context[[1L]] + 1) {
       1:len.max
@@ -439,12 +440,15 @@ diff_obj_internal <- function(
   len.max <- context[[1L]] * 2 + 1
   len.str <- max(length(res.str@tar.capt), length(res.str@cur.capt))
 
-  # Chose which display to use; only favor res.str if it really is substantially
-  # more compact and it does show an error
+  # Choose which display to use; only favor res.str if it really is substantially
+  # more compact and it does show an error and not possible to show full print
+  # diff in context
 
   res <- if(
-    (!any(res.str) || len.print < len.str * 3) &&
-    !(len.print > len.max && len.str <= len.max)
+    len.print <= len.max || (
+      (!any(res.str) || len.print < len.str * 3) &&
+      !(len.print > len.max && len.str <= len.max)
+    )
   )
     res.print else res.str
 
