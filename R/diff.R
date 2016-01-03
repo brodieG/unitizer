@@ -254,9 +254,10 @@ diff_color <- function(txt, diffs, range, color) {
 #' Show Diffs Between The Display Values of Two Objects
 #'
 #' Designed to highlight at a glance the \bold{display} differences between
-#' two objects.  Note that the difference shown or reported by these functions
-#' may not be the totality of the differences between objects since display
-#' methods may not display all differences.
+#' two objects.  Lack of visual differences is not guarantee that the objects
+#' are the same.  These functions are designed to help you quickly understand
+#' the nature of differences between objects when they are known to be different
+#' (e.g. not \code{identical} or \code{all.equal}).
 #'
 #' \itemize{
 #'   \item \code{diff_print} shows the differences in the \code{print} or
@@ -268,6 +269,11 @@ diff_color <- function(txt, diffs, range, color) {
 #'   \item \code{diff_obj} picks between \code{diff_print} and \code{diff_str}
 #'     depending on which one it thinks will provide the most useful diff
 #' }
+#' @note: differences shown or reported by these functions may not be the
+#'   totality of the differences between objects since display methods may not
+#'   display all differences.  This is particularly true when using \code{str}
+#'   for comparisons with \code{max.level} since differences inside unexpanded
+#'   recursive levels will not be shown at all.
 #' @export
 #' @param target the reference object
 #' @param new the object being compared to \code{target}
