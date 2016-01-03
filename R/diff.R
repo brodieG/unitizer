@@ -208,24 +208,36 @@ diff_word <- function(target, current) {
   )
   # Compute the char by char diffs for each line
 
-  tar.split <- strsplit(target, " ")
-  cur.split <- strsplit(current, " ")
+  tar.reg <- gregexpr("\\S+", target)
+  cur.reg <- gregexpr("\\S+", current)
+
+  tar.split <- regmatches(target, tar.reg)
+  cur.split <- regmatches(current, cur.reg)
+
   diffs <- Map(char_diff, tar.split, cur.split)
 
-  # Merge the sequences of equal/diff characters and then color them
+  # Color
 
-  words.colored <- vapply(
-    seq_along(diffs),
+  tar.colored <- lapply(
+    seq_along(tar.split),
     function(i)
-      c(
-        target=color_words(tar.split[[i]], diffs[[i]]@target, "red"),
-        current=color_words(cur.split[[i]], diffs[[i]]@current, "green")
-      ),
-    c(target=character(1L), current=character(1L))
+      diff_color(
+        tar.split[[i]], diffs[[i]]@target, seq_along(tar.split[[i]]), "red"
+      )
   )
-  # Restructure for return
+  cur.colored <- lapply(
+    seq_along(cur.split),
+    function(i)
+      diff_color(
+        cur.split[[i]], diffs[[i]]@current, seq_along(cur.split[[i]]), "green"
+      )
+  )
+  # Merge back into original
 
-  split(words.colored, rownames(words.colored))
+  regmatches(target, tar.reg) <- tar.colored
+  regmatches(current, cur.reg) <- cur.colored
+
+  list(target=target, current=current)
 }
 # Apply line colors
 
