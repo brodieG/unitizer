@@ -366,6 +366,7 @@ diff_str_internal <- function(
   obj.add.capt.str <- obj.rem.capt.str <- obj.add.capt.str.prev <-
     obj.rem.capt.str.prev <- character()
 
+  prev.lvl <- 0L
   lvl <- 1L
   repeat{
     if(lvl > 100) lvl <- NA # safety valve
@@ -386,21 +387,21 @@ diff_str_internal <- function(
     }
     # Other break conditions
 
+    if(is.na(lvl) || lvl >= max.level) break
     if(
-      is.na(lvl) || lvl >= max.level ||
-      (
-        identical(obj.add.capt.str.prev, obj.add.capt.str) &&
-        identical(obj.rem.capt.str.prev, obj.rem.capt.str)
-      )
-    )
+      identical(obj.add.capt.str.prev, obj.add.capt.str) &&
+      identical(obj.rem.capt.str.prev, obj.rem.capt.str)
+    ) {
+      lvl <- prev.lvl
       break
-
+    }
     # Run differences and iterate
 
     diffs.str <- char_diff(obj.rem.capt.str, obj.add.capt.str)
-    lvl <- lvl + 1
     obj.add.capt.str.prev <- obj.add.capt.str
     obj.rem.capt.str.prev <- obj.rem.capt.str
+    prev.lvl <- lvl
+    lvl <- lvl + 1
   }
   diffs <- char_diff(obj.rem.capt.str, obj.add.capt.str)
   tar.exp <- call("str", tar.exp, max.level=lvl)
