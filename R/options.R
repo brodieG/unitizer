@@ -262,7 +262,7 @@ options_update <- function(tar.opts) {
   unitizer.test.msg.lines=c(10L, 3L),
   # How many lines of context to display when showing failed objects
   # (note banner means one more line than this displayed)
-  unitizer.test.fail.context.lines=c(10L, 5L),
+  unitizer.test.fail.context.lines=c(10L, 3L),
   unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
   unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
   unitizer.history.file="",                # "" is interpreted as tempfile()
