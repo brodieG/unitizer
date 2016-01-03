@@ -96,9 +96,12 @@ setMethod("as.character", "unitizerDiff",
     safety <- 0L
 
     repeat {
-      if((safety <- safety + 1L) > tar.len)
-        stop("Logic Error: infinite loop detected; contact maintainer")
       if(index >= tar.len) break
+      if((safety <- safety + 1L) > tar.len)
+        stop(
+          "Logic Error: infinite loop detected trying to find mismatched lines; ",
+          "contact maintainer"
+        )
       mismatches.next <- which(!tar.ids & tar.seq > index)
       if(!length(mismatches.next)) break
       mismatch.next <- mismatches.next[[1L]]
