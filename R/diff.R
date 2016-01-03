@@ -324,17 +324,16 @@ diff_print <- function(target, current, context=NULL) {
   context <- check_context(context)
   width <- getOption("width")
   frame <- parent.frame()
-  cat(
-    as.character(
-      diff_print_internal(
-        target, current, tar.exp=substitute(target), frame=frame,
-        cur.exp=substitute(current), context=context, width=width
-      ),
-      context=context,
-      width=width
+  res <- as.character(
+    diff_print_internal(
+      target, current, tar.exp=substitute(target), frame=frame,
+      cur.exp=substitute(current), context=context, width=width
     ),
-    sep="\n"
+    context=context,
+    width=width
   )
+  cat(res, sep="\n")
+  invisible(res)
 }
 #' @rdname diff_obj
 #' @export
@@ -342,18 +341,17 @@ diff_print <- function(target, current, context=NULL) {
 diff_str <- function(target, current, context=NULL, max.level=10) {
   width <- getOption("width")
   frame <- parent.frame()
-  cat(
-    as.character(
-      diff_str_internal(
-        target, current, tar.exp=substitute(target),
-        cur.exp=substitute(current), context=context, width=width,
-        frame=frame, max.lines=NULL, max.level=max.level
-      ),
-      context=context,
-      width=width
+  res <- as.character(
+    diff_str_internal(
+      target, current, tar.exp=substitute(target),
+      cur.exp=substitute(current), context=context, width=width,
+      frame=frame, max.lines=NULL, max.level=max.level
     ),
-    sep="\n"
+    context=context,
+    width=width
   )
+  cat(res, sep="\n")
+  invisible(res)
 }
 # Implements the diff_* functions
 #
