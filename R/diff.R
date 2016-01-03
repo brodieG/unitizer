@@ -116,7 +116,7 @@ setMethod("as.character", "unitizerDiff",
       prev.match.cur <- if(prev.match) {
         match(c(prev.match, prev.match + 1L), cur.ids)
       } else {
-        c(1L, match(1L, cur.ids))
+        c(0L, match(1L, cur.ids))
       }
       # If no more matching values, indicate one index past end of cur vector
       # since we'll be looking at index values less than that
