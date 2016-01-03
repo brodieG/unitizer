@@ -68,15 +68,24 @@ setMethod("as.character", "unitizerDiff",
     show.range <- if(len.max <= 2 * context[[1L]] + 1) {
       1:len.max
     } else {
-      # if first diff is too close to beginning or end, use extra context on
-      # other side of error
+      rng.trim <- 2 * context[[2L]] + 1
+      if(first.diff <= rng.trim) {
+        # if can show first diff starting from beginning, do that
+        1:rng.trim
+      } else if (len.max - first.diff + 1 <= rng.trim) {
+        # if first diff is close to end, then show through end
+        tail(1:len.max, -rng.trim)
+      } else {
+        # if first diff is too close to beginning or end, use extra context on
+        # other side of error
 
-      end.extra <- max(0, context[[2L]] - first.diff)
-      start.extra <- max(0, context[[2L]] - (len.max - first.diff))
-      seq(
-        max(first.diff - context[[2L]] - start.extra, 1),
-        min(first.diff + context[[2L]] + end.extra, len.max)
-      )
+        end.extra <- max(0, context[[2L]] - first.diff)
+        start.extra <- max(0, context[[2L]] - (len.max - first.diff))
+        seq(
+          max(first.diff - context[[2L]] - start.extra, 1),
+          min(first.diff + context[[2L]] + end.extra, len.max)
+        )
+      }
     }
     # Match up the diffs; first step is to match the matches since we know that
     # there are the exact same number of these in both
