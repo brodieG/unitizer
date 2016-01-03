@@ -168,18 +168,14 @@ setMethod("as.character", "unitizerDiff",
 
     # Add all the display stuff
 
-    pad.rem <- rep("   ", length(x@tar.capt))
-    pad.add <- rep("   ", length(x@cur.capt))
-    pad.rem[x@diffs@target] <- "-  "
-    pad.add[x@diffs@current] <- "+  "
     c(
       obj_screen_chr(
         tar.txt,  x@tar.exp, diffs=x@diffs@target, range=show.range,
-        width=width, pad=pad.rem, color="red"
+        width=width, pad= "-  ", color="red"
       ),
       obj_screen_chr(
         cur.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
-        width=width, pad=pad.add, color="green"
+        width=width, pad= "+  ", color="green"
     ) )
 } )
 # groups characters based on whether they are different or not and colors
@@ -650,16 +646,19 @@ obj_screen_chr <- function(
   obj.chr, obj.name, diffs, range, width, pad, color=NA_character_
 ) {
   pre <- post <- NULL
+  pad.all <- pad.pre.post <- NULL
   obj.name.dep <- deparse(obj.name)[[1L]]
   extra <- character()
   len.obj <- length(obj.chr)
 
-  if(length(pad)) {
-    pad <- format(pad)
-    pad.pre.post <- paste0(rep(" ", nchar(pad[[1L]])), collapse="")
-  } else pad.pre.post <- character()
-
   if(len.obj) {
+    pad.all <- character(length(diffs))
+    pad.all[diffs] <- pad
+    pad.all <- format(pad.all)
+    pad.chars <- nchar(pad[[1L]])
+    pad.all[diffs] <- clr(pad.all[diffs], color)
+    pad.pre.post <- paste0(rep(" ", pad.chars), collapse="")
+
     omit.first <- max(min(range[[1L]] - 1L, len.obj), 0L)
     omit.last <- max(len.obj - tail(range, 1L), 0L)
     diffs.last <- sum(tail(diffs, -tail(range, 1L)))
@@ -671,14 +670,15 @@ obj_screen_chr <- function(
       )
     if(omit.last) {
       post <- paste0(
-        "~~ omitted ", omit.last, " line", if(omit.last != 1L) "s", " w/ ",
-        diffs.last, " diff", if(diffs.last != 1L) "s"
+        "~~ omitted ", omit.last, " line", if(omit.last != 1L) "s",
+        if(diffs.last) cc(" w/ ", diffs.last, " diff") else " w/o diff",
+        if(diffs.last != 1L) "s"
     ) }
     if(!is.null(post)) {
       post <- clr(
         paste0(
           pad.pre.post,
-          word_wrap(paste0(post, extra, " ~~"), width - nchar(pad[[1L]]))
+          word_wrap(paste0(post, extra, " ~~"), width - pad.chars)
         ),
         "silver"
     ) }
@@ -687,7 +687,7 @@ obj_screen_chr <- function(
         paste0(
           pad.pre.post,
           word_wrap(
-            paste0(pre, if(is.null(post)) extra, " ~~"), width - nchar(pad[[1L]])
+            paste0(pre, if(is.null(post)) extra, " ~~"), width - pad.chars
         ) ),
         "silver",
     ) }
@@ -695,7 +695,7 @@ obj_screen_chr <- function(
   c(
     clr(paste0("@@ ", obj.name.dep, " @@"), "cyan"),
     paste0(
-      c(pre, paste0(clr(pad, color), obj.chr)[range[range <= len.obj]], post)
+      c(pre, paste0(pad.all, obj.chr)[range[range <= len.obj]], post)
     )
   )
 }

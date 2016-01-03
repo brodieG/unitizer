@@ -53,11 +53,15 @@ local({
   old.color <- options(unitizer.color=TRUE)
   test_that("diff", {
     expect_identical(
-      unitizer:::diff_obj(mx.1, mx.2, width=60L, context=c(10L, 5L), file=stdout()),
-      c("@@ mx.1 @@", "-       [,1] [,2] [,3]", "-  [1,]    1    4    7", "-  [2,]    2    5    8", "-  [3,]    3    6    9", "@@ mx.2 @@", "+        [,1] [,2]", "+   [1,]    1   51", "+   [2,]    2   52", "+   [3,]    3   53", "+   [4,]    4   54", "+   [5,]    5   55", "+   [6,]    6   56", "+   [7,]    7   57", "+   [8,]    8   58", "+   [9,]    9   59", "   ... omitted 41 lines; see `mx.2` ...")
+      unitizer:::diff_obj_internal(
+        mx.1, mx.2, width=60L, context=c(10L, 5L), file=stdout()
+      ),
+      c("\033[36m@@ str(mx.1, max.level = 1L) @@\033[39m", "\033[31m-  \033[39m int \033[31m[1:3, 1:3]\033[39m 1 2 3 4 5 6 7 8 9", "\033[36m@@ str(mx.2, max.level = 1L) @@\033[39m", "\033[32m+  \033[39m int \033[32m[1:50, 1:2]\033[39m 1 2 3 4 5 6 7 8 9 \033[32m10 ...\033[39m")
     )
     expect_identical(
-      unitizer:::diff_obj_out(mx.2, mx.3, width=60L, max.len=c(10L, 5L), file=stdout()),
+      unitizer:::diff_obj_internal(
+        mx.2, mx.3, width=60L, context=c(8L, 3L), file=stdout()
+      ),
       c("@@ mx.2 @@", "   ... omitted 31 lines ...", "-  [31,]   31   81", "   [32,]   32   82", "   [33,]   33   83", "   [34,]   34   84", "   [35,]   35   85", "   ... omitted 15 lines; see `mx.2` ...", "@@ mx.3 @@", "   ... omitted 31 lines ...", "+  [31,]   31  111", "   [32,]   32   82", "   [33,]   33   83", "   [34,]   34   84", "   [35,]   35   85", "   ... omitted 15 lines; see `mx.3` ...")
     )
     expect_identical(
