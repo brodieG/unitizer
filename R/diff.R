@@ -170,11 +170,11 @@ setMethod("as.character", "unitizerDiff",
     pad.add[x@diffs@current] <- "+  "
     c(
       obj_screen_chr(
-        tar.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
+        tar.txt,  x@tar.exp, diffs=x@diffs@target, range=show.range,
         width=width, pad=pad.rem, color="red"
       ),
       obj_screen_chr(
-        cur.txt,  x@tar.exp, diffs=x@diffs@current, range=show.range,
+        cur.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
         width=width, pad=pad.add, color="green"
     ) )
 } )
