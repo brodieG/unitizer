@@ -473,8 +473,7 @@ diff_obj_internal <- function(
   res <- if(
     (len.print <= len.max && any(res.print)) ||
     !any(res.str) ||
-    len.print < len.str * 3 ||
-    (len.print > len.max && len.str <= len.max)
+    (len.print < len.str * 3 && len.str > len.max)
   )
     res.print else res.str
 
