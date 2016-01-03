@@ -268,6 +268,9 @@ diff_color <- function(txt, diffs, range, color) {
 #' the nature of differences between objects when they are known to be different
 #' (e.g. not \code{identical} or \code{all.equal}).
 #'
+#' These functions focus on the first display difference between two objects.
+#' If you want to see the full object diff try \code{\link{Rdiff_obj}}.
+#'
 #' \itemize{
 #'   \item \code{diff_print} shows the differences in the \code{print} or
 #'     \code{show} screen output of the two objects
