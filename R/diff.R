@@ -367,8 +367,8 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
 diff_print_internal <- function(
   target, current, tar.exp, cur.exp, context, width, frame
 ) {
-  cur.capt <- obj_capt(target, width, frame)
-  tar.capt <- obj_capt(current, width, frame)
+  cur.capt <- obj_capt(current, width, frame)
+  tar.capt <- obj_capt(target, width, frame)
   diffs <- char_diff(tar.capt, cur.capt)
   new(
     "unitizerDiff", tar.capt=tar.capt, cur.capt=cur.capt, tar.exp=tar.exp,
