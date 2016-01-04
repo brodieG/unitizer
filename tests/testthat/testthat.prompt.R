@@ -66,6 +66,11 @@ txt2 <- capture.output(
     help="This is all the help you get"
   )
 )
+unitizer:::read_line_set_vals(c("hell())", "Q"))
+txt3 <- capture.output(
+  unitizer:::unitizer_prompt("hello", valid.opts=c(Y="[Y]es", N="[N]o")),
+  type="message"
+)
 test_that("unitizer prompt", {
   expect_equal(
     txt,
@@ -74,6 +79,10 @@ test_that("unitizer prompt", {
   expect_equal(
     txt2,
     c("unitizer> 1 +", "+ 1", "[1] 2", "unitizer> H", "This is all the help you get", "", "hello ([Y]es, [N]o, [Q]uit, [H]elp)?", "unitizer> Q")
+  )
+  expect_equal(
+    txt3,
+    c("Error in \"hell())\": <text>:1:7: unexpected ')'", "1: hell())", "          ^")
   )
   expect_error(
     unitizer:::unitizer_prompt(
