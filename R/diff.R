@@ -367,8 +367,8 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
 diff_print_internal <- function(
   target, current, tar.exp, cur.exp, context, width, frame
 ) {
-  cur.capt <- obj_capt(current, width, frame)
-  tar.capt <- obj_capt(target, width, frame)
+  cur.capt <- obj_capt(current, width - 3L, frame)
+  tar.capt <- obj_capt(target, width - 3L, frame)
   diffs <- char_diff(tar.capt, cur.capt)
   new(
     "unitizerDiff", tar.capt=tar.capt, cur.capt=cur.capt, tar.exp=tar.exp,
@@ -398,9 +398,9 @@ diff_str_internal <- function(
   repeat{
     if(lvl > 100) lvl <- NA # safety valve
     obj.add.capt.str <-
-      obj_capt(current, width, frame, mode="str", max.level=lvl)
+      obj_capt(current, width - 3L, frame, mode="str", max.level=lvl)
     obj.rem.capt.str <-
-      obj_capt(target, width, frame, mode="str", max.level=lvl)
+      obj_capt(target, width - 3L, frame, mode="str", max.level=lvl)
     str.len.min <- min(length(obj.add.capt.str), length(obj.rem.capt.str))
     str.len.max <- max(length(obj.add.capt.str), length(obj.rem.capt.str))
 

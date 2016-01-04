@@ -305,7 +305,7 @@ diff_state <- function(
       ) )
     }
     diff.string.pad <- paste0("    ", diff.string)
-    word_cat(diff.string.pad, sep="\n")
+    cat(diff.string.pad, sep="\n")
     out <- c(out, diff.string.pad)
   }
   msg.no.diff <- paste0(
