@@ -1,6 +1,7 @@
 library(unitizer)
 library(testthat)
 context("Item")
+old.opt <- options(unitizer.color=FALSE)
 
 # These tests are intended to cover all the functions/classes/methods in:
 # - item.R
@@ -462,4 +463,4 @@ local( {
 
 } )
 
-
+options(old.opt)

@@ -1,5 +1,6 @@
 library(unitizer)
 context("State")
+old.opt <- options(unitizer.color=FALSE, width=80L)
 test_that("Random Seed", {
   old.seed <- if(!exists(".Random.seed")) NULL else .Random.seed
   seed.dat <- getOption("unitizer.seed")
@@ -113,7 +114,6 @@ test_that("All Equal States", {
   )
   # diff_state
 
-  old.width <- options(width=80)
   expect_equal(
     diff_state(state.A, state.B, file=NULL),
     c("`options` state mismatch:", "    - c: `.NEW` value was not recorded, but `.REF` value was; they are likely ", "      different", "    - d: this option is missing from `.REF` state", "`working.directory` state mismatch:", "    @@ .REF$state@working.directory @@", "    -  [1] \"a/b/c\"", "    @@ .NEW$state@working.directory @@", "    +  <object not recorded>", "`random.seed` state mismatch:", "    @@ .REF$state@random.seed @@", "    -  NULL", "    @@ .NEW$state@random.seed @@", "    +  [1] 1 2 3",  "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
@@ -124,7 +124,7 @@ test_that("All Equal States", {
   )
   expect_equal(
     diff_state(state.A, state.D, file=NULL),
-    c("`options` state mismatch:", "    @@ .REF$state@options[[\"a\"]] @@", "    -  [1] 5 6 7", "    @@ .NEW$state@options[[\"a\"]] @@", "    +  [[1]]", "    +  [1] 1", "    +  ", "    +  [[2]]", "    +  [1] 2", "    +  ", "    +  [[3]]", "    +  [1] 3", "    +  ", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
+    c("`options` state mismatch:", "    @@ .REF$state@options$a @@", "    -  [1] 5 6 7", "    @@ .NEW$state@options$a @@", "    +  [[1]]", "    +  [1] 1", "    +  ", "    +  [[2]]", "    +  [1] 2", "    +  ", "    +  [[3]]", "    +  [1] 3", "    +  ", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
   )
   # These have big enough options differences to kick off the condensed
   # options comparison
@@ -137,7 +137,6 @@ test_that("All Equal States", {
     diff_state(state.G, state.H, file=NULL),
     c("`options` state mismatch:", "    - a: <unknown difference>", "    - b: Mean absolute difference: 2", "For a more detailed comparison you can access state values directly (e.g. ", ".NEW$state@options).  Note that there may be state differences that are not ", "reported here as state tracking is incomplete.  See vignette for details.")
   )
-  options(old.width)
 })
 test_that("as.state", {
   expect_identical(unitizer:::as.state("default"), unitizer:::unitizerStateDefault())
@@ -235,3 +234,4 @@ test_that("in_pkg", {
     "Unable to detect package"
   )
 })
+options(old.opt)

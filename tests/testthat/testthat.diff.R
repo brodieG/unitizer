@@ -115,7 +115,7 @@ local({
       unitizer:::char_diff(c("a", "b"), c("a", "b", "c")),
       new(
         "unitizerDiffDiffs", target=c(FALSE, FALSE),
-        current=c(FALSE, FALSE, FALSE)
+        current=c(FALSE, FALSE, TRUE)
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b")),
