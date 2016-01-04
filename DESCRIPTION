@@ -13,7 +13,11 @@ Authors@R: c(
     person(
     family="R Core Team",
     email="R-core@r-project.org", role="cph",
-    comment="Copy of source for library / attach / detach"))
+    comment="Copy of source for library / attach / detach"),
+    person(
+    "Gabor", "Csardi", email="csardi.gabor@gmail.com",
+    role=c("cph"),
+    comment="Copied parts of sources of crayon package"))
 Depends:
     R (>= 3.2.2)
 Imports:
@@ -24,29 +28,33 @@ Suggests:
     knitr,
     testthat,
     devtools
-License: GPL-3
+License: GPL-3 + file LICENSE
 LazyData: true
+URL: https://github.com/brodieG/unitizer
+BugReports: https://github.com/brodieG/unitizer/issues
 Collate:
     'asciiml.R'
-    'text.R'
+    'capture.R'
+    'is.R'
+    'global.R'
+    'change.R'
     'class_unions.R'
     'list.R'
-    'is.R'
-    'capture.R'
-    'global.R'
     'conditions.R'
     'item.R'
     'deparse.R'
+    'text.R'
     'item.sub.R'
     'section.R'
     'test.R'
-    'change.R'
     'unitizer.R'
     'exec.R'
     'prompt.R'
     'browse.struct.R'
     'browse.R'
+    'color.R'
     'demo.R'
+    'diff.R'
     'faux_prompt.R'
     'fun.ref.R'
     'get.R'
@@ -71,3 +79,4 @@ Collate:
     'unitizer-package.r'
     'unitizer.add.R'
     'upgrade.R'
+RoxygenNote: 5.0.1

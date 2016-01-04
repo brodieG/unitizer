@@ -5,6 +5,7 @@ if(!file_test("-d", file.path("helper", "refobjs")))
 
 library(unitizer)
 library(testthat)
+old.opt.outer <- options(unitizer.color=FALSE, width=80L)
 context("Unitize")
 
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
@@ -14,8 +15,6 @@ devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
 
 # Random history file
-
-old.width <- options(width=80L)
 
 unitizer:::read_line_set_vals(c("1 + 1", "Y", "Y", "Y", "Y", "N"))
 hist.file <- tempfile()
@@ -368,4 +367,4 @@ test_that("Load Fail", {
 
 unitizer_cleanup_demo()
 unitizer:::read_line_set_vals(NULL)
-options(old.width)
+options(old.opt.outer)

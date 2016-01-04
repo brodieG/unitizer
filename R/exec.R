@@ -222,11 +222,23 @@ user_exp_display <- function(value, env, expr) {
   }
   user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
 }
+# Like `user_exp_display` except that is uses `str` instead of print/show
+
+user_exp_str <- function(value, env, expr, max.level=NA) {
+  disp.expr <- call(
+    "str",
+    if(is.language(value)) enquote(value) else value,
+    max.level=max.level
+  )
+  user_exp_handle(disp.expr, env, print.mode="str", expr.raw=expr)
+}
+# It used to matter what precise value `print.mode`, but now the only thing
+# that matters is whether it is zero char or not
+
 user_exp_handle <- function(expr, env, print.mode, expr.raw) {
   aborted <- FALSE
   conditions <- list()
   trace <- list()
-  print.type <- print.mode
   printed <- nchar(print.mode) > 1
   value <- NULL
 
@@ -240,7 +252,7 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
         attr(cond, "unitizer.printed") <- printed
         trace.new <- sys.calls()
         trace.net <- get_trace(
-          trace.base, trace.new, printed, print.type, expr.raw
+          trace.base, trace.new, printed, expr.raw
         )
         if(attr(trace.net, "set.trace")) trace <<- c(trace.net)
 
@@ -270,7 +282,7 @@ set_trace <- function(trace) {
   }
   TRUE
 }
-get_trace <- function(trace.base, trace.new, printed, print.type, exp) {
+get_trace <- function(trace.base, trace.new, printed, exp) {
 
   # because withCallingHandlers/withRestarts don't register when calling
   # sys.calls() within them, but do when calling sys.calls() from the handling
