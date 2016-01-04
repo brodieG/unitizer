@@ -100,7 +100,7 @@ local({
     )
     expect_identical(
       diff_obj(lst.1, lst.2, context=c(2, 1)),
-      c("\033[36m@@ lst.1 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[31m-  \033[39m[1] \"a\" \033[31m\"b\"\033[39m \"c\"", "   ", "\033[90m   ~~ omitted 34 lines w/ 4 diffs ~~\033[39m", "\033[36m@@ lst.2 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[32m+  \033[39m[1] \"a\"       \033[32m\"bananas\"\033[39m \"c\"      ", "   ", "\033[90m   ~~ omitted 35 lines w/ 5 diffs ~~\033[39m")
+      c("\033[36m@@ lst.1 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[31m-  \033[39m[1] \"a\" \033[31m\"b\"\033[39m \"c\"", "   ", "\033[90m   ~~ omitted 34 lines w/ 4 diffs ~~\033[39m", "\033[36m@@ lst.2 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[32m+  \033[39m[1] \"a\"       \033[32m\"bananas\"\033[39m \"c\"", "   ", "\033[90m   ~~ omitted 35 lines w/ 5 diffs ~~\033[39m")
     )
   } )
   options(old.opt)

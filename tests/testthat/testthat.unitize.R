@@ -5,7 +5,7 @@ if(!file_test("-d", file.path("helper", "refobjs")))
 
 library(unitizer)
 library(testthat)
-old.opt <- options(unitize.color=FALSE, width=80L)
+old.opt.outer <- options(unitizer.color=FALSE, width=80L)
 context("Unitize")
 
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
@@ -367,4 +367,4 @@ test_that("Load Fail", {
 
 unitizer_cleanup_demo()
 unitizer:::read_line_set_vals(NULL)
-options(old.opt)
+options(old.opt.outer)
