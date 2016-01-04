@@ -643,6 +643,10 @@ obj_capt <- function(
 
   options(width=width.old)
   on.exit(NULL)
+  # remove trailing spaces; shouldn't have to do it but doing it since legacy
+  # tests remove them and PITA to update those
+
+  obj.out <- sub("\\s*$", "", obj.out)
 
   if(print.res$aborted) {  # If failed during eval retrieve conditions
     err.cond <-
