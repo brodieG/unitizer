@@ -293,12 +293,18 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     is.list(opts.to.validate),
     all(grep("^unitizer\\.", names(opts.to.validate)))
   )
-  names.def <- setdiff(names(.unitizer.opts.default), "unitizer.par.env")  # unitizer.par.env can be NULL
+  # Check all option existence except those that can be NULL
+
+  names.def <- setdiff(
+    names(.unitizer.opts.default), c("unitizer.par.env", "unitizer.color")
+  )
   if(any(missing.opts <- !names.def %in% names(opts.to.validate)))
     stop(
       "The following options must be set in order for `unitizer` to work: ",
       deparse(names.def[missing.opts], width.cutoff=500L)
     )
+  # Now validate
+
   with(
     opts.to.validate,
     {

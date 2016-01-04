@@ -82,7 +82,7 @@ setClass("unitizerItemTestsErrors",
     output="unitizerItemTestError",
     message="unitizerItemTestError",
     aborted="unitizerItemTestError",
-    .max.out.len="numericOrNULL" # for passing around options for
+    .fail.context="numericOrNULL" # for passing around options for
 ) )
 unitizerItemTestsErrorsSlots <-
   grep("^[^.]", slotNames("unitizerItemTestsErrors"), value=TRUE)
@@ -135,11 +135,13 @@ setMethod("show", "unitizerItemTestsErrors",
         cat(as.character(UL(decap_first(curr.err@value))), sep="\n", file=stderr())
       }
       make_cont <- function(x)
-        if(identical(i, "value")) x else paste0(toupper(x), "$", i)
+        if(identical(i, "value")) {
+          as.name(x)
+        } else call("$", as.name(toupper(x)), as.name(i))
 
-      diff_obj_out(
+      diff_obj_internal(
         curr.err@.ref, curr.err@.new, make_cont(".ref"), make_cont(".new"),
-        max.len=object@.max.out.len
+        context=object@.fail.context
       )
     }
     invisible(NULL)
