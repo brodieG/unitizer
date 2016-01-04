@@ -38,8 +38,8 @@ has_color <- function() {
   enabled <- getOption("unitizer.color")
   if(is.TF(enabled)) return(enabled)
 
-  ## Are we in a terminal? No?
-  if (!isatty(stdout())) { return(FALSE) }
+  ## Are we in interactive mode?
+  if (!interactive_mode()) { return(FALSE) }
 
   ## Are we in a windows terminal?
   if (.Platform$OS.type == "windows") { return(FALSE) }
