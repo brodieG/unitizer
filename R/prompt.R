@@ -104,8 +104,11 @@ unitizer_prompt <- function(
   )
   repeat {
     val <- tryCatch(faux_prompt("unitizer> "), simpleError=function(e) e)
-    if(inherits(val, "simpleError")) next
-
+    if(inherits(val, "simpleError")) {
+      cond.chr <- as.character(val)
+      cat(cond.chr, file=stderr())
+      next
+    }
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) &&
       as.character(val[[1L]]) %in% names(valid.opts) &&
