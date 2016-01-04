@@ -610,8 +610,6 @@ char_diff_int <- function(x, y) {
   }
   list(target=x.d, current=y.d)
 }
-# @rdname diff_obj_out
-
 obj_capt <- function(
   obj, width=getOption("width"), frame=parent.frame(), mode="print",
   max.level=0L
