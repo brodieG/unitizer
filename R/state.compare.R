@@ -199,7 +199,7 @@ diff_state <- function(
     tar <- slot(target, i)
     if(is.null(cur) || identical(tar, cur)) next
 
-    cat(out <- sprintf("`%s` state mismatch:", i), sep="\n")
+    word_cat(out <- sprintf("`%s` state mismatch:", i))
     if(!is.int.1L(width) || width < 8L) width <- 8L else width <- width - 4L
 
     diff.string <- if(identical(i, "options")) {
@@ -235,10 +235,15 @@ diff_state <- function(
         diff.call.new <- diff.call.ref <- diff.call
         diff.call.new[[2L]] <- as.name(".NEW")
         diff.call.ref[[2L]] <- as.name(".REF")
-        diff_obj_internal(
-          tar[[diff.name]], cur[[diff.name]],
-          tar.exp=diff.call.ref, cur.exp=diff.call.new, width=width
-        )
+        diff.txt <- paste0(
+          "    ",
+          capture.output(
+            diff_obj_internal(
+              tar[[diff.name]], cur[[diff.name]],
+              tar.exp=diff.call.ref, cur.exp=diff.call.new, width=width
+        ) ) )
+        cat(diff.txt, sep="\n")
+        diff.txt
       } else if(deltas.count <= 10L) {
         # Depending on whether `all.equal` output is one or more lines, use
         # different display mode
@@ -296,9 +301,16 @@ diff_state <- function(
       diff.call.new[[2L]] <- as.name(".NEW")
       diff.call.ref[[2L]] <- as.name(".REF")
 
-      diff_obj_internal(  # should try to collapse this with the one for options
-        tar, cur, tar.exp=diff.call.ref, cur.exp=diff.call.new, width=width
+      diff.txt <- paste0(
+        "    ",
+        capture.output(
+          diff_obj_internal(  # should try to collapse this with the one for options
+            tar, cur, tar.exp=diff.call.ref, cur.exp=diff.call.new, width=width
+          )
+        )
       )
+      cat(diff.txt, sep="\n")
+      diff.txt
     }
     out <- c(out, diff.string)
   }
