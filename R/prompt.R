@@ -235,7 +235,8 @@ review_prompt <- function(x, nav.env) {
       x@last.id <- item.len
       return(x)
     }
-    message("Jumping to first unreviewed test.") # But note that we also show all ignored tests before that one for context
+    # We also show all ignored tests before that one for context
+    message("Jumping to first unreviewed test.")
     nav.id <- min(which(unreviewed))
   } else if (
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
@@ -263,6 +264,7 @@ review_prompt <- function(x, nav.env) {
   # then cause desired test to be reviewed
 
   x@last.id <- as.integer(nav.id) - 1L
+  x@browsing <- TRUE
   x@navigating <- TRUE
   return(x)
 }

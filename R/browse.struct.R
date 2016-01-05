@@ -258,15 +258,16 @@ setClass("unitizerBrowseMapping",
 setClass("unitizerBrowse", contains="unitizerList",
   slots=c(
     mapping="unitizerBrowseMapping",
-    last.id="integer",          # used so that `reviewNext` knows what to show next
-    last.reviewed="integer",    # used so that `reviewNext` knows what headers to display
-    hist.con="ANY",             # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
+    last.id="integer",          # so that `reviewNext` knows what to show next
+    last.reviewed="integer",    # so that `reviewNext` knows what headers to display
+    hist.con="ANY",             # should be 'fileOrNULL', but setOldClass` issues
     mode="character",
-    review="integer",           # counter used to figure out when to pop up browse/review menu
-    inspect.all="logical",      # whether to force inspection of all elements, whether ignored/passed or not
-    navigating="logical",       # whether user has triggered at least one navigation command
+    review="integer",           # counter to figure out when browse/review menu
+    inspect.all="logical",      # force inspection of all elements
+    navigating="logical",       # user has triggered at least one navigation command
+    browsing="logical",         # current test selected via browse
     human="logical",            # whether user has had any interaction at all
-    re.eval="integer",          # so navigate prompt can communicate back re-eval status
+    re.eval="integer",          # so navprompt can communicate back re-eval status
     interactive="logical",      # whether to browse in interactive mode
     interactive.error="logical",# whether in non-interactive mode but required input
     global="unitizerGlobal",    # object for global settings
@@ -281,6 +282,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     review=1L,
     inspect.all=FALSE,
     navigating=FALSE,
+    browsing=FALSE,
     human=FALSE,
     re.eval=0L,
     interactive=FALSE,
@@ -295,6 +297,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@inspect.all` must be TRUE or FALSE")
     if(!is.TF(object@navigating))
       return("Slot `@navigating` must be TRUE or FALSE")
+    if(!is.TF(object@browsing))
+      return("Slot `@browsing` must be TRUE or FALSE")
     if(!is.TF(object@auto.accept))
       return("Slot `@auto.accept` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))

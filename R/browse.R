@@ -119,7 +119,8 @@ setMethod(
           withRestarts(
             {
               if(!done(y)) {
-                if(first.time && identical(y@mode, "review")) { # for passed tests, start by showing the list of tests
+                if(first.time && identical(y@mode, "review")) {
+                  # for passed tests, start by showing the list of tests
                   first.time <- FALSE
                   y@review <- 0L
                 } else {
@@ -374,7 +375,10 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
+    browsed <- x@browsing
+    x@browsing <- FALSE
     curr.id <- x@last.id + 1L
+
     if(x@last.reviewed) {
       last.reviewed.sec <-
         x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
@@ -442,16 +446,19 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
-    # conditions
+    # conditions, or if we just got here via a browse statement
 
-    if(!identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect) {
+    if(
+      !identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect
+      || browsed
+    ) {
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate
       (
         !identical(last.reviewed.sub.sec, curr.sub.sec) ||
         !identical(last.reviewed.sec, curr.sec)
-      ) && !ignore.sub.sec
+      ) && !ignore.sub.sec || browsed
     ) {
       print(H3(curr.sub.sec.obj@title))
       rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
@@ -552,7 +559,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
         err.obj@.fail.context <-
           unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]
         summary(err.obj)
-        eval(  # must eval to make sure that correct methods are available when outputing failures to screen
+        # must eval to make sure that correct methods are available when
+        # outputing failures to screen
+
+        eval(
           call("show", err.obj),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
@@ -580,8 +590,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     if(!x@inspect.all) {
       if(
         x@mapping@ignored[[curr.id]] || ignore.passed ||
-        (x@mapping@reviewed[[curr.id]] && !x@navigating)  # reviewed items are skipped unless we're actively navigating to support `auto.accept`
+        (x@mapping@reviewed[[curr.id]] && !x@navigating)
       ) {
+        # reviewed items are skipped unless we're actively navigating to support
+        # `auto.accept`
         x@last.id <- curr.id
         return(x)
       }
