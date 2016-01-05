@@ -141,9 +141,7 @@ unitizer_prompt <- function(
     # Note `val` here is the expression the user inputted, not the result of the
     # evaluation.  The latter will be in res$value
 
-    res <- eval_with_capture(val, browse.env)
-    if(length(res$message) && nchar(res$message)) cat(res$message, file=stderr())
-    if(length(res$output) && nchar(res$output)) cat(res$output, file=stdout())
+    res <- eval_user_exp(val, browse.env)
 
     # store / record history
 
