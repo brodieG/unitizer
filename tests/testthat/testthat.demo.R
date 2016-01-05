@@ -131,7 +131,7 @@ txt5 <- unitizer:::capture_output(
 )
 test_that("demo changes", {
   expect_match(
-    paste0(txt5$output, collapse=""), "Pass Fail 1\\. <untitled>     2    2"
+    paste0(txt5$output, collapse=""), "Pass Fail <untitled>     2    2"
   )
   expect_match(
     paste0(txt5$message, collapse=""),

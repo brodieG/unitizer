@@ -176,6 +176,9 @@ txt7 <- unitizer:::capture_output(
       file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE
 ) ) )
 options(old.keep.ns)
+# Note that if `data.table` namespace is loaded these tests are likely to fail
+# because they include un-unloadable namespaces in the error list
+
 test_that("namespace conflict", {
   expect_equal_to_reference(
     txt4, file.path("helper", "refobjs", "unitize_nsconf1.rds")
