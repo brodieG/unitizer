@@ -472,7 +472,9 @@ str_reduce_unique <- function(x, from="left") {
 #'
 #' @keywords internal
 
-summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
+summ_matrix_to_text <- function(
+  mx, from="right", width=getOption("width"), show.nums=TRUE
+) {
   # Ignore any columns with zero totals other than pass/fail
 
   if(
@@ -489,7 +491,9 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
   col.count <- length(col.names)
   num.width <- max(nchar(col.names), nchar(as.character(totals.keep)))
 
-  test.nums <- paste0(" ", format(seq.int(nrow(mx.keep))), ".")
+  test.len <- nrow(mx.keep)
+  test.nums <- if(show.nums)
+    paste0(" ", format(seq.int(test.len)), ".") else character(test.len)
   rns <- rownames(mx.keep)
 
   scr.width <- width

@@ -227,7 +227,7 @@ setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
-    cat(summ_matrix_to_text(sum.mx), "", sep="\n")
+    cat(summ_matrix_to_text(sum.mx, show.nums=FALSE), "", sep="\n")
     invisible(NULL)
 } )
 
