@@ -485,8 +485,10 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
   function(x, ...) {
     items <- new("unitizerItems")
     for(i in x@mapping@item.id) {
+      # while it was nice to have mapping as an object for validation, this is
+      # terrible
 
-      sec <- x@mapping@sec.id[[i]]        # while it was nice to have mapping as an object for validation, this is terrible
+      sec <- x@mapping@sec.id[[i]]
       sub.sec <- x@mapping@sub.sec.id[[i]]
       id.rel <- x@mapping@item.id.rel[[i]]
       input <- x@mapping@review.val[[i]]

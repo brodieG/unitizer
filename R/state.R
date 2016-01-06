@@ -269,7 +269,7 @@ setClassUnion(
   "environmentOrNULLOrCharacterUnitizerInPkg",
   c("environment", "NULL", "character", "unitizerInPkg")
 )
-# unitizerState is an abstract class and is not meant to be isntantiated.  It
+# unitizerState is an abstract class and is not meant to be instantiated.  It
 # defines basic structure for unitizerStateRaw and unitizerStateProcessed.
 # `as.state` will process a unitizerStateRaw class into a unitizerStateProcessed`
 # objects.  Note that `unitizerState` does not have a `par.env` slot as that is
@@ -438,7 +438,7 @@ in_pkg_to_env <- function(inPkg, test.files) {
     ) ) )
   pkg.env
 }
-# This method is a bit odd because it has logic for dealin with slots that are
+# This method is a bit odd because it has logic for dealing with slots that are
 # not actually defined in the class but are in the child classes that are
 # expected to kick of the method
 #' @rdname unitizer_s4method_doc
