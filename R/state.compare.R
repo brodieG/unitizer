@@ -322,3 +322,56 @@ diff_state <- function(
   if(!is.null(file)) cat(msg.extra, sep="\n", file=file)
   invisible(out)
 }
+# Merge State Data Between Reference and New Indices
+#
+# Required because we track these separately, but when we merge new and reference
+# items we have to account for states from both.
+
+setGeneric("mergeStates", function(x, y, ...) standardGeneric("mergeStates"))
+setMethod("mergeStates", c("unitizerItems", "unitizer"),
+  function(x, y, ...) {
+    types <- itemsType(x)
+    types.ref <- which(types == "reference")
+    ref.indices <- lapply(x[types.ref ], slot, "glob.indices")
+    max.indices <- unitizerStateMaxIndices(y@state.new)
+
+    # Map the global indices in reference to values starting from 1 up beyond
+    # the end , or 0 for zero
+
+    ref.ind.mx <- do.call(cbind, lapply(ref.indeces, as.integer))
+    ref.ind.mx.map <- t(
+      apply(
+        ref.ind.mx, 1, function(z) {
+          match(z, sort(Filter(as.logical, unique(z))), no.match=0L)
+    } ) ) + as.integer(max.indices)
+    if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map)))
+      stop(
+        "Logic Error: global index mapping matrix malformed; contact maintainer."
+      )
+    ref.ind.mx.map[!ref.ind.mx] <- 0L  # these all map to the starting state
+
+    # Pull out the states from ref and copy them into new
+
+    for(i in slotNames(x@state.new)) {
+      needed.state.ids <- unique(ref.ind.mx[i, ])
+      needed.state.ids.map <- unique(ref.ind.mx.map[i, ])
+      length(slot(x@state.new, i)) <- max(needed.state.ids.map)
+
+      for(j in seq_along(needed.state.ids)) {
+        id <- needed.state.ids[[j]]
+        id.map <- needed.state.ids.map[[j]]
+        slot(x@state.new, i)[[id]] <- slot(x@state.ref, i)[[id.map]]
+      }
+    }
+    # For each ref index, remap to the new positions in new state
+
+    for(i in seq_along(types.ref)) {
+      old.id <- types.ref[[i]]
+      x[[old.id]]@glob.indices <- do.call(
+        "new", c(list("unitizerGlobalIndices", as.list(ref.ind.mx.map[, i])))
+      )
+    }
+    # Return a list with the update item list and the states
+
+    list(items=x, states=x@state.new)
+} )

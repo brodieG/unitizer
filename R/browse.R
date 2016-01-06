@@ -366,9 +366,13 @@ setMethod(
     items.ref <- processInput(y)
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
+    # Need to reconcile state.new / state.ref with items.ref here
+
+    state.merged <- mergeStates(items.ref, x@state.new, x@state.ref)
+
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
-      base.env=x@base.env, test.file.loc=x@test.file.loc, state.ref=x@state.new
+      base.env=x@base.env, test.file.loc=x@test.file.loc, state.ref=state.merged
     )
     unitizer <- unitizer + items.ref
 
