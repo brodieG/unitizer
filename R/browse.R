@@ -486,8 +486,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # conditions, or if we just got here via a browse statement
 
     if(
-      !identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect
-      || browsed || jumping
+      (
+        !identical(last.reviewed.sec, curr.sec) && !ignore.sec ||
+        browsed || jumping
+      ) && multi.sect
     ) {
       print(H2(x[[curr.sec]]@section.title))
     }
@@ -558,7 +560,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         ) )
       }
       if(length(item.main@comment)) {
-        if(x@last.id && x@mapping@ignored[[x@last.id]]) cat("\n")
+        if(x@last.id && x@mapping@ignored[[x@last.id]] && !jumping) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
         cat("\n")
       }
