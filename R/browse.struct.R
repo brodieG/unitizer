@@ -269,6 +269,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     browsing="logical",         # current test selected via browse
     human="logical",            # whether user has had any interaction at all
     re.eval="integer",          # so navprompt can communicate back re-eval status
+    force.up="logical",         # force update even if no changes
     interactive="logical",      # whether to browse in interactive mode
     interactive.error="logical",# whether in non-interactive mode but required input
     global="unitizerGlobal",    # object for global settings
@@ -287,6 +288,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     browsing=FALSE,
     human=FALSE,
     re.eval=0L,
+    force.up=FALSE,
     interactive=FALSE,
     interactive.error=FALSE,
     auto.accept=FALSE
@@ -305,6 +307,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@auto.accept` must be TRUE or FALSE")
     if(!is.TF(object@jumping.to))
       return("Slot `jumping.to` must be TRUE or FALSE")
+    if(!is.TF(object@force.up))
+      return("Slot `force.up` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
       return("Slot `@re.eval` must be integer(1L) and in 0:2")
     TRUE

@@ -219,7 +219,7 @@ setMethod(
         } else if(
           length(x@changes) > 0L || (
             something.happened && (slow.run || !user.quit)
-          ) || y@re.eval || force.update
+          ) || y@re.eval || force.update || y@force.up
         ) {
           cat("\n")
           print(H2("Finalize Unitizer"))
@@ -231,8 +231,8 @@ setMethod(
           # mode since that tells us we activated re-eval while viewing tests
           # and not at the end
 
-          update <- length(x@changes) || force.update
-          re.eval.started <- !!y@re.eval
+          update <- length(x@changes) || force.update || y@force.up
+          re.eval.started <- !!y@re.eval  # check at end that we started off
 
           # Make sure we did not skip anything we were supposed to review
 
@@ -248,15 +248,15 @@ setMethod(
           ) } }
           valid.opts <- c(
             Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
-            R="[R]erun", RR=""
+            R="[R]erun", RR="", O=""
           )
-          if(!length(x@changes) && force.update)
+          if(!length(x@changes) && (force.update || y@force.up))
             word_msg(
               "Running in `force.update` mode so `unitizer` will be re-saved",
               "even though there are no changes to record (see `?unitize` for",
               "details)."
             )
-          if(update) {
+          if(update || !!y@re.eval) {
             tar <- getTarget(x)
             wd <- if(file.exists(tar)) get_package_dir(tar) else
               if(file.exists(dirname(tar)))
@@ -265,10 +265,17 @@ setMethod(
             tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
               relativize_path(tar)
 
-            word_msg(
-              "You will IRREVERSIBLY modify '", tar.final, "'",
-              if(length(x@changes)) " by", ":", sep=""
-            )
+            if(!length(x@changes)) {
+              word_msg(
+                "You are about to update '", tar.final, "' with re-evaluated ",
+                "but otherwise unchanged tests.", sep=""
+              )
+            } else {
+              word_msg(
+                "You will IRREVERSIBLY modify '", tar.final, "'",
+                if(length(x@changes)) " by", ":", sep=""
+              )
+            }
           }
           if(length(x@changes) > 0) {
             show(x@changes)
@@ -278,7 +285,7 @@ setMethod(
             # Can this be rationalized with the logic in `reviewNext`?
 
             actions <- character()
-            if(update) {
+            if(update || !!y@re.eval) {
               actions <- c(actions, "update unitizer")
               nav.hlp <- paste0(
                 "Pressing Y will replace the previous unitizer with a new one, ",
@@ -325,6 +332,9 @@ setMethod(
               break
             } else if (isTRUE(grepl("^RR?$", user.input))) {      # Re-eval
               y <- toggleReeval(y, user.input)
+              next
+            } else if (isTRUE(grepl("^O$", user.input))) { # Force update
+              y <- toggleForceUp(y)
               next
             } else if (grepl("^[QN]$", user.input)) {
               update <- FALSE
@@ -434,7 +444,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     valid.opts <- c(
       Y="[Y]es", N="[N]o", P="[P]rev", B="[B]rowse", YY="", YYY="", YYYY="",
-      NN="", NNN="", NNNNN="",
+      NN="", NNN="", NNNNN="", O="",
       if(identical(x@mode, "unitize")) c(R="[R]erun", RR="")
     )
     # Pre compute whether sections are effectively ignored or not; these will
@@ -543,8 +553,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
           cc(
             "Jumping to test #", curr.id, " because that was the test under ",
             "review when test re-run was requested.  Updating unitizer will reset ",
-            "this bookmark.  You can toggle force update by typing 'F' at the ",
-            "prompt if your unitizer has no changes.\n"
+            "this bookmark.  You can toggle force update by typing `O` at the ",
+            "prompt if your unitizer has no changes.\n\n"
         ) )
       }
       if(length(item.main@comment)) {
@@ -712,10 +722,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
           paste0(
             "`R` to re-run the unitizer or `RR` to re-run all loaded ",
             "unitizers; used typically after you re-`install` the package you ",
-            "are testing via the unitizer prompt."
+            "are testing via the unitizer prompt"
           ),
           paste0(
-            "`F` to force updating of store even when there are no accepted ",
+            "`O` to fOrce update of store even when there are no accepted ",
             "changes"
         ) )
       }
@@ -744,6 +754,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x <- toggleReeval(x, x.mod)
         Sys.sleep(0.3)  # so people can see the toggle message
         invokeRestart("earlyExit", extra=x)
+      } else if (isTRUE(grepl("^O$", x.mod))) {             # Force update
+        x <- toggleForceUp(x)
+        next
       } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
         act <- substr(x.mod, 1L, 1L)
         act.times <- nchar(x.mod)
@@ -828,6 +841,14 @@ setMethod("toggleReeval", "unitizerBrowse",
     )
     word_msg("Toggling re-run mode", re.status, "for", re.mode)
     x@re.eval <- if(x@re.eval) 0L else nchar(y)
+    x
+})
+setGeneric("toggleForceUp", function(x, ...) standardGeneric("toggleForceUp"))
+setMethod("toggleForceUp", "unitizerBrowse",
+  function(x, ...) {
+    re.status <- if(x@force.up) "OFF" else "ON"
+    word_msg("Toggling force update mode", re.status)
+    x@force.up <- !x@force.up
     x
 })
 
