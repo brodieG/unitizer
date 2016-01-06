@@ -1,3 +1,18 @@
+unitizer 1.1
+--------------------------------------------------------------------------------
+
+Improvement / Changes:
+
+* Colorized output if supported (thank you Gabor Csardi)
+* Better diff object comparisions when tests fail (see `?diff_obj`)
+* Minor improvements to test navigation / display
+
+Bugfixes:
+
+* Several unitizer prompt issues:
+    * Can now `debug` again at the unitizer prompt
+    * Parse errors reported correctly
+
 unitizer 1.0.0-1.0.9
 --------------------------------------------------------------------------------
 

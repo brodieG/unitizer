@@ -76,10 +76,16 @@ setClass(
     zero.env="environment",         # keep functions and stuff here
     base.env="environment",
     test.file.loc="character",      # location of test file that produced `unitizer`
-    eval="logical",                 # internal used during browsing to determine a re-eval instruction by user
-    eval.time="numeric",            # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
-    updated="logical",              # whether this unitizer has been queued for update
-    updated.at.least.once="logical",# should reflect whether a unitizer was modified at least once so that we can report this in return values
+    # internal used during browsing to determine a re-eval instruction by user
+    eval="logical",
+    # eval time for all tests in `unitizer`, computed in
+    # `+.unitizer.unitizerTestsOrExpression`
+    eval.time="numeric",
+    updated="logical",              # unitizer has been queued for update
+    jump.to.test="integer",         # for re-eval, what test to show first
+    # should reflect whether a unitizer was modified at least once so that we
+    # can report this in return values
+    updated.at.least.once="logical",
     global="unitizerGlobalOrNULL",  # Global object used to track state
 
     items.new="unitizerItems",                         # Should all be same length
@@ -128,6 +134,7 @@ setClass(
     eval=FALSE,
     eval.time=0,
     updated=FALSE,
+    jump.to.test=0L,
     updated.at.least.once=FALSE,
     global=unitizerGlobal$new(enable.which=character())  # dummy so tests will run
   ),
@@ -152,6 +159,8 @@ setClass(
       return("slot `eval.time` must be length 1L, positive, and not NA")
     if(!is.TF(object@updated.at.least.once))
       return("slot `updated.at.least.once` must be TRUE or FALSE")
+    if(!is.int.1L(object@jump.to.test) || object@jump.to.test < 0L)
+      return("slot `jump.to.test` must be integer(1L) and positive")
     if(!is.TF(object@updated))
       return("slot `updated` must be TRUE or FALSE")
     TRUE

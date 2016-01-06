@@ -260,6 +260,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     mapping="unitizerBrowseMapping",
     last.id="integer",          # so that `reviewNext` knows what to show next
     last.reviewed="integer",    # so that `reviewNext` knows what headers to display
+    jumping.to="logical",       # indicate there was a re-eval jump
     hist.con="ANY",             # should be 'fileOrNULL', but setOldClass` issues
     mode="character",
     review="integer",           # counter to figure out when browse/review menu
@@ -277,6 +278,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     mapping=new("unitizerBrowseMapping"),
     last.id=0L,
     last.reviewed=0L,
+    jumping.to=FALSE,
     hist.con=NULL,
     mode="unitize",
     review=1L,
@@ -301,6 +303,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@browsing` must be TRUE or FALSE")
     if(!is.TF(object@auto.accept))
       return("Slot `@auto.accept` must be TRUE or FALSE")
+    if(!is.TF(object@jumping.to))
+      return("Slot `jumping.to` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
       return("Slot `@re.eval` must be integer(1L) and in 0:2")
     TRUE

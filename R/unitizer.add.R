@@ -142,6 +142,21 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
           e1@section.ref.map[[i]] <- NA_integer_
         }
     } }
+    # Update reference test ids to match new ids so we have a cohesive set of
+    # ids to use
+
+    new.len <- length(e1@items.new.map)
+    for(i in seq.int(new.len)) {
+      ref.id <- e1@items.new.map[i]
+      if(!is.na(ref.id)) e1@items.ref[[ref.id]]@id <- ref.id
+    }
+    # For unmatched reference tests, just give id numbers past the end of new
+
+    for(j in seq_along(deleted)) {
+      e1@items.ref[[deleted[[j]]]]@id <- new.len + j
+    }
+    # Finalize
+
     over_print("")
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
     on.exit()

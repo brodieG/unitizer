@@ -89,6 +89,7 @@ setMethod(
     quit.time <- getOption("unitizer.prompt.b4.quit.time")
     if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
+    update.reeval <- FALSE
     slow.run <- x@eval.time > quit.time
 
     something.happened <- any(
@@ -102,6 +103,22 @@ setMethod(
     } else if(!something.happened && !force.update) {
       word_msg("All tests passed, unitizer store unchanged.")
     } else {
+      # Check we if we requested a re-eval and if so set the id where we were
+      # before re-eval
+
+      if(x@jump.to.test) {
+        id.map <- match(x@jump.to.test, y@mapping@item.id.orig, nomatch=0L)
+        if(!id.map || id.map > length(y@mapping@item.id)) {
+          word_msg(
+            cc(
+              "Unable to find test you toggled re-eval restart point; starting ",
+              "from beginning."
+          ) )
+        } else {
+          y@last.id <- y@mapping@item.id[id.map]
+          y@jumping.to <- TRUE
+        }
+      }
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
 
@@ -208,8 +225,14 @@ setMethod(
           print(H2("Finalize Unitizer"))
 
           # default update status; this can be modified if we cancel on exit
+          # reeval update required to store last.id and must be tracked
+          # separately so we can toggle it on or off without modifying overall
+          # update decision; also, need to know if we started off in re.eval
+          # mode since that tells us we activated re-eval while viewing tests
+          # and not at the end
 
           update <- length(x@changes) || force.update
+          re.eval.started <- !!y@re.eval
 
           # Make sure we did not skip anything we were supposed to review
 
@@ -356,9 +379,12 @@ setMethod(
 
     # Return structure
 
+    update.reeval <- !!y@re.eval
+    unitizer@jump.to.test <- if(y@re.eval && re.eval.started) y@last.id else 0L
+
     new(
       "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
-      updated=update, interactive.error=y@interactive.error,
+      updated=update || update.reeval, interactive.error=y@interactive.error,
       data=as.data.frame(y)
     )
 } )
@@ -376,7 +402,8 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
     browsed <- x@browsing
-    x@browsing <- FALSE
+    jumping <- x@jumping.to
+    x@browsing <- x@jumping.to <- FALSE
     curr.id <- x@last.id + 1L
 
     if(x@last.reviewed) {
@@ -450,7 +477,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     if(
       !identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect
-      || browsed
+      || browsed || jumping
     ) {
       print(H2(x[[curr.sec]]@section.title))
     }
@@ -458,7 +485,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       (
         !identical(last.reviewed.sub.sec, curr.sub.sec) ||
         !identical(last.reviewed.sec, curr.sec)
-      ) && !ignore.sub.sec || browsed
+      ) && !ignore.sub.sec || browsed || jumping
     ) {
       print(H3(curr.sub.sec.obj@title))
       rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
@@ -511,6 +538,15 @@ setMethod("reviewNext", c("unitizerBrowse"),
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
       ) }
+      if(jumping) {
+        word_msg(
+          cc(
+            "Jumping to test #", curr.id, " because that was the test under ",
+            "review when test re-run was requested.  Updating unitizer will reset ",
+            "this bookmark.  You can toggle force update by typing 'F' at the ",
+            "prompt if your unitizer has no changes.\n"
+        ) )
+      }
       if(length(item.main@comment)) {
         if(x@last.id && x@mapping@ignored[[x@last.id]]) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
@@ -671,12 +707,18 @@ setMethod("reviewNext", c("unitizerBrowse"),
         "remaining unreviewed items in, respectively, the sub-section, ",
         "section, or unitizer"
       ),
-      if(identical(x@mode, "unitize"))
-        paste0(
-          "`R` to re-run the unitizer or `RR` to re-run all loaded ",
-          "unitizers; used typically after you re-`install` the package you ",
-          "are testing via the unitizer prompt."
-        )
+      if(identical(x@mode, "unitize")) {
+        c(
+          paste0(
+            "`R` to re-run the unitizer or `RR` to re-run all loaded ",
+            "unitizers; used typically after you re-`install` the package you ",
+            "are testing via the unitizer prompt."
+          ),
+          paste0(
+            "`F` to force updating of store even when there are no accepted ",
+            "changes"
+        ) )
+      }
     )
     # navigate_prompt handles the P and B cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a function

@@ -165,6 +165,11 @@ upgrade_internal <- function(object) {
         object@items.ref@.items[[i]]@data@value
       )
   }
+  # - 1.1.0 --------------------------------------------------------------------
+
+  if(ver < "1.1.0") {
+    object <- addSlot(object, "jump.to.test", 0L)
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
