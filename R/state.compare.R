@@ -327,22 +327,26 @@ diff_state <- function(
 # Required because we track these separately, but when we merge new and reference
 # items we have to account for states from both.
 
-setGeneric("mergeStates", function(x, y, ...) standardGeneric("mergeStates"))
-setMethod("mergeStates", c("unitizerItems", "unitizer"),
-  function(x, y, ...) {
+setGeneric("mergeStates", function(x, y, z, ...) standardGeneric("mergeStates"))
+setMethod(
+  "mergeStates", c(
+    "unitizerItems", "unitizerGlobalTrackingStore",
+    "unitizerGlobalTrackingStore"
+  ),
+  function(x, y, z, ...) {
     types <- itemsType(x)
     types.ref <- which(types == "reference")
     ref.indices <- lapply(x[types.ref ], slot, "glob.indices")
-    max.indices <- unitizerStateMaxIndices(y@state.new)
+    max.indices <- unitizerStateMaxIndices(y)
 
     # Map the global indices in reference to values starting from 1 up beyond
     # the end , or 0 for zero
 
-    ref.ind.mx <- do.call(cbind, lapply(ref.indeces, as.integer))
+    ref.ind.mx <- do.call(cbind, lapply(ref.indices, as.integer))
     ref.ind.mx.map <- t(
       apply(
         ref.ind.mx, 1, function(z) {
-          match(z, sort(Filter(as.logical, unique(z))), no.match=0L)
+          match(z, sort(Filter(as.logical, unique(z))), nomatch=0L)
     } ) ) + as.integer(max.indices)
     if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map)))
       stop(
@@ -352,15 +356,16 @@ setMethod("mergeStates", c("unitizerItems", "unitizer"),
 
     # Pull out the states from ref and copy them into new
 
-    for(i in slotNames(x@state.new)) {
+    for(i in slotNames(y)) {
       needed.state.ids <- unique(ref.ind.mx[i, ])
       needed.state.ids.map <- unique(ref.ind.mx.map[i, ])
-      length(slot(x@state.new, i)) <- max(needed.state.ids.map)
+      length(slot(y, i)) <- max(needed.state.ids.map)
 
       for(j in seq_along(needed.state.ids)) {
         id <- needed.state.ids[[j]]
         id.map <- needed.state.ids.map[[j]]
-        slot(x@state.new, i)[[id]] <- slot(x@state.ref, i)[[id.map]]
+        if(!id.map) next
+        slot(y, i)[[id.map]] <- slot(z, i)[[id]]
       }
     }
     # For each ref index, remap to the new positions in new state
@@ -368,10 +373,10 @@ setMethod("mergeStates", c("unitizerItems", "unitizer"),
     for(i in seq_along(types.ref)) {
       old.id <- types.ref[[i]]
       x[[old.id]]@glob.indices <- do.call(
-        "new", c(list("unitizerGlobalIndices", as.list(ref.ind.mx.map[, i])))
+        "new", c(list("unitizerGlobalIndices"), as.list(ref.ind.mx.map[, i]))
       )
     }
     # Return a list with the update item list and the states
 
-    list(items=x, states=x@state.new)
+    list(items=x, states=y)
 } )

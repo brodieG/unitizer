@@ -180,7 +180,7 @@ setGeneric(
 setMethod("unitizerStateMaxIndices", c("unitizerGlobalTrackingStore"),
   function(x, ...) {
     last.ids <- Map(function(y) length(slot(x, y)), slotNames(x))
-    do.call("new", c(list("unitizerGlobalIndices", last.ids)))
+    do.call("new", c(list("unitizerGlobalIndices"), last.ids))
 } )
 # Pull out a single state from a tracking object
 

@@ -234,4 +234,44 @@ test_that("in_pkg", {
     "Unable to detect package"
   )
 })
+test_that("merge states", {
+  trk.new <- new("unitizerGlobalTrackingStore",
+    search.path=list(1, 2, 3),
+    options=list("a", "b")
+  )
+  trk.ref <- new("unitizerGlobalTrackingStore",
+    search.path=list(4, 5, 6),
+    options=list("c", "d")
+  )
+  items <- new("unitizerItems")
+
+  items <- items + new(
+    "unitizerItem", call=quote(1 + 1), glob.indices=new(
+      "unitizerGlobalIndices", search.path=1L, options=2L
+  ) )
+  items <- items + new(
+    "unitizerItem", call=quote(2 + 1), glob.indices=new(
+      "unitizerGlobalIndices", search.path=2L, options=1L
+  ) )
+  items <- items + new(
+    "unitizerItem", call=quote(1 * 1), reference=TRUE, glob.indices=new(
+      "unitizerGlobalIndices", search.path=1L, options=1L
+  ) )
+  items <- items + new(
+    "unitizerItem", call=quote(2 * 1), reference=TRUE, glob.indices=new(
+      "unitizerGlobalIndices", search.path=3L, options=2L
+  ) )
+  res <- unitizer:::mergeStates(items, trk.new, trk.ref)
+  expect_equal(
+    sapply(res$items, function(x) as.integer(slot(x, "glob.indices"))),
+    structure(c(1L, 2L, 0L, 0L, 0L, 2L, 1L, 0L, 0L, 0L, 4L, 3L, 0L, 0L, 0L, 5L, 4L, 0L, 0L, 0L), .Dim = c(5L, 4L), .Dimnames = list(c("search.path", "options", "working.directory", "random.seed", "namespaces"), NULL))
+  )
+  s.n.to.check <- c(
+    "search.path", "options", "working.directory", "random.seed", "namespaces"
+  )
+  expect_equal(
+    sapply(s.n.to.check, slot, object=res$state),
+    structure(list(search.path = list(1, 2, 3, 4, 6), options = list("a", "b", "c", "d"), working.directory = list(), random.seed = list(), namespaces = list()), .Names = c("search.path", "options", "working.directory", "random.seed", "namespaces"))
+  )
+})
 options(old.opt)
