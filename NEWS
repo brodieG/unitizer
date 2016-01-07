@@ -10,8 +10,9 @@ Improvement / Changes:
 Bugfixes:
 
 * Several unitizer prompt issues:
-    * Can now `debug` again at the unitizer prompt
+    * No longer capture prompt evals so `debug` is usable again
     * Parse errors reported correctly
+* Reference state properly preserved (previously would incorrectly use new state for reference tests kept in store)
 
 unitizer 1.0.0-1.0.9
 --------------------------------------------------------------------------------

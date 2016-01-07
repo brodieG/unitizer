@@ -157,6 +157,31 @@ setClass(
     TRUE
   }
 )
+setMethod(
+  "as.integer", "unitizerGlobalIndices",
+  function(x, ...) {
+    s.n <- slotNames(x)
+    res <- setNames(unlist(lapply(s.n, slot, object=x)), s.n)
+    if(!is.integer(res))
+      stop(
+        "Logic Error: unable to convert `unitizerGlobalIndices` object to ",
+        "integer; contact maintainer."
+      )
+    res
+} )
+# Create a `unitizerGlobalIndices` object that points to the last stored states;
+# used primarily so we can then add more states to the ends and can compute what
+# the indices for the added states should be; used by `mergeStates`
+
+setGeneric(
+  "unitizerStateMaxIndices",
+  function(x, ...) standardGeneric("unitizerStateMaxIndices")
+)
+setMethod("unitizerStateMaxIndices", c("unitizerGlobalTrackingStore"),
+  function(x, ...) {
+    last.ids <- Map(function(y) length(slot(x, y)), slotNames(x))
+    do.call("new", c(list("unitizerGlobalIndices"), last.ids))
+} )
 # Pull out a single state from a tracking object
 
 setGeneric(

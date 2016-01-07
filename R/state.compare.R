@@ -322,3 +322,61 @@ diff_state <- function(
   if(!is.null(file)) cat(msg.extra, sep="\n", file=file)
   invisible(out)
 }
+# Merge State Data Between Reference and New Indices
+#
+# Required because we track these separately, but when we merge new and reference
+# items we have to account for states from both.
+
+setGeneric("mergeStates", function(x, y, z, ...) standardGeneric("mergeStates"))
+setMethod(
+  "mergeStates", c(
+    "unitizerItems", "unitizerGlobalTrackingStore",
+    "unitizerGlobalTrackingStore"
+  ),
+  function(x, y, z, ...) {
+    types <- itemsType(x)
+    types.ref <- which(types == "reference")
+    if(length(types.ref)) {
+      ref.indices <- lapply(x[types.ref ], slot, "glob.indices")
+      max.indices <- unitizerStateMaxIndices(y)
+
+      # Map the global indices in reference to values starting from 1 up beyond
+      # the end , or 0 for zero
+
+      ref.ind.mx <- do.call(cbind, lapply(ref.indices, as.integer))
+      ref.ind.mx.map <- t(
+        apply(
+          ref.ind.mx, 1, function(z) {
+            match(z, sort(Filter(as.logical, unique(z))), nomatch=0L)
+      } ) ) + as.integer(max.indices)
+      if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map)))
+        stop(
+          "Logic Error: global index mapping matrix malformed; contact maintainer."
+        )
+      ref.ind.mx.map[!ref.ind.mx] <- 0L  # these all map to the starting state
+
+      # Pull out the states from ref and copy them into new
+
+      for(i in slotNames(y)) {
+        needed.state.ids <- unique(ref.ind.mx[i, ])
+        needed.state.ids.map <- unique(ref.ind.mx.map[i, ])
+        length(slot(y, i)) <- max(needed.state.ids.map)
+
+        for(j in seq_along(needed.state.ids)) {
+          id <- needed.state.ids[[j]]
+          id.map <- needed.state.ids.map[[j]]
+          if(!id.map) next
+          slot(y, i)[[id.map]] <- slot(z, i)[[id]]
+        }
+      }
+      # For each ref index, remap to the new positions in new state
+
+      for(i in seq_along(types.ref)) {
+        old.id <- types.ref[[i]]
+        x[[old.id]]@glob.indices <- do.call(
+          "new", c(list("unitizerGlobalIndices"), as.list(ref.ind.mx.map[, i]))
+    ) } }
+    # Return a list with the update item list and the states
+
+    list(items=x, states=y)
+} )
