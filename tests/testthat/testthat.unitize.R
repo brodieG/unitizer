@@ -280,6 +280,17 @@ txt12 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 unitizer:::read_line_set_vals(c("1", "RR", "Y", "Q"))
 txt12a <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
+# Reset to get rid of re-eval bookmark, and also test "O"; here the use of
+# bookmarks is apparent by the fact that the ignored tests at beginning of
+# file are not shown in first go around, but are after we f[O]rce update
+
+unitizer:::read_line_set_vals(
+  c(
+    "1", "O", "Q", "Y", # first run, force update and accept
+    "R", "1", "Q", "Q"  # second run, R from dir summary doesn't set bookmarks
+) )
+txt12b <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
 # Variations on YY, YYY, and YYY
 
 unitizer:::read_line_set_vals(c("1", "YY", "Y", "Q", "Q"))
@@ -326,6 +337,9 @@ test_that("review dir", {
   )
   expect_equal_to_reference(
     txt12a, file.path("helper", "refobjs", "unitize_reeval2.rds")
+  )
+  expect_equal_to_reference(
+    txt12b, file.path("helper", "refobjs", "unitize_reeval2b.rds")
   )
   expect_equal_to_reference(
     txt13, file.path("helper", "refobjs", "unitize_multiaccept1.rds")
