@@ -267,7 +267,7 @@ store_unitizer <- function(unitizer) {
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {
-    message("unitizer updated")
+    word_msg("unitizer updated.")
   } else {
     stop("Error attempting to save unitizer, see previous messages.")
   }

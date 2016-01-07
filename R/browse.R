@@ -338,8 +338,8 @@ setMethod(
               next
             } else if (grepl("^[QN]$", user.input)) {
               update <- FALSE
-              word_msg("Changes discarded; unitizer store unchanged.")
-              if(y@re.eval) word_msg("Re-evaluation disabled")
+              word_msg("Changes discarded.")
+              if(y@re.eval) word_msg("Re-evaluation disabled.")
               y@re.eval <- 0L
               loop.status <- "b"
               break
@@ -354,7 +354,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          word_msg("No changes recorded; exiting.")
+          word_msg("No changes recorded.")
           break
         }
     } }
