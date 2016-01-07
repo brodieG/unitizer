@@ -370,11 +370,14 @@ setMethod(
 
     state.merged <- mergeStates(items.ref, x@state.new, x@state.ref)
 
+    # Instantiate new unitizer and add selected items as reference items
+
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
-      base.env=x@base.env, test.file.loc=x@test.file.loc, state.ref=state.merged
+      base.env=x@base.env, test.file.loc=x@test.file.loc,
+      state.ref=state.merged$states
     )
-    unitizer <- unitizer + items.ref
+    unitizer <- unitizer + state.merged$items
 
     # Extract and re-map sections of tests we're saving as reference
 
