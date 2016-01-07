@@ -280,5 +280,20 @@ test_that("merge states", {
     unitizer:::mergeStates(items.no.ref, trk.new, trk.ref),
     list(items=items.no.ref, states=trk.new)
   )
+  # No new items; note that we only remap the used states to the new state
+  # which is why we need all the .mod objects
+
+  items.no.new <- items[3:4]
+  items.no.new.mod <- items.no.new
+  items.no.new.mod[[2L]]@glob.indices@search.path <- 2L
+  trk.ref.mod <- trk.ref
+  trk.ref.mod@search.path[[2L]] <- NULL
+
+  expect_identical(
+    unitizer:::mergeStates(
+      items.no.new, new("unitizerGlobalTrackingStore"), trk.ref
+    ),
+    list(items=items.no.new.mod, states=trk.ref.mod)
+  )
 })
 options(old.opt)
