@@ -273,5 +273,12 @@ test_that("merge states", {
     sapply(s.n.to.check, slot, object=res$state),
     structure(list(search.path = list(1, 2, 3, 4, 6), options = list("a", "b", "c", "d"), working.directory = list(), random.seed = list(), namespaces = list()), .Names = c("search.path", "options", "working.directory", "random.seed", "namespaces"))
   )
+  # No reference items
+
+  items.no.ref <- items[1:2]
+  expect_identical(
+    unitizer:::mergeStates(items.no.ref, trk.new, trk.ref),
+    list(items=items.no.ref, states=trk.new)
+  )
 })
 options(old.opt)
