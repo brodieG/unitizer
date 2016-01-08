@@ -118,7 +118,8 @@ setMethod(
           ) )
         } else {
           match.id <- cand.match[x@bookmark@id]
-          id.map <- which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
+          id.map <-
+            which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
           # nocov start
           if(!length(id.map) == 1L)
             stop(
