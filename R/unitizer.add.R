@@ -69,7 +69,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     matched.calls <- rep(NA_integer_, length(e2))
     i <- 1L
     sect.par <- NA_integer_
-    sect.end <- 0L  # Used to track if there is an active section and to manage nested sections
+    # Used to track if there is an active section and to manage nested sections
+
+    sect.end <- 0L
 
     test.env <- new.env(parent=e1@items.new@base.env)
     chr.width <- getOption("width")
@@ -84,9 +86,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
         exec(getItem(e2), test.env, e1@global),
         unitizerQuitExit=unitizer_quit_handler
       )
-      # If item is a section, added to the store and update the tests with the contents of
-      # the section, and re-loop (this is how we handle nested tests), if not, store the
-      # evaluated test
+      # If item is a section, added to the store and update the tests with the
+      # contents of the section, and re-loop (this is how we handle nested
+      #  tests), if not, store the evaluated test
 
       if(is(item@data@value[[1L]], "unitizerSectionExpression")) {
         sect.obj <- item@data@value[[1L]]
@@ -142,19 +144,6 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
           e1@section.ref.map[[i]] <- NA_integer_
         }
     } }
-    # Update reference test ids to match new ids so we have a cohesive set of
-    # ids to use
-
-    new.len <- length(e1@items.new.map)
-    for(i in seq.int(new.len)) {
-      ref.id <- e1@items.new.map[i]
-      if(!is.na(ref.id)) e1@items.ref[[ref.id]]@id <- ref.id
-    }
-    # For unmatched reference tests, just give id numbers past the end of new
-
-    for(j in seq_along(deleted)) {
-      e1@items.ref[[deleted[[j]]]]@id <- new.len + j
-    }
     # Finalize
 
     over_print("")

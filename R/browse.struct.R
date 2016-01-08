@@ -192,6 +192,25 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     unitizer.browse
   }
 )
+# Allow us to find a specific test based on deparse call and id
+# `parse.mod` indicates whether the parse is not the same as it was when the
+# bookmark was set, which indicates the bookmark may not be correct any more
+
+setClass("unitizerBrowseBookmark",
+  slots=c(call="character", id="integer", parse.mod="logical"),
+  prototype=list(call="", id=0L, parse.mod=FALSE),
+  validity=function(object) {
+    if(!is.chr1(object@call))
+      return("Slot `@call` must be character(1L) and not NA")
+    if(!length(object@id) == 1L || object@id < 0L)
+      return("Slot `@id` must be integer(1L) and positive")
+    if(!is.TF(object@parse.mod))
+      return("Slot `@parse.mode` must be TRUE or FALSE")
+  }
+)
+setClassUnion(
+  "unitizerBrowseBookmarkOrNULL", c("unitizerBrowseBookmark", "NULL")
+)
 # Keeps track of All Test Review Data
 #
 # Seemed like a brilliant idea to make this an object to simplify validation,
@@ -541,10 +560,14 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
     test.types <- unlist(lapply(as.list(e2), slot, "title"))
     max.item <- length(e1@mapping@item.id)
     max.sub.sec <- if(max.item) max(e1@mapping@sub.sec.id) else 0L
+
+    # New items if available, ref items otherwise
+
     sec.item.list <- as.list(extractItems(e2))
     action.default <- vapply(as.list(e2), slot, character(1L), "action.default")
 
     mapping.new <- new("unitizerBrowseMapping",
+      # This id tracks the order of tests as we intend to review them
       item.id=(max.item + 1L):(max.item + sum(item.count)),
       item.id.rel=unlist(lapply(item.count, function(x) seq(len=x))),
       item.id.orig=vapply(sec.item.list, slot, 1L, "id"),
@@ -942,7 +965,8 @@ setClass(
   "unitizerBrowseResult",
   slots=c(
     unitizer="unitizer", re.eval="integer", updated="logical",
-    interactive.error="logical", data="data.frame"
+    interactive.error="logical", data="data.frame",
+    bookmark="unitizerBrowseBookmarkOrNULL"
   ),
   validity=function(object) {
     if(

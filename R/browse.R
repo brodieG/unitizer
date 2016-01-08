@@ -71,6 +71,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     # environments in `browseUnitizerInternal`
 
     x@updated <- browse.res@updated
+    x@bookmark <- browse.res@bookmark
     browse.res@unitizer <- x
     browse.res
   }
@@ -106,15 +107,24 @@ setMethod(
       # Check we if we requested a re-eval and if so set the id where we were
       # before re-eval
 
-      if(x@jump.to.test) {
-        id.map <- match(x@jump.to.test, y@mapping@item.id.orig, nomatch=0L)
-        if(!id.map || id.map > length(y@mapping@item.id)) {
+      if(!is.null(x@bookmark)) {
+        cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
+        cand.match.len <- length(cand.match)
+        if(!cand.match.len || x@bookmark@id > cand.match.len) {
           word_msg(
             cc(
-              "Unable to find test you toggled re-eval restart point; starting ",
+              "Unable to find test you toggled re-eval from; starting ",
               "from beginning."
           ) )
         } else {
+          match.id <- cand.match[x@bookmark@id]
+          id.map <- which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
+          # nocov start
+          if(!length(id.map) == 1L)
+            stop(
+              "Logic Error: unable to find bookmarked test; contact maintainer."
+            )
+          # nocov end
           y@last.id <- y@mapping@item.id[id.map]
           y@jumping.to <- TRUE
         }
@@ -256,7 +266,7 @@ setMethod(
               "even though there are no changes to record (see `?unitize` for",
               "details)."
             )
-          if(update || !!y@re.eval) {
+          if(update) {
             tar <- getTarget(x)
             wd <- if(file.exists(tar)) get_package_dir(tar) else
               if(file.exists(dirname(tar)))
@@ -285,7 +295,7 @@ setMethod(
             # Can this be rationalized with the logic in `reviewNext`?
 
             actions <- character()
-            if(update || !!y@re.eval) {
+            if(update) {
               actions <- c(actions, "update unitizer")
               nav.hlp <- paste0(
                 "Pressing Y will replace the previous unitizer with a new one, ",
@@ -394,15 +404,25 @@ setMethod(
     }
     unitizer <- refSections(unitizer, x)
 
-    # Return structure
+    # If `re.eval.started` set, means we asked for re-eval while browsing tests
+    # so we want to restart there; translate a browse id to a bookmark so we can
+    # look it up later
 
-    update.reeval <- !!y@re.eval
-    unitizer@jump.to.test <- if(y@re.eval && re.eval.started) y@last.id else 0L
+    id.cur <- y@last.id
+    bookmark <- if(
+      y@re.eval && re.eval.started && !y@mapping@item.ref[[id.cur]]
+    ) {
+      id.map <- y@mapping@item.id.orig[[id.cur]]
+      call.dep <- x@items.new.calls.deparse[id.map]
+      call.dep.id <- x@items.new.calls.deparse.id[id.map]
+      new("unitizerBrowseBookmark", call=call.dep, id=call.dep.id)
+    }
+    # Return structure
 
     new(
       "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
-      updated=update || update.reeval, interactive.error=y@interactive.error,
-      data=as.data.frame(y)
+      updated=update, interactive.error=y@interactive.error,
+      data=as.data.frame(y), bookmark=bookmark
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
@@ -559,12 +579,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) }
       if(jumping) {
         word_msg(
-          cc(
-            "Jumping to test #", curr.id, " because that was the test under ",
-            "review when test re-run was requested.  Updating unitizer will reset ",
-            "this bookmark.  You can toggle force update by typing `O` at the ",
-            "prompt if your unitizer has no changes.\n\n"
-        ) )
+          sep="",
+          "Jumping to test #", curr.id, " because that was the test under ",
+          "review when test re-run was requested.",
+          if(!is.null(unitizer@bookmark) && unitizer@bookmark@parse.mod)
+            cc(
+              " Note that since the test file was modified we cannot guarantee ",
+              "the jump is to the correct test."
+            )
+        )
+        cat("\n")
       }
       if(length(item.main@comment)) {
         if(x@last.id && x@mapping@ignored[[x@last.id]] && !jumping) cat("\n")
@@ -734,7 +758,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             "are testing via the unitizer prompt"
           ),
           paste0(
-            "`O` to fOrce update of store even when there are no accepted ",
+            "`O` to f[O]rce update of store even when there are no accepted ",
             "changes"
         ) )
       }

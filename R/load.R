@@ -257,6 +257,7 @@ store_unitizer <- function(unitizer) {
 
   unitizer@res.data <- NULL
   unitizer@updated.at.least.once <- FALSE
+  unitizer@bookmark <- NULL
 
   # blow away calls; these should be memorialized as deparsed versions and the
   # original ones take up a lot of room to store

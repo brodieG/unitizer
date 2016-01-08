@@ -306,29 +306,56 @@ unitize_core <- function(
 
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
+  start.len <- length(eval.which)
   valid <- rep(TRUE, length(eval.which))
   updated <- rep(FALSE, length(eval.which)) # Track which unitizers were updated
   unitizers <- new("unitizerObjectList")
+  # Set up dummy unitizers; needed for bookmark stuff to work
+  unitizers[valid] <- replicate(start.len, new("unitizer"))
+  tests.parsed <- replicate(start.len, expression())
 
   # - Evaluate / Browse --------------------------------------------------------
 
   # Parse, and use `eval.which` to determine which tests to evaluate
 
-  if(identical(mode, "unitize")) {
-    over_print("Parsing tests...")
-    tests.parsed <- lapply(
-      test.files,
-      function(x) {
-        over_print(paste("Parsing", relativize_path(x)))
-        parse_tests(x, comments=TRUE)
-  } ) }
-  over_print("")
 
   while(
     (length(eval.which) || mode == identical(mode, "review")) && length(valid)
   ) {
-    active <- intersect(eval.which, which(valid)) # kind of implied in `eval.which` after first loop
+    # kind of implied in `eval.which` after first loop
 
+    active <- intersect(eval.which, which(valid))
+
+    # Parse tests
+
+    tests.parsed.prev <- tests.parsed
+    if(identical(mode, "unitize")) {
+      over_print("Parsing tests...")
+      tests.parsed[active] <- lapply(
+        test.files[active],
+        function(x) {
+          over_print(paste("Parsing", relativize_path(x)))
+          parse_tests(x, comments=TRUE)
+    } ) }
+    over_print("")
+
+    # Retrieve bookmarks so they are not blown away by re-load; make sure to
+    # mark those that have had changes to the parse data
+
+    bookmarks <- lapply(
+      seq_along(unitizers), function(i) {
+        utz <- unitizers[[i]]
+        if(is(utz, "unitizer") && is(utz@bookmark, "unitizerBrowseBookmark")) {
+          # compare expressions without attributes
+          if(
+            !identical(
+              `attributes<-`(tests.parsed.prev[[i]], NULL),
+              `attributes<-`(tests.parsed[[i]], NULL)
+          ) ) {
+            utz@bookmark@parse.mod <- TRUE
+          }
+          utz@bookmark
+    } } )
     # Load / create all the unitizers; note loading envs with references to
     # namespace envs can cause state to change so we need to record it here;
     # also, `global` is attached to the `unitizer` here
@@ -339,6 +366,11 @@ unitize_core <- function(
     )
     global$state()
     valid <- vapply(as.list(unitizers), is, logical(1L), "unitizer")
+
+    # Reset the bookmarks
+
+    for(i in seq_along(unitizers))
+      if(valid[[i]]) unitizers[[i]]@bookmark <- bookmarks[[i]]
 
     # Now evaluate, whether a unitizer is evaluated or not is a function of
     # the slot @eval, set just above as they are loaded
@@ -702,8 +734,7 @@ unitize_browse <- function(
           # annoyingly we need to force update here as well as for
           # the unreviewed unitizers
           browse.res <- browseUnitizer(
-            unitizers[[i]], untz.browsers[[i]],
-            force.update=force.update,
+            unitizers[[i]], untz.browsers[[i]], force.update=force.update
           )
           summaries@updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer
