@@ -190,9 +190,6 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
       }
     } else stop("Logic Error: unexpected `mode`")
 
-    # - Finalize ---------------------------------------------------------------
-
-    unitizer.browse@mapping@item.id.ord <- getIdOrder(unitizer.browse)
     unitizer.browse
   }
 )
@@ -599,6 +596,11 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
       comb_fun <- if(is.matrix(slot(e1@mapping, i))) rbind else append
       slot(e1@mapping, i) <- comb_fun(slot(e1@mapping, i), slot(mapping.new, i))
     }
+    # Update the id ord; this is a bit redundant as ideally we would just do it
+    # once at the end, but since this function is used in different places we
+    # just do it here and accept that it is a bit repetitive
+
+    e1@mapping@item.id.ord <- getIdOrder(e1)
     e1
   }
 )
