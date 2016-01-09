@@ -204,9 +204,7 @@ review_prompt <- function(x, nav.env) {
     " been reviewed). Type \"U\" to jump to the first unreviewed ",
     "test.\n\n",
     "Note that tests are displayed in the order they appear in the test",
-    "file, not in the order they would be reviewed in, which is why the test",
-    "numbers are not necessarily sequential (see vignette for details and",
-    "exceptions).\n"
+    "file, not in the order they would be reviewed in.\n"
   )
   nav.opts <- c(
     "input a test number",
@@ -244,6 +242,14 @@ review_prompt <- function(x, nav.env) {
     stop(
       "Logic Error: Unexpected user input allowed through in Review mode; ",
       "contact maintainer")
+  } else {
+    # Remap our nav.id to the actual review order instead of file order
+
+    nav.id <- x@mapping@item.id[match(nav.id, x@mapping@item.id.ord)]
+    if(is.na(nav.id))
+      stop(
+        "Logic Error: failed retrieving internal item id; contact maintainer."
+      )
   }
   # Determine whether test we selected is a test we would normally not review
 

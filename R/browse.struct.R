@@ -154,10 +154,11 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           section.title=paste0(if(rem.count.all) "Other ", "Removed Items")
         )
         rem.item.count <- length(which(rem.unmapped))
+        # by definition can't have new conditions on removed tests
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionRemoved",
           items.ref=x@items.ref[rem.unmapped],
-          new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
+          new.conditions=rep(FALSE, rem.item.count),
           tests.result=tests_result_mat(rem.item.count)
         )
         unitizer.browse <- unitizer.browse + browse.sect
@@ -165,8 +166,10 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     } else if(identical(mode, "review")) {
     # - Review -----------------------------------------------------------------
 
-      for(i in seq_along(x@sections.ref)) {                   # Loop through parent sections
-        sect.map <- x@section.ref.map == i   # will have to check what the section numbers are, this might not be right
+      for(i in seq_along(x@sections.ref)) {  # Loop through parent sections
+        # will have to check what the section numbers are, this might not be
+        # right
+        sect.map <- x@section.ref.map == i
         if(!length(which(sect.map))) next
 
         browse.sect <- new(
@@ -189,6 +192,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
 
     # - Finalize ---------------------------------------------------------------
 
+    unitizer.browse@mapping@item.id.ord <- getIdOrder(unitizer.browse)
     unitizer.browse
   }
 )
@@ -239,6 +243,7 @@ setClass("unitizerBrowseMapping",
     item.id="integer",
     item.id.rel="integer",
     item.id.orig="integer",
+    item.id.ord="integer",
     item.ref="logical",
     sec.id="integer",
     sub.sec.id="integer",
@@ -352,15 +357,17 @@ setGeneric("getIdOrder", function(object, ...) standardGeneric("getIdOrder"))
 setMethod(
   "getIdOrder", "unitizerBrowse",
   function(object, ...) {
-    # Figure out order as stuff showed up in original file; reference ids are
-    # put at the end.  Note the implicit assumption here is that the stuff in
+    # Figure out order as stuff showed up in original file; deletd reference ids
+    # are put at the end.  Note the implicit assumption here is that the stuff in
     # sections is in the same order in file and here, which is almost certainly
     # true except for stuff outside of sections
 
     ids <- object@mapping@item.id.orig
-    max.id.orig <- max(c(0, ids[!object@mapping@item.ref]))
-    ids[object@mapping@item.ref] <-
-      rank(ids[object@mapping@item.ref]) + max.id.orig
+    max.id.orig <- max(c(0L, ids[!object@mapping@item.ref]))
+    if(any(object@mapping@item.ref)) {
+      ids[object@mapping@item.ref] <-
+        rank(ids[object@mapping@item.ref], ties.method="first") + max.id.orig
+    }
     ids
   }
 )
@@ -385,7 +392,8 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
-    tests.to.show <- rep(TRUE, length(x@mapping@review.type))  # this used to limit what test were shown
+    # this used to limit what test were shown
+    tests.to.show <- rep(TRUE, length(x@mapping@review.type))
     out.calls <- character(sum(tests.to.show))
     out.calls.idx <- integer(sum(tests.to.show))
     out.sec <- character(length(unique(x@mapping@sec.id[tests.to.show])))
@@ -397,7 +405,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     min.deparse.len <- 20L
     sec.id.prev <- 0L
     item.id.formatted <- format(justify="right",
-      paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id)
+      paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id.ord)
     )
     review.formatted <- format(
       paste(sep=":",
