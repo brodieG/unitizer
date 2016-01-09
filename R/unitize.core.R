@@ -423,7 +423,9 @@ unitize_core <- function(
   on.exit(NULL)
   reset_and_unshim(global)
 
-  post.res <- source_files(post, pre.load.frame)  # return env on success, char on error
+  # return env on success, char on error
+
+  post.res <- source_files(post, pre.load.frame)
   if(!is.environment(post.res))
     word_msg(
       "`unitizer` evaluation succeed, but `post` steps had errors:",
@@ -590,7 +592,11 @@ unitize_browse <- function(
 
   # - Interactive --------------------------------------------------------------
 
-  if(test.len > 1L) show(summaries)
+  # Check if any unitizer has bookmark set, and if so jump directly to
+  # that unitizer
+
+  bookmarked <- bookmarked(unitizers)
+  if(test.len > 1L && !any(bookmarked)) show(summaries)
   quit <- FALSE
 
   # If any conflicts in state tracking are detected, alert user and give them
@@ -671,7 +677,9 @@ unitize_browse <- function(
           "Available options:",
           paste0(as.character(UL(help.opts)), collapse="\n")
         )
-        if(!first.time) {
+        # Show summary if applicable
+
+        if(!first.time && !any(bookmarked)) {
           if(!interactive.mode)
             stop(
               "Logic Error: looping for user input in non-interactive mode, ",
@@ -682,7 +690,9 @@ unitize_browse <- function(
         first.time <- FALSE
         eval.which <- integer(0L)
 
-        if(test.len > 1L) {
+        if(any(bookmarked)) {
+          pick.num <- which(bookmarked)
+        } else if(test.len > 1L) {
           pick.num <- integer()
           pick <- if(interactive.mode) {
             word_cat(prompt)
@@ -752,6 +762,10 @@ unitize_browse <- function(
               } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
           ) )
         }
+        # Update bookmarks
+
+        bookmarked <- bookmarked(unitizers)
+
         # - Non-interactive Issues ---------------------------------------------
         if(any(int.error)) {
           if(interactive.mode)

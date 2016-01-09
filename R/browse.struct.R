@@ -212,6 +212,21 @@ setClass("unitizerBrowseBookmark",
 setClassUnion(
   "unitizerBrowseBookmarkOrNULL", c("unitizerBrowseBookmark", "NULL")
 )
+setGeneric("bookmarked", function(x, ...) standardGeneric("bookmarked"))
+setMethod("bookmarked", "unitizerObjectList", function(x, ...) {
+  bookmarked <- vapply(
+    x,
+    function(y)
+      is(y, "unitizer") && is(y@bookmark, "unitizerBrowseBookmark"),
+    logical(1L)
+  )
+  if(!length(which(bookmarked)) %in% 0:1)
+    stop(
+      "Logic Error: no more than one unitizer may be bookmarked at any ",
+      "given time; contact maintainer"
+    )
+  bookmarked
+} )
 # Keeps track of All Test Review Data
 #
 # Seemed like a brilliant idea to make this an object to simplify validation,
