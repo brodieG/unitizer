@@ -174,6 +174,7 @@ load_unitizers <- function(
   for(i in valid.idx) {
     unitizers[[i]]@id <- norm_store_id(store.ids[[i]])
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
+
     parent.env(unitizers[[i]]@zero.env) <- par.frame
     unitizers[[i]]@global <- global
     unitizers[[i]]@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
