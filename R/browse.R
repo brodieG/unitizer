@@ -126,7 +126,7 @@ setMethod(
               "Logic Error: unable to find bookmarked test; contact maintainer."
             )
           # nocov end
-          y@last.id <- y@mapping@item.id[id.map]
+          y@last.id <- y@mapping@item.id[id.map] - 1L
           y@jumping.to <- TRUE
         }
       }
@@ -442,7 +442,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
     browsed <- x@browsing
     jumping <- x@jumping.to
     x@browsing <- x@jumping.to <- FALSE
+    last.id <- x@last.id
     curr.id <- x@last.id + 1L
+    x@last.id <- curr.id
 
     if(x@last.reviewed) {
       last.reviewed.sec <-
@@ -592,7 +594,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         cat("\n")
       }
       if(length(item.main@comment)) {
-        if(x@last.id && x@mapping@ignored[[x@last.id]] && !jumping) cat("\n")
+        if(last.id && x@mapping@ignored[[last.id]] && !jumping) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
         cat("\n")
       }
@@ -674,7 +676,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
       ) {
         # reviewed items are skipped unless we're actively navigating to support
         # `auto.accept`
-        x@last.id <- curr.id
         return(x)
       }
     }
