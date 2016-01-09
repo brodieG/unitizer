@@ -762,7 +762,9 @@ unitize_browse <- function(
               } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
           ) )
         }
-        # Update bookmarks
+        # Update bookmarks (in reality, we're just clearing the bookmark if it
+        # was previously set, as setting the bookmark will break out of this
+        # loop).
 
         bookmarked <- bookmarked(unitizers)
 
