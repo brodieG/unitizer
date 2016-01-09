@@ -842,7 +842,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
               valid.opts=c(Y="[Y]es", N="[N]o")
             )
             if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
-            if(identical(act.conf, "N")) return(x)
+            if(identical(act.conf, "N")) {
+              x@last.id <- x@last.id - 1L  # Otherwise we advance to next test
+              return(x)
+            }
           }
           indices
         }
