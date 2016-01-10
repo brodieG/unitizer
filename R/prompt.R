@@ -184,7 +184,7 @@ navigate_prompt <- function(
   } else if (identical(prompt.val, "U")) {
     unreviewed <- unreviewed(x)
     if(!length(unreviewed)) {
-      word_msg("No unreviewed tests")
+      word_msg("No unreviewed tests.")
       x@last.id <- tail(x@mapping@item.id, 1L)
     } else x@last.id <- head(unreviewed, 1L) - 1L
     x@navigating <- TRUE
@@ -229,7 +229,7 @@ review_prompt <- function(x, nav.env) {
   } else if (identical(nav.id, "U")) { # Go to unreviewed test
     unreviewed <- unreviewed(x)
     nav.id <- if(!length(unreviewed)) {
-      word_msg("No unreviewed tests")
+      word_msg("No unreviewed tests.")
       tail(x@mapping@item.id, 1L) + 1L
     } else head(unreviewed, 1L)
   } else if (
