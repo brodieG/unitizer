@@ -583,8 +583,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(jumping) {
         word_msg(
           sep="",
-          "Jumping to test #", curr.id, " because that was the test under ",
-          "review when test re-run was requested.",
+          "Jumping to test #", x@mapping@item.id.ord[[curr.id]], " because ",
+          "that was the test under review when test re-run was requested.",
           if(!is.null(unitizer@bookmark) && unitizer@bookmark@parse.mod)
             cc(
               " Note that since the test file was modified we cannot guarantee ",
