@@ -1,6 +1,6 @@
 library(unitizer)
 library(testthat)
-context("Browse")
+context("Browse\n")
 
 local( {
   zero.env <- parent.env(.GlobalEnv)
@@ -79,17 +79,21 @@ local( {
 
   test_that("unitizerBrowse correctly processes unitizer for display", {
     # force all tests to be reviewed so they will be shown
-    unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
-    unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
-    expect_equal(
+    unitizer.prepped@mapping@reviewed <-
+      rep(TRUE, length(unitizer.prepped@mapping@reviewed))
+    unitizer.prepped@mapping@review.val <-
+      rep("Y", length(unitizer.prepped@mapping@reviewed))
+    expect_equal_to_reference(
       as.character(unitizer.prepped, 60),
-      c("= <untitled> ===============================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:Y\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:Y\n", "     7. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:Y\n", "     8. \"I too will be removed\" .  .  .  .  .  .   Removed:Y\n", "= Section 2 ================================================\n", "    11. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:Y\n", "    *9. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "    10. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:Y\n", "    12. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:Y\n", "    13. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:Y\n")
+      file.path("helper", "refobjs", "browse_aschar1.rds")
     )
     # Alternating tests
-    unitizer.prepped@mapping@reviewed <- as.logical(seq(length(unitizer.prepped@mapping@reviewed)) %% 2)
-    expect_equal(
+    unitizer.prepped@mapping@reviewed <- as.logical(
+      seq(length(unitizer.prepped@mapping@reviewed)) %% 2
+    )
+    expect_equal_to_reference(
       as.character(unitizer.prepped, 60),
-      c("= <untitled> ===============================================\n", "    *1. library(stats) .  .  .  .  .  .  .  .  .         -:Y\n", "= Section 1 ================================================\n", "     5. 1 + 1 .  .  .  .  .  .  .  .  .  .  .  .    Passed:Y\n", "     2. runif(20)   .  .  .  .  .  .  .  .  .  .    Failed:-\n", "     6. stop(\"woohoo\") .  .  .  .  .  .  .  .  .    Passed:-\n", "    *3. var <- 200  .  .  .  .  .  .  .  .  .  .         -:Y\n", "     4. matrix(1:9, 3) .  .  .  .  .  .  .  .  .       New:-\n", "     7. \"I'll be removed\" .  .  .  .  .  .  .  .   Removed:Y\n", "     8. \"I too will be removed\" .  .  .  .  .  .   Removed:-\n", "= Section 2 ================================================\n", "    11. 1 + 20   .  .  .  .  .  .  .  .  .  .  .       New:Y\n", "    *9. var1 <- list(1, 2, 3)   .  .  .  .  .  .         -:Y\n", "    10. sample(20)  .  .  .  .  .  .  .  .  .  .    Failed:-\n", "    12. matrix(1:9, ncol = 3)   .  .  .  .  .  .       New:-\n", "    13. lm(x ~ y, data.frame(x = 1:10, y = c(5,...     New:Y\n", "    14. \"I three will be removed\"  .  .  .  .  .   Removed:-\n")
+      file.path("helper", "refobjs", "browse_aschar2.rds")
     )
   } )
   test_that("processInput generates Correct Item Structure", {
@@ -177,9 +181,9 @@ local( {
     item.types <- vapply(unitizer:::as.list(items), slot, FALSE, "reference")
     item.ids <- vapply(unitizer:::as.list(items), slot, 1L, "id")
     item.df <- data.frame(item.calls, item.types, item.ids, stringsAsFactors=FALSE)
-    expect_identical(
+    expect_equal_to_reference(
       item.df[order(item.types, item.ids),],
-      structure(list(item.calls = c("library(stats)", "1 + 1", "runif(20)", "stop(\"woohoo\")", "var <- 200", "matrix(1:9, 3)", "1 + 20", "var1 <- list(1, 2, 3)", "sample(20)", "matrix(1:9, ncol = 3)", "lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))", "\"I'll be removed\"", "\"I too will be removed\"", "\"I three will be removed\""), item.types = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), item.ids = c(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 5L, 6L, 7L)), .Names = c("item.calls", "item.types", "item.ids"), row.names = c(1L, 5L, 2L, 6L, 3L, 4L, 11L, 9L, 10L, 12L, 13L, 7L, 8L, 14L), class = "data.frame")
+      file.path("helper", "refobjs", "browse_itemord.rds")
     )
   } )
 } )

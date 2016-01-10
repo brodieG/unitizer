@@ -121,7 +121,7 @@ test_that("demo review", {
   )
   expect_match(
     paste0(txt4$message, collapse=""),
-    "No changes recorded; exiting.unitizer unchanged."
+    "No changes recorded.unitizer unchanged."
   )
 })
 unitizer:::read_line_set_vals(c("Y", "Y", "Y"))

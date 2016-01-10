@@ -1,5 +1,6 @@
 library(testthat)
 library(unitizer)
+context("In Package")
 
 if(!file_test("-d", file.path("helper", "refobjs")))
   stop("Make sure wd is set to tests/testthat")

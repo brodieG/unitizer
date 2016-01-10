@@ -144,15 +144,22 @@ test_that("unitize_dir", {
     class(untz3a), "unitizer_results"
   )
   expect_identical(
-    lapply(untz3a, class), replicate(3L, c("unitizer_result", "data.frame"), simplify=FALSE)
+    lapply(untz3a, class),
+    replicate(3L, c("unitizer_result", "data.frame"), simplify=FALSE)
   )
-  expect_equal_to_reference(untz3a.all, file.path("helper", "refobjs", "unitize_resprint1.rds"))
-  expect_equal_to_reference(untz3a.first, file.path("helper", "refobjs", "unitize_resprint2.rds"))
-
-  expect_equal_to_reference(untz3a.cpy, file.path("helper", "refobjs", "unitize_res1.rds"))
+  expect_equal_to_reference(
+    untz3a.all, file.path("helper", "refobjs", "unitize_resprint1.rds")
+  )
+  expect_equal_to_reference(
+    untz3a.first, file.path("helper", "refobjs", "unitize_resprint2.rds")
+  )
+  expect_equal_to_reference(
+    untz3a.cpy, file.path("helper", "refobjs", "unitize_res1.rds")
+  )
   expect_equal(untz3a.get.all, c("unitizer", "unitizer", "logical"))
-
-  expect_equal_to_reference(untz3b.all, file.path("helper", "refobjs", "unitize_resprint3.rds"))
+  expect_equal_to_reference(
+    untz3b.all, file.path("helper", "refobjs", "unitize_resprint3.rds")
+  )
   expect_equal(untz3b.get.all, c("unitizer", "unitizer", "unitizer"))
 })
 # Namespace conflicts; unfortunately if either `covr` or `data.table` are loaded
@@ -274,15 +281,13 @@ txt10 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 # review one, and Re-eval despite no change
 
-unitizer:::read_line_set_vals(c("1", "R", "Y", "Q"))
+unitizer:::read_line_set_vals(c("1", "R", "Y", "Q", "Q"))
 txt12 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
-unitizer:::read_line_set_vals(c("1", "RR", "Y", "Q"))
+unitizer:::read_line_set_vals(c("1", "RR", "Y", "Q", "Q"))
 txt12a <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
-# Reset to get rid of re-eval bookmark, and also test "O"; here the use of
-# bookmarks is apparent by the fact that the ignored tests at beginning of
-# file are not shown in first go around, but are after we f[O]rce update
+# Test force eval
 
 unitizer:::read_line_set_vals(
   c(
