@@ -248,18 +248,17 @@ setMethod(
           # Make sure we did not skip anything we were supposed to review
 
           if(identical(y@mode, "unitize")) {
-            unreviewed <- sum(
-              !y@mapping@reviewed & y@mapping@review.type != "Passed" &
-              !y@mapping@ignored
-            )
-            if(unreviewed) {
+            unreviewed <- unreviewed(y)
+            unrevavail  <- length(unreviewed)
+            if(unrevavail) {
               word_cat(
-                "You have ", unreviewed, " unreviewed tests; press `B` to ",
-                "browse tests, `U` to go to first unreviewed test.\n\n", sep=""
+                "You have ", unrevavail, " unreviewed tests; press ",
+                "`B` to browse tests, `U` to go to first unreviewed test.\n\n",
+                sep=""
           ) } }
           valid.opts <- c(
             Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
-            R="[R]erun", RR="", O=""
+            U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="", O=""
           )
           if(!length(x@changes) && (force.update || y@force.up))
             word_msg(

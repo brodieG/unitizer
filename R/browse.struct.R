@@ -553,6 +553,18 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
     }
     items
 } )
+# Get id for unreviewed test
+
+setGeneric("unreviewed", function(x, ...) standardGeneric("unreviewed"))
+setMethod("unreviewed", "unitizerBrowse",
+  function(x, ...) {
+    unreviewed <- which(
+      !x@mapping@reviewed & !x@mapping@ignored & (
+        if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
+        else TRUE
+    ) )
+    sort(unreviewed)
+} )
 # Represents a \code{`unitizer_sect`}
 
 setClass("unitizerBrowseSection", contains="unitizerList",

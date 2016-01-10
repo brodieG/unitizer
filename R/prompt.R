@@ -170,7 +170,6 @@ navigate_prompt <- function(
     hist.con=x@hist.con
   )
   if(identical(prompt.val, "P")) {
-
     # Go back to previous
     prev.tests <- x@mapping@item.id < curr.id & !x@mapping@ignored & (
       if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
@@ -182,6 +181,14 @@ navigate_prompt <- function(
     return(x)
   } else if (identical(prompt.val, "B")) {
     return(review_prompt(x, browse.env2))
+  } else if (identical(prompt.val, "U")) {
+    unreviewed <- unreviewed(x)
+    if(!length(unreviewed)) {
+      word_msg("No unreviewed tests")
+      x@last.id <- tail(x@mapping@item.id, 1L)
+    } else x@last.id <- head(unreviewed, 1L) - 1L
+    x@navigating <- TRUE
+    return(x)
   }
   return(prompt.val)
 }
@@ -219,23 +226,12 @@ review_prompt <- function(x, nav.env) {
   )
   if(identical(nav.id, "Q")) {
     return("Q")
-  } else if (identical(nav.id, "U")) {
-    # Go to unreviewed test
-
-    unreviewed <- !x@mapping@reviewed & !x@mapping@ignored &
-      (
-        if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
-        else TRUE
-      )
-    item.len <- length(x@mapping@review.val)
-    if(!any(unreviewed)) {
-      message("No unreviewed tests.")
-      x@last.id <- item.len
-      return(x)
-    }
-    # We also show all ignored tests before that one for context
-    message("Jumping to first unreviewed test.")
-    nav.id <- min(which(unreviewed))
+  } else if (identical(nav.id, "U")) { # Go to unreviewed test
+    unreviewed <- unreviewed(x)
+    nav.id <- if(!length(unreviewed)) {
+      word_msg("No unreviewed tests")
+      tail(x@mapping@item.id, 1L) + 1L
+    } else head(unreviewed, 1L)
   } else if (
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
   ) {
@@ -252,19 +248,23 @@ review_prompt <- function(x, nav.env) {
       )
   }
   # Determine whether test we selected is a test we would normally not review
+  # note nav.id can be greater than length if we select Unreviewed and there are
+  # no unreviewed
 
-  x@inspect.all <- x@mapping@ignored[[nav.id]] || (
-      identical(x@mode, "unitize") &&
-      identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
-    )
-  x@review <- if(x@inspect.all) -1L else 1L
+  if(nav.id <= length(x@mapping@ignored)) {
+    x@inspect.all <- x@mapping@ignored[[nav.id]] || (
+        identical(x@mode, "unitize") &&
+        identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
+      )
+    x@review <- if(x@inspect.all) -1L else 1L
 
-  if(x@inspect.all) {
-    word_msg(
-      "You selected a test that is not normally reviewed in this mode;",
-      "as such, upon test completion, you will be brought back to this menu",
-      "instead of being taken to the next reviewable test."
-    )
+    if(x@inspect.all) {
+      word_msg(
+        "You selected a test that is not normally reviewed in this mode;",
+        "as such, upon test completion, you will be brought back to this menu",
+        "instead of being taken to the next reviewable test."
+      )
+    }
   }
   # Set last.id to test just before the one we want to review as process will
   # then cause desired test to be reviewed
