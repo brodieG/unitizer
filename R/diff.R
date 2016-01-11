@@ -210,20 +210,31 @@ color_words <- function(chrs, diffs, color) {
 # returns a list with target values and current values word colored.  The
 # vectors within the list will have the same # of elements as the inputs
 
-diff_word <- function(target, current) {
+diff_word <- function(target, current, across.lines=FALSE) {
   stopifnot(
     is.character(target), is.character(current),
-    length(target) == length(current)
+    all(!is.na(target)), all(!is.na(current)),
+    is.TF(across.lines)
   )
   # Compute the char by char diffs for each line
 
-  reg <- "\\w+|\\d+|[^[:alnum:]_[:blank:]]+"
+  reg <- "-?\\d+(\\.\\d+)?(e-?\\d{1,3})?|\\w+|\\d+|[^[:alnum:]_[:blank:]]+"
   tar.reg <- gregexpr(reg, target)
   cur.reg <- gregexpr(reg, current)
 
   tar.split <- regmatches(target, tar.reg)
   cur.split <- regmatches(current, cur.reg)
 
+  # Collapse into one line if we want to do the diff across lines, but record
+  # item counts so we can reconstitute the lines at the end
+
+  if(across.lines) {
+    tar.lens <- vapply(tar.split, length, integer(1L))
+    cur.lens <- vapply(tar.split, length, integer(1L))
+
+    tar.split <- list(unlist(tar.split))
+    cur.split <- list(unlist(cur.split))
+  }
   diffs <- Map(char_diff, tar.split, cur.split)
 
   # Color
@@ -242,6 +253,16 @@ diff_word <- function(target, current) {
         cur.split[[i]], diffs[[i]]@current, seq_along(cur.split[[i]]), "green"
       )
   )
+  # Reconstitute lines if needed
+
+  if(across.lines) {
+    tar.colored <- split(
+      tar.colored[[1L]], rep(seq_along(tar.lens), tar.lens)
+    )
+    cur.colored <- split(
+      cur.colored[[1L]], rep(seq_along(cur.lens), cur.lens)
+    )
+  }
   # Merge back into original
 
   regmatches(target, tar.reg) <- tar.colored
