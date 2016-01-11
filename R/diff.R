@@ -109,8 +109,8 @@ setMethod("as.character", "unitizerDiff",
       if(index >= tar.len) break
       if((safety <- safety + 1L) > tar.len)
         stop(
-          "Logic Error: infinite loop detected trying to find mismatched lines; ",
-          "contact maintainer"
+          "Logic Error: infinite loop detected trying to find mismatched ",
+          "lines; contact maintainer"
         )
       mismatches.next <- which(!tar.ids & tar.seq > index)
       if(!length(mismatches.next)) break
@@ -118,15 +118,15 @@ setMethod("as.character", "unitizerDiff",
 
       # most recent matched value
       prev.match <- if(mismatch.next == 1L) 0L else
-        max(head(tar.ids, mismatch.next - 1L))
+        max(head(abs(tar.ids), mismatch.next - 1L))
 
       # Need to find the unmatched values in current that are between
       # `prev.match` and `prev.match + 1`; matches are encoded as negative values
 
       prev.match.cur <- if(prev.match) {
-        match(c(prev.match, prev.match + 1L), cur.ids)
+        match(c(prev.match, prev.match + 1L), abs(cur.ids))
       } else {
-        c(0L, match(1L, cur.ids))
+        c(0L, match(1L, abs(cur.ids)))
       }
       # If no more matching values, indicate one index past end of cur vector
       # since we'll be looking at index values less than that
