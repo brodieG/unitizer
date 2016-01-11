@@ -201,6 +201,78 @@ color_words <- function(chrs, diffs, color) {
     cc(diff_color(chrs.grp, diff.grp, seq_along(chrs.grp), color), c=" ")
   } else cc(chrs)
 }
+# Try to use fancier word matching with vectors and matrices
+
+.brack.pat <- "^  *\\[\\d+\\]"
+
+diff_word_print <- function(target, current) {
+  # Need to make these arguments
+  width <- 80L
+  frame <- parent.frame()
+  cur.capt <- obj_capt(current, width - 3L, frame)
+  tar.capt <- obj_capt(target, width - 3L, frame)
+  # should check default:
+  # - default method equal to selected method
+  # - dealing with atomic?
+
+  # Separate out the stuff that can wrap (starts with index headers vs. not)
+
+  cur.head <- find_brackets(cur.capt)
+  tar.head <- find_brackets(tar.capt)
+
+  if(length(cur.head) && length(tar.head)) {
+    cur.body <- regexpr(sprintf("%s\\K.*", .brack.pat), cur.capt[cur.head])
+    tar.body <- regexpr(sprintf("%s\\K.*", .brack.pat), tar.capt[tar.head])
+
+    body.diff <- word_diff(
+      regmatches(tar.capt[tar.head], tar.body),
+      regmatches(cur.capt[cur.head], cur.body),
+      across.lines=TRUE
+    )
+    regmatches(tar.capt[tar.head], tar.body) <- body.diff$target
+    regmatches(cur.capt[cur.head], cur.body) <- body.diff$current
+
+    cur.rest <- -cur.head
+    tar.rest <- -tar.head
+  } else {
+    cur.rest <- seq_along(cur.capt)
+    tar.rest <- seq_along(tar.capt)
+  }
+  # Everything else gets a normal line diff
+
+  diffs <- char_diff(tar.capt[tar.rest], cur.capt[cur.rest])
+
+}
+# Determine if a string contains what appear to be standard index headers
+#
+# Returns index of elements in string that start with index headers.
+# Note that it is permissible to have ouput that doesn't match brackets
+# provided that it starts with brackets (e.g. attributes shown after break
+# pattern)
+
+find_brackets <- function(x) {
+  stopifnot(is.character(x), all(!is.na(x)))
+  matches <- regexpr(.brack.pat,  x)
+  vals <- regmatches(x, matches)
+  # the matching section must be uninterrupted starting from first line
+  # and must have consisten formatting
+
+  brackets <- which(cumsum(!nzchar(vals)) == 0L)
+  vals.in.brk <- vals[brackets]
+  nums.in.brk <- regmatches(vals.in.brk, regexpr("\\d+", vals.in.brk))
+
+  if(
+    length(brackets) && length(unique(nchar(vals.in.brk)) == 1L) &&
+    length(unique(diff(as.integer(nums.in.brk)))) <= 1L
+  ) {
+    brackets
+  } else integer(0L)
+}
+# Diff by matching lines
+#
+# The key additional
+diff_line <- function(target, current) {
+}
 
 # Apply diff algorithm within lines; need to preselect which lines to line up
 # with each other.
