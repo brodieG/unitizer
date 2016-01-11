@@ -85,8 +85,9 @@ devtools::install(.unitizer.fastlm)
 
 unitize(.unitizer.test.file, .unitizer.test.store, auto.accept="new")
 unitizer:::read_line_set_vals(c("B", "Q"))
-untz.2 <- unitize(.unitizer.test.file.2, .unitizer.test.store)
-
+untz.2 <- unitize(
+  .unitizer.test.file.2, .unitizer.test.store, interactive.mode=TRUE
+)
 test_that("Section Extra", {
   expect_equal_to_reference(
     `attributes<-`(untz.2, NULL),

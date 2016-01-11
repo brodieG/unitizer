@@ -15,6 +15,8 @@ diff_str(target, current, context = NULL, max.level = 10)
 \arguments{
 \item{target}{the reference object}
 
+\item{current}{the object being compared to \code{target}}
+
 \item{context}{2 length integer vector representing how many lines of context
 are shown on either side of differences.  The first value is the maximum
 before we start trimming output.  The second value is the maximum to be
@@ -30,8 +32,6 @@ reached then will let \code{str} run with \code{max.level} unspecified.
 This is designed to produce the most compact screen output possible that
 shows the differences between objects, though obviously it comes at a
 performance cost; set to 0 to disable}
-
-\item{new}{the object being compared to \code{target}}
 }
 \value{
 character, invisibly, the text representation of the diff

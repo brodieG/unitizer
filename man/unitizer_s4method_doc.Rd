@@ -32,6 +32,7 @@
 \alias{as.character,unitizerDiff-method}
 \alias{as.character,unitizerInPkg-method}
 \alias{as.data.frame,unitizerBrowse-method}
+\alias{as.integer,unitizerGlobalIndices-method}
 \alias{as.list,unitizerList-method}
 \alias{c,unitizerList-method}
 \alias{initialize,unitizer-method}
@@ -56,6 +57,8 @@
 \title{Documentation Block for Internal S4 Methods}
 \usage{
 \S4method{show}{unitizerDummy}(object)
+
+\S4method{as.integer}{unitizerGlobalIndices}(x, ...)
 
 \S4method{length}{unitizerList}(x)
 

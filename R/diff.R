@@ -290,7 +290,7 @@ diff_color <- function(txt, diffs, range, color) {
 #'   recursive levels will not be shown at all.
 #' @export
 #' @param target the reference object
-#' @param new the object being compared to \code{target}
+#' @param current the object being compared to \code{target}
 #' @param context 2 length integer vector representing how many lines of context
 #'   are shown on either side of differences.  The first value is the maximum
 #'   before we start trimming output.  The second value is the maximum to be

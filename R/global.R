@@ -157,6 +157,8 @@ setClass(
     TRUE
   }
 )
+#' @rdname unitizer_s4method_doc
+
 setMethod(
   "as.integer", "unitizerGlobalIndices",
   function(x, ...) {
