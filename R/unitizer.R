@@ -9,6 +9,25 @@ NULL
 
 .unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
 
+# Allow us to find a specific test based on deparse call and id
+# `parse.mod` indicates whether the parse is not the same as it was when the
+# bookmark was set, which indicates the bookmark may not be correct any more
+
+setClass("unitizerBrowseBookmark",
+  slots=c(call="character", id="integer", parse.mod="logical"),
+  prototype=list(call="", id=0L, parse.mod=FALSE),
+  validity=function(object) {
+    if(!is.chr1(object@call))
+      return("Slot `@call` must be character(1L) and not NA")
+    if(!length(object@id) == 1L || object@id < 0L)
+      return("Slot `@id` must be integer(1L) and positive")
+    if(!is.TF(object@parse.mod))
+      return("Slot `@parse.mode` must be TRUE or FALSE")
+  }
+)
+setClassUnion(
+  "unitizerBrowseBookmarkOrNULL", c("unitizerBrowseBookmark", "NULL")
+)
 # Contains All The Data for Our Tests!
 #
 # Generally is populated through the \code{+} methods, with the exception of
