@@ -616,14 +616,15 @@ char_diff_int <- function(x, y) {
     diff.found <- FALSE
     for(i in seq(first.diff, length(x), by=1L)) {
       n.match.self <- which(x[[i]] == tail(x, -i))
-      n.match <- which(x[[i]] == tail(y, -first.diff))
-
+      n.match <- which(
+        x[[i]] == tail(y, if(first.diff == 1L) Inf else  -first.diff + 1L)
+      )
       if(length(n.match) && length(n.match) > length(n.match.self)) {
         tmp.res <- Recall(
-          x[i:length(x)], y[(n.match[[1L]] + first.diff):length(y)]
+          x[i:length(x)], y[(n.match[[1L]] + first.diff - 1L):length(y)]
         )
         x.d <- c(eq.so.far, eq.extra, tmp.res[[1L]])
-        y.d <- c(eq.so.far, rep(TRUE, n.match[[1L]]), tmp.res[[2L]])
+        y.d <- c(eq.so.far, rep(TRUE, n.match[[1L]] - 1L), tmp.res[[2L]])
         diff.found <- TRUE
         break
       }
