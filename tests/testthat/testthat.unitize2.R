@@ -16,6 +16,26 @@ devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.store <- file.path(.unitizer.fastlm, "tests", "unitizer", "fastlm1.unitizer")
 test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
 
+# Test unreviewed
+
+unitizer:::read_line_set_vals(
+  c(
+    "Y", "Q", "U",    # Accept one and go to unreviewed
+    "Y", "B", "U",    # Accept one more and browse and go to unreviewed
+    "Y", "Y", "U",    # Accept two remaining and confirm no unreviewed
+    "B", "U", "Q"     # No unreviewed tests
+  )
+)
+txt0 <- unitizer:::capture_output(
+  unitize(.unitizer.test.file, interactive.mode=TRUE)
+)
+test_that("unreviewed variations", {
+  expect_equal_to_reference(
+    txt0, file.path("helper", "refobjs", "unitize2_unreview.rds")
+  )
+} )
+# Test re-eval
+
 unitizer:::read_line_set_vals(
   c(
     "1", "Y", "R", "Y",   # Re-eval and jump back to file 1
