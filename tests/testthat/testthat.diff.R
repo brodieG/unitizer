@@ -103,6 +103,27 @@ local({
       c("\033[36m@@ lst.1 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[31m-  \033[39m[1] \"a\" \033[31m\"b\"\033[39m \"c\"", "   ", "\033[90m   ~~ omitted 34 lines w/ 4 diffs ~~\033[39m", "\033[36m@@ lst.2 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[32m+  \033[39m[1] \"a\"       \033[32m\"bananas\"\033[39m \"c\"", "   ", "\033[90m   ~~ omitted 35 lines w/ 5 diffs ~~\033[39m")
     )
   } )
+  set.seed(2)
+  words <- c(
+    "carrot", "cat", "cake", "eat", "rabbit", "holes", "the", "a", "pasta",
+    "boom", "noon", "sky", "parenthesis", "blah"
+  )
+  nums <- runif(5, -1e9, 1e9)
+  scinums <- format(c(nums, 1/nums), scientific=TRUE)
+  other <- c(paste0(sample(1:200, 5), "%"), "5.34e-8", "-2.534e6")
+  wl <- c(words, nums, scinums, other)
+
+  # Initial sample
+
+  s1 <- s2 <- s3 <- s4 <- sample(wl, 20, replace=T)
+  s2 <- s1[5:20]                             # subset
+  s3[sample(seq_along(s1), 10)] <- sample(s1, 10)     # change some
+  s4 <- c(s1[1:5], sample(s1, 2), s1[6:15], sample(s1, 2), s1[16:20])
+
+  test_that("brackets", {
+    unitizer:::find_brackets(capture.output(1:100))
+
+  } )
   test_that("diff_word", {
     # Make sure not fooled by repeats of same tokens in same string
 
@@ -112,6 +133,30 @@ local({
         "[1] \"should be length 5 (is 3)\""
       ),
       structure(list(target = "[1] \033[31m\"`\033[39m\033[31m1\033[39m\033[31m:\033[39m\033[31m3\033[39m\033[31m`\033[39m should be length 5 (is 3)\"", current = "[1] \033[32m\"\033[39mshould be length 5 (is 3)\""), .Names = c("target", "current"))
+    )
+    # Test `across.lines`
+
+    a <- c("a b", "c d")
+    b <- c("b c", "d e")
+    expect_identical(
+      unitizer:::diff_word(a, b, across.lines=TRUE),
+      structure(list(target = c("\033[31ma\033[39m \033[31mb\033[39m c d", "e f g h"), current = c("c d e f", "g h \033[32mi\033[39m \033[32mj\033[39m")), .Names = c("target", "current"))
+    )
+    a <- c("x a b", "c d z")
+    b <- c("x b c", "d e z")
+    expect_identical(
+      unitizer:::diff_word(a, b, across.lines=TRUE),
+      structure(list(target = c("x \033[31ma\033[39m b", "c d z"), current = c("x b c", "d \033[32me\033[39m z")), .Names = c("target", "current"))
+    )
+    a <- c("x a b", "c d z")
+    b <- c("z b c", "d e x")
+    expect_identical(
+      unitizer:::diff_word(a, b, across.lines=TRUE),
+      structure(list(target = c("x \033[31ma\033[39m \033[31mb\033[39m", "\033[31mc\033[39m \033[31md\033[39m \033[31mz\033[39m"), current = c("\033[32mz\033[39m \033[32mb\033[39m \033[32mc\033[39m", "\033[32md\033[39m \033[32me\033[39m x")), .Names = c("target", "current"))
+    )
+    lapply(
+      unitizer:::diff_word(b, a, across.lines=TRUE),
+      cat, sep="\n"
     )
   }
   options(old.opt)
@@ -139,6 +184,12 @@ local({
       new(
         "unitizerDiffDiffs", target=c(FALSE, TRUE),
         current=c(TRUE, FALSE)
+    ) )
+    expect_identical(
+      unitizer:::char_diff(letters[1:3], letters[2:4]),
+      new(
+        "unitizerDiffDiffs", target=c(TRUE, FALSE, FALSE),
+        current=c(FALSE, FALSE, TRUE)
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c", "d"), c("a", "b", "b", "d", "e")),
