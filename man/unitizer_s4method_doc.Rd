@@ -24,6 +24,7 @@
 \alias{all.equal,unitizerGlobalState,unitizerGlobalState-method}
 \alias{all.equal,unitizerSearchData,unitizerSearchData-method}
 \alias{any,unitizerDiff-method}
+\alias{any,unitizerDiffDiffs-method}
 \alias{append,factor,factor-method}
 \alias{append,unitizerList,ANY-method}
 \alias{as.character,unitizer-method}
@@ -31,6 +32,7 @@
 \alias{as.character,unitizerDiff-method}
 \alias{as.character,unitizerInPkg-method}
 \alias{as.data.frame,unitizerBrowse-method}
+\alias{as.integer,unitizerGlobalIndices-method}
 \alias{as.list,unitizerList-method}
 \alias{c,unitizerList-method}
 \alias{initialize,unitizer-method}
@@ -55,6 +57,8 @@
 \title{Documentation Block for Internal S4 Methods}
 \usage{
 \S4method{show}{unitizerDummy}(object)
+
+\S4method{as.integer}{unitizerGlobalIndices}(x, ...)
 
 \S4method{length}{unitizerList}(x)
 
@@ -123,7 +127,9 @@
 
 \S4method{any}{unitizerDiff}(x, ..., na.rm = FALSE)
 
-\S4method{as.character}{unitizerDiff}(x, context, ...)
+\S4method{any}{unitizerDiffDiffs}(x, ..., na.rm = FALSE)
+
+\S4method{as.character}{unitizerDiff}(x, context, width, ...)
 
 \S4method{show}{unitizerLoadFail}(object)
 

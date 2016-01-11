@@ -9,6 +9,25 @@ NULL
 
 .unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
 
+# Allow us to find a specific test based on deparse call and id
+# `parse.mod` indicates whether the parse is not the same as it was when the
+# bookmark was set, which indicates the bookmark may not be correct any more
+
+setClass("unitizerBrowseBookmark",
+  slots=c(call="character", id="integer", parse.mod="logical"),
+  prototype=list(call="", id=0L, parse.mod=FALSE),
+  validity=function(object) {
+    if(!is.chr1(object@call))
+      return("Slot `@call` must be character(1L) and not NA")
+    if(!length(object@id) == 1L || object@id < 0L)
+      return("Slot `@id` must be integer(1L) and positive")
+    if(!is.TF(object@parse.mod))
+      return("Slot `@parse.mode` must be TRUE or FALSE")
+  }
+)
+setClassUnion(
+  "unitizerBrowseBookmarkOrNULL", c("unitizerBrowseBookmark", "NULL")
+)
 # Contains All The Data for Our Tests!
 #
 # Generally is populated through the \code{+} methods, with the exception of
@@ -47,6 +66,8 @@ NULL
 #   new items will show up as NA here
 # @slot items.new.calls.deparse a character vector of the deparsed calls in
 #   \code{items.new}
+# @slot items.new.calls.deparse integer() tracks what instance of a particular
+#   deparse string this is to allow us to disambiguate duplicate tests for
 # @slot items.envs contains the environments for each call
 # @slot tests.fail vector highlighting which tests failed
 # @slot tests.new vector highlighting which tests did not exist in reference
@@ -76,15 +97,21 @@ setClass(
     zero.env="environment",         # keep functions and stuff here
     base.env="environment",
     test.file.loc="character",      # location of test file that produced `unitizer`
-    eval="logical",                 # internal used during browsing to determine a re-eval instruction by user
-    eval.time="numeric",            # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
-    updated="logical",              # whether this unitizer has been queued for update
-    updated.at.least.once="logical",# should reflect whether a unitizer was modified at least once so that we can report this in return values
+    # internal used during browsing to determine a re-eval instruction by user
+    eval="logical",
+    # eval time for all tests in `unitizer`, computed in
+    # `+.unitizer.unitizerTestsOrExpression`
+    eval.time="numeric",
+    updated="logical",              # unitizer has been queued for update
+    # should reflect whether a unitizer was modified at least once so that we
+    # can report this in return values
+    updated.at.least.once="logical",
     global="unitizerGlobalOrNULL",  # Global object used to track state
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
     items.new.calls.deparse="character",
+    items.new.calls.deparse.id="integer",
     items.envs="list",
 
     tests.fail="logical",                  # really need tests.fail?
@@ -114,11 +141,14 @@ setClass(
     sections.ref="list",
     section.ref.map="integer",
 
-    state.new="unitizerGlobalTrackingStore",  # "compressed" versions of the tracking data in @global
+    # "compressed" versions of the tracking data in @global
+
+    state.new="unitizerGlobalTrackingStore",
     state.ref="unitizerGlobalTrackingStore",
 
-    changes="unitizerChanges",                # Summary of user changes
-    res.data="data.frameOrNULL"               # details of test evaluation and user review
+    changes="unitizerChanges",       # Summary of user changes
+    res.data="data.frameOrNULL",     # details of test evaluation and user review
+    bookmark="unitizerBrowseBookmarkOrNULL"  # used for re-eval navigation
   ),
   prototype(
     version=as.character(packageVersion("unitizer")),
@@ -129,6 +159,7 @@ setClass(
     eval.time=0,
     updated=FALSE,
     updated.at.least.once=FALSE,
+    bookmark=NULL,
     global=unitizerGlobal$new(enable.which=character())  # dummy so tests will run
   ),
   validity=function(object) {
@@ -227,7 +258,7 @@ setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
-    cat(summ_matrix_to_text(sum.mx), "", sep="\n")
+    cat(summ_matrix_to_text(sum.mx, show.nums=FALSE), "", sep="\n")
     invisible(NULL)
 } )
 
@@ -422,6 +453,9 @@ setMethod("registerItem", c("unitizer", "unitizerItem"),
     e1@items.new <- e1@items.new + item.new
     e1@items.new.calls.deparse <-
       c(e1@items.new.calls.deparse, call.dep <- item.new@call.dep)
+    e1@items.new.calls.deparse.id <- c(
+      e1@items.new.calls.deparse.id, sum(e1@items.new.calls.deparse == call.dep)
+    )
     if(length(e1@items.new.map) > 0L) {
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
       items.already.matched <- e1@items.new.map[!is.na(e1@items.new.map)]

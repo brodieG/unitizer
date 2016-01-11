@@ -4,7 +4,8 @@
 \alias{summ_matrix_to_text}
 \title{Convert A Matrix of Test Outcomes for Display}
 \usage{
-summ_matrix_to_text(mx, from = "right", width = getOption("width"))
+summ_matrix_to_text(mx, from = "right", width = getOption("width"),
+  show.nums = TRUE)
 }
 \description{
 Used by \code{show} methods for both \code{unitizerSummary} and

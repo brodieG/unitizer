@@ -154,10 +154,11 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
           section.title=paste0(if(rem.count.all) "Other ", "Removed Items")
         )
         rem.item.count <- length(which(rem.unmapped))
+        # by definition can't have new conditions on removed tests
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionRemoved",
           items.ref=x@items.ref[rem.unmapped],
-          new.conditions=rep(FALSE, rem.item.count),   # by definition can't have new conditions on removed tests
+          new.conditions=rep(FALSE, rem.item.count),
           tests.result=tests_result_mat(rem.item.count)
         )
         unitizer.browse <- unitizer.browse + browse.sect
@@ -165,8 +166,10 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
     } else if(identical(mode, "review")) {
     # - Review -----------------------------------------------------------------
 
-      for(i in seq_along(x@sections.ref)) {                   # Loop through parent sections
-        sect.map <- x@section.ref.map == i   # will have to check what the section numbers are, this might not be right
+      for(i in seq_along(x@sections.ref)) {  # Loop through parent sections
+        # will have to check what the section numbers are, this might not be
+        # right
+        sect.map <- x@section.ref.map == i
         if(!length(which(sect.map))) next
 
         browse.sect <- new(
@@ -187,11 +190,24 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
       }
     } else stop("Logic Error: unexpected `mode`")
 
-    # - Finalize ---------------------------------------------------------------
-
     unitizer.browse
   }
 )
+setGeneric("bookmarked", function(x, ...) standardGeneric("bookmarked"))
+setMethod("bookmarked", "unitizerObjectList", function(x, ...) {
+  bookmarked <- vapply(
+    x,
+    function(y)
+      is(y, "unitizer") && is(y@bookmark, "unitizerBrowseBookmark"),
+    logical(1L)
+  )
+  if(!length(which(bookmarked)) %in% 0:1)
+    stop(
+      "Logic Error: no more than one unitizer may be bookmarked at any ",
+      "given time; contact maintainer"
+    )
+  bookmarked
+} )
 # Keeps track of All Test Review Data
 #
 # Seemed like a brilliant idea to make this an object to simplify validation,
@@ -220,6 +236,7 @@ setClass("unitizerBrowseMapping",
     item.id="integer",
     item.id.rel="integer",
     item.id.orig="integer",
+    item.id.ord="integer",
     item.ref="logical",
     sec.id="integer",
     sub.sec.id="integer",
@@ -258,15 +275,18 @@ setClass("unitizerBrowseMapping",
 setClass("unitizerBrowse", contains="unitizerList",
   slots=c(
     mapping="unitizerBrowseMapping",
-    last.id="integer",          # used so that `reviewNext` knows what to show next
-    last.reviewed="integer",    # used so that `reviewNext` knows what headers to display
-    hist.con="ANY",             # should be 'fileOrNULL', but gave up on this due to `setOldClass` issues
+    last.id="integer",          # so that `reviewNext` knows what to show next
+    last.reviewed="integer",    # so that `reviewNext` knows what headers to display
+    jumping.to="logical",       # indicate there was a re-eval jump
+    hist.con="ANY",             # should be 'fileOrNULL', but setOldClass` issues
     mode="character",
-    review="integer",           # counter used to figure out when to pop up browse/review menu
-    inspect.all="logical",      # whether to force inspection of all elements, whether ignored/passed or not
-    navigating="logical",       # whether user has triggered at least one navigation command
+    review="integer",           # counter to figure out when browse/review menu
+    inspect.all="logical",      # force inspection of all elements
+    navigating="logical",       # user has triggered at least one navigation command
+    browsing="logical",         # current test selected via browse
     human="logical",            # whether user has had any interaction at all
-    re.eval="integer",          # so navigate prompt can communicate back re-eval status
+    re.eval="integer",          # so navprompt can communicate back re-eval status
+    force.up="logical",         # force update even if no changes
     interactive="logical",      # whether to browse in interactive mode
     interactive.error="logical",# whether in non-interactive mode but required input
     global="unitizerGlobal",    # object for global settings
@@ -276,13 +296,16 @@ setClass("unitizerBrowse", contains="unitizerList",
     mapping=new("unitizerBrowseMapping"),
     last.id=0L,
     last.reviewed=0L,
+    jumping.to=FALSE,
     hist.con=NULL,
     mode="unitize",
     review=1L,
     inspect.all=FALSE,
     navigating=FALSE,
+    browsing=FALSE,
     human=FALSE,
     re.eval=0L,
+    force.up=FALSE,
     interactive=FALSE,
     interactive.error=FALSE,
     auto.accept=FALSE
@@ -295,8 +318,14 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@inspect.all` must be TRUE or FALSE")
     if(!is.TF(object@navigating))
       return("Slot `@navigating` must be TRUE or FALSE")
+    if(!is.TF(object@browsing))
+      return("Slot `@browsing` must be TRUE or FALSE")
     if(!is.TF(object@auto.accept))
       return("Slot `@auto.accept` must be TRUE or FALSE")
+    if(!is.TF(object@jumping.to))
+      return("Slot `jumping.to` must be TRUE or FALSE")
+    if(!is.TF(object@force.up))
+      return("Slot `force.up` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
       return("Slot `@re.eval` must be integer(1L) and in 0:2")
     TRUE
@@ -321,15 +350,17 @@ setGeneric("getIdOrder", function(object, ...) standardGeneric("getIdOrder"))
 setMethod(
   "getIdOrder", "unitizerBrowse",
   function(object, ...) {
-    # Figure out order as stuff showed up in original file; reference ids are
-    # put at the end.  Note the implicit assumption here is that the stuff in
+    # Figure out order as stuff showed up in original file; deletd reference ids
+    # are put at the end.  Note the implicit assumption here is that the stuff in
     # sections is in the same order in file and here, which is almost certainly
     # true except for stuff outside of sections
 
     ids <- object@mapping@item.id.orig
-    max.id.orig <- max(c(0, ids[!object@mapping@item.ref]))
-    ids[object@mapping@item.ref] <-
-      rank(ids[object@mapping@item.ref]) + max.id.orig
+    max.id.orig <- max(c(0L, ids[!object@mapping@item.ref]))
+    if(any(object@mapping@item.ref)) {
+      ids[object@mapping@item.ref] <-
+        rank(ids[object@mapping@item.ref], ties.method="first") + max.id.orig
+    }
     ids
   }
 )
@@ -354,7 +385,8 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
-    tests.to.show <- rep(TRUE, length(x@mapping@review.type))  # this used to limit what test were shown
+    # this used to limit what test were shown
+    tests.to.show <- rep(TRUE, length(x@mapping@review.type))
     out.calls <- character(sum(tests.to.show))
     out.calls.idx <- integer(sum(tests.to.show))
     out.sec <- character(length(unique(x@mapping@sec.id[tests.to.show])))
@@ -366,7 +398,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     min.deparse.len <- 20L
     sec.id.prev <- 0L
     item.id.formatted <- format(justify="right",
-      paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id)
+      paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id.ord)
     )
     review.formatted <- format(
       paste(sep=":",
@@ -473,8 +505,10 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
   function(x, ...) {
     items <- new("unitizerItems")
     for(i in x@mapping@item.id) {
+      # while it was nice to have mapping as an object for validation, this is
+      # terrible
 
-      sec <- x@mapping@sec.id[[i]]        # while it was nice to have mapping as an object for validation, this is terrible
+      sec <- x@mapping@sec.id[[i]]
       sub.sec <- x@mapping@sub.sec.id[[i]]
       id.rel <- x@mapping@item.id.rel[[i]]
       input <- x@mapping@review.val[[i]]
@@ -499,6 +533,18 @@ setMethod("processInput", "unitizerBrowse", valueClass="unitizerItems",
       items <- items + item
     }
     items
+} )
+# Get id for unreviewed test
+
+setGeneric("unreviewed", function(x, ...) standardGeneric("unreviewed"))
+setMethod("unreviewed", "unitizerBrowse",
+  function(x, ...) {
+    unreviewed <- which(
+      !x@mapping@reviewed & !x@mapping@ignored & (
+        if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
+        else TRUE
+    ) )
+    sort(unreviewed)
 } )
 # Represents a \code{`unitizer_sect`}
 
@@ -527,10 +573,14 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
     test.types <- unlist(lapply(as.list(e2), slot, "title"))
     max.item <- length(e1@mapping@item.id)
     max.sub.sec <- if(max.item) max(e1@mapping@sub.sec.id) else 0L
+
+    # New items if available, ref items otherwise
+
     sec.item.list <- as.list(extractItems(e2))
     action.default <- vapply(as.list(e2), slot, character(1L), "action.default")
 
     mapping.new <- new("unitizerBrowseMapping",
+      # This id tracks the order of tests as we intend to review them
       item.id=(max.item + 1L):(max.item + sum(item.count)),
       item.id.rel=unlist(lapply(item.count, function(x) seq(len=x))),
       item.id.orig=vapply(sec.item.list, slot, 1L, "id"),
@@ -554,6 +604,11 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
       comb_fun <- if(is.matrix(slot(e1@mapping, i))) rbind else append
       slot(e1@mapping, i) <- comb_fun(slot(e1@mapping, i), slot(mapping.new, i))
     }
+    # Update the id ord; this is a bit redundant as ideally we would just do it
+    # once at the end, but since this function is used in different places we
+    # just do it here and accept that it is a bit repetitive
+
+    e1@mapping@item.id.ord <- getIdOrder(e1)
     e1
   }
 )
@@ -928,7 +983,8 @@ setClass(
   "unitizerBrowseResult",
   slots=c(
     unitizer="unitizer", re.eval="integer", updated="logical",
-    interactive.error="logical", data="data.frame"
+    interactive.error="logical", data="data.frame",
+    bookmark="unitizerBrowseBookmarkOrNULL"
   ),
   validity=function(object) {
     if(

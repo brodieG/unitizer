@@ -125,6 +125,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   if("env" %in% dots.names) .Object@env <- dots.all$env
   if("comment" %in% dots.names) .Object@comment <- dots.all$comment
   if("trace" %in% dots.names) .Object@trace <- dots.all$trace
+  if("reference" %in% dots.names) .Object@reference <- dots.all$reference
   if("glob.indices" %in% dots.names)
     .Object@glob.indices <- dots.all$glob.indices
   dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]

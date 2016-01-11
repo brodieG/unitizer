@@ -111,33 +111,52 @@ copy_fastlm_to_tmpdir <- function() {
     stop("Unable to copy `fastlm` sources")
   dir
 }
+# Helper fun for update_fastlm_*
+
+.test.core.files <- c(
+  "DESCRIPTION", file.path("R", "fastlm.R"),
+  file.path(
+    "tests", "unitizer", c("fastlm1.R", "fastlm2.R", "unitizer.fastlm.R")
+) )
+check_test_dir <- function(dir) {
+  stopifnot(
+    file_test("-d", dir),
+    file_test("-d", file.path(dir, "tests", "unitizer")),
+    all(file_test("-f", file.path(dir, .test.core.files)))
+  )
+}
 #' @export
 #' @rdname demo
 
 update_fastlm <- function(dir, version) {
-  stopifnot(
-    version %in% c("0.1.0", "0.1.1", "0.1.2"),
-    file_test("-d", dir),
-    file_test("-f", file.path(dir, "DESCRIPTION")),
-    file_test("-f", file.path(dir, "R", "fastlm.R")),
-    file_test("-d", file.path(dir, "tests", "unitizer")),
-    file_test("-f", file.path(dir, "tests", "unitizer", "fastlm1.R")),
-    file_test("-f", file.path(dir, "tests", "unitizer", "fastlm2.R")),
-    file_test("-f", file.path(dir, "tests", "unitizer", "unitizer.fastlm.R"))
-
-  )
+  check_test_dir(dir)
+  stopifnot(version %in% c("0.1.0", "0.1.1", "0.1.2"))
   lm.dir <- switch(
     version, "0.1.0"="fastlm.0", "0.1.1"="fastlm.1", "0.1.2"="fastlm.2",
     stop("Logic Error; unknown version")
   )
   untz.dir <- system.file(package="unitizer")
   lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir)
-  cpy.files <- c(
-    "DESCRIPTION", file.path("R", "fastlm.R"),
-    file.path("tests", "unitizer", "fastlm1.R"),
-    file.path("tests", "unitizer", "fastlm2.R"),
-    file.path("tests", "unitizer", "unitizer.fastlm.R")
+  cpy.files <- .test.core.files
+  cpy.from <- file.path(lm.dir.full, cpy.files)
+  cpy.to <- file.path(dir, cpy.files)
+
+  invisible(file.copy(cpy.from, cpy.to, overwrite=TRUE))
+}
+# copy extra file for tests, this is primarily just for the section tests and
+# should be used with care as it will mess up all the other tests by adding
+# an extra file.  This also installs version 0.1.2
+
+update_fastlm_extra <- function(dir) {
+  check_test_dir(dir)
+  lm.dir <- "fastlm.2"
+  untz.dir <- system.file(package="unitizer")
+  lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir)
+  file.extra <- file.path("tests", "unitizer", "unitizer.fastlm2.R")
+  stopifnot(
+    file_test("-f", file.path(lm.dir.full, file.extra))
   )
+  cpy.files <- c(.test.core.files, file.extra)
   cpy.from <- file.path(lm.dir.full, cpy.files)
   cpy.to <- file.path(dir, cpy.files)
 

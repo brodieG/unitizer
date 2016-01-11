@@ -81,7 +81,6 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 setMethod("healEnvs", c("unitizerItems", "unitizer"),
   valueClass="unitizerItems",
   function(x, y, ...) {
-
     # Now need to reconstruct all the parenthood relationships between items,
     # start by figuring out the indices of all the new and reference items
 

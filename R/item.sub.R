@@ -33,10 +33,25 @@ setClass(
     frms <- frms[!(names(frms) %in% "...")]
     if(
       length(frms) < 2L |
-      any(vapply(head(frms, 2L), function(frm) !(is.symbol(frm) && nchar(as.character(frm)) == 0L), logical(1L))) |
-      any(vapply(tail(frms, -2L), function(frm) (is.symbol(frm) && nchar(as.character(frm)) == 0L), logical(1L)))
+      any(
+        vapply(
+          head(frms, 2L),
+          function(frm)
+            !(is.symbol(frm) && nchar(as.character(frm)) == 0L),
+          logical(1L))
+       ) |
+      any(
+        vapply(
+          tail(frms, -2L),
+          function(frm) (is.symbol(frm) && nchar(as.character(frm)) == 0L),
+          logical(1L)
+      ) )
     ) {
-      return("slot `@fun` must be a function with the first two paramaters non-optional and all others optional.")
+      return(
+        cc(
+         "slot `@fun` must be a function with the first two parameters ",
+         "non-optional and all others optional."
+      ) )
     }
     TRUE
   }

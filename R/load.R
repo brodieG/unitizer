@@ -174,6 +174,7 @@ load_unitizers <- function(
   for(i in valid.idx) {
     unitizers[[i]]@id <- norm_store_id(store.ids[[i]])
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
+
     parent.env(unitizers[[i]]@zero.env) <- par.frame
     unitizers[[i]]@global <- global
     unitizers[[i]]@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
@@ -257,6 +258,7 @@ store_unitizer <- function(unitizer) {
 
   unitizer@res.data <- NULL
   unitizer@updated.at.least.once <- FALSE
+  unitizer@bookmark <- NULL
 
   # blow away calls; these should be memorialized as deparsed versions and the
   # original ones take up a lot of room to store
@@ -267,7 +269,7 @@ store_unitizer <- function(unitizer) {
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {
-    message("unitizer updated")
+    word_msg("unitizer updated.")
   } else {
     stop("Error attempting to save unitizer, see previous messages.")
   }

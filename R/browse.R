@@ -71,6 +71,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     # environments in `browseUnitizerInternal`
 
     x@updated <- browse.res@updated
+    x@bookmark <- browse.res@bookmark
     browse.res@unitizer <- x
     browse.res
   }
@@ -89,6 +90,7 @@ setMethod(
     quit.time <- getOption("unitizer.prompt.b4.quit.time")
     if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
+    update.reeval <- FALSE
     slow.run <- x@eval.time > quit.time
 
     something.happened <- any(
@@ -102,6 +104,32 @@ setMethod(
     } else if(!something.happened && !force.update) {
       word_msg("All tests passed, unitizer store unchanged.")
     } else {
+      # Check we if we requested a re-eval and if so set the id where we were
+      # before re-eval
+
+      if(!is.null(x@bookmark)) {
+        cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
+        cand.match.len <- length(cand.match)
+        if(!cand.match.len || x@bookmark@id > cand.match.len) {
+          word_msg(
+            cc(
+              "Unable to find test you toggled re-eval from; starting ",
+              "from beginning."
+          ) )
+        } else {
+          match.id <- cand.match[x@bookmark@id]
+          id.map <-
+            which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
+          # nocov start
+          if(!length(id.map) == 1L)
+            stop(
+              "Logic Error: unable to find bookmarked test; contact maintainer."
+            )
+          # nocov end
+          y@last.id <- y@mapping@item.id[id.map] - 1L
+          y@jumping.to <- TRUE
+        }
+      }
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
 
@@ -119,7 +147,8 @@ setMethod(
           withRestarts(
             {
               if(!done(y)) {
-                if(first.time && identical(y@mode, "review")) { # for passed tests, start by showing the list of tests
+                if(first.time && identical(y@mode, "review")) {
+                  # for passed tests, start by showing the list of tests
                   first.time <- FALSE
                   y@review <- 0L
                 } else {
@@ -201,32 +230,37 @@ setMethod(
         } else if(
           length(x@changes) > 0L || (
             something.happened && (slow.run || !user.quit)
-          ) || y@re.eval || force.update
+          ) || y@re.eval || force.update || y@force.up
         ) {
           cat("\n")
           print(H2("Finalize Unitizer"))
 
           # default update status; this can be modified if we cancel on exit
+          # reeval update required to store last.id and must be tracked
+          # separately so we can toggle it on or off without modifying overall
+          # update decision; also, need to know if we started off in re.eval
+          # mode since that tells us we activated re-eval while viewing tests
+          # and not at the end
 
-          update <- length(x@changes) || force.update
+          update <- length(x@changes) || force.update || y@force.up
+          re.eval.started <- !!y@re.eval  # check at end that we started off
 
           # Make sure we did not skip anything we were supposed to review
 
           if(identical(y@mode, "unitize")) {
-            unreviewed <- sum(
-              !y@mapping@reviewed & y@mapping@review.type != "Passed" &
-              !y@mapping@ignored
-            )
-            if(unreviewed) {
+            unreviewed <- unreviewed(y)
+            unrevavail  <- length(unreviewed)
+            if(unrevavail) {
               word_cat(
-                "You have ", unreviewed, " unreviewed tests; press `B` to ",
-                "browse tests, `U` to go to first unreviewed test.\n\n", sep=""
+                "You have ", unrevavail, " unreviewed tests; press ",
+                "`B` to browse tests, `U` to go to first unreviewed test.\n\n",
+                sep=""
           ) } }
           valid.opts <- c(
             Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
-            R="[R]erun", RR=""
+            U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="", O=""
           )
-          if(!length(x@changes) && force.update)
+          if(!length(x@changes) && (force.update || y@force.up))
             word_msg(
               "Running in `force.update` mode so `unitizer` will be re-saved",
               "even though there are no changes to record (see `?unitize` for",
@@ -241,10 +275,17 @@ setMethod(
             tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
               relativize_path(tar)
 
-            word_msg(
-              "You will IRREVERSIBLY modify '", tar.final, "'",
-              if(length(x@changes)) " by", ":", sep=""
-            )
+            if(!length(x@changes)) {
+              word_msg(
+                "You are about to update '", tar.final, "' with re-evaluated ",
+                "but otherwise unchanged tests.", sep=""
+              )
+            } else {
+              word_msg(
+                "You will IRREVERSIBLY modify '", tar.final, "'",
+                if(length(x@changes)) " by", ":", sep=""
+              )
+            }
           }
           if(length(x@changes) > 0) {
             show(x@changes)
@@ -302,10 +343,13 @@ setMethod(
             } else if (isTRUE(grepl("^RR?$", user.input))) {      # Re-eval
               y <- toggleReeval(y, user.input)
               next
+            } else if (isTRUE(grepl("^O$", user.input))) { # Force update
+              y <- toggleForceUp(y)
+              next
             } else if (grepl("^[QN]$", user.input)) {
               update <- FALSE
-              word_msg("Changes discarded; unitizer store unchanged.")
-              if(y@re.eval) word_msg("Re-evaluation disabled")
+              word_msg("Changes discarded.")
+              if(y@re.eval) word_msg("Re-evaluation disabled.")
               y@re.eval <- 0L
               loop.status <- "b"
               break
@@ -320,7 +364,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          word_msg("No changes recorded; exiting.")
+          word_msg("No changes recorded.")
           break
         }
     } }
@@ -332,11 +376,18 @@ setMethod(
     items.ref <- processInput(y)
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
+    # Need to reconcile state.new / state.ref with items.ref here
+
+    state.merged <- mergeStates(items.ref, x@state.new, x@state.ref)
+
+    # Instantiate new unitizer and add selected items as reference items
+
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
-      base.env=x@base.env, test.file.loc=x@test.file.loc, state.ref=x@state.new
+      base.env=x@base.env, test.file.loc=x@test.file.loc,
+      state.ref=state.merged$states
     )
-    unitizer <- unitizer + items.ref
+    unitizer <- unitizer + state.merged$items
 
     # Extract and re-map sections of tests we're saving as reference
 
@@ -353,12 +404,25 @@ setMethod(
     }
     unitizer <- refSections(unitizer, x)
 
+    # If `re.eval.started` set, means we asked for re-eval while browsing tests
+    # so we want to restart there; translate a browse id to a bookmark so we can
+    # look it up later
+
+    id.cur <- y@last.id
+    bookmark <- if(
+      y@re.eval && re.eval.started && !y@mapping@item.ref[[id.cur]]
+    ) {
+      id.map <- y@mapping@item.id.orig[[id.cur]]
+      call.dep <- x@items.new.calls.deparse[id.map]
+      call.dep.id <- x@items.new.calls.deparse.id[id.map]
+      new("unitizerBrowseBookmark", call=call.dep, id=call.dep.id)
+    }
     # Return structure
 
     new(
       "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
       updated=update, interactive.error=y@interactive.error,
-      data=as.data.frame(y)
+      data=as.data.frame(y), bookmark=bookmark
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
@@ -374,7 +438,13 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
+    browsed <- x@browsing
+    jumping <- x@jumping.to
+    x@browsing <- x@jumping.to <- FALSE
+    last.id <- x@last.id
     curr.id <- x@last.id + 1L
+    x@last.id <- curr.id
+
     if(x@last.reviewed) {
       last.reviewed.sec <-
         x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
@@ -403,7 +473,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     valid.opts <- c(
       Y="[Y]es", N="[N]o", P="[P]rev", B="[B]rowse", YY="", YYY="", YYYY="",
-      NN="", NNN="", NNNNN="",
+      NN="", NNN="", NNNNN="", O="",
       if(identical(x@mode, "unitize")) c(R="[R]erun", RR="")
     )
     # Pre compute whether sections are effectively ignored or not; these will
@@ -442,16 +512,21 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
-    # conditions
+    # conditions, or if we just got here via a browse statement
 
-    if(!identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect) {
+    if(
+      (
+        !identical(last.reviewed.sec, curr.sec) && !ignore.sec ||
+        browsed || jumping
+      ) && multi.sect
+    ) {
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate
       (
         !identical(last.reviewed.sub.sec, curr.sub.sec) ||
         !identical(last.reviewed.sec, curr.sec)
-      ) && !ignore.sub.sec
+      ) && !ignore.sub.sec || browsed || jumping
     ) {
       print(H3(curr.sub.sec.obj@title))
       rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
@@ -504,8 +579,21 @@ setMethod("reviewNext", c("unitizerBrowse"),
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
       ) }
+      if(jumping) {
+        word_msg(
+          sep="",
+          "Jumping to test #", x@mapping@item.id.ord[[curr.id]], " because ",
+          "that was the test under review when test re-run was requested.",
+          if(!is.null(unitizer@bookmark) && unitizer@bookmark@parse.mod)
+            cc(
+              " Note that since the test file was modified we cannot guarantee ",
+              "the jump is to the correct test."
+            )
+        )
+        cat("\n")
+      }
       if(length(item.main@comment)) {
-        if(x@last.id && x@mapping@ignored[[x@last.id]]) cat("\n")
+        if(last.id && x@mapping@ignored[[last.id]] && !jumping) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
         cat("\n")
       }
@@ -552,7 +640,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
         err.obj@.fail.context <-
           unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]
         summary(err.obj)
-        eval(  # must eval to make sure that correct methods are available when outputing failures to screen
+        # must eval to make sure that correct methods are available when
+        # outputing failures to screen
+
+        eval(
           call("show", err.obj),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
@@ -580,9 +671,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     if(!x@inspect.all) {
       if(
         x@mapping@ignored[[curr.id]] || ignore.passed ||
-        (x@mapping@reviewed[[curr.id]] && !x@navigating)  # reviewed items are skipped unless we're actively navigating to support `auto.accept`
+        (x@mapping@reviewed[[curr.id]] && !x@navigating)
       ) {
-        x@last.id <- curr.id
+        # reviewed items are skipped unless we're actively navigating to support
+        # `auto.accept`
         return(x)
       }
     }
@@ -659,12 +751,18 @@ setMethod("reviewNext", c("unitizerBrowse"),
         "remaining unreviewed items in, respectively, the sub-section, ",
         "section, or unitizer"
       ),
-      if(identical(x@mode, "unitize"))
-        paste0(
-          "`R` to re-run the unitizer or `RR` to re-run all loaded ",
-          "unitizers; used typically after you re-`install` the package you ",
-          "are testing via the unitizer prompt."
-        )
+      if(identical(x@mode, "unitize")) {
+        c(
+          paste0(
+            "`R` to re-run the unitizer or `RR` to re-run all loaded ",
+            "unitizers; used typically after you re-`install` the package you ",
+            "are testing via the unitizer prompt"
+          ),
+          paste0(
+            "`O` to f[O]rce update of store even when there are no accepted ",
+            "changes"
+        ) )
+      }
     )
     # navigate_prompt handles the P and B cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a function
@@ -690,6 +788,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x <- toggleReeval(x, x.mod)
         Sys.sleep(0.3)  # so people can see the toggle message
         invokeRestart("earlyExit", extra=x)
+      } else if (isTRUE(grepl("^O$", x.mod))) {             # Force update
+        x <- toggleForceUp(x)
+        next
       } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
         act <- substr(x.mod, 1L, 1L)
         act.times <- nchar(x.mod)
@@ -740,7 +841,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
               valid.opts=c(Y="[Y]es", N="[N]o")
             )
             if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
-            if(identical(act.conf, "N")) return(x)
+            if(identical(act.conf, "N")) {
+              x@last.id <- x@last.id - 1L  # Otherwise we advance to next test
+              return(x)
+            }
           }
           indices
         }
@@ -774,6 +878,14 @@ setMethod("toggleReeval", "unitizerBrowse",
     )
     word_msg("Toggling re-run mode", re.status, "for", re.mode)
     x@re.eval <- if(x@re.eval) 0L else nchar(y)
+    x
+})
+setGeneric("toggleForceUp", function(x, ...) standardGeneric("toggleForceUp"))
+setMethod("toggleForceUp", "unitizerBrowse",
+  function(x, ...) {
+    re.status <- if(x@force.up) "OFF" else "ON"
+    word_msg("Toggling force update mode", re.status)
+    x@force.up <- !x@force.up
     x
 })
 

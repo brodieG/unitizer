@@ -165,6 +165,16 @@ upgrade_internal <- function(object) {
         object@items.ref@.items[[i]]@data@value
       )
   }
+  # - 1.1.0 --------------------------------------------------------------------
+
+  if(ver < "1.1.0") {
+    object <- addSlot(object, "jump.to.test", 0L)
+  }
+  if(ver < "1.1.1") {
+    object <- addSlot(object, "items.new.calls.deparse.id", integer())
+    object <- addSlot(object, "bookmark", NULL)
+    object <- removeSlots(object, "jump.to.test")
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always

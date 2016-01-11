@@ -170,7 +170,5 @@ local({
       structure(
         list(output="hello", message="goodbye"), class="captured_output"
     ) )
-    capt2 <- unitizer:::capture_output(print(capt))
-    expect_equal(capt, capt2)
   })
 })

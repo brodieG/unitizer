@@ -144,15 +144,22 @@ test_that("unitize_dir", {
     class(untz3a), "unitizer_results"
   )
   expect_identical(
-    lapply(untz3a, class), replicate(3L, c("unitizer_result", "data.frame"), simplify=FALSE)
+    lapply(untz3a, class),
+    replicate(3L, c("unitizer_result", "data.frame"), simplify=FALSE)
   )
-  expect_equal_to_reference(untz3a.all, file.path("helper", "refobjs", "unitize_resprint1.rds"))
-  expect_equal_to_reference(untz3a.first, file.path("helper", "refobjs", "unitize_resprint2.rds"))
-
-  expect_equal_to_reference(untz3a.cpy, file.path("helper", "refobjs", "unitize_res1.rds"))
+  expect_equal_to_reference(
+    untz3a.all, file.path("helper", "refobjs", "unitize_resprint1.rds")
+  )
+  expect_equal_to_reference(
+    untz3a.first, file.path("helper", "refobjs", "unitize_resprint2.rds")
+  )
+  expect_equal_to_reference(
+    untz3a.cpy, file.path("helper", "refobjs", "unitize_res1.rds")
+  )
   expect_equal(untz3a.get.all, c("unitizer", "unitizer", "logical"))
-
-  expect_equal_to_reference(untz3b.all, file.path("helper", "refobjs", "unitize_resprint3.rds"))
+  expect_equal_to_reference(
+    untz3b.all, file.path("helper", "refobjs", "unitize_resprint3.rds")
+  )
   expect_equal(untz3b.get.all, c("unitizer", "unitizer", "unitizer"))
 })
 # Namespace conflicts; unfortunately if either `covr` or `data.table` are loaded
@@ -176,6 +183,9 @@ txt7 <- unitizer:::capture_output(
       file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE
 ) ) )
 options(old.keep.ns)
+# Note that if `data.table` namespace is loaded these tests are likely to fail
+# because they include un-unloadable namespaces in the error list
+
 test_that("namespace conflict", {
   expect_equal_to_reference(
     txt4, file.path("helper", "refobjs", "unitize_nsconf1.rds")
@@ -271,11 +281,20 @@ txt10 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 # review one, and Re-eval despite no change
 
-unitizer:::read_line_set_vals(c("1", "R", "Y", "Q"))
+unitizer:::read_line_set_vals(c("1", "R", "Y", "Q", "Q"))
 txt12 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
-unitizer:::read_line_set_vals(c("1", "RR", "Y", "Q"))
+unitizer:::read_line_set_vals(c("1", "RR", "Y", "Q", "Q"))
 txt12a <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
+# Test force eval
+
+unitizer:::read_line_set_vals(
+  c(
+    "1", "O", "Q", "Y", # first run, force update and accept
+    "R", "1", "Q", "Q"  # second run, R from dir summary doesn't set bookmarks
+) )
+txt12b <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
 # Variations on YY, YYY, and YYY
 
@@ -323,6 +342,9 @@ test_that("review dir", {
   )
   expect_equal_to_reference(
     txt12a, file.path("helper", "refobjs", "unitize_reeval2.rds")
+  )
+  expect_equal_to_reference(
+    txt12b, file.path("helper", "refobjs", "unitize_reeval2b.rds")
   )
   expect_equal_to_reference(
     txt13, file.path("helper", "refobjs", "unitize_multiaccept1.rds")

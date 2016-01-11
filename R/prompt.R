@@ -104,8 +104,11 @@ unitizer_prompt <- function(
   )
   repeat {
     val <- tryCatch(faux_prompt("unitizer> "), simpleError=function(e) e)
-    if(inherits(val, "simpleError")) next
-
+    if(inherits(val, "simpleError")) {
+      cond.chr <- as.character(val)
+      cat(cond.chr, file=stderr())
+      next
+    }
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) &&
       as.character(val[[1L]]) %in% names(valid.opts) &&
@@ -138,9 +141,7 @@ unitizer_prompt <- function(
     # Note `val` here is the expression the user inputted, not the result of the
     # evaluation.  The latter will be in res$value
 
-    res <- eval_with_capture(val, browse.env)
-    if(length(res$message) && nchar(res$message)) cat(res$message, file=stderr())
-    if(length(res$output) && nchar(res$output)) cat(res$output, file=stdout())
+    res <- eval_user_exp(val, browse.env)
 
     # store / record history
 
@@ -169,7 +170,6 @@ navigate_prompt <- function(
     hist.con=x@hist.con
   )
   if(identical(prompt.val, "P")) {
-
     # Go back to previous
     prev.tests <- x@mapping@item.id < curr.id & !x@mapping@ignored & (
       if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
@@ -181,6 +181,14 @@ navigate_prompt <- function(
     return(x)
   } else if (identical(prompt.val, "B")) {
     return(review_prompt(x, browse.env2))
+  } else if (identical(prompt.val, "U")) {
+    unreviewed <- unreviewed(x)
+    if(!length(unreviewed)) {
+      word_msg("No unreviewed tests.")
+      x@last.id <- tail(x@mapping@item.id, 1L)
+    } else x@last.id <- head(unreviewed, 1L) - 1L
+    x@navigating <- TRUE
+    return(x)
   }
   return(prompt.val)
 }
@@ -203,9 +211,7 @@ review_prompt <- function(x, nav.env) {
     " been reviewed). Type \"U\" to jump to the first unreviewed ",
     "test.\n\n",
     "Note that tests are displayed in the order they appear in the test",
-    "file, not in the order they would be reviewed in, which is why the test",
-    "numbers are not necessarily sequential (see vignette for details and",
-    "exceptions).\n"
+    "file, not in the order they would be reviewed in.\n"
   )
   nav.opts <- c(
     "input a test number",
@@ -220,48 +226,51 @@ review_prompt <- function(x, nav.env) {
   )
   if(identical(nav.id, "Q")) {
     return("Q")
-  } else if (identical(nav.id, "U")) {
-    # Go to unreviewed test
-
-    unreviewed <- !x@mapping@reviewed & !x@mapping@ignored &
-      (
-        if(!identical(x@mode, "review")) x@mapping@review.type != "Passed"
-        else TRUE
-      )
-    item.len <- length(x@mapping@review.val)
-    if(!any(unreviewed)) {
-      message("No unreviewed tests.")
-      x@last.id <- item.len
-      return(x)
-    }
-    message("Jumping to first unreviewed test.") # But note that we also show all ignored tests before that one for context
-    nav.id <- min(which(unreviewed))
+  } else if (identical(nav.id, "U")) { # Go to unreviewed test
+    unreviewed <- unreviewed(x)
+    nav.id <- if(!length(unreviewed)) {
+      word_msg("No unreviewed tests.")
+      tail(x@mapping@item.id, 1L) + 1L
+    } else head(unreviewed, 1L)
   } else if (
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
   ) {
     stop(
       "Logic Error: Unexpected user input allowed through in Review mode; ",
       "contact maintainer")
+  } else {
+    # Remap our nav.id to the actual review order instead of file order
+
+    nav.id <- x@mapping@item.id[match(nav.id, x@mapping@item.id.ord)]
+    if(is.na(nav.id))
+      stop(
+        "Logic Error: failed retrieving internal item id; contact maintainer."
+      )
   }
   # Determine whether test we selected is a test we would normally not review
+  # note nav.id can be greater than length if we select Unreviewed and there are
+  # no unreviewed
 
-  x@inspect.all <- x@mapping@ignored[[nav.id]] || (
-      identical(x@mode, "unitize") &&
-      identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
-    )
-  x@review <- if(x@inspect.all) -1L else 1L
+  if(nav.id <= length(x@mapping@ignored)) {
+    x@inspect.all <- x@mapping@ignored[[nav.id]] || (
+        identical(x@mode, "unitize") &&
+        identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
+      )
+    x@review <- if(x@inspect.all) -1L else 1L
 
-  if(x@inspect.all) {
-    word_msg(
-      "You selected a test that is not normally reviewed in this mode;",
-      "as such, upon test completion, you will be brought back to this menu",
-      "instead of being taken to the next reviewable test."
-    )
+    if(x@inspect.all) {
+      word_msg(
+        "You selected a test that is not normally reviewed in this mode;",
+        "as such, upon test completion, you will be brought back to this menu",
+        "instead of being taken to the next reviewable test."
+      )
+    }
   }
   # Set last.id to test just before the one we want to review as process will
   # then cause desired test to be reviewed
 
   x@last.id <- as.integer(nav.id) - 1L
+  x@browsing <- TRUE
   x@navigating <- TRUE
   return(x)
 }
