@@ -103,6 +103,17 @@ local({
       c("\033[36m@@ lst.1 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[31m-  \033[39m[1] \"a\" \033[31m\"b\"\033[39m \"c\"", "   ", "\033[90m   ~~ omitted 34 lines w/ 4 diffs ~~\033[39m", "\033[36m@@ lst.2 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[32m+  \033[39m[1] \"a\"       \033[32m\"bananas\"\033[39m \"c\"", "   ", "\033[90m   ~~ omitted 35 lines w/ 5 diffs ~~\033[39m")
     )
   } )
+  test_that("diff_word", {
+    # Make sure not fooled by repeats of same tokens in same string
+
+    expect_identical(
+      unitizer:::diff_word(
+        "[1] \"`1:3` should be length 5 (is 3)\"",
+        "[1] \"should be length 5 (is 3)\""
+      ),
+      structure(list(target = "[1] \033[31m\"`\033[39m\033[31m1\033[39m\033[31m:\033[39m\033[31m3\033[39m\033[31m`\033[39m should be length 5 (is 3)\"", current = "[1] \033[32m\"\033[39mshould be length 5 (is 3)\""), .Names = c("target", "current"))
+    )
+  }
   options(old.opt)
   test_that("char_diff", {
     expect_identical(
@@ -165,4 +176,5 @@ local({
     expect_identical(capture.output(Rdiff_obj(f, f)), character())
     expect_equal(Rdiff_obj(a, a), 0)
     unlink(f)
-  })} )
+  })}
+)

@@ -585,14 +585,19 @@ char_diff_int <- function(x, y) {
     eq.extra <- logical(0L)
 
     # Try to see if difference exists in y, and if not see if any subsequent
-    # line does exist, indicating deletions from x.
+    # line does exist, indicating deletions from x.  However, make sure that
+    # we don't have the same number of matches in x as well as in y, as that
+    # would suggest the match in y is just a coincidence
+
     # This grows vectors, but doesn't seem to be a huge performance issue at
     # the normal scale we run this.
 
     diff.found <- FALSE
     for(i in seq(first.diff, length(x), by=1L)) {
-      n.match <- head(which(x[[i]] == tail(y, -first.diff)), 1L)
-      if(length(n.match)) {
+      n.match.self <- which(x[[i]] == tail(x, -i))
+      n.match <- which(x[[i]] == tail(y, -first.diff))
+
+      if(length(n.match) && length(n.match) > length(n.match.self)) {
         tmp.res <- Recall(
           x[i:length(x)], y[(n.match[[1L]] + first.diff):length(y)]
         )
