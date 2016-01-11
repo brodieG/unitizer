@@ -217,8 +217,9 @@ diff_word <- function(target, current) {
   )
   # Compute the char by char diffs for each line
 
-  tar.reg <- gregexpr("\\S+", target)
-  cur.reg <- gregexpr("\\S+", current)
+  reg <- "\\w+|\\d+|[^[:alnum:]_[:blank:]]+"
+  tar.reg <- gregexpr(reg, target)
+  cur.reg <- gregexpr(reg, current)
 
   tar.split <- regmatches(target, tar.reg)
   cur.split <- regmatches(current, cur.reg)
