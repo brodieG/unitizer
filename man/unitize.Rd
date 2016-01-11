@@ -75,7 +75,10 @@ request user input when needed) or not (error if user input is required,
 e.g. if all tests do not pass).}
 
 \item{force.update}{logical(1L) if TRUE will give the option to re-store a
-unitizer after re-evaluating all the tests even if all tests passed.}
+unitizer after re-evaluating all the tests even if all tests passed.
+you can also toggle this option from the unitizer prompt by typing \code{O},
+though \code{force.update=TRUE} will force update irrespective of what
+you do with \code{O} at the prompt}
 
 \item{auto.accept}{character(X) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
 YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without

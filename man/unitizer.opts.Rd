@@ -128,6 +128,9 @@ results, etc.
     stream is still captured but setting the value to FALSE tees it.
   \item \code{unitizer.max.capture.chars}: integer(1L) maximum number of
     characters to allow capture of per test
+  \item \code{unitizer.color} whether to use ANSI color escape sequences,
+    set to TRUE to force, FALSE to force off, or NULL to attempt to auto
+    detect (based on code from package:crayon, thanks Gabor Csardi)
 }
 }
 
