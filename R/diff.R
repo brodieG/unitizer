@@ -31,16 +31,7 @@ setMethod("any", "unitizerDiff",
     dots <- list(...)
     if(length(dots))
       stop("`any` method for `unitizerDiff` supports only one argument")
-    any(x@diffs)
-} )
-#' @rdname unitizer_s4method_doc
-
-setMethod("any", "unitizerDiffDiffs",
-  function(x, ..., na.rm = FALSE) {
-    dots <- list(...)
-    if(length(dots))
-      stop("`any` method for `unitizerDiffDiffs` supports only one argument")
-    any(x@target, x@current)
+    any(tarDiff(x), curDiff(x))
 } )
 #' @rdname unitizer_s4method_doc
 
@@ -55,7 +46,7 @@ setMethod("as.character", "unitizerDiff",
     len.max <- max(length(x@tar.capt), length(x@cur.capt))
     first.diff <- if(!any(x)) {
       return("No visible differences between objects")
-    } else min(which(x@diffs@target), which(x@diffs@current))
+    } else min(which(tarDiff(x)), which(curDiff(x)))
 
     show.range <- if(len.max <= 2 * context[[1L]] + 1) {
       1:len.max
@@ -79,70 +70,18 @@ setMethod("as.character", "unitizerDiff",
         )
       }
     }
-    # Match up the diffs; first step is to match the matches since we know that
-    # there are the exact same number of these in both
+    # Match up the diffs; first step is to do word diffs on the matched
+    # mismatches. Start by getting the match ids that are not NA and
+    # greater than zero
 
-    matches <- sum(!x@diffs@target)
-    tar.len <- length(x@diffs@target)
-    tar.seq <- seq.int(tar.len)
-    tar.ids <- integer(tar.len)
-    cur.len <- length(x@diffs@current)
-    cur.ids <- integer(cur.len)
-    tar.ids[!x@diffs@target] <- seq.int(matches)
-    cur.ids[!x@diffs@current] <- seq.int(matches)
+    match.ids <- Filter(identity, x@diffs@target)
 
-    # Walk through the target vector and for each mismatch find best mismatch in
-    # current vector to try do the wordiff agains
+    # Now find the indeces of these ids
 
-    index <- 0L
-    safety <- 0L
-
-    repeat {
-      if(index >= tar.len) break
-      if((safety <- safety + 1L) > tar.len)
-        stop(
-          "Logic Error: infinite loop detected trying to find mismatched ",
-          "lines; contact maintainer"
-        )
-      mismatches.next <- which(!tar.ids & tar.seq > index)
-      if(!length(mismatches.next)) break
-      mismatch.next <- mismatches.next[[1L]]
-
-      # most recent matched value
-      prev.match <- if(mismatch.next == 1L) 0L else
-        max(head(abs(tar.ids), mismatch.next - 1L))
-
-      # Need to find the unmatched values in current that are between
-      # `prev.match` and `prev.match + 1`; matches are encoded as negative values
-
-      prev.match.cur <- if(prev.match) {
-        match(c(prev.match, prev.match + 1L), abs(cur.ids))
-      } else {
-        c(0L, match(1L, abs(cur.ids)))
-      }
-      # If no more matching values, indicate one index past end of cur vector
-      # since we'll be looking at index values less than that
-
-      if(is.na(prev.match.cur[2L])) prev.match.cur[2L] <- cur.len + 1L
-
-      # There are possible unmatched items in cur we can match to our unmatched
-      # item in tar
-      if(
-        diff(prev.match.cur) > 1 &&
-        length(cur.unmatch <- which(
-          !cur.ids[seq(prev.match.cur[1L] + 1L, prev.match.cur[2L] - 1L)]
-        ) )
-      ) {
-        cur.unm.id <- prev.match.cur[1L] + cur.unmatch[1L]
-        tar.ids[mismatch.next] <- -cur.unm.id
-        cur.ids[cur.unm.id] <- -mismatch.next
-      }
-      index <- mismatch.next
-    }
-    # Now extract the corresponding strings to compare
-
-    tar.ids.mismatch <- -cur.ids[cur.ids < 0L & -cur.ids %in% show.range]
-    cur.ids.mismatch <- -tar.ids[tar.ids < 0L & -tar.ids %in% show.range]
+    tar.ids.mismatch <- match(match.ids, x@diffs@target)
+    cur.ids.mismatch <- match(match.ids, x@diffs@current)
+    if( any(is.na(c(tar.ids.mismatch, cur.ids.mismatch))))
+      stop("Logic Error: mismatched mismatches; contact maintainer.")
 
     # Add word colors
 
@@ -157,11 +96,11 @@ setMethod("as.character", "unitizerDiff",
 
     # Color lines that were not word colored
 
-    tar.seq <- seq_along(tar.ids)
-    cur.seq <- seq_along(cur.ids)
-    tar.line.diff <- x@diffs@target & !tar.seq %in% tar.ids.mismatch &
+    tar.seq <- seq_along(tar.txt)
+    cur.seq <- seq_along(cur.txt)
+    tar.line.diff <- tarDiff(x) & !tar.seq %in% tar.ids.mismatch &
       tar.seq %in% show.range
-    cur.line.diff <- x@diffs@current & !cur.seq %in% cur.ids.mismatch &
+    cur.line.diff <- curDiff(x) & !cur.seq %in% cur.ids.mismatch &
       cur.seq %in% show.range
 
     tar.txt[tar.line.diff] <- clr(tar.txt[tar.line.diff], color="red")
@@ -171,13 +110,23 @@ setMethod("as.character", "unitizerDiff",
 
     c(
       obj_screen_chr(
-        tar.txt,  x@tar.exp, diffs=x@diffs@target, range=show.range,
+        tar.txt,  x@tar.exp, diffs=tarDiff(x), range=show.range,
         width=width, pad= "-  ", color="red"
       ),
       obj_screen_chr(
-        cur.txt,  x@cur.exp, diffs=x@diffs@current, range=show.range,
+        cur.txt,  x@cur.exp, diffs=curDiff(x), range=show.range,
         width=width, pad= "+  ", color="green"
     ) )
+} )
+setGeneric("tarDiff", function(x, ...) standardGeneric("tarDiff"))
+setMethod("tarDiff", "unitizerDiff", function(x, ...) tarDiff(x@diffs))
+setGeneric("curDiff", function(x, ...) standardGeneric("curDiff"))
+setMethod("curDiff", "unitizerDiff", function(x, ...) curDiff(x@diffs))
+setMethod("tarDiff", "unitizerDiffDiffs", function(x, ...) {
+  is.na(x@target) | !!x@target
+} )
+setMethod("curDiff", "unitizerDiffDiffs", function(x, ...) {
+  is.na(x@current) | !!x@current
 } )
 # groups characters based on whether they are different or not and colors
 # them; assumes that the chrs vector values are words that were previously
@@ -309,14 +258,14 @@ diff_word <- function(target, current, across.lines=FALSE) {
     seq_along(tar.split),
     function(i)
       diff_color(
-        tar.split[[i]], diffs[[i]]@target, seq_along(tar.split[[i]]), "red"
+        tar.split[[i]], tarDiff(diffs[[i]]), seq_along(tar.split[[i]]), "red"
       )
   )
   cur.colored <- lapply(
     seq_along(cur.split),
     function(i)
       diff_color(
-        cur.split[[i]], diffs[[i]]@current, seq_along(cur.split[[i]]), "green"
+        cur.split[[i]], curDiff(diffs[[i]]), seq_along(cur.split[[i]]), "green"
       )
   )
   # Reconstitute lines if needed
@@ -815,10 +764,10 @@ obj_screen_chr <- function(
     if(!any(diffs)) {
       pad.all <- replicate(len.obj, cc(rep(" ", pad.chars)))
     } else {
-      pad.all[diffs] <- pad
+      pad.all[] <- pad
       pad.all <- format(pad.all)
     }
-    pad.all[diffs] <- clr(pad.all[diffs], color)
+    pad.all[] <- clr(pad.all[diffs], color)
     pad.pre.post <- paste0(rep(" ", pad.chars), collapse="")
 
     omit.first <- max(min(range[[1L]] - 1L, len.obj), 0L)
@@ -828,7 +777,7 @@ obj_screen_chr <- function(
     if(omit.first)
       pre <- paste0(
         "~~ omitted ", omit.first, " line", if(omit.first != 1L) "s",
-        " w/o diffs"
+        " w/o "
       )
     if(omit.last) {
       post <- paste0(
