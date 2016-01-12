@@ -1,3 +1,5 @@
+#' @include class_unions.R
+
 # Classes for tracking intermediate diff obj data
 #
 # DiffDiffs contains a slot corresponding to each of target and current where
@@ -13,7 +15,9 @@ setClass(
     tar.exp="ANY",
     cur.exp="ANY",
     mode="character",
-    diffs="unitizerDiffDiffs"
+    diffs="unitizerDiffDiffs",
+    tar.capt.def="characterOrNULL",
+    cur.capt.def="characterOrNULL"
   ),
   validity=function(object) {
     if(!is.chr1(object@mode) || ! object@mode %in% c("print", "str"))
@@ -39,47 +43,67 @@ setMethod("as.character", "unitizerDiff",
   function(x, context, width, ...) {
     context <- check_context(context)
     width <- check_width(width)
-    # If there is an error, we want to show as much of the objects as we can
-    # centered on the error.  If we can show the entire objects without centering
-    # then we do that.
 
     len.max <- max(length(x@tar.capt), length(x@cur.capt))
-    first.diff <- if(!any(x)) {
-      return("No visible differences between objects")
-    } else min(which(tarDiff(x)), which(curDiff(x)))
+    if(!any(x)) return("No visible differences between objects")
 
-    show.range <- if(len.max <= 2 * context[[1L]] + 1) {
-      1:len.max
-    } else {
-      rng.trim <- 2 * context[[2L]] + 1
-      if(first.diff <= rng.trim) {
-        # if can show first diff starting from beginning, do that
-        1:rng.trim
-      } else if (len.max - first.diff + 1 <= rng.trim) {
-        # if first diff is close to end, then show through end
-        tail(1:len.max, -rng.trim)
-      } else {
-        # if first diff is too close to beginning or end, use extra context on
-        # other side of error
+    show.range <- diff_range(x, context)
+    show.range.tar <- show.range %in% seq_along(x@tar.capt)
+    show.range.cur <- show.range %in% seq_along(x@cur.capt)
 
-        end.extra <- max(0, context[[2L]] - first.diff)
-        start.extra <- max(0, context[[2L]] - (len.max - first.diff))
-        seq(
-          max(first.diff - context[[2L]] - start.extra, 1),
-          min(first.diff + context[[2L]] + end.extra, len.max)
+    # Detect whether we should attempt to deal with wrapping objects, if so
+    # overwrite cur/tar.body/rest variables with the color diffed wrap word
+    # diffs; note that if the tar/cur.capt.def is not NULL then the objects
+    # being compared must be atomic vectors
+
+    cur.body <- tar.body <- character(0L)
+    cur.rest <- show.range.cur
+    tar.rest <- show.range.tar
+
+    if(
+      identical(x@mode, "print") && identical(x@tar.capt, x@tar.capt.def) &&
+      identical(x@cur.capt, x@cur.capt.def)
+    ) {
+      # Separate out the stuff that can wrap (starts with index headers vs. not)
+
+      cur.head.raw <- find_brackets(x@cur.capt)
+      tar.head.raw <- find_brackets(x@tar.capt)
+
+      cur.head <- cur.head.raw[cur.head.raw %in% show.range]
+      tar.head <- tar.head.raw[tar.head.raw %in% show.range]
+
+      if(length(cur.head) && length(tar.head)) {
+        cur.body <- regexpr(sprintf("%s\\K.*", .brack.pat), x@cur.capt[cur.head])
+        tar.body <- regexpr(sprintf("%s\\K.*", .brack.pat), x@tar.capt[tar.head])
+
+        body.diff <- diff_word(
+          regmatches(x@tar.capt[tar.head], tar.body),
+          regmatches(x@cur.capt[cur.head], cur.body),
+          across.lines=TRUE
         )
+        regmatches(x@tar.capt[tar.head], tar.body) <- body.diff$target
+        regmatches(x@cur.capt[cur.head], cur.body) <- body.diff$current
+
+        # Everything else gets a normal line diff
+
+        cur.rest <- show.range.cur[!show.range.cur %in% cur.head]
+        tar.rest <- show.range.tar[!show.range.tar %in% tar.head]
       }
     }
+    # Run line diffs on the remaining lines
     # Match up the diffs; first step is to do word diffs on the matched
     # mismatches. Start by getting the match ids that are not NA and
     # greater than zero
 
+    tar.diff <- x@diffs@target[tar.rest]
+    cur.diff <- x@diffs@current[cur.rest]
+
     match.ids <- Filter(identity, x@diffs@target)
 
-    # Now find the indeces of these ids
+    # Now find the indeces of these ids that are in display range
 
-    tar.ids.mismatch <- match(match.ids, x@diffs@target)
-    cur.ids.mismatch <- match(match.ids, x@diffs@current)
+    tar.ids.mismatch <- match(match.ids, x@diffs@target[cur.rest])
+    cur.ids.mismatch <- match(match.ids, x@diffs@current[tar.rest])
     if( any(is.na(c(tar.ids.mismatch, cur.ids.mismatch))))
       stop("Logic Error: mismatched mismatches; contact maintainer.")
 
@@ -99,9 +123,9 @@ setMethod("as.character", "unitizerDiff",
     tar.seq <- seq_along(tar.txt)
     cur.seq <- seq_along(cur.txt)
     tar.line.diff <- tarDiff(x) & !tar.seq %in% tar.ids.mismatch &
-      tar.seq %in% show.range
+      tar.seq %in% tar.rest
     cur.line.diff <- curDiff(x) & !cur.seq %in% cur.ids.mismatch &
-      cur.seq %in% show.range
+      cur.seq %in% cur.rest
 
     tar.txt[tar.line.diff] <- clr(tar.txt[tar.line.diff], color="red")
     cur.txt[cur.line.diff] <- clr(cur.txt[cur.line.diff], color="green")
@@ -128,6 +152,45 @@ setMethod("tarDiff", "unitizerDiffDiffs", function(x, ...) {
 setMethod("curDiff", "unitizerDiffDiffs", function(x, ...) {
   is.na(x@current) | !!x@current
 } )
+# If there is an error, we want to show as much of the objects as we can
+# centered on the error.  If we can show the entire objects without centering
+# then we do that.
+#
+# Returns the range of values that should be shown on both objects.  Note that
+# this can include out of range indices if one object is larger than the other
+
+diff_range <- function(x, context) {
+  stopifnot(is(x, "unitizerDiff"))
+  context <- check_context(context)
+  len.max <- max(length(x@tar.capt), length(x@cur.capt))
+  first.diff <- if(!any(x)) {
+    return("No visible differences between objects")
+  } else min(which(tarDiff(x)), which(curDiff(x)))
+
+  show.range <- if(len.max <= 2 * context[[1L]] + 1) {
+    1:len.max
+  } else {
+    rng.trim <- 2 * context[[2L]] + 1
+    if(first.diff <= rng.trim) {
+      # if can show first diff starting from beginning, do that
+      1:rng.trim
+    } else if (len.max - first.diff + 1 <= rng.trim) {
+      # if first diff is close to end, then show through end
+      tail(1:len.max, -rng.trim)
+    } else {
+      # if first diff is too close to beginning or end, use extra context on
+      # other side of error
+
+      end.extra <- max(0, context[[2L]] - first.diff)
+      start.extra <- max(0, context[[2L]] - (len.max - first.diff))
+      seq(
+        max(first.diff - context[[2L]] - start.extra, 1),
+        min(first.diff + context[[2L]] + end.extra, len.max)
+      )
+    }
+  }
+  show.range
+}
 # groups characters based on whether they are different or not and colors
 # them; assumes that the chrs vector values are words that were previously
 # separated by spaces, and collapses the strings back with the spaces at the
@@ -156,34 +219,6 @@ diff_word_print <- function(target, current) {
   # - default method equal to selected method
   # - dealing with atomic?
 
-  # Separate out the stuff that can wrap (starts with index headers vs. not)
-
-  cur.head <- find_brackets(cur.capt)
-  tar.head <- find_brackets(tar.capt)
-
-  if(length(cur.head) && length(tar.head)) {
-    cur.body <- regexpr(sprintf("%s\\K.*", .brack.pat), cur.capt[cur.head])
-    tar.body <- regexpr(sprintf("%s\\K.*", .brack.pat), tar.capt[tar.head])
-
-    body.diff <- word_diff(
-      regmatches(tar.capt[tar.head], tar.body),
-      regmatches(cur.capt[cur.head], cur.body),
-      across.lines=TRUE
-    )
-    regmatches(tar.capt[tar.head], tar.body) <- body.diff$target
-    regmatches(cur.capt[cur.head], cur.body) <- body.diff$current
-
-    cur.rest <- -cur.head
-    tar.rest <- -tar.head
-  } else {
-    cur.rest <- seq_along(cur.capt)
-    tar.rest <- seq_along(tar.capt)
-  }
-  # Everything else gets a normal line diff
-
-  stop("not implemented yet")
-
-  diffs <- char_diff(tar.capt[tar.rest], cur.capt[cur.rest])
 
 }
 # Determine if a string contains what appear to be standard index headers
@@ -211,19 +246,12 @@ find_brackets <- function(x) {
     brackets
   } else integer(0L)
 }
-# Diff by matching lines
+# Apply diff algorithm within lines
 #
-# The key additional
-diff_line <- function(target, current) {
-}
-
-# Apply diff algorithm within lines; need to preselect which lines to line up
-# with each other.
-#
-# For each line, splits into characters and groups them into alike and diff
-# groups, colors them, collapses each back into one character value, and
-# returns a list with target values and current values word colored.  The
-# vectors within the list will have the same # of elements as the inputs
+# For each line, splits into words, runs diffs, and colors them appropriately.
+# For `across.lines=TRUE`, merges all lines into one and does the word diff on
+# a single line to allow for the diff to look for matches across lines, though
+# the result is then unwrapped back to the original lines.
 
 diff_word <- function(target, current, across.lines=FALSE) {
   stopifnot(
@@ -404,12 +432,23 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
 diff_print_internal <- function(
   target, current, tar.exp, cur.exp, context, width, frame
 ) {
+  # capture normal prints, along with default prints to make sure that if we
+  # do try to wrap an atomic vector print it is very likely to be in a format
+  # we are familiar with and not affected by a non-default print method
+  both.at <- is.atomic(current) && is.atomic(target)
   cur.capt <- obj_capt(current, width - 3L, frame)
+  cur.capt.def <- if(both.at) obj_capt(current, width - 3L, frame, default=TRUE)
   tar.capt <- obj_capt(target, width - 3L, frame)
+  tar.capt.def <- if(both.at) obj_capt(target, width - 3L, frame, default=TRUE)
+
+  # Run basic diff
+
   diffs <- char_diff(tar.capt, cur.capt)
+
   new(
-    "unitizerDiff", tar.capt=tar.capt, cur.capt=cur.capt, tar.exp=tar.exp,
-    cur.exp=cur.exp, diffs=diffs, mode="print"
+    "unitizerDiff", tar.capt=tar.capt, cur.capt=cur.capt,
+    tar.exp=tar.exp, cur.exp=cur.exp, diffs=diffs, mode="print",
+    tar.capt.def=tar.capt.def, cur.capt.def=cur.capt.def
   )
 }
 diff_str_internal <- function(
@@ -687,7 +726,7 @@ char_diff_int <- function(x, y) {
 }
 obj_capt <- function(
   obj, width=getOption("width"), frame=parent.frame(), mode="print",
-  max.level=0L
+  max.level=0L, default=FALSE
 ) {
   if(!is.numeric(width) || length(width) != 1L)
     stop("Argument `width` must be a one long numeric/integer.")
@@ -706,7 +745,7 @@ obj_capt <- function(
 
   if(identical(mode, "print")) {
     obj.out <- capture.output(
-      invisible(print.res <- user_exp_display(obj, frame, quote(obj)))
+      invisible(print.res <- user_exp_display(obj, frame, quote(obj), default))
     )
   } else if(identical(mode, "str")) {
     obj.out <- capture.output(
@@ -744,6 +783,7 @@ obj_capt <- function(
     } else ""
     obj.out <- c(obj.out, err.cond.msg)
   }
+
   obj.out
 }
 # constructs the full diff message with additional meta information
