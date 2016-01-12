@@ -73,8 +73,9 @@ setMethod("as.character", "unitizerDiff",
       tar.head <- tar.head.raw[tar.head.raw %in% show.range]
 
       if(length(cur.head) && length(tar.head)) {
-        cur.body <- regexpr(sprintf("%s\\K.*", .brack.pat), x@cur.capt[cur.head])
-        tar.body <- regexpr(sprintf("%s\\K.*", .brack.pat), x@tar.capt[tar.head])
+        pat <- sprintf("%s\\K.*", .brack.pat)
+        cur.body <- regexpr(pat, x@cur.capt[cur.head], perl=TRUE)
+        tar.body <- regexpr(pat, x@tar.capt[tar.head], perl=TRUE)
 
         body.diff <- diff_word(
           regmatches(x@tar.capt[tar.head], tar.body),
@@ -207,7 +208,7 @@ color_words <- function(chrs, diffs, color) {
 }
 # Try to use fancier word matching with vectors and matrices
 
-.brack.pat <- "^  *\\[\\d+\\]"
+.brack.pat <- "^ *\\[\\d+\\]"
 
 diff_word_print <- function(target, current) {
   # Need to make these arguments
