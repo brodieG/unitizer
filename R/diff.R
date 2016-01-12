@@ -759,15 +759,15 @@ obj_screen_chr <- function(
   len.obj <- length(obj.chr)
 
   if(len.obj) {
-    pad.all <- character(length(diffs))
+    pad.all <- character(len.obj)
     pad.chars <- nchar(pad)
     if(!any(diffs)) {
       pad.all <- replicate(len.obj, cc(rep(" ", pad.chars)))
     } else {
-      pad.all[] <- pad
+      pad.all[diffs] <- pad
       pad.all <- format(pad.all)
     }
-    pad.all[] <- clr(pad.all[diffs], color)
+    pad.all[diffs] <- clr(pad.all[diffs], color)
     pad.pre.post <- paste0(rep(" ", pad.chars), collapse="")
 
     omit.first <- max(min(range[[1L]] - 1L, len.obj), 0L)
@@ -777,7 +777,7 @@ obj_screen_chr <- function(
     if(omit.first)
       pre <- paste0(
         "~~ omitted ", omit.first, " line", if(omit.first != 1L) "s",
-        " w/o "
+        " w/o diffs"
       )
     if(omit.last) {
       post <- paste0(
