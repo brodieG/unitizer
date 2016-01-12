@@ -4,15 +4,7 @@
 # a TRUE value means the corresponding value matches in both objects and FALSE
 # means that it does not match
 
-setClass(
-  "unitizerDiffDiffs",
-  slots=c(target="logical", current="logical"),
-  validity=function(object) {
-    for(i in slotNames(object))
-      if(any(is.na(slot(object, i))))
-        return("slot `", i, "` may not contain NAs")
-    TRUE
-} )
+setClass("unitizerDiffDiffs", slots=c(target="integer", current="integer"))
 setClass(
   "unitizerDiff",
   slots=c(
@@ -239,6 +231,8 @@ diff_word_print <- function(target, current) {
     tar.rest <- seq_along(tar.capt)
   }
   # Everything else gets a normal line diff
+
+  stop("not implemented yet")
 
   diffs <- char_diff(tar.capt[tar.rest], cur.capt[cur.rest])
 
@@ -652,14 +646,33 @@ Rdiff_obj <- function(from, to, ...) {
 
 char_diff <- function(x, y) {
   diffs.int <- char_diff_int(x, y)
-  if(sum(!diffs.int[[1L]]) != sum(!diffs.int[[2L]]))
+  if(sum(!diffs.int[[1L]], na.rm=TRUE) != sum(!diffs.int[[2L]], na.rm=TRUE))
     stop(
       "Logic Error: diff produced unequal number of matching lines; contact ",
       "maintainer."
     )
   do.call("new", c(list("unitizerDiffDiffs"), diffs.int))
 }
+# Helper function encodes matches within mismatches so that we can later word
+# diff the mismatches
+match_mismatch <- function(x, y) {
+  mis.overlap <- min(x, y)
+  mis.extra <- max(x, y) - mis.overlap
+  mis.seq <- seq_len(mis.overlap)
+  mis.x <- x > y
+
+  # construct final match vector, any additional mismatches in one or
+  # other vector are mismatched and encoded as NAs
+
+  x.d <- c(mis.seq, rep(NA_integer_, if(mis.x) mis.extra else 0L))
+  y.d <- c(mis.seq, rep(NA_integer_, if(!mis.x) mis.extra else 0L))
+
+  list(target=x.d, current=y.d)
+}
 char_diff_int <- function(x, y) {
+  # REALLY WANT TO CHANGE THIS TO RETURN MISMATCHES LINED UP WITH EACH OTHER
+  # SO THAT RETURN VALUE HAS 0L FOR MATCHES, #L FOR MISMATCHES THAT LINE UP
+  # ACROSS THE TWO VECTORS, AND NA OR SOME OTHER VALUE FOR THOSE THAT DONT
   stopifnot(
     is.character(x), is.character(y), !any(is.na(c(x, y)))
   )
@@ -670,12 +683,13 @@ char_diff_int <- function(x, y) {
   eq <- head(x, len.match) == head(y, len.match)
   diffs <- which(!eq)
   if(!length(diffs)) {
-    x.d <- c(rep(FALSE, len.match), c(rep(TRUE, length(x) - len.match)))
-    y.d <- c(rep(FALSE, len.match), c(rep(TRUE, length(y) - len.match)))
+    # extras at end
+    x.d <- c(rep(0L, len.match), c(rep(NA_integer_, length(x) - len.match)))
+    y.d <- c(rep(0L, len.match), c(rep(NA_integer_, length(y) - len.match)))
   } else {
     first.diff <- diffs[[1L]]
-    eq.so.far <- rep(FALSE, first.diff - 1L)
-    eq.extra <- logical(0L)
+    eq.so.far <- rep(0L, first.diff - 1L)
+    eq.extra <- 0L
 
     # Try to see if difference exists in y, and if not see if any subsequent
     # line does exist, indicating deletions from x.  However, make sure that
@@ -695,17 +709,29 @@ char_diff_int <- function(x, y) {
         tmp.res <- Recall(
           x[i:length(x)], y[(n.match[[1L]] + first.diff - 1L):length(y)]
         )
-        x.d <- c(eq.so.far, eq.extra, tmp.res[[1L]])
-        y.d <- c(eq.so.far, rep(TRUE, n.match[[1L]] - 1L), tmp.res[[2L]])
+        # compute matched mismatches and line them up so they have the same
+        # non-zero non-NA integer value in both x and y
+
+        m.match <- match_mismatch(eq.extra, n.match[[1L]] - 1L)
+
+        # re-adjust recursion values by how many matched mismatches we have
+        m.max <- max(0L, unlist(m.match), na.rm=TRUE)
+        tmp.res <- lapply(
+          tmp.res, function(y) ifelse(!is.na(y) & !!y, y + m.max, y)
+        )
+        # construct final match vector, any additional mismatches in one or
+        # other vector are mismatched and encoded as NAs
+        x.d <- c(eq.so.far, m.match[[1L]], tmp.res[[1L]])
+        y.d <- c(eq.so.far, m.match[[2L]], tmp.res[[2L]])
         diff.found <- TRUE
         break
       }
-      eq.extra <- c(eq.extra, TRUE)
+      eq.extra <- eq.extra + 1L
     }
-    if(!diff.found) {
-      # Difference did not exist in y
-      x.d <- c(eq.so.far, eq.extra)
-      y.d <- c(eq.so.far, rep(TRUE, length(y) - first.diff + 1L))
+    if(!diff.found) {  # Difference did not exist in y
+      m.match <- match_mismatch(eq.extra, length(y) - first.diff + 1L)
+      x.d <- c(eq.so.far, m.match[[1L]])
+      y.d <- c(eq.so.far, m.match[[2L]])
     }
   }
   list(target=x.d, current=y.d)

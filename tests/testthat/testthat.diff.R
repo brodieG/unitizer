@@ -164,44 +164,44 @@ local({
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "c")),
       new(
-        "unitizerDiffDiffs", target=c(FALSE, FALSE, FALSE),
-        current=c(FALSE, FALSE, FALSE)
+        "unitizerDiffDiffs", target=integer(3L),
+        current=integer(3L)
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b"), c("a", "b", "c")),
       new(
-        "unitizerDiffDiffs", target=c(FALSE, FALSE),
-        current=c(FALSE, FALSE, TRUE)
+        "unitizerDiffDiffs", target=integer(2L),
+        current=c(0L, 0L, NA)
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b")),
       new(
-        "unitizerDiffDiffs", target=c(FALSE, FALSE, TRUE),
-        current=c(FALSE, FALSE)
+        "unitizerDiffDiffs", target=c(0L, 0L, NA),
+        current=integer(2L)
     ) )
     expect_identical(
       unitizer:::char_diff(c("b", "c"), c("a", "b")),
       new(
-        "unitizerDiffDiffs", target=c(FALSE, TRUE),
-        current=c(TRUE, FALSE)
+        "unitizerDiffDiffs", target=c(0L, NA),
+        current=c(NA, 0L)
     ) )
     expect_identical(
       unitizer:::char_diff(letters[1:3], letters[2:4]),
       new(
-        "unitizerDiffDiffs", target=c(TRUE, FALSE, FALSE),
-        current=c(FALSE, FALSE, TRUE)
+        "unitizerDiffDiffs", target=c(NA, 0L, 0L),
+        current=c(0L, 0L, NA)
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c", "d"), c("a", "b", "b", "d", "e")),
       new(
-        "unitizerDiffDiffs", target=c(FALSE, FALSE, TRUE, FALSE),
-        current=c(FALSE, FALSE, TRUE, FALSE, TRUE)
+        "unitizerDiffDiffs", target=c(0L, 0L, 1L, 0L),
+        current=c(0L, 0L, 1L, 0L, NA)
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "d")),
       new(
-        "unitizerDiffDiffs", target=c(FALSE, FALSE, TRUE),
-        current=c(FALSE, FALSE, TRUE)
+        "unitizerDiffDiffs", target=c(0L, 0L, 1L),
+        current=c(0L, 0L, 1L)
     ) )
   })
   test_that("Rdiff_obj", {
