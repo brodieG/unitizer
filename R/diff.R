@@ -175,9 +175,7 @@ diff_range <- function(x, context) {
   stopifnot(is(x, "unitizerDiff"))
   context <- check_context(context)
   len.max <- max(length(x@tar.capt), length(x@cur.capt))
-  first.diff <- if(!any(x)) {
-    return("No visible differences between objects")
-  } else min(which(tarDiff(x)), which(curDiff(x)))
+  first.diff <- if(!any(x)) 1L else min(which(tarDiff(x)), which(curDiff(x)))
 
   show.range <- if(len.max <= 2 * context[[1L]] + 1) {
     1:len.max
@@ -188,7 +186,7 @@ diff_range <- function(x, context) {
       1:rng.trim
     } else if (len.max - first.diff + 1 <= rng.trim) {
       # if first diff is close to end, then show through end
-      tail(1:len.max, -rng.trim)
+      tail(1:len.max, rng.trim)
     } else {
       # if first diff is too close to beginning or end, use extra context on
       # other side of error
