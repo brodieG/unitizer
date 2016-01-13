@@ -6,11 +6,12 @@
 \alias{diff_str}
 \title{Show Diffs Between the Screen Display Versions of Two Objects}
 \usage{
-diff_obj(target, current, context = NULL)
+diff_obj(target, current, context = NULL, white.space = FALSE)
 
-diff_print(target, current, context = NULL)
+diff_print(target, current, context = NULL, white.space = FALSE)
 
-diff_str(target, current, context = NULL, max.level = 10)
+diff_str(target, current, context = NULL, white.space = FALSE,
+  max.level = 10)
 }
 \arguments{
 \item{target}{the reference object}
@@ -23,6 +24,10 @@ before we start trimming output.  The second value is the maximum to be
 shown before we start trimming.  We will always attempt to show as much as
 \code{2 * context + 1} lines of output so context may not be centered if
 objects display as less than \code{2 * context + 1} lines.}
+
+\item{white.space}{TRUE or FALSE, whether to consider differences in
+horizontal whitespace (i.e. spaces and tabs) as differences (defaults to
+FALSE)}
 
 \item{max.level}{integer(1L) up to how many levels to try running \code{str};
 \code{str} is run repeatedly starting with \code{max.level=1} and then

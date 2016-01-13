@@ -24,7 +24,6 @@
 \alias{all.equal,unitizerGlobalState,unitizerGlobalState-method}
 \alias{all.equal,unitizerSearchData,unitizerSearchData-method}
 \alias{any,unitizerDiff-method}
-\alias{any,unitizerDiffDiffs-method}
 \alias{append,factor,factor-method}
 \alias{append,unitizerList,ANY-method}
 \alias{as.character,unitizer-method}
@@ -126,8 +125,6 @@
 \S4method{+}{unitizerBrowseSection,unitizerBrowseSubSection}(e1, e2)
 
 \S4method{any}{unitizerDiff}(x, ..., na.rm = FALSE)
-
-\S4method{any}{unitizerDiffDiffs}(x, ..., na.rm = FALSE)
 
 \S4method{as.character}{unitizerDiff}(x, context, width, ...)
 

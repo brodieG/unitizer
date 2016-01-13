@@ -104,9 +104,10 @@ local({
     )
   } )
   set.seed(2)
-  words <- c(
+  words <- sample(
+    c(
     "carrot", "cat", "cake", "eat", "rabbit", "holes", "the", "a", "pasta",
-    "boom", "noon", "sky", "parenthesis", "blah"
+    "boom", "noon", "sky", "parenthesis", "blah", "bangalore", "dog", "snake"
   )
   nums <- runif(5, -1e9, 1e9)
   scinums <- format(c(nums, 1/nums), scientific=TRUE)
@@ -119,6 +120,22 @@ local({
   s2 <- s1[5:20]                             # subset
   s3[sample(seq_along(s1), 10)] <- sample(s1, 10)     # change some
   s4 <- c(s1[1:5], sample(s1, 2), s1[6:15], sample(s1, 2), s1[16:20])
+
+  test_that("whitespace", {
+    # Note the whitespaces here include tabs, and this S3 class has a print
+    # class that just cats out the output
+
+    hello1 <- structure("   hello  hello", class="unitizer_test_obj_1")
+    hello2 <- structure( "hello    hello   ", class="unitizer_test_obj_1")
+    expect_equal(
+      diff_print(hello1, hello2, context=c(5, 10)),
+      c("\033[90mOnly visible differences between objects are horizontal \033[39m", "\033[90mwhite spaces. You can re-run diff with `white.space=TRUE` to\033[39m", "\033[90mshow them.\033[39m")
+    )
+    expect_equal(
+      diff_print("hello hello", "hello    hello", white.space=TRUE, context=c(5, 10)),
+      c("\033[36m@@ hello1 @@\033[39m", "\033[31m-  \033[39m   hello  hello", "\033[36m@@ hello2 @@\033[39m", "\033[32m+  \033[39mhello    hello")
+    )
+  })
 
   test_that("brackets", {
     unitizer:::find_brackets(capture.output(1:100))

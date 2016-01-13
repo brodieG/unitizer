@@ -73,6 +73,7 @@ Collate:
     'size.R'
     'state.R'
     'state.compare.R'
+    'testfuns.R'
     'translate.R'
     'unitize.R'
     'unitize.core.R'
