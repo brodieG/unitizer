@@ -99,7 +99,7 @@ setMethod("as.character", "unitizerDiff",
     tar.diff <- x@diffs@target[tar.rest]
     cur.diff <- x@diffs@current[cur.rest]
 
-    match.ids <- Filter(identity, x@diffs@target)
+    match.ids <- Filter(identity, tar.diff)
 
     # Now find the indeces of these ids that are in display range
 
@@ -274,7 +274,7 @@ diff_word <- function(target, current, across.lines=FALSE) {
 
   if(across.lines) {
     tar.lens <- vapply(tar.split, length, integer(1L))
-    cur.lens <- vapply(tar.split, length, integer(1L))
+    cur.lens <- vapply(cur.split, length, integer(1L))
 
     tar.split <- list(unlist(tar.split))
     cur.split <- list(unlist(cur.split))
