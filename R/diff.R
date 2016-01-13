@@ -607,14 +607,14 @@ diff_obj_internal <- function(
 
   res.print <- diff_print_internal(
     target, current, tar.exp=tar.exp, cur.exp=cur.exp, context=context,
-    width=width, frame=frame
+    width=width, frame=frame, white.space=white.space
   )
   len.print <- max(length(res.print@tar.capt), length(res.print@cur.capt))
 
   res.str <- diff_str_internal(
     target, current, tar.exp=tar.exp,
     cur.exp=cur.exp, context=context, width=width,
-    frame=frame, max.lines=len.print
+    frame=frame, max.lines=len.print, white.space=white.space
   )
   len.max <- context[[1L]] * 2 + 1
   len.str <- max(length(res.str@tar.capt), length(res.str@cur.capt))
