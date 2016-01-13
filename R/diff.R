@@ -6,7 +6,15 @@
 # a TRUE value means the corresponding value matches in both objects and FALSE
 # means that it does not match
 
-setClass("unitizerDiffDiffs", slots=c(target="integer", current="integer"))
+setClass(
+  "unitizerDiffDiffs",
+  slots=c(target="integer", current="integer", white.space="logical"),
+  validity=function(object) {
+    if(!is.TF(object@white.space))
+      return("slot `white.space` must be TRUE or FALSE")
+    TRUE
+  }
+)
 setClass(
   "unitizerDiff",
   slots=c(
@@ -44,6 +52,7 @@ setMethod("as.character", "unitizerDiff",
   function(x, context, width, ...) {
     context <- check_context(context)
     width <- check_width(width)
+    white.space <- x@diffs@white.space
 
     len.max <- max(length(x@tar.capt), length(x@cur.capt))
     if(!any(x)) return("No visible differences between objects")
@@ -84,7 +93,7 @@ setMethod("as.character", "unitizerDiff",
         body.diff <- diff_word(
           regmatches(x@tar.capt[tar.head], tar.body),
           regmatches(x@cur.capt[cur.head], cur.body),
-          across.lines=TRUE
+          across.lines=TRUE, white.space=white.space
         )
         regmatches(x@tar.capt[tar.head], tar.body) <- body.diff$target
         regmatches(x@cur.capt[cur.head], cur.body) <- body.diff$current
@@ -99,7 +108,7 @@ setMethod("as.character", "unitizerDiff",
 
         x.r.h <- new(
           "unitizerDiff", tar.capt=tar.r.h.txt, cur.capt=cur.r.h.txt,
-          diffs=char_diff(tar.r.h.txt, cur.r.h.txt)
+          diffs=char_diff(tar.r.h.txt, cur.r.h.txt, white.space=white.space)
         )
         r.h.diff <- diff_line(x.r.h)
         regmatches(x@tar.capt[tar.head], tar.r.h) <- r.h.diff$target
@@ -191,6 +200,7 @@ diff_line <- function(
   # mismatches. Start by getting the match ids that are not NA and
   # greater than zero
 
+  white.space <- x@diffs@white.space
   tar.diff <- x@diffs@target[tar.range]
   cur.diff <- x@diffs@current[cur.range]
 
@@ -209,7 +219,10 @@ diff_line <- function(
   cur.txt <- x@cur.capt[cur.range]
 
   word.color <-
-    diff_word(tar.txt[tar.ids.mismatch], cur.txt[cur.ids.mismatch])
+    diff_word(
+      tar.txt[tar.ids.mismatch], cur.txt[cur.ids.mismatch],
+      white.space=white.space
+    )
 
   tar.txt[tar.ids.mismatch] <- word.color$target
   cur.txt[cur.ids.mismatch] <- word.color$current
@@ -284,7 +297,7 @@ find_brackets <- function(x) {
 # a single line to allow for the diff to look for matches across lines, though
 # the result is then unwrapped back to the original lines.
 
-diff_word <- function(target, current, across.lines=FALSE) {
+diff_word <- function(target, current, across.lines=FALSE, white.space) {
   stopifnot(
     is.character(target), is.character(current),
     all(!is.na(target)), all(!is.na(current)),
@@ -310,8 +323,10 @@ diff_word <- function(target, current, across.lines=FALSE) {
     tar.split <- list(unlist(tar.split))
     cur.split <- list(unlist(cur.split))
   }
-  diffs <- Map(char_diff, tar.split, cur.split)
-
+  diffs <- mapply(
+    char_diff, tar.split, cur.split, MoreArgs=list(white.space=white.space),
+    SIMPLIFY=FALSE
+  )
   # Color
 
   tar.colored <- lapply(
@@ -394,6 +409,9 @@ diff_color <- function(txt, diffs, range, color) {
 #'   shown before we start trimming.  We will always attempt to show as much as
 #'   \code{2 * context + 1} lines of output so context may not be centered if
 #'   objects display as less than \code{2 * context + 1} lines.
+#' @param white.space TRUE or FALSE, whether to consider differences in
+#'   horizontal whitespace (i.e. spaces and tabs) as differences (defaults to
+#'   FALSE)
 #' @param max.level integer(1L) up to how many levels to try running \code{str};
 #'   \code{str} is run repeatedly starting with \code{max.level=1} and then
 #'   increasing \code{max.level} until we fill the context or a difference
@@ -404,27 +422,28 @@ diff_color <- function(txt, diffs, range, color) {
 #'   performance cost; set to 0 to disable
 #' @return character, invisibly, the text representation of the diff
 
-diff_obj <- function(target, current, context=NULL) {
+diff_obj <- function(target, current, context=NULL, white.space=FALSE) {
   context <- check_context(context)
   frame <- parent.frame()
   width <- getOption("width")
 
   diff_obj_internal(
     target, current, tar.exp=substitute(target), cur.exp=substitute(current),
-    context=context, frame=frame, width=width
+    context=context, frame=frame, width=width, white.space=white.space
   )
 }
 #' @rdname diff_obj
 #' @export
 
-diff_print <- function(target, current, context=NULL) {
+diff_print <- function(target, current, context=NULL, white.space=FALSE) {
   context <- check_context(context)
   width <- getOption("width")
   frame <- parent.frame()
   res <- as.character(
     diff_print_internal(
       target, current, tar.exp=substitute(target), frame=frame,
-      cur.exp=substitute(current), context=context, width=width
+      cur.exp=substitute(current), context=context, width=width,
+      white.space=white.space
     ),
     context=context,
     width=width
@@ -435,14 +454,17 @@ diff_print <- function(target, current, context=NULL) {
 #' @rdname diff_obj
 #' @export
 
-diff_str <- function(target, current, context=NULL, max.level=10) {
+diff_str <- function(
+  target, current, context=NULL, white.space=FALSE, max.level=10
+) {
   width <- getOption("width")
   frame <- parent.frame()
   res <- as.character(
     diff_str_internal(
       target, current, tar.exp=substitute(target),
       cur.exp=substitute(current), context=context, width=width,
-      frame=frame, max.lines=NULL, max.level=max.level
+      frame=frame, max.lines=NULL, max.level=max.level,
+      white.space=white.space
     ),
     context=context,
     width=width
@@ -462,11 +484,14 @@ diff_str <- function(target, current, context=NULL, max.level=10) {
 #   method
 
 diff_print_internal <- function(
-  target, current, tar.exp, cur.exp, context, width, frame
+  target, current, tar.exp, cur.exp, context, width, frame, white.space
 ) {
   # capture normal prints, along with default prints to make sure that if we
   # do try to wrap an atomic vector print it is very likely to be in a format
   # we are familiar with and not affected by a non-default print method
+  if(!is.TF(white.space))
+    stop("Argument `white.space` must be TRUE or FALSE")
+
   both.at <- is.atomic(current) && is.atomic(target)
   cur.capt <- obj_capt(current, width - 3L, frame)
   cur.capt.def <- if(both.at) obj_capt(current, width - 3L, frame, default=TRUE)
@@ -475,7 +500,7 @@ diff_print_internal <- function(
 
   # Run basic diff
 
-  diffs <- char_diff(tar.capt, cur.capt)
+  diffs <- char_diff(tar.capt, cur.capt, white.space=white.space)
 
   new(
     "unitizerDiff", tar.capt=tar.capt, cur.capt=cur.capt,
@@ -485,7 +510,7 @@ diff_print_internal <- function(
 }
 diff_str_internal <- function(
   target, current, tar.exp, cur.exp, context, width, frame, max.lines,
-  max.level=10
+  max.level=10, white.space
 ) {
   context <- check_context(context)
   if(is.null(max.lines)) {
@@ -497,6 +522,8 @@ diff_str_internal <- function(
     stop("Argument `max.level` must be integer(1L) and GTE zero.")
   if(max.level > 100)
     stop("Argument `max.level` cannot be greater than 100")
+  if(!is.TF(white.space))
+    stop("Argument `white.space` must be TRUE or FALSE")
 
   obj.add.capt.str <- obj.rem.capt.str <- obj.add.capt.str.prev <-
     obj.rem.capt.str.prev <- character()
@@ -532,13 +559,13 @@ diff_str_internal <- function(
     }
     # Run differences and iterate
 
-    diffs.str <- char_diff(obj.rem.capt.str, obj.add.capt.str)
+    diffs.str <- char_diff(obj.rem.capt.str, obj.add.capt.str, white.space)
     obj.add.capt.str.prev <- obj.add.capt.str
     obj.rem.capt.str.prev <- obj.rem.capt.str
     prev.lvl <- lvl
     lvl <- lvl + 1
   }
-  diffs <- char_diff(obj.rem.capt.str, obj.add.capt.str)
+  diffs <- char_diff(obj.rem.capt.str, obj.add.capt.str, white.space)
   tar.exp <- call("str", tar.exp, max.level=lvl)
   cur.exp <- call("str", cur.exp, max.level=lvl)
   new(
@@ -552,7 +579,7 @@ diff_str_internal <- function(
 diff_obj_internal <- function(
   target, current, tar.exp=substitute(target),
   cur.exp=substitute(current), context=NULL, width=NULL,
-  frame=parent.frame(), max.level=10L, file=stdout()
+  frame=parent.frame(), max.level=10L, file=stdout(), white.space
 ) {
   context <- check_context(context)
   width <- check_width(width)
@@ -656,14 +683,22 @@ Rdiff_obj <- function(from, to, ...) {
 # Carries out the comparison between two character vectors and returns the
 # elements that match and those that don't as a unitizerDiffDiffs object
 
-char_diff <- function(x, y) {
+char_diff <- function(x, y, white.space=FALSE) {
+  if(!white.space) {
+    pat.1 <- "^[\\t ]*|[\\t ]*$"
+    pat.2 <- "[\\t ]+"
+    x <- gsub(pat.2, " ", gsub(pat.1, "", x))
+    y <- gsub(pat.2, " ", gsub(pat.1, "", y))
+  }
   diffs.int <- char_diff_int(x, y)
   if(sum(!diffs.int[[1L]], na.rm=TRUE) != sum(!diffs.int[[2L]], na.rm=TRUE))
     stop(
       "Logic Error: diff produced unequal number of matching lines; contact ",
       "maintainer."
     )
-  do.call("new", c(list("unitizerDiffDiffs"), diffs.int))
+  do.call(
+    "new", c(list("unitizerDiffDiffs", white.space=white.space), diffs.int)
+  )
 }
 # Helper function encodes matches within mismatches so that we can later word
 # diff the mismatches
