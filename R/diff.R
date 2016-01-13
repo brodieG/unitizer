@@ -46,6 +46,14 @@ setMethod("any", "unitizerDiff",
       stop("`any` method for `unitizerDiff` supports only one argument")
     any(tarDiff(x), curDiff(x))
 } )
+setMethod("any", "unitizerDiffDiffs",
+  function(x, ..., na.rm = FALSE) {
+    dots <- list(...)
+    if(length(dots))
+      stop("`any` method for `unitizerDiff` supports only one argument")
+    any(tarDiff(x), curDiff(x))
+} )
+
 #' @rdname unitizer_s4method_doc
 
 setMethod("as.character", "unitizerDiff",
@@ -55,8 +63,18 @@ setMethod("as.character", "unitizerDiff",
     white.space <- x@diffs@white.space
 
     len.max <- max(length(x@tar.capt), length(x@cur.capt))
-    if(!any(x)) return("No visible differences between objects")
-
+    if(!any(x)) {
+      msg <- "No visible differences between objects"
+      if(!x@diffs@white.space) {
+        xa <- char_diff(x@tar.capt, x@cur.capt, white.space=TRUE)
+        if(any(xa))
+          msg <- cc(
+            "Only visible differences between objects are horizontal white ",
+            "spaces. You can re-run diff with `white.space=TRUE` to show them."
+          )
+      }
+      return(clr(word_wrap(msg, width=width), "silver"))
+    }
     show.range <- diff_range(x, context)
     show.range.tar <- intersect(show.range, seq_along(x@tar.capt))
     show.range.cur <- intersect(show.range, seq_along(x@cur.capt))
