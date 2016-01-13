@@ -73,6 +73,9 @@ setMethod("as.character", "unitizerDiff",
       tar.head <- tar.head.raw[tar.head.raw %in% show.range]
 
       if(length(cur.head) && length(tar.head)) {
+        # note we modify `x` here so that subsequent steps can re-use `x` with
+        # modifications
+
         pat <- sprintf("%s\\K.*", .brack.pat)
         cur.body <- regexpr(pat, x@cur.capt[cur.head], perl=TRUE)
         tar.body <- regexpr(pat, x@tar.capt[tar.head], perl=TRUE)
@@ -84,6 +87,18 @@ setMethod("as.character", "unitizerDiff",
         )
         regmatches(x@tar.capt[tar.head], tar.body) <- body.diff$target
         regmatches(x@cur.capt[cur.head], cur.body) <- body.diff$current
+
+        # We also need to diff the row headers
+
+        cur.r.h <- regexpr(.brack.pat, x@cur.capt[cur.head], perl=TRUE)
+        tar.r.h <- regexpr(.brack.pat, x@tar.capt[tar.head], perl=TRUE)
+
+        r.h.diff <- diff_word(
+          regmatches(x@tar.capt[tar.head], tar.r.h),
+          regmatches(x@cur.capt[cur.head], cur.r.h)
+        )
+        regmatches(x@tar.capt[tar.head], tar.r.h) <- r.h.diff$target
+        regmatches(x@cur.capt[cur.head], cur.r.h) <- r.h.diff$current
 
         # Everything else gets a normal line diff
 
