@@ -252,18 +252,6 @@ color_words <- function(chrs, diffs, color) {
 
 .brack.pat <- "^ *\\[\\d+\\]"
 
-diff_word_print <- function(target, current) {
-  # Need to make these arguments
-  width <- 80L
-  frame <- parent.frame()
-  cur.capt <- obj_capt(current, width - 3L, frame)
-  tar.capt <- obj_capt(target, width - 3L, frame)
-  # should check default:
-  # - default method equal to selected method
-  # - dealing with atomic?
-
-
-}
 # Determine if a string contains what appear to be standard index headers
 #
 # Returns index of elements in string that start with index headers.
@@ -627,14 +615,6 @@ check_width <- function(width) {
   }
   if(!is.int.pos.1L(width)) stop("Argument `width` ", err.msg)
   width
-}
-
-capt_print <- function(obj, width, frame) {
-
-}
-capt_str <- function(obj, width, frame) {
-}
-capt_diff <- function() {
 }
 #' a \code{tools::Rdiff} Between R Objects
 #'
