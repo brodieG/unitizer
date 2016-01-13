@@ -19,6 +19,7 @@ setClass(
     tar.capt.def="characterOrNULL",
     cur.capt.def="characterOrNULL"
   ),
+  prototype=list(mode="print"),
   validity=function(object) {
     if(!is.chr1(object@mode) || ! object@mode %in% c("print", "str"))
       return("slot `mode` must be either \"print\" or \"str\"")
@@ -48,8 +49,8 @@ setMethod("as.character", "unitizerDiff",
     if(!any(x)) return("No visible differences between objects")
 
     show.range <- diff_range(x, context)
-    show.range.tar <- show.range %in% seq_along(x@tar.capt)
-    show.range.cur <- show.range %in% seq_along(x@cur.capt)
+    show.range.tar <- intersect(show.range, seq_along(x@tar.capt))
+    show.range.cur <- intersect(show.range, seq_along(x@cur.capt))
 
     # Detect whether we should attempt to deal with wrapping objects, if so
     # overwrite cur/tar.body/rest variables with the color diffed wrap word
@@ -93,10 +94,14 @@ setMethod("as.character", "unitizerDiff",
         cur.r.h <- regexpr(.brack.pat, x@cur.capt[cur.head], perl=TRUE)
         tar.r.h <- regexpr(.brack.pat, x@tar.capt[tar.head], perl=TRUE)
 
-        r.h.diff <- diff_word(
-          regmatches(x@tar.capt[tar.head], tar.r.h),
-          regmatches(x@cur.capt[cur.head], cur.r.h)
+        cur.r.h.txt <- regmatches(x@cur.capt[cur.head], cur.r.h)
+        tar.r.h.txt <- regmatches(x@tar.capt[tar.head], tar.r.h)
+
+        x.r.h <- new(
+          "unitizerDiff", tar.capt=tar.r.h.txt, cur.capt=cur.r.h.txt,
+          diffs=char_diff(tar.r.h.txt, cur.r.h.txt)
         )
+        r.h.diff <- diff_line(x.r.h)
         regmatches(x@tar.capt[tar.head], tar.r.h) <- r.h.diff$target
         regmatches(x@cur.capt[cur.head], cur.r.h) <- r.h.diff$current
 
@@ -106,55 +111,19 @@ setMethod("as.character", "unitizerDiff",
         tar.rest <- show.range.tar[!show.range.tar %in% tar.head]
       }
     }
-    # Run line diffs on the remaining lines
-    # Match up the diffs; first step is to do word diffs on the matched
-    # mismatches. Start by getting the match ids that are not NA and
-    # greater than zero
+    # Do the line diffs
 
-    tar.diff <- x@diffs@target[tar.rest]
-    cur.diff <- x@diffs@current[cur.rest]
-
-    match.ids <- Filter(identity, tar.diff)
-
-    # Now find the indeces of these ids that are in display range
-
-    tar.ids.mismatch <- match(match.ids, x@diffs@target[cur.rest])
-    cur.ids.mismatch <- match(match.ids, x@diffs@current[tar.rest])
-    if( any(is.na(c(tar.ids.mismatch, cur.ids.mismatch))))
-      stop("Logic Error: mismatched mismatches; contact maintainer.")
-
-    # Add word colors
-
-    tar.txt <- x@tar.capt
-    cur.txt <- x@cur.capt
-
-    word.color <-
-      diff_word(tar.txt[tar.ids.mismatch], cur.txt[cur.ids.mismatch])
-
-    tar.txt[tar.ids.mismatch] <- word.color$target
-    cur.txt[cur.ids.mismatch] <- word.color$current
-
-    # Color lines that were not word colored
-
-    tar.seq <- seq_along(tar.txt)
-    cur.seq <- seq_along(cur.txt)
-    tar.line.diff <- tarDiff(x) & !tar.seq %in% tar.ids.mismatch &
-      tar.seq %in% tar.rest
-    cur.line.diff <- curDiff(x) & !cur.seq %in% cur.ids.mismatch &
-      cur.seq %in% cur.rest
-
-    tar.txt[tar.line.diff] <- clr(tar.txt[tar.line.diff], color="red")
-    cur.txt[cur.line.diff] <- clr(cur.txt[cur.line.diff], color="green")
+    diff.fin <- diff_line(x, tar.rest, cur.rest)
 
     # Add all the display stuff
 
     c(
       obj_screen_chr(
-        tar.txt,  x@tar.exp, diffs=tarDiff(x), range=show.range,
+        diff.fin$target,  x@tar.exp, diffs=tarDiff(x), range=show.range,
         width=width, pad= "-  ", color="red"
       ),
       obj_screen_chr(
-        cur.txt,  x@cur.exp, diffs=curDiff(x), range=show.range,
+        diff.fin$current,  x@cur.exp, diffs=curDiff(x), range=show.range,
         width=width, pad= "+  ", color="green"
     ) )
 } )
@@ -207,6 +176,64 @@ diff_range <- function(x, context) {
   }
   show.range
 }
+
+# Matches up mismatched lines and word diffs them line by line, lines that
+# cannot be matched up are fully diffed
+#
+# Designed to operate on subsets of an original diff, hence tar.range and
+# cur.range
+
+diff_line <- function(
+  x, tar.range=seq_along(tarDiff(x)), cur.range=seq_along(curDiff(x))
+) {
+  # Run line diffs on the remaining lines
+  # Match up the diffs; first step is to do word diffs on the matched
+  # mismatches. Start by getting the match ids that are not NA and
+  # greater than zero
+
+  tar.diff <- x@diffs@target[tar.range]
+  cur.diff <- x@diffs@current[cur.range]
+
+  match.ids <- Filter(identity, tar.diff)
+
+  # Now find the indeces of these ids that are in display range
+
+  tar.ids.mismatch <- match(match.ids, x@diffs@target[cur.range])
+  cur.ids.mismatch <- match(match.ids, x@diffs@current[tar.range])
+  if( any(is.na(c(tar.ids.mismatch, cur.ids.mismatch))))
+    stop("Logic Error: mismatched mismatches; contact maintainer.")
+
+  # Add word colors
+
+  tar.txt <- x@tar.capt[tar.range]
+  cur.txt <- x@cur.capt[cur.range]
+
+  word.color <-
+    diff_word(tar.txt[tar.ids.mismatch], cur.txt[cur.ids.mismatch])
+
+  tar.txt[tar.ids.mismatch] <- word.color$target
+  cur.txt[cur.ids.mismatch] <- word.color$current
+
+  # Color lines that were not word colored
+
+  tar.seq <- seq_along(tar.txt)
+  cur.seq <- seq_along(cur.txt)
+  tar.line.diff <- setdiff(which(tarDiff(x)[tar.range]), tar.ids.mismatch)
+  cur.line.diff <- setdiff(which(curDiff(x)[cur.range]), cur.ids.mismatch)
+
+  tar.txt[tar.line.diff] <- clr(tar.txt[tar.line.diff], color="red")
+  cur.txt[cur.line.diff] <- clr(cur.txt[cur.line.diff], color="green")
+
+  # Re-sub back into the entire character vector
+
+  x@tar.capt[tar.range] <- tar.txt
+  x@cur.capt[cur.range] <- cur.txt
+
+  # return
+
+  list(target=x@tar.capt, current=x@cur.capt)
+}
+
 # groups characters based on whether they are different or not and colors
 # them; assumes that the chrs vector values are words that were previously
 # separated by spaces, and collapses the strings back with the spaces at the
@@ -273,7 +300,8 @@ diff_word <- function(target, current, across.lines=FALSE) {
   stopifnot(
     is.character(target), is.character(current),
     all(!is.na(target)), all(!is.na(current)),
-    is.TF(across.lines)
+    is.TF(across.lines),
+    across.lines || length(target) == length(current)
   )
   # Compute the char by char diffs for each line
 
