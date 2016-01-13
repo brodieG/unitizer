@@ -13,7 +13,8 @@ local({
   oc1 <- unitizer:::obj_capt(test.obj.s3)
   oc2 <- unitizer:::obj_capt(test.obj.s4)
   do1 <- unitizer:::diff_obj_internal(
-    test.obj.s3, test.obj.s3, width=60L, context=c(10L, 5L), file=stdout()
+    test.obj.s3, test.obj.s3, width=60L, context=c(10L, 5L), file=stdout(),
+    white.space=FALSE
   )
 
   test_that("S4 objs", {
@@ -22,13 +23,14 @@ local({
       tar.exp=quote(letters), cur.exp=quote(letters),
       diffs=new(
         "unitizerDiffDiffs",
-        target=c(rep(TRUE, 25), FALSE),
-        current=c(FALSE, rep(TRUE, 25))
+        target=c(1:25, 0L),
+        current=c(0L, 1:25),
+        white.space=TRUE
       ), mode="str"
     )
     y <- x
-    y@diffs@target <- rep(FALSE, 26)
-    y@diffs@current <- rep(FALSE, 26)
+    y@diffs@target <- rep(0L, 26)
+    y@diffs@current <- rep(0L, 26)
     expect_true(any(x))
     expect_false(any(y))
     x@tar.capt <- letters[1:5]
@@ -81,7 +83,7 @@ local({
     )
     expect_identical(
       diff_obj(mx.3[1:6, ], mx.3[1:6, ], context=c(10L, 2L)),
-      "No visible differences between objects"
+      "\033[90mNo visible differences between objects\033[39m"
     )
     lst.1 <- list(
       NULL,
@@ -108,7 +110,7 @@ local({
     c(
     "carrot", "cat", "cake", "eat", "rabbit", "holes", "the", "a", "pasta",
     "boom", "noon", "sky", "parenthesis", "blah", "bangalore", "dog", "snake"
-  )
+  ) )
   nums <- runif(5, -1e9, 1e9)
   scinums <- format(c(nums, 1/nums), scientific=TRUE)
   other <- c(paste0(sample(1:200, 5), "%"), "5.34e-8", "-2.534e6")
@@ -128,26 +130,23 @@ local({
     hello1 <- structure("   hello  hello", class="unitizer_test_obj_1")
     hello2 <- structure( "hello    hello   ", class="unitizer_test_obj_1")
     expect_equal(
-      diff_print(hello1, hello2, context=c(5, 10)),
+      diff_print(hello1, hello2, context=c(10, 5)),
       c("\033[90mOnly visible differences between objects are horizontal \033[39m", "\033[90mwhite spaces. You can re-run diff with `white.space=TRUE` to\033[39m", "\033[90mshow them.\033[39m")
     )
     expect_equal(
-      diff_print("hello hello", "hello    hello", white.space=TRUE, context=c(5, 10)),
+      diff_print(hello1, hello2, white.space=TRUE, context=c(10, 5)),
       c("\033[36m@@ hello1 @@\033[39m", "\033[31m-  \033[39m   hello  hello", "\033[36m@@ hello2 @@\033[39m", "\033[32m+  \033[39mhello    hello")
     )
+    # expect_equal(diff_print(matrix(1:100), matrix(1:99), context=c(1, 1)))
   })
-
-  test_that("brackets", {
-    unitizer:::find_brackets(capture.output(1:100))
-
-  } )
   test_that("diff_word", {
     # Make sure not fooled by repeats of same tokens in same string
 
     expect_identical(
       unitizer:::diff_word(
         "[1] \"`1:3` should be length 5 (is 3)\"",
-        "[1] \"should be length 5 (is 3)\""
+        "[1] \"should be length 5 (is 3)\"",
+        white.space=FALSE
       ),
       structure(list(target = "[1] \033[31m\"`\033[39m\033[31m1\033[39m\033[31m:\033[39m\033[31m3\033[39m\033[31m`\033[39m should be length 5 (is 3)\"", current = "[1] \033[32m\"\033[39mshould be length 5 (is 3)\""), .Names = c("target", "current"))
     )
@@ -156,79 +155,80 @@ local({
     a <- c("a b", "c d")
     b <- c("b c", "d e")
     expect_identical(
-      unitizer:::diff_word(a, b, across.lines=TRUE),
+      unitizer:::diff_word(a, b, across.lines=TRUE, white.space=FALSE),
       structure(list(target = c("\033[31ma\033[39m b", "c d"), current = c("b c", "d \033[32me\033[39m")), .Names = c("target", "current"))
     )
     a <- c("x a b", "c d z")
     b <- c("x b c", "d e z")
     expect_identical(
-      unitizer:::diff_word(a, b, across.lines=TRUE),
+      unitizer:::diff_word(a, b, across.lines=TRUE, white.space=FALSE),
       structure(list(target = c("x \033[31ma\033[39m b", "c d z"), current = c("x b c", "d \033[32me\033[39m z")), .Names = c("target", "current"))
     )
     a <- c("x a b", "c d z")
     b <- c("z b c", "d e x")
     expect_identical(
-      unitizer:::diff_word(a, b, across.lines=TRUE),
+      unitizer:::diff_word(a, b, across.lines=TRUE, white.space=FALSE),
       structure(list(target = c("x \033[31ma\033[39m \033[31mb\033[39m", "\033[31mc\033[39m \033[31md\033[39m \033[31mz\033[39m"), current = c("\033[32mz\033[39m \033[32mb\033[39m \033[32mc\033[39m", "\033[32md\033[39m \033[32me\033[39m x")), .Names = c("target", "current"))
     )
     lapply(
-      unitizer:::diff_word(a, b, across.lines=TRUE),
+      unitizer:::diff_word(a, b, across.lines=TRUE, white.space=FALSE),
       cat, sep="\n"
     )
-  }
+  })
   options(old.opt)
   test_that("char_diff", {
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "c")),
       new(
         "unitizerDiffDiffs", target=integer(3L),
-        current=integer(3L)
+        current=integer(3L), white.space=FALSE
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b"), c("a", "b", "c")),
       new(
         "unitizerDiffDiffs", target=integer(2L),
-        current=c(0L, 0L, NA)
+        current=c(0L, 0L, NA), white.space=FALSE
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b")),
       new(
         "unitizerDiffDiffs", target=c(0L, 0L, NA),
-        current=integer(2L)
+        current=integer(2L), white.space=FALSE
     ) )
     expect_identical(
       unitizer:::char_diff(c("b", "c"), c("a", "b")),
       new(
         "unitizerDiffDiffs", target=c(0L, NA),
-        current=c(NA, 0L)
+        current=c(NA, 0L), white.space=FALSE
     ) )
     expect_identical(
       unitizer:::char_diff(letters[1:3], letters[2:4]),
       new(
         "unitizerDiffDiffs", target=c(NA, 0L, 0L),
-        current=c(0L, 0L, NA)
+        current=c(0L, 0L, NA), white.space=FALSE
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c", "d"), c("a", "b", "b", "d", "e")),
       new(
         "unitizerDiffDiffs", target=c(0L, 0L, 1L, 0L),
-        current=c(0L, 0L, 1L, 0L, NA)
+        current=c(0L, 0L, 1L, 0L, NA), white.space=FALSE
     ) )
     expect_identical(
       unitizer:::char_diff(c("a", "b", "c"), c("a", "b", "d")),
       new(
         "unitizerDiffDiffs", target=c(0L, 0L, 1L),
-        current=c(0L, 0L, 1L)
+        current=c(0L, 0L, 1L), white.space=FALSE
     ) )
     expect_identical(
       unitizer:::char_diff(
         c("a", "b", "c", "d", "f", "g", "h", "i", "j"),
-        c("b", "C", "D", "E", "f", "G", "H", "j", "K")
+        c("b", "C", "D", "E", "f", "G", "H", "j", "K"), white.space=FALSE
       ),
       new(
         "unitizerDiffDiffs", target=c(NA, 0L, 1L, 2L, 0L, 3L, 4L, NA, 0L),
-        current=c(0L, 0L, 1L)
+        current=c(0L, 1L, 2L, NA, 0L, 3L, 4L, 0L, NA), white.space=FALSE
       )
+    )
   })
   test_that("Rdiff_obj", {
     a <- matrix(1:3, ncol=1)
