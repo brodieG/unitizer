@@ -741,9 +741,6 @@ match_mismatch <- function(x, y) {
   list(target=x.d, current=y.d)
 }
 char_diff_int <- function(x, y) {
-  # REALLY WANT TO CHANGE THIS TO RETURN MISMATCHES LINED UP WITH EACH OTHER
-  # SO THAT RETURN VALUE HAS 0L FOR MATCHES, #L FOR MISMATCHES THAT LINE UP
-  # ACROSS THE TWO VECTORS, AND NA OR SOME OTHER VALUE FOR THOSE THAT DONT
   stopifnot(
     is.character(x), is.character(y), !any(is.na(c(x, y)))
   )
@@ -806,6 +803,78 @@ char_diff_int <- function(x, y) {
     }
   }
   list(target=x.d, current=y.d)
+}
+# Alternate algorithm
+
+differ <- function(A, B) {
+  N <- length(A)
+  M <- length(B)
+  MAX <- M + N
+  OFF <- MAX + 1L  # offset to adjust to R indexing
+  Vl <- vector("list", MAX)
+  Vl[[1L]] <- integer(2L * MAX + 1L)
+  for(D in seq_len(MAX) - 1L) {
+    Vl[[D + 1L]] <- if(!D) integer(2L * MAX + 1L) else Vl[[D]]
+    for(k in seq(-D, D, by=2L)) {
+      # not sure of precendence for || vs &&
+      # k == -D means x == 0
+      V <- Vl[[D + 1L]]
+      if(k == -D || (k != D && V[k - 1L + OFF] < V[k + 1L + OFF])) {
+        x <- V[k + 1L + OFF]
+      } else {
+        x <- V[k - 1L + OFF] + 1L
+      }
+      y <- x - k
+
+      # Move on diagonal
+      while (x < N && y < M && A[x + 1L] == B[y + 1L]) {
+        x <- x + 1L
+        y <- y + 1L
+      }
+      # Record last match or end; if a mismatch no longer increment
+
+      Vl[[D + 1L]][k + OFF] <- x
+      if(x >= N && y >= M) {
+        # Create matrix to hold entire result path; should be longest of
+        # A and B plus recorded differences
+
+        path.len <- D + max(N, M)
+        res <- matrix(integer(1L), nrow=path.len, ncol=2)
+        res[path.len, ] <- c(x, y)
+        path.len <- path.len - 1L
+
+        for(d in rev(seq_len(D))) {
+          Vp <- Vl[[d]]
+          break.out <- FALSE
+          repeat {
+            shift.up <- Vp[k + 1L + OFF] == x
+            shift.left <- Vp[k - 1L + OFF] == x - 1L
+            if(!x && !y) {
+              break
+            } else if(!shift.up && !shift.left) {
+              # must be on snake
+              x <- x - 1L
+              y <- y - 1L
+            } else {
+              if(shift.up) {
+                y <- y - 1L
+                k <- k + 1L
+              } else {
+                x <- x - 1L
+                k <- k - 1L
+              }
+              break.out <- TRUE
+            }
+            res[path.len, ] <- c(x, y)
+            path.len <- path.len - 1L
+            if(break.out) break
+          }
+        }
+        return(res)
+      }
+    }
+  }
+  stop("Logic Error, should not get here")
 }
 obj_capt <- function(
   obj, width=getOption("width"), frame=parent.frame(), mode="print",
