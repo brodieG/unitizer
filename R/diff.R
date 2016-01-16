@@ -164,6 +164,14 @@ setMethod("tarDiff", "unitizerDiffDiffs", function(x, ...) {
 setMethod("curDiff", "unitizerDiffDiffs", function(x, ...) {
   is.na(x@current) | !!x@current
 } )
+diff_rdiff <- function(target, current) {
+  stopifnot(is.character(target), is.character(current))
+  a <- tempfile("unitizerRdiffa")
+  writeLines(target, a)
+  b <- tempfile("unitizerRdiffb")
+  writeLines(current, b)
+  diff <- capture.output(system(paste("diff -bw", shQuote(a), shQuote(b))))
+}
 # If there is an error, we want to show as much of the objects as we can
 # centered on the error.  If we can show the entire objects without centering
 # then we do that.
