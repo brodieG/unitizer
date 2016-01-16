@@ -232,8 +232,8 @@ diff_line <- function(
 
   # Now find the indeces of these ids that are in display range
 
-  tar.ids.mismatch <- match(match.ids, x@diffs@target[cur.range])
-  cur.ids.mismatch <- match(match.ids, x@diffs@current[tar.range])
+  tar.ids.mismatch <- match(match.ids, x@diffs@target[tar.range])
+  cur.ids.mismatch <- match(match.ids, x@diffs@current[cur.range])
   if( any(is.na(c(tar.ids.mismatch, cur.ids.mismatch))))
     stop("Logic Error: mismatched mismatches; contact maintainer.")
 
