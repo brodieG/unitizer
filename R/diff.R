@@ -876,6 +876,65 @@ differ <- function(A, B) {
   }
   stop("Logic Error, should not get here")
 }
+# Translates a diff path produced by the Myers Algorithm into the standard
+# format we use in the rest of unitizer
+
+diff_path_to_diff <- function(path, target, current) {
+  stopifnot(
+    is.character(target), is.character(current),
+    is.matrix(path), is.integer(path), ncol(path) == 2,
+    all(path[, 1L] %in% c(0L, seq_along(target))),
+    all(path[, 2L] %in% c(0L, seq_along(current)))
+  )
+  # Path specifies 0s as well as duplicate coordinates, which we don't use
+  # in our other formats.  We'll set all those to NA so that we can later
+  # remove them
+
+  path[path == 0L] <- NA_integer_
+  path[duplicated(path[, 1L]), 1L] <- NA_integer_
+  path[duplicated(path[, 2L]), 2L] <- NA_integer_
+
+  # Now create the character equivalents of the path matrix
+
+  tar.path <- target[path[, 1L]]
+  cur.path <- current[path[, 2L]]
+
+  # Mark the equalities in the path matrix by setting them negative
+
+  path[which(tar.path == cur.path), ] <- -path[which(tar.path == cur.path), ]
+
+  # Remaining numbers are the mismatches which we will arbitrarily assign to
+  # each other; to do so we first split our data into groups of matches and
+  # mismatches and do the mapping there-in.  We also get rid of non-matching
+  # entries.
+
+  matched <- ifelse(!is.na(path[, 1]) & path[, 1] < 0L, 1L, 0L)
+  splits <- cumsum(abs(diff(c(0, matched))))
+  chunks <- split.data.frame(path, splits)
+  res.tar <- res.cur <- vector("list", length(chunks))
+  mm.count <- 0L  # for tracking matched mismatches
+
+  for(i in seq_along(chunks)) {
+    x <- chunks[[i]]
+    if((neg <- any(x < 0L, na.rm=TRUE)) && !all(x < 0L, na.rm=TRUE))
+      stop("Logic Error: match group error; contact maintainer")
+    if(neg) {
+      # Matches, so equal length and set to zero
+      res.tar[[i]] <- res.cur[[i]] <- integer(nrow(x))
+    } else {
+      # Mismatches
+      tar.mm <- Filter(Negate(is.na), x[, 1L])
+      cur.mm <- Filter(Negate(is.na), x[, 2L])
+
+      x.min.len <- min(length(tar.mm), length(cur.mm))
+      res.tar[[i]] <- res.cur[[i]] <- seq_len(x.min.len) + mm.count
+      mm.count <- x.min.len + mm.count
+      length(res.tar[[i]]) <- length(tar.mm)
+      length(res.cur[[i]]) <- length(cur.mm)
+    }
+  }
+  return(list(target=unlist(res.tar), current=unlist(res.cur)))
+}
 obj_capt <- function(
   obj, width=getOption("width"), frame=parent.frame(), mode="print",
   max.level=0L, default=FALSE
