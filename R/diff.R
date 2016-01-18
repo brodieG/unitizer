@@ -813,7 +813,6 @@ char_diff_myers_int <- function(A, B) {
   if(!MAX) return(matrix(integer(0L), ncol=2))
   OFF <- MAX + 1L  # offset to adjust to R indexing
   Vl <- vector("list", MAX)
-  Vl[[1L]] <- integer(2L * MAX + 1L)
   for(D in seq_len(MAX) - 1L) {
     Vl[[D + 1L]] <- if(!D) integer(2L * MAX + 1L) else Vl[[D]]
     for(k in seq(-D, D, by=2L)) {
@@ -848,14 +847,15 @@ char_diff_myers_int <- function(A, B) {
           Vp <- Vl[[d]]
           break.out <- FALSE
           repeat {
-            shift.up <- Vp[k + 1L + OFF] == x
-            shift.left <- Vp[k - 1L + OFF] == x - 1L
-            if(!x && !y) {
+            # can't match to zero since that is the initialized value
+            shift.up <- Vp[k + 1L + OFF] == x && x
+            shift.left <- Vp[k - 1L + OFF] == x - 1L && x > 1L
+            if(x <= 0L && y <= 0L) {
               break
             } else if(!shift.up && !shift.left) {
-              # must be on snake
-              x <- x - 1L
-              y <- y - 1L
+              # must be on snake or about to hit 0,0
+              x <- max(x - 1L, 0L)
+              y <- max(y - 1L, 0L)
             } else {
               if(shift.up) {
                 y <- y - 1L
@@ -871,6 +871,8 @@ char_diff_myers_int <- function(A, B) {
             if(break.out) break
           }
         }
+        if(any(res < 0L))
+          stop("Logic Error: diff generated illegal coords; contact maintainer.")
         return(res)
       }
     }
