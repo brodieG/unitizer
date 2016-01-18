@@ -806,10 +806,11 @@ char_diff_int <- function(x, y) {
 }
 # Alternate algorithm
 
-differ <- function(A, B) {
+char_diff_myers_int <- function(A, B) {
   N <- length(A)
   M <- length(B)
-  MAX <- M + N
+  MAX <- M + N + 1L
+  if(!MAX) return(matrix(integer(0L), ncol=2))
   OFF <- MAX + 1L  # offset to adjust to R indexing
   Vl <- vector("list", MAX)
   Vl[[1L]] <- integer(2L * MAX + 1L)
@@ -888,9 +889,9 @@ diff_path_to_diff <- function(path, target, current) {
   )
   # Path specifies 0s as well as duplicate coordinates, which we don't use
   # in our other formats.  We'll set all those to NA so that we can later
-  # remove them
+  # remove them.  Any row with a zero gets set to NA (rowSums business)
 
-  path[path == 0L] <- NA_integer_
+  path[!!rowSums(!path), ] <- NA_integer_
   path[duplicated(path[, 1L]), 1L] <- NA_integer_
   path[duplicated(path[, 2L]), 2L] <- NA_integer_
 
