@@ -936,6 +936,10 @@ diff_path_to_diff <- function(path, target, current) {
   }
   return(list(target=unlist(res.tar), current=unlist(res.cur)))
 }
+char_diff_myers <- function(target, current) {
+  path <- char_diff_myers_int(target, current)
+  diff_path_to_diff(path, target, current)
+}
 obj_capt <- function(
   obj, width=getOption("width"), frame=parent.frame(), mode="print",
   max.level=0L, default=FALSE
