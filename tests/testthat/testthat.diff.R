@@ -105,12 +105,67 @@ local({
       c("\033[36m@@ lst.1 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[31m-  \033[39m[1] \"a\" \"\033[31mb\033[39m\" \"c\"", "   ", "\033[90m   ~~ omitted 34 lines w/ 4 diffs ~~\033[39m", "\033[36m@@ lst.2 @@\033[39m", "\033[90m   ~~ omitted 5 lines w/o diffs ~~\033[39m", "   $z[[1]][[1]]", "\033[32m+  \033[39m[1] \"a\"       \"\033[32mbananas\033[39m\" \"c\"", "   ", "\033[90m   ~~ omitted 35 lines w/ 5 diffs ~~\033[39m")
     )
   } )
+  test_that("diff myers", {
+    expect_identical(
+      unitizer:::char_diff_myers(character(), character()),
+      list(target = integer(0), current = integer(0))
+    )
+    expect_identical(
+      unitizer:::char_diff_myers("a", character()),
+      list(target = NA_integer_, current = integer(0))
+    )
+    expect_identical(
+      unitizer:::char_diff_myers(character(), "a"),
+      list(target = integer(0), current = NA_integer_)
+    )
+    expect_identical(
+      unitizer:::char_diff_myers("a", "a"), list(target = 0L, current = 0L)
+    )
+    expect_identical(
+      unitizer:::char_diff_myers("a", "b"),
+      list(target = 1L, current = 1L)
+    )
+    expect_identical(
+      unitizer:::char_diff_myers(c("a", "b"), "b"),
+      list(target = c(NA, 0L), current = 0L)
+    )
+    expect_identical(
+      unitizer:::char_diff_myers(c("a", "b"), "a"),
+      list(target = c(0L, NA), current = 0L)
+    )
+    expect_identical(
+      unitizer:::char_diff_myers("a", c("a", "b")),
+      list(target = 0L, current = c(0L, NA))
+    )
+    expect_identical(
+      unitizer:::char_diff_myers("b", c("a", "b")),
+      list(target = 0L, current = c(NA, 0L))
+    )
+    expect_identical(
+      unitizer:::char_diff_myers(c("a", "b"), c("b", "c")),
+      list(target = c(NA, 0L), current = c(0L, NA))
+    )
+    expect_identical(
+      unitizer:::char_diff_myers(c("a", "b", "c", "d"), c("a", "c", "d", "b")),
+      list(target = c(0L, NA, 0L, 0L), current = c(0L, 0L,  0L, NA))
+    )
+  } )
   set.seed(2)
-  words <- sample(
+  w1 <- sample(
     c(
     "carrot", "cat", "cake", "eat", "rabbit", "holes", "the", "a", "pasta",
-    "boom", "noon", "sky", "parenthesis", "blah", "bangalore", "dog", "snake"
-  ) )
+    "boom", "noon", "sky", "hat", "blah", "paris", "dog", "snake"
+    ), 25, replace=TRUE
+  )
+  w4 <- w3 <- w2 <- w1
+  w2[sample(seq_along(w1), 5)] <- LETTERS[1:5]
+  w3 <- w1[8:15]
+  w4 <- c(w1[1:5], toupper(w1[1:5]), w1[6:15], toupper(w1[1:5]))
+
+  diff_print(w1, w2)
+  diff_print(w1, w3)
+  diff_print(w1, w4)
+
   nums <- runif(5, -1e9, 1e9)
   scinums <- format(c(nums, 1/nums), scientific=TRUE)
   other <- c(paste0(sample(1:200, 5), "%"), "5.34e-8", "-2.534e6")
@@ -137,7 +192,14 @@ local({
       diff_print(hello1, hello2, white.space=TRUE, context=c(10, 5)),
       c("\033[36m@@ hello1 @@\033[39m", "\033[31m-  \033[39m   hello  hello", "\033[36m@@ hello2 @@\033[39m", "\033[32m+  \033[39mhello    hello")
     )
-    # expect_equal(diff_print(matrix(1:100), matrix(1:99), context=c(1, 1)))
+    expect_equal(
+      diff_print(matrix(1:100), matrix(1:98), context=c(1, 1)),
+      c("\033[36m@@ matrix(1:100) @@\033[39m", "\033[90m   ~~ omitted 98 lines w/o diffs ~~\033[39m", "    [98,]   98", "\033[31m-  \033[39m\033[31m [99,]   99\033[39m", "\033[31m-  \033[39m\033[31m[100,]  100\033[39m", "\033[36m@@ matrix(1:98) @@\033[39m", "\033[90m   ~~ omitted 98 lines w/o diffs ~~\033[39m", "   [98,]   98")
+    )
+    expect_equal(
+      diff_print(matrix(1:100), matrix(1:98), context=c(1, 1), white.space=TRUE),
+      c("\033[36m@@ matrix(1:100) @@\033[39m", "\033[31m-  \033[39m       [,1]", "\033[31m-  \033[39m  [1,]    1", "\033[31m-  \033[39m  [2,]    2", "\033[90m   ~~ omitted 98 lines w/ 98 diffs ~~\033[39m", "\033[36m@@ matrix(1:98) @@\033[39m", "\033[32m+  \033[39m      [,1]", "\033[32m+  \033[39m [1,]    1", "\033[32m+  \033[39m [2,]    2", "\033[90m   ~~ omitted 96 lines w/ 96 diffs ~~\033[39m")
+    )
   })
   test_that("diff_word", {
     # Make sure not fooled by repeats of same tokens in same string
