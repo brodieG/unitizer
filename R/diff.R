@@ -890,12 +890,21 @@ diff_path_to_diff <- function(path, target, current) {
     all(path[, 2L] %in% c(0L, seq_along(current)))
   )
   # Path specifies 0s as well as duplicate coordinates, which we don't use
-  # in our other formats.  We'll set all those to NA so that we can later
-  # remove them.  Any row with a zero gets set to NA (rowSums business)
+  # in our other formats.  For dupes, find first value for each index that is
+  # lined up with a real value in the other column
 
-  path[!!rowSums(!path), ] <- NA_integer_
-  path[duplicated(path[, 1L]), 1L] <- NA_integer_
-  path[duplicated(path[, 2L]), 2L] <- NA_integer_
+  get_dupe <- function(x) {
+    base <- !logical(length(x))
+    if(!length(y <- which(x != 0L)))
+      base[[1L]] <- FALSE else base[[min(y)]] <- FALSE
+    base
+  }
+  cur.dup <- as.logical(ave(path[, 1L], path[, 2L], FUN=get_dupe))
+  tar.dup <- as.logical(ave(path[, 2L], path[, 1L], FUN=get_dupe))
+
+  path[!path] <- NA_integer_
+  path[tar.dup, 1L] <- NA_integer_
+  path[cur.dup, 2L] <- NA_integer_
 
   # Now create the character equivalents of the path matrix
 
@@ -936,6 +945,9 @@ diff_path_to_diff <- function(path, target, current) {
       length(res.cur[[i]]) <- length(cur.mm)
     }
   }
+  if(!length(res.tar)) res.tar <- integer()
+  if(!length(res.cur)) res.cur <- integer()
+
   return(list(target=unlist(res.tar), current=unlist(res.cur)))
 }
 char_diff_myers <- function(target, current) {
