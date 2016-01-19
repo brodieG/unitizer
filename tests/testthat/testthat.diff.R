@@ -149,6 +149,14 @@ local({
       unitizer:::char_diff_myers(c("a", "b", "c", "d"), c("a", "c", "d", "b")),
       list(target = c(0L, NA, 0L, 0L), current = c(0L, 0L,  0L, NA))
     )
+    # Actual Myers sample string
+    expect_identical(
+      unitizer:::char_diff_myers(
+        c("a", "b", "c", "a", "b", "b", "a"),
+        c("c", "b", "a", "b", "a", "c")
+      ),
+      list(target = c(NA, NA, 0L, 0L, 0L, NA, 0L), current = c(0L,  NA, 0L, 0L, 0L, NA))
+    )
   } )
   set.seed(2)
   w1 <- sample(
