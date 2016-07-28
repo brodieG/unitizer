@@ -22,7 +22,8 @@ Depends:
     R (>= 3.2.2)
 Imports:
     methods,
-    stats
+    stats,
+    diffobj
 VignetteBuilder: knitr
 Suggests:
     knitr,
@@ -54,7 +55,6 @@ Collate:
     'browse.R'
     'color.R'
     'demo.R'
-    'diff.R'
     'faux_prompt.R'
     'fun.ref.R'
     'get.R'

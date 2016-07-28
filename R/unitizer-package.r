@@ -7,6 +7,7 @@
 #'
 #' @import methods
 #' @import stats
+#' @import diffobj
 #' @name `unitizer-package`
 #' @docType package
 
