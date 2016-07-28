@@ -4,18 +4,13 @@ language: r
 
 r_binary_packages:
   - testthat
-  - devtools
-  - knitr
-  - markdown
+  - covr
 
 warnings_are_errors: true
 
 sudo: required
 
 cran: http://cran.rstudio.com/
-
-r_github_packages:
-  - jimhester/covr@no_try
 
 after_success:
   - Rscript -e 'covr::codecov(quiet=FALSE, ...=list(quiet=FALSE))'
