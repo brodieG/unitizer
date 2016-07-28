@@ -17,6 +17,7 @@ vignette: >
 ### TL;DR
 
 `unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
+
 ```
 library(devtools)
 install_github("brodieg/unitizer")
@@ -135,13 +136,14 @@ Once you have created your first `unitizer` with `unitize`, subsequent calls to 
 
 ### State and Reference Objects
 
-`unitizer` tracks and manages many aspects of state so that it can be reproduced later, and so that your workspace is restored to its original state after running the tests.  The following aspects of state are actively tracked and managed:
+`unitizer` tracks and manages many aspects of state to make your tests more reproducible.  For example, `unitizer` will set your search path to what is found in a vanilla R session prior to running tests so that you can ensure your test is not affected by libraries you happen to have loaded in your session (the corollary to this is you must explicitly load libraries your tests need from within your tests). The following aspects of state are actively tracked and managed:
 
+* Search path
 * Parent environment (objects in your workspace will not be visible to tests)
 * Random seed
 * Working directory
 
-Additionally, `unitizer` is able to control the search path and global options, though these last two features are disabled by default.  For more details, see `?unitizerState` and the [reproducible tests vignette](unitizer_reproducible_tests.html).
+Additionally, `unitizer` is able to control global options and namespaces, though these last two features are disabled by default.  For more details, see `?unitizerState` and the [reproducible tests vignette](unitizer_reproducible_tests.html).
 
 Tests that modify objects by reference are not perfectly suited for use with `unitizer`.  The tests will work fine, but `unitizer` will only be able to show you the most recent version of the reference object when you review a test, not what it was like when the test was evaluated.  This is only an issue with reference objects that are modified (e.g. environments, RC objects, `data.table` modified with `:=` or `set*`).
 
