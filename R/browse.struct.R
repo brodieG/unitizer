@@ -889,10 +889,10 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "Tests fail when the evaluation of the test expression no longer ",
       "produces the value it did when it was originally added to the store. ",
       "You should select 'N' at the prompt unless you know the previous value ",
-      "was incorrect and should be replaced by the new value.  `diff_obj` ",
-      "and `Rdiff_obj` can help you compare the new and reference objects; ",
-      "the default `unitizer` action is to show you the output of `diff_obj` ",
-      "on failure.  See `?diff_obj` for more details."
+      "was incorrect and should be replaced by the new value. ",
+      "`unitizer` shows you the output of `diffobj::diffObj(.ref, .new)` by ",
+      "default, but you can just as easily invoke any comparison function ",
+      "(e.g. `identical(.new, .ref)`."
     ),
     actions=c(Y="A", N="B")
 ) )
