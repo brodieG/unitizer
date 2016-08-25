@@ -67,7 +67,6 @@ trace_at_end <- function(fun, tracer, print, where) {
     )
     name
   }
-  
   old.edit <- options(editor=trace_editor)
   on.exit(options(old.edit))
   trace(fun, edit=TRUE, where=where)
@@ -92,31 +91,16 @@ trace_test_fun <- function(x=0) {
     .par.env <- asNamespace("unitizer")$.global$global$par.env
     parent.env(.par.env) <- as.environment(2L)
 } )
-setClass(
-  "unitizerShimDat",
-  slots=c(
-    tracer="languageOrNULL",
-    exit="languageOrNULL",
-    at="list"
-  ),
-  validity=function(object) {
-    if(is.null(object@tracer) && is.null(object@exit))
-      return("Both `tracer` and `exit` slots may not be NULL at same time")
-    if(!is.null(object@tracer) && !length(object@at))
-      return("Slot `at` must be specified if slot `tracer` is specified")
-    if(!all(vapply(object@at, is.integer, logical(1L))))
-      return("All values in `at` slot must be integer")
-  }
-)
+# Used to have both exit and at slots, but we removed it with the development
+# of trace_at_end
+
+setClass("unitizerShimDat", slots=c(tracer="languageOrNULL"))
 .unitizer.shim.dat <- list(
   # Complex shim for library required b/c we cannot use `on.exit`
 
-  library=new(
-    "unitizerShimDat", tracer=.unitizer.tracer,
-    at=list(c(7L, 3L, 9L, 3L, 13L, 3L, 4L, 4L, 6L), 8L)
-  ),
-  attach=new("unitizerShimDat", exit=.unitizer.tracer),
-  detach=new("unitizerShimDat", exit=.unitizer.tracer)
+  library=new("unitizerShimDat", tracer=.unitizer.tracer),
+  attach=new("unitizerShimDat", tracer=.unitizer.tracer),
+  tracer=new("unitizerShimDat", tracer=.unitizer.tracer)
 )
 
 unitizerGlobal$methods(
@@ -198,11 +182,11 @@ unitizerGlobal$methods(
       stop("Logic Error: missing shim data")
 
     shimmed <- try(
-      base::trace(
+      trace_at_end(
         name, tracer=.unitizer.shim.dat[[name]]@tracer,
-        at=.unitizer.shim.dat[[name]]@at, print=FALSE,
-        where=.BaseNamespaceEnv, exit=.unitizer.shim.dat[[name]]@exit
-    ) )
+        where=.BaseNamespaceEnv, print=FALSE
+      )
+    )
     # Process std.err to make sure nothing untoward happened
 
     shim.out <- get_text_capture(capt.cons, "message")
