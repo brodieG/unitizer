@@ -135,3 +135,67 @@ try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 remove.packages(c("unitizerdummypkg1"))
 tracingState(prev.trace.state)
+
+test_that("find_returns", {
+  fun <- function() {
+    if(TRUE) return(1) else {
+      {
+        2 + 2
+        identity(
+          c(
+            1, 2, return(3), {
+              list(1, 2, 5)
+              return(return(4))
+            }
+          )
+        )
+        return(5)
+      }
+      return(6)
+    }
+    if(TRUE) return(7) else return(8)
+    return(9)
+    return(10)
+  }
+  expect_equal(
+    ret.loc <- unitizer:::find_returns(fun),
+    list(
+      2:3, c(2L, 4L, 2L, 3L, 2L, 4L),
+      c(2L, 4L, 2L, 3L, 2L, 5L, 3L),
+      c(2L, 4L, 2L, 4L), c(2L, 4L, 3L), c(3L, 3L), 3:4, 4L, 5L
+  ) )
+  # # Validate visually that this worked
+
+  expect_true(
+    all(
+      vapply(
+        unitizer:::get_returns(fun, ret.loc),
+        function(x) x[[1L]] == quote(return),
+        logical(1L)
+  ) ) )
+})
+test_that("trace_at_end", {
+  if(is(unitizer:::trace_test_fun, "functionWithTrace"))
+    untrace("trace_test_fun", where=asNamespace("unitizer"))
+  unitizer:::trace_at_end(
+    "trace_test_fun",
+    quote(cat(sprintf("x: %d\n", x))), print=FALSE,
+    where=asNamespace("unitizer")
+  )
+  old.state <- tracingState(TRUE)
+  on.exit(tracingState(old.state))
+  expect_equal(capture.output(unitizer:::trace_test_fun()), "x: 2")
+  tracingState(FALSE)
+  expect_equal(capture.output(unitizer:::trace_test_fun()), character())
+  tracingState(TRUE)
+  err <- try(unitizer:::trace_test_fun(stop("hello")), silent=TRUE)
+  cond <- attr(err, "condition")$condition
+  expect_equal(conditionMessage(cond), "hello")
+  expect_equal(
+    conditionCall(cond),quote(unitizer:::trace_test_fun(stop("hello")))
+  )
+
+    "Error in unitizer:::trace_test_fun(stop(\"hello\")) : hello",
+    fixed=TRUE
+  )
+})
