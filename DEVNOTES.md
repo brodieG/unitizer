@@ -248,8 +248,6 @@ consideration.  The reasonable thing would be to run in some lower level of
 reproducibility, though annoyingly any time we re-run the tests we would have
 to use those exact settings.  This is somewhat mitigated if we
 
-
-
 ### Philosophy
 
 Offer two options for each setting:
@@ -265,6 +263,20 @@ that you can only have zero-set options if you also have zero set search path.
 Additionally this means that the search path trimming should happen with
 unloading namespaces as well so that when they are re-attached onload scripts
 get run again (and define options as they often do)?
+
+### Search Path Tracking
+
+Shimming library/attach/detach likely to be a major obstacle to CRAN approval,
+and also introduces complexity and instability as new R versions are released.
+Simplest solution is to just add library/attach/detach functions in a "shims"
+environment, but not as robust as tracing the actual functions.  In particular,
+things can fail if there is a compound expression that uses `base::library`,
+either via package namespace or directly.  We can detect the direct calls via
+parsing and issue warnings, but this is limited since people can get creative.
+
+Note that even shimming `base::library`, etc, not fullproof since some packages
+may be calling internals directly, or some base R functions may do that too?
+(seems unlikely though).
 
 ### Seed Tracking
 

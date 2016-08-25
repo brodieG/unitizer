@@ -4,6 +4,83 @@
 
 NULL
 
+# Return List With Return Call Locations
+#
+# List is in same format as the \code{at} parameter for trace
+
+find_returns <- function(fun) {
+  stopifnot(is.function(fun))
+  ret.lang <- as.name("return")
+
+  rec_fn <- function(x) {
+    if(is.call(x) && is.name(x[[1L]]) && x[[1L]] == ret.lang) {
+      list(NULL)
+    } else if (is.call(x) && length(x) > 1L) {
+      index.res <- list()
+      for(i in tail(seq_along(x), -1L)) {
+        res <- Recall(x[[i]])
+        if(is.list(res))
+          index.res <- c(index.res, lapply(res, function(x) c(i, x)))
+      }
+      index.res
+    }
+  }
+  rec_fn(body(fun))
+}
+# Given a function and find_returns value, pull out the referenced statements
+
+get_returns <- function(fun, ret.loc) {
+  bod <- as.list(body(fun))
+  lapply(
+    ret.loc,
+    function(x) {val <- bod; for(i in x) val <- val[[i]]; val}
+  )
+}
+# Add a tracing expression at end of a function
+#
+# This works generically for all functions, even when they themselves use
+# `on.exit`.  Total hack, but it works.
+#
+# Note that one trade-off on this one is that we squelch any errors produced by
+# the original function, and then re-issue them as part of the trace code.  This
+# is so that the error message itself shows the function name.  The drawback
+# of this is that the original trace is overwritten so some information is lost
+# there which could be a problem.
+#
+# @param fun must be character(1L), name of a function
+# @param tracer an expression to insert in fun
+# @param print TRUE or FALSE
+# @param where a namespace
+
+trace_at_end <- function(fun, tracer, print, where) {
+  trace_editor <- function(name, file, title) {
+    body(name) <- bquote(
+      {
+        .res <- try(withVisible(.(body(name))), silent=TRUE)
+        if(inherits(.res, "try-error")) {
+          cond <- attr(.res, "condition")
+          stop(simpleError(message=conditionMessage(cond), call=sys.call()))
+        }
+        .doTrace(.(tracer))
+        with(.res, if(visible) value else invisible(value))
+      }
+    )
+    name
+  }
+  
+  old.edit <- options(editor=trace_editor)
+  on.exit(options(old.edit))
+  trace(fun, edit=TRUE, where=where)
+  invisible(fun)
+}
+# Function for testing tracing stuff
+
+trace_test_fun <- function(x=0) {
+  on.exit(NULL)
+  x <- x + 1
+  x <- 2
+}
+
 .unitizer.base.funs <- list(
   library=base::library,
   attach=base::attach,
@@ -32,6 +109,8 @@ setClass(
   }
 )
 .unitizer.shim.dat <- list(
+  # Complex shim for library required b/c we cannot use `on.exit`
+
   library=new(
     "unitizerShimDat", tracer=.unitizer.tracer,
     at=list(c(7L, 3L, 9L, 3L, 13L, 3L, 4L, 4L, 6L), 8L)
