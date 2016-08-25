@@ -147,17 +147,22 @@ setMethod("show", "unitizerItemTestsErrors",
         word_cat(paste0(mismatch, decap_first(curr.err@value)), file=stderr())
       } else {
         word_cat(mismatch, file=stderr())
-        cat(as.character(UL(decap_first(curr.err@value))), sep="\n", file=stderr())
+        cat(
+          as.character(
+            UL(decap_first(curr.err@value))), sep="\n", file=stderr()
+        )
       }
-      make_cont <- function(x)
-        if(identical(i, "value")) {
+      make_cont <- function(x) {
+        res <- if(identical(i, "value")) {
           as.name(x)
         } else call("$", as.name(toupper(x)), as.name(i))
-
-      diff_obj_internal(
-        curr.err@.ref, curr.err@.new, make_cont(".ref"), make_cont(".new"),
-        context=object@.fail.context
-      )
+        paste0(deparse(res), collapse="\n")
+      }
+      show(
+        diffObj(
+          curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+          cur.banner=make_cont(".new")
+      ) )
     }
     invisible(NULL)
 } )

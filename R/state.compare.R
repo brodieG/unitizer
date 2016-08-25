@@ -238,9 +238,11 @@ diff_state <- function(
         diff.call.new[[2L]][[2L]][[2L]] <- as.name(".NEW")
         diff.call.ref[[2L]][[2L]][[2L]] <- as.name(".REF")
         capture.output(
-          diff_obj_internal(
+          diffObj(
             tar[[diff.name]], cur[[diff.name]],
-            tar.exp=diff.call.ref, cur.exp=diff.call.new, width=width
+            tar.banner=paste0(deparse(diff.call.ref), collapse="\n"),
+            cur.banner=paste0(deparse(diff.call.new), collapse="\n"),
+            disp.width=width
         ) )
       } else if(deltas.count <= 10L) {
         # Depending on whether `all.equal` output is one or more lines, use
@@ -300,8 +302,11 @@ diff_state <- function(
       diff.call.ref[[2L]][[2L]] <- as.name(".REF")
 
       capture.output(
-        diff_obj_internal(  # should try to collapse this with the one for options
-          tar, cur, tar.exp=diff.call.ref, cur.exp=diff.call.new, width=width
+        diffPrint(  # should try to collapse this with the one for options
+          tar, cur, 
+          tar.banner=paste0(deparse(diff.call.ref), collapse="\n"),
+          cur.banner=paste0(deparse(diff.call.new), collapse="\n"),
+          disp.width=width
       ) )
     }
     diff.string.pad <- paste0("    ", diff.string)
