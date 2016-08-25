@@ -100,7 +100,7 @@ setClass("unitizerShimDat", slots=c(tracer="languageOrNULL"))
 
   library=new("unitizerShimDat", tracer=.unitizer.tracer),
   attach=new("unitizerShimDat", tracer=.unitizer.tracer),
-  tracer=new("unitizerShimDat", tracer=.unitizer.tracer)
+  detach=new("unitizerShimDat", tracer=.unitizer.tracer)
 )
 
 unitizerGlobal$methods(
@@ -116,8 +116,7 @@ unitizerGlobal$methods(
     )
     stopifnot(
       is.character(funs), all(!is.na(funs)),
-      all(vapply(.unitizer.base.funs[funs], is.function, logical(1L))),
-      all(vapply(.unitizer.base.funs.ref[funs], is.function, logical(1L)))
+      all(vapply(.unitizer.base.funs[funs], is.function, logical(1L)))
     )
     funs.to.shim <- mget(
       funs, ifnotfound=vector("list", length(funs)), mode="function",
@@ -133,22 +132,7 @@ unitizerGlobal$methods(
       any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))
     ) {
       err.extra <- "they are already traced"
-    } else if(  # Make sure funs are unchanged; note as.character needed b/c of `covr`
-      !all(
-        fun.identical <- unlist(
-          Map(
-            function(x, y)
-              identical(as.character(body(x)), as.character(body(y))),
-            .unitizer.base.funs[funs],
-            .unitizer.base.funs.ref[funs]
-      ) ) )
-    ) {
-      err.extra <- paste0(
-        "base functions ",paste0("`", funs[!fun.identical], "`", collapse=", "),
-        " do not have the definitions they had when this package was ",
-        "developed"
-      )
-    }
+    } 
     if(nchar(err.extra)) {
       warning(sprintf(err.base, err.extra), immediate.=TRUE)
       parent.env(par.env) <<- .GlobalEnv
