@@ -14,7 +14,10 @@ local({
     expect_error(set_unitizer("a"), "argument \"unitizer\" is missing, with no default")
     expect_error(set_unitizer("a", "blergh"), "Argument `unitizer` must be a unitizer")
     expect_true(!file.exists("a"))
-    expect_error(set_unitizer("tests/# ;!./# \\/", toy.stor), "Could not create")
+    expect_error(
+      suppressWarnings(
+        set_unitizer("tests/# ;!./# \\/", toy.stor), "Could not create")
+      )
   } )
   test_that("Get works as expected", {
     expect_false(get_unitizer("asldkfjskfa"))
@@ -88,9 +91,11 @@ local({
     )
     # Load mix of loadable and not loadable objects
 
-    untzs <- unitizer:::load_unitizers(
-      store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-      interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
+    suppressWarnings(
+      untzs <- unitizer:::load_unitizers(
+        store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+        interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
+      )
     )
     untzs.classes <- vapply(unitizer:::as.list(untzs), class, character(1L))
     expect_equal(
@@ -112,28 +117,37 @@ local({
     # Try reloading already loaded unitisers
 
     reload <- unitizer:::as.list(untzs)[untzs.classes == "unitizer"]
-    untzs1a <- unitizer:::load_unitizers(
-      reload, rep(NA_character_, length(reload)),
-      par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
-      force.upgrade=FALSE
+    expect_warning( # this creates a global object, hence warning
+      untzs1a <- unitizer:::load_unitizers(
+        reload, rep(NA_character_, length(reload)),
+        par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
+        force.upgrade=FALSE
+      ),
+      "Instantiated global object without "
     )
     expect_true(
       all(vapply(unitizer:::as.list(untzs1a), is, logical(1L), "unitizer"))
     )
     # misc tests
 
-    untzs2 <- unitizer:::load_unitizers(
-      list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
-      mode="unitize", force.upgrade=FALSE
+    expect_warning(
+      untzs2 <- unitizer:::load_unitizers(
+        list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+        mode="unitize", force.upgrade=FALSE
+      ),
+      "Instantiated global object without "
     )
     expect_true(is(untzs2[[1L]], "unitizer"))
     expect_identical(parent.env(untzs2[[1L]]@zero.env), par.frame)
     untzs2[[1L]]@eval.time <- 33  # something that won't get rest on load so we can check our re-load
 
     expect_true(unitizer:::store_unitizer(untzs2[[1L]]))
-    untzs2.1 <- unitizer:::load_unitizers(
-      list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
-      mode="unitize", force.upgrade=FALSE
+    expect_warning(
+      untzs2.1 <- unitizer:::load_unitizers(
+        list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+        mode="unitize", force.upgrade=FALSE
+      ),
+      "Instantiated global object without "
     )
     expect_equal(untzs2.1[[1L]]@eval.time, 33)
 
@@ -275,10 +289,13 @@ local({
     # Interactive mode
 
     unitizer:::read_line_set_vals(c("26", "Q"))
-    expect_equal(
-      unitizer:::infer_unitizer_location(file.path(base.dir, "*"), type="f", interactive.mode=TRUE),
-      file.path(base.dir, "*")
+    expect_warning(
+      select <- unitizer:::infer_unitizer_location(
+        file.path(base.dir, "*"), type="f", interactive.mode=TRUE
+      ),
+      "Invalid user selection"
     )
+    expect_equal(select, file.path(base.dir, "*"))
     unitizer:::read_line_set_vals(c("5"))
     expect_equal(
       unitizer:::infer_unitizer_location(file.path(base.dir, "*"), type="f", interactive.mode=TRUE),
