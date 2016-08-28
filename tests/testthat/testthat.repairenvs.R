@@ -27,11 +27,11 @@ local({
       x <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
       "Detected corrupted environment history"
     )
-    expect_true(
-      is(
-        unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
-        "unitizerItems"
-    ) )
+    expect_warning(
+      res <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
+      "Detected corrupted environment history"
+    )
+    expect_true(is(res,"unitizerItems"))
     ref.anc <- unitizer:::env_ancestry(x@base.env)
     itm.anc <- unitizer:::env_ancestry(x[[1L]]@env)
 
@@ -59,9 +59,12 @@ local({
       file.path("helper", "trivial.R")
     )
     file.copy(cpy.files, file.path(tmp.dir, cpy.files), overwrite=TRUE)
-    untz <- unitizer:::load_unitizers(
-      list(store.new), NA_character_, par.frame=.GlobalEnv,
-      interactive.mode=TRUE, mode="unitize"
+    expect_warning(
+      untz <- unitizer:::load_unitizers(
+        list(store.new), NA_character_, par.frame=.GlobalEnv,
+        interactive.mode=TRUE, mode="unitize"
+      ),
+      "Instantiated global object"
     )
     # Break env chain, store, and reload
 
@@ -69,12 +72,14 @@ local({
     parent.env(untz[[1L]]@items.ref[[5L]]@env) <- baseenv()
 
     unitizer:::store_unitizer(untz[[1L]])
-    untz.rep <- repair_environments(store.new)
-    expect_that(
-      unitizer:::healEnvs(untz.rep@items.ref, untz.rep), not(gives_warning())
+    expect_warning(
+      untz.rep <- repair_environments(store.new),
+      "Instantiated global object without|Detected corrupted environment"
+    )
+    # this should not give warnings
+    expect_warning(
+      unitizer:::healEnvs(untz.rep@items.ref, untz.rep), NA
     )
     unlink(tmp.dir, recursive=TRUE)
   } )
-
-
 })

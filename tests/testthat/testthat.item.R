@@ -106,7 +106,13 @@ local( {
     expect_equal(unitizer:::ignored(my.unitizer2@items.ref), c(F, T, T, F, T, F))
   } )
   test_that("Size Measurement works", {
-    x <- unitizer:::sizeUntz(my.unitizer2)
+    # Produces errors b/c there are environments that have search path envs as
+    # parents; oddly doesn't seem to cause warnings in test_file but does in
+    # test_dir...
+
+    expect_warning(
+      x <- unitizer:::sizeUntz(my.unitizer2), "package.* may not be available"
+    )
     expect_true(is.matrix(x) && is.numeric(x))
     expect_identical(colnames(x), c("size", "rds"))
   })
@@ -367,16 +373,19 @@ local( {
   # Error objects
 
   test_that("Error Display", {
-    expect_match(
-      paste0(capture.output(show(my.unitizer7@tests.errorDetails[[5L]])), collapse=";"),
-      "^@@ \\.ref @@;-  \\[1\\] [0-9.]+;@@ \\.new @@", "+  \\[1\\] [0-9.]$"
-    )
+    # # Superseded by diffobj
+    # expect_match(
+    #   paste0(capture.output(show(my.unitizer7@tests.errorDetails[[5L]])), collapse=";"),
+    #   "^@@ \\.ref @@;-  \\[1\\] [0-9.]+;@@ \\.new @@", "+  \\[1\\] [0-9.]$"
+    # )
     expect_match(
       capture.output(show(my.unitizer7@tests.errorDetails[[5L]]), type="message"),
       "^\\*value\\* mismatch: mean relative difference: "
     )
     expect_match(
-      capture.output(unitizer:::summary(my.unitizer7@tests.errorDetails[[5L]]), type="message"),
+      capture.output(
+        summary(my.unitizer7@tests.errorDetails[[5L]]), type="message"
+      ),
       "^unitizer test fails on value mismatch:"
     )
   })
@@ -433,9 +442,12 @@ local( {
     my.unitizer <- new("unitizer", id=25, zero.env=new.env())
     my.unitizer <- my.unitizer + exps   # add ref.exps as new items
 
-    my.unitizer2 <- new("unitizer", id=26, zero.env=new.env()) + my.unitizer@items.new
-    my.unitizer2 <- my.unitizer2 + exps
-
+    my.unitizer2 <- new("unitizer", id=26, zero.env=new.env()) +
+      my.unitizer@items.new
+    expect_warning(
+      my.unitizer2 <- my.unitizer2 + exps,
+      "not gonna work"
+    )
     expect_identical(as.character(my.unitizer2@tests.status), c("Pass", "Error"))
     expect_identical(
       my.unitizer2@tests.errorDetails[[2]]@value@value,
