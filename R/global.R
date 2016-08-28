@@ -369,7 +369,8 @@ unitizerGlobal <- setRefClass(
       } else
         warning(
           "Instantiated global object without global namespace registry; ",
-          "you should only see this warning during package install",
+          "you should only see this warning during package install or if ",
+          "you are using `repair_environments`.",
           immediate.=TRUE
         )
       obj
