@@ -53,7 +53,6 @@ Collate:
     'prompt.R'
     'browse.struct.R'
     'browse.R'
-    'color.R'
     'demo.R'
     'faux_prompt.R'
     'fun.ref.R'
