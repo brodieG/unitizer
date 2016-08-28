@@ -167,6 +167,12 @@ setMethod("show", "unitizerItemTestsErrors",
     invisible(NULL)
 } )
 
+#' Summary Method for unitizerItemTestsErrors Objects
+#'
+#' @param object a \code{unitizerItemTestsErrors} object
+#' @return NULL, invisibly
+#' @export
+
 setMethod("summary", "unitizerItemTestsErrors",
   function(object, ...) {
     slots <- grep("^[^.]", slotNames(object), value=TRUE)

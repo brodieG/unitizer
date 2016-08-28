@@ -264,7 +264,7 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     norm[to.norm] <- reled
     norm
   } else path
-  if(!nchar(res)) res <- "."
+  res[!nzchar(res)] <- "."
   if(only.if.shorter) {
     ifelse(nchar(res) < nchar(path), res, path)
   } else res

@@ -228,7 +228,7 @@ test_that("word_cat", {
     capture.output(unitizer:::word_cat(str, width=20L)),
     c("Humpty dumpty sat on", "a wall and took a ", "big fall.  All the ", "kings horses and men", "couldn't put humpty ", "dumpty together ", "again")
   )
-  expect_error(unitizer:::word_cat(stop("boom"), width=20L, sep=" "), ": boom")
+  expect_error(unitizer:::word_cat(stop("boom"), width=20L, sep=" "), "boom")
   str2 <- rep("goodbye goodbye")
   str1 <- rep("hello hello hello", 2)
   expect_equal(

@@ -47,8 +47,7 @@ test_that("faux prompt", {
   expect_identical(res, quote(1 + 1))
   unitizer:::read_line_set_vals(c("(})"))
   expect_error(
-    unitizer:::faux_prompt(prompt="> ", continue="+ "),
-    "Error in \"\\(\\}\\)\""
+    unitizer:::faux_prompt(prompt="> ", continue="+ "), "unexpected '\\}'"
   )
 })
 # Some of this needs to be done outside of testthat due to sinking
@@ -94,7 +93,7 @@ test_that("unitizer prompt", {
   unitizer:::read_line_set_vals(character())
   expect_error(
     unitizer:::unitizer_prompt("hello", valid.opts=c(Y="[Y]es", N="[N]o")),
-    "Error : Logic Error: ran out of predefined readline input"
+    "Logic Error: ran out of predefined readline input"
   )
   unitizer:::read_line_set_vals("1L")
   expect_error(
@@ -102,7 +101,7 @@ test_that("unitizer prompt", {
       "hello", valid.opts=c(Y="[Y]es", N="[N]o"),
       exit.condition=unitizer:::exit_fun, valid.vals=2:3
     ),
-    "Error : Logic Error: ran out of predefined readline input"
+    "Logic Error: ran out of predefined readline input"
   )
   unitizer:::read_line_set_vals("2L")
   expect_equal(
