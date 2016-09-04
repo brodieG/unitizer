@@ -1,10 +1,12 @@
 # `unitizer` NEWS
 
-## v1.1
+## v1.1.0
 
 ### Improvement / Changes:
 
 * [#161](https://github.com/brodieG/unitizer/issues/161): Compare objects with `diffobj::diffObj`
+* [#166](https://github.com/brodieG/unitizer/issues/166): More systematic
+  handling of `library`/`attach`/`detach`
 * Minor improvements to test navigation / display
 
 ### Bugfixes:
@@ -12,7 +14,7 @@
 * Several unitizer prompt issues:
     * No longer capture prompt evals so `debug` is usable again
     * Parse errors reported correctly
-    * #165: Confusing Help Prompt
+    * [#165](https://github.com/brodieG/unitizer/issues/165): Confusing Help Prompt
 * Reference state properly preserved (previously would incorrectly use new state for reference tests kept in store)
 * Internal shimming of library/detach/attach more robust
 * Updated tests for changes in testthat, R
