@@ -7,6 +7,37 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## Display Improvements
+
+### Pager
+
+Use pager?  Seems like almost definitely want to do this for elements like
+[B]rowse, etc.  Have to think about how it impacts flow if the pager is external
+like in RStudio.
+
+### Colorizing Output
+
+All meta-text should be grey...  But what about large portions of text such as
+those we get in [B]rowse?  Maybe the headers and all that in gray, but the
+contents in white?  What about the prompts?  Will have to play around.
+
+Color in code comments?  Could do so pretty easily
+
+### Simple Value Failures
+
+Need some way of mitigating the amount of output put out by `unitizer`.  Right
+now with the addition of the new diff it's pretty jarring to see so much red and
+yellow and blue.  Some options:
+
+* If only a `value` error, squash `all.equal` and rely instead on `diffobj`
+  output only; one issue here is that we might conceal some errors that
+  `all.equal` would otherwise show; partly relies on making sure `diffobj` shows
+  the `all.equal` output when there are no visible differences.
+* The whole `diff_state` business; what's the best way to handle it?
+
+### Value and Condition
+
+See 
 ## Return values
 
 Still somewhat conflicted about what the return values should be for a unitizer.
@@ -38,6 +69,8 @@ post eval but pre-browse `unitizers`, combined in some way with the post-browse
 `unitizerBrowse` objects, with mechanisms for extracting the data in easy to
 manipulate structures (e.g. matrices).
 
+Right now we're just returning the data.frame.
+
 ## Optim
 
 * A lot of the overhead is related to the display and capture of text.  One
@@ -49,7 +82,6 @@ manipulate structures (e.g. matrices).
   that is a bit finicky
 * `all.equal` adds a little overhead, but not a huge ammount
 * `append` also adds some overhead
-
 
 ## Capture
 
