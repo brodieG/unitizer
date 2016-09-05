@@ -145,6 +145,17 @@ has_new_err_only <- function(object) {
     !inherits(object@conditions@.ref[[ref.cond.len]], "error")
   )
 }
+## Check Whether Only New Evaluation Produces Conditions
+##
+## Also, values must not produce an error.
+
+has_new_conds_only <- function(object) {
+  stopifnot(is(object, "unitizerItemTestsErrors"))
+
+  is.null(object@value@value) && !is.null(object@conditions@value) &&
+    !isTRUE(object@conditions@compare.err) &&
+    !length(object@conditions@.ref) && length(object@conditions@.new)
+}
 # Display Test Errors
 #' @rdname unitizer_s4method_doc
 
@@ -152,7 +163,13 @@ setMethod("show", "unitizerItemTestsErrors",
   function(object) {
     # Only show details of errors if we're not dealing with a simple error
     # being added, since that is shown any way
-    if(!has_new_err_only(object)) {
+    if(has_new_err_only(object)) {
+      # Maybe this should only be called when an actual abort signal is detected
+      # although, can't do it right now since we decided not to track that
+      word_cat("Failed unitizer test: evaluation introduces an error.")
+    } else if (has_new_conds_only(object)) {
+      word_cat("Failed unitizer test: evaluation produces new conditions.")
+    } else {
       slots <- grep("^[^.]", slotNames(object), value=TRUE)
       for(i in slots) {
         curr.err <- slot(object, i)
@@ -189,6 +206,9 @@ setMethod("show", "unitizerItemTestsErrors",
 
 #' Summary Method for unitizerItemTestsErrors Objects
 #'
+#' NOTE: disabled this because it was making special handling of conditions
+#' difficult since we need to coordinate with the show method.
+#'
 #' Used to generate the blurb ahead of each failed test with the components
 #' that the test failed on.
 #'
@@ -198,6 +218,8 @@ setMethod("show", "unitizerItemTestsErrors",
 
 setMethod("summary", "unitizerItemTestsErrors",
   function(object, ...) {
+    stop("`summary` method discontinued")
+
     slots <- grep("^[^.]", slotNames(object), value=TRUE)
     slot.err <- logical(length(slots))
     for(i in seq_along(slots))
@@ -210,7 +232,7 @@ setMethod("summary", "unitizerItemTestsErrors",
     # case where our new code fails when the old one didn't use to
 
     if(has_new_err_only(object)) {
-      word_cat("test produces an error now, but it did not use to.")
+      word_cat("Failed unitizer test: new evaluation introduces an error.")
     } else {
       if(length(errs) > 1L) {
         err.chr <- paste(
