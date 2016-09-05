@@ -13,6 +13,9 @@ fun1 <- function(a, check.num=TRUE, warn=TRUE) {
   if(warn && !is.integer(a)) {
     warning("Coercing to integer")
   }
-  c(tail(a, 1L), head(a, -1L))
+  c(tail(a.int, 1L), head(a.int, -1L))
 }
+#' @export
+
+fun2 <- function(a, rev=TRUE) rev(fun1(a))
 
