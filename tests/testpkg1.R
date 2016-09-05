@@ -6,7 +6,11 @@ if(interactive()) {
   if(!identical(basename(getwd()), "tests")) stop("Should be in /tests")
 
   par.dir <- tempfile()
-  on.exit(unlink(par.dir, recursive=TRUE))
+  on.exit({
+    try(detach("package:testpkg1", unload=TRUE))
+    try(remove.packages("testpkg1", lib=lib.tmp))
+    unlink(par.dir, recursive=TRUE)
+  })
   dir.create(par.dir)
   lib.tmp <- file.path(par.dir, "lib")
   untz.tmp <- file.path(par.dir, "unitizer")
@@ -21,15 +25,13 @@ if(interactive()) {
     file.path(tp.0, "tests", "tests.R"), store.id=store, state="off",
     auto.accept="new"
   )
-  detach("package:testpkg1", unload=TRUE)
-  remove.packages("testpkg1", lib=lib.tmp)
 
   # Upgrade the package, note we test against same store
 
+  detach("package:testpkg1", unload=TRUE)
+  remove.packages("testpkg1", lib=lib.tmp)
   tp.1 <- file.path("test_pkgs", "testpkg1", "testpkg1.1")
   install.packages(pkgs=tp.1, lib=lib.tmp, repos=NULL, type="src")
   library("testpkg1", lib.loc=lib.tmp)
   unitize(file.path(tp.1, "tests", "tests.R"), store.id=store, state="off")
-  detach("package:testpkg1", unload=TRUE)
-  remove.packages("testpkg1", lib=lib.tmp)
 }

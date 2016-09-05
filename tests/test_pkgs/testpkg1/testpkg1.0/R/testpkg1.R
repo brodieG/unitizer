@@ -17,4 +17,4 @@ fun1 <- function(a, check.num=FALSE, warn=FALSE) {
 }
 #' @export
 
-fun2 <- function(a, rev=FALSE) rev(fun1(a))
+fun2 <- function(a, rev=FALSE) if(rev) rev(fun1(a)) else fun1(a)
