@@ -129,45 +129,68 @@ setClass(
 )
 setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
 
+## Check Whether New Evaluation Produces Error When Old Did Not
+##
+## Helper function for summary and show methods to unitizerItemTestsErrors
+
+has_new_err_only <- function(object) {
+  stopifnot(is(object, "unitizerItemTestsErrors"))
+  !is.null(object@value@value) && !isTRUE(object@value@compare.err) &&
+  !is.null(object@conditions@value) && !isTRUE(object@conditions@compare.err) &&
+  is.null(object@value@.new) &&
+  (new.cond.len <- length(object@conditions@.new)) &&
+  inherits(object@conditions@.new[[new.cond.len]], "error") &&
+  (
+    !(ref.cond.len <- length(object@conditions@.ref)) ||
+    !inherits(object@conditions@.ref[[ref.cond.len]], "error")
+  )
+}
 # Display Test Errors
 #' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerItemTestsErrors",
   function(object) {
-    slots <- grep("^[^.]", slotNames(object), value=TRUE)
-    for(i in slots) {
-      curr.err <- slot(object, i)
-      if(is.null(curr.err@value)) next  # No error, so continue
-      mismatch <- if(curr.err@compare.err) {
-        paste0("Unable to compare ", i, ": ")
-      } else {
-        paste0("*", i, "* mismatch: ")
+    # Only show details of errors if we're not dealing with a simple error
+    # being added, since that is shown any way
+    if(!has_new_err_only(object)) {
+      slots <- grep("^[^.]", slotNames(object), value=TRUE)
+      for(i in slots) {
+        curr.err <- slot(object, i)
+        if(is.null(curr.err@value)) next  # No error, so continue
+        mismatch <- if(curr.err@compare.err) {
+          paste0("Unable to compare ", i, ": ")
+        } else {
+          paste0("*", i, "* mismatch: ")
+        }
+        if(length(curr.err@value) < 2L) {
+          word_cat(paste0(mismatch, decap_first(curr.err@value)), file=stderr())
+        } else {
+          word_cat(mismatch, file=stderr())
+          cat(
+            as.character(
+              UL(decap_first(curr.err@value))), sep="\n", file=stderr()
+          )
+        }
+        make_cont <- function(x) {
+          res <- if(identical(i, "value")) {
+            as.name(x)
+          } else call("$", as.name(toupper(x)), as.name(i))
+          paste0(deparse(res), collapse="\n")
+        }
+        show(
+          diffObj(
+            curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+            cur.banner=make_cont(".new")
+        ) )
       }
-      if(length(curr.err@value) < 2L) {
-        word_cat(paste0(mismatch, decap_first(curr.err@value)), file=stderr())
-      } else {
-        word_cat(mismatch, file=stderr())
-        cat(
-          as.character(
-            UL(decap_first(curr.err@value))), sep="\n", file=stderr()
-        )
-      }
-      make_cont <- function(x) {
-        res <- if(identical(i, "value")) {
-          as.name(x)
-        } else call("$", as.name(toupper(x)), as.name(i))
-        paste0(deparse(res), collapse="\n")
-      }
-      show(
-        diffObj(
-          curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
-          cur.banner=make_cont(".new")
-      ) )
     }
     invisible(NULL)
 } )
 
 #' Summary Method for unitizerItemTestsErrors Objects
+#'
+#' Used to generate the blurb ahead of each failed test with the components
+#' that the test failed on.
 #'
 #' @param object a \code{unitizerItemTestsErrors} object
 #' @return NULL, invisibly
@@ -182,19 +205,27 @@ setMethod("summary", "unitizerItemTestsErrors",
 
     errs <- slots[slot.err]
     if(!length(errs)) return(invisible(NULL))
-    if(length(errs) > 1L) {
-      err.chr <- paste(
-        paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
-      )
-      plrl <- "es"
+    # Check for special case where return value is NULL and last condition in
+    # condition list is a simpleError only in the new evaluation; this is the
+    # case where our new code fails when the old one didn't use to
+
+    if(has_new_err_only(object)) {
+      word_cat("test produces an error now, but it did not use to.")
     } else {
-      err.chr <- errs
-      plrl <- ""
+      if(length(errs) > 1L) {
+        err.chr <- paste(
+          paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
+        )
+        plrl <- "es"
+      } else {
+        err.chr <- errs
+        plrl <- ""
+      }
+      word_cat(
+        "unitizer test fails on", err.chr, paste0("mismatch", plrl, ":"),
+        file=stderr()
+      )
     }
-    word_cat(
-      "unitizer test fails on", err.chr, paste0("mismatch", plrl, ":"),
-      file=stderr()
-    )
     return(invisible(NULL))
 } )
 #' Store Functions for New vs. Reference Test Comparisons
