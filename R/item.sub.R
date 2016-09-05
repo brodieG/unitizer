@@ -166,10 +166,11 @@ setMethod("show", "unitizerItemTestsErrors",
     if(has_new_err_only(object)) {
       # Maybe this should only be called when an actual abort signal is detected
       # although, can't do it right now since we decided not to track that
-      word_cat("Failed unitizer test: evaluation introduces an error.")
+      word_cat("Failed unitizer test: new evaluation introduces an error.")
     } else if (has_new_conds_only(object)) {
-      word_cat("Failed unitizer test: evaluation produces new conditions.")
+      word_cat("Failed unitizer test: new evaluation produces conditions.")
     } else {
+      summary(object)
       slots <- grep("^[^.]", slotNames(object), value=TRUE)
       for(i in slots) {
         curr.err <- slot(object, i)
@@ -206,11 +207,10 @@ setMethod("show", "unitizerItemTestsErrors",
 
 #' Summary Method for unitizerItemTestsErrors Objects
 #'
-#' NOTE: disabled this because it was making special handling of conditions
-#' difficult since we need to coordinate with the show method.
-#'
 #' Used to generate the blurb ahead of each failed test with the components
 #' that the test failed on.
+#'
+#' Only intended to be called within the \code{show} method.
 #'
 #' @param object a \code{unitizerItemTestsErrors} object
 #' @return NULL, invisibly
@@ -218,8 +218,6 @@ setMethod("show", "unitizerItemTestsErrors",
 
 setMethod("summary", "unitizerItemTestsErrors",
   function(object, ...) {
-    stop("`summary` method discontinued")
-
     slots <- grep("^[^.]", slotNames(object), value=TRUE)
     slot.err <- logical(length(slots))
     for(i in seq_along(slots))
@@ -231,39 +229,47 @@ setMethod("summary", "unitizerItemTestsErrors",
     # condition list is a simpleError only in the new evaluation; this is the
     # case where our new code fails when the old one didn't use to
 
-    if(has_new_err_only(object)) {
-      word_cat("Failed unitizer test: new evaluation introduces an error.")
-    } else {
-      if(length(errs) > 1L) {
-        err.chr <- paste(
-          paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
-        )
-        plrl <- "es"
-      } else {
-        err.chr <- errs
-        plrl <- ""
-      }
-      word_cat(
-        "unitizer test fails on", err.chr, paste0("mismatch", plrl, ":"),
-        file=stderr()
+    if(length(errs) > 1L) {
+      err.chr <- paste(
+        paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
       )
+      plrl <- "es"
+    } else {
+      err.chr <- errs
+      plrl <- ""
     }
+    word_cat("Failed unitizer test:", err.chr, paste0("mismatch", plrl, ":"))
     return(invisible(NULL))
 } )
+#' Like all.equal but Returns "" If Not all.equal
+#'
+#' Used as the default value comparison function since default action is two
+#' show the value differences, which would be a bit redundant.
+#'
+#' @export all.equal_
+#' @param target R object
+#' @param current other R object to be compared to \code{target}
+#' @param ... arguments to pass to \code{all.equal}
+#' @return TRUE if \code{all.equal} returns TRUE, "" otherwise
+
+all.equal_ <- function(target, current, ...)
+  if(isTRUE(all.equal(target, current, ...))) TRUE else ""
+
 #' Store Functions for New vs. Reference Test Comparisons
 #'
-#' \code{`unitizerItemTestsFuns`} contains the functions used to compare the results
-#' and side effects of running test expresssions.
+#' \code{`unitizerItemTestsFuns`} contains the functions used to compare the
+#' results and side effects of running test expressions.
 #'
-#' By default, the comparison for each of the \code{`unitizerItem-class`} elements
-#' are carried out as follows (i.e. this is what the default
+#' By default, the comparison for each of the \code{`unitizerItem-class`}
+#' elements are carried out as follows (i.e. this is what the default
 #' \code{`unitizerItemTestsFuns-class`} is populated with)
 #' \itemize{
 #'   \item value: compared using \code{`\link{all.equal}`}
-#'   \item conditions: each item in this list is compared to the corresponding item
-#'     in the reference list with \code{`\link{all.equal}`}
+#'   \item conditions: each item in this list is compared to the corresponding
+#'     item in the reference list with \code{`\link{all.equal}`}
 #'   \item output: not compared (too variable, e.g. screen widths, etc.)
-#'   \item message: not compared (note this is presumably included in \code{`conditions`})
+#'   \item message: not compared (note this is presumably included in
+#'   \code{`conditions`})
 #'   \item aborted: not compared (also implied in conditions, hopefully)
 #' }
 #' @seealso \code{`\link{unitizer_sect}`}
@@ -272,7 +278,8 @@ setMethod("summary", "unitizerItemTestsErrors",
 #' @export unitizerItemTestsFuns
 #' @examples
 #' \dontrun{
-#' unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
+#' # use `identical` instead of `all.equal` to compare values
+#' unitizerItemTestsFuns(value=identical)
 #' }
 
 unitizerItemTestsFuns <- setClass(
@@ -285,8 +292,9 @@ unitizerItemTestsFuns <- setClass(
     aborted="unitizerItemTestFun"
   ),
   prototype(
-    value=new("unitizerItemTestFun", fun=all.equal),
-    conditions=new("unitizerItemTestFun", fun=all.equal),  # note this will dispatch all.equal.condition_list
+    value=new("unitizerItemTestFun", fun=all.equal_),
+    # note this will dispatch all.equal.condition_list
+    conditions=new("unitizerItemTestFun", fun=all.equal),
     output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)
