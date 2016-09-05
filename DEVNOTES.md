@@ -23,6 +23,10 @@ contents in white?  What about the prompts?  Will have to play around.
 
 Color in code comments?  Could do so pretty easily
 
+One of the key objectives is differentiating `unitizer` meta output from normal
+code output.  Will need to provide a solution for terminals without color
+support, perhaps something like prepending `>>` to every meta line.
+
 ### Simple Value Failures
 
 Need some way of mitigating the amount of output put out by `unitizer`.  Right
@@ -33,11 +37,15 @@ yellow and blue.  Some options:
   output only; one issue here is that we might conceal some errors that
   `all.equal` would otherwise show; partly relies on making sure `diffobj` shows
   the `all.equal` output when there are no visible differences.
+* Another big issue with quashing the `value` error is that we need to handle
+  those cases where the user provides their own comparison function with its own
+  output preferences.  The auto-output of `diffObj` might conflict with this.
 * The whole `diff_state` business; what's the best way to handle it?
 
 ### Value and Condition
 
-See 
+
+
 ## Return values
 
 Still somewhat conflicted about what the return values should be for a unitizer.

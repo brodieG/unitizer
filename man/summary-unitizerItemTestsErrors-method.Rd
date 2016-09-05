@@ -14,6 +14,10 @@
 NULL, invisibly
 }
 \description{
-Summary Method for unitizerItemTestsErrors Objects
+Used to generate the blurb ahead of each failed test with the components
+that the test failed on.
+}
+\details{
+Only intended to be called within the \code{show} method.
 }
 

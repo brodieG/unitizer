@@ -492,7 +492,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       e1@tests.error <- c(e1@tests.error, FALSE)
       e1@tests.new <- c(e1@tests.new, TRUE)
       e1@tests.result <- rbind(e1@tests.result, test.result.tpl)
-      if(length(item.new@data@conditions)) tests.conditions.new <- TRUE  # A new test with conditions by definition has new conditions
+      # A new test with conditions by definition has new conditions
+      if(length(item.new@data@conditions)) tests.conditions.new <- TRUE
     } else {
       e1@items.ref.map[[item.map]] <- length(e1@items.new)
       item.ref <- e1@items.ref[[item.map]]
@@ -505,9 +506,9 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       # Test functions and the data to test is organized in objects with
       # the exact same structure as item.new@data, so cycle through the slots.
       # Status is always "Error" if something indeterminable happens,
-      # if not and a failure happens, then it is "Fail", and if nothing goes wrong
-      # for any of the slots, it is "Pass" (there is only one status for all
-      # slots)
+      # if not and a failure happens, then it is "Fail", and if nothing goes
+      # wrong for any of the slots, it is "Pass" (there is only one status for
+      # all slots)
 
       test.status <- "Pass"
       test.result <- test.result.tpl
