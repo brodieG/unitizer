@@ -886,13 +886,17 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "match the reference values from the store."
     ),
     help=paste0(
-      "Tests fail when the evaluation of the test expression no longer ",
-      "produces the value it did when it was originally added to the store. ",
+      "Tests fail when the evaluation of the test expression produces ",
+      "different outputs than when it was originally added to the store. ",
+      "Note that `unitizer` checks conditions as well as values, so a test ",
+      "will fail if the values are the same but new conditions are issued. ",
       "You should select 'N' at the prompt unless you know the previous value ",
-      "was incorrect and should be replaced by the new value. ",
-      "`unitizer` shows you the output of `diffobj::diffObj(.ref, .new)` by ",
-      "default, but you can just as easily invoke any comparison function ",
-      "(e.g. `identical(.new, .ref)`."
+      "was incorrect and should be replaced by the new value. Depending on ",
+      "the nature of the failure `unitizer` may show the output of ",
+      "`diffobj::diffObj(.ref, .new)` so you can easily see the test value ",
+      "differences.  You can always directly compare new and reference ",
+      "objects with `.new`, `.NEW`, `.ref`, and `.REF`. (e.g. ",
+      "`identical(.new, .ref)`)."
     ),
     actions=c(Y="A", N="B")
 ) )
