@@ -256,8 +256,7 @@ word_cat <- function(
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
   vec <- unlist(strsplit(vec, "\n"))
   out <- word_wrap(vec, width, tolerance)
-  old.opt <- options(crayon.enabled=TRUE)
-  on.exit(options(old.opt))
+  if(!is.null(out))
   cat(crayon::silver(out), file=file, sep="\n")
   invisible(out)
 }
