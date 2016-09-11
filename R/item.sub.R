@@ -166,9 +166,9 @@ setMethod("show", "unitizerItemTestsErrors",
     if(has_new_err_only(object)) {
       # Maybe this should only be called when an actual abort signal is detected
       # although, can't do it right now since we decided not to track that
-      word_cat("Failed unitizer test: new evaluation introduces an error.")
+      meta_word_cat("Failed unitizer test: new evaluation introduces an error.")
     } else if (has_new_conds_only(object)) {
-      word_cat("Failed unitizer test: new evaluation produces conditions.")
+      meta_word_cat("Failed unitizer test: new evaluation produces conditions.")
     } else {
       summary(object)
       slots <- grep("^[^.]", slotNames(object), value=TRUE)
@@ -240,7 +240,9 @@ setMethod("summary", "unitizerItemTestsErrors",
       err.chr <- errs
       plrl <- ""
     }
-    word_cat("Failed unitizer test:", err.chr, paste0("mismatch", plrl, ":"))
+    meta_word_cat(
+      "Failed unitizer test:", err.chr, paste0("mismatch", plrl, ":")
+    )
     return(invisible(NULL))
 } )
 #' Like all.equal but Returns "" If Not all.equal
