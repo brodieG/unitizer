@@ -258,7 +258,7 @@ meta_word_cat <- function(
     w.c <- word_wrap_split(
       ..., sep=sep, width=width, tolerance=tolerance, pre="## "
     )
-    cat(w.c, sep="\n", file=file)
+    cat(w.c, sep=sep, file=file)
   }
   invisible(w.c)
 }

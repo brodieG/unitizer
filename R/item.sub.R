@@ -166,11 +166,14 @@ setMethod("show", "unitizerItemTestsErrors",
     if(has_new_err_only(object)) {
       # Maybe this should only be called when an actual abort signal is detected
       # although, can't do it right now since we decided not to track that
-      meta_word_cat("Failed unitizer test: new evaluation introduces an error.")
+      meta_word_cat(
+        "New evaluation introduces an error where there was none before"
+      )
     } else if (has_new_conds_only(object)) {
-      meta_word_cat("Failed unitizer test: new evaluation produces conditions.")
+      meta_word_cat(
+        "New evaluation produces conditions where there were none before"
+      )
     } else {
-      summary(object)
       slots <- grep("^[^.]", slotNames(object), value=TRUE)
       slot.errs <- vapply(
         slots, function(x) !is.null(slot(object, x)@value), logical(1L)
@@ -178,19 +181,18 @@ setMethod("show", "unitizerItemTestsErrors",
       for(i in slots[slot.errs]) {
         curr.err <- slot(object, i)
         mismatch <- if(curr.err@compare.err) {
+          cat_fun <- function(x) word_cat(x, file=stderr())
           paste0("Unable to compare ", i, ": ")
         } else {
-          if(sum(slot.errs) > 1L) paste0("*", i, "* mismatch: ")
+          cat_fun <- meta_word_cat
+          paste0(cap_first(i), " mismatch: ")
         }
-        if(length(curr.err@value) < 2L) {
-          word_cat(paste0(mismatch, decap_first(curr.err@value)), file=stderr())
+        out <- if(length(curr.err@value) < 2L) {
+          paste0(mismatch, decap_first(curr.err@value))
         } else {
-          word_cat(mismatch, file=stderr())
-          cat(
-            as.character(
-              UL(decap_first(curr.err@value))), sep="\n", file=stderr()
-          )
+          c(mismatch, as.character(UL(decap_first(curr.err@value))))
         }
+        cat_fun("", out, "")
         make_cont <- function(x) {
           res <- if(identical(i, "value")) {
             as.name(x)
@@ -209,6 +211,8 @@ setMethod("show", "unitizerItemTestsErrors",
 
 #' Summary Method for unitizerItemTestsErrors Objects
 #'
+#' DEPRECATED
+#'
 #' Used to generate the blurb ahead of each failed test with the components
 #' that the test failed on.
 #'
@@ -220,6 +224,7 @@ setMethod("show", "unitizerItemTestsErrors",
 
 setMethod("summary", "unitizerItemTestsErrors",
   function(object, ...) {
+    warning("this method is deprecated")
     slots <- grep("^[^.]", slotNames(object), value=TRUE)
     slot.err <- logical(length(slots))
     for(i in seq_along(slots))
@@ -227,9 +232,6 @@ setMethod("summary", "unitizerItemTestsErrors",
 
     errs <- slots[slot.err]
     if(!length(errs)) return(invisible(NULL))
-    # Check for special case where return value is NULL and last condition in
-    # condition list is a simpleError only in the new evaluation; this is the
-    # case where our new code fails when the old one didn't use to
 
     if(length(errs) > 1L) {
       err.chr <- paste(
@@ -240,16 +242,14 @@ setMethod("summary", "unitizerItemTestsErrors",
       err.chr <- errs
       plrl <- ""
     }
-    meta_word_cat(
-      "Failed unitizer test:", err.chr, paste0("mismatch", plrl, ":")
-    )
+    meta_word_cat(cc(err.chr, " mismatch", plrl, ":"))
     return(invisible(NULL))
 } )
 #' Like all.equal but Returns "" If Not all.equal
 #'
 #' Used as the default value comparison function since when values mismatch
 #' we use \code{\link{diffObj}} which would make the text output from
-#' \code{\link{}all.equal}} somewhat redundant.
+#' \code{\link{all.equal}} somewhat redundant.
 #'
 #' @export all.equal_
 #' @param target R object
