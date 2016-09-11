@@ -172,13 +172,15 @@ setMethod("show", "unitizerItemTestsErrors",
     } else {
       summary(object)
       slots <- grep("^[^.]", slotNames(object), value=TRUE)
-      for(i in slots) {
+      slot.errs <- vapply(
+        slots, function(x) !is.null(slot(object, x)@value), logical(1L)
+      )
+      for(i in slots[slot.errs]) {
         curr.err <- slot(object, i)
-        if(is.null(curr.err@value)) next  # No error, so continue
         mismatch <- if(curr.err@compare.err) {
           paste0("Unable to compare ", i, ": ")
         } else {
-          paste0("*", i, "* mismatch: ")
+          if(sum(slot.errs) > 1L) paste0("*", i, "* mismatch: ")
         }
         if(length(curr.err@value) < 2L) {
           word_cat(paste0(mismatch, decap_first(curr.err@value)), file=stderr())
@@ -243,13 +245,14 @@ setMethod("summary", "unitizerItemTestsErrors",
 } )
 #' Like all.equal but Returns "" If Not all.equal
 #'
-#' Used as the default value comparison function since default action is two
-#' show the value differences, which would be a bit redundant.
+#' Used as the default value comparison function since when values mismatch
+#' we use \code{\link{diffObj}} which would make the text output from
+#' \code{\link{}all.equal}} somewhat redundant.
 #'
 #' @export all.equal_
 #' @param target R object
 #' @param current other R object to be compared to \code{target}
-#' @param ... arguments to pass to \code{all.equal}
+#' @param ... arguments to pass to \code{\link{all.equal}}
 #' @return TRUE if \code{all.equal} returns TRUE, "" otherwise
 
 all.equal_ <- function(target, current, ...)
@@ -294,7 +297,7 @@ unitizerItemTestsFuns <- setClass(
   prototype(
     value=new("unitizerItemTestFun", fun=all.equal_),
     # note this will dispatch all.equal.condition_list
-    conditions=new("unitizerItemTestFun", fun=all.equal),
+    conditions=new("unitizerItemTestFun", fun=all.equal_),
     output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)

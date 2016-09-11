@@ -246,18 +246,45 @@ cc <- function(..., c="") paste0(c(...), collapse=c)
 
 #' @rdname text_wrap
 
-word_cat <- function(
-  ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
+meta_word_cat <- function(
+  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout()
 ) {
+  # yeah yeah, sounds like a basketball player name...
+
+  if(isTRUE(crayon::has_color())) {
+    w.c <- word_wrap_split(..., sep=sep, width=width, tolerance=tolerance)
+    if(!is.null(w.c)) cat(crayon::silver(w.c), sep=sep, file=file)
+  } else {
+    w.c <- word_wrap_split(
+      ..., sep=sep, width=width, tolerance=tolerance, pre="## "
+    )
+    cat(w.c, sep="\n", file=file)
+  }
+  invisible(w.c)
+}
+## Like word_wrap, but handles some additional duties needed for word_cat
+
+word_wrap_split <- function(
+  ..., width=getOption("width"), tolerance=8L, pre="", sep=" "
+) {
+  stopifnot(is.chr1(pre))
+  width <- width - nchar(pre)
+  if(width < 10L) width <- 10L
   vec <- try(
     paste0(unlist(list(...)), collapse=sep),
     silent=TRUE
   )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
   vec <- unlist(strsplit(vec, "\n"))
-  out <- word_wrap(vec, width, tolerance)
-  if(!is.null(out))
-  cat(crayon::silver(out), file=file, sep="\n")
+  paste0(pre, word_wrap(vec, width, tolerance))
+}
+#' @rdname text_wrap
+
+word_cat <- function(
+  ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
+) {
+  out <- word_wrap_split(..., width=width, tolerance=tolerance, sep=sep)
+  if(!is.null(out)) cat(out, file=file, sep="\n")
   invisible(out)
 }
 #' @rdname text_wrap

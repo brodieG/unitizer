@@ -171,4 +171,15 @@ local({
         list(output="hello", message="goodbye"), class="captured_output"
     ) )
   })
+  test_that("meta_word_cat", {
+    old.opt <- options(crayon.enabled=TRUE)
+    on.exit(options(old.opt))
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello")),"\033[90mhello\033[39m"
+    )
+    old.opt <- options(crayon.enabled=FALSE)
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello")), "## hello"
+    )
+  })
 })
