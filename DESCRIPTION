@@ -54,6 +54,7 @@ Collate:
     'browse.struct.R'
     'browse.R'
     'demo.R'
+    'diff.R'
     'faux_prompt.R'
     'fun.ref.R'
     'get.R'

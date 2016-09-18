@@ -192,7 +192,7 @@ setMethod("show", "unitizerItemTestsErrors",
         } else {
           c(mismatch, as.character(UL(decap_first(curr.err@value))))
         }
-        cat_fun("", out, "")
+        cat_fun(out)
         make_cont <- function(x) {
           res <- if(identical(i, "value")) {
             as.name(x)
@@ -204,6 +204,7 @@ setMethod("show", "unitizerItemTestsErrors",
             curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
             cur.banner=make_cont(".new")
         ) )
+        cat("\n")
       }
     }
     invisible(NULL)

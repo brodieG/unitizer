@@ -14,10 +14,12 @@
 NULL, invisibly
 }
 \description{
-Used to generate the blurb ahead of each failed test with the components
-that the test failed on.
+DEPRECATED
 }
 \details{
+Used to generate the blurb ahead of each failed test with the components
+that the test failed on.
+
 Only intended to be called within the \code{show} method.
 }
 

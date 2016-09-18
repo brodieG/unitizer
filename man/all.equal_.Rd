@@ -11,13 +11,14 @@
 
 \item{current}{other R object to be compared to \code{target}}
 
-\item{...}{arguments to pass to \code{all.equal}}
+\item{...}{arguments to pass to \code{\link{all.equal}}}
 }
 \value{
 TRUE if \code{all.equal} returns TRUE, "" otherwise
 }
 \description{
-Used as the default value comparison function since default action is two
-show the value differences, which would be a bit redundant.
+Used as the default value comparison function since when values mismatch
+we use \code{\link{diffObj}} which would make the text output from
+\code{\link{all.equal}} somewhat redundant.
 }
 
