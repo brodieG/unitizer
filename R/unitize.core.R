@@ -137,13 +137,13 @@ unitize_core <- function(
   if(length(dir.names.clean)) {
     dir.word <-
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
-    word_cat(
+    meta_word_cat(
       "In order to proceed unitizer must create the following ", dir.word,
       ":\n", sep=""
     )
     print(UL(dir.names.clean))
     prompt <- paste0("Create ", dir.word)
-    word_cat(prompt, "?", sep="")
+    meta_word_cat(prompt, "?", sep="")
 
     pick <- unitizer_prompt(prompt, valid.opts=c(Y="[Y]es", N="[N]o"))
     if(!identical(pick, "Y"))
@@ -625,7 +625,7 @@ unitize_browse <- function(
         "avoid any changes.  See `?unitizerState` for more details.", sep=""
       )
       proceed <- "Do you wish to proceed despite compromised state tracking"
-      word_cat(proceed, "([Y]es, [N]o)?\n")
+      meta_word_cat(proceed, "([Y]es, [N]o)?\n")
       prompt <- unitizer_prompt(
         "Do you wish to proceed despite compromised state tracking",
         valid.opts=c(Y="[Y]es", N="[N]o"),
@@ -695,7 +695,7 @@ unitize_browse <- function(
         } else if(test.len > 1L) {
           pick.num <- integer()
           pick <- if(interactive.mode) {
-            word_cat(prompt)
+            meta_word_cat(prompt)
             unitizer_prompt(
               "Pick a unitizer or an option",
               valid.opts=c(
@@ -943,7 +943,7 @@ confirm_quit <- function(unitizers) {
     Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
       unitizers[[1L]]@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
   ) {
-    word_cat("Are you sure you want to quit?")
+    meta_word_cat("Are you sure you want to quit?")
     ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
     return(!identical(ui, "N"))
   }

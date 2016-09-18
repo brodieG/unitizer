@@ -119,14 +119,13 @@ unitizer_prompt <- function(
       return("Q")
     } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
       if(!length(help)) {
-        cat("No help available.", "", paste(text, opts.txt), sep="\n")
+        meta_word_cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        word_cat(help[[1L]])
+        meta_word_cat(help[[1L]])
         if(length(help) > 1L) {
-          cat(help[-1L], sep="")
+          meta_word_cat(help[-1L], sep="\n")
         }
-        cat("\n", sep="")
-        word_cat(paste0(paste(text, opts.txt)))
+        meta_word_cat(paste0(paste(text, opts.txt)))
       }
       next
     }
@@ -147,7 +146,8 @@ unitizer_prompt <- function(
 
     if(!is.null(hist.con) && length(val) == 1L)
       history_write(hist.con, deparse(val[[1L]]))
-    if(res$aborted || !length(val)) word_cat(text, opts.txt)  # error or no user input, re-prompt user
+    if(res$aborted || !length(val)) 
+      meta_word_cat(text, opts.txt)  # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
 #' @rdname unitizer_prompt
@@ -219,7 +219,7 @@ review_prompt <- function(x, nav.env) {
   )
   nav.prompt <- "What test do you wish to review"
   show(x)
-  word_cat(nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"))
+  meta_word_cat(nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"))
   nav.id <- unitizer_prompt(
     text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit_fun,
     valid.opts=nav.opts, valid.vals=x@mapping@item.id
@@ -299,13 +299,13 @@ simple_prompt <- function(
   attempts <- attempts.left <- as.integer(attempts)
   val.tran <- if(!case.sensitive) tolower(values)
 
-  word_cat(message)
+  meta_word_cat(message)
 
   while(attempts.left > 0L) {
     x <- read_line(prompt)
     if(!case.sensitive) x <- tolower(x)
     if(!(res.ind <- match(x, val.tran, nomatch=0L))) {
-      word_cat(
+      meta_word_cat(
         paste(
           "Invalid input, please select one of:", paste(values, collapse=", ")
       ) )

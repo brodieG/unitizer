@@ -263,7 +263,7 @@ setMethod("as.character", "unitizerInPkg",
 #' @rdname unitizer_s4method_doc
 setMethod(
   "show", "unitizerInPkg",
-  function(object) word_cat(as.character(object), sep="\n")
+  function(object) meta_word_cat(as.character(object), sep="\n")
 )
 setClassUnion(
   "environmentOrNULLOrCharacterUnitizerInPkg",
@@ -463,7 +463,7 @@ setMethod(
     res <- data.frame(Settings=sn, Values=unlist(sv))
     rownames(res) <- NULL
     print(res)
-    word_cat(
+    meta_word_cat(
       "-----", "0: off", "1: track starting with initial state",
       "2: track starting with clean state",
       if(nchar(sv.extra)) sv.extra,

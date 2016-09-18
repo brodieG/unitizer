@@ -251,7 +251,7 @@ setMethod(
             unreviewed <- unreviewed(y)
             unrevavail  <- length(unreviewed)
             if(unrevavail) {
-              word_cat(
+              meta_word_cat(
                 "You have ", unrevavail, " unreviewed tests; press ",
                 "`B` to browse tests, `U` to go to first unreviewed test.\n\n",
                 sep=""
@@ -324,7 +324,7 @@ setMethod(
             }
             if(!length(actions)) actions <- "exit unitizer"
             nav.msg <- cap_first(paste0(actions, collapse= " and "))
-            word_cat(
+            meta_word_cat(
               nav.msg,
               paste0("(",
                 paste0(valid.opts[nchar(valid.opts) > 0L], collapse=", "),
@@ -545,7 +545,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             ),
             ")?\n"
       ) )
-      word_cat(prompt.txt, "\n")
+      meta_word_cat(prompt.txt, "\n")
     }
     # Retrieve actual tests objects
 

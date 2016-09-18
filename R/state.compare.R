@@ -106,7 +106,7 @@ setMethod(
 
     if(length(deltas)) {
       res <- vapply(deltas, paste0, character(1L), collapse="\n")
-      if(verbose) word_cat(res, sep="\n")
+      if(verbose) meta_word_cat(res, sep="\n")
       invisible(res)
     } else TRUE
 } )
@@ -199,7 +199,7 @@ diff_state <- function(
     tar <- slot(target, i)
     if(is.null(cur) || identical(tar, cur)) next
 
-    word_cat(header <- sprintf("`%s` state mismatch:", i))
+    meta_word_cat(header <- sprintf("`%s` state mismatch:", i))
     out <- c(out, header)
 
     if(!is.int.1L(width) || width < 8L) width <- 8L else width <- width - 4L

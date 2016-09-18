@@ -21,7 +21,7 @@ screen_out <- function(
     ]
     if(sum(nchar(txt.proc))) cat(txt.proc, sep="\n", file=file)
     if(out.len > max.len[[1]]) {
-      word_cat(
+      meta_word_cat(
         "... truncated ", out.len - max.len[[2]],
         " line", if(out.len - max.len[[2]] > 1) "s",
         file=file, sep=""

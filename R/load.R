@@ -103,7 +103,7 @@ load_unitizers <- function(
 
   if(length(toup.idx)) {
     many <- length(toup.idx) > 1L
-    word_cat(
+    meta_word_cat(
       "\nThe following unitizer", if(many) "s",
       if(force.upgrade) " will" else " must", " be upgraded to version '",
       as.character(curr.version), "':",
@@ -211,7 +211,7 @@ load_unitizers <- function(
     )
   }
   if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))
-    word_cat(
+    meta_word_cat(
       "No valid unitizer", if(length(store.ids) > 1L) "s", " to load", sep=""
     )
   # Create fail load objects for all failures
@@ -327,7 +327,7 @@ setClass(
 setMethod(
   "show", "unitizerLoadFail",
   function(object) {
-    word_cat(sep="\n",
+    meta_word_cat(sep="\n",
       "Failed Loading Unitizer:",
       as.character(
         UL(

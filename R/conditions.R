@@ -145,7 +145,7 @@ setMethod("show", "conditionList",
       cond.out.wrap <- word_wrap(cond.out, width=width-2L)
       cat(paste0("  ", cond.out.wrap), sep="\n")
       if(isTRUE(attr(object[[1L]], "unitizer.printed")))
-        word_cat(
+        meta_word_cat(
           cc(
             "Condition issued during print/show method rather than during ",
             "actual evaluation."

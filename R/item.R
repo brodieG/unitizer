@@ -205,7 +205,7 @@ setMethod("show", "unitizerItem",
             levels=c("error", "warning", "message", "other condition")),
           length
       ) )
-      word_cat(
+      meta_word_cat(
         "* conditions:",
         paste0(
           cond.types.summ, " ",
@@ -215,7 +215,7 @@ setMethod("show", "unitizerItem",
           ), collapse=", "
       ) )
     }
-    word_cat(
+    meta_word_cat(
       "Access component `x` with",
       paste0("`", if(object@reference) ".REF" else ".NEW", "$x`;"),
       "see `help(\"$\", \"unitizer\")`"

@@ -418,17 +418,17 @@ setMethod("show", "unitizerObjectListSummary",
       } else disp[[j]]
     }
     cat("\n")
-    word_cat(
+    meta_word_cat(
       "Summary of files in common directory '", relativize_path(full.dir),
       "':", sep=""
     )
     cat(disp, sep="\n")
     # Legends
 
-    if(any(review.req || object@updated)) word_cat("Legend:")
-    if(any(review.req)) word_cat("* `unitizer` requires review")
+    if(any(review.req || object@updated)) meta_word_cat("Legend:")
+    if(any(review.req)) meta_word_cat("* `unitizer` requires review")
     if(any(object@updated))
-      word_cat(
+      meta_word_cat(
         "$ `unitizer` has been updated and needs to be re-evaluted to",
         "recompute summary"
       )
