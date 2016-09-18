@@ -147,7 +147,7 @@ unitizer_prompt <- function(
     if(!is.null(hist.con) && length(val) == 1L)
       history_write(hist.con, deparse(val[[1L]]))
     if(res$aborted || !length(val)) 
-      meta_word_cat(text, opts.txt)  # error or no user input, re-prompt user
+      meta_word_cat(cc(text, opts.txt)) # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
 #' @rdname unitizer_prompt
