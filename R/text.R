@@ -21,7 +21,7 @@ screen_out <- function(
     ]
     if(sum(nchar(txt.proc))) cat(txt.proc, sep="\n", file=file)
     if(out.len > max.len[[1]]) {
-      meta_word_cat(
+      word_cat(
         "... truncated ", out.len - max.len[[2]],
         " line", if(out.len - max.len[[2]] > 1) "s",
         file=file, sep=""
@@ -91,7 +91,11 @@ strtrunc <- function(
 #'     necessary; note that unlike \code{text_wrap} \code{width} must be scalar
 #'   \item \code{word_cat} is like \code{word_wrap}, except it outputs to screen
 #'   \item \code{word_msg} is like \code{word_cat}, except it ouputs to stderr
+#'   \item \code{meta_word_cat} is like \code{word_cat}, except it wraps output
+#'     in formatting to highlight this is not normal output
 #' }
+#' Newlines are replaced by empty strings in the output so that each character
+#' vector in the output represents a line of screen output.
 #'
 #' @keywords internal
 #' @return a list with, for each item in \code{`x`}, a character vector
@@ -179,7 +183,8 @@ word_wrap <- function(
   )
   break_char <- function(x) {
     lines.raw <- ceiling(nchar(x) / (width - tolerance))
-    res <- character(lines.raw + ceiling(lines.raw / (width - tolerance))) # for hyphens
+    # for hyphens
+    res <- character(lines.raw + ceiling(lines.raw / (width - tolerance)))
     res.idx <- 1
 
     if(!nchar(x)) return(x)
@@ -208,8 +213,8 @@ word_wrap <- function(
             } }
         } }
         if(!matched) x.trim <- substr(x, 1L, width)  # Failed, truncate
-
-        x.trim <- substr(x.trim, 1L, width)  # we allow one extra char for pattern matching in some cases, remove here
+        # we allow one extra char for pattern match some cases, remove here
+        x.trim <- substr(x.trim, 1L, width)
         x <- sub(  # remove leading space if any
           "^\\s(.*)", "\\1",
           substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x)),
@@ -249,18 +254,14 @@ cc <- function(..., c="") paste0(c(...), collapse=c)
 meta_word_cat <- function(
   ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout()
 ) {
-  # yeah yeah, sounds like a basketball player name...
-
-  if(isTRUE(crayon::has_color())) {
+  out <- if(isTRUE(crayon::has_color())) {
     w.c <- word_wrap_split(..., sep=sep, width=width, tolerance=tolerance)
-    if(!is.null(w.c)) cat(crayon::silver(w.c), sep=sep, file=file)
+    if(!is.null(w.c)) crayon::silver(w.c)
   } else {
-    w.c <- word_wrap_split(
-      ..., sep=sep, width=width, tolerance=tolerance, pre="## "
-    )
-    cat(w.c, sep=sep, file=file)
+    word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="## ")
   }
-  invisible(w.c)
+  if(!is.null(out)) cat(out, sep="\n", file=file)
+  invisible(out)
 }
 ## Like word_wrap, but handles some additional duties needed for word_cat
 
@@ -275,8 +276,7 @@ word_wrap_split <- function(
     silent=TRUE
   )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
-  vec <- unlist(strsplit(vec, "\n"))
-  paste0(pre, word_wrap(vec, width, tolerance))
+  paste0(pre, word_wrap(vec, width=width, tolerance=tolerance))
 }
 #' @rdname text_wrap
 
