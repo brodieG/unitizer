@@ -121,7 +121,7 @@ unitizer_prompt <- function(
       if(!length(help)) {
         meta_word_cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        meta_word_cat(help[[1L]])
+        meta_word_cat(help[[1L]], "", sep="\n")
         if(length(help) > 1L) {
           meta_word_cat(help[-1L], sep="\n")
         }
@@ -146,7 +146,7 @@ unitizer_prompt <- function(
 
     if(!is.null(hist.con) && length(val) == 1L)
       history_write(hist.con, deparse(val[[1L]]))
-    if(res$aborted || !length(val)) 
+    if(res$aborted || !length(val))
       meta_word_cat(cc(text, opts.txt)) # error or no user input, re-prompt user
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
 } }
@@ -219,7 +219,10 @@ review_prompt <- function(x, nav.env) {
   )
   nav.prompt <- "What test do you wish to review"
   show(x)
-  meta_word_cat(nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"))
+  meta_word_cat(
+    nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"), sep=" "
+  )
+  cat("\n")
   nav.id <- unitizer_prompt(
     text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit_fun,
     valid.opts=nav.opts, valid.vals=x@mapping@item.id

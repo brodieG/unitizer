@@ -41,7 +41,7 @@ setGeneric(
 ##   in as an argument because the logic for generating it is different
 ##   depending on whether we are using `unitize` or `review`.
 ## @return a unitizer if the unitizer was modified, FALSE otherwise
- 
+
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
 
@@ -329,7 +329,9 @@ setMethod(
               paste0("(",
                 paste0(valid.opts[nchar(valid.opts) > 0L], collapse=", "),
                 ")?"
-            ) )
+              ),
+              sep=" "
+            )
             user.input <- navigate_prompt(
               y, curr.id=max(y@mapping@item.id) + 1L,
               text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -545,7 +547,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             ),
             ")?\n"
       ) )
-      meta_word_cat(prompt.txt, "\n")
+      meta_word_cat(prompt.txt, "")
     }
     # Retrieve actual tests objects
 
