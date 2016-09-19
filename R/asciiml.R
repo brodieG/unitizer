@@ -22,7 +22,7 @@ NULL
 
 print.header <- function(x, margin="bottom", ...) {
   y <- as.character(x, margin, ...)
-  cat(y)
+  cat(crayon::silver(y))
   invisible(y)
 }
 #' @export
