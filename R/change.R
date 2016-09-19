@@ -25,31 +25,43 @@ setClass("unitizerChanges",
 
 setMethod("show", "unitizerChanges",
   function(object) {
+    bullets <- character()
     if(sum(object@failed))
-      cat(
-        "- Replacing", object@failed[[1L]] ,"out of", object@failed[[2L]],
-        "failed tests\n"
-      )
+      bullets <- c(
+        bullets,
+        paste(
+          "Replacing", object@failed[[1L]], "out of", object@failed[[2L]],
+          "failed tests"
+      ) )
     if(sum(object@new))
-      cat(
-        "- Adding", object@new[[1L]] , "out of", object@new[[2L]],
-        "new tests\n"
-      )
+      bullets <- c(
+        bullets,
+        paste(
+          "Adding", object@new[[1L]], "out of", object@new[[2L]],
+          "new tests\n"
+      ) )
     if(sum(object@removed))
-      cat(
-        "- Removing", object@removed[[1L]], "out of", object@removed[[2L]],
-        "removed tests\n"
-      )
+      bullets <- c(
+        bullets,
+        paste(
+          "Removing", object@removed[[1L]], "out of", object@removed[[2L]],
+          "removed tests\n"
+      ) )
     if(sum(object@corrupted))
-      cat(
-        "- Replacing", object@corrupted[[1L]], "out of", object@corrupted[[2L]],
-        "tests with errors\n"
-      )
+      bullets <- c(
+        bullets,
+        paste(
+          "Replacing", object@corrupted[[1L]], "out of", object@corrupted[[2L]],
+          "tests with errors\n"
+      ) )
     if(object@passed[[1L]])
-      cat(
-        "- Dropping", object@passed[[1L]], "out of", object@passed[[2L]],
-        "passed tests\n"
-      )
+      bullets <- c(
+        bullets,
+        paste(
+          "Dropping", object@passed[[1L]], "out of", object@passed[[2L]],
+          "passed tests\n"
+      ) )
+    cat(crayon::silver(as.character(UL(bullets))), sep="\n")
     invisible(NULL)
   }
 )
