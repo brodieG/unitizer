@@ -167,11 +167,11 @@ setMethod("show", "unitizerItemTestsErrors",
       # Maybe this should only be called when an actual abort signal is detected
       # although, can't do it right now since we decided not to track that
       meta_word_cat(
-        "New evaluation introduces an error where there was none before"
+        "", "New evaluation introduces an error where there was none before"
       )
     } else if (has_new_conds_only(object)) {
       meta_word_cat(
-        "New evaluation produces conditions where there were none before"
+        "", "New evaluation produces conditions where there were none before"
       )
     } else {
       slots <- grep("^[^.]", slotNames(object), value=TRUE)
@@ -179,6 +179,7 @@ setMethod("show", "unitizerItemTestsErrors",
         slots, function(x) !is.null(slot(object, x)@value), logical(1L)
       )
       for(i in slots[slot.errs]) {
+        cat("\n")
         curr.err <- slot(object, i)
         mismatch <- if(curr.err@compare.err) {
           cat_fun <- function(x) word_cat(x, file=stderr())
@@ -193,6 +194,7 @@ setMethod("show", "unitizerItemTestsErrors",
           c(mismatch, as.character(UL(decap_first(curr.err@value))))
         }
         cat_fun(out)
+        cat("\n")
         make_cont <- function(x) {
           res <- if(identical(i, "value")) {
             as.name(x)
@@ -204,9 +206,9 @@ setMethod("show", "unitizerItemTestsErrors",
             curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
             cur.banner=make_cont(".new")
         ) )
-        cat("\n")
       }
     }
+    cat("\n")
     invisible(NULL)
 } )
 

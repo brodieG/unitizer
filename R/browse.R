@@ -252,9 +252,11 @@ setMethod(
             unrevavail  <- length(unreviewed)
             if(unrevavail) {
               meta_word_cat(
-                "You have ", unrevavail, " unreviewed tests; press ",
-                "`B` to browse tests, `U` to go to first unreviewed test.\n\n",
-                sep=""
+                paste0(
+                  "You have ", unrevavail, " unreviewed tests; press ",
+                  "`B` to browse tests, `U` to go to first unreviewed test."
+                ),
+                "", ""
           ) } }
           valid.opts <- c(
             Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
@@ -332,6 +334,7 @@ setMethod(
               ),
               sep=" "
             )
+            cat("\n")
             user.input <- navigate_prompt(
               y, curr.id=max(y@mapping@item.id) + 1L,
               text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,

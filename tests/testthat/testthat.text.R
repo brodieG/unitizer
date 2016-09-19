@@ -181,5 +181,18 @@ local({
     expect_equal(
       capture.output(unitizer:::meta_word_cat("hello")), "## hello"
     )
+    # Newline issues
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello\n", sep="")),
+      c("## hello", "## ")
+    )
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello", "there")),
+      c("## hello", "## ", "## there")
+    )
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello", "there", sep=" ")),
+      "## hello there"
+    )
   })
 })
