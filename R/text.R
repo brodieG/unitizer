@@ -234,11 +234,9 @@ word_wrap <- function(
   x.lst <- as.list(x)
 
   # replace new lines with 0 char item; note that leading NLs need special
-  # treatment
+  # treatment; used to put in two newlines here; not sure why though
 
-  x.lst[nchar(x) > 0] <- strsplit(
-    gsub("(?<!^)\n", "\n\n", x[nchar(x) > 0], perl=TRUE), "\n"
-  )
+  x.lst[nchar(x) > 0] <- strsplit(x[nchar(x) > 0], "\n")
 
   res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
   res.fin <- if(unlist) unlist(res) else res

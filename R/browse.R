@@ -252,11 +252,9 @@ setMethod(
             unrevavail  <- length(unreviewed)
             if(unrevavail) {
               meta_word_cat(
-                paste0(
-                  "You have ", unrevavail, " unreviewed tests; press ",
-                  "`B` to browse tests, `U` to go to first unreviewed test."
-                ),
-                "", ""
+                "You have ", unrevavail, " unreviewed tests; press ",
+                "`B` to browse tests, `U` to go to first unreviewed test.\n\n",
+                sep=""
           ) } }
           valid.opts <- c(
             Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
@@ -548,9 +546,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
               c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
               collapse=", "
             ),
-            ")?\n"
+            ")?\n\n"
       ) )
-      meta_word_cat(prompt.txt, "")
+      meta_word_cat(prompt.txt)
     }
     # Retrieve actual tests objects
 
@@ -781,10 +779,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
             browse.env1=browse.eval.env,
             browse.env2=new.env(parent=parent.env(base.env.pri)),
             valid.opts=valid.opts,
-            help=c(
-              help.prompt,
-              paste0(as.character(UL(help.opts)), collapse="\n"), "\n"
-          ) ),
+            help=c(help.prompt, as.character(UL(help.opts)))
+          ),
           "unitizerBrowse"
         )
       ) {
@@ -832,7 +828,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             help <- paste0(
               paste0(
                 "The effect of 'Y' or 'N' depends on what type of test you ",
-                "are reviewing.  Consult the following table for details:\n\n"
+                "are reviewing.  Consult the following table for details:\n"
               ),
               paste0(help.txt, collapse="\n")
             )

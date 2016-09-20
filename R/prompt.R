@@ -121,11 +121,11 @@ unitizer_prompt <- function(
       if(!length(help)) {
         meta_word_cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        meta_word_cat(help[[1L]], "", sep="\n")
+        meta_word_cat(help[[1L]], sep="\n")
         if(length(help) > 1L) {
           meta_word_cat(help[-1L], sep="\n")
         }
-        meta_word_cat(paste0(paste(text, opts.txt)))
+        meta_word_cat("", paste(text, opts.txt))
       }
       next
     }
@@ -146,9 +146,10 @@ unitizer_prompt <- function(
 
     if(!is.null(hist.con) && length(val) == 1L)
       history_write(hist.con, deparse(val[[1L]]))
-    if(res$aborted || !length(val))
-      meta_word_cat(cc(text, opts.txt)) # error or no user input, re-prompt user
-    if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
+      # error or no user input, re-prompt user
+    if(res$aborted || !length(val)) meta_word_cat(text, opts.txt, sep=" ")
+    # make error trace available for `traceback()`
+    if(res$aborted && !is.null(res$trace)) set_trace(res$trace)
 } }
 #' @rdname unitizer_prompt
 #' @keywords internal
