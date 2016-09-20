@@ -129,51 +129,12 @@ setClass(
 )
 setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
 
-## Check Whether New Evaluation Produces Error When Old Did Not
-##
-## Helper function for summary and show methods to unitizerItemTestsErrors
-
-has_new_err_only <- function(object) {
-  stopifnot(is(object, "unitizerItemTestsErrors"))
-  !is.null(object@value@value) && !isTRUE(object@value@compare.err) &&
-  !is.null(object@conditions@value) && !isTRUE(object@conditions@compare.err) &&
-  is.null(object@value@.new) &&
-  (new.cond.len <- length(object@conditions@.new)) &&
-  inherits(object@conditions@.new[[new.cond.len]], "error") &&
-  (
-    !(ref.cond.len <- length(object@conditions@.ref)) ||
-    !inherits(object@conditions@.ref[[ref.cond.len]], "error")
-  )
-}
-## Check Whether Only New Evaluation Produces Conditions
-##
-## Also, values must not produce an error.
-
-has_new_conds_only <- function(object) {
-  stopifnot(is(object, "unitizerItemTestsErrors"))
-
-  is.null(object@value@value) && !is.null(object@conditions@value) &&
-    !isTRUE(object@conditions@compare.err) &&
-    !length(object@conditions@.ref) && length(object@conditions@.new)
-}
 # Display Test Errors
 #' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerItemTestsErrors",
   function(object) {
-    # Only show details of errors if we're not dealing with a simple error
-    # being added, since that is shown any way
-    if(has_new_err_only(object)) {
-      # Maybe this should only be called when an actual abort signal is detected
-      # although, can't do it right now since we decided not to track that
-      meta_word_cat(
-        "", "New evaluation introduces an error where there was none before"
-      )
-    } else if (has_new_conds_only(object)) {
-      meta_word_cat(
-        "", "New evaluation produces conditions where there were none before"
-      )
-    } else {
+    if(TRUE) {
       slots <- grep("^[^.]", slotNames(object), value=TRUE)
       slot.errs <- vapply(
         slots, function(x) !is.null(slot(object, x)@value), logical(1L)
