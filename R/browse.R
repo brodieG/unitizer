@@ -253,9 +253,11 @@ setMethod(
             if(unrevavail) {
               meta_word_cat(
                 "You have ", unrevavail, " unreviewed tests; press ",
-                "`B` to browse tests, `U` to go to first unreviewed test.\n\n",
+                "`B` to browse tests, `U` to go to first unreviewed test.\n",
                 sep=""
-          ) } }
+              )
+              cat("\n")
+          } }
           valid.opts <- c(
             Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
             U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="", O=""
