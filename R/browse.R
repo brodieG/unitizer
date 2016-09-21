@@ -780,7 +780,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             browse.env1=browse.eval.env,
             browse.env2=new.env(parent=parent.env(base.env.pri)),
             valid.opts=valid.opts,
-            help=c(help.prompt, as.character(UL(help.opts)))
+            help=help.prompt, help.opts=help.opts
           ),
           "unitizerBrowse"
         )

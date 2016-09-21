@@ -141,7 +141,9 @@ unitize_core <- function(
       "In order to proceed unitizer must create the following ", dir.word,
       ":\n", sep=""
     )
-    print(UL(dir.names.clean))
+    meta_word_cat(
+      as.character(UL(dir.names.clean), option=getOption("width") - 2L)
+    )
     prompt <- paste0("Create ", dir.word)
     meta_word_cat(prompt, "?", sep="")
 
@@ -673,10 +675,8 @@ unitize_browse <- function(
           "RR: Re-run all tests",
           "Q: quit"
         )
-        help <- c(
-          "Available options:",
-          paste0(as.character(UL(help.opts)), collapse="\n")
-        )
+        help <- "Available options:"
+
         # Show summary if applicable
 
         if(!first.time && !any(bookmarked)) {
@@ -704,7 +704,7 @@ unitize_browse <- function(
                 AA="", RR=""
               ),
               exit.condition=exit_fun, valid.vals=seq.int(test.len),
-              hist.con=hist.obj$con, help=help
+              hist.con=hist.obj$con, help=help, help.opts=help.opts
             )
           } else {
             # in non.interactive mode, review all, this will apply auto.accepts

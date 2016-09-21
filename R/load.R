@@ -104,20 +104,20 @@ load_unitizers <- function(
   if(length(toup.idx)) {
     many <- length(toup.idx) > 1L
     meta_word_cat(
-      "\nThe following unitizer", if(many) "s",
-      if(force.upgrade) " will" else " must", " be upgraded to version '",
-      as.character(curr.version), "':",
-      sep=""
-    )
-    cat(
+      paste0(
+        "\nThe following unitizer", if(many) "s",
+        if(force.upgrade) " will" else " must", " be upgraded to version '",
+        as.character(curr.version), "':\n"
+      ),
       as.character(
         UL(
           paste0(
             chr.ids[toup.idx], " (at '",
             vapply(versions[toup.idx], as.character, character(1L))
             , "')"
-      ) ) ),
-      sep="\n"
+        ) ) ,
+        width=getOption("width") - 2L
+      )
     )
     if(!interactive.mode && !force.upgrade)
       stop("Cannot upgrade unitizers in non-interactive mode")
@@ -182,32 +182,35 @@ load_unitizers <- function(
   # Issue errors as required
 
   if(length(invalid.idx)) {
-    word_msg(
-      "\nThe following unitizer", if(length(invalid.idx) > 1L) "s",
-      " could not be loaded:", sep=""
-    )
-    cat(
-      as.character(
-        UL(paste0(chr.ids[invalid.idx], ": ",  valid[invalid.idx]))
+    meta_word_cat(
+      paste0(
+        "\nThe following unitizer", if(length(invalid.idx) > 1L) "s",
+        " could not be loaded:"
       ),
-      sep="\n", file=stderr()
+      as.character(
+        UL(paste0(chr.ids[invalid.idx], ": ",  valid[invalid.idx])),
+        width=getOption("width") - 2L
+      ),
+      file=stderr()
     )
   }
   if(length(toup.fail.idx)) {
-    word_msg(
-      "\nThe following unitizer", if(length(toup.fail.idx) > 1L) "s",
-      " could not be upgraded to version '", as.character(curr.version), "':",
-      sep=""
-    )
-    cat(
+    meta_word_cat(
+      paste0(
+        "\nThe following unitizer", if(length(toup.fail.idx) > 1L) "s",
+        " could not be upgraded to version '", as.character(curr.version),
+        "':\n"
+      ),
       as.character(
         UL(
           paste0(
             chr.files[toup.fail.idx], " at '",
             vapply(versions[toup.fail.idx], as.character, character(1L)),
             "': ", valid[toup.fail.idx]
-      ) ) ),
-      sep="\n", file=stderr()
+        ) ),
+        width=getOption("width") - 2L
+      ),
+      file=stderr()
     )
   }
   if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))
@@ -340,7 +343,9 @@ setMethod(
               best_store_name(object@store.id[[1L]], object@test.file)
             ),
             paste0("Reason: ", object@reason)
-    ) ) ) )
+        ) ),
+        width=getOption("width") - 2L
+    ) )
     invisible(NULL)
   }
 )

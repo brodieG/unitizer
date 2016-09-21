@@ -46,6 +46,7 @@ NULL
 #'   the quit and help options will always be appended to this
 #' @param help a character vector with help suggestions: the first value in the
 #'   vector is \code{\link{word_cat}} output, the rest normal \code{cat}
+#' @param help.opts a character vector of help options
 #' @param hist.con connection to save history to
 #' @param exit.condition function used to evaluate whether user input should
 #'   cause the prompt loop to exit; this function should accept two parameters:
@@ -81,7 +82,7 @@ NULL
 #' }
 
 unitizer_prompt <- function(
-  text, browse.env=baseenv(), help=character(),
+  text, browse.env=baseenv(), help=character(), help.opts=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
   ...
 ) {
@@ -122,10 +123,11 @@ unitizer_prompt <- function(
       if(!length(help)) {
         meta_word_cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        meta_word_cat(help[[1L]], sep="\n")
-        if(length(help) > 1L) {
-          meta_word_cat(help[-1L], sep="\n")
-        }
+        meta_word_cat(help)
+        if(length(help.opts))
+          meta_word_cat(
+            as.character(UL(help.opts), width=getOption("width") - 2L)
+          )
         meta_word_cat("", paste(text, opts.txt))
       }
       cat("\n")
@@ -148,8 +150,12 @@ unitizer_prompt <- function(
 
     if(!is.null(hist.con) && length(val) == 1L)
       history_write(hist.con, deparse(val[[1L]]))
-      # error or no user input, re-prompt user
-    if(res$aborted || !length(val)) meta_word_cat(text, opts.txt, sep=" ")
+    # error or no user input, re-prompt user
+    if(res$aborted || !length(val)) {
+      cat("\n")
+      meta_word_cat(text, opts.txt, sep=" ")
+      cat("\n")
+    }
     # make error trace available for `traceback()`
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)
 } }
@@ -158,7 +164,7 @@ unitizer_prompt <- function(
 
 navigate_prompt <- function(
   x, curr.id, text, browse.env1=globalenv(), browse.env2=globalenv(),
-  help=character(), valid.opts
+  help=character(), help.opts=character(), valid.opts
 ) {
   if(!is(x, "unitizerBrowse")) {
     stop(
@@ -169,8 +175,8 @@ navigate_prompt <- function(
   # User input
 
   prompt.val <- unitizer_prompt(
-    text, browse.env=browse.env1, help=help, valid.opts=valid.opts,
-    hist.con=x@hist.con
+    text, browse.env=browse.env1, help=help, help.opts=help.opts,
+    valid.opts=valid.opts, hist.con=x@hist.con
   )
   if(identical(prompt.val, "P")) {
     # Go back to previous

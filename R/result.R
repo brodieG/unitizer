@@ -202,7 +202,9 @@ print.unitizer_results <- function(x, ...) {
         UL(
           paste0(
             "id: ", which.fail, "; ", files.short[which.fail], ": ", fail.reason
-      ) ) ),
+        ) ),
+        width=getOption("width") - 2L
+      ),
       sep="\n"
     )
   }

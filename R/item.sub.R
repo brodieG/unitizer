@@ -143,24 +143,29 @@ setMethod("show", "unitizerItemTestsErrors",
         cat("\n")
         curr.err <- slot(object, i)
         mismatch <- if(curr.err@compare.err) {
-          cat_fun <- function(x) word_cat(x, file=stderr())
+          out.file <- stderr()
           paste0("Unable to compare ", i, ": ")
         } else {
-          cat_fun <- meta_word_cat
+          out.file <- stdout()
           paste0(cap_first(i), " mismatch: ")
         }
         out <- if(length(curr.err@value) < 2L) {
           paste0(mismatch, decap_first(curr.err@value))
         } else {
-          c(mismatch, as.character(UL(decap_first(curr.err@value))))
+          c(
+            mismatch,
+            as.character(
+              UL(decap_first(curr.err@value)),
+              width=getOption("width") - 2L
+          ) )
         }
-        cat_fun(out)
+        meta_word_cat(out, file=out.file)
         cat("\n")
         make_cont <- function(x) {
           res <- if(identical(i, "value")) {
             as.name(x)
           } else call("$", as.name(toupper(x)), as.name(i))
-          paste0(deparse(res), collapse="\n")
+          call("quote", res)
         }
         show(
           diffObj(
