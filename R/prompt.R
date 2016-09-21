@@ -118,6 +118,7 @@ unitizer_prompt <- function(
     } else if (length(val) == 1L && identical(val[[1L]], quote(Q))) {
       return("Q")
     } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
+      cat("\n")
       if(!length(help)) {
         meta_word_cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
@@ -127,6 +128,7 @@ unitizer_prompt <- function(
         }
         meta_word_cat("", paste(text, opts.txt))
       }
+      cat("\n")
       next
     }
     # Check whether input should be captured specially
@@ -206,10 +208,10 @@ review_prompt <- function(x, nav.env) {
   nav.help <- paste0(
     "Select a test to review by typing that test's number at the prompt. ",
     "Tests that start with a `*`",
-    if(identical(x@mode, "unitize")) ", or with status \"Passed\",", "are not ",
-    "typically reviewed in this mode.  The letter after the test status ",
-    "represents prior user input to test review (a `-` indicates test has not ",
-    " been reviewed). Type \"U\" to jump to the first unreviewed ",
+    if(identical(x@mode, "unitize")) ", or with status \"Passed\",", 
+    " are not typically reviewed in this mode.  The letter after the test ",
+    "status represents prior user input to test review (a `-` indicates test ",
+    "has not been reviewed). Type \"U\" to jump to the first unreviewed ",
     "test.\n\n",
     "Note that tests are displayed in the order they appear in the test",
     "file, not in the order they would be reviewed in.\n"

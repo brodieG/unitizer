@@ -546,9 +546,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
               c(valid.opts[nchar(valid.opts) > 0], Q="[Q]uit", H="[H]elp"),
               collapse=", "
             ),
-            ")?\n\n"
+            ")?\n"
       ) )
       meta_word_cat(prompt.txt)
+      cat("\n")
     }
     # Retrieve actual tests objects
 
