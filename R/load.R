@@ -123,7 +123,7 @@ load_unitizers <- function(
       stop("Cannot upgrade unitizers in non-interactive mode")
 
     pick <- if(interactive.mode) {
-      word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
+      meta_word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
       unitizer_prompt(
         "Upgrade unitizer stores?", hist.con=NULL,
         valid.opts=c(Y="[Y]es", N="[N]o")
@@ -164,7 +164,7 @@ load_unitizers <- function(
       toup.fail.idx <- toup.idx[!upgrade.success]
       valid[toup.fail.idx] <- upgraded[!upgrade.success]
     } else {
-      word_msg("unitizer(s) listed above will not be tested")
+      meta_word_msg("unitizer(s) listed above will not be tested")
       toup.fail.idx <- toup.idx
       valid[toup.fail.idx] <- "User elected not to upgrade unitizers"
     }
@@ -272,7 +272,7 @@ store_unitizer <- function(unitizer) {
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {
-    word_msg("unitizer updated.")
+    meta_word_msg("unitizer updated.")
   } else {
     stop("Error attempting to save unitizer, see previous messages.")
   }

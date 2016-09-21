@@ -60,9 +60,9 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     if(browse.res@updated) {
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
-        word_msg("Unable to store '", getTarget(browse.res@unitizer, "'"))
+        meta_word_msg("Unable to store '", getTarget(browse.res@unitizer, "'"))
     } else {
-      message("unitizer unchanged.")
+      meta_word_msg("unitizer unchanged.")
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it
@@ -100,9 +100,9 @@ setMethod(
     )
 
     if(!length(y)) {
-      word_msg("No tests to review.")
+      meta_word_msg("No tests to review.")
     } else if(!something.happened && !force.update) {
-      word_msg("All tests passed, unitizer store unchanged.")
+      meta_word_msg("All tests passed, unitizer store unchanged.")
     } else {
       # Check we if we requested a re-eval and if so set the id where we were
       # before re-eval
@@ -111,7 +111,7 @@ setMethod(
         cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
         cand.match.len <- length(cand.match)
         if(!cand.match.len || x@bookmark@id > cand.match.len) {
-          word_msg(
+          meta_word_msg(
             cc(
               "Unable to find test you toggled re-eval from; starting ",
               "from beginning."
@@ -213,7 +213,7 @@ setMethod(
         # Finalize depending on situation
 
         if(y@interactive.error) {
-          word_msg(
+          meta_word_msg(
             "User input required to proceed, but we are in non-interactive mode."
           )
           break
@@ -224,7 +224,7 @@ setMethod(
               "Logic Error: should only get here in `auto.accept` mode, ",
               "contact maintainer"
             )
-          word_msg("Auto-accepting changes...")
+          meta_word_msg("Auto-accepting changes...")
           update <- TRUE
           break
         } else if(
@@ -261,10 +261,10 @@ setMethod(
             U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="", O=""
           )
           if(!length(x@changes) && (force.update || y@force.up))
-            word_msg(
+            meta_word_cat(
               "Running in `force.update` mode so `unitizer` will be re-saved",
               "even though there are no changes to record (see `?unitize` for",
-              "details)."
+              "details).", file=stderr()
             )
           if(update) {
             tar <- getTarget(x)
@@ -276,19 +276,22 @@ setMethod(
               relativize_path(tar)
 
             if(!length(x@changes)) {
-              word_msg(
+              meta_word_cat(
                 "You are about to update '", tar.final, "' with re-evaluated ",
-                "but otherwise unchanged tests.", sep=""
+                "but otherwise unchanged tests.", sep="", file=stderr()
               )
             } else {
-              word_msg(
+              meta_word_cat(
                 "You will IRREVERSIBLY modify '", tar.final, "'",
-                if(length(x@changes)) " by", ":", sep=""
+                if(length(x@changes)) " by", ":", sep="", file=stderr()
               )
             }
           }
           if(length(x@changes) > 0) {
-            show(x@changes)
+            meta_word_cat(
+              as.character(x@changes, width=getOption("width") - 2L),
+              file=stderr()
+            )
             cat("\n")
           }
           repeat {
@@ -351,8 +354,8 @@ setMethod(
               next
             } else if (grepl("^[QN]$", user.input)) {
               update <- FALSE
-              word_msg("Changes discarded.")
-              if(y@re.eval) word_msg("Re-evaluation disabled.")
+              meta_word_msg("Changes discarded.")
+              if(y@re.eval) meta_word_msg("Re-evaluation disabled.")
               y@re.eval <- 0L
               loop.status <- "b"
               break
@@ -367,7 +370,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          word_msg("No changes recorded.")
+          meta_word_msg("No changes recorded.")
           break
         }
     } }
@@ -584,7 +587,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           x@mapping@review.val[[curr.id]], "\""
       ) }
       if(jumping) {
-        word_msg(
+        meta_word_msg(
           sep="",
           "Jumping to test #", x@mapping@item.id.ord[[curr.id]], " because ",
           "that was the test under review when test re-run was requested.",
@@ -663,7 +666,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
         if(!isTRUE(state.comp))
-          word_msg(
+          meta_word_msg(
             "Additionally, there are state differences (compare with",
             "`diff_state()`)."
           )
@@ -878,7 +881,7 @@ setMethod("toggleReeval", "unitizerBrowse",
     re.mode <- switch(
       nchar(y), "this unitizer", "all loaded unitizers"
     )
-    word_msg("Toggling re-run mode", re.status, "for", re.mode)
+    meta_word_msg("Toggling re-run mode", re.status, "for", re.mode)
     x@re.eval <- if(x@re.eval) 0L else nchar(y)
     x
 })
@@ -886,7 +889,7 @@ setGeneric("toggleForceUp", function(x, ...) standardGeneric("toggleForceUp"))
 setMethod("toggleForceUp", "unitizerBrowse",
   function(x, ...) {
     re.status <- if(x@force.up) "OFF" else "ON"
-    word_msg("Toggling force update mode", re.status)
+    meta_word_msg("Toggling force update mode", re.status)
     x@force.up <- !x@force.up
     x
 })

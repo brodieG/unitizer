@@ -185,7 +185,8 @@ navigate_prompt <- function(
       else TRUE
     )
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
-    if(!x@last.id) word_msg("At first reviewable item; nothing to step back to")
+    if(!x@last.id)
+      meta_word_msg("At first reviewable item; nothing to step back to")
     x@navigating <- TRUE
     return(x)
   } else if (identical(prompt.val, "B")) {
@@ -193,7 +194,7 @@ navigate_prompt <- function(
   } else if (identical(prompt.val, "U")) {
     unreviewed <- unreviewed(x)
     if(!length(unreviewed)) {
-      word_msg("No unreviewed tests.")
+      meta_word_msg("No unreviewed tests.")
       x@last.id <- tail(x@mapping@item.id, 1L)
     } else x@last.id <- head(unreviewed, 1L) - 1L
     x@navigating <- TRUE
@@ -214,7 +215,7 @@ review_prompt <- function(x, nav.env) {
   nav.help <- paste0(
     "Select a test to review by typing that test's number at the prompt. ",
     "Tests that start with a `*`",
-    if(identical(x@mode, "unitize")) ", or with status \"Passed\",", 
+    if(identical(x@mode, "unitize")) ", or with status \"Passed\",",
     " are not typically reviewed in this mode.  The letter after the test ",
     "status represents prior user input to test review (a `-` indicates test ",
     "has not been reviewed). Type \"U\" to jump to the first unreviewed ",
@@ -241,7 +242,7 @@ review_prompt <- function(x, nav.env) {
   } else if (identical(nav.id, "U")) { # Go to unreviewed test
     unreviewed <- unreviewed(x)
     nav.id <- if(!length(unreviewed)) {
-      word_msg("No unreviewed tests.")
+      meta_word_msg("No unreviewed tests.")
       tail(x@mapping@item.id, 1L) + 1L
     } else head(unreviewed, 1L)
   } else if (
@@ -271,7 +272,7 @@ review_prompt <- function(x, nav.env) {
     x@review <- if(x@inspect.all) -1L else 1L
 
     if(x@inspect.all) {
-      word_msg(
+      meta_word_msg(
         "You selected a test that is not normally reviewed in this mode;",
         "as such, upon test completion, you will be brought back to this menu",
         "instead of being taken to the next reviewable test."
@@ -336,7 +337,7 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
     y[[1L]] != as.integer(y[[1L]])
   ) return(FALSE)
   if(!isTRUE(y[[1L]] %in% valid.vals)) {
-    word_msg("Input must be in `", deparse(valid.vals), "`", sep="")
+    meta_word_msg("Input must be in `", deparse(valid.vals), "`", sep="")
     return(FALSE)
   }
   return(y[[1L]])

@@ -72,7 +72,7 @@ unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
 # can't test this without quitting R!
 
 unitizer_quit_handler <- function(quitArgs) {
-  word_msg(
+  meta_word_msg(
     paste0(
       "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
       "quitting type `Q` (without quotes) at the unitizer prompt, or avoid ",

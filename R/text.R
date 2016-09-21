@@ -255,10 +255,20 @@ cc <- function(..., c="") paste0(c(...), collapse=c)
 meta_word_cat <- function(
   ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout()
 ) {
+  # NOTE: if we change `pre` nchar width there are several calls to
+  # meta_word_wrap involving `UL` that will need to be udpated as well
+
   out <-
     word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| ")
   if(!is.null(out)) cat(out, sep="\n", file=file)
   invisible(out)
+}
+#' @rdname text_wrap
+
+meta_word_msg <- function(
+  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stderr()
+) {
+  meta_word_cat(..., sep=sep, width=width, tolerance=tolerance, file=file)
 }
 ## Like word_wrap, but handles some additional duties needed for word_cat
 

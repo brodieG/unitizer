@@ -263,7 +263,7 @@ infer_unitizer_location.character <- function(
     type.name <- "test directory"
   }
   inf_msg <- function(name)
-    word_msg("Inferred", type.name, "location:", relativize_path(name))
+    meta_word_msg("Inferred", type.name, "location:", relativize_path(name))
 
   # Is a directory, check if a package and pick tests/unitizer as the directory
 
