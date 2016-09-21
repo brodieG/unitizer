@@ -259,7 +259,7 @@ setMethod("show", "unitizerSummary",
     sum.mx <- object@data
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
     cat(
-      crayon::silver(summ_matrix_to_text(sum.mx, show.nums=FALSE)), "", 
+      summ_matrix_to_text(sum.mx, show.nums=FALSE), "", 
       sep="\n"
     )
     invisible(NULL)
@@ -425,7 +425,8 @@ setMethod("show", "unitizerObjectListSummary",
       "Summary of files in common directory '", relativize_path(full.dir),
       "':\n", sep=""
     )
-    cat(crayon::silver(disp), sep="\n")
+    cat(disp, sep="\n")
+
     # Legends
 
     if(any(review.req || object@updated)) meta_word_cat("Legend:")

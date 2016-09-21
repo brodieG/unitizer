@@ -255,14 +255,8 @@ cc <- function(..., c="") paste0(c(...), collapse=c)
 meta_word_cat <- function(
   ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout()
 ) {
-  out <- if(isTRUE(crayon::has_color())) {
-    w.c <-
-      word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| ")
-    # if(!is.null(w.c)) crayon::silver(w.c)
-    w.c
-  } else {
-    word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="## ")
-  }
+  out <-
+    word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| ")
   if(!is.null(out)) cat(out, sep="\n", file=file)
   invisible(out)
 }

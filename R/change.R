@@ -61,7 +61,7 @@ setMethod("show", "unitizerChanges",
           "Dropping", object@passed[[1L]], "out of", object@passed[[2L]],
           "passed tests\n"
       ) )
-    cat(crayon::silver(as.character(UL(bullets))), sep="\n")
+    cat(as.character(UL(bullets)), sep="\n")
     invisible(NULL)
   }
 )
