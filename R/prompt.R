@@ -115,8 +115,11 @@ unitizer_prompt <- function(
       as.character(val[[1L]]) %in% names(valid.opts) &&
       !(as.character(val[[1L]]) %in% c("Q", "H")) && nchar(val[[1L]])
     ) {
+      cat("\n")
       return(as.character(val[[1L]]))
     } else if (length(val) == 1L && identical(val[[1L]], quote(Q))) {
+      cat("\n")
+      return(as.character(val[[1L]]))
       return("Q")
     } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
       cat("\n")
