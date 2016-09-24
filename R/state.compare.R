@@ -303,7 +303,7 @@ diff_state <- function(
 
       capture.output(
         diffPrint(  # should try to collapse this with the one for options
-          tar, cur, 
+          tar, cur,
           tar.banner=paste0(deparse(diff.call.ref), collapse="\n"),
           cur.banner=paste0(deparse(diff.call.new), collapse="\n"),
           disp.width=width
@@ -349,15 +349,19 @@ setMethod(
       # the end , or 0 for zero
 
       ref.ind.mx <- do.call(cbind, lapply(ref.indices, as.integer))
-      ref.ind.mx.map <- t(
-        apply(
+      ref.ind.mx.map.tmp <- apply(
           ref.ind.mx, 1, function(z) {
             match(z, sort(Filter(as.logical, unique(z))), nomatch=0L)
-      } ) ) + as.integer(max.indices)
-      if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map)))
+      } ) + as.integer(max.indices)
+      ref.ind.mx.map <- if(is.matrix(ref.ind.mx.map.tmp))
+        t(ref.ind.mx.map.tmp) else as.matrix(ref.ind.mx.map.tmp)
+
+      if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map))) {
         stop(
-          "Logic Error: global index mapping matrix malformed; contact maintainer."
+          "Logic Error: global index mapping matrix malformed; contact ",
+          "maintainer."
         )
+      }
       ref.ind.mx.map[!ref.ind.mx] <- 0L  # these all map to the starting state
 
       # Pull out the states from ref and copy them into new
