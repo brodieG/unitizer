@@ -115,7 +115,6 @@ unitize_core <- function(
     history <- tempfile()
     attr(history, "hist.tmp") <- TRUE
   }
-
   # Make sure nothing untoward will happen if a test triggers an error
 
   check_call_stack()
@@ -139,10 +138,11 @@ unitize_core <- function(
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
     meta_word_cat(
       "In order to proceed unitizer must create the following ", dir.word,
-      ":\n", sep=""
+      ":\n", sep="", trail.nl=FALSE
     )
     meta_word_cat(
-      as.character(UL(dir.names.clean), option=getOption("width") - 2L)
+      as.character(UL(dir.names.clean), option=getOption("width") - 2L),
+      trail.nl=FALSE
     )
     prompt <- paste0("Create ", dir.word)
     meta_word_cat(prompt, "?", sep="")
@@ -820,8 +820,11 @@ unitize_browse <- function(
 
   if(length(eval.which)) {
     for(i in eval.which) unitizers[[i]]@eval <- TRUE
-  } else for(i in seq_along(unitizers))  unitizers[[i]]@eval <- FALSE  # this one may not be necessary
+  } else {
+    # this one may not be necessary
 
+    for(i in seq_along(unitizers)) unitizers[[i]]@eval <- FALSE
+  }
   unitizers
 }
 # Check Not Running in Undesirable Environments

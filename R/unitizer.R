@@ -421,7 +421,6 @@ setMethod("show", "unitizerObjectListSummary",
         sub("^(\\s*) (\\d+\\.)", "\\1*\\2", disp[[j]])
       } else disp[[j]]
     }
-    cat("\n")
     meta_word_cat(
       "Summary of files in common directory '", relativize_path(full.dir),
       "':\n\n", sep="", trail.nl=FALSE
