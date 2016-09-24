@@ -301,7 +301,8 @@ infer_unitizer_location.character <- function(
       inf_msg(fp)
       return(fp)
     }
-    dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
+    # use tests/unitizer as starting point for any package
+    dir.store.id.proc <- test.base
   } else {
     dir.store.id.proc <- dir.store.id
   }
