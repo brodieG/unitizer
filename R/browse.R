@@ -617,7 +617,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
       # show the message, and set the trace if relevant; options need to be
       # retrieved from unitizer object since they get reset
 
-      msg.out <- res.out <- FALSE
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg ||
@@ -643,7 +642,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
         msg.out <- TRUE
       }
-      if(msg.out || res.out) cat("\n")
 
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
@@ -653,6 +651,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
       ) {
+        cat("\n")
         err.obj <- curr.sub.sec.obj@show.fail[[id.rel]]
         err.obj@.fail.context <-
           unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]

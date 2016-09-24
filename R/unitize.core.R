@@ -661,7 +661,7 @@ unitize_browse <- function(
       first.time <- TRUE
       repeat {
         prompt <- paste0(
-          "\nType number of unitizer to review",
+          "Type number of unitizer to review",
           if(any(to.review))
             ", 'A' to review all that require review",
           if(any(summaries@updated))
@@ -740,9 +740,12 @@ unitize_browse <- function(
           ) ) )
           # summaries don't really work well in review mode if the tests are
           # not evaluated
+
           if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])
+
           # annoyingly we need to force update here as well as for
           # the unreviewed unitizers
+
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]], force.update=force.update
           )

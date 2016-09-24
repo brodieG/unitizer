@@ -318,7 +318,7 @@ word_comment <- function(
   res <- lapply(
     res,
     function(x)
-      if(getOption("crayon.enabled")) crayon::silver(paste0("#", x)) else
+      if(crayon::has_color()) crayon::silver(paste0("#", x)) else
         paste0("#", x)
   )
   if(unlist) unlist(res) else res
