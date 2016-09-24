@@ -402,11 +402,12 @@ setMethod("show", "unitizerObjectListSummary",
 
     review.req <- !vapply(as.list(object), passed, logical(1L))
 
-    # Display
+    # Display; if updated, mark with `NA` as we don't know what the deal is
+    # until we re-run the tests
 
     totals <- t(vapply(as.list(object), slot, object[[1L]]@totals, "totals"))
-    totals[object@updated, ] <- NA_integer_
     rownames(totals) <- test.files.trim
+    totals[object@updated, ] <- NA_integer_
     disp <- summ_matrix_to_text(totals, from="left")
 
     # Post processing
@@ -438,6 +439,7 @@ setMethod("show", "unitizerObjectListSummary",
         "$ `unitizer` has been updated and needs to be re-evaluted to",
         "recompute summary", sep=" ", trail.nl=FALSE
       )
+    cat("\n")
     invisible(NULL)
 } )
 setGeneric(
