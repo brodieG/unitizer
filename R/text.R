@@ -534,7 +534,11 @@ summ_matrix_to_text <- function(
 
   col.names <- substr_cons(names(totals.keep), 4L, justify="right")
   col.count <- length(col.names)
-  num.width <- max(nchar(col.names), nchar(as.character(totals.keep)))
+  tot.chr <- as.character(totals.keep)
+  tot.chr[is.na(totals.keep)] <- "?"
+  tot.chr[!is.na(totals.keep) & !totals.keep] <- "-"
+
+  num.width <- max(nchar(col.names), nchar(tot.chr))
 
   test.len <- nrow(mx.keep)
   test.nums <- if(show.nums)
@@ -570,9 +574,6 @@ summ_matrix_to_text <- function(
   # totals.keep
 
   res <- c(res, paste0(rep(".", nchar(res[[1L]])), collapse=""))
-  tot.chr <- as.character(totals.keep)
-  tot.chr[is.na(totals.keep)] <- "?"
-  tot.chr[!totals.keep] <- "-"
   res <- c(
     res,
     do.call(sprintf, c(list(fmt, "", ""), as.list(tot.chr)))
