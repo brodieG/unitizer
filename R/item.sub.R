@@ -140,7 +140,6 @@ setMethod("show", "unitizerItemTestsErrors",
         slots, function(x) !is.null(slot(object, x)@value), logical(1L)
       )
       for(i in slots[slot.errs]) {
-        cat("\n")
         curr.err <- slot(object, i)
         mismatch <- if(curr.err@compare.err) {
           out.file <- stderr()
@@ -160,7 +159,6 @@ setMethod("show", "unitizerItemTestsErrors",
           ) )
         }
         meta_word_cat(out, file=out.file)
-        cat("\n")
         make_cont <- function(x) {
           res <- if(identical(i, "value")) {
             as.name(x)
@@ -172,9 +170,9 @@ setMethod("show", "unitizerItemTestsErrors",
             curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
             cur.banner=make_cont(".new")
         ) )
+        cat("\n")
       }
     }
-    cat("\n")
     invisible(NULL)
 } )
 

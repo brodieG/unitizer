@@ -259,7 +259,7 @@ setMethod("show", "unitizerSummary",
     sum.mx <- object@data
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
     cat(
-      summ_matrix_to_text(sum.mx, show.nums=FALSE), "", 
+      summ_matrix_to_text(sum.mx, show.nums=FALSE), "",
       sep="\n"
     )
     invisible(NULL)
@@ -423,18 +423,20 @@ setMethod("show", "unitizerObjectListSummary",
     cat("\n")
     meta_word_cat(
       "Summary of files in common directory '", relativize_path(full.dir),
-      "':\n", sep=""
+      "':\n\n", sep="", trail.nl=FALSE
     )
-    cat(disp, sep="\n")
+    meta_word_cat(disp, "", trail.nl=FALSE)
 
     # Legends
 
-    if(any(review.req || object@updated)) meta_word_cat("Legend:")
-    if(any(review.req)) meta_word_cat("* `unitizer` requires review")
+    if(any(review.req || object@updated))
+      meta_word_cat("Legend:", trail.nl=FALSE)
+    if(any(review.req))
+      meta_word_cat("* `unitizer` requires review", trail.nl=FALSE)
     if(any(object@updated))
       meta_word_cat(
         "$ `unitizer` has been updated and needs to be re-evaluted to",
-        "recompute summary"
+        "recompute summary", sep=" ", trail.nl=FALSE
       )
     invisible(NULL)
 } )

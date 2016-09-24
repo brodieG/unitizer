@@ -133,7 +133,6 @@ unitizer_prompt <- function(
           )
         meta_word_cat("", paste(text, opts.txt))
       }
-      cat("\n")
       next
     }
     # Check whether input should be captured specially
@@ -157,7 +156,6 @@ unitizer_prompt <- function(
     if(res$aborted || !length(val)) {
       cat("\n")
       meta_word_cat(text, opts.txt, sep=" ")
-      cat("\n")
     }
     # make error trace available for `traceback()`
     if(res$aborted && !is.null(res$trace)) set_trace(res$trace)
@@ -235,7 +233,6 @@ review_prompt <- function(x, nav.env) {
   meta_word_cat(
     nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"), sep=" "
   )
-  cat("\n")
   nav.id <- unitizer_prompt(
     text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit_fun,
     valid.opts=nav.opts, valid.vals=x@mapping@item.id
@@ -275,6 +272,7 @@ review_prompt <- function(x, nav.env) {
     x@review <- if(x@inspect.all) -1L else 1L
 
     if(x@inspect.all) {
+      cat("\n")
       meta_word_msg(
         "You selected a test that is not normally reviewed in this mode;",
         "as such, upon test completion, you will be brought back to this menu",

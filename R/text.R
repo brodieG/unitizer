@@ -253,7 +253,8 @@ cc <- function(..., c="") paste0(c(...), collapse=c)
 #' @rdname text_wrap
 
 meta_word_cat <- function(
-  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout()
+  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout(),
+  trail.nl=TRUE
 ) {
   # NOTE: if we change `pre` nchar width there are several calls to
   # meta_word_wrap involving `UL` that will need to be udpated as well
@@ -261,14 +262,18 @@ meta_word_cat <- function(
   out <-
     word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| ")
   if(!is.null(out)) cat(out, sep="\n", file=file)
+  if(trail.nl) cat("\n")
   invisible(out)
 }
 #' @rdname text_wrap
 
 meta_word_msg <- function(
-  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stderr()
+  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stderr(),
+  trail.nl=TRUE
 ) {
-  meta_word_cat(..., sep=sep, width=width, tolerance=tolerance, file=file)
+  meta_word_cat(
+    ..., sep=sep, width=width, tolerance=tolerance, file=file, trail.nl=trail.nl
+  )
 }
 ## Like word_wrap, but handles some additional duties needed for word_cat
 
@@ -310,7 +315,12 @@ word_comment <- function(
     x=sub("^#", "", x), width=width - 1L, tolerance=tolerance, hyphens=hyphens,
     unlist=FALSE
   )
-  res <- lapply(res, function(x) paste0("#", x))
+  res <- lapply(
+    res,
+    function(x)
+      if(getOption("crayon.enabled")) crayon::silver(paste0("#", x)) else
+        paste0("#", x)
+  )
   if(unlist) unlist(res) else res
 }
 

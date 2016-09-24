@@ -267,7 +267,10 @@ store_unitizer <- function(unitizer) {
   # original ones take up a lot of room to store
 
   for(i in seq_along(unitizer@items.ref)) unitizer@items.ref[[i]]@call <- NULL
-  for(i in seq_along(unitizer@items.new)) unitizer@items.new[[i]]@call <- NULL  # shouldn't really be anything here
+
+  # shouldn't really be anything here
+
+  for(i in seq_along(unitizer@items.new)) unitizer@items.new[[i]]@call <- NULL
 
   success <- try(set_unitizer(unitizer@id, unitizer))
 

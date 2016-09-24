@@ -60,9 +60,12 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     if(browse.res@updated) {
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
-        meta_word_msg("Unable to store '", getTarget(browse.res@unitizer, "'"))
+        meta_word_msg(
+          "Unable to store '", getTarget(browse.res@unitizer, "'"),
+          trail.nl=FALSE
+        )
     } else {
-      meta_word_msg("unitizer unchanged.")
+      meta_word_cat("unitizer unchanged.", trail.nl=FALSE)
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it
@@ -100,9 +103,11 @@ setMethod(
     )
 
     if(!length(y)) {
-      meta_word_msg("No tests to review.")
+      meta_word_cat("No tests to review.", trail.nl=FALSE)
     } else if(!something.happened && !force.update) {
-      meta_word_msg("All tests passed, unitizer store unchanged.")
+      meta_word_cat(
+        "All tests passed, unitizer store unchanged.", trail.nl=FALSE
+      )
     } else {
       # Check we if we requested a re-eval and if so set the id where we were
       # before re-eval
@@ -214,7 +219,8 @@ setMethod(
 
         if(y@interactive.error) {
           meta_word_msg(
-            "User input required to proceed, but we are in non-interactive mode."
+            "User input required to proceed, but we are in non-interactive ",
+            "mode.", sep=""
           )
           break
         } else if(!y@human && !user.quit && y@auto.accept) {
@@ -224,7 +230,7 @@ setMethod(
               "Logic Error: should only get here in `auto.accept` mode, ",
               "contact maintainer"
             )
-          meta_word_msg("Auto-accepting changes...")
+          meta_word_msg("Auto-accepting changes...", trail.nl=FALSE)
           update <- TRUE
           break
         } else if(
@@ -256,7 +262,6 @@ setMethod(
                 "`B` to browse tests, `U` to go to first unreviewed test.\n",
                 sep=""
               )
-              cat("\n")
           } }
           valid.opts <- c(
             Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
@@ -278,23 +283,21 @@ setMethod(
               relativize_path(tar)
 
             if(!length(x@changes)) {
-              meta_word_cat(
+              meta_word_msg(
                 "You are about to update '", tar.final, "' with re-evaluated ",
-                "but otherwise unchanged tests.", sep="", file=stderr()
+                "but otherwise unchanged tests.", sep=""
               )
             } else {
-              meta_word_cat(
+              meta_word_msg(
                 "You will IRREVERSIBLY modify '", tar.final, "'",
-                if(length(x@changes)) " by", ":", sep="", file=stderr()
+                if(length(x@changes)) " by", ":", sep="", trail.nl=FALSE
               )
             }
           }
           if(length(x@changes) > 0) {
-            meta_word_cat(
-              as.character(x@changes, width=getOption("width") - 2L),
-              file=stderr()
+            meta_word_msg(
+              as.character(x@changes, width=getOption("width") - 2L)
             )
-            cat("\n")
           }
           repeat {
             # Can this be rationalized with the logic in `reviewNext`?
@@ -337,7 +340,6 @@ setMethod(
               ),
               sep=" "
             )
-            cat("\n")
             user.input <- navigate_prompt(
               y, curr.id=max(y@mapping@item.id) + 1L,
               text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -356,8 +358,9 @@ setMethod(
               next
             } else if (grepl("^[QN]$", user.input)) {
               update <- FALSE
-              meta_word_msg("Changes discarded.")
-              if(y@re.eval) meta_word_msg("Re-evaluation disabled.")
+              meta_word_msg("Changes discarded.", trail.nl=FALSE)
+              if(y@re.eval)
+                meta_word_msg("Re-evaluation disabled.", trail.nl=FALSE)
               y@re.eval <- 0L
               loop.status <- "b"
               break
@@ -372,7 +375,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          meta_word_msg("No changes recorded.")
+          meta_word_msg("No changes recorded.", trail.nl=FALSE)
           break
         }
     } }
@@ -554,7 +557,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
             ")?\n"
       ) )
       meta_word_cat(prompt.txt)
-      cat("\n")
     }
     # Retrieve actual tests objects
 
@@ -599,7 +601,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
               "the jump is to the correct test."
             )
         )
-        cat("\n")
       }
       if(length(item.main@comment)) {
         if(last.id && x@mapping@ignored[[last.id]] && !jumping) cat("\n")
@@ -616,27 +617,34 @@ setMethod("reviewNext", c("unitizerBrowse"),
       # show the message, and set the trace if relevant; options need to be
       # retrieved from unitizer object since they get reset
 
+      msg.out <- res.out <- FALSE
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg ||
         x@review == 0L
       ) {
-        if(length(item.main@data@message) && nchar(item.main@data@message))
+        if(length(item.main@data@message) && nchar(item.main@data@message)) {
           screen_out(
             item.main@data@message,
             max.len=unitizer@global$unitizer.opts[["unitizer.test.msg.lines"]],
             stderr()
           )
+          msg.out <- TRUE
+        }
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
       if(
         (curr.sub.sec.obj@show.out || x@review == 0L) &&
-        nchar(item.main@data@output)
-      )
+        sum(nchar(item.main@data@output))
+      ) {
         screen_out(
           item.main@data@output,
           max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
         )
+        msg.out <- TRUE
+      }
+      if(msg.out || res.out) cat("\n")
+
       # If test failed, show details of failure; note this should mean there must
       # be a `.new` and a `.ref`
 
@@ -667,11 +675,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
           unitizer@state.ref, item.ref@glob.indices
         )
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
-        if(!isTRUE(state.comp))
-          meta_word_msg(
-            "Additionally, there are state differences (compare with",
-            "`diff_state()`)."
-          )
+        if(!isTRUE(state.comp)) {
+          meta_word_cat("See state differences with `diff_state()`")
+        }
     } }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
