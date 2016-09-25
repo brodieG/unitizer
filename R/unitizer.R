@@ -431,11 +431,11 @@ setMethod("show", "unitizerObjectListSummary",
 
     if(any(review.req || object@updated))
       meta_word_cat("Legend:", trail.nl=FALSE)
-    if(any(review.req))
+    if(any(review.req & !object@updated))
       meta_word_cat("* `unitizer` requires review", trail.nl=FALSE)
     if(any(object@updated))
       meta_word_cat(
-        "$ `unitizer` has been updated and needs to be re-evaluted to",
+        "$ `unitizer` has been modified and needs to be re-run to",
         "recompute summary", sep=" ", trail.nl=FALSE
       )
     cat("\n")
