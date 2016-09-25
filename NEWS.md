@@ -1,5 +1,19 @@
 # `unitizer` NEWS
 
+## v1.2.0
+
+* [#168](https://github.com/brodieG/unitizer/issues/168): Failing tests now will
+  output all output and conditions
+* [#171](https://github.com/brodieG/unitizer/issues/171): Flush warnings in
+  `unitizer` REPL
+* Improved integration of object diffs via `.DIFF` and `.diff`
+* Display improvements, including:
+    * Cleaner separation of `unitizer` meta-output vs. test or command line
+    * Harmonizing of state difference output with rest of diff output
+    * [#164](https://github.com/brodieG/unitizer/issues/164): Less intrusive way
+      of alerting to state differences
+
+
 ## v1.1.0
 
 ### Improvement / Changes:
@@ -7,15 +21,16 @@
 * [#161](https://github.com/brodieG/unitizer/issues/161): Compare objects with `diffobj::diffObj`
 * [#166](https://github.com/brodieG/unitizer/issues/166): More systematic
   handling of `library`/`attach`/`detach`
-* Minor improvements to test navigation / display
 
 ### Bugfixes:
 
 * Several unitizer prompt issues:
     * No longer capture prompt evals so `debug` is usable again
     * Parse errors reported correctly
-    * [#165](https://github.com/brodieG/unitizer/issues/165): Confusing Help Prompt
-* Reference state properly preserved (previously would incorrectly use new state for reference tests kept in store)
+    * [#165](https://github.com/brodieG/unitizer/issues/165): Confusing Help
+      Prompt
+* Reference state properly preserved (previously would incorrectly use new state
+  for reference tests kept in store)
 * Internal shimming of library/detach/attach more robust
 * Updated tests for changes in testthat, R
 
