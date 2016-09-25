@@ -886,17 +886,21 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "match the reference values from the store."
     ),
     help=paste0(
-      "Tests fail when the evaluation of the test expression produces ",
-      "different outputs than when it was originally added to the store. ",
-      "You should type N at the prompt unless you know the previous value ",
-      "was incorrect and should be replaced by the new value. ",
-      "Note that `unitizer` checks conditions as well as values, so a test ",
-      "will fail if the values are the same but new conditions are issued. ",
-      "Depending on the nature of the failure `unitizer` may show the output ",
-      "of `diffobj::diffObj(.ref, .new)` so you can easily see the test value ",
-      "differences.  You can always directly compare new and reference ",
-      "objects with `.new`, `.NEW`, `.ref`, and `.REF`. (e.g. ",
-      "`identical(.new, .ref)`)."
+      "Tests fail when a test expression produces ",
+      "different results than when it was originally added to the store. ",
+      "You should type N at the prompt unless you know the previous result ",
+      "is incorrect and should be replaced by the new result\n\n",
+      "Test failures can be caused by mismatches in either values or ",
+      "conditions, or possibly other aspects of the test result if you ",
+      "enable checks for them via `unitizer_sect`.\n\n",
+      "If you wish to examine test values more closely you can retrieve the ",
+      "reference value with `.ref`, and the newly evaluated one with `.new`. ",
+      "`.diff` contains a precomputed diff (i.e. ",
+      "`diffobj::diffObj(.ref, .new)`). `.NEW` and `.REF` contain all stored ",
+      "components of the test, and `.DIFF` contains the diffs ",
+      "between each of those components.  `.new`, `.ref`, `.diff`, and ",
+      "`.diff.s` are each respectively copies of `.NEW$value`, `.REF$value`, ",
+      "`.DIFF$value`, and `.DIFF$state` provided for convenience."
     ),
     actions=c(Y="A", N="B")
 ) )
