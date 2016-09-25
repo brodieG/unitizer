@@ -238,7 +238,6 @@ setMethod(
             something.happened && (slow.run || !user.quit)
           ) || y@re.eval || force.update || y@force.up
         ) {
-          cat("\n")
           print(H2("Finalize Unitizer"))
 
           # default update status; this can be modified if we cancel on exit
