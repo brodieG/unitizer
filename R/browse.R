@@ -585,7 +585,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     if(!ignore.sub.sec || x@review == 0L) {
       if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
-        message(
+        meta_word_msg(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\""
       ) }
@@ -602,7 +602,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
       }
       if(length(item.main@comment)) {
-        if(last.id && x@mapping@ignored[[last.id]] && !jumping) cat("\n")
+        # if(last.id && x@mapping@ignored[[last.id]] && !jumping) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
         cat("\n")
       }
@@ -616,6 +616,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       # show the message, and set the trace if relevant; options need to be
       # retrieved from unitizer object since they get reset
 
+      out.std <- out.err <- FALSE
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg ||
@@ -627,7 +628,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             max.len=unitizer@global$unitizer.opts[["unitizer.test.msg.lines"]],
             stderr()
           )
-          msg.out <- TRUE
+          out.err <- TRUE
         }
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
@@ -639,7 +640,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           item.main@data@output,
           max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
         )
-        msg.out <- TRUE
+        out.std <- TRUE
       }
 
       # If test failed, show details of failure; note this should mean there must
@@ -676,7 +677,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         if(!isTRUE(state.comp)) {
           meta_word_cat("See state differences with `diff_state()`")
         }
-    } }
+      } else if (out.std || out.err) cat("\n")
+    }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
     # based on what happens to the subsequent non-ignored test.
