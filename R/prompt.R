@@ -126,10 +126,11 @@ unitizer_prompt <- function(
       if(!length(help)) {
         meta_word_cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        meta_word_cat(help)
+        meta_word_cat(help, trail.nl=FALSE)
         if(length(help.opts))
           meta_word_cat(
-            as.character(UL(help.opts), width=getOption("width") - 2L)
+            as.character(UL(help.opts), width=getOption("width") - 2L),
+            trail.nl=FALSE
           )
         meta_word_cat("", paste(text, opts.txt))
       }

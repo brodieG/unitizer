@@ -674,7 +674,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         if(!isTRUE(state.comp)) {
           diffs@state <- new(
             "unitizerItemTestsErrorsDiff", err=FALSE,
-            txt="See `.DIFF$state` for state differences",
+            txt="State mismatch:",
+            txt.alt="State mismatch; see `.diff.s` for details.",
             show.diff=FALSE,
             diff=diffPrint(
               item.ref@state, item.new@state,
@@ -688,6 +689,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
           call("show", diffs),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
+        # Reset the diff to show tate details
+
+        diffs@state@show.diff <- TRUE
+
       } else if (out.std || out.err) cat("\n")
     }
     # Need to add ignored tests as default action is N, though note that ignored
@@ -725,14 +730,15 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(!is.null(item.ref))
         list(.REF=item.ref, .ref=item.ref@data@value[[1L]]),
       if(!is.null(diffs))
-        list(.DIFF=diffs, .diff=diffs@value@diff)
+        list(.DIFF=diffs, .diff=diffs@value@diff, .diff.s=diffs@state@diff)
     )
     browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)
 
     # Functions to override
 
-    env.sec <- if(!is.null(item.new) && !is.null(item.ref)) item.ref@env else NULL
+    env.sec <- if(!is.null(item.new) && !is.null(item.ref))
+      item.ref@env else NULL
     assign("ls", unitizer_ls, base.env.pri)
     if(!is.null(env.sec)) {
       assign("ref", function(x) eval(substitute(x), env.sec), base.env.pri)
@@ -766,9 +772,15 @@ setMethod("reviewNext", c("unitizerBrowse"),
           "`.ref` for the reference value, or `.REF` for the full reference ",
           "object"
         ),
+      if(!is.null(item.new) && !is.null(item.ref))
+        paste0(
+          "`.diff` for a diff between `.new` and `.ref`, and `.DIFF`  for the ",
+          "differences between all components in `.NEW` and `.REF`."
+        ),
+
       if(!isTRUE(state.comp))
         paste0(
-          "`diff_state()` to see differences in state (e.g. search path, ",
+          "`diff.s` to see differences in state (e.g. search path, ",
           "random seed) between new and reference tests"
         ),
       paste0(
@@ -790,8 +802,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
       }
     )
     # navigate_prompt handles the P and B cases internally and modifies the
-    # unitizerBrowse to be at the appropriate location; this is done as a function
-    # because same logic is re-used elsewhere
+    # unitizerBrowse to be at the appropriate location; this is done as a
+    # function because same logic is re-used elsewhere
 
     repeat {   # repeat needed just for re-eval toggle
       if(

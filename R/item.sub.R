@@ -123,11 +123,16 @@ setMethod("initialize", "unitizerItemTestsErrors",
       } else dots[[i]]
     .Object
 } )
+## Track Diff And Comparison Error Text
+##
+## Store whether to show the diff or not in `show.diff`, and the alternate
+## text to show in that circumstances in `txt.alt`.
 
 setClass("unitizerItemTestsErrorsDiff",
   slots=c(
     diff="DiffOrNULL",
     txt="character",
+    txt.alt="character",
     err="logical",
     show.diff="logical"
   ),
@@ -237,10 +242,12 @@ setMethod("show", "unitizerItemTestsErrorsDiffs",
 setMethod("show", "unitizerItemTestsErrorsDiff",
   function(object) {
     file <- if(object@err) stderr() else stdout()
-    meta_word_cat(object@txt, file=file)
+    meta_word_cat(
+      if(object@show.diff) object@txt else object@txt.alt, file=file
+    )
     if(object@show.diff) {
-      res <- show(object@diff)
-      cat("\n")
+    res <- show(object@diff)
+    cat("\n")
     }
     invisible(NULL)
 } )
