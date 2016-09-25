@@ -589,7 +589,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
         meta_word_msg(
           "You are re-reviewing a test; previous selection was: \"",
-          x@mapping@review.val[[curr.id]], "\""
+          x@mapping@review.val[[curr.id]], "\"", sep=""
       ) }
       if(jumping) {
         meta_word_msg(
@@ -729,8 +729,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
         list(.NEW=item.new, .new=item.new@data@value[[1L]]),
       if(!is.null(item.ref))
         list(.REF=item.ref, .ref=item.ref@data@value[[1L]]),
-      if(!is.null(diffs)) list(.DIFF=diffs),
-      if(!is.null(diffs@value)) list(.diff=diffs@value@diff)
+      if(!is.null(diffs)) {
+        c(
+          list(.DIFF=diffs),
+          if(!is.null(diffs@value)) list(.diff=diffs@value@diff)
+      ) }
     )
     browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)
