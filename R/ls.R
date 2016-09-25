@@ -115,7 +115,6 @@ print.unitizer_ls <- function(x, ...) {
   x.copy <- x
   x <- unclass(x)
   attr(x, "mods") <- NULL
-  if(length(x) == 1L) x <- unlist(x, use.names=FALSE)
   if(is.list(x)) {
     name.match <- c(
       tests="unitizer objects:",
