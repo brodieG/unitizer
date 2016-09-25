@@ -620,6 +620,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
       out.std <- out.err <- FALSE
       if(
+        (curr.sub.sec.obj@show.out || x@review == 0L) &&
+        sum(nchar(item.main@data@output))
+      ) {
+        screen_out(
+          item.main@data@output,
+          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
+        )
+        out.std <- TRUE
+      }
+      if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg ||
         x@review == 0L
@@ -633,16 +643,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
           out.err <- TRUE
         }
         if(length(item.main@trace)) set_trace(item.main@trace)
-      }
-      if(
-        (curr.sub.sec.obj@show.out || x@review == 0L) &&
-        sum(nchar(item.main@data@output))
-      ) {
-        screen_out(
-          item.main@data@output,
-          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
-        )
-        out.std <- TRUE
       }
 
       # If test failed, show details of failure; note this should mean there

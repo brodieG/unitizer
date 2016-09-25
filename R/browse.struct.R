@@ -92,6 +92,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
 
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionFailed",
+          show.out=TRUE, show.msg=TRUE,
           items.new=x@items.new[x@tests.fail & sect.map],
           show.fail=x@tests.errorDetails[x@tests.fail & sect.map],
           items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]],
