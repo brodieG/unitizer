@@ -1,3 +1,4 @@
+library(testpkg1)
 
 unitizer_sect("fun1", {
   # Fun 1 simple usage
