@@ -374,7 +374,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          meta_word_msg("No changes recorded.", trail.nl=FALSE)
+          meta_word_msg("No changes recorded.")
           break
         }
     } }
@@ -644,7 +644,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
         }
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
-
       # If test failed, show details of failure; note this should mean there
       # must be a `.new` and a `.ref`
 
@@ -914,7 +913,7 @@ setMethod("toggleReeval", "unitizerBrowse",
     re.mode <- switch(
       nchar(y), "this unitizer", "all loaded unitizers"
     )
-    meta_word_msg("Toggling re-run mode", re.status, "for", re.mode)
+    meta_word_msg("Toggling re-run mode", re.status, "for", re.mode, sep=" ")
     x@re.eval <- if(x@re.eval) 0L else nchar(y)
     x
 })
@@ -922,7 +921,7 @@ setGeneric("toggleForceUp", function(x, ...) standardGeneric("toggleForceUp"))
 setMethod("toggleForceUp", "unitizerBrowse",
   function(x, ...) {
     re.status <- if(x@force.up) "OFF" else "ON"
-    meta_word_msg("Toggling force update mode", re.status)
+    meta_word_msg("Toggling force update mode", re.status, sep=" ")
     x@force.up <- !x@force.up
     x
 })
