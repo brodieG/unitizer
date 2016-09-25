@@ -658,13 +658,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         err.obj@.fail.context <-
           unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]
 
-        # must eval to make sure that correct methods are available when
-        # outputing failures to screen
+        diffs <- as.Diffs(err.obj)
 
-        diffs <- eval(
-          call("show", err.obj),
-          if(is.environment(item.main@env)) item.main@env else base.env.pri
-        )
         # Extract specific state based on indices and attach the to the objects;
         # these objects will be discarded so we don't need to worry about
         # nulling them out
@@ -677,13 +672,22 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
         if(!isTRUE(state.comp)) {
-          meta_word_cat("See `.DIFF$state` for state differences")
-          diffs@state <- diffPrint(
-            item.ref@state, item.new@state,
-            tar.banner=quote(.REF$state),
-            cur.banner=quote(.NEW$state)
-          )
-        }
+          diffs@state <- new(
+            "unitizerItemTestsErrorsDiff", err=FALSE,
+            txt="See `.DIFF$state` for state differences",
+            show.diff=FALSE,
+            diff=diffPrint(
+              item.ref@state, item.new@state,
+              tar.banner=quote(.REF$state),
+              cur.banner=quote(.NEW$state)
+        ) ) }
+        # must eval to make sure that correct methods are available when
+        # outputing failures to screen
+
+        eval(
+          call("show", diffs),
+          if(is.environment(item.main@env)) item.main@env else base.env.pri
+        )
       } else if (out.std || out.err) cat("\n")
     }
     # Need to add ignored tests as default action is N, though note that ignored
@@ -721,7 +725,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(!is.null(item.ref))
         list(.REF=item.ref, .ref=item.ref@data@value[[1L]]),
       if(!is.null(diffs))
-        list(.DIFF=diffs, .diff=diffs@value)
+        list(.DIFF=diffs, .diff=diffs@value@diff)
     )
     browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)

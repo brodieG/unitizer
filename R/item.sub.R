@@ -123,17 +123,30 @@ setMethod("initialize", "unitizerItemTestsErrors",
       } else dots[[i]]
     .Object
 } )
+
+setClass("unitizerItemTestsErrorsDiff",
+  slots=c(
+    diff="DiffOrNULL",
+    txt="character",
+    err="logical",
+    show.diff="logical"
+  ),
+  prototype=list(show.diff=TRUE)
+)
+setClassUnion(
+  "unitizerItemTestsErrorsDiffOrNULL", c("unitizerItemTestsErrorsDiff", "NULL")
+)
 # Hold diffs for display; only used when a test actually fails and is queued up
 # for review by user
 
 setClass("unitizerItemTestsErrorsDiffs",
-  representation(
-    value="DiffOrNULL",
-    conditions="DiffOrNULL",
-    output="DiffOrNULL",
-    message="DiffOrNULL",
-    aborted="DiffOrNULL",
-    state="DiffOrNULL"
+  slots=c(
+    value="unitizerItemTestsErrorsDiffOrNULL",
+    conditions="unitizerItemTestsErrorsDiffOrNULL",
+    output="unitizerItemTestsErrorsDiffOrNULL",
+    message="unitizerItemTestsErrorsDiffOrNULL",
+    aborted="unitizerItemTestsErrorsDiffOrNULL",
+    state="unitizerItemTestsErrorsDiffOrNULL"
 ) )
 if("state" %in% unitizerItemDataSlots)
   stop(
@@ -151,54 +164,7 @@ if(
     "slots not identical; contact maintainer."
   )
 }
-# Generic / Methods for converting Errors to Diffs
 
-setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff"))
-setMethod("as.Diffs", "unitizerItemTestsErrors",
-  function(x, state.ref, state.new, ...) {
-    slots <- grep("^[^.]", slotNames(x), value=TRUE)
-    res <- list(length(slots) + 1L)
-    names(res) <- c(slots, "state")
-
-    slot.errs <- vapply(
-      slots, function(y) !is.null(slot(x, y)@value), logical(1L)
-    )
-    for(i in slots[slot.errs]) {
-      curr.err <- slot(x, i)
-      mismatch <- if(curr.err@compare.err) {
-        out.file <- stderr()
-        paste0("Unable to compare ", i, ": ")
-      } else {
-        out.file <- stdout()
-        paste0(cap_first(i), " mismatch: ")
-      }
-      out <- if(length(curr.err@value) < 2L) {
-        paste0(mismatch, decap_first(curr.err@value))
-      } else {
-        c(
-          mismatch,
-          as.character(
-            UL(decap_first(curr.err@value)),
-            width=getOption("width") - 2L
-        ) )
-      }
-      meta_word_cat(out, file=out.file)
-      make_cont <- function(x) {
-        res <- if(identical(i, "value")) {
-          as.name(x)
-        } else call("$", as.name(toupper(x)), as.name(i))
-        call("quote", res)
-      }
-      show(
-        diffObj(
-          curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
-          cur.banner=make_cont(".new")
-      ) )
-      cat("\n")
-    }
-
-  }
-)
 setClass(
   "unitizerItemsTestsErrors", contains="unitizerList"
   # ,validity=function(object) { # commented out for computation cost
@@ -218,7 +184,75 @@ setClassUnion(
   "unitizerItemsTestsErrorsOrLogical",
   c("unitizerItemsTestsErrors", "logical")
 )
-# Display Test Errors
+
+setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff"))
+setMethod("as.Diffs", "unitizerItemTestsErrors",
+  function(x, state.ref, state.new, width=getOption("width"), ...) {
+    slots <- grep("^[^.]", slotNames(x), value=TRUE)
+    slot.errs <- vapply(
+      slots, function(y) !is.null(slot(x, y)@value), logical(1L)
+    )
+    diffs <- vector("list", length(slots))
+    names(diffs) <- slots
+
+    for(i in slots[slot.errs]) {
+      curr.err <- slot(x, i)
+      mismatch <- if(curr.err@compare.err) {
+        paste0("Unable to compare ", i, ": ")
+      } else {
+        paste0(cap_first(i), " mismatch: ")
+      }
+      out <- if(length(curr.err@value) < 2L) {
+        paste0(mismatch, decap_first(curr.err@value))
+      } else {
+        c(mismatch, as.character(UL(decap_first(curr.err@value)), width=width))
+      }
+      make_cont <- function(x) {
+        res <- if(identical(i, "value")) {
+          as.name(x)
+        } else call("$", as.name(toupper(x)), as.name(i))
+        call("quote", res)
+      }
+      diff <- diffObj(
+        curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+        cur.banner=make_cont(".new")
+      )
+      diffs[[i]] <- new(
+        "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
+        err=curr.err@compare.err
+      )
+    }
+    invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
+  }
+)
+setMethod("show", "unitizerItemTestsErrorsDiffs",
+  function(object) {
+    sn <- slotNames(object)
+    null.slots <- vapply(sn, function(x) is.null(slot(object, x)), logical(1L))
+    if(any(null.slots)) {
+      for(i in sn[!null.slots]) show(slot(object, i))
+    }
+    invisible(object)
+} )
+setMethod("show", "unitizerItemTestsErrorsDiff",
+  function(object) {
+    file <- if(object@err) stderr() else stdout()
+    meta_word_cat(object@txt, file=file)
+    if(object@show.diff) {
+      res <- show(object@diff)
+      cat("\n")
+    }
+    invisible(NULL)
+} )
+
+## Display Test Errors
+##
+## Also generates the object that records the diffs and the function output
+## for re-display by user.
+##
+## This is somewhat convoluted.  Better would be to compute the object that has
+## all this info, and then use the show method both when we first.
+##
 #' @rdname unitizer_s4method_doc
 
 setMethod("show", "unitizerItemTestsErrors",
@@ -228,8 +262,9 @@ setMethod("show", "unitizerItemTestsErrors",
       slot.errs <- vapply(
         slots, function(x) !is.null(slot(object, x)@value), logical(1L)
       )
-      diffs <- vector("list", length(slots))
-      names(diffs) <- slots
+      diffs <- text <- vector("list", length(slots))
+      errs <- logical(length(slots))
+      names(diffs) <- names(text) <- names(errs) <- slots
 
       for(i in slots[slot.errs]) {
         curr.err <- slot(object, i)
@@ -261,7 +296,10 @@ setMethod("show", "unitizerItemTestsErrors",
           curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
           cur.banner=make_cont(".new")
         )
-        diffs[[i]] <- diff
+        diffs[[i]] <- new(
+          "unitizerItemTestsErrorsDiff", diff=diff, text=out,
+          err=out.file==std.err()
+        )
         show(diff)
         cat("\n")
       }

@@ -372,7 +372,7 @@ setMethod("$", "unitizerItemTestsErrorsDiffs",
   function(x, name) {
     what <- substitute(name)
     what <- if(is.symbol(what)) as.character(what) else name
-    x[[what]]
+    x[[what]]@diff
 } )
 setMethod("[[",  "unitizerItemTestsErrorsDiffs",
   function(x, i, j, ..., exact=TRUE) {
