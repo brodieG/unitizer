@@ -37,7 +37,6 @@ if(interactive()) {
     )
     tp.0 <- file.path(old.dir, "test_pkgs", "testpkg1", "testpkg1.0")
     install.packages(pkgs=tp.0, lib=lib.tmp, repos=NULL, type="src")
-    unitize_dir(file.path(test.tmp, "unitizer"))
     unitize_dir(file.path(test.tmp, "unitizer"), auto.accept="new")
 
     # Upgrade the package, note we test against same store

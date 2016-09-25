@@ -181,9 +181,7 @@ all.equal.unitizer_glob_state_test <- function(target, current, ...)
 #' diff_state()
 #' }
 
-diff_state <- function(
-  target=NULL, current=NULL, width=getOption("width"), file=stdout()
-) {
+diff_state <- function(target=NULL, current=NULL, width=getOption("width")) {
   target <- if(!is.null(target))
     target else try(get(".REF", parent.env(parent.frame()))$state, silent=T)
   current <- if(!is.null(current))
@@ -194,17 +192,19 @@ diff_state <- function(
     is(target, "unitizerGlobalState"), is(current, "unitizerGlobalState")
   )
   out <- character(0L) # we're growing this, but it's small
+
+  has.state.diffs <- FALSE
+  first.diff <- TRUE
   for(i in .unitizer.global.settings.names) {
     cur <- slot(current, i)
     tar <- slot(target, i)
     if(is.null(cur) || identical(tar, cur)) next
 
-    meta_word_cat(header <- sprintf("`%s` state mismatch:", i))
-    out <- c(out, header)
+    if(!has.state.diffs) cat("\n")
+    meta_word_cat(sprintf("`%s` state mismatch:", i))
+    has.state.diffs <- TRUE
 
-    if(!is.int.1L(width) || width < 8L) width <- 8L else width <- width - 4L
-
-    diff.string <- if(identical(i, "options")) {
+    if(identical(i, "options")) {
       # Compare common options with state_item_compare, all others are
       # assumed to be different; note that system and asis options should
       # not be part of these lists
@@ -237,11 +237,10 @@ diff_state <- function(
         diff.call.new <- diff.call.ref <- diff.call
         diff.call.new[[2L]][[2L]][[2L]] <- as.name(".NEW")
         diff.call.ref[[2L]][[2L]][[2L]] <- as.name(".REF")
-        capture.output(
+        show(
           diffObj(
             tar[[diff.name]], cur[[diff.name]],
-            tar.banner=paste0(deparse(diff.call.ref), collapse="\n"),
-            cur.banner=paste0(deparse(diff.call.new), collapse="\n"),
+            tar.banner=diff.call.ref, cur.banner=diff.call.ref,
             disp.width=width
         ) )
       } else if(deltas.count <= 10L) {
@@ -264,7 +263,7 @@ diff_state <- function(
             diff.list[[k + 1L]] <- OL(deltas.opts[[j]])
             k <- k + 1L
         } }
-        as.character(UL(diff.list[seq.int(k)]), width=width)
+        print(UL(diff.list[seq.int(k)]), width=width)
       } else {
         # this is a mess, need to cleanup someday
 
@@ -292,7 +291,7 @@ diff_state <- function(
             tmp, "The following options are missing from `.REF`: ", tmp.out
           )
         }
-        word_wrap(tmp, width=width)
+        cat(word_wrap(tmp, width=width), sep="\n")
       }
     } else {
       diff.call <- quote(x$state@y)
@@ -301,7 +300,7 @@ diff_state <- function(
       diff.call.new[[2L]][[2L]] <- as.name(".NEW")
       diff.call.ref[[2L]][[2L]] <- as.name(".REF")
 
-      capture.output(
+      show(
         diffPrint(  # should try to collapse this with the one for options
           tar, cur,
           tar.banner=paste0(deparse(diff.call.ref), collapse="\n"),
@@ -309,23 +308,19 @@ diff_state <- function(
           disp.width=width
       ) )
     }
-    diff.string.pad <- paste0("    ", diff.string)
-    cat(diff.string.pad, sep="\n")
-    out <- c(out, diff.string.pad)
+    cat("\n")
   }
   msg.no.diff <- paste0(
     "Note that there may be state differences that are not reported here as ",
     "state tracking is incomplete.  See vignette for details."
   )
-  msg.extra <- word_wrap(
-    if(length(out)) paste0(
+  meta_word_cat(
+    if(has.state.diffs) paste0(
       "For a more detailed comparison you can access state values ",
       "directly (e.g. .NEW$state@options).  ", msg.no.diff
     ) else c("No state differences detected.", "", msg.no.diff)
   )
-  out <- c(out, msg.extra)
-  if(!is.null(file)) cat(msg.extra, sep="\n", file=file)
-  invisible(out)
+  invisible(NULL)
 }
 # Merge State Data Between Reference and New Indices
 #
