@@ -675,7 +675,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           diffs@state <- new(
             "unitizerItemTestsErrorsDiff", err=FALSE,
             txt="State mismatch:",
-            txt.alt="State mismatch; see `.diff.s` for details.",
+            txt.alt="State mismatch; see `.DIFF$state` for details.",
             show.diff=FALSE,
             diff=diffPrint(
               item.ref@state, item.new@state,
@@ -730,8 +730,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       if(!is.null(item.ref))
         list(.REF=item.ref, .ref=item.ref@data@value[[1L]]),
       if(!is.null(diffs)) list(.DIFF=diffs),
-      if(!is.null(diffs@value)) list(.diff=diffs@value@diff),
-      if(!is.null(diffs@state)) list(.diff.s=diffs@state@diff)
+      if(!is.null(diffs@value)) list(.diff=diffs@value@diff)
     )
     browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)

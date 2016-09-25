@@ -52,7 +52,7 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
     ref.inv <- isTRUE(attr(ref.item@ls, "invalid"))
   }
   if(!inherits(ref.item, "try-error") && !inherits(new.item, "try-error")) {
-    ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".diff", ".diff.s", ".DIFF"))
+    ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".diff", ".DIFF"))
   }
   if(new.inv || ref.inv) {
     warning(

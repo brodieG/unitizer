@@ -898,9 +898,9 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "`.diff` contains a precomputed diff (i.e. ",
       "`diffobj::diffObj(.ref, .new)`). `.NEW` and `.REF` contain all stored ",
       "components of the test, and `.DIFF` contains the diffs ",
-      "between each of those components.  `.new`, `.ref`, `.diff`, and ",
-      "`.diff.s` are each respectively copies of `.NEW$value`, `.REF$value`, ",
-      "`.DIFF$value`, and `.DIFF$state` provided for convenience."
+      "between each of those components.  `.new`, `.ref`, and `.diff` ",
+      "are each respectively copies of `.NEW$value`, `.REF$value`, ",
+      "and `.DIFF$value` provided for convenience."
     ),
     actions=c(Y="A", N="B")
 ) )
