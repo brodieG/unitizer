@@ -583,6 +583,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # not passed tests, and requesting that those not be shown, and not elected
     # to review a test that isn't usually reviewed (x@review)
 
+    diffs <- NULL
+
     if(!ignore.sub.sec || x@review == 0L) {
       if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
         meta_word_msg(
@@ -643,8 +645,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
         out.std <- TRUE
       }
 
-      # If test failed, show details of failure; note this should mean there must
-      # be a `.new` and a `.ref`
+      # If test failed, show details of failure; note this should mean there
+      # must be a `.new` and a `.ref`
 
       state.comp <- FALSE
       if(
@@ -659,7 +661,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         # must eval to make sure that correct methods are available when
         # outputing failures to screen
 
-        eval(
+        diffs <- eval(
           call("show", err.obj),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
@@ -675,7 +677,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
         if(!isTRUE(state.comp)) {
-          meta_word_cat("See state differences with `diff_state()`")
+          meta_word_cat("See `.DIFF$state` for state differences")
+          diffs@state <- diffPrint(
+            item.ref@state, item.new@state,
+            tar.banner=quote(.REF$state),
+            cur.banner=quote(.NEW$state)
+          )
         }
       } else if (out.std || out.err) cat("\n")
     }
@@ -703,20 +710,19 @@ setMethod("reviewNext", c("unitizerBrowse"),
     x@human <- TRUE
 
     # Create evaluation environment; these are really two nested environments,
-    # with the parent environment containing the unitizerItem values and the child
-    # environment containing the actual unitizer items.  This is so that when
-    # user evaluates `.new` or `.ref` they see the value, but then we can
+    # with the parent environment containing the unitizerItem values and the
+    # child environment containing the actual unitizer items.  This is so that
+    # when user evaluates `.new` or `.ref` they see the value, but then we can
     # easily retrieve the full object with the `get*` functions.
 
-    var.list <- list()
-    if(!is.null(item.new)) {
-      var.list <- c(
-        var.list, list(.NEW=item.new, .new=item.new@data@value[[1L]])
-    ) }
-    if(!is.null(item.ref)) {
-      var.list <- c(
-        var.list, list(.REF=item.ref, .ref=item.ref@data@value[[1L]])
-    ) }
+    var.list <- c(
+      if(!is.null(item.new))
+        list(.NEW=item.new, .new=item.new@data@value[[1L]]),
+      if(!is.null(item.ref))
+        list(.REF=item.ref, .ref=item.ref@data@value[[1L]]),
+      if(!is.null(diffs))
+        list(.DIFF=diffs, .diff=diffs@value)
+    )
     browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)
 

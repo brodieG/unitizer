@@ -70,10 +70,12 @@ setMethod("initialize", "unitizerItemTestFun", function(.Object, ...) {
 #
 # There various nested objects involved:
 # \itemize{
-#   \item \code{`unitizerItemTestError`} contains the error produced from a comparison
-#   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot of an item
+#   \item \code{`unitizerItemTestError`} contains the error produced from a
+#     comparison
+#   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot
+#     of an item
 #   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the
-#      \code{`\link{unitizer-class}`} object
+#     \code{`\link{unitizer-class}`} object
 # }
 #
 # @aliases unitizerItemsTestsErrors-class, unitizerItemTestsErrors-class
@@ -101,7 +103,9 @@ setClass("unitizerItemTestsErrors",
 ) )
 unitizerItemTestsErrorsSlots <-
   grep("^[^.]", slotNames("unitizerItemTestsErrors"), value=TRUE)
-if(!identical(unitizerItemDataSlots, unitizerItemTestsErrorsSlots)) { # used to do this with virtual class, but slow
+
+# used to do this with virtual class, but slow
+if(!identical(unitizerItemDataSlots, unitizerItemTestsErrorsSlots)) {
   stop(
     "Install error: `unitizerItemData` and `unitizerItemTestsErrors` slots ",
     "not identical; contact maintainer."
@@ -119,16 +123,101 @@ setMethod("initialize", "unitizerItemTestsErrors",
       } else dots[[i]]
     .Object
 } )
+# Hold diffs for display; only used when a test actually fails and is queued up
+# for review by user
+
+setClass("unitizerItemTestsErrorsDiffs",
+  representation(
+    value="DiffOrNULL",
+    conditions="DiffOrNULL",
+    output="DiffOrNULL",
+    message="DiffOrNULL",
+    aborted="DiffOrNULL",
+    state="DiffOrNULL"
+) )
+if("state" %in% unitizerItemDataSlots)
+  stop(
+    "Install error: `unitizerItemData` may not contain a \"state\" slot; ",
+    "contact maintainer."
+  )
+if(
+  !identical(
+    c(unitizerItemDataSlots, "state"),
+    slotNames("unitizerItemTestsErrorsDiffs")
+  )
+){
+  stop(
+    "Install error: `unitizerItemData` and `unitizerItemTestsErrorsDiffs` ",
+    "slots not identical; contact maintainer."
+  )
+}
+# Generic / Methods for converting Errors to Diffs
+
+setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff"))
+setMethod("as.Diffs", "unitizerItemTestsErrors",
+  function(x, state.ref, state.new, ...) {
+    slots <- grep("^[^.]", slotNames(x), value=TRUE)
+    res <- list(length(slots) + 1L)
+    names(res) <- c(slots, "state")
+
+    slot.errs <- vapply(
+      slots, function(y) !is.null(slot(x, y)@value), logical(1L)
+    )
+    for(i in slots[slot.errs]) {
+      curr.err <- slot(x, i)
+      mismatch <- if(curr.err@compare.err) {
+        out.file <- stderr()
+        paste0("Unable to compare ", i, ": ")
+      } else {
+        out.file <- stdout()
+        paste0(cap_first(i), " mismatch: ")
+      }
+      out <- if(length(curr.err@value) < 2L) {
+        paste0(mismatch, decap_first(curr.err@value))
+      } else {
+        c(
+          mismatch,
+          as.character(
+            UL(decap_first(curr.err@value)),
+            width=getOption("width") - 2L
+        ) )
+      }
+      meta_word_cat(out, file=out.file)
+      make_cont <- function(x) {
+        res <- if(identical(i, "value")) {
+          as.name(x)
+        } else call("$", as.name(toupper(x)), as.name(i))
+        call("quote", res)
+      }
+      show(
+        diffObj(
+          curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+          cur.banner=make_cont(".new")
+      ) )
+      cat("\n")
+    }
+
+  }
+)
 setClass(
   "unitizerItemsTestsErrors", contains="unitizerList"
   # ,validity=function(object) { # commented out for computation cost
-  #   tests <- vapply(as.list(object), is, logical(1L), class2="unitizerItemTestsErrors")
-  #   if(!all(tests)) return("\"unitizerItemsTestsErrors\" may only contain objects of class \"unitizerItemTestsErrors\"")
+  #   tests <- vapply(
+  #     as.list(object), is, logical(1L), class2="unitizerItemTestsErrors"
+  #   )
+  #   if(!all(tests))
+  #      return(
+  #        paste0(
+  #          "\"unitizerItemsTestsErrors\" may only contain objects of class ",
+  #          "\"unitizerItemTestsErrors\""
+  #        )
   #   TRUE
   # }
 )
-setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
-
+setClassUnion(
+  "unitizerItemsTestsErrorsOrLogical",
+  c("unitizerItemsTestsErrors", "logical")
+)
 # Display Test Errors
 #' @rdname unitizer_s4method_doc
 
@@ -139,6 +228,9 @@ setMethod("show", "unitizerItemTestsErrors",
       slot.errs <- vapply(
         slots, function(x) !is.null(slot(object, x)@value), logical(1L)
       )
+      diffs <- vector("list", length(slots))
+      names(diffs) <- slots
+
       for(i in slots[slot.errs]) {
         curr.err <- slot(object, i)
         mismatch <- if(curr.err@compare.err) {
@@ -165,15 +257,16 @@ setMethod("show", "unitizerItemTestsErrors",
           } else call("$", as.name(toupper(x)), as.name(i))
           call("quote", res)
         }
-        show(
-          diffObj(
-            curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
-            cur.banner=make_cont(".new")
-        ) )
+        diff <- diffObj(
+          curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+          cur.banner=make_cont(".new")
+        )
+        diffs[[i]] <- diff
+        show(diff)
         cat("\n")
       }
     }
-    invisible(NULL)
+    invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
 } )
 
 #' Summary Method for unitizerItemTestsErrors Objects

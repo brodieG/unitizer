@@ -7,6 +7,7 @@ setClassUnion("integerOrNULL", c("integer", "NULL"))
 setClassUnion("characterOrNULL", c("character", "NULL"))
 setClassUnion("subIndex", c("character", "logical", "numeric", "missing"))
 setClassUnion("data.frameOrNULL", c("data.frame", "NULL"))
+setClassUnion("DiffOrNULL", c("Diff", "NULL"))
 
 # setOldClass("file")
 # setOldClass(c('package_version', 'numeric_version'))
