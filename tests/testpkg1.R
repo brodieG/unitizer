@@ -45,7 +45,7 @@ if(interactive()) {
     try(remove.packages("testpkg1", lib=lib.tmp))
     tp.1 <- file.path(old.dir, "test_pkgs", "testpkg1", "testpkg1.1")
     install.packages(pkgs=tp.1, lib=lib.tmp, repos=NULL, type="src")
-    library("testpkg1", lib.loc=lib.tmp)
+    browser()
     unitize_dir(file.path(test.tmp, "unitizer"))
   })
 }

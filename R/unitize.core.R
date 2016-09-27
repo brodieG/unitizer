@@ -147,7 +147,9 @@ unitize_core <- function(
     prompt <- paste0("Create ", dir.word)
     meta_word_cat(prompt, "?", sep="")
 
-    pick <- unitizer_prompt(prompt, valid.opts=c(Y="[Y]es", N="[N]o"))
+    pick <- unitizer_prompt(
+      prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL
+    )
     if(!identical(pick, "Y"))
       stop("Cannot proceed without creating directories.")
     if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
@@ -632,7 +634,7 @@ unitize_browse <- function(
         "Do you wish to proceed despite compromised state tracking",
         valid.opts=c(Y="[Y]es", N="[N]o"),
         exit.condition=exit_fun, valid.vals=seq.int(test.len),
-        hist.con=hist.obj$con, help=help
+        hist.con=hist.obj$con, help=help, global=global
       )
       if(prompt %in% c("N", "Q") && confirm_quit(unitizers)) quit <- TRUE
     } else {
@@ -704,7 +706,8 @@ unitize_browse <- function(
                 AA="", RR=""
               ),
               exit.condition=exit_fun, valid.vals=seq.int(test.len),
-              hist.con=hist.obj$con, help=help, help.opts=help.opts
+              hist.con=hist.obj$con, help=help, help.opts=help.opts,
+              global=global
             )
           } else {
             # in non.interactive mode, review all, this will apply auto.accepts
@@ -950,7 +953,10 @@ confirm_quit <- function(unitizers) {
       unitizers[[1L]]@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
   ) {
     meta_word_cat("Are you sure you want to quit?")
-    ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
+    ui <- unitizer_prompt(
+      "Quit", valid.opts=c(Y="[Y]es", N="[N]o"),
+      global=unitizers[[1L]]@global
+    )
     return(!identical(ui, "N"))
   }
   TRUE

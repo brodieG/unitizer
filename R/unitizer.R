@@ -545,13 +545,11 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           )
         }
         # this is a bit roundabout b/c we added this hack in long after the
-        # code was initially written
+        # code was initially written; note we don't use `global` here b/c
+        # we don't need to track state during comparison (but what happens
+        # if user comparison function changes state??)
 
-        res.tmp <- eval_with_capture(
-          test.call, e2@env, cons=e1@global$cons,
-          disable.capt=e1@global$unitizer.opts[["unitizer.disable.capt"]],
-          max.capt.chars=e1@global$unitizer.opts[["unitizer.max.capture.chars"]]
-        )
+        res.tmp <- eval_with_capture(test.call, e2@env, global=e1@global)
         e1@global$cons <- res.tmp$cons # In case cons was modified
         cond <- res.tmp$conditions
         test.res <- if(length(cond)) {
