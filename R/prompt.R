@@ -72,6 +72,8 @@ NULL
 #' @param attempts how many times to try before erroring
 #' @param case.sensitive whether to care about case sensitivity when matching
 #'   user input
+#' @param global unitizerGlobal or NULL, if the global state tracking object;
+#'   will be used to record state after evaluating user expressions
 #' @return \itemize{
 #'   \item \code{unitizer_prompt}: mixed allowable user input
 #'   \item \code{navigate_prompt}: a \code{unitizerBrowse} object, or allowable
@@ -84,7 +86,7 @@ NULL
 unitizer_prompt <- function(
   text, browse.env=baseenv(), help=character(), help.opts=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
-  ...
+  global, ...
 ) {
   if(!interactive_mode())
     stop(
@@ -98,6 +100,8 @@ unitizer_prompt <- function(
   }
   if(!is.character(valid.opts))
     stop("Argument `valid.opts` must be character")
+  if(!is(global, "unitizerGlobal") && !is.null(global))
+    stop("Argument `global` must be \"unitizerGlobal\" or NULL")
   valid.opts <- c(valid.opts, Q="[Q]uit", H="[H]elp")
   # should validate other parameters as well
   opts.txt <- paste0(
@@ -147,7 +151,7 @@ unitizer_prompt <- function(
     # Note `val` here is the expression the user inputted, not the result of the
     # evaluation.  The latter will be in res$value
 
-    res <- eval_user_exp(val, browse.env)
+    res <- eval_user_exp(val, browse.env, global=global)
 
     # store / record history
 
@@ -172,13 +176,12 @@ navigate_prompt <- function(
     stop(
       "Logic Error, expected unitizerBrowse object as param `x`; ",
       "contact maintainer."
-    )
-  }
+  ) }
   # User input
 
   prompt.val <- unitizer_prompt(
     text, browse.env=browse.env1, help=help, help.opts=help.opts,
-    valid.opts=valid.opts, hist.con=x@hist.con
+    valid.opts=valid.opts, hist.con=x@hist.con, global=x@global
   )
   if(identical(prompt.val, "P")) {
     # Go back to previous
@@ -236,7 +239,7 @@ review_prompt <- function(x, nav.env) {
   )
   nav.id <- unitizer_prompt(
     text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit_fun,
-    valid.opts=nav.opts, valid.vals=x@mapping@item.id
+    valid.opts=nav.opts, valid.vals=x@mapping@item.id, x@global
   )
   if(identical(nav.id, "Q")) {
     return("Q")

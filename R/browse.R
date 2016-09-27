@@ -65,7 +65,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
           trail.nl=FALSE
         )
     } else {
-      meta_word_cat("unitizer unchanged.", trail.nl=FALSE)
+      meta_word_cat("unitizer unchanged.")
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it
@@ -875,7 +875,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             cat(prompt, " ([Y]es, [N]o)?\n", sep="")
             act.conf <- unitizer_prompt(
               prompt, new.env(parent=parent.env(base.env.pri)), help,
-              valid.opts=c(Y="[Y]es", N="[N]o")
+              valid.opts=c(Y="[Y]es", N="[N]o"), global=x@global
             )
             if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
             if(identical(act.conf, "N")) {
