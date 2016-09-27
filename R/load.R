@@ -103,27 +103,27 @@ load_unitizers <- function(
 
   if(length(toup.idx)) {
     many <- length(toup.idx) > 1L
-    word_cat(
-      "\nThe following unitizer", if(many) "s",
-      if(force.upgrade) " will" else " must", " be upgraded to version '",
-      as.character(curr.version), "':",
-      sep=""
-    )
-    cat(
+    meta_word_cat(
+      paste0(
+        "\nThe following unitizer", if(many) "s",
+        if(force.upgrade) " will" else " must", " be upgraded to version '",
+        as.character(curr.version), "':\n"
+      ),
       as.character(
         UL(
           paste0(
             chr.ids[toup.idx], " (at '",
             vapply(versions[toup.idx], as.character, character(1L))
             , "')"
-      ) ) ),
-      sep="\n"
+        ) ) ,
+        width=getOption("width") - 2L
+      )
     )
     if(!interactive.mode && !force.upgrade)
       stop("Cannot upgrade unitizers in non-interactive mode")
 
     pick <- if(interactive.mode) {
-      word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
+      meta_word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
       unitizer_prompt(
         "Upgrade unitizer stores?", hist.con=NULL,
         valid.opts=c(Y="[Y]es", N="[N]o")
@@ -164,7 +164,7 @@ load_unitizers <- function(
       toup.fail.idx <- toup.idx[!upgrade.success]
       valid[toup.fail.idx] <- upgraded[!upgrade.success]
     } else {
-      word_msg("unitizer(s) listed above will not be tested")
+      meta_word_msg("unitizer(s) listed above will not be tested")
       toup.fail.idx <- toup.idx
       valid[toup.fail.idx] <- "User elected not to upgrade unitizers"
     }
@@ -182,36 +182,39 @@ load_unitizers <- function(
   # Issue errors as required
 
   if(length(invalid.idx)) {
-    word_msg(
-      "\nThe following unitizer", if(length(invalid.idx) > 1L) "s",
-      " could not be loaded:", sep=""
-    )
-    cat(
-      as.character(
-        UL(paste0(chr.ids[invalid.idx], ": ",  valid[invalid.idx]))
+    meta_word_cat(
+      paste0(
+        "\nThe following unitizer", if(length(invalid.idx) > 1L) "s",
+        " could not be loaded:"
       ),
-      sep="\n", file=stderr()
+      as.character(
+        UL(paste0(chr.ids[invalid.idx], ": ",  valid[invalid.idx])),
+        width=getOption("width") - 2L
+      ),
+      file=stderr()
     )
   }
   if(length(toup.fail.idx)) {
-    word_msg(
-      "\nThe following unitizer", if(length(toup.fail.idx) > 1L) "s",
-      " could not be upgraded to version '", as.character(curr.version), "':",
-      sep=""
-    )
-    cat(
+    meta_word_cat(
+      paste0(
+        "\nThe following unitizer", if(length(toup.fail.idx) > 1L) "s",
+        " could not be upgraded to version '", as.character(curr.version),
+        "':\n"
+      ),
       as.character(
         UL(
           paste0(
             chr.files[toup.fail.idx], " at '",
             vapply(versions[toup.fail.idx], as.character, character(1L)),
             "': ", valid[toup.fail.idx]
-      ) ) ),
-      sep="\n", file=stderr()
+        ) ),
+        width=getOption("width") - 2L
+      ),
+      file=stderr()
     )
   }
   if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))
-    word_cat(
+    meta_word_cat(
       "No valid unitizer", if(length(store.ids) > 1L) "s", " to load", sep=""
     )
   # Create fail load objects for all failures
@@ -264,12 +267,15 @@ store_unitizer <- function(unitizer) {
   # original ones take up a lot of room to store
 
   for(i in seq_along(unitizer@items.ref)) unitizer@items.ref[[i]]@call <- NULL
-  for(i in seq_along(unitizer@items.new)) unitizer@items.new[[i]]@call <- NULL  # shouldn't really be anything here
+
+  # shouldn't really be anything here
+
+  for(i in seq_along(unitizer@items.new)) unitizer@items.new[[i]]@call <- NULL
 
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {
-    word_msg("unitizer updated.")
+    meta_word_msg("unitizer updated.")
   } else {
     stop("Error attempting to save unitizer, see previous messages.")
   }
@@ -327,7 +333,7 @@ setClass(
 setMethod(
   "show", "unitizerLoadFail",
   function(object) {
-    word_cat(sep="\n",
+    meta_word_cat(sep="\n",
       "Failed Loading Unitizer:",
       as.character(
         UL(
@@ -340,7 +346,9 @@ setMethod(
               best_store_name(object@store.id[[1L]], object@test.file)
             ),
             paste0("Reason: ", object@reason)
-    ) ) ) )
+        ) ),
+        width=getOption("width") - 2L
+    ) )
     invisible(NULL)
   }
 )

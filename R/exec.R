@@ -112,6 +112,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     )
 } )
 eval_user_exp <- function(unitizerUSEREXP, env) {
+  old.opt <- options(warn=1L)
+  on.exit(options(old.opt))
+
   exp <- if(is.expression(unitizerUSEREXP)) {
      call("withVisible", call("eval", unitizerUSEREXP))
   } else call("withVisible", unitizerUSEREXP)
@@ -132,9 +135,8 @@ eval_with_capture <- function(
   disable.capt=getOption("unitizer.disable.capt"),
   max.capt.chars=getOption("unitizer.max.capture.chars")
 ) {
-  # Need to ensure warn=1 so that things work properly
+  # Disable error handler; warn gets set to one when we eval the expression
 
-  warn.opt <- getOption("warn")
   err.opt <- getOption("error")
 
   # Setup text capture; a bit messy due to funny way we have to pull in
@@ -157,7 +159,6 @@ eval_with_capture <- function(
   # Manage unexpected outcomes
 
   on.exit({
-    options(warn=warn.opt)
     options(error=err.opt)
     get.try <- try(capt <- do.call(get_capture, get_args))
     unsink.try <- try(capt.cons <- unsink_cons(capt.cons))
@@ -167,7 +168,7 @@ eval_with_capture <- function(
     }
     if(inherits(unsink.try, "try-error")) failsafe_con(capt.cons)
     if(!came.with.capts) close_and_clear(capt.cons)
-    word_msg(
+    meta_word_msg(
       "Unexpectedly exited evaluation attempt when executing test ",
       "expression:\n> ", paste0(deparse(x), collapse=""), "\nMake sure you ",
       "are not calling `unitize` inside a `tryCatch`/`try` block, invoking a ",
@@ -180,9 +181,7 @@ eval_with_capture <- function(
   })
   # Evaluate expression
 
-  options(warn=1L)
   options(error=NULL)
-
   res <- eval_user_exp(x, test.env)
 
   # Revert settings, get captured messages, if any and if user isn't capturing
@@ -196,7 +195,6 @@ eval_with_capture <- function(
     cat(c(capt$output, "\n"), sep="\n")
   }
   on.exit(NULL)
-  options(warn=warn.opt)
   options(error=err.opt)
 
   # Need to make sure we either close the connections or return the updated

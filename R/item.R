@@ -205,7 +205,7 @@ setMethod("show", "unitizerItem",
             levels=c("error", "warning", "message", "other condition")),
           length
       ) )
-      word_cat(
+      meta_word_cat(
         "* conditions:",
         paste0(
           cond.types.summ, " ",
@@ -215,7 +215,7 @@ setMethod("show", "unitizerItem",
           ), collapse=", "
       ) )
     }
-    word_cat(
+    meta_word_cat(
       "Access component `x` with",
       paste0("`", if(object@reference) ".REF" else ".NEW", "$x`;"),
       "see `help(\"$\", \"unitizer\")`"
@@ -348,6 +348,12 @@ setMethod("$", c("unitizerItem"),
   function(x, name) {
     what <- substitute(name)
     what <- if(is.symbol(what)) as.character(what) else name
+    x[[what]]
+} )
+setMethod(
+  "[[", signature=c(x="unitizerItem"),
+  function(x, i, j, ..., exact=TRUE) {
+    what <- i
     data.slots <- slotNames(x@data)
     extras <- c("call", "state")
     valid <- c(extras, data.slots)
@@ -356,8 +362,27 @@ setMethod("$", c("unitizerItem"),
     if(length(what) != 1L || !what %in% data.slots) {
       stop(
         "Argument `name` must be in ",
-        paste0(deparse(valid, width.cutoff=500L), collapse=", ")
+        paste0(deparse(valid, width.cutoff=500L), collapse="")
     ) }
     if(identical(what, "value")) return(x@data@value[[1L]])
     slot(x@data, what)
+  }
+)
+setMethod("$", "unitizerItemTestsErrorsDiffs",
+  function(x, name) {
+    what <- substitute(name)
+    what <- if(is.symbol(what)) as.character(what) else name
+    x[[what]]@diff
 } )
+setMethod("[[",  "unitizerItemTestsErrorsDiffs",
+  function(x, i, j, ..., exact=TRUE) {
+    if(!is.chr1plain(i))
+      stop("Argument `i` must be character(1L) and not NA")
+    sn <- slotNames(x)
+    if(!i %in% sn)
+      stop(
+        "Argument `i` must be one of ",
+        paste0(deparse(sn, width.cutoff=500L), collapse="")
+      )
+    slot(x, i)
+})

@@ -25,32 +25,52 @@ setClass("unitizerChanges",
 
 setMethod("show", "unitizerChanges",
   function(object) {
-    if(sum(object@failed))
-      cat(
-        "- Replacing", object@failed[[1L]] ,"out of", object@failed[[2L]],
-        "failed tests\n"
-      )
-    if(sum(object@new))
-      cat(
-        "- Adding", object@new[[1L]] , "out of", object@new[[2L]],
-        "new tests\n"
-      )
-    if(sum(object@removed))
-      cat(
-        "- Removing", object@removed[[1L]], "out of", object@removed[[2L]],
-        "removed tests\n"
-      )
-    if(sum(object@corrupted))
-      cat(
-        "- Replacing", object@corrupted[[1L]], "out of", object@corrupted[[2L]],
-        "tests with errors\n"
-      )
-    if(object@passed[[1L]])
-      cat(
-        "- Dropping", object@passed[[1L]], "out of", object@passed[[2L]],
-        "passed tests\n"
-      )
+    cat(as.character(object), sep="\n")
     invisible(NULL)
+  }
+)
+#' Print Out A Summary Of the Changes
+#' @keywords internal
+
+setMethod("as.character", "unitizerChanges",
+  function(x, width=getOption("width"), ...) {
+    bullets <- character()
+    if(sum(x@failed))
+      bullets <- c(
+        bullets,
+        paste(
+          "Replacing", x@failed[[1L]], "out of", x@failed[[2L]],
+          "failed tests"
+      ) )
+    if(sum(x@new))
+      bullets <- c(
+        bullets,
+        paste(
+          "Adding", x@new[[1L]], "out of", x@new[[2L]],
+          "new tests\n"
+      ) )
+    if(sum(x@removed))
+      bullets <- c(
+        bullets,
+        paste(
+          "Removing", x@removed[[1L]], "out of", x@removed[[2L]],
+          "removed tests\n"
+      ) )
+    if(sum(x@corrupted))
+      bullets <- c(
+        bullets,
+        paste(
+          "Replacing", x@corrupted[[1L]], "out of", x@corrupted[[2L]],
+          "tests with errors\n"
+      ) )
+    if(x@passed[[1L]])
+      bullets <- c(
+        bullets,
+        paste(
+          "Dropping", x@passed[[1L]], "out of", x@passed[[2L]],
+          "passed tests\n"
+      ) )
+    as.character(UL(bullets), width=width)
   }
 )
 #' Return Sum of Total Changes

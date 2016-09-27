@@ -258,7 +258,10 @@ setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
-    cat(summ_matrix_to_text(sum.mx, show.nums=FALSE), "", sep="\n")
+    cat(
+      summ_matrix_to_text(sum.mx, show.nums=FALSE), "",
+      sep="\n"
+    )
     invisible(NULL)
 } )
 
@@ -399,11 +402,12 @@ setMethod("show", "unitizerObjectListSummary",
 
     review.req <- !vapply(as.list(object), passed, logical(1L))
 
-    # Display
+    # Display; if updated, mark with `NA` as we don't know what the deal is
+    # until we re-run the tests
 
     totals <- t(vapply(as.list(object), slot, object[[1L]]@totals, "totals"))
-    totals[object@updated, ] <- NA_integer_
     rownames(totals) <- test.files.trim
+    totals[object@updated, ] <- NA_integer_
     disp <- summ_matrix_to_text(totals, from="left")
 
     # Post processing
@@ -417,21 +421,24 @@ setMethod("show", "unitizerObjectListSummary",
         sub("^(\\s*) (\\d+\\.)", "\\1*\\2", disp[[j]])
       } else disp[[j]]
     }
-    cat("\n")
-    word_cat(
+    meta_word_cat(
       "Summary of files in common directory '", relativize_path(full.dir),
-      "':", sep=""
+      "':\n\n", sep="", trail.nl=FALSE
     )
-    cat(disp, sep="\n")
+    meta_word_cat(disp, "", trail.nl=FALSE)
+
     # Legends
 
-    if(any(review.req || object@updated)) word_cat("Legend:")
-    if(any(review.req)) word_cat("* `unitizer` requires review")
+    if(any(review.req || object@updated))
+      meta_word_cat("Legend:", trail.nl=FALSE)
+    if(any(review.req & !object@updated))
+      meta_word_cat("* `unitizer` requires review", trail.nl=FALSE)
     if(any(object@updated))
-      word_cat(
-        "$ `unitizer` has been updated and needs to be re-evaluted to",
-        "recompute summary"
+      meta_word_cat(
+        "$ `unitizer` has been modified and needs to be re-run to",
+        "recompute summary", sep=" ", trail.nl=FALSE
       )
+    cat("\n")
     invisible(NULL)
 } )
 setGeneric(
@@ -492,7 +499,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       e1@tests.error <- c(e1@tests.error, FALSE)
       e1@tests.new <- c(e1@tests.new, TRUE)
       e1@tests.result <- rbind(e1@tests.result, test.result.tpl)
-      if(length(item.new@data@conditions)) tests.conditions.new <- TRUE  # A new test with conditions by definition has new conditions
+      # A new test with conditions by definition has new conditions
+      if(length(item.new@data@conditions)) tests.conditions.new <- TRUE
     } else {
       e1@items.ref.map[[item.map]] <- length(e1@items.new)
       item.ref <- e1@items.ref[[item.map]]
@@ -505,9 +513,9 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       # Test functions and the data to test is organized in objects with
       # the exact same structure as item.new@data, so cycle through the slots.
       # Status is always "Error" if something indeterminable happens,
-      # if not and a failure happens, then it is "Fail", and if nothing goes wrong
-      # for any of the slots, it is "Pass" (there is only one status for all
-      # slots)
+      # if not and a failure happens, then it is "Fail", and if nothing goes
+      # wrong for any of the slots, it is "Pass" (there is only one status for
+      # all slots)
 
       test.status <- "Pass"
       test.result <- test.result.tpl

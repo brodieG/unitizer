@@ -92,6 +92,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
 
         browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionFailed",
+          show.out=TRUE, show.msg=TRUE,
           items.new=x@items.new[x@tests.fail & sect.map],
           show.fail=x@tests.errorDetails[x@tests.fail & sect.map],
           items.ref=x@items.ref[x@items.new.map[x@tests.fail & sect.map]],
@@ -886,13 +887,21 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "match the reference values from the store."
     ),
     help=paste0(
-      "Tests fail when the evaluation of the test expression no longer ",
-      "produces the value it did when it was originally added to the store. ",
-      "You should select 'N' at the prompt unless you know the previous value ",
-      "was incorrect and should be replaced by the new value. ",
-      "`unitizer` shows you the output of `diffobj::diffObj(.ref, .new)` by ",
-      "default, but you can just as easily invoke any comparison function ",
-      "(e.g. `identical(.new, .ref)`."
+      "Tests fail when a test expression produces ",
+      "different results than when it was originally added to the store. ",
+      "You should type N at the prompt unless you know the previous result ",
+      "is incorrect and should be replaced by the new result.\n\n",
+      "Test failures can be caused by mismatches in either values or ",
+      "conditions, or possibly other aspects of the test result if you ",
+      "enable checks for them via `unitizer_sect`.\n\n",
+      "If you wish to examine test values more closely you can retrieve the ",
+      "reference value with `.ref`, and the newly evaluated one with `.new`. ",
+      "`.diff` contains a precomputed diff (i.e. ",
+      "`diffobj::diffObj(.ref, .new)`). `.NEW` and `.REF` contain all stored ",
+      "components of the test, and `.DIFF` contains the diffs ",
+      "between each of those components.  `.new`, `.ref`, and `.diff` ",
+      "are each respectively copies of `.NEW$value`, `.REF$value`, ",
+      "and `.DIFF$value` provided for convenience."
     ),
     actions=c(Y="A", N="B")
 ) )

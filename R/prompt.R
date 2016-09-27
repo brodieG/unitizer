@@ -46,6 +46,7 @@ NULL
 #'   the quit and help options will always be appended to this
 #' @param help a character vector with help suggestions: the first value in the
 #'   vector is \code{\link{word_cat}} output, the rest normal \code{cat}
+#' @param help.opts a character vector of help options
 #' @param hist.con connection to save history to
 #' @param exit.condition function used to evaluate whether user input should
 #'   cause the prompt loop to exit; this function should accept two parameters:
@@ -81,7 +82,7 @@ NULL
 #' }
 
 unitizer_prompt <- function(
-  text, browse.env=baseenv(), help=character(),
+  text, browse.env=baseenv(), help=character(), help.opts=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
   ...
 ) {
@@ -114,19 +115,24 @@ unitizer_prompt <- function(
       as.character(val[[1L]]) %in% names(valid.opts) &&
       !(as.character(val[[1L]]) %in% c("Q", "H")) && nchar(val[[1L]])
     ) {
+      cat("\n")
       return(as.character(val[[1L]]))
     } else if (length(val) == 1L && identical(val[[1L]], quote(Q))) {
+      cat("\n")
+      return(as.character(val[[1L]]))
       return("Q")
     } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
+      cat("\n")
       if(!length(help)) {
-        cat("No help available.", "", paste(text, opts.txt), sep="\n")
+        meta_word_cat("No help available.", "", paste(text, opts.txt), sep="\n")
       } else {
-        word_cat(help[[1L]])
-        if(length(help) > 1L) {
-          cat(help[-1L], sep="")
-        }
-        cat("\n", sep="")
-        word_cat(paste0(paste(text, opts.txt)))
+        meta_word_cat(help, trail.nl=FALSE)
+        if(length(help.opts))
+          meta_word_cat(
+            as.character(UL(help.opts), width=getOption("width") - 2L),
+            trail.nl=FALSE
+          )
+        meta_word_cat("", paste(text, opts.txt))
       }
       next
     }
@@ -147,15 +153,20 @@ unitizer_prompt <- function(
 
     if(!is.null(hist.con) && length(val) == 1L)
       history_write(hist.con, deparse(val[[1L]]))
-    if(res$aborted || !length(val)) word_cat(text, opts.txt)  # error or no user input, re-prompt user
-    if(res$aborted && !is.null(res$trace)) set_trace(res$trace)  # make error trace available for `traceback()`
+    # error or no user input, re-prompt user
+    if(res$aborted || !length(val)) {
+      cat("\n")
+      meta_word_cat(text, opts.txt, sep=" ")
+    }
+    # make error trace available for `traceback()`
+    if(res$aborted && !is.null(res$trace)) set_trace(res$trace)
 } }
 #' @rdname unitizer_prompt
 #' @keywords internal
 
 navigate_prompt <- function(
   x, curr.id, text, browse.env1=globalenv(), browse.env2=globalenv(),
-  help=character(), valid.opts
+  help=character(), help.opts=character(), valid.opts
 ) {
   if(!is(x, "unitizerBrowse")) {
     stop(
@@ -166,8 +177,8 @@ navigate_prompt <- function(
   # User input
 
   prompt.val <- unitizer_prompt(
-    text, browse.env=browse.env1, help=help, valid.opts=valid.opts,
-    hist.con=x@hist.con
+    text, browse.env=browse.env1, help=help, help.opts=help.opts,
+    valid.opts=valid.opts, hist.con=x@hist.con
   )
   if(identical(prompt.val, "P")) {
     # Go back to previous
@@ -176,7 +187,8 @@ navigate_prompt <- function(
       else TRUE
     )
     x@last.id <- if(any(prev.tests)) max(which(prev.tests)) - 1L else 0L
-    if(!x@last.id) word_msg("At first reviewable item; nothing to step back to")
+    if(!x@last.id)
+      meta_word_msg("At first reviewable item; nothing to step back to")
     x@navigating <- TRUE
     return(x)
   } else if (identical(prompt.val, "B")) {
@@ -184,7 +196,7 @@ navigate_prompt <- function(
   } else if (identical(prompt.val, "U")) {
     unreviewed <- unreviewed(x)
     if(!length(unreviewed)) {
-      word_msg("No unreviewed tests.")
+      meta_word_msg("No unreviewed tests.")
       x@last.id <- tail(x@mapping@item.id, 1L)
     } else x@last.id <- head(unreviewed, 1L) - 1L
     x@navigating <- TRUE
@@ -205,10 +217,10 @@ review_prompt <- function(x, nav.env) {
   nav.help <- paste0(
     "Select a test to review by typing that test's number at the prompt. ",
     "Tests that start with a `*`",
-    if(identical(x@mode, "unitize")) ", or with status \"Passed\",", "are not ",
-    "typically reviewed in this mode.  The letter after the test status ",
-    "represents prior user input to test review (a `-` indicates test has not ",
-    " been reviewed). Type \"U\" to jump to the first unreviewed ",
+    if(identical(x@mode, "unitize")) ", or with status \"Passed\",",
+    " are not typically reviewed in this mode.  The letter after the test ",
+    "status represents prior user input to test review (a `-` indicates test ",
+    "has not been reviewed). Type \"U\" to jump to the first unreviewed ",
     "test.\n\n",
     "Note that tests are displayed in the order they appear in the test",
     "file, not in the order they would be reviewed in.\n"
@@ -219,7 +231,9 @@ review_prompt <- function(x, nav.env) {
   )
   nav.prompt <- "What test do you wish to review"
   show(x)
-  word_cat(nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"))
+  meta_word_cat(
+    nav.prompt, paste0("(", paste0(nav.opts, collapse=", "), ")?"), sep=" "
+  )
   nav.id <- unitizer_prompt(
     text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit_fun,
     valid.opts=nav.opts, valid.vals=x@mapping@item.id
@@ -229,7 +243,7 @@ review_prompt <- function(x, nav.env) {
   } else if (identical(nav.id, "U")) { # Go to unreviewed test
     unreviewed <- unreviewed(x)
     nav.id <- if(!length(unreviewed)) {
-      word_msg("No unreviewed tests.")
+      meta_word_msg("No unreviewed tests.")
       tail(x@mapping@item.id, 1L) + 1L
     } else head(unreviewed, 1L)
   } else if (
@@ -259,7 +273,8 @@ review_prompt <- function(x, nav.env) {
     x@review <- if(x@inspect.all) -1L else 1L
 
     if(x@inspect.all) {
-      word_msg(
+      cat("\n")
+      meta_word_msg(
         "You selected a test that is not normally reviewed in this mode;",
         "as such, upon test completion, you will be brought back to this menu",
         "instead of being taken to the next reviewable test."
@@ -299,13 +314,13 @@ simple_prompt <- function(
   attempts <- attempts.left <- as.integer(attempts)
   val.tran <- if(!case.sensitive) tolower(values)
 
-  word_cat(message)
+  meta_word_cat(message)
 
   while(attempts.left > 0L) {
     x <- read_line(prompt)
     if(!case.sensitive) x <- tolower(x)
     if(!(res.ind <- match(x, val.tran, nomatch=0L))) {
-      word_cat(
+      meta_word_cat(
         paste(
           "Invalid input, please select one of:", paste(values, collapse=", ")
       ) )
@@ -324,7 +339,7 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
     y[[1L]] != as.integer(y[[1L]])
   ) return(FALSE)
   if(!isTRUE(y[[1L]] %in% valid.vals)) {
-    word_msg("Input must be in `", deparse(valid.vals), "`", sep="")
+    meta_word_msg("Input must be in `", deparse(valid.vals), "`", sep="")
     return(FALSE)
   }
   return(y[[1L]])

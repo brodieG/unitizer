@@ -40,7 +40,6 @@ local({
     expect_identical(
       unitizer:::word_wrap(lorem2, 15L, 8L),
       c("/Volumes/FIXED/", "folder1/", "folder2/folder.", "2345/fol-", "derabac/file.", "text.batch")
-
     )
     expect_identical(
       unitizer:::word_wrap(lorem3, 76L, 8L),
@@ -59,6 +58,10 @@ local({
     expect_identical(
       unitizer:::word_comment(com, width=30L),
       c("# this is supposed to be a ", "#relatively long comment that ", "#will get re-flowed")
+    )
+    expect_identical(
+      unitizer:::word_wrap(c("\nhello\nthere", "\nhow")),
+      c("", "hello", "", "there", "", "how")
     )
   })
   test_that("bullets", {
@@ -170,5 +173,29 @@ local({
       structure(
         list(output="hello", message="goodbye"), class="captured_output"
     ) )
+  })
+  test_that("meta_word_cat", {
+    old.opt <- options(crayon.enabled=TRUE)
+    on.exit(options(old.opt))
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello")),"\033[90mhello\033[39m"
+    )
+    old.opt <- options(crayon.enabled=FALSE)
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello")), "## hello"
+    )
+    # Newline issues
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello\n", sep="")),
+      c("## hello", "## ")
+    )
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello", "there")),
+      c("## hello", "## ", "## there")
+    )
+    expect_equal(
+      capture.output(unitizer:::meta_word_cat("hello", "there", sep=" ")),
+      "## hello there"
+    )
   })
 })

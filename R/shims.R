@@ -132,7 +132,7 @@ unitizerGlobal$methods(
       any(vapply(funs.to.shim, inherits, logical(1L), "functionWithTrace"))
     ) {
       err.extra <- "they are already traced"
-    } 
+    }
     if(nchar(err.extra)) {
       warning(sprintf(err.base, err.extra), immediate.=TRUE)
       parent.env(par.env) <<- .GlobalEnv
@@ -213,9 +213,11 @@ unitizerGlobal$methods(
     } )
     set_text_capture(capt.cons, "message")
     untraced <- character()
+    shimmed.funs <- length(shim.funs)
 
     for(i in names(shim.funs)) {
-      if(identical(getFun(i), shim.funs[[i]])) {   # if not identical, then someone else shimmed / unshimmed
+      # if not identical, then someone else shimmed / unshimmed
+      if(identical(getFun(i), shim.funs[[i]])) {
         base::untrace(i, where=.BaseNamespaceEnv)
         untraced <- c(untraced, i)
       }
@@ -224,9 +226,8 @@ unitizerGlobal$methods(
     unshim.out <- get_text_capture(capt.cons, "message")
     on.exit(NULL)
     close_and_clear(capt.cons)
-
     if(
-      !identical(
+      shimmed.funs && !identical(
         paste0(
           "Untracing function \"", untraced,
           "\" in package \"namespace:base\"\n", collapse=""

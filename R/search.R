@@ -252,7 +252,8 @@ namespace_update <- function(id, global) {
       "maintainer"
     )
   ns.target <- global$tracking@namespaces[[id]]
-  ns.curr <- global$tracking@namespaces[[global$indices.last@namespaces]]  # should this be get_namespace_data()?
+  # should this be get_namespace_data()?
+  ns.curr <- global$tracking@namespaces[[global$indices.last@namespaces]]
 
   ns.in.common <- intersect(names(ns.target), names(ns.curr))
   ns.extra <- setdiff(names(ns.curr), ns.in.common)

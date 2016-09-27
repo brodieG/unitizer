@@ -115,7 +115,6 @@ unitize_core <- function(
     history <- tempfile()
     attr(history, "hist.tmp") <- TRUE
   }
-
   # Make sure nothing untoward will happen if a test triggers an error
 
   check_call_stack()
@@ -137,13 +136,16 @@ unitize_core <- function(
   if(length(dir.names.clean)) {
     dir.word <-
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
-    word_cat(
+    meta_word_cat(
       "In order to proceed unitizer must create the following ", dir.word,
-      ":\n", sep=""
+      ":\n", sep="", trail.nl=FALSE
     )
-    print(UL(dir.names.clean))
+    meta_word_cat(
+      as.character(UL(dir.names.clean), option=getOption("width") - 2L),
+      trail.nl=FALSE
+    )
     prompt <- paste0("Create ", dir.word)
-    word_cat(prompt, "?", sep="")
+    meta_word_cat(prompt, "?", sep="")
 
     pick <- unitizer_prompt(prompt, valid.opts=c(Y="[Y]es", N="[N]o"))
     if(!identical(pick, "Y"))
@@ -199,7 +201,7 @@ unitize_core <- function(
   on.exit(
     {
       reset_and_unshim(global)
-      word_msg(
+      meta_word_msg(
         "Unexpectedly exited before storing unitizer; ",
         if(length(test.files) < 2L)
           "tests were not saved or changed." else c(
@@ -427,7 +429,7 @@ unitize_core <- function(
 
   post.res <- source_files(post, pre.load.frame)
   if(!is.environment(post.res))
-    word_msg(
+    meta_word_msg(
       "`unitizer` evaluation succeed, but `post` steps had errors:",
       post.res
     )
@@ -604,7 +606,7 @@ unitize_browse <- function(
 
   if(global$ns.opt.conflict@conflict) {
     many <- length(global$ns.opt.conflict@namespaces)
-    word_msg(
+    meta_word_msg(
       "`unitizer` was unable to run with `options` state tracking enabled ",
       "starting with ",
       if(!nchar(global$ns.opt.conflict@file)) "the first test file" else
@@ -617,7 +619,7 @@ unitize_browse <- function(
       ".", sep=""
     )
     if(interactive.mode) {
-      word_msg(
+      meta_word_msg(
         "You may proceed normally but be aware that option state was not ",
         "managed starting with the file in question, and option state will ",
         "not be managed during review, or restored to original values after ",
@@ -625,7 +627,7 @@ unitize_browse <- function(
         "avoid any changes.  See `?unitizerState` for more details.", sep=""
       )
       proceed <- "Do you wish to proceed despite compromised state tracking"
-      word_cat(proceed, "([Y]es, [N]o)?\n")
+      meta_word_cat(proceed, "([Y]es, [N]o)?\n")
       prompt <- unitizer_prompt(
         "Do you wish to proceed despite compromised state tracking",
         valid.opts=c(Y="[Y]es", N="[N]o"),
@@ -659,7 +661,7 @@ unitize_browse <- function(
       first.time <- TRUE
       repeat {
         prompt <- paste0(
-          "\nType number of unitizer to review",
+          "Type number of unitizer to review",
           if(any(to.review))
             ", 'A' to review all that require review",
           if(any(summaries@updated))
@@ -673,10 +675,8 @@ unitize_browse <- function(
           "RR: Re-run all tests",
           "Q: quit"
         )
-        help <- c(
-          "Available options:",
-          paste0(as.character(UL(help.opts)), collapse="\n")
-        )
+        help <- "Available options:"
+
         # Show summary if applicable
 
         if(!first.time && !any(bookmarked)) {
@@ -695,7 +695,7 @@ unitize_browse <- function(
         } else if(test.len > 1L) {
           pick.num <- integer()
           pick <- if(interactive.mode) {
-            word_cat(prompt)
+            meta_word_cat(prompt)
             unitizer_prompt(
               "Pick a unitizer or an option",
               valid.opts=c(
@@ -704,7 +704,7 @@ unitize_browse <- function(
                 AA="", RR=""
               ),
               exit.condition=exit_fun, valid.vals=seq.int(test.len),
-              hist.con=hist.obj$con, help=help
+              hist.con=hist.obj$con, help=help, help.opts=help.opts
             )
           } else {
             # in non.interactive mode, review all, this will apply auto.accepts
@@ -724,7 +724,7 @@ unitize_browse <- function(
           } else {
             pick.num <- as.integer(pick)
             if(!pick.num %in% seq.int(test.len)) {
-              word_msg(
+              meta_word_msg(
                 "Input not a valid unitizer; choose in ",
                 deparse(seq.int(test.len))
               )
@@ -740,9 +740,12 @@ unitize_browse <- function(
           ) ) )
           # summaries don't really work well in review mode if the tests are
           # not evaluated
+
           if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])
+
           # annoyingly we need to force update here as well as for
           # the unreviewed unitizers
+
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]], force.update=force.update
           )
@@ -781,7 +784,7 @@ unitize_browse <- function(
           for(i in which(int.error)) {
             untz <- unitizers[[i]]
             delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
-            word_msg(
+            meta_word_msg(
               paste0(
                 "  * ",
                 format(paste0(untz@tests.status[delta.show], ": ")),
@@ -793,7 +796,7 @@ unitize_browse <- function(
             )
           }
           non.zero <- which(summaries@totals > 0)
-          word_msg(sep="",
+          meta_word_msg(sep="",
             "Newly evaluated tests do not match unitizer (",
             paste(
               names(summaries@totals[non.zero]), summaries@totals[non.zero],
@@ -809,7 +812,7 @@ unitize_browse <- function(
           break
       }
     } else {
-      word_msg("All tests passed; nothing to review.")
+      meta_word_msg("All tests passed; nothing to review.")
     }
   } else eval.which <- integer(0L)  # we quit, so don't want to re-evalute anything
 
@@ -817,8 +820,11 @@ unitize_browse <- function(
 
   if(length(eval.which)) {
     for(i in eval.which) unitizers[[i]]@eval <- TRUE
-  } else for(i in seq_along(unitizers))  unitizers[[i]]@eval <- FALSE  # this one may not be necessary
+  } else {
+    # this one may not be necessary
 
+    for(i in seq_along(unitizers)) unitizers[[i]]@eval <- FALSE
+  }
   unitizers
 }
 # Check Not Running in Undesirable Environments
@@ -913,19 +919,19 @@ reset_and_unshim <- function(global) {
   success.unshim <-  !inherits(glob.unshim, "try-error")
   success.release <-  !inherits(glob.release, "try-error")
   if(!success.clear)
-    word_msg(
+    meta_word_msg(
       "Failed restoring global settings to original state; you may want",
       "to restart your R session to ensure all global settings are in a",
       "reasonable state."
     )
   if(!success.unshim)
-    word_msg(
+    meta_word_msg(
       "Failed unshimming library/detach/attach; you may want to restart",
       "your R session to reset them to their original values (or you",
       "can `untrace` them manually)"
     )
   if(!success.release)
-    word_msg(
+    meta_word_msg(
       "Failed releasing global tracking object; you will not be able to",
       "instantiate another `unitizer` session.  This should not happen, ",
       "please contact the maintainer.  In the meantime, restarting your R",
@@ -943,7 +949,7 @@ confirm_quit <- function(unitizers) {
     Reduce(`+`, lapply(as.list(unitizers), slot, "eval.time")) >
       unitizers[[1L]]@global$unitizer.opts[["unitizer.prompt.b4.quit.time"]]
   ) {
-    word_cat("Are you sure you want to quit?")
+    meta_word_cat("Are you sure you want to quit?")
     ui <- unitizer_prompt("Quit", valid.opts=c(Y="[Y]es", N="[N]o"))
     return(!identical(ui, "N"))
   }

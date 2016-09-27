@@ -245,7 +245,7 @@ failsafe_con <- function(cons) {
     if(sum(nchar(capt.try$message)))
       cat(capt.try$message, "\n", sep="", file=stderr())
   }
-  word_msg(
+  meta_word_msg(
     "Problems managing stdout/stderr streams, so we have reset all sinks, ",
     "even those that may have been set prior to calling `unitizer`.", sep=""
   )
@@ -264,7 +264,7 @@ close_and_clear <- function(cons) {
   if(inherits(err.reset, "try-error")) {
     status[["message"]] <- FALSE
     sink(type="message")
-    word_msg(
+    meta_word_msg(
       "Unable to restore original message sink, setting back to normal stderr"
     )
   }
@@ -280,7 +280,9 @@ close_and_clear <- function(cons) {
     if(!is_stdout_sink(cons@out.c)){
       # nocov start
       replicate(sink.number(), sink())
-      word_msg("Tests corrupted stdout sink stack; all stdout sinks cleared.")
+      meta_word_msg(
+        "Tests corrupted stdout sink stack; all stdout sinks cleared."
+      )
       status[["output"]] <- FALSE
       # nocov end
     } else if(sink.number()) sink()

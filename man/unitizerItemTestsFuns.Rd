@@ -5,25 +5,27 @@
 \alias{unitizerItemTestsFuns}
 \title{Store Functions for New vs. Reference Test Comparisons}
 \description{
-\code{`unitizerItemTestsFuns`} contains the functions used to compare the results
-and side effects of running test expresssions.
+\code{`unitizerItemTestsFuns`} contains the functions used to compare the
+results and side effects of running test expressions.
 }
 \details{
-By default, the comparison for each of the \code{`unitizerItem-class`} elements
-are carried out as follows (i.e. this is what the default
+By default, the comparison for each of the \code{`unitizerItem-class`}
+elements are carried out as follows (i.e. this is what the default
 \code{`unitizerItemTestsFuns-class`} is populated with)
 \itemize{
   \item value: compared using \code{`\link{all.equal}`}
-  \item conditions: each item in this list is compared to the corresponding item
-    in the reference list with \code{`\link{all.equal}`}
+  \item conditions: each item in this list is compared to the corresponding
+    item in the reference list with \code{`\link{all.equal}`}
   \item output: not compared (too variable, e.g. screen widths, etc.)
-  \item message: not compared (note this is presumably included in \code{`conditions`})
+  \item message: not compared (note this is presumably included in
+  \code{`conditions`})
   \item aborted: not compared (also implied in conditions, hopefully)
 }
 }
 \examples{
 \dontrun{
-unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
+# use `identical` instead of `all.equal` to compare values
+unitizerItemTestsFuns(value=identical)
 }
 }
 \seealso{

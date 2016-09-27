@@ -1,4 +1,0 @@
-# random tests
-
-q()
-

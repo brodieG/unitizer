@@ -65,11 +65,11 @@ print.unitizer_result <- function(x, ...) {
     att <- try(as.character(attr(x, "store.id")), silent=TRUE)
     if(inherits(att, "try-error")) "<untranslateable store.id>" else att
   }
-  word_cat("Test File: ", pretty_path(attr(x, "test.file")), "\n", sep="")
-  word_cat("Store ID: ", store.char, "\n\n", sep="")
+  meta_word_cat("Test File: ", pretty_path(attr(x, "test.file")), "\n", sep="")
+  meta_word_cat("Store ID: ", store.char, "\n\n", sep="")
   res <- NextMethod(x, ...)
   if(!isTRUE(attr(x, "updated")))
-    word_cat(
+    meta_word_cat(
       "\nYou chose NOT to save these changes to the unitizer store\n"
     )
   invisible(res)
@@ -91,7 +91,7 @@ print.unitizer_results <- function(x, ...) {
       "`unitizerLoadFail` or `unitizer_result` objects"
     )
   if(!length(x)) {
-    word_cat("No unitizers")
+    meta_word_cat("No unitizers")
     return(invisible(NULL))
   }
   failed <- vapply(x, is, logical(1L), "unitizerLoadFail")
@@ -177,14 +177,18 @@ print.unitizer_results <- function(x, ...) {
     if(any(updated < 3L)) fin.out[-c(1L, length(fin.out))] <-
       paste(fin.out[-c(1L, length(fin.out))], updated.mark[updated])
 
-    word_cat("Summary of tests (accept/total):\n\n")
-    cat(
-      head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
-      tail(fin.out, 1L), sep="\n"
+    meta_word_cat(
+      cc(
+        "Summary of tests (accept/total):\n",
+        head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
+        tail(fin.out, 1L),
+      ),
+      sep="\n"
     )
     if(any(updated < 3L)) cat("\n")
-    if(any(updated == 1L)) word_cat("* unitizer was not saved")
-    if(any(updated == 2L)) word_cat("$ unitizer was saved in prior evaluation")
+    if(any(updated == 1L)) meta_word_cat("* unitizer was not saved")
+    if(any(updated == 2L))
+      meta_word_cat("$ unitizer was saved in prior evaluation")
   }
   if(length(which.fail)) {
     if(length(which.pass)) cat("\n")
@@ -192,17 +196,19 @@ print.unitizer_results <- function(x, ...) {
     fail.reason <- vapply(x[which.fail], slot, character(1L), "reason")
     file.names.short <- unique_path(test.files)
 
-    word_cat(
-      "Unitizers for the following files could not be loaded:\n\n"
-    )
-    cat(sep="\n",
+    meta_word_cat(
+      "Unitizers for the following files could not be loaded:\n",
       as.character(
         UL(
           paste0(
             "id: ", which.fail, "; ", files.short[which.fail], ": ", fail.reason
-    ) ) ) )
+        ) ),
+        width=getOption("width") - 2L
+      ),
+      sep="\n"
+    )
   }
-  word_cat("\nTest files in common directory '", files.dir, "'", sep="")
+  meta_word_cat("\nTest files in common directory '", files.dir, "'", sep="")
   return(invisible(x))
 }
 # Check whether an object is of type "unitizer_result"

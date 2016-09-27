@@ -1,26 +1,47 @@
-unitizer 1.1
---------------------------------------------------------------------------------
+# `unitizer` NEWS
 
-Improvement / Changes:
+## v1.2.0
 
-* Colorized output if supported (thank you Gabor Csardi)
-* Better diff object comparisions when tests fail (see `?diff_obj`)
-* Minor improvements to test navigation / display
+* [#168](https://github.com/brodieG/unitizer/issues/168): Failing tests now will
+  output all output and conditions
+* [#171](https://github.com/brodieG/unitizer/issues/171): Flush warnings in
+  `unitizer` REPL
+* Improved integration of object diffs via `.DIFF` and `.diff`
+* Display improvements, including:
+    * Cleaner separation of `unitizer` meta-output vs. test or command line
+    * [#164](https://github.com/brodieG/unitizer/issues/164), 
+      [#176](https://github.com/brodieG/unitizer/issues/176): Streamline state
+      difference display.
+* Assorted bugfixes ([#175](https://github.com/brodieG/unitizer/issues/175),
+   [#173](https://github.com/brodieG/unitizer/issues/173),
+   [#170](https://github.com/brodieG/unitizer/issues/170))
 
-Bugfixes:
+## v1.1.0
+
+### Improvement / Changes:
+
+* [#161](https://github.com/brodieG/unitizer/issues/161): Compare objects with `diffobj::diffObj`
+* [#166](https://github.com/brodieG/unitizer/issues/166): More systematic
+  handling of `library`/`attach`/`detach`
+
+### Bugfixes:
 
 * Several unitizer prompt issues:
     * No longer capture prompt evals so `debug` is usable again
     * Parse errors reported correctly
-* Reference state properly preserved (previously would incorrectly use new state for reference tests kept in store)
+    * [#165](https://github.com/brodieG/unitizer/issues/165): Confusing Help
+      Prompt
+* Reference state properly preserved (previously would incorrectly use new state
+  for reference tests kept in store)
+* Internal shimming of library/detach/attach more robust
+* Updated tests for changes in testthat, R
 
-unitizer 1.0.0-1.0.9
---------------------------------------------------------------------------------
+## v1.0.0-1.0.9
 
-Improvement / Changes:
+### Improvement / Changes:
 
 * More comprehensive state tracking and resetting:
-    * options, random.seed, and wd are tracked in addition to seach path
+    * options, random.seed, and wd are tracked in addition to search path
     * state is reset when reviewing tests as well as when executing them
     * you are alerted off state differences between new and reference tests
       on error
@@ -37,7 +58,7 @@ Improvement / Changes:
 * Demo update
 * Added `Rdiff_obj` to run a `tools::Rdiff` directly on two R objects
 
-Internal:
+### Internal:
 
 * Reduced storage requirements for the `unitizer` stores
     * No longer storing assignments both as test value and object in environment
@@ -45,14 +66,13 @@ Internal:
 * Shimming used for search path tracking is more lightweight
 * Text capture much more robust
 
-Issues Fixed:
+### Issues Fixed:
   107, 106, 104, 103, 101, 99, 98, 94, 93, 90, 85, 84, 77, 74, 71, 67, 127, 115,
   132, 134
 
-unitizer 0.9.0
---------------------------------------------------------------------------------
+## v0.9.0
 
-Improvements / Changes:
+### Improvements / Changes:
 
 * Complete restructure of internal test management to allow for much more robust
   `unitize_dir` behavior (#51)
@@ -66,22 +86,20 @@ Improvements / Changes:
 * Improved path inference to better guess desired unitizer based on partiallly
   specified file names (#72)
 
-Other
+### Other
 
 * `unitize_dir` works with empty dirs (#78)
 * Better management of file locations and names (#35, #75)
 
-unitizer 0.8.1
---------------------------------------------------------------------------------
+## v0.8.1
 
-Bugfixes
+### Bugfixes
 
 * `review` now properly infers unitizer locations
 
-unitizer 0.8.0
---------------------------------------------------------------------------------
+## v0.8.0
 
-Improvements:
+### Improvements:
 
 * Added ability to accept multiple tests at once (Issue #45, use wisely...)
 * `unitize` can now infer partially specified test file names (in particular,
@@ -89,38 +107,34 @@ Improvements:
 * `parse_with_comments` no longer run in non-interactive mode (#63)
 * Test call now part of output of test object `show` method (#54)
 
-Bugfixes:
+### Bugfixes:
 
 * Comments inside `unitizer_sect` preserved (#64)
 * Ignored tests assigned to first non-ignored test section (#57)
 * Prompt display issues (#65, #66)
 
-Internal:
+### Internal:
 
 * `search_path_cleanup` more robust (#59)
 * `get_text_capture` tests added (#60)
 
+## v0.7.1
 
-unitizer 0.7.1
---------------------------------------------------------------------------------
-
-Improvements:
+### Improvements:
 
 * Reduced test execution and parsing overhead
 * Better handling of call recording for traceback and condition calls
 * `editFunNames` becomes `editCalls` and provides more comprehensive editing of
   calls (Issue #52)
 
-Bufixes:
+### Bufixes:
 
 * Comment handling in calls (Issues #56, #58)
 * Comment deparsing (Issues #39, #47, #52)
 
+## v0.7.0
 
-unitizer 0.7.0
---------------------------------------------------------------------------------
-
-Improvements:
+### Improvements:
 
 * Failed tests now automatically output a snippet of new and reference objects
   (Issue #34)
@@ -131,43 +145,38 @@ Improvements:
 * Implemented `editFunNames` to allow user to modify stored calls in `unitizer`
   so that tests can be re-used even if function names are changed
 
-unitizer 0.6.5
---------------------------------------------------------------------------------
+## v0.6.5
 
 Doc updates; should have been part of 0.6.4, but was too rushed to push...
 
-unitizer 0.6.4
---------------------------------------------------------------------------------
+## v0.6.4
 
-Improvements:
+### Improvements:
 
 * Comment parsing faster (issue #15)
 
-
-Bugfixes:
+### Bugfixes:
 
 * Reference section logic improved (assume fixes #36 until there is evidence
   against)
 * Several parse errors fixed
 
-Other:
+### Other:
 
 * Now depends on R 3.1.2 (not really, but that's what we are developing on and
   don't have bandwidth to test against multiple R versions)
 
-unitizer 0.6.3
---------------------------------------------------------------------------------
+## v0.6.3
 
-Bugfixes:
+### Bugfixes:
 
 * stderr now show in `review` mode (issue #43)
 * package startup messages suppressed (issue #23)
 * small demo bug
 
-unitizer 0.6.2
---------------------------------------------------------------------------------
+## v0.6.2
 
-Bugfixes:
+### Bugfixes:
 
 * Better whitespace wrapping in terminal mode (partially addresses #38)
 * Can now drop all items in review mode (issue #37)
@@ -178,26 +187,24 @@ Behavior changes:
 
 * History is only subbed out if you need to type input (issue #40)
 
-unitizer 0.6.1
---------------------------------------------------------------------------------
+#### v0.6.1
 
 Minor release, no substantive changes.
 
-Bugfixes:
+### Bugfixes:
 
 * Loading a `unitizer` no longer automatically modifies it through `upgrade`
 * `upgrade` cleaned up and has tests now
 * calling functions in form `pkg::fun` or `pkg:::fun` no longer causes problems
   when checking for ignoredness
 
-Behavior changes:
+### Behavior changes:
 
 * `get` no longer warns if `unitizer` ids don't match
 
-unitizer 0.6.0
---------------------------------------------------------------------------------
+## v0.6.0
 
-New Features:
+### New Features:
 
 * Added a demo (`demo(unitizer)`)
 * Broke up and updated vignettes
@@ -210,25 +217,24 @@ New Features:
 * `unitize(..., force.update=TRUE)` will overwrite unitizer even if there were
   no changes recorded (issue #19)
 
-Behavior changes:
+### Behavior changes:
 
 * `unitize` now runs with `search.path.clean=TRUE` by default
 
-Bugfixes:
+### Bugfixes:
 
 * Comparison function warnings not captured (issue #14)
 * Search path restoration error messages fixed (issue #22)
 * Navigation regressions fixed (issue #30)
 
-Other:
+### Other:
 
 Summary titles cleaned up, interative prompts made clearer, package reload warn
 conflicts quieted (d2fe594c747, #23)
 
-unitizer 0.5.0
---------------------------------------------------------------------------------
+## v0.5.0
 
-New Features:
+### New Features:
 
 * Can now run tests in clean environment (i.e. objects from .GlobalEnv will not
   be visible) (issue #13)
@@ -236,21 +242,20 @@ New Features:
   loaded) (also issue #13), use `unitize(..., search.path.clean=TRUE)`
 * New vignette "Reproducible Tests" discusses the above features
 
-Bugfixes:
+### Bugfixes:
 
 * Expressions printed as tests evaluated now truncated corretly (issue #4)
 * Incorrect displaying/hiding of ignored tests in some circumstances fixed
 
-Other Improvements:
+### Other Improvements:
 
 * Summary no longer includes "removed" tests in matrix, since those are section-
   less
 * Other minor clean-up of the interactive environment prompting
 
-unitizer 0.4.3
---------------------------------------------------------------------------------
+## v0.4.3
 
-Many interactive use bug fixes:
+### Many interactive use bug fixes:
 
 * LBB now parsed properly (issue #5)
 * Non interactive parse (issue #11)
@@ -258,9 +263,7 @@ Many interactive use bug fixes:
 * Other interactive use cleanup (issues #6, 12, 10, 9)
 * Vignette now done properly
 
-
-unitizer 0.4.2
---------------------------------------------------------------------------------
+## v0.4.2
 
 * Fixed setOldClass conflicts with RJSONIO (issue #1)
 * Fixed run_ls not finding base env under certain circumstances (issue #2)

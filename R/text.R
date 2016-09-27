@@ -91,7 +91,11 @@ strtrunc <- function(
 #'     necessary; note that unlike \code{text_wrap} \code{width} must be scalar
 #'   \item \code{word_cat} is like \code{word_wrap}, except it outputs to screen
 #'   \item \code{word_msg} is like \code{word_cat}, except it ouputs to stderr
+#'   \item \code{meta_word_cat} is like \code{word_cat}, except it wraps output
+#'     in formatting to highlight this is not normal output
 #' }
+#' Newlines are replaced by empty strings in the output so that each character
+#' vector in the output represents a line of screen output.
 #'
 #' @keywords internal
 #' @return a list with, for each item in \code{`x`}, a character vector
@@ -179,7 +183,8 @@ word_wrap <- function(
   )
   break_char <- function(x) {
     lines.raw <- ceiling(nchar(x) / (width - tolerance))
-    res <- character(lines.raw + ceiling(lines.raw / (width - tolerance))) # for hyphens
+    # for hyphens
+    res <- character(lines.raw + ceiling(lines.raw / (width - tolerance)))
     res.idx <- 1
 
     if(!nchar(x)) return(x)
@@ -208,8 +213,8 @@ word_wrap <- function(
             } }
         } }
         if(!matched) x.trim <- substr(x, 1L, width)  # Failed, truncate
-
-        x.trim <- substr(x.trim, 1L, width)  # we allow one extra char for pattern matching in some cases, remove here
+        # we allow one extra char for pattern match some cases, remove here
+        x.trim <- substr(x.trim, 1L, width)
         x <- sub(  # remove leading space if any
           "^\\s(.*)", "\\1",
           substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x)),
@@ -228,9 +233,10 @@ word_wrap <- function(
 
   x.lst <- as.list(x)
 
-  # replace new lines with 0 char item
+  # replace new lines with 0 char item; note that leading NLs need special
+  # treatment; used to put in two newlines here; not sure why though
 
-  x.lst[nchar(x) > 0] <- strsplit(gsub("\n", "\n\n", x[nchar(x) > 0]), "\n")
+  x.lst[nchar(x) > 0] <- strsplit(x[nchar(x) > 0], "\n")
 
   res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
   res.fin <- if(unlist) unlist(res) else res
@@ -246,17 +252,51 @@ cc <- function(..., c="") paste0(c(...), collapse=c)
 
 #' @rdname text_wrap
 
-word_cat <- function(
-  ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
+meta_word_cat <- function(
+  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout(),
+  trail.nl=TRUE
 ) {
+  # NOTE: if we change `pre` nchar width there are several calls to
+  # meta_word_wrap involving `UL` that will need to be udpated as well
+
+  out <-
+    word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| ")
+  if(!is.null(out)) cat(out, sep="\n", file=file)
+  if(trail.nl) cat("\n")
+  invisible(out)
+}
+#' @rdname text_wrap
+
+meta_word_msg <- function(
+  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stderr(),
+  trail.nl=TRUE
+) {
+  meta_word_cat(
+    ..., sep=sep, width=width, tolerance=tolerance, file=file, trail.nl=trail.nl
+  )
+}
+## Like word_wrap, but handles some additional duties needed for word_cat
+
+word_wrap_split <- function(
+  ..., width=getOption("width"), tolerance=8L, pre="", sep=" "
+) {
+  stopifnot(is.chr1(pre))
+  width <- width - nchar(pre)
+  if(width < 10L) width <- 10L
   vec <- try(
     paste0(unlist(list(...)), collapse=sep),
     silent=TRUE
   )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
-  vec <- unlist(strsplit(vec, "\n"))
-  out <- word_wrap(vec, width, tolerance)
-  cat(out, file=file, sep="\n")
+  paste0(pre, word_wrap(vec, width=width, tolerance=tolerance))
+}
+#' @rdname text_wrap
+
+word_cat <- function(
+  ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
+) {
+  out <- word_wrap_split(..., width=width, tolerance=tolerance, sep=sep)
+  if(!is.null(out)) cat(out, file=file, sep="\n")
   invisible(out)
 }
 #' @rdname text_wrap
@@ -275,7 +315,12 @@ word_comment <- function(
     x=sub("^#", "", x), width=width - 1L, tolerance=tolerance, hyphens=hyphens,
     unlist=FALSE
   )
-  res <- lapply(res, function(x) paste0("#", x))
+  res <- lapply(
+    res,
+    function(x)
+      if(crayon::has_color()) crayon::silver(paste0("#", x)) else
+        paste0("#", x)
+  )
   if(unlist) unlist(res) else res
 }
 
@@ -489,7 +534,11 @@ summ_matrix_to_text <- function(
 
   col.names <- substr_cons(names(totals.keep), 4L, justify="right")
   col.count <- length(col.names)
-  num.width <- max(nchar(col.names), nchar(as.character(totals.keep)))
+  tot.chr <- as.character(totals.keep)
+  tot.chr[is.na(totals.keep)] <- "?"
+  tot.chr[!is.na(totals.keep) & !totals.keep] <- "-"
+
+  num.width <- max(nchar(col.names), nchar(tot.chr))
 
   test.len <- nrow(mx.keep)
   test.nums <- if(show.nums)
@@ -525,9 +574,6 @@ summ_matrix_to_text <- function(
   # totals.keep
 
   res <- c(res, paste0(rep(".", nchar(res[[1L]])), collapse=""))
-  tot.chr <- as.character(totals.keep)
-  tot.chr[is.na(totals.keep)] <- "?"
-  tot.chr[!totals.keep] <- "-"
   res <- c(
     res,
     do.call(sprintf, c(list(fmt, "", ""), as.list(tot.chr)))

@@ -172,7 +172,7 @@ unitizer_check_demo_state <- function() {
   for(i in seq_along(vars))
     vars.exist[[i]] <- exists(vars[[i]], envir=parent.frame(), inherits=FALSE)
   if(any(vars.exist)) {
-    word_msg(
+    meta_word_msg(
       "Variables", paste0("`", vars, "`", collapse=", "), " already exist, but",
       "must be overwritten for demo to proceed.  These could have been left",
       "over by a previous run of the demo that did not complete properly.\n"

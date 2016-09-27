@@ -263,7 +263,9 @@ infer_unitizer_location.character <- function(
     type.name <- "test directory"
   }
   inf_msg <- function(name)
-    word_msg("Inferred", type.name, "location:", relativize_path(name))
+    meta_word_msg(
+      "Inferred", type.name, "location:", relativize_path(name), sep=" "
+    )
 
   # Is a directory, check if a package and pick tests/unitizer as the directory
 
@@ -299,7 +301,8 @@ infer_unitizer_location.character <- function(
       inf_msg(fp)
       return(fp)
     }
-    dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
+    # use tests/unitizer as starting point for any package
+    dir.store.id.proc <- test.base
   } else {
     dir.store.id.proc <- dir.store.id
   }

@@ -124,6 +124,10 @@ unitize <- function(
   force.update=FALSE,
   auto.accept=character(0L)
 ) {
+  # Initial spacer, must be done in each top level call
+
+  cat("\n")
+
   test.file.inf <- infer_unitizer_location(test.file)
   store.id.inf <- store.id
   if(is.null(store.id)) store.id.inf <- filename_to_storeid(test.file.inf)
@@ -141,6 +145,10 @@ unitize <- function(
 
 review <- function(store.id) {
   if(!interactive_mode()) stop("`review` only available in interactive mode")
+  # Initial spacer, must be done in each top level call
+
+  cat("\n")
+
   invisible(
     unitize_core(
       test.files=NA_character_,
@@ -176,6 +184,10 @@ unitize_dir <- function(
     stop("Argument `pattern` must be character(1L) and not NA.")
   if(file.exists(test.dir) && !file_test("-d", test.dir))
     stop("Argument `test.dir` points to a file instead of a directory")
+
+  # Initial spacer, must be done in each top level call
+
+  cat("\n")
 
   # Infer
 
