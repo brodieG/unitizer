@@ -65,7 +65,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
           trail.nl=FALSE
         )
     } else {
-      meta_word_cat("unitizer unchanged.", trail.nl=FALSE)
+      meta_word_cat("unitizer unchanged.")
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it

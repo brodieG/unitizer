@@ -172,8 +172,7 @@ navigate_prompt <- function(
     stop(
       "Logic Error, expected unitizerBrowse object as param `x`; ",
       "contact maintainer."
-    )
-  }
+  ) }
   # User input
 
   prompt.val <- unitizer_prompt(
