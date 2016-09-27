@@ -9,10 +9,12 @@
 * Improved integration of object diffs via `.DIFF` and `.diff`
 * Display improvements, including:
     * Cleaner separation of `unitizer` meta-output vs. test or command line
-    * Harmonizing of state difference output with rest of diff output
-    * [#164](https://github.com/brodieG/unitizer/issues/164): Less intrusive way
-      of alerting to state differences
-
+    * [#164](https://github.com/brodieG/unitizer/issues/164), 
+      [#176](https://github.com/brodieG/unitizer/issues/176): Streamline state
+      difference display.
+* Assorted bugfixes ([#175](https://github.com/brodieG/unitizer/issues/175),
+   [#173](https://github.com/brodieG/unitizer/issues/173),
+   [#170](https://github.com/brodieG/unitizer/issues/170))
 
 ## v1.1.0
 
@@ -39,7 +41,7 @@
 ### Improvement / Changes:
 
 * More comprehensive state tracking and resetting:
-    * options, random.seed, and wd are tracked in addition to seach path
+    * options, random.seed, and wd are tracked in addition to search path
     * state is reset when reviewing tests as well as when executing them
     * you are alerted off state differences between new and reference tests
       on error
