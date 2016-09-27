@@ -98,9 +98,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
         "Failed instantiating a unitizer section:\n",
         paste0(res$message, "\n")
       )
-    if(!is(res$state, "unitizerGlobal"))
+    if(!is(res$state, "unitizerGlobalIndices")) {
       stop("Logic Error: failed recording state; contact maintainer.")
-
+    }
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
       conditions=new("conditionList", .items=res$conditions),
