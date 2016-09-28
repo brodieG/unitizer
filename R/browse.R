@@ -876,7 +876,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
             cat(prompt, " ([Y]es, [N]o)?\n", sep="")
             act.conf <- unitizer_prompt(
               prompt, new.env(parent=parent.env(base.env.pri)), help,
-              valid.opts=c(Y="[Y]es", N="[N]o"), global=x@global
+              valid.opts=c(Y="[Y]es", N="[N]o"), global=x@global,
+              browse.env=new.env(parent=parent.env(base.env.pri))
             )
             if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
             if(identical(act.conf, "N")) {

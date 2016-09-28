@@ -148,7 +148,8 @@ unitize_core <- function(
     meta_word_cat(prompt, "?", sep="")
 
     pick <- unitizer_prompt(
-      prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL
+      prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
+      browse.env=new.env(parent=par.env)
     )
     if(!identical(pick, "Y"))
       stop("Cannot proceed without creating directories.")
@@ -304,9 +305,9 @@ unitize_core <- function(
 
   global$state("init")  # mark post pre-load state
 
+  # Used to put q/quit here before we switched to tracing them
+
   util.frame <- new.env(parent=pre.load.frame)
-  assign("quit", unitizer_quit, util.frame)
-  assign("q", unitizer_quit, util.frame)
 
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
@@ -634,7 +635,8 @@ unitize_browse <- function(
         "Do you wish to proceed despite compromised state tracking",
         valid.opts=c(Y="[Y]es", N="[N]o"),
         exit.condition=exit_fun, valid.vals=seq.int(test.len),
-        hist.con=hist.obj$con, help=help, global=global
+        hist.con=hist.obj$con, help=help, global=global,
+        browse.env=new.env(parent=unitizers[[1L]]@zero.env)
       )
       if(prompt %in% c("N", "Q") && confirm_quit(unitizers)) quit <- TRUE
     } else {
@@ -707,7 +709,8 @@ unitize_browse <- function(
               ),
               exit.condition=exit_fun, valid.vals=seq.int(test.len),
               hist.con=hist.obj$con, help=help, help.opts=help.opts,
-              global=global
+              global=global,
+              browse.env=new.env(parent=unitizers[[1L]]@zero.env)
             )
           } else {
             # in non.interactive mode, review all, this will apply auto.accepts
@@ -955,7 +958,8 @@ confirm_quit <- function(unitizers) {
     meta_word_cat("Are you sure you want to quit?")
     ui <- unitizer_prompt(
       "Quit", valid.opts=c(Y="[Y]es", N="[N]o"),
-      global=unitizers[[1L]]@global
+      global=unitizers[[1L]]@global,
+      browse.env=new.env(parent=unitizers[[1L]]@zero.env)
     )
     return(!identical(ui, "N"))
   }

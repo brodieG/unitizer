@@ -123,7 +123,9 @@ eval_user_exp <- function(unitizerUSEREXP, env, global) {
      call("withVisible", call("eval", unitizerUSEREXP))
   } else call("withVisible", unitizerUSEREXP)
   res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
-  if(!res$aborted && res$value$visible && length(unitizerUSEREXP)) {
+  if(
+    !res$aborted && !res$resumed && res$value$visible && length(unitizerUSEREXP)
+  ) {
     res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
     res$conditions <- append(res$conditions, res2$conditions)
     if(length(res2$trace)) res$trace <- res2$trace
@@ -253,6 +255,7 @@ user_exp_str <- function(value, env, expr, max.level=NA) {
 
 user_exp_handle <- function(expr, env, print.mode, expr.raw) {
   aborted <- FALSE
+  resumed <- FALSE
   conditions <- list()
   trace <- list()
   printed <- nchar(print.mode) > 1
@@ -282,13 +285,18 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
     ),
     abort=function() {
       aborted <<- structure(TRUE, printed=printed)
+    },
+    # Used to short circuit `quit()` process
+    unitizerResume=function() {
+      resumed <<- TRUE
     }
   )
   list(
     value=value,
     aborted=aborted,
     conditions=conditions,
-    trace=tail(trace, -1L)
+    trace=tail(trace, -1L),
+    resumed=resumed
   )
 }
 set_trace <- function(trace) {

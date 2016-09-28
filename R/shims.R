@@ -83,26 +83,48 @@ trace_test_fun <- function(x=0) {
 .unitizer.base.funs <- list(
   library=base::library,
   attach=base::attach,
-  detach=base::detach
+  detach=base::detach,
+  q=base::q,
+  quit=base::quit
 )
-.unitizer.base.funs.to.shim <- c("library", "attach", "detach")
+.unitizer.base.funs.to.shim <- c(
+  "library", "attach", "detach", "q", "quit"
+)
 .unitizer.tracer <- quote(
   {
     .par.env <- asNamespace("unitizer")$.global$global$par.env
     parent.env(.par.env) <- as.environment(2L)
 } )
+.quit.tracer <- quote(
+  {
+    message(
+      "You are attempting to quit R from within `unitizer`.  If you do so ",
+      "you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` ",
+      "gracefully.  Are you sure you want to exit R?"
+    )
+    while(
+      !(res <- head(tolower(readline("Quit R? [y/n]: ")), 1L)) %in% c("y", "n")
+    ) NULL
+    if(res == "n") invokeRestart("unitizerResume")
+} )
 # Used to have both exit and at slots, but we removed it with the development
 # of trace_at_end
 
-setClass("unitizerShimDat", slots=c(tracer="languageOrNULL"))
+setClass(
+  "unitizerShimDat",
+  slots=c(
+    at="integer",
+    tracer="languageOrNULL"
+  ),
+  prototype=list(at=0L)
+)
 .unitizer.shim.dat <- list(
-  # Complex shim for library required b/c we cannot use `on.exit`
-
   library=new("unitizerShimDat", tracer=.unitizer.tracer),
   attach=new("unitizerShimDat", tracer=.unitizer.tracer),
-  detach=new("unitizerShimDat", tracer=.unitizer.tracer)
+  detach=new("unitizerShimDat", tracer=.unitizer.tracer),
+  q=new("unitizerShimDat", tracer=.quit.tracer, at=1L),
+  quit=new("unitizerShimDat", tracer=.quit.tracer, at=1L)
 )
-
 unitizerGlobal$methods(
   shimFuns=function(funs=.unitizer.base.funs.to.shim) {
     '
@@ -166,11 +188,21 @@ unitizerGlobal$methods(
       stop("Logic Error: missing shim data")
 
     shimmed <- try(
-      trace_at_end(
-        name, tracer=.unitizer.shim.dat[[name]]@tracer,
-        where=.BaseNamespaceEnv, print=FALSE
-      )
-    )
+      # Note we don't actually use `at` here for now since we don't need it
+      # for our quit tracing; if we do end up expanding on this we'll have to
+      # fix it (actually, we can't use it for quit tracing since they have no
+      # body)
+
+      if(.unitizer.shim.dat[[name]]@at) {
+        base::trace(
+          what=name, tracer=.unitizer.shim.dat[[name]]@tracer,
+          where=.BaseNamespaceEnv, print=FALSE
+        )
+      } else {
+        trace_at_end(
+          name, tracer=.unitizer.shim.dat[[name]]@tracer,
+          where=.BaseNamespaceEnv, print=FALSE
+    ) } )
     # Process std.err to make sure nothing untoward happened
 
     shim.out <- get_text_capture(capt.cons, "message")

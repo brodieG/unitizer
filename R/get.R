@@ -351,7 +351,7 @@ infer_unitizer_location.character <- function(
       "Pick a matching file",
       valid.opts=c("Type a number"),
       exit.condition=exit_fun, valid.vals=valid,
-      hist.con=NULL, global=NULL
+      hist.con=NULL, global=NULL, browse.env=.GlobalEnv
     )
     if(identical(pick, "Q")) {
       message("No file selected")
