@@ -426,7 +426,7 @@ testthat_transcribe_file <- function(
         )
       )
         stop(
-          "Unable to create test directory `", normalizePath(target.dir),
+          "Unable to create test directory `", normalize_path(target.dir),
           "`; see prior errors."
         )
     }
@@ -435,7 +435,7 @@ testthat_transcribe_file <- function(
     if(!identical(prompt, "never") && file.exists(untz.test)) {
       u.inp <- if(interactive.mode) {
         simple_prompt(
-          paste0("Overwrite file '", normalizePath(untz.test), "'?")
+          paste0("Overwrite file '", normalize_path(untz.test), "'?")
         )
       } else "N"
       if(!identical(u.inp, "Y"))
@@ -485,10 +485,10 @@ testthat_translate_dir <- function(
   # Get file names
 
   file.list <- sort(dir(dir.name))
-  files.helper <- normalizePath(
+  files.helper <- normalize_path(
     file.path(dir.name, grep("^helper.*[rR]$", file.list, value=TRUE))
   )
-  files.test <- normalizePath(
+  files.test <- normalize_path(
     file.path(dir.name, grep(filter, file.list, value=TRUE))
   )
   res <- character(length(files.test))
@@ -503,7 +503,7 @@ testthat_translate_dir <- function(
       length(dir(all.files=TRUE, include.dirs=TRUE, no..=TRUE))
     )
       stop(
-        "`target.dir` '", normalizePath(target.dir) ,"' contains files so we ",
+        "`target.dir` '", normalize_path(target.dir) ,"' contains files so we ",
         "cannot proceed; manually clear or set `force` to TRUE.  This is a ",
         "safety feature to ensure files are not accidentally overwritten."
       )

@@ -49,7 +49,7 @@ unitize_core <- function(
         "Logic Error: `test.files` must all point to valid files in unitize ",
         "mode; contact maintainer"
       )
-    test.files <- try(normalizePath(test.files, mustWork=TRUE))
+    test.files <- try(normalize_path(test.files, mustWork=TRUE))
     if(inherits(test.files, "try-error"))
       stop("Logic Error: unable to normalize test files; contact maintainer")
   }
@@ -169,7 +169,7 @@ unitize_core <- function(
       store.ids,
       function(x) {
         if(is.character(x) && !is.object(x)) {
-          file.path(normalizePath(dirname(x), mustWork=TRUE), basename(x))
+          file.path(normalize_path(dirname(x), mustWork=TRUE), basename(x))
         } else x
   } ) )
   if(inherits(norm.attempt, "try-error"))

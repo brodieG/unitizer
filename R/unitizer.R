@@ -167,7 +167,7 @@ setClass(
       # # No guarantees store id actually exists, so not enforcing this check
       # if(
       #   !file_test("-d", dirname(object@id)) ||
-      #   !identical(dirname(object@id), normalizePath(dirname(object@id)))
+      #   !identical(dirname(object@id), normalize_path(dirname(object@id)))
       # ) {
       #   return(
       #     paste0(

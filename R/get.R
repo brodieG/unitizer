@@ -276,7 +276,7 @@ infer_unitizer_location.character <- function(
     dir.store.id <- store.id
     file.store.id <- NULL
   }
-  dir.store.id <- normalizePath(dir.store.id)
+  dir.store.id <- normalize_path(dir.store.id)
   at.package.dir <-
     file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))
 
@@ -335,8 +335,8 @@ infer_unitizer_location.character <- function(
       paste0(
         " from \"",
         sub(
-          paste0("^", normalizePath(dir.store.id), "/?"), "",
-          normalizePath(dir.store.id.proc)
+          paste0("^", normalize_path(dir.store.id), "/?"), "",
+          normalize_path(dir.store.id.proc)
         ),
         "\""
       )
@@ -522,7 +522,7 @@ source_files <- function(files, env.par, pattern="\\.[rR]$") {
     !inherits(try(grepl(pattern, "a"), silent=TRUE), "try-error"),
     is.environment(env.par)
   )
-  file.norm <- try(normalizePath(files, mustWork=TRUE))
+  file.norm <- try(normalize_path(files, mustWork=TRUE))
   if(inherits(file.norm, "try-error"))
     return("Unable to normalize file paths; see previous error")
 
