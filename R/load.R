@@ -126,7 +126,8 @@ load_unitizers <- function(
       meta_word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
       unitizer_prompt(
         "Upgrade unitizer stores?", hist.con=NULL,
-        valid.opts=c(Y="[Y]es", N="[N]o"), global=global
+        valid.opts=c(Y="[Y]es", N="[N]o"), global=global,
+        browse.env=
       )
     } else "Y"
 
