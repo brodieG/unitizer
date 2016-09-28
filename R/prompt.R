@@ -239,7 +239,7 @@ review_prompt <- function(x, nav.env) {
   )
   nav.id <- unitizer_prompt(
     text=nav.prompt, help=nav.help, browse.env=nav.env, exit.condition=exit_fun,
-    valid.opts=nav.opts, valid.vals=x@mapping@item.id, x@global
+    valid.opts=nav.opts, valid.vals=x@mapping@item.id, global=x@global
   )
   if(identical(nav.id, "Q")) {
     return("Q")
