@@ -193,7 +193,7 @@ history_write <- function(hist.con, data) {
 ## Variation on 'normalizePath' with \code{winSlash} Pre-Specified
 
 normalize_path <- function(path, mustWork=NA)
-  normalizePath(path, winSlash=.Platform$file.sep, mustWork=mustWork)
+  normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
 
 # Simplify a Path As Much as Possible to Working Directory
 #
