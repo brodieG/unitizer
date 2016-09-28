@@ -305,9 +305,9 @@ unitize_core <- function(
 
   global$state("init")  # mark post pre-load state
 
+  # Used to put q/quit here before we switched to tracing them
+
   util.frame <- new.env(parent=pre.load.frame)
-  assign("quit", unitizer_quit, util.frame)
-  assign("q", unitizer_quit, util.frame)
 
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
