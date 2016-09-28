@@ -196,7 +196,7 @@ unitizerGlobal$methods(
       if(.unitizer.shim.dat[[name]]@at) {
         base::trace(
           what=name, tracer=.unitizer.shim.dat[[name]]@tracer,
-          where=.BaseNamespaceEnv
+          where=.BaseNamespaceEnv, print=FALSE
         )
       } else {
         trace_at_end(
