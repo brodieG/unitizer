@@ -252,6 +252,7 @@ setMethod(
 
           # Make sure we did not skip anything we were supposed to review
 
+          unrevavail <- 0L
           if(identical(y@mode, "unitize")) {
             unreviewed <- unreviewed(y)
             unrevavail  <- length(unreviewed)
