@@ -11,7 +11,7 @@ if(interactive()) {
     par.dir <- tempfile()
     on.exit({
       setwd(old.dir)
-      try(detach("package:testpkg1"))
+      if("testpkg1" %in% search()) try(detach("package:testpkg1"))
       try(unloadNamespace("testpkg1"))
       try(remove.packages("testpkg1", lib=lib.tmp))
       unlink(par.dir, recursive=TRUE)
@@ -42,7 +42,7 @@ if(interactive()) {
 
     # Upgrade the package, note we test against same store
 
-    try(detach("package:testpkg1"))
+    if("testpkg1" %in% search()) try(detach("package:testpkg1"))
     try(unloadNamespace("testpkg1"))
     try(remove.packages("testpkg1", lib=lib.tmp))
     tp.1 <- file.path(old.dir, "test_pkgs", "testpkg1", "testpkg1.1")
