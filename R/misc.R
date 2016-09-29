@@ -190,7 +190,7 @@ history_write <- function(hist.con, data) {
   } }
   # nocov end
 }
-## Variation on 'normalizePath' with \code{winSlash} Pre-Specified
+## Variation on 'normalizePath' with \code{winslash} Pre-Specified
 
 normalize_path <- function(path, mustWork=NA)
   normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
