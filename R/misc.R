@@ -190,6 +190,11 @@ history_write <- function(hist.con, data) {
   } }
   # nocov end
 }
+## Variation on 'normalizePath' with \code{winslash} Pre-Specified
+
+normalize_path <- function(path, mustWork=NA)
+  normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
+
 # Simplify a Path As Much as Possible to Working Directory
 #
 # \itemize{
@@ -223,12 +228,12 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   )
     stop("Argument `wd` must be NULL or a reference of to a directory")
   if(is.null(wd)) wd <- getwd()
-  wd <- try(normalizePath(wd, mustWork=TRUE), silent=TRUE)
+  wd <- try(normalize_path(wd, mustWork=TRUE), silent=TRUE)
   res <- if(
     !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
     identical(length(.Platform$file.sep), 1L)
   ) {
-    norm <- normalizePath(path, mustWork=FALSE)
+    norm <- normalize_path(path, mustWork=FALSE)
     to.norm <- TRUE  # used to be only for existing files, but can't recall why
 
     # Break up into pieces; we re-append "" to make sure the root shows up if

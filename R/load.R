@@ -384,7 +384,7 @@ norm_store_id <- function(x) if(is.default_unitizer_id(x)) norm_file(x) else x
 norm_file <- function(x) {
   if(
     !inherits(  # maybe this should just throw an error
-      normed <- try(normalizePath(x, mustWork=TRUE), silent=TRUE),
+      normed <- try(normalize_path(x, mustWork=TRUE), silent=TRUE),
       "try-error"
     )
   ) normed else x

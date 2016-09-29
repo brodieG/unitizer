@@ -175,7 +175,8 @@ unitizer_check_demo_state <- function() {
     meta_word_msg(
       "Variables", paste0("`", vars, "`", collapse=", "), " already exist, but",
       "must be overwritten for demo to proceed.  These could have been left",
-      "over by a previous run of the demo that did not complete properly.\n"
+      "over by a previous run of the demo that did not complete properly.\n",
+      sep=" "
     )
     choice <- simple_prompt("Overwrite variables?")
     if(!identical(choice, "Y")) stop("Cannot continue demo.")

@@ -521,6 +521,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
       unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])
     ) > 1L
 
+    # Used to track whether the previous thing displayed is an expression or
+    # meta info
+
+    prev.is.expr <- TRUE
+
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
     # conditions, or if we just got here via a browse statement
@@ -531,6 +536,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         browsed || jumping
       ) && multi.sect
     ) {
+      prev.is.expr <- FALSE
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate
@@ -539,6 +545,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !identical(last.reviewed.sec, curr.sec)
       ) && !ignore.sub.sec || browsed || jumping
     ) {
+      prev.is.expr <- FALSE
       print(H3(curr.sub.sec.obj@title))
       rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
 
@@ -588,11 +595,13 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     if(!ignore.sub.sec || x@review == 0L) {
       if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
+        prev.is.expr <- FALSE
         meta_word_msg(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\"", sep=""
       ) }
       if(jumping) {
+        prev.is.expr <- FALSE
         meta_word_msg(
           sep="",
           "Jumping to test #", x@mapping@item.id.ord[[curr.id]], " because ",
@@ -605,7 +614,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
       }
       if(length(item.main@comment)) {
-        # if(last.id && x@mapping@ignored[[last.id]] && !jumping) cat("\n")
+        if(prev.is.expr) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
         cat("\n")
       }

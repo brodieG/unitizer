@@ -213,13 +213,19 @@ search_path_update <- function(id, global) {
 
   tar.objs <- vapply(search.new, is.loaded_package, logical(1L))
   cur.objs <- vapply(names(search_as_envs()), is.loaded_package, logical(1L))
+  search.keep <- keep_sp_default(global$unitizer.opts)
 
   if(!identical(tar.objs, cur.objs))
     stop("Logic Error: search path object type mismatch; contact maintainer.")
 
   if(!all(tar.objs)) {
-    for(i in which(!tar.objs)) {
-      if(i == 1L) next # global env doesn't count since
+    for(i in which(!tar.objs && !(search.new %in% search.keep))) {
+      # Don't replace identical elements; this is meant to avoid re-attaching
+      # environments since doing so actually leads to a copy of the
+      # environment being made
+
+      if(identical(as.environment(i), search.target[[i]])) next
+
       detach(pos=i, character.only=TRUE)
       reattach(
         i, names(search.target)[[i]], type="object", data=search.target[[i]],
