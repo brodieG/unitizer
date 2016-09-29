@@ -108,7 +108,10 @@ unitizer_prompt <- function(
     "(", paste0(valid.opts[nchar(valid.opts) > 0], collapse=", "), ")?"
   )
   repeat {
-    val <- tryCatch(faux_prompt("unitizer> "), simpleError=function(e) e)
+    val <- tryCatch(
+      faux_prompt(sprintf("%s>", crayon::green("unitizer> "))),
+      simpleError=function(e) e
+    )
     if(inherits(val, "simpleError")) {
       cond.chr <- as.character(val)
       cat(cond.chr, file=stderr())
