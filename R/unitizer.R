@@ -590,11 +590,13 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           err.tpl@value <- test.res
         } else if(identical(test.res, FALSE)) {
           test.status <- "Fail"
-          err.tpl@value <- paste0(err.msg, " found a mismatch")
+          err.tpl@value <- ""
         } else {
           test.status <- "Error"
           err.tpl@value <- paste0(
-            err.msg, " returned something other than TRUE or character vector"
+            err.msg,
+            " returned something other than TRUE, FALSE, or character vector ",
+            sprintf("(%s of length %d)", typeof(test.res), length(test.res))
           )
           err.tpl@compare.err <- TRUE
         }

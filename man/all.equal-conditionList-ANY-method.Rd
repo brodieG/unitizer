@@ -15,8 +15,8 @@
 \item{...}{provided for compatibility with generic}
 }
 \value{
-TRUE if the lists of conditions are equivalent, an character vector explaining
-  why they are not otherwise
+TRUE if the lists of conditions are equivalent, a character
+  vector explaining why they are not otherwise
 }
 \description{
 This is the default function for comparing conditions across the new and

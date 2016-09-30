@@ -48,7 +48,7 @@
 #'   you to specify non-standard \code{unitizer} storage mechanisms (see
 #'   \code{\link{get_unitizer}}).  Finally, you can pass an actual
 #'   \code{unitizer} object if you are using \code{review}; see \code{store.ids}
-#'   for \code{unitize_dir}}
+#'   for \code{unitize_dir}
 #' @param store.ids one of \itemize{
 #'   \item a function that converts test file names to \code{unitizer} ids; if
 #'     \code{unitize}ing multiple files will be \code{lapply}ed over each file

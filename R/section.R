@@ -20,15 +20,15 @@ NULL
 #' @aliases unitizerSectionExpression-class unitizerSectionNA-class
 #' @slot title 1 lenght character, the name of the section
 #' @slot details character vector containing additional info on the section
-#' @slot compare functions to compare the various aspects of a \code{unitizerItem-class}
-#' @slot length tracks size of the section
+#' @slot compare functions to compare the various aspects of a
+#'   \code{unitizerItem-class} @slot length tracks size of the section
 
 setClass(
   "unitizerSection",
   representation(
     title="character",
     details="character",
-    compare="unitizerItemTestsFuns",
+    compare="testFuns",
     length="integer",
     parent="integer"
   ),
@@ -60,7 +60,7 @@ setClass("unitizerSectionExpression", contains="unitizerList",
   representation(
     title="characterOrNULL",
     details="character",
-    compare="unitizerItemTestsFuns"
+    compare="testFuns"
   )
 )
 setClassUnion("unitizerSectionExpressionOrExpression", c("unitizerSectionExpression", "unitizerSection", "expression"))
@@ -75,25 +75,57 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' Define a \code{unitizer} Section
 #'
 #' The purpose of \code{unitizer} sections is to allow the user to tag a
-#' group of test expressions with meta information as well as to modify the
-#' comparison functions used when determining whether the newly evaluated
-#' values match the reference values.
+#' group of test expressions with meta information as well as to modify
+#' how tests are determined to pass or fail.
+#'
+#' @section Tested Data:
+#'
+#' \code{unitizer} tracks the following:
+#' \itemize{
+#'   \item value: the return value of the test
+#'   \item conditions: any conditions emitted by the test (e.g. warnings or
+#'     errors)
+#'   \item output: screen output
+#'   \item message: stderr output
+#'   \item aborted: whether the test issued an `abort` restart (e.g. by calling
+#'     `stop` directly or indirectly)
+#' }
+#' In the future stdout produced by the test expression itself may be captured
+#' separately from that produced by print/showing of the return value, but at
+#' this point the two are combined.
+#'
+#' Each of the components of the test data can be tested, although by default
+#' only \code{value} and \code{condition} are checked.  Testing \code{output} is
+#' potentially duplicative of testing \code{value}, since most often
+#' \code{value} is printed to screen and the screen output of the value closely
+#' correlates to the actual value.  In some cases it is useful to explicitly
+#' test the \code{output}, such as when testing \code{print} or \code{show}
+#' methods.
 #'
 #' @section Comparison Functions:
 #'
-#' \code{unitizer} will compare values as well as some side effects from
-#' the test expression evaluation.  If you wish to modify the comparison function
-#' for the value of the test expressions then all you need to do is pass your
-#' comparison function as the \code{compare} argument.
+#' The comparison function should accept at least two parameters, and
+#' require no more than two.  For each test component, the comparison function
+#' will be passed the reference data as the first argument, and the newly
+#' evaluated data as the second.  The function should return TRUE if the
+#' compared test components are considered equivalent, or FALSE.  Instead of
+#' FALSE, the function may also return a character vector describing the
+#' mismatch, as \code{\link{all.equal}} does.
+#'
+#' \code{value} and \code{conditions} are compared with \code{\link{all.eq}},
+#' which is a wrapper to \code{\link{all.equal}} except that it returns FALSE
+#' instead of a descriptive string on failure.  This is because \code{unitizer}
+#' will run \code{\link[diffobj]{diffObj}} on the test data components do not
+#' match and including the \code{all.equal} output would be redundant.
 #'
 #' If a comparison function signals a condition (e.g. throws a warning) the
 #' test will not be evaluated, so make sure that your function does not signal
 #' conditions unless it is genuinely failing.
 #'
-#' If you wish to modify the comparison functions for the side effects of test
-#' evaluation (e.g. screen output or conditions), then you need to pass a
-#' \code{\link{unitizerItemTestsFuns}} object intialized with the
-#' appropriate functions (see example).
+#' If you wish to provide custom comparison functions you may do so by passing
+#' an appropriately initialized \code{\link{testFuns}} object as the
+#' value to the \code{compare} parameter to \code{unitizer_sect}
+#' (see examples).
 #'
 #' Make sure your comparison functions are available to \code{\link{unitize}}.
 #' Comparisons will be evaluated in the environment of the test.  By default
@@ -111,10 +143,10 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' functions for a portion of the outermost \code{unitizer_sect}.
 #'
 #' @note if you want to modify the functions used to compare conditions,
-#' keep in mind that the conditions are stored in lists, so your function
-#' must loop through the lists and compare conditions pairwise.  By default
-#' \code{unitizer} uses the \code{all.equal} method for S4 class
-#' \code{conditionList}.
+#' keep in mind that the conditions are stored in \code{\link{conditionList}}
+#' objects so your function must loop through the lists and compare conditions
+#' pairwise.  By default \code{unitizer} uses the \code{all.equal} method for S4
+#' class \code{conditionList}.
 #'
 #' @note \code{untizer} does not account for sections when matching new and
 #' reference tests.  All tests will be displayed as per the section they belong
@@ -135,38 +167,28 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #'   several calls inside (see examples)
 #' @param details character more detailed description of what the purpose
 #'   of the section is; currently this doesn't do anything.
-#' @param compare a function or a \code{\link{unitizerItemTestsFuns}}
-#'   object
+#' @param compare a function or a \code{\link{testFuns}} object
 #' @examples
-#' \dontrun{
-#' unitizer_sect("Custom Tests", {
-#'   my_fun("a", FALSE)
-#'   my_fun(845, TRUE)
-#' })
-#' unitizer_sect("Compare With Identical",
+#' unitizer_sect("Switch to `all.equal` instead of `all.eq`",
 #'   {
-#'     my_exact_fun(6L)
-#'     my_exact_fun("hello")
+#'     fun(6L)
+#'     fun("hello")
+#'   },
+#'   compare=testFuns(value=all.equal, conditions=all.equal)
+#' )
+#' unitizer_sect("Use identical for ALL test data, including stdout, etc.",
+#'   {
+#'     fun(6L)
+#'     fun("hello")
 #'   },
 #'   compare=identical
 #' )
-#' unitizer_sect("Compare With Identical",
-#'   {
-#'     my_exact_fun(6L)
-#'     my_exact_fun("hello")
-#'   },
-#'   compare=identical
-#' )
-#' unitizer_sect("Compare With Identical For Screen Output",
-#'   {
-#'     my_exact_fun(6L)
-#'     my_exact_fun("hello")
-#'   },
-#'   compare=unitizerItemTestsFuns(value=identical, output=identical)
-#' )
-#' }
-unitizer_sect <- function(title=NULL, expr=expression(), details=character(), compare=new("unitizerItemTestsFuns")) {
-  if(!is(compare, "unitizerItemTestsFuns") & !is.function(compare)) stop("Argument `compare` must be \"unitizerItemTestsFuns\" or a function")
+unitizer_sect <- function(
+  title=NULL, expr=expression(), details=character(),
+  compare=new("testFuns")
+) {
+  if(!is(compare, "testFuns") & !is.function(compare))
+    stop("Argument `compare` must be \"testFuns\" or a function")
   if(!is.character(details)) stop("Argument `details` must be character")
   if(!is.null(title) && (!is.character(title) || length(title) != 1L)) stop("Argument `title` must be a 1 length character vector.")
   exp.sub <- substitute(expr)
@@ -179,17 +201,26 @@ unitizer_sect <- function(title=NULL, expr=expression(), details=character(), co
     }
   }
   if (!is.expression(expr)) {
-    stop("Argument `expr` must be an expression, or an unevaluated call that evaluates to an expression or `{`.")
+    stop(
+      "Argument `expr` must be an expression, or an unevaluated call that ",
+      "evaluates to an expression or `{`."
+    )
   }
-  if(!is(compare, "unitizerItemTestsFuns")) {
+  if(!is(compare, "testFuns")) {
     if(is.function(compare)) {
       compare <- try(
         new(
-          "unitizerItemTestsFuns",
-          value=new("unitizerItemTestFun", fun=compare, fun.name=deparse_fun(substitute(compare)))
+          "testFuns",
+          value=new(
+            "unitizerItemTestFun", fun=compare,
+            fun.name=deparse_fun(substitute(compare))
+          )
       ) )
       if(inherits(compare, "try-error")) {
-        stop("Problem with provided function for argument `compare`; see previous errors for details")
+        stop(
+          "Problem with provided function for argument `compare`; see ",
+          "previous errors for details"
+        )
       }
     } else stop("Logic Error: contact package maintainer.")
   }

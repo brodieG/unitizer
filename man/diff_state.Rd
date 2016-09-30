@@ -4,8 +4,7 @@
 \alias{diff_state}
 \title{Display State Differences Between New and Reference Tests}
 \usage{
-diff_state(target = NULL, current = NULL, width = getOption("width"),
-  file = stdout())
+diff_state(target = NULL, current = NULL, width = getOption("width"))
 }
 \arguments{
 \item{target}{unitizerGlobalState object}

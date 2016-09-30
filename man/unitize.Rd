@@ -30,7 +30,8 @@ based on the \code{test.file} name by replacing \code{.[rR]} with
 object that has a defined \code{\link{get_unitizer}} method which allows
 you to specify non-standard \code{unitizer} storage mechanisms (see
 \code{\link{get_unitizer}}).  Finally, you can pass an actual
-\code{unitizer} object if you are using \code{review}.}
+\code{unitizer} object if you are using \code{review}; see \code{store.ids}
+for \code{unitize_dir}}
 
 \item{state}{character(1L) one of
 \code{c("prisitine", "default", "basic", "off", "safe")}, an environment,
