@@ -614,7 +614,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
       }
       if(length(item.main@comment)) {
-        if(prev.is.expr) cat("\n")
+        if(prev.is.expr && x@mapping@ignored[last.id]) cat("\n")
         cat(word_comment(item.main@comment), sep="\n")
         cat("\n")
       }
@@ -763,13 +763,40 @@ setMethod("reviewNext", c("unitizerBrowse"),
         ) },
         base.env.pri
     ) }
+    # More details for help in failure case
+    help.extra.1 <- help.extra.2 <- ""
+    if(identical(tolower(curr.sub.sec.obj@title), "failed")) {
+      fails <- x@mapping@tests.result[curr.id, ]
+      fail.name <- names(fails)[!fails]
+      help.extra.1 <- if(length(fail.name) > 1L) {
+        paste0(
+          "mismatches in test ",
+          paste0(head(fail.name, -1L), collapse=", "), ", and ",
+          tail(fail.name, 1L)
+        )
+      } else if(length(fail.name) == 1L) {
+        sprintf("mismatch in test %s", fail.name)
+      } else {
+        stop(
+          "Logic Error: test failures must have populated @tests.results ",
+          "values; contact maintainer."
+        )
+      }
+      if("conditions" %in% fail.name) {
+        help.extra.2 <- cc(
+          "\n\nYou can retrieve individual conditions from the `conditionList` ",
+          "objects inside the test objects; for example, use ",
+          "`.NEW$conditions[[1L]]` to get first condition from new evaluation."
+        )
+      }
+    }
     # Options to navigate; when navigating the name of the game is set `@last.id`
     # to the non-ignored test just previous to the one you want to navigate to,
     # the loop will then advance you to that test
 
     help.prompt <- paste0(
       "Reviewing test #", curr.id, " (type: ", tolower(curr.sub.sec.obj@title),
-      "). ", curr.sub.sec.obj@help,
+      "). ", sprintf(curr.sub.sec.obj@help, help.extra.1, help.extra.2),
       "\n\nIn addition to any valid R expression, you may type the following ",
       "at the prompt (without backticks):\n\n"
     )
@@ -788,12 +815,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
         paste0(
           "`.diff` for a diff between `.new` and `.ref`, and `.DIFF`  for the ",
           "differences between all components in `.NEW` and `.REF`."
-        ),
-
-      if(!isTRUE(state.comp))
-        paste0(
-          "`diff.s` to see differences in state (e.g. search path, ",
-          "random seed) between new and reference tests"
         ),
       paste0(
         "`YY`/`NN`, `YYY`/`NNN`, `YYYY`/`NNNN` to apply same choice to all ",

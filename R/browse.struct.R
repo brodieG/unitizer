@@ -891,9 +891,11 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "different results than when it was originally added to the store. ",
       "You should type N at the prompt unless you know the previous result ",
       "is incorrect and should be replaced by the new result.\n\n",
-      "Test failures can be caused by mismatches in either values or ",
-      "conditions, or possibly other aspects of the test result if you ",
-      "enable checks for them via `unitizer_sect`.\n\n",
+
+      "Test failure in this case is caused by %s; see `?unitizer_sect` for ",
+      "more details on what causes test failures and how to customize that ",
+      "behavior.\n\n",
+
       "If you wish to examine test values more closely you can retrieve the ",
       "reference value with `.ref`, and the newly evaluated one with `.new`. ",
       "`.diff` contains a precomputed diff (i.e. ",
@@ -901,7 +903,9 @@ setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
       "components of the test, and `.DIFF` contains the diffs ",
       "between each of those components.  `.new`, `.ref`, and `.diff` ",
       "are each respectively copies of `.NEW$value`, `.REF$value`, ",
-      "and `.DIFF$value` provided for convenience."
+      "and `.DIFF$value` provided for convenience.",
+
+      "%s"
     ),
     actions=c(Y="A", N="B")
 ) )

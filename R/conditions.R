@@ -1,18 +1,29 @@
 #' Contains A List of Conditions
 #'
-#' Used by \code{`unitizer`} to capture conditions emitted by tests.
+#' Condition lists are S4 classes that contain \code{link{condition}} objects
+#' emitted by \code{unitizer} tests.  Condition lists will typically be
+#' accessible via the \code{.NEW} and \code{.REF} \code{unitizer} test objects.
+#' You can access individual conditions using \code{[[} (see examples), and for
+#' the most part you can treat them as you would an S3 list containing
+#' conditions.
 #'
-#' When submitting custom comparison functions with:
+#' There are \code{show} and \code{all.equal} methods implemented for them, the
+#' latter of which is used to compare conditions across tests.  If you wish to
+#' implement a custom comparison function via \code{\link{unitizer_sect}}, your
+#' function will need to compare \code{conditionList} objects.
 #'
-#' \code{`unitizer_sect(..., compare=unitizerItemTestsFuns(...))`}
+#' @note Implemented as an S4 class to avoid \code{setOldClass} and related
+#' compatibility issues; the \code{conditionList} class contains
+#' \code{\link{unitizerList}}.
 #'
-#' functions that compare conditions must compare \code{`conditionList`} objects
-#'
-#' @note Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
-#' compatibility issues.
-#'
-#' @seealso \code{`\link{unitizer_sect}`}
+#' @name conditionList
+#' @seealso \code{\link{unitizer_sect}}, \code{\link{unitizerList}}
 #' @export
+#' @examples
+#' ## Access the first condition from the new test evaluation
+#' .NEW$conditions[[1L]]
+#' ## loop through all conditions
+#' for(i in seq_along(.NEW$conditions)) .NEW$conditions[[i]]
 
 setClass("conditionList", contains="unitizerList")
 
@@ -28,8 +39,8 @@ setClass("conditionList", contains="unitizerList")
 #' @param target the list of conditions that we are matching against
 #' @param current the list of conditions we are checking
 #' @param ... provided for compatibility with generic
-#' @return TRUE if the lists of conditions are equivalent, an character vector explaining
-#'   why they are not otherwise
+#' @return TRUE if the lists of conditions are equivalent, a character
+#'   vector explaining why they are not otherwise
 
 setMethod("all.equal", "conditionList",
   function(target, current, ...) {
@@ -175,9 +186,6 @@ setMethod("show", "conditionList",
     ) ) }
     out <- c(out)
     cat(out, sep="\n")
-    word_cat(
-      "You can access conditions directly (e.g. `.NEW$conditions[[1L]]`)."
-    )
     return(invisible(object))
   }
 )
