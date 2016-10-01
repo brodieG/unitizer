@@ -37,8 +37,12 @@
 #' @aliases unitize review unitize_dir
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
-#'   path (see \code{\link{infer_unitizer_location}})
-#' @param test.dir the directory to run the tests on
+#'   path.  If NULL, will look for a file in the \dQuote{tests/unitizer} package
+#'   folder if it exists, or in \dQuote{.} if it does not.
+#'   See \code{\link{infer_unitizer_location}}) for details.
+#' @param test.dir the directory to run the tests on; if NULL will use the
+#'   \dQuote{tests/unitizer} package folder if it exists, or \dQuote{.} if it
+#'   does not.  See \code{\link{infer_unitizer_location}}) for details.
 #' @param pattern a regular expression used to match what subset of files in
 #'   \code{test.dir} to \code{unitize}
 #' @param store.id if NULL (default), \code{unitizer} will select a directory
@@ -117,7 +121,7 @@
 #'   \code{\link{unitizer_result}}
 
 unitize <- function(
-  test.file, store.id=NULL,
+  test.file=NULL, store.id=NULL,
   state=getOption("unitizer.state"),
   pre=NULL, post=NULL,
   history=getOption("unitizer.history.file"),
@@ -144,7 +148,7 @@ unitize <- function(
 #' @rdname unitize
 #' @export
 
-review <- function(store.id) {
+review <- function(store.id=NULL) {
   if(!interactive_mode()) stop("`review` only available in interactive mode")
   # Initial spacer, must be done in each top level call
 
@@ -168,7 +172,7 @@ review <- function(store.id) {
 #' @export
 
 unitize_dir <- function(
-  test.dir,
+  test.dir=NULL,
   store.ids=filename_to_storeid,
   pattern="^[^.].*\\.[Rr]$",
   state=getOption("unitizer.state"),
@@ -179,11 +183,14 @@ unitize_dir <- function(
   auto.accept=character(0L)
 ) {
   # Validations
-  if(!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir))
-    stop("Argument `test.dir` must be character(1L) and not NA.")
+  if(
+    (!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir)) &&
+    !is.null(test.dir)
+  )
+    stop("Argument `test.dir` must be character(1L) and not NA, or NULL.")
   if(!is.character(pattern) || length(pattern) != 1L || is.na(pattern))
     stop("Argument `pattern` must be character(1L) and not NA.")
-  if(file.exists(test.dir) && !file_test("-d", test.dir))
+  if(!is.null(test.dir) && file.exists(test.dir) && !file_test("-d", test.dir))
     stop("Argument `test.dir` points to a file instead of a directory")
 
   # Initial spacer, must be done in each top level call

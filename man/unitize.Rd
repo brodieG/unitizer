@@ -6,14 +6,15 @@
 \alias{unitize_dir}
 \title{Unitize an R Test Script}
 \usage{
-unitize(test.file, store.id = NULL, state = getOption("unitizer.state"),
-  pre = NULL, post = NULL, history = getOption("unitizer.history.file"),
+unitize(test.file = NULL, store.id = NULL,
+  state = getOption("unitizer.state"), pre = NULL, post = NULL,
+  history = getOption("unitizer.history.file"),
   interactive.mode = interactive(), force.update = FALSE,
   auto.accept = character(0L))
 
-review(store.id)
+review(store.id = NULL)
 
-unitize_dir(test.dir, store.ids = filename_to_storeid,
+unitize_dir(test.dir = NULL, store.ids = filename_to_storeid,
   pattern = "^[^.].*\\\\.[Rr]$", state = getOption("unitizer.state"),
   pre = NULL, post = NULL, history = getOption("unitizer.history.file"),
   interactive.mode = interactive(), force.update = FALSE,
@@ -22,7 +23,9 @@ unitize_dir(test.dir, store.ids = filename_to_storeid,
 \arguments{
 \item{test.file}{path to the file containing tests, if supplied path does not
 match an actual system path, \code{unitizer} will try to infer a possible
-path (see \code{\link{infer_unitizer_location}})}
+path.  If NULL, will look for a file in the \dQuote{tests/unitizer} package
+folder if it exists, or in \dQuote{.} if it does not.
+See \code{\link{infer_unitizer_location}}) for details.}
 
 \item{store.id}{if NULL (default), \code{unitizer} will select a directory
 based on the \code{test.file} name by replacing \code{.[rR]} with
@@ -88,7 +91,9 @@ specify which type(s) of test you wish to auto accept (i.e. same as typing
 \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
 off (default)}
 
-\item{test.dir}{the directory to run the tests on}
+\item{test.dir}{the directory to run the tests on; if NULL will use the
+\dQuote{tests/unitizer} package folder if it exists, or \dQuote{.} if it
+does not.  See \code{\link{infer_unitizer_location}}) for details.}
 
 \item{store.ids}{one of \itemize{
   \item a function that converts test file names to \code{unitizer} ids; if
