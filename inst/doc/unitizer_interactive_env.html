@@ -181,7 +181,7 @@ unitizer&gt;</code></pre>
 <li>You did not make any changes to the <code>unitizer</code> (e.g. if you chose <code>N</code> at failed tests, you are keeping the reference value, so the <code>unitizer</code> is not actually changing)</li>
 <li>And test evaluation took less than <code>getOption(&quot;unitizer.prompt.b4.quit.time&quot;)</code> seconds (currently 10 seconds)</li>
 </ul>
-<p>You can also use <code>quit()</code> or <code>q()</code> from the <code>unitizer</code> prompt, though this is not recommended as it will override standard <code>unitizer</code> behavior.</p>
+<p>Note that if you quit using <code>quit()</code> or <code>q()</code> you will lose any unsaved changes. The same will happen if you interrupt evaluation with CTRL+C (or ESC in RStudio), or if you are in a debugged function and quit the browser with ‘Q’.</p>
 </div>
 <div id="differences-in-review-mode" class="section level3">
 <h3>Differences in <code>review</code> Mode</h3>
@@ -217,6 +217,7 @@ unitizer&gt;</code></pre>
 <li><code>.NEW$aborted</code> returns whether the test expression invoked an “abort” restart (e.g. called <code>stop</code> at some point)</li>
 </ul>
 <p>You can substitute <code>.REF</code> for <code>.NEW</code> in any of the above, provided that <code>.REF</code> is defined (i.e. that will not work when you are reviewing new tests since there is no corresponding reference test for those by definition).</p>
+<p>If both <code>.NEW</code> and <code>.REF</code> are defined, then <code>.DIFF</code> will be defined too. <code>.DIFF</code> has the same structure as <code>.NEW</code> and it contains the result of evaluating <code>diffobj::diffObj</code> between each component of <code>.NEW</code> and <code>.REF</code>. <code>.diff</code> is shorthand for <code>.DIFF$value</code>.</p>
 </div>
 <div id="ls" class="section level3">
 <h3><code>ls</code></h3>
