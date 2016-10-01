@@ -12,11 +12,12 @@
 \title{Interactively Retrieve User Input}
 \usage{
 unitizer_prompt(text, browse.env = baseenv(), help = character(),
-  valid.opts, hist.con = NULL, exit.condition = function(exp, env) FALSE,
-  ...)
+  help.opts = character(), valid.opts, hist.con = NULL,
+  exit.condition = function(exp, env) FALSE, global, ...)
 
 navigate_prompt(x, curr.id, text, browse.env1 = globalenv(),
-  browse.env2 = globalenv(), help = character(), valid.opts)
+  browse.env2 = globalenv(), help = character(), help.opts = character(),
+  valid.opts)
 
 review_prompt(x, nav.env)
 
@@ -40,6 +41,8 @@ this will contain interesting objects (use \code{ls()} to review)}
 \item{help}{a character vector with help suggestions: the first value in the
 vector is \code{\link{word_cat}} output, the rest normal \code{cat}}
 
+\item{help.opts}{a character vector of help options}
+
 \item{valid.opts}{the special letters user can type to get a special action,
 typically a character vector where the names are one letter (though they
 don't actually have to be) and are looked for as user typed input; note that
@@ -59,6 +62,9 @@ is implemented this way because \code{eval_user_exp} will print to screen
 which may not be desirable.  Function should return a value which will then
 be returned by \code{unitizer_prompt}, unless this value is \code{FALSE}
 in which case \code{unitizer_prompt} will continue with normal evaluation.}
+
+\item{global}{unitizerGlobal or NULL, if the global state tracking object;
+will be used to record state after evaluating user expressions}
 
 \item{...}{additional arguments for \code{exit.condition}}
 

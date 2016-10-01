@@ -2,6 +2,7 @@
 % Please edit documentation in R/text.R
 \name{text_wrap}
 \alias{meta_word_cat}
+\alias{meta_word_msg}
 \alias{text_wrap}
 \alias{word_cat}
 \alias{word_comment}
@@ -15,7 +16,10 @@ word_wrap(x, width = getOption("width"), tolerance = 8L, hyphens = TRUE,
   unlist = TRUE, collapse = NULL)
 
 meta_word_cat(..., sep = "\\n", width = getOption("width"),
-  tolerance = 8L, file = stdout())
+  tolerance = 8L, file = stdout(), trail.nl = TRUE)
+
+meta_word_msg(..., sep = "\\n", width = getOption("width"),
+  tolerance = 8L, file = stderr(), trail.nl = TRUE)
 
 word_cat(..., sep = " ", width = getOption("width"), tolerance = 8L,
   file = stdout())
@@ -57,7 +61,11 @@ Functions to break up character vector components to a specified width.
     necessary; note that unlike \code{text_wrap} \code{width} must be scalar
   \item \code{word_cat} is like \code{word_wrap}, except it outputs to screen
   \item \code{word_msg} is like \code{word_cat}, except it ouputs to stderr
+  \item \code{meta_word_cat} is like \code{word_cat}, except it wraps output
+    in formatting to highlight this is not normal output
 }
+Newlines are replaced by empty strings in the output so that each character
+vector in the output represents a line of screen output.
 }
 \keyword{internal}
 

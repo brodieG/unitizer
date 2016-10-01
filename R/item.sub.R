@@ -350,50 +350,46 @@ setMethod("summary", "unitizerItemTestsErrors",
     meta_word_cat(cc(err.chr, " mismatch", plrl, ":"))
     return(invisible(NULL))
 } )
-#' Like all.equal but Returns "" If Not all.equal
+#' Like all.equal but Returns FALSE If Not all.equal
 #'
 #' Used as the default value comparison function since when values mismatch
 #' we use \code{\link{diffObj}} which would make the text output from
 #' \code{\link{all.equal}} somewhat redundant.
 #'
-#' @export all.equal_
+#' @export all.eq
 #' @param target R object
 #' @param current other R object to be compared to \code{target}
 #' @param ... arguments to pass to \code{\link{all.equal}}
 #' @return TRUE if \code{all.equal} returns TRUE, "" otherwise
 
-all.equal_ <- function(target, current, ...)
+all.eq <- function(target, current, ...)
   if(isTRUE(all.equal(target, current, ...))) TRUE else ""
 
 #' Store Functions for New vs. Reference Test Comparisons
 #'
-#' \code{`unitizerItemTestsFuns`} contains the functions used to compare the
-#' results and side effects of running test expressions.
+#' \code{testFuns} contains the functions used to compare the results and side
+#' effects of running test expressions.
 #'
-#' By default, the comparison for each of the \code{`unitizerItem-class`}
-#' elements are carried out as follows (i.e. this is what the default
-#' \code{`unitizerItemTestsFuns-class`} is populated with)
+#' The default comparison functions are as follows:
 #' \itemize{
-#'   \item value: compared using \code{`\link{all.equal}`}
-#'   \item conditions: each item in this list is compared to the corresponding
-#'     item in the reference list with \code{`\link{all.equal}`}
-#'   \item output: not compared (too variable, e.g. screen widths, etc.)
-#'   \item message: not compared (note this is presumably included in
-#'   \code{`conditions`})
-#'   \item aborted: not compared (also implied in conditions, hopefully)
+#'   \item value: \code{\link{all.eq}}
+#'   \item conditions: \code{\link{all.eq}}
+#'   \item output: \code{function(x, y) TRUE}, i.e. not compared
+#'   \item message: \code{function(x, y) TRUE}, i.e. not compared as conditions
+#'     should be capturing warnings/errors
+#'   \item aborted: \code{function(x, y) TRUE}, i.e. not compared as conditions
+#'     should also be capturing this implicitly
 #' }
-#' @seealso \code{`\link{unitizer_sect}`}
-#' @rdname unitizerItemTestsFuns
-#' @name unitizerItemTestsFuns
-#' @export unitizerItemTestsFuns
+#' @seealso \code{\link{unitizer_sect}}, \code{\link{all.eq}}
+#' @rdname testFuns
+#' @name testFuns
+#' @export testFuns
 #' @examples
-#' \dontrun{
 #' # use `identical` instead of `all.equal` to compare values
-#' unitizerItemTestsFuns(value=identical)
-#' }
+#' testFuns(value=identical)
 
-unitizerItemTestsFuns <- setClass(
-  "unitizerItemTestsFuns", contains="unitizerItemTests",
+testFuns <- setClass(
+  "testFuns", contains="unitizerItemTests",
   representation(
     value="unitizerItemTestFun",
     conditions="unitizerItemTestFun",
@@ -402,9 +398,9 @@ unitizerItemTestsFuns <- setClass(
     aborted="unitizerItemTestFun"
   ),
   prototype(
-    value=new("unitizerItemTestFun", fun=all.equal_),
+    value=new("unitizerItemTestFun", fun=all.eq),
     # note this will dispatch all.equal.condition_list
-    conditions=new("unitizerItemTestFun", fun=all.equal_),
+    conditions=new("unitizerItemTestFun", fun=all.eq),
     output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)
@@ -417,7 +413,7 @@ unitizerItemTestsFuns <- setClass(
 # Finally, recovers the deparsed passed function name.
 # @keywords internal
 
-setMethod("initialize", "unitizerItemTestsFuns", function(.Object, ...) {
+setMethod("initialize", "testFuns", function(.Object, ...) {
   dots <- list(...)
   if(!all(err.slots <- names(dots) %in% slotNames(getClass(.Object))))
     stop("Can't initialize invalid slots ", deparse(names(dots)[!err.slots]))

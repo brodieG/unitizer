@@ -25,9 +25,8 @@ by user in interactive environment)
 
 \item{\code{details}}{character vector containing additional info on the section}
 
-\item{\code{compare}}{functions to compare the various aspects of a \code{unitizerItem-class}}
-
-\item{\code{length}}{tracks size of the section}
+\item{\code{compare}}{functions to compare the various aspects of a
+\code{unitizerItem-class} @slot length tracks size of the section}
 }}
 \keyword{internal}
 

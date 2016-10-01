@@ -109,7 +109,7 @@ unitizer_prompt <- function(
   )
   repeat {
     val <- tryCatch(
-      faux_prompt(sprintf("%s> ", crayon::green("unitizer"))),
+      faux_prompt(sprintf("%s> ", crayon::inverse(crayon::silver("unitizer")))),
       simpleError=function(e) e
     )
     if(inherits(val, "simpleError")) {

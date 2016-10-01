@@ -7,12 +7,14 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <meta name="author" content="Brodie Gaslam" />
 
 
 <title>unitizeR - Reproducible Tests</title>
+
 
 
 
@@ -26,13 +28,10 @@
 
 
 
-<div class="fluid-row" id="header">
 
-
-<h1 class="title">unitizeR - Reproducible Tests</h1>
+<h1 class="title toc-ignore">unitizeR - Reproducible Tests</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
 
-</div>
 
 <div id="TOC">
 <ul>
@@ -105,8 +104,9 @@ TestEnv --&gt; UnitizerEnv</code></pre>
                         +--&gt; package:y --&gt; package:x --&gt; ... --&gt; Base
                        /
 TestEnv --&gt; UnitizerEnv</code></pre>
-<p>Clearly overriding such fundamental functions such as <code>library</code> / <code>attach</code> / <code>detach</code> is not good form. We recognize this, and try to do the overriding in as lightweight a manner as possible. For <code>attach</code> and <code>detach</code> we rely primarily on the <code>exit</code> parameter to <code>trace</code> so that the functions are as close to their original form as possible. Unfortunately this method is not compatible with <code>library</code> since it uses <code>on.exit</code>, but again we use an implementation that should be transparent to users. Additionally, these functions are only traced during <code>unitizer</code> execution and are returned to their original state on exit. The untracing is registered to the <code>on.exit</code> of <code>unitize</code> so the functions should get untraced even if <code>unitize</code> fails.</p>
+<p>Clearly overriding such fundamental functions such as <code>library</code> / <code>attach</code> / <code>detach</code> is not good form. We recognize this, and try to do the overriding in as lightweight a manner as possible by tracing them only to record the search path in the <code>unitizer</code> environment. This should be completely transparent to the user. The untracing is registered to the <code>on.exit</code> of <code>unitize</code> so the functions should get untraced even if <code>unitize</code> fails.</p>
 <p>Aside from the issues raised above, this method is not completely robust. Any tests that turn tracing off using <code>tracingState</code>, or <code>trace</code>/<code>untrace</code> <code>library</code> / <code>attach</code> / <code>detach</code> will interfere with <code>unitizer</code>. If you must do any of the above you should consider specifying a parent environment for your tests through the <code>state</code> parameter to <code>unitize</code> (see <code>?unitize</code>).</p>
+<p>Some functions that expect to find <code>.GlobalEnv</code> on the search path may not work as expected. For example, <code>setClass</code> uses <code>topenv</code> by default to find an environment to define classes in. When <code>setClass</code> is called at the top level, this normally results in the class being defined in <code>.GlobalEnv</code>, but if <code>.GlobalEnv</code> is not available <code>setClass</code> will attempt to define the class in the first environment on the search path, which will likely be a locked namespace. You can work around this by specifying an environment in calls to <code>setClass</code>.</p>
 </div>
 <div id="package-namespace-as-parent-environment" class="section level3">
 <h3>Package Namespace as Parent Environment</h3>
