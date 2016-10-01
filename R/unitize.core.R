@@ -818,7 +818,11 @@ unitize_browse <- function(
           break
       }
     } else {
-      meta_word_msg("All tests passed; nothing to review.")
+      pass.num <- summary(unitizers, silent=TRUE)@totals["Pass"]
+      meta_word_msg(
+        pass.num , "/", pass.num, " test", if(pass.num != 1) "s", " passed; ",
+        "nothing to review.", sep=""
+      )
     }
   } else eval.which <- integer(0L)  # we quit, so don't want to re-evalute anything
 
