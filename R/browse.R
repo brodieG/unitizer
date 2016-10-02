@@ -247,68 +247,78 @@ setMethod(
           # mode since that tells us we activated re-eval while viewing tests
           # and not at the end
 
-          update <- length(x@changes) || force.update || y@force.up
-          re.eval.started <- !!y@re.eval  # check at end that we started off
+          repeat {
+            update <- length(x@changes) || force.update || y@force.up
+            re.eval.started <- !!y@re.eval  # check at end that we started off
 
-          # Make sure we did not skip anything we were supposed to review
+            # Make sure we did not skip anything we were supposed to review
 
-          unrevavail <- 0L
-          if(identical(y@mode, "unitize")) {
-            unreviewed <- unreviewed(y)
-            unrevavail  <- length(unreviewed)
-            if(unrevavail) {
-              meta_word_cat(
-                "You have ", unrevavail, " unreviewed tests; press ",
-                "`B` to browse tests, `U` to go to first unreviewed test.\n",
-                sep=""
-              )
-          } }
-          valid.opts <- c(
-            Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
-            U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="", O=""
-          )
-          if(!length(x@changes) && (force.update || y@force.up))
-            meta_word_cat(
-              "Running in `force.update` mode so `unitizer` will be re-saved",
-              "even though there are no changes to record (see `?unitize` for",
-              "details).", file=stderr()
+            unrevavail <- 0L
+            if(identical(y@mode, "unitize")) {
+              unreviewed <- unreviewed(y)
+              unrevavail  <- length(unreviewed)
+              if(unrevavail) {
+                meta_word_cat(
+                  "You have ", unrevavail, " unreviewed tests; press ",
+                  "`B` to browse tests, `U` to go to first unreviewed test.\n",
+                  sep=""
+                )
+            } }
+            valid.opts <- c(
+              Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
+              U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="",
+              O=if(!length(x@changes) || (force.update || y@force.up))
+                "f[O]rce" else ""
             )
-          if(update) {
-            tar <- getTarget(x)
-            wd <- if(file.exists(tar)) get_package_dir(tar) else
-              if(file.exists(dirname(tar)))
-                get_package_dir(dirname(tar)) else ""
-
-            tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
-              relativize_path(tar)
-
-            if(!length(x@changes)) {
-              meta_word_msg(
-                "You are about to update '", tar.final, "' with re-evaluated ",
-                "but otherwise unchanged tests.", sep=""
+            if(!length(x@changes) && (force.update || y@force.up))
+              meta_word_cat(
+                "Running in `force.update` mode so `unitizer` will be re-saved",
+                "even though there are no changes to record (see `?unitize`",
+                "for details).", sep="",
+                file=stderr()
               )
+            if(update) {
+              tar <- getTarget(x)
+              wd <- if(file.exists(tar)) get_package_dir(tar) else
+                if(file.exists(dirname(tar)))
+                  get_package_dir(dirname(tar)) else ""
+
+              tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
+                relativize_path(tar)
+
+              if(!length(x@changes)) {
+                meta_word_msg(
+                  "You are about to update '", tar.final, "' with re-evaluated ",
+                  "but otherwise unchanged tests.", sep=""
+                )
+              } else {
+                meta_word_msg(
+                  "You will IRREVERSIBLY modify '", tar.final, "'",
+                  if(length(x@changes)) " by", ":", sep="", trail.nl=FALSE
+                )
+              }
             } else {
-              meta_word_msg(
-                "You will IRREVERSIBLY modify '", tar.final, "'",
-                if(length(x@changes)) " by", ":", sep="", trail.nl=FALSE
+              meta_word_cat(
+                "You made no changes to the unitizer so there is no need to",
+                "update it.  While unnecessary, you can force an update by",
+                "typing O at the prompt.", sep=" "
               )
             }
-          }
-          if(length(x@changes) > 0) {
-            meta_word_msg(
-              as.character(x@changes, width=getOption("width") - 2L)
-            )
-          }
-          repeat {
+            if(length(x@changes) > 0) {
+              meta_word_msg(
+                as.character(x@changes, width=getOption("width") - 2L)
+              )
+            }
             # Can this be rationalized with the logic in `reviewNext`?
 
             actions <- character()
             if(update) {
               actions <- c(actions, "update unitizer")
               nav.hlp <- paste0(
-                "Pressing Y will replace the previous unitizer with a new one, ",
-                "pressing P or B will allow you to re-review your choices.  ",
-                "Pressing N or Q both quit without saving changes to the unitizer"
+                "Pressing Y will replace the previous unitizer with a new ",
+                "one, pressing P or B will allow you to re-review your ",
+                "choices.  Pressing N or Q both quit without saving changes to ",
+                "the unitizer."
               )
             } else if(!length(x@changes)) {
               nav.hlp <- paste0(
@@ -484,7 +494,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     valid.opts <- c(
       Y="[Y]es", N="[N]o", P="[P]rev", B="[B]rowse", YY="", YYY="", YYYY="",
-      NN="", NNN="", NNNNN="", O="",
+      NN="", NNN="", NNNN="", O="",
       if(identical(x@mode, "unitize")) c(R="[R]erun", RR="")
     )
     # Pre compute whether sections are effectively ignored or not; these will
