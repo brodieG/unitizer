@@ -3,6 +3,8 @@
 
 NULL
 
+.loaded <- FALSE   # gets set by .onLoad
+
 .unitizer.global.settings.names <-
   c("search.path", "options", "working.directory", "random.seed", "namespaces")
 
@@ -366,13 +368,13 @@ unitizerGlobal <- setRefClass(
       } else if(set.global) {
         .global$global <- .self
         locked <<- TRUE
-      } else
+      } else if(.loaded) {
         warning(
           "Instantiated global object without global namespace registry; ",
-          "you should only see this warning during package install or if ",
-          "you are using `repair_environments`.",
-          immediate.=TRUE
+          "you should only see this warning you are using ",
+          "`repair_environments`.", immediate.=TRUE
         )
+      }
       obj
     },
     enable=function(
