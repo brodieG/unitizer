@@ -120,7 +120,7 @@ unitizer_prompt <- function(
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) &&
       as.character(val[[1L]]) %in% names(valid.opts) &&
-      !(as.character(val[[1L]]) %in% c("Q", "H")) && nchar(val[[1L]])
+      !(as.character(val[[1L]]) %in% c("Q", "H"))
     ) {
       cat("\n")
       return(as.character(val[[1L]]))

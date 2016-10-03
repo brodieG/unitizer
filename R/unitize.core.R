@@ -749,8 +749,13 @@ unitize_browse <- function(
 
           if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])
 
-          # annoyingly we need to force update here as well as for
-          # the unreviewed unitizers
+          # If reviewing multiple unitizers, mark as much so we have a mechanism
+          # to quit the muti-unitizer review process
+
+          if(length(pick.num) > 1L) untz.browsers[[i]]@multi <- TRUE
+
+          # annoyingly we need to force update here as well as for the
+          # unreviewed unitizers
 
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]], force.update=force.update
@@ -770,6 +775,9 @@ unitize_browse <- function(
                 i
               } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
           ) )
+          # Break out of review loop if signaled
+
+          if(browse.res@multi.quit) break
         }
         # Update bookmarks (in reality, we're just clearing the bookmark if it
         # was previously set, as setting the bookmark will break out of this

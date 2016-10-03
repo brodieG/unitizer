@@ -268,7 +268,8 @@ setMethod(
               Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
               U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="",
               O=if(!length(x@changes) || (force.update || y@force.up))
-                "f[O]rce" else ""
+                "f[O]rce" else "",
+              QQ=if(y@multi) "[QQ]uit All"
             )
             if(!length(x@changes) && (force.update || y@force.up))
               meta_word_cat(
@@ -366,13 +367,16 @@ setMethod(
             } else if (isTRUE(grepl("^O$", user.input))) { # Force update
               y <- toggleForceUp(y)
               next
-            } else if (grepl("^[QN]$", user.input)) {
+            } else if (
+              grepl("^[QN]$", user.input) || identical(user.input, "QQ")
+            ) {
               update <- FALSE
               meta_word_msg("Changes discarded.", trail.nl=FALSE)
               if(y@re.eval)
                 meta_word_msg("Re-evaluation disabled.", trail.nl=FALSE)
               y@re.eval <- 0L
               loop.status <- "b"
+              if(identical(user.input, "QQ")) y@multi.quit <- TRUE
               break
             } else if (identical(user.input, "Y")) {
               loop.status <- "b"
@@ -443,7 +447,7 @@ setMethod(
     new(
       "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
       updated=update, interactive.error=y@interactive.error,
-      data=as.data.frame(y), bookmark=bookmark
+      data=as.data.frame(y), bookmark=bookmark, multi.quit=y@multi.quit
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
@@ -495,7 +499,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     valid.opts <- c(
       Y="[Y]es", N="[N]o", P="[P]rev", B="[B]rowse", YY="", YYY="", YYYY="",
       NN="", NNN="", NNNN="", O="",
-      if(identical(x@mode, "unitize")) c(R="[R]erun", RR="")
+      if(identical(x@mode, "unitize")) c(R="[R]erun", RR=""),
+      if(x@multi) c(QQ="[QQ]uit All")
     )
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
@@ -842,7 +847,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
             "`O` to f[O]rce update of store even when there are no accepted ",
             "changes"
         ) )
-      }
+      },
+      if(x@multi)
+        paste0(
+          "`QQ` to quit this unitizer and interrupt review of other queued  ",
+          "unitizers"
+        )
     )
     # navigate_prompt handles the P and B cases internally and modifies the
     # unitizerBrowse to be at the appropriate location; this is done as a
@@ -933,6 +943,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@mapping@review.val[rev.ind] <- act
         x@last.id <- max(rev.ind)
       } else if (identical(x.mod, "Q")) {
+        invokeRestart("earlyExit", extra=x)
+      } else if (identical(x.mod, "QQ")) {
+        x@multi.quit <- TRUE
         invokeRestart("earlyExit", extra=x)
       } else {
         stop(

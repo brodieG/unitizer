@@ -291,7 +291,9 @@ setClass("unitizerBrowse", contains="unitizerList",
     interactive="logical",      # whether to browse in interactive mode
     interactive.error="logical",# whether in non-interactive mode but required input
     global="unitizerGlobal",    # object for global settings
-    auto.accept="logical"       # indicate whether any auto-accepts were triggered
+    auto.accept="logical",      # indicate whether any auto-accepts were triggered
+    multi="logical",            # whether many unitizers are being browsed
+    multi.quit="logical"        # whether many unitizers are being browsed
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -309,7 +311,9 @@ setClass("unitizerBrowse", contains="unitizerList",
     force.up=FALSE,
     interactive=FALSE,
     interactive.error=FALSE,
-    auto.accept=FALSE
+    auto.accept=FALSE,
+    multi=FALSE,
+    multi.quit=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -329,6 +333,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `force.up` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
       return("Slot `@re.eval` must be integer(1L) and in 0:2")
+    if(!is.TF(object@multi))
+      return("Slot `multi` must be TRUE or FALSE")
     TRUE
   }
 )
@@ -997,8 +1003,10 @@ setClass(
   slots=c(
     unitizer="unitizer", re.eval="integer", updated="logical",
     interactive.error="logical", data="data.frame",
-    bookmark="unitizerBrowseBookmarkOrNULL"
+    bookmark="unitizerBrowseBookmarkOrNULL",
+    multi.quit="logical"
   ),
+  prototype=list(multi.quit=FALSE),
   validity=function(object) {
     if(
       !identical(length(object@re.eval), 1L) || is.na(object@re.eval) ||
@@ -1014,6 +1022,9 @@ setClass(
       return("slot `interactive.error` must be TRUE or FALSE")
     if(!isTRUE(dat.err <- is.unitizer_result_data(object@data)))
       return(paste0("slot `data` in unexpected format: ", dat.err))
+    if(!is.TF(object@multi.quit))
+      return("slot `multi.quit` must be TRUE or FALSE")
+
     TRUE
   }
 )
