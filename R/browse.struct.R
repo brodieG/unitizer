@@ -477,6 +477,7 @@ setMethod(
   function(x, row.names = NULL, optional = FALSE, ...) {
     id.order <- getIdOrder(x)
     calls.dep <- deparseCalls(x)
+    if(is.null(calls.dep)) calls.dep <- character()
     sec.titles <-
       vapply(x@mapping@sec.id, function(y) x[[y]]@section.title, character(1L))
 
