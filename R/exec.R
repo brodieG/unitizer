@@ -331,11 +331,16 @@ get_trace <- function(trace.base, trace.new, printed, exp) {
       identical(trace.new[[len.new - 1L]][[1L]], quote(stop))
 
     trace.new[seq_along(trace.base)] <- NULL
-    trace.new.clean <- lapply(trace.new, `attributes<-`, NULL) # remove srcref attributes
+    # remove srcref attributes
+    trace.new.clean <- lapply(trace.new, `attributes<-`, NULL)
 
-    if(length(trace.new.clean) >= 7L || (printed && length(trace.new.clean) >= 6L)) {
+    if(
+      length(trace.new.clean) >= 7L ||
+      (printed && length(trace.new.clean) >= 6L)
+    ) {
+      # printing removes expression
       trace.new.clean[
-        1L:(if(printed) 5L else 6L + is.expression(exp) * 2L)  # printing removes expression
+        1L:(if(printed) 5L else 6L + is.expression(exp) * 2L)
       ] <- NULL
       if(printed) {
         # Find any calls from the beginning that are length 2 and start with
