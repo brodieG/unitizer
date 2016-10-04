@@ -4,6 +4,11 @@
 
 ### Improvement / Changes:
 
+* [#102](https://github.com/brodieG/unitizer/issues/102): Ability to break out
+  of multi file review with `QQ`
+* [#142](https://github.com/brodieG/unitizer/issues/142): Ability to run
+  `unitize` and `unitize_dir` without specifying any arguments (infer from
+  working directory)
 * [#168](https://github.com/brodieG/unitizer/issues/168): Failing tests now will
   display all output and conditions
 * [#171](https://github.com/brodieG/unitizer/issues/171): Flush warnings in
@@ -14,12 +19,16 @@
     * [#164](https://github.com/brodieG/unitizer/issues/164), [#176](https://github.com/brodieG/unitizer/issues/176): Streamline state difference display
     * Colorize `unitizer` prompt to make it easier to see where each test
       statement is executed
+* Several other [enhancements](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20is%3Aopen%20label%3A%22fixed%20in%20dev%22%20milestone%3A1.2.0%20-label%3Aenhancement%20)
 
 ### Bugfixes:
 
- * unintended detaching of `tools:rstudio`
- * [#175](https://github.com/brodieG/unitizer/issues/175),
+ * Fix unintended detaching of `tools:rstudio`
+ * [#185](https://github.com/brodieG/unitizer/issues/185),
+   [#178](https://github.com/brodieG/unitizer/issues/178),
+   [#175](https://github.com/brodieG/unitizer/issues/175),
    [#173](https://github.com/brodieG/unitizer/issues/173),
+   [#171](https://github.com/brodieG/unitizer/issues/171),
    [#170](https://github.com/brodieG/unitizer/issues/170),
    [#169](https://github.com/brodieG/unitizer/issues/169),
    [#163](https://github.com/brodieG/unitizer/issues/163),
