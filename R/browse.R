@@ -713,9 +713,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
           call("show", diffs),
           if(is.environment(item.main@env)) item.main@env else base.env.pri
         )
-        # Reset the diff to show tate details
+        # Reset the diff to show state details in future
 
-        diffs@state@show.diff <- TRUE
+        if(!is.null(diffs@state)) diffs@state@show.diff <- TRUE
 
       } else if (out.std || out.err) cat("\n")
     }
