@@ -408,16 +408,22 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id.ord)
     )
     num.pad <- ".  "
-    front.pad <- "    "
-    review.formatted <- format(
-      paste(sep=":",
-        ifelse(!x@mapping@ignored, as.character(x@mapping@review.type), "-"),
+    front.pad <- "  "
+    rev.type <- format(as.character(x@mapping@review.type), justify="right")
+    rev.fail.corr <- rev.type %in% c("Failed", "Corrupted")
+    rev.new <- rev.type == "New"
+    rev.type[rev.fail.corr] <- crayon::yellow(rev.type[rev.fail.corr])
+    rev.type[rev.new] <- crayon::blue(rev.type[rev.new])
+
+    review.formatted <- paste(sep=":",
+      ifelse(!x@mapping@ignored, rev.type, "-"),
+      format(
         ifelse(x@mapping@reviewed, as.character(x@mapping@review.val), "-")
-      ),
-      justify="right"
+      )
     )[tests.to.show]
     disp.len <- width.max - max(nchar(item.id.formatted)) -
-      max(nchar(review.formatted)) - nchar(num.pad) - nchar(front.pad)
+      max(nchar(crayon::strip_style(review.formatted))) -
+      nchar(num.pad) - nchar(front.pad)
     if(disp.len < min.deparse.len) {
       warning("Selected display width too small, will be ignored")
       disp.len <- min.deparse.len
@@ -428,7 +434,8 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     # as they show up in review (also, we're still really ordering by section)
     # first, and only then by original id
 
-    for(i in x@mapping@item.id[order(x@mapping@sec.id, getIdOrder(x))]) {
+    id.ord <- x@mapping@item.id[order(x@mapping@sec.id, getIdOrder(x))]
+    for(i in id.ord) {
       if(!tests.to.show[[i]]) next
       j <- j + 1L
       l <- l + 1L
@@ -450,7 +457,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
         l <- l + 1L
       }
       # Now paste the call together, substituting into the padding template
-      call.dep <- paste0(one_line(item@call.dep, disp.len - 2L))
+      call.dep <- paste0(one_line(item@call.dep, disp.len - 1L), " ")
 
       out.calls[[j]] <- call.dep
       out.calls.idx[[j]] <- l
@@ -466,11 +473,12 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     calls.fin <- rep(dot.pad, length(call.chrs))
     substr(calls.fin, 1L, call.chrs) <- out.calls
     out.fin <- paste0(
-      front.pad, item.id.formatted, num.pad, calls.fin, review.formatted, "\n"
+      front.pad, item.id.formatted[id.ord], num.pad, calls.fin,
+      review.formatted[id.ord], "\n"
     )
     # Now generate headers and interleave them
 
-    out.width <- max(nchar(out.fin)) - 1L
+    out.width <- max(nchar(crayon::strip_style(out.fin))) - 1L
     out.sec.proc <- vapply(
       out.sec,
       function(x) as.character(H2(x), margin="none", width=out.width),
