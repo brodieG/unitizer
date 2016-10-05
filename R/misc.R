@@ -73,13 +73,21 @@ unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
 
 unitizer_quit_handler <- function(quitArgs) {
   meta_word_msg(
-    paste0(
-      "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
-      "quitting type `Q` (without quotes) at the unitizer prompt, or avoid ",
-      "using test code that involves calls to `quit()`/`q()`."
-    )
+    "You are attempting to quit R from within `unitizer`.  If you do so ",
+    "you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` ",
+    "gracefully.  Are you sure you want to exit R?"
   )
-  do.call("quit", quitArgs)
+  quit.count <- 5
+  while(
+    !(res <- head(tolower(readline("Quit R? [y/n]: ")), 1L)) %in% c("y", "n")
+  ) {
+    quit.count <- quit.count - 1L
+    if(quit.count < 0) {
+      meta_word_msg("Sorry, could not understand you, quitting then.")
+      do.call("quit", quitArgs)
+    }
+  }
+  if(res == "y") do.call("quit", quitArgs)
 }
 # nocov end
 
