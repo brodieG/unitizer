@@ -54,24 +54,16 @@ identical_fun <- function(x, y) {
   }
   identical(x, y)
 }
-# Overrides Default quit() Behavior
-#
-# Necessary because quit short circuits the `on.exit` clean-up functions and
-# would leave stuff in a weird state (history not reset, etc.).
-#
-# This is used in \code{`\link{unitize}`}.
-#
-# @aliases unitizer_quit_handler
-# @keywords internal
+## Overrides Default quit() Behavior
+##
+## Necessary because quit short circuits the \code{on.exit} clean-up functions
+## and would leave stuff in a weird state (history not reset, etc.).
+##
+## This is used in \code{\link{unitize}}.
+##
+## @keywords internal
 
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
-  invokeRestart(
-    "unitizerQuitExit", list(save=save, status=status, runLast=runLast)
-) }
-# nocov start
-# can't test this without quitting R!
-
-unitizer_quit_handler <- function(quitArgs) {
   meta_word_msg(
     "You are attempting to quit R from within `unitizer`.  If you do so ",
     "you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` ",
@@ -84,13 +76,12 @@ unitizer_quit_handler <- function(quitArgs) {
     quit.count <- quit.count - 1L
     if(quit.count < 0) {
       meta_word_msg("Sorry, could not understand you, quitting then.")
-      do.call("quit", quitArgs)
+      quit(save=save, status=status, runLast=runLast)
     }
   }
-  if(res == "y") do.call("quit", quitArgs)
+  if(res == "y") quit(save=save, status=status, runLast=runLast)
+  invisible(NULL)
 }
-# nocov end
-
 # Cleans a Path to be In Standard Format
 #
 # Uses \code{`\link{dirname}`} to convert paths on windows machines with back
@@ -114,7 +105,8 @@ path_clean <- function(path) {
 #' @examples
 #' filename_to_storeid(file.path("tests", "unitizer", "foo.R"))
 #' filename_to_storeid(file.path("tests", "unitizer", "boo.r"))
-#' filename_to_storeid(file.path("tests", "unitizer", "boo"))  # does not end in [rR]
+#' # does not end in [rR] 
+#' filename_to_storeid(file.path("tests", "unitizer", "boo"))  
 
 filename_to_storeid <- function(x) {
   if(is.character(x) && length(x) == 1L){

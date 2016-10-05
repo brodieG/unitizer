@@ -51,10 +51,8 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
         "non-interactive state or in force.update mode,  which should not be ",
         "possible, contact maintainer."
       )
-    browse.res <- withRestarts(
-      browseUnitizerInternal(x, y, force.update=force.update),
-      unitizerQuitExit=unitizer_quit_handler
-    )
+    browse.res <- browseUnitizerInternal(x, y, force.update=force.update)
+
     # Need to store our `unitizer`
 
     if(browse.res@updated) {
