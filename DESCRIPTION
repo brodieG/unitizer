@@ -23,7 +23,7 @@ Depends:
 Imports:
     methods,
     stats,
-    diffobj
+    diffobj (>= 0.1.5.9000)
 VignetteBuilder: knitr
 Suggests:
     knitr,
