@@ -2,9 +2,9 @@
 % Please edit documentation in R/text.R
 \name{desc}
 \alias{desc}
-\title{Produces 1 Line Description of Value}
+\title{One Line Description of Object}
 \usage{
-desc(val, limit = getOption("width"))
+desc(val, depth = 0, limit = getOption("width"))
 }
 \arguments{
 \item{val}{object to describe}
@@ -12,10 +12,14 @@ desc(val, limit = getOption("width"))
 \item{limit}{max characters to display}
 }
 \value{
-character vector describing object
+character(1L) describing object
 }
 \description{
-Produces 1 Line Description of Value
+Objects are described by class, and dimensions.  Dimensions is always denoted
+in square brackets.  For example, \dQuote{int[10]} means an integer of length
+ten.
 }
-\keyword{internal}
+\examples{
+desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2))
+}
 

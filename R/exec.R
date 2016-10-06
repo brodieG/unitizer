@@ -124,7 +124,7 @@ eval_user_exp <- function(unitizerUSEREXP, env, global) {
   } else call("withVisible", unitizerUSEREXP)
   res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
   if(
-    !res$aborted && !res$resumed && res$value$visible && length(unitizerUSEREXP)
+    !res$aborted && res$value$visible && length(unitizerUSEREXP)
   ) {
     res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
     res$conditions <- append(res$conditions, res2$conditions)
@@ -255,7 +255,6 @@ user_exp_str <- function(value, env, expr, max.level=NA) {
 
 user_exp_handle <- function(expr, env, print.mode, expr.raw) {
   aborted <- FALSE
-  resumed <- FALSE
   conditions <- list()
   trace <- list()
   printed <- nchar(print.mode) > 1
@@ -285,18 +284,13 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
     ),
     abort=function() {
       aborted <<- structure(TRUE, printed=printed)
-    },
-    # Used to short circuit `quit()` process
-    unitizerResume=function() {
-      resumed <<- TRUE
     }
   )
   list(
     value=value,
     aborted=aborted,
     conditions=conditions,
-    trace=tail(trace, -1L),
-    resumed=resumed
+    trace=tail(trace, -1L)
   )
 }
 set_trace <- function(trace) {
@@ -331,11 +325,16 @@ get_trace <- function(trace.base, trace.new, printed, exp) {
       identical(trace.new[[len.new - 1L]][[1L]], quote(stop))
 
     trace.new[seq_along(trace.base)] <- NULL
-    trace.new.clean <- lapply(trace.new, `attributes<-`, NULL) # remove srcref attributes
+    # remove srcref attributes
+    trace.new.clean <- lapply(trace.new, `attributes<-`, NULL)
 
-    if(length(trace.new.clean) >= 7L || (printed && length(trace.new.clean) >= 6L)) {
+    if(
+      length(trace.new.clean) >= 7L ||
+      (printed && length(trace.new.clean) >= 6L)
+    ) {
+      # printing removes expression
       trace.new.clean[
-        1L:(if(printed) 5L else 6L + is.expression(exp) * 2L)  # printing removes expression
+        1L:(if(printed) 5L else 6L + is.expression(exp) * 2L)
       ] <- NULL
       if(printed) {
         # Find any calls from the beginning that are length 2 and start with

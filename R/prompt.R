@@ -108,10 +108,8 @@ unitizer_prompt <- function(
     "(", paste0(valid.opts[nchar(valid.opts) > 0], collapse=", "), ")?"
   )
   repeat {
-    val <- tryCatch(
-      faux_prompt(sprintf("%s> ", crayon::inverse(crayon::silver("unitizer")))),
-      simpleError=function(e) e
-    )
+    prompt.txt <- sprintf("%s> ", "unitizer")
+    val <- tryCatch(faux_prompt(prompt.txt), simpleError=function(e) e)
     if(inherits(val, "simpleError")) {
       cond.chr <- as.character(val)
       cat(cond.chr, file=stderr())
@@ -120,14 +118,13 @@ unitizer_prompt <- function(
     if(  # Input matches one of the options
       length(val) == 1L && is.symbol(val[[1L]]) &&
       as.character(val[[1L]]) %in% names(valid.opts) &&
-      !(as.character(val[[1L]]) %in% c("Q", "H")) && nchar(val[[1L]])
+      !(as.character(val[[1L]]) %in% c("Q", "H"))
     ) {
       cat("\n")
       return(as.character(val[[1L]]))
     } else if (length(val) == 1L && identical(val[[1L]], quote(Q))) {
       cat("\n")
       return(as.character(val[[1L]]))
-      return("Q")
     } else if (length(val) == 1L && identical(val[[1L]], quote(H))) {
       cat("\n")
       if(!length(help)) {

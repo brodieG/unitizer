@@ -305,9 +305,11 @@ unitize_core <- function(
 
   global$state("init")  # mark post pre-load state
 
-  # Used to put q/quit here before we switched to tracing them
+  # Place quit functions in the correct frame
 
   util.frame <- new.env(parent=pre.load.frame)
+  assign("quit", unitizer_quit, util.frame)
+  assign("q", unitizer_quit, util.frame)
 
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
@@ -749,8 +751,13 @@ unitize_browse <- function(
 
           if(identical(untz.browsers[[i]]@mode, "unitize")) show(summaries[[i]])
 
-          # annoyingly we need to force update here as well as for
-          # the unreviewed unitizers
+          # If reviewing multiple unitizers, mark as much so we have a mechanism
+          # to quit the muti-unitizer review process
+
+          if(length(pick.num) > 1L) untz.browsers[[i]]@multi <- TRUE
+
+          # annoyingly we need to force update here as well as for the
+          # unreviewed unitizers
 
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]], force.update=force.update
@@ -770,6 +777,9 @@ unitize_browse <- function(
                 i
               } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
           ) )
+          # Break out of review loop if signaled
+
+          if(browse.res@multi.quit) break
         }
         # Update bookmarks (in reality, we're just clearing the bookmark if it
         # was previously set, as setting the bookmark will break out of this
@@ -818,7 +828,11 @@ unitize_browse <- function(
           break
       }
     } else {
-      meta_word_msg("All tests passed; nothing to review.")
+      pass.num <- summary(unitizers, silent=TRUE)@totals["Pass"]
+      meta_word_msg(
+        pass.num , "/", pass.num, " test", if(pass.num != 1) "s", " passed; ",
+        "nothing to review.", sep=""
+      )
     }
   } else eval.which <- integer(0L)  # we quit, so don't want to re-evalute anything
 

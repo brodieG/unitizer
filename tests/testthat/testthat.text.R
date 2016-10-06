@@ -47,21 +47,23 @@ local({
     )
     expect_identical(
       unitizer:::word_wrap("hello sunset \nthere moonrise", width=12L),
-      c("hello sunset", "", "there ", "moonrise")
+      c("hello sunset", "there ", "moonrise")
     )
     x1 <- c("this is supposed to be a particularly long string\nthat allows us to test the behavior of bullets once we start seeing\nsome wrapping kicking in which was a problem once upon a time")
     expect_identical(
       unitizer:::word_wrap(x1, unlist=FALSE, width=80L),
-      list(c("this is supposed to be a particularly long string", "", "that allows us to test the behavior of bullets once we start seeing", "", "some wrapping kicking in which was a problem once upon a time"))
+      list(c("this is supposed to be a particularly long string", "that allows us to test the behavior of bullets once we start seeing", "some wrapping kicking in which was a problem once upon a time"))
     )
     com <- "# this is supposed to be a relatively long comment that will get re-flowed"
+    old.opt <- options(crayon.enabled=FALSE)
+    on.exit(old.opt)
     expect_identical(
       unitizer:::word_comment(com, width=30L),
       c("# this is supposed to be a ", "#relatively long comment that ", "#will get re-flowed")
     )
     expect_identical(
       unitizer:::word_wrap(c("\nhello\nthere", "\nhow")),
-      c("", "hello", "", "there", "", "how")
+      c("", "hello", "there", "", "how")
     )
   })
   test_that("bullets", {
@@ -175,27 +177,38 @@ local({
     ) )
   })
   test_that("meta_word_cat", {
-    old.opt <- options(crayon.enabled=TRUE)
-    on.exit(options(old.opt))
     expect_equal(
-      capture.output(unitizer:::meta_word_cat("hello")),"\033[90mhello\033[39m"
+      capture.output(unitizer:::meta_word_cat("hello")), c("| hello", "")
     )
-    old.opt <- options(crayon.enabled=FALSE)
     expect_equal(
-      capture.output(unitizer:::meta_word_cat("hello")), "## hello"
+      capture.output(unitizer:::meta_word_cat("hello", trail.nl=FALSE)),
+      "| hello"
     )
     # Newline issues
     expect_equal(
       capture.output(unitizer:::meta_word_cat("hello\n", sep="")),
-      c("## hello", "## ")
+      c("| hello", "")
     )
     expect_equal(
       capture.output(unitizer:::meta_word_cat("hello", "there")),
-      c("## hello", "## ", "## there")
+      c("| hello", "| there", "")
     )
     expect_equal(
       capture.output(unitizer:::meta_word_cat("hello", "there", sep=" ")),
-      "## hello there"
+      c("| hello there", "")
+    )
+  })
+  test_that("desc", {
+    obj1 <- list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2))
+    expect_equal(
+      desc(obj1, 80),
+      "list(a=data.frame[150,5], b=lm[12], int[10], chr mat[2,13])"
+    )
+    expect_equal(desc(obj1, 40), "list[4]")
+    expect_equal(desc(iris, 80), "data.frame[150,5]")
+    expect_equal(
+      desc(iris, 200),
+      "data.frame(Sepal.Length=num[150], Sepal.Width=num[150], Petal.Length=num[150], Petal.Width=num[150], Species=fct[150])"
     )
   })
 })

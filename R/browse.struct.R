@@ -291,7 +291,9 @@ setClass("unitizerBrowse", contains="unitizerList",
     interactive="logical",      # whether to browse in interactive mode
     interactive.error="logical",# whether in non-interactive mode but required input
     global="unitizerGlobal",    # object for global settings
-    auto.accept="logical"       # indicate whether any auto-accepts were triggered
+    auto.accept="logical",      # indicate whether any auto-accepts were triggered
+    multi="logical",            # whether many unitizers are being browsed
+    multi.quit="logical"        # whether many unitizers are being browsed
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -309,7 +311,9 @@ setClass("unitizerBrowse", contains="unitizerList",
     force.up=FALSE,
     interactive=FALSE,
     interactive.error=FALSE,
-    auto.accept=FALSE
+    auto.accept=FALSE,
+    multi=FALSE,
+    multi.quit=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -329,6 +333,8 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `force.up` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))
       return("Slot `@re.eval` must be integer(1L) and in 0:2")
+    if(!is.TF(object@multi))
+      return("Slot `multi` must be TRUE or FALSE")
     TRUE
   }
 )
@@ -401,29 +407,35 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     item.id.formatted <- format(justify="right",
       paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id.ord)
     )
-    review.formatted <- format(
-      paste(sep=":",
-        ifelse(!x@mapping@ignored, as.character(x@mapping@review.type), "-"),
+    num.pad <- ".  "
+    front.pad <- "  "
+    rev.type <- format(as.character(x@mapping@review.type), justify="right")
+    rev.fail.corr <- rev.type %in% c("Failed", "Corrupted")
+    rev.new <- rev.type == "New"
+    rev.type[rev.fail.corr] <- crayon::yellow(rev.type[rev.fail.corr])
+    rev.type[rev.new] <- crayon::blue(rev.type[rev.new])
+
+    review.formatted <- paste(sep=":",
+      ifelse(!x@mapping@ignored, rev.type, "-"),
+      format(
         ifelse(x@mapping@reviewed, as.character(x@mapping@review.val), "-")
-      ),
-      justify="right"
+      )
     )[tests.to.show]
-    disp.len <- width.max - 7L - max(nchar(item.id.formatted)) -
-      max(nchar(review.formatted))
+    disp.len <- width.max - max(nchar(item.id.formatted)) -
+      max(nchar(crayon::strip_style(review.formatted))) -
+      nchar(num.pad) - nchar(front.pad)
     if(disp.len < min.deparse.len) {
       warning("Selected display width too small, will be ignored")
       disp.len <- min.deparse.len
     }
     j <- k <- l <- 0L
 
-    dot.pad <- substr(  # this will be the padding template
-      paste0(rep(".  ", ceiling(disp.len / 3)), collapse=""), 1L, disp.len
-    )
     # Display in order tests appear in file; note this is not in same order
     # as they show up in review (also, we're still really ordering by section)
     # first, and only then by original id
 
-    for(i in x@mapping@item.id[order(x@mapping@sec.id, getIdOrder(x))]) {
+    id.ord <- x@mapping@item.id[order(x@mapping@sec.id, getIdOrder(x))]
+    for(i in id.ord) {
       if(!tests.to.show[[i]]) next
       j <- j + 1L
       l <- l + 1L
@@ -439,28 +451,41 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
       }
       if(!identical(sec.id.prev, sec.id)) {
         k <- k + 1L
-        out.sec[[k]] <- as.character(
-          H2(x[[sec.id]]@section.title), margin="none", width=width.max
-        )
+        out.sec[[k]] <- x[[sec.id]]@section.title
         out.sec.idx[[k]] <- l
         sec.id.prev <- sec.id
         l <- l + 1L
       }
       # Now paste the call together, substituting into the padding template
-      call.dep <- paste0(one_line(item@call.dep, disp.len), " ")
-      call.str <- dot.pad
-      substr(call.str, 1L, nchar(call.dep)) <- call.dep
+      call.dep <- paste0(one_line(item@call.dep, disp.len - 1L), " ")
 
-      out.calls[[j]] <- paste0(
-        "    ", item.id.formatted[[i]], ". ", call.str, " ",
-        review.formatted[[i]], "\n"
-      )
+      out.calls[[j]] <- call.dep
       out.calls.idx[[j]] <- l
     }
-    # Now interleave contents and headers
+    # Combine all the call pieces, start by resizing template
 
-    out[out.calls.idx] <- out.calls
-    out[out.sec.idx] <- out.sec
+    call.chrs <- nchar(out.calls)
+    call.chrs.max <- max(call.chrs)
+    tar.len <- min(disp.len, call.chrs.max + 3L)
+    dot.pad <- substr(  # this will be the padding template
+      paste0(rep(".  ", ceiling(tar.len / 3)), collapse=""), 1L, tar.len
+    )
+    calls.fin <- rep(dot.pad, length(call.chrs))
+    substr(calls.fin, 1L, call.chrs) <- out.calls
+    out.fin <- paste0(
+      front.pad, item.id.formatted[id.ord], num.pad, calls.fin,
+      review.formatted[id.ord], "\n"
+    )
+    # Now generate headers and interleave them
+
+    out.width <- max(nchar(crayon::strip_style(out.fin))) - 1L
+    out.sec.proc <- vapply(
+      out.sec,
+      function(x) as.character(H2(x), margin="none", width=out.width),
+      character(1L)
+    )
+    out[out.calls.idx] <- out.fin
+    out[out.sec.idx] <- out.sec.proc
 
     if(length(out.sec) == 1L) out[-out.sec.idx] else out
 } )
@@ -471,6 +496,7 @@ setMethod(
   function(x, row.names = NULL, optional = FALSE, ...) {
     id.order <- getIdOrder(x)
     calls.dep <- deparseCalls(x)
+    if(is.null(calls.dep)) calls.dep <- character()
     sec.titles <-
       vapply(x@mapping@sec.id, function(y) x[[y]]@section.title, character(1L))
 
@@ -997,8 +1023,10 @@ setClass(
   slots=c(
     unitizer="unitizer", re.eval="integer", updated="logical",
     interactive.error="logical", data="data.frame",
-    bookmark="unitizerBrowseBookmarkOrNULL"
+    bookmark="unitizerBrowseBookmarkOrNULL",
+    multi.quit="logical"
   ),
+  prototype=list(multi.quit=FALSE),
   validity=function(object) {
     if(
       !identical(length(object@re.eval), 1L) || is.na(object@re.eval) ||
@@ -1014,6 +1042,9 @@ setClass(
       return("slot `interactive.error` must be TRUE or FALSE")
     if(!isTRUE(dat.err <- is.unitizer_result_data(object@data)))
       return(paste0("slot `data` in unexpected format: ", dat.err))
+    if(!is.TF(object@multi.quit))
+      return("slot `multi.quit` must be TRUE or FALSE")
+
     TRUE
   }
 )

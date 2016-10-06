@@ -1,51 +1,51 @@
-# Helper Functions to Capture and Process stdout/err Output
-#
-# \code{set} functions set sinks, and \code{get} functions retrieve the
-# captured output. There are two types of functions here:
-#
-# \itemize{
-#   \item \code{set_text_capture} and \code{get_text_capture} are intended for
-#     use in situations we know the code to be evaluated will not be setting
-#     sinks of its own; note that \code{get_text_capture} undoes any sinks set
-#     by \code{set_text_capture}
-#   \item \code{set_capture} and \code{get_capture} are meant for use when
-#     evaluating the tests as both stdout and stderr are handled
-#     \code{get_capture} does *not* undo the sinks since we need to check after
-#     getting the text that the sinks are still in a reasonable state
-#     with \code{unsink_cons}
-# }
-# All output to \code{stdout} and \code{stderr} is capture in a single file for
-# each of those streams.  The captures happen sequentially, and are read off
-# by \code{\link{readChar}}.  It is important to note this method implies that
-# the files grow throughout the entire test evaluation process, and are only
-# dumped at the very end.  This is to avoid overhead from repeatedly creating
-# and opening new connections.
-#
-# \code{set} functions will not actually set the sinks if the connections have
-# a "waive" attribute set to TRUE.
-#
-# \code{get_text_capture} and set companion are kind of half-assed updated to
-# use the new version of the \code{cons} argument.  The used to just take a
-# simple connection, but the need to reset stderr output to the original error
-# connection required the change, and it's a bit confusing because \code{cons}
-# contains both connections, whereas these functions operate on one connection
-# at a time.
-#
-# @param con either a file name or an open connection; make sure that you use
-#   a \code{con} created by \code{set_text_capture} for \code{get_text_capture}
-#   since \code{set_text_capture} detects whether sinking is already in process
-#   and returns FALSE if it is, which then tells \code{get_text_capture} not to
-#   undo the sink
-# @param type charcter(1L) in \code{c("output", "message")}
-# @param file.name character(1L) file location corresponding to \code{con}
-# @param no.unsink logical(1L) for testing purposes so we don't release a sink
-#   when none was actually set
-# @return \itemize{
-#   \item \code{set_text_capture}: a connection, with attribute "waive" set to
-#     TRUE if the sink was already sunk and we did not sink it again
-#   \item \code{get_text_capture}: character
-# }
-# @keywords internal
+## Helper Functions to Capture and Process stdout/err Output
+##
+## \code{set} functions set sinks, and \code{get} functions retrieve the
+## captured output. There are two types of functions here:
+##
+## \itemize{
+##   \item \code{set_text_capture} and \code{get_text_capture} are intended for
+##     use in situations we know the code to be evaluated will not be setting
+##     sinks of its own; note that \code{get_text_capture} undoes any sinks set
+##     by \code{set_text_capture}
+##   \item \code{set_capture} and \code{get_capture} are meant for use when
+##     evaluating the tests as both stdout and stderr are handled
+##     \code{get_capture} does *not* undo the sinks since we need to check after
+##     getting the text that the sinks are still in a reasonable state
+##     with \code{unsink_cons}
+## }
+## All output to \code{stdout} and \code{stderr} is capture in a single file for
+## each of those streams.  The captures happen sequentially, and are read off
+## by \code{\link{readChar}}.  It is important to note this method implies that
+## the files grow throughout the entire test evaluation process, and are only
+## dumped at the very end.  This is to avoid overhead from repeatedly creating
+## and opening new connections.
+##
+## \code{set} functions will not actually set the sinks if the connections have
+## a "waive" attribute set to TRUE.
+##
+## \code{get_text_capture} and set companion are kind of half-assed updated to
+## use the new version of the \code{cons} argument.  The used to just take a
+## simple connection, but the need to reset stderr output to the original error
+## connection required the change, and it's a bit confusing because \code{cons}
+## contains both connections, whereas these functions operate on one connection
+## at a time.
+##
+## @param con either a file name or an open connection; make sure that you use
+##   a \code{con} created by \code{set_text_capture} for \code{get_text_capture}
+##   since \code{set_text_capture} detects whether sinking is already in process
+##   and returns FALSE if it is, which then tells \code{get_text_capture} not to
+##   undo the sink
+## @param type character(1L) in \code{c("output", "message")}
+## @param file.name character(1L) file location corresponding to \code{con}
+## @param no.unsink logical(1L) for testing purposes so we don't release a sink
+##   when none was actually set
+## @return \itemize{
+##   \item \code{set_text_capture}: a connection, with attribute "waive" set to
+##     TRUE if the sink was already sunk and we did not sink it again
+##   \item \code{get_text_capture}: character
+## }
+## @keywords internal
 
 set_text_capture <- function(
   cons, type, capt.disabled=
