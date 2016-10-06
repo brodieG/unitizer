@@ -3,6 +3,33 @@ library(testthat)
 test_dir(
   "testthat",
   filter=paste(sep="|",
-    "exec"
+    # "browse",
+    "capture"
+    # "change",
+    # "demo",
+    # "exec",
+    # "get",
+    # "global",
+    # "handledruns",
+    # "inpkg",
+    # "is",
+    # "item",
+    # "list",
+    # "misc",
+    # "options",
+    # "parse",
+    # "prompt",
+    # "rename",
+    # "repairenvs",
+    # "search",
+    # "section",
+    # "shim",
+    # "state",
+    # "text",
+    # "translate",
+    # "unitize",
+    # "unitize2",
+    # "upgrade",
+    # "zzrunlast"
   )
 )

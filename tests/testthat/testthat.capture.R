@@ -1,8 +1,12 @@
 library(unitizer)
 context("Capture")
 
-old.max <- getOption("unitizer.max.capture.chars")
-options(unitizer.max.capture.chars=100L)
+if(!identical(basename(getwd()), "testthat"))
+  stop("Working dir does not appear to be /testthat, is ", getwd())
+
+rdsf <- function(x)
+  file.path(getwd(), "helper", "capture", sprintf("%s.rds", x))
+
 
 # # Messing around trying to understand seek...
 # f <- tempfile()
@@ -21,6 +25,8 @@ options(unitizer.max.capture.chars=100L)
 # unlink(f)
 
 test_that("get_capture", {
+  old.max <- options(unitizer.max.capture.chars=100L)
+  on.exit(options(old.max))
   cons <- new("unitizerCaptCons")
   base.char <- paste(rep(letters, 10), collapse=" ")
   writeChar(base.char, cons@out.c)
@@ -47,7 +53,6 @@ test_that("get_capture", {
   expect_equal(paste0(rep("y", 100), collapse=""), cpt1)
   unitizer:::close_and_clear(cons)
 } )
-options(unitizer.max.capture.chars=old.max)
 
 test_that("connection capture works", {
   out.num <- as.integer(stdout())
@@ -165,15 +170,19 @@ test_that("connection capture works", {
   # helper function
 
   f1 <- tempfile()
-  c1 <- file(f1,  "w+b")
-
+  f2 <- tempfile()
+  c1 <- file(f1, "w+b")
+  c2 <- file(f2, "w+b")
+  sink(c2)
   expect_false(unitizer:::is_stdout_sink(c1))
+  sink()
   expect_error(unitizer:::is_stdout_sink(f1))
   sink(c1)
   expect_true(unitizer:::is_stdout_sink(c1))
   sink()
   close(c1)
-  unlink(f1)
+  close(c2)
+  unlink(c(f1, f2))
 })
 # # These tests cannot be run as they blow away the entire sink stack which can
 # # mess up any testing done under capture
@@ -203,14 +212,18 @@ test_that("connection capture works", {
 #   )
 # })
 test_that("eval with capt", {
-  expect_identical(
-    (capt <- unitizer:::eval_with_capture(quote(1+1)))[1:7],
-    list(value = 2, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "[1] 2\n", message = "")
+  suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
+  expect_equal_to_reference(
+    (capt <- unitizer:::eval_with_capture(quote(1+1), global=glob))[1:8],
+    rdsf(100)
   )
-  expect_is(capt[[8]], "unitizerCaptCons")
-  expect_identical(
-    (capt <- unitizer:::eval_with_capture(cat("wow\n", file=stderr())))[1:7],
-    list(value = NULL, visible = TRUE, aborted = FALSE, conditions = list(), trace = list(), output = "", message = "wow\n")
+  expect_is(capt[[9]], "unitizerCaptCons")
+  expect_equal_to_reference(
+    (
+      capt <- unitizer:::eval_with_capture(
+        cat("wow\n", file=stderr()), global=glob)
+    )[1:8],
+    rdsf(200)
   )
-  expect_is(capt[[8]], "unitizerCaptCons")
+  expect_is(capt[[9]], "unitizerCaptCons")
 })
