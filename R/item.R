@@ -205,20 +205,20 @@ setMethod("show", "unitizerItem",
             levels=c("error", "warning", "message", "other condition")),
           length
       ) )
-      meta_word_cat(
+      cat(
         "* conditions:",
         paste0(
           cond.types.summ, " ",
           paste0(
             names(cond.types.summ),
             ifelse(cond.types.summ > 1L, "s", "")
-          ), collapse=", "
+          ), "\n", collapse=", "
       ) )
     }
-    meta_word_cat(
-      "Access component `x` with",
-      paste0("`", if(object@reference) ".REF" else ".NEW", "$x`;"),
-      "see `help(\"$\", \"unitizer\")`"
+    cat(
+      "\nAccess components with `$`, e.g.",
+      paste0("`", if(object@reference) ".REF" else ".NEW", "$value`;"),
+      "see `help(\"$\", \"unitizer\")`\n"
     )
 } )
 # Methods to Track Whether a \code{\link{unitizerItem-class}} Object is New Or Reference
@@ -319,7 +319,9 @@ setMethod("+",
 #'     item the environment may not be the same so you could get different
 #'     results (\code{ls} will provide more details)
 #'   \item \code{value} the value that results from evaluating the test, note
-#'     this is equivalent to using \code{.new} or \code{.ref}
+#'     this is equivalent to using \code{.new} or \code{.ref}; note that the
+#'     value is displayed using \code{\link{desc}} when viewing all of
+#'     \code{.NEW} or \code{.REF}
 #'   \item \code{output} the screen output (i.e. anything produced by cat/print,
 #'     or any visible evaluation output) as a character vector
 #'   \item \code{message} anything that was output to \code{stderr}, mostly

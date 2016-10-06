@@ -357,58 +357,67 @@ over_print <- (
       invisible(NULL)
 } } ) ()
 
-#' Produces 1 Line Description of Value
+class_map <- function(val) {
+  abb <- c(
+    numeric="num", integer="int", character="chr", complex="cpx", factor="fct",
+    matrix="mat", logical="logi"
+  )
+  if(is.na(mapped <- abb[match(val, names(abb))])) val else mapped
+}
+desc_type <- function(val) {
+  class.map <- c(
+    numeric="num", integer="int", character="chr", complex="cpx", factor="fct",
+    logical="logi"
+  )
+  if(is.matrix(val))
+    paste(class_map(typeof(val)), "mat") else
+    class_map(head(class(val), 1L))
+}
+desc_size <- function(val) {
+  if(!is.null(dim(val))) {
+    paste0("[", paste0(dim(val), collapse=","), "]")
+  } else if(length(val) != 1L) {
+    paste0("[", length(val), "]")
+  }
+}
+desc_simple <- function(val) {
+  type <- desc_type(val)
+  paste0(type, desc_size(val))
+}
+#' One Line Description of Object
 #'
-#' @keywords internal
+#' Objects are described by class, and dimensions.  Dimensions is always denoted
+#' in square brackets.  For example, \dQuote{int[10]} means an integer of length
+#' ten.  Typically an object will be identified by \code{head(class(obj), 1L)}
+#' along with its dimensions.  Recursive objects will have the first level shown
+#' provided that doing so fits within \code{limit}}.
+#'
+#' Eventually this will be migrated to an S3 generic to allow recursive dispatch
+#' on object type.
+#'
+#' @export
 #' @param val object to describe
 #' @param limit max characters to display
-#' @return character vector describing object
+#' @return character(1L) describing object
+#' @examples
+#' desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2))
 
 desc <- function(val, limit=getOption("width")) {
-  if(!is.numeric(limit) | !identical(length(limit), 1L) | limit <= 4L) {
-    stop("Argument `limit` must be a 1 length integer with value greater than 3")
-  }
-  if(is.null(val)) return("NULL")
-  val.desc <- typeof(val)
-  if(!is.null(class(val)) && !identical(class(val)[[1]], typeof(class(val)))) {
-    val.desc <- paste(val.desc, class(val)[[1]])
-  }
-  first_lvl <- function(x, inc.len=TRUE) {
-    class.map <- c(numeric="num", integer="int", character="chr", complex="cpx", factor="fct")
-    classes <- vapply(x, function(y) class(y)[[1L]], character(1L))
-    lens <- if(inc.len) {
-      vapply(
-        x,
-        function(y) if(length(y) > 1L) paste0("(", length(y), ")") else "",
-        character(1L)
-      )
-    } else character(length(x))
-    paste0(
-      ifelse(nchar(nms <- names(x)), valid_names(nms), seq_along(x)), ":",
-      ifelse(is.na(new.class <- class.map[classes]), classes, new.class),
-      lens, collapse=";"
-    )
-  }
-  if(inherits(val, "data.frame")) {
-    val.desc <- paste0(val.desc, " [", nrow(val), ",{", first_lvl(val, FALSE), "}]")
-  } else if(!is.null(val.dim <- dim(val))) {
-    val.desc <- paste0(val.desc, paste0(" [", paste0(val.dim, collapse=",")), "]")
-  } else if (is.atomic(val)) {
-    val.desc <- paste0(val.desc, paste0(" [", length(val), "]"))
-  } else if (is.recursive(val)) {
-    count_rec <- function(x, lvl=0) {
-      if(is.recursive(x) && length(x)) {
-        lvl <- lvl + 1L
-        res <- vapply(x, count_rec, numeric(2L), lvl=lvl)
-        return(c(lvl=max(res["lvl", ]), counts=sum(res["counts",])))
-      } else {
-        return(c(lvl=lvl, counts=1L))
-      }
-    }
-    val.desc <- paste(val.desc, paste0("[", paste0(c(length(val), paste0(count_rec(val), collapse=";")), collapse=","), "]"))
-    val.desc <- paste0(val.desc, " {", first_lvl(val), "}")
-  }
-  if(nchar(val.desc) > limit - 3L) paste0(substr(val.desc, 1L, limit - 3L), "...") else val.desc
+  type <- desc_type(val)
+  simple <- desc_simple(val)
+  res <- if(nchar(simple) < limit && is.recursive(val) && length(val)) {
+    descs <- vapply(val, desc_simple, character(1L))
+    names <- if(is.null(names(val))) character(length(val)) else names(val)
+    rec <- sprintf(
+      "%s(%s)", type,
+      paste0(
+        ifelse(nzchar(names), paste0(names, "=", descs), descs),
+        collapse=", "
+    ) )
+    if(nchar(rec) < limit) rec else simple
+  } else simple
+  if(nchar(res) > limit - 3L)
+    paste0(substr(res, 1L, limit - 3L), "...") else res
 }
 #' Collapse Multi-line Character into one line
 #'
