@@ -105,8 +105,8 @@ path_clean <- function(path) {
 #' @examples
 #' filename_to_storeid(file.path("tests", "unitizer", "foo.R"))
 #' filename_to_storeid(file.path("tests", "unitizer", "boo.r"))
-#' # does not end in [rR] 
-#' filename_to_storeid(file.path("tests", "unitizer", "boo"))  
+#' # does not end in [rR]
+#' filename_to_storeid(file.path("tests", "unitizer", "boo"))
 
 filename_to_storeid <- function(x) {
   if(is.character(x) && length(x) == 1L){
@@ -275,16 +275,21 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   } else res
 }
 pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
-  rel.path <- relativize_path(path, wd, only.if.shorter)
-  pkg.dir <- get_package_dir(path)
-  if(!length(pkg.dir) || !identical(substr(path, 1L, nchar(pkg.dir)), pkg.dir))
+  path.norm <- normalize_path(path)
+  rel.path <- relativize_path(path.norm, wd, only.if.shorter)
+  pkg.dir <- get_package_dir(path.norm)
+  if(
+    !length(pkg.dir) ||
+    !identical(substr(path.norm, 1L, nchar(pkg.dir)), pkg.dir)
+  )
     return(rel.path)
 
   pkg.name <- try(get_package_name(pkg.dir))
   if(inherits(pkg.name, "try-error"))
     stop("Logic Error: failed getting package name; contact maintainer")
   pkg.path <- file.path(
-    paste0("package:", pkg.name), substr(path, nchar(pkg.dir) + 2L, nchar(path))
+    paste0("package:", pkg.name),
+    substr(path.norm, nchar(pkg.dir) + 2L, nchar(path.norm))
   )
   if(nchar(rel.path) <= nchar(pkg.path)) rel.path else pkg.path
 }
