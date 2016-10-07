@@ -56,7 +56,7 @@ local({
     )
     com <- "# this is supposed to be a relatively long comment that will get re-flowed"
     old.opt <- options(crayon.enabled=FALSE)
-    on.exit(old.opt)
+    on.exit(options(old.opt))
     expect_identical(
       unitizer:::word_comment(com, width=30L),
       c("# this is supposed to be a ", "#relatively long comment that ", "#will get re-flowed")

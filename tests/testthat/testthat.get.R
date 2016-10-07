@@ -7,12 +7,25 @@ local({
   test_that("Error Cases", {
     expect_error(get_unitizer(1), "No method defined")
     expect_error(get_unitizer(letters), "Argument `store.id`")
-    expect_error(get_unitizer("../interactive"), "does not appear to refer to a unitizer directory")
-    expect_error(get_unitizer("testthat.get.R"), "does not appear to refer to a unitizer directory")
+    expect_error(
+      get_unitizer("../interactive"),
+      "does not appear to refer to a unitizer directory"
+    )
+    expect_error(
+      get_unitizer("testthat.get.R"),
+      "does not appear to refer to a unitizer directory"
+    )
     expect_error(set_unitizer(1), "No method defined")
-    expect_error(set_unitizer(letters), "Argument `store.id` must be a 1 length character vector")
-    expect_error(set_unitizer("a"), "argument \"unitizer\" is missing, with no default")
-    expect_error(set_unitizer("a", "blergh"), "Argument `unitizer` must be a unitizer")
+    expect_error(
+      set_unitizer(letters),
+      "Argument `store.id` must be a 1 length character vector"
+    )
+    expect_error(
+      set_unitizer("a"), "argument \"unitizer\" is missing, with no default"
+    )
+    expect_error(
+      set_unitizer("a", "blergh"), "Argument `unitizer` must be a unitizer"
+    )
     expect_true(!file.exists("a"))
     expect_error(
       suppressWarnings(
@@ -21,7 +34,9 @@ local({
   } )
   test_that("Get works as expected", {
     expect_false(get_unitizer("asldkfjskfa"))
-    expect_equal(get_unitizer("../interactive/unitizer/misc.unitizer"), toy.stor)
+    expect_equal(
+      get_unitizer("../interactive/unitizer/misc.unitizer"), toy.stor
+    )
     expect_true(is(toy.stor, "unitizer"))
   } )
   tmp.dir <- tempdir()
@@ -35,13 +50,16 @@ local({
     expect_true(set_unitizer(tmp.sub.dir, toy.stor))
     expect_equal(readRDS(paste0(tmp.sub.dir, "/data.rds")), toy.stor)
   } )
+  context("load")
   test_that("load/store_unitizer", {
 
+    browser()
     # Several different stores in different states (i.e. requiring upgrade,
     # not unitizers, etc.)
 
     dir.create(tmp.sub.dir3)
-    make.path <- lapply(file.path(tmp.sub.dir3, dir("helper/load/")), dir.create)
+    make.path <-
+      lapply(file.path(tmp.sub.dir3, dir("helper/load/")), dir.create)
     if(!all(unlist(make.path))) stop("Failed making paths")
     file.copy(
       list.files("helper/load", full.names=TRUE),
@@ -51,19 +69,30 @@ local({
     store.ids <- as.list(list.files(tmp.sub.dir3, full.names=TRUE))
 
     expect_error(
-      unitizer:::load_unitizers(
-        store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-        interactive.mode=FALSE, mode="unitize", force.upgrade=FALSE
+      expect_output(
+        unitizer:::load_unitizers(
+          store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+          interactive.mode=FALSE, mode="unitize", force.upgrade=FALSE
+        ),
+        "must be upgraded"
       ),
       "Cannot upgrade .* in non-interactive"
     )
     # try weird store ids
 
-    invalid.store.return <- unitizer:::load_unitizers(
-      list(structure("hello", class="unitizer_error_store")), NA_character_,
-      par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
-      force.upgrade=FALSE
+    context("load 1")
+    expect_message(
+      expect_output(
+        invalid.store.return <- unitizer:::load_unitizers(
+          list(structure("hello", class="unitizer_error_store")), NA_character_,
+          par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
+          force.upgrade=FALSE
+        ),
+        "No valid unitizer"
+      ),
+      "could not be loaded"
     )
+    context("load 2")
     expect_is(invalid.store.return[[1L]], "unitizerLoadFail")
     expect_match(
       invalid.store.return[[1L]]@reason, "returned something other than"
@@ -71,10 +100,13 @@ local({
     # don't agree to upgrade in interactive mode
 
     unitizer:::read_line_set_vals("N")
-    untzs0 <- unitizer:::load_unitizers(
-      store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-      interactive.mode=TRUE, mode="unitize",
-      global=suppressWarnings(unitizer:::unitizerGlobal$new())
+    expect_output(
+      untzs0 <- unitizer:::load_unitizers(
+        store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+        interactive.mode=TRUE, mode="unitize",
+        global=suppressWarnings(unitizer:::unitizerGlobal$new())
+      ),
+      "No valid unitizer to load"
     )
     unitizer:::read_line_set_vals(NULL)
     expect_true(
@@ -92,11 +124,12 @@ local({
     )
     # Load mix of loadable and not loadable objects
 
-    suppressWarnings(
-      untzs <- unitizer:::load_unitizers(
-        store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-        interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
-      )
+    context("mix")
+    glob <- unitizer:::unitizerGlobal$new()
+    untzs <- unitizer:::load_unitizers(
+      store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+      interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE,
+      global=glob
     )
     untzs.classes <- vapply(unitizer:::as.list(untzs), class, character(1L))
     expect_equal(
@@ -169,6 +202,7 @@ local({
   } )
   unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE)
 
+  context("package test")
   test_that("is_package", {
     expect_true(unitizer:::is_package_dir(system.file(package="stats")))
     expect_true(unitizer:::is_package_dir(system.file(package="methods")))
@@ -237,6 +271,7 @@ local({
       file.path(test.dir, "unitizer.fastlm")
     )
   } )
+  context("unitize dir")
   test_that("is_unitizer_dir", {
     base.dir <- file.path(
       system.file(package="unitizer"), "example.pkgs", "infer"
@@ -248,6 +283,7 @@ local({
     ) )
 
   })
+  context("infer")
   test_that("infer_unitizer_location", {
     infer <- function(...) infer_unitizer_location(..., interactive.mode=FALSE)
     base.dir <- file.path(
@@ -277,7 +313,8 @@ local({
     # Normal dir
 
     base.dir2 <- file.path(base.dir, "tests", "unitizer")
-    expect_warning(inf.dir2 <- infer(base.dir2), "5 possible targets")  # note don't need * to generate warning
+    # note don't need * to generate warning
+    expect_warning(inf.dir2 <- infer(base.dir2), "5 possible targets")
     expect_equal(base.dir2, inf.dir2)
     expect_warning(infer(file.path(base.dir2, "a")), "2 possible targets")
     expect_warning(
@@ -300,25 +337,39 @@ local({
     expect_equal(select, file.path(base.dir, "*"))
     unitizer:::read_line_set_vals(c("5"))
     expect_equal(
-      unitizer:::infer_unitizer_location(file.path(base.dir, "*"), type="f", interactive.mode=TRUE),
+      unitizer:::infer_unitizer_location(
+        file.path(base.dir, "*"), type="f", interactive.mode=TRUE
+      ),
       file.path(base.dir, "tests", "unitizer", "zzz.R")
     )
     unitizer:::read_line_set_vals(NULL)
   })
+  context("manip")
   test_that("test file / store manip", {
     expect_identical(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello")
-    expect_error(unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")), "Unable to convert")
+    expect_error(
+      unitizer:::as.store_id_chr(
+        structure("hello", class="untz_stochrerr")
+      ),
+      "Unable to convert"
+    )
     as.character.custstore <- function(x, ...) x
     expect_match(
-      unitizer:::best_store_name(structure(list("hello", class="custstore")), "hello"),
+      unitizer:::best_store_name(
+        structure(list("hello", class="custstore")), "hello"
+      ),
       "unitizer for .*hello"
     )
     expect_match(
-      unitizer:::best_store_name(structure(list("hello", class="custstore")), NA_character_),
+      unitizer:::best_store_name(
+        structure(list("hello", class="custstore")), NA_character_
+      ),
       "untranslateable"
     )
     expect_match(
-      unitizer:::best_file_name(structure(list("hello", class="custstore")), NA_character_),
+      unitizer:::best_file_name(
+        structure(list("hello", class="custstore")), NA_character_
+      ),
       "unknown-test-file"
     )
   })

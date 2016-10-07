@@ -241,13 +241,11 @@ setMethod("show", "unitizerItemTestsErrorsDiffs",
 } )
 setMethod("show", "unitizerItemTestsErrorsDiff",
   function(object) {
-    file <- if(object@err) stderr() else stdout()
-    meta_word_cat(
-      if(object@show.diff) object@txt else object@txt.alt, file=file
-    )
+    cat_fun <- if(object@err) meta_word_msg else meta_word_cat
+    cat_fun(if(object@show.diff) object@txt else object@txt.alt)
     if(object@show.diff) {
-    res <- show(object@diff)
-    cat("\n")
+      res <- show(object@diff)
+      cat("\n")
     }
     invisible(NULL)
 } )
@@ -276,10 +274,10 @@ setMethod("show", "unitizerItemTestsErrors",
       for(i in slots[slot.errs]) {
         curr.err <- slot(object, i)
         mismatch <- if(curr.err@compare.err) {
-          out.file <- stderr()
+          out.fun <- meta_word_msg
           paste0("Unable to compare ", i, ": ")
         } else {
-          out.file <- stdout()
+          out.fun <- meta_word_cat
           paste0(cap_first(i), " mismatch: ")
         }
         out <- if(length(curr.err@value) < 2L) {
@@ -292,7 +290,7 @@ setMethod("show", "unitizerItemTestsErrors",
               width=getOption("width") - 2L
           ) )
         }
-        meta_word_cat(out, file=out.file)
+        out.fun(out)
         make_cont <- function(x) {
           res <- if(identical(i, "value")) {
             as.name(x)

@@ -183,7 +183,7 @@ load_unitizers <- function(
   # Issue errors as required
 
   if(length(invalid.idx)) {
-    meta_word_cat(
+    meta_word_msg(
       paste0(
         "\nThe following unitizer", if(length(invalid.idx) > 1L) "s",
         " could not be loaded:"
@@ -191,12 +191,11 @@ load_unitizers <- function(
       as.character(
         UL(paste0(chr.ids[invalid.idx], ": ",  valid[invalid.idx])),
         width=getOption("width") - 2L
-      ),
-      file=stderr()
+      )
     )
   }
   if(length(toup.fail.idx)) {
-    meta_word_cat(
+    meta_word_msg(
       paste0(
         "\nThe following unitizer", if(length(toup.fail.idx) > 1L) "s",
         " could not be upgraded to version '", as.character(curr.version),
@@ -210,8 +209,7 @@ load_unitizers <- function(
             "': ", valid[toup.fail.idx]
         ) ),
         width=getOption("width") - 2L
-      ),
-      file=stderr()
+      )
     )
   }
   if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))

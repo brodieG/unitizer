@@ -270,7 +270,7 @@ setMethod(
               QQ=if(y@multi) "[QQ]uit All"
             )
             if(!length(x@changes) && (force.update || y@force.up))
-              meta_word_cat(
+              meta_word_msg(
                 "Running in `force.update` mode so `unitizer` will be re-saved",
                 "even though there are no changes to record (see `?unitize`",
                 "for details).", sep="",
