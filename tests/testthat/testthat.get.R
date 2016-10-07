@@ -73,7 +73,8 @@ local({
     unitizer:::read_line_set_vals("N")
     untzs0 <- unitizer:::load_unitizers(
       store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-      interactive.mode=TRUE, mode="unitize"
+      interactive.mode=TRUE, mode="unitize",
+      global=suppressWarnings(unitizer:::unitizerGlobal$new())
     )
     unitizer:::read_line_set_vals(NULL)
     expect_true(
@@ -108,10 +109,10 @@ local({
     txt1 <- paste0(collapse=";", capture.output(show(untzs[[1L]])))
     txt2 <- paste0(collapse=";", capture.output(show(untzs[[3L]])))
     expect_match(
-      txt1, "Failed Loading Unitizer:;- Test file.*;- Store.*;- Reason: `get_unitizer` error: Retrieved object is not a unitizer store"
+      txt1, "| Failed Loading Unitizer:;| - Test file.*;| - Store.*;| - Reason: `get_unitizer` error: Retrieved object is not a unitizer store"
     )
     expect_match(
-      txt2, "Failed Loading Unitizer:;- Test file.*;- Store.*;- Reason: Upgrade failed: no slot of name \"items.ref\" for this object"
+      txt2, "| Failed Loading Unitizer:;| - Test file.*;| - Store.*;| - Reason: Upgrade failed: no slot of name \"items.ref\" for this object"
     )
     options(old.width)
     # Try reloading already loaded unitisers
@@ -219,7 +220,8 @@ local({
     cat("helloworld", file=f)
     expect_true(length(unitizer:::get_package_dir(f)) == 0L)
     unlink(f)
-    expect_equal(unitizer:::get_package_dir(f), character(0L))
+    expect_warning(check.pkg <- unitizer:::get_package_dir(f), "No such file")
+    expect_equal(check.pkg, character(0L))
     test.dir <- file.path(
       system.file(package="unitizer"), "example.pkgs", "fastlm.0",
       "unitizer.fastlm.Rcheck", "unitizer.fastlm", "R"

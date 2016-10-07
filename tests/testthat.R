@@ -4,11 +4,11 @@ test_dir(
   "testthat",
   filter=paste(sep="|",
     # "browse",
-    "capture"
+    # "capture",
     # "change",
     # "demo",
     # "exec",
-    # "get",
+    "get"
     # "global",
     # "handledruns",
     # "inpkg",
