@@ -302,8 +302,8 @@ setMethod("show", "unitizerItemTestsErrors",
           cur.banner=make_cont(".new")
         )
         diffs[[i]] <- new(
-          "unitizerItemTestsErrorsDiff", diff=diff, text=out,
-          err=out.file==std.err()
+          "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
+          err=curr.err@compare.err
         )
         show(diff)
         cat("\n")
