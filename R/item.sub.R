@@ -311,43 +311,6 @@ setMethod("show", "unitizerItemTestsErrors",
     }
     invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
 } )
-
-#' Summary Method for unitizerItemTestsErrors Objects
-#'
-#' DEPRECATED
-#'
-#' Used to generate the blurb ahead of each failed test with the components
-#' that the test failed on.
-#'
-#' Only intended to be called within the \code{show} method.
-#'
-#' @param object a \code{unitizerItemTestsErrors} object
-#' @return NULL, invisibly
-#' @export
-
-setMethod("summary", "unitizerItemTestsErrors",
-  function(object, ...) {
-    warning("this method is deprecated")
-    slots <- grep("^[^.]", slotNames(object), value=TRUE)
-    slot.err <- logical(length(slots))
-    for(i in seq_along(slots))
-      slot.err[[i]] <- !is.null(slot(object, slots[[i]])@value)
-
-    errs <- slots[slot.err]
-    if(!length(errs)) return(invisible(NULL))
-
-    if(length(errs) > 1L) {
-      err.chr <- paste(
-        paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
-      )
-      plrl <- "es"
-    } else {
-      err.chr <- errs
-      plrl <- ""
-    }
-    meta_word_cat(cc(err.chr, " mismatch", plrl, ":"))
-    return(invisible(NULL))
-} )
 #' Like all.equal but Returns FALSE If Not all.equal
 #'
 #' Used as the default value comparison function since when values mismatch
