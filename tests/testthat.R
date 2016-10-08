@@ -11,8 +11,8 @@ test_dir(
     # "get",
     # "global",
     # "handledruns"
-    "inpkg"
-    # "is",
+    # "inpkg",
+    "ischecks"
     # "item",
     # "list",
     # "misc",
