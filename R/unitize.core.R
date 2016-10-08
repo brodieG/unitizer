@@ -305,11 +305,9 @@ unitize_core <- function(
 
   global$state("init")  # mark post pre-load state
 
-  # Place quit functions in the correct frame
+  # Used to put q/quit here before we switched to tracing them
 
   util.frame <- new.env(parent=pre.load.frame)
-  assign("quit", unitizer_quit, util.frame)
-  assign("q", unitizer_quit, util.frame)
 
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
@@ -882,17 +880,17 @@ check_call_stack <- function() {
     )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
-  reserved.restarts <- c("unitizerQuitExit", "unitizerInteractiveFail")
+  reserved.restarts <- c("unitizerInteractiveFail")
   if(any(res.err <- reserved.restarts %in% restart.names)) {
     many <- sum(res.err) > 1L
     stop(
       word_wrap(collapse="\n",
         cc(
           deparse(reserved.restarts[res.err], width.cutoff=500L),
-          "restart", if(many) "s are" else "  is", " already defined; ",
-          "unitizer relies on ", if(many) "these restarts" else "this restart",
+          " restart", if(many) "s are" else " is", " already defined; ",
+          "unitizer relies on ", if(many) "these restarts" else "this restart ",
           "to manage evaluation so unitizer will not run if ",
-          if(many) "they are" else "it is", "defined outside of `unitize`.  ",
+          if(many) "they are" else "it is", " defined outside of `unitize`.  ",
           "If you did not define ", if(many) "these restarts" else
           "this restart", " contact maintainer."
   ) ) ) }
