@@ -8,9 +8,9 @@ test_dir(
     # "change",
     # "demo",
     # "exec",
-    "get"
+    # "get",
     # "global",
-    # "handledruns",
+    "handledruns"
     # "inpkg",
     # "is",
     # "item",
