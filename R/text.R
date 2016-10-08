@@ -638,9 +638,9 @@ capture_output <- function(expr, env=parent.frame()) {
 #' @rdname capture_output
 
 print.captured_output <- function(x, ...) {
-  cat(clr(as.character(H3("Output")), "red"))
+  cat(as.character(H3("Output")))
   cat(x$output, sep="\n")
-  cat(clr(as.character(H3("Message")), "red"))
+  cat(as.character(H3("Message")))
   cat(x$message, sep="\n")
 }
 

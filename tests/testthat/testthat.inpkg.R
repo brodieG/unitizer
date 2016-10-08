@@ -5,6 +5,9 @@ context("In Package")
 if(!file_test("-d", file.path("helper", "refobjs")))
   stop("Make sure wd is set to tests/testthat")
 
+rdsf <- function(x)
+  file.path(getwd(), "helper", "refobjs", sprintf("%s.rds", x))
+
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
 .unitizer.test.file <- file.path(.unitizer.fastlm, "tests", "extra", "inpkg.R")
@@ -27,15 +30,9 @@ txt3 <- unitizer:::capture_output(
       .unitizer.test.file, state=in_pkg("ASDFASDFA"), interactive.mode=TRUE
 ) ) )
 test_that("in_pkg", {
-  expect_equal_to_reference(
-    txt1, file.path("helper", "refobjs", "inpkg_txt1.rds")
-  )
-  expect_equal_to_reference(
-    txt2, file.path("helper", "refobjs", "inpkg_txt2.rds")
-  )
-  expect_equal_to_reference(
-    txt3, file.path("helper", "refobjs", "inpkg_txt3.rds")
-  )
+  expect_equal_to_reference(txt1, rdsf("inpkg_txt1"))
+  expect_equal_to_reference(txt2, rdsf("inpkg_txt2"))
+  expect_equal_to_reference(txt3, rdsf("inpkg_txt3"))
 })
 
 unitizer_cleanup_demo()

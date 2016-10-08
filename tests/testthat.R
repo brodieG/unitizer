@@ -10,8 +10,8 @@ test_dir(
     # "exec",
     # "get",
     # "global",
-    "handledruns"
-    # "inpkg",
+    # "handledruns"
+    "inpkg"
     # "is",
     # "item",
     # "list",
