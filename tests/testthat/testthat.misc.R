@@ -2,8 +2,11 @@ library(testthat)
 library(unitizer)
 context("Misc")
 
-if(!file_test("-d", file.path("helper", "refobjs")))
-  stop("Make sure wd is set to tests/testthat")
+if(!identical(basename(getwd()), "testthat"))
+  stop("Working dir does not appear to be /testthat, is ", getwd())
+
+rdsf <- function(x)
+  file.path(getwd(), "helper", "misc", sprintf("%s.rds", x))
 
 test_that("Text wrapping", {
   var <- "humpty dumpty sat on a truck and had a big dump"
@@ -17,17 +20,32 @@ test_that("Text wrapping", {
 test_that("Headers", {
   # these basically require visual inspection
 
-  print(unitizer:::H1("hello world"))
-  print(unitizer:::H2("hello world"))
-  print(unitizer:::H3("hello world"))
-
+  old.opt <- options(width=80L)
+  on.exit(old.opt)
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H1("hello world"))),
+    rdsf(100)
+  )
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H2("hello world"))),
+    rdsf(200)
+  )
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H3("hello world"))),
+    rdsf(300)
+  )
   expect_error(print(unitizer:::H1(rep_len("hello world", 10)))) # cause an error
-  print(unitizer:::H1(paste0(rep_len("hello world", 10), collapse=" ")))
-  print(unitizer:::H2(paste0(rep_len("hello world", 10), collapse=" ")))
 
-  "No margin"
-  print(unitizer:::H2("No margin"), margin="none")
-  "No margin"
+  h.w.long <- paste0(rep_len("hello world", 10), collapse=" ")
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H1(h.w.long))), rdsf(400)
+  )
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H2(h.w.long))), rdsf(500)
+  )
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H2("No margin"), margin="none")), rdsf(600)
+  )
 } )
 test_that("Valid Names convert names to valid", {
   expect_equal(unitizer:::valid_names("hello"), "hello")
@@ -307,4 +325,3 @@ test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
 })
-
