@@ -4,12 +4,12 @@ context("Prompt")
 test_that("read_line works", {
   unitizer:::read_line_set_vals(letters[1:3])
   u.ns <- asNamespace("unitizer")
-  expect_identical(unitizer:::read_line(), "a")
-  expect_identical(u.ns$.global$prompt.vals, letters[2:3])
-  expect_identical(unitizer:::read_line(), "b")
-  expect_identical(u.ns$.global$prompt.vals, letters[3])
-  expect_identical(unitizer:::read_line(), "c")
-  expect_identical(u.ns$.global$prompt.vals, character())
+  capture.output(expect_identical(unitizer:::read_line(), "a"))
+  capture.output(expect_identical(u.ns$.global$prompt.vals, letters[2:3]))
+  capture.output(expect_identical(unitizer:::read_line(), "b"))
+  capture.output(expect_identical(u.ns$.global$prompt.vals, letters[3]))
+  capture.output(expect_identical(unitizer:::read_line(), "c"))
+  capture.output(expect_identical(u.ns$.global$prompt.vals, character()))
   expect_error(unitizer:::read_line(), "ran out of predefined readline input")
 })
 
@@ -19,21 +19,28 @@ test_that("simple prompts", {
   expect_error(unitizer:::simple_prompt("hello", attempts=1:5))
   expect_error(unitizer:::simple_prompt("hello", values=NA_character_))
   expect_error(unitizer:::simple_prompt("hello", case.sensitive=1))
-  expect_identical("Y", unitizer:::simple_prompt("hello"))
-  expect_identical("Y", unitizer:::simple_prompt("hello"))
-  expect_identical("N", unitizer:::simple_prompt("hello"))
-  expect_identical("N", unitizer:::simple_prompt("hello"))
+  capture.output(expect_identical("Y", unitizer:::simple_prompt("hello")))
+  capture.output(expect_identical("Y", unitizer:::simple_prompt("hello")))
+  capture.output(expect_identical("N", unitizer:::simple_prompt("hello")))
+  capture.output(expect_identical("N", unitizer:::simple_prompt("hello")))
   unitizer:::read_line_set_vals(c("y", "y", "n"))
   expect_error(
-    unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE),
+    capture.output(
+      unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE)
+    ),
     "Gave up trying to collect"
   )
   expect_output(
-    try(unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE)),
+    try(
+      unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE),
+      silent=TRUE
+    ),
     "hello\n.*Invalid input, please select one of: Y, N"
   )
   expect_error(
-    unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE),
+    capture.output(
+      unitizer:::simple_prompt("hello", attempts=1L, case.sensitive=TRUE)
+    ),
     "Gave up trying to collect"
   )
 })
@@ -47,28 +54,32 @@ test_that("faux prompt", {
   expect_identical(res, quote(1 + 1))
   unitizer:::read_line_set_vals(c("(})"))
   expect_error(
-    unitizer:::faux_prompt(prompt="> ", continue="+ "), "unexpected '\\}'"
+    capture.output(
+      unitizer:::faux_prompt(prompt="> ", continue="+ ")
+    ),
+    "unexpected '\\}'"
   )
 })
 # Some of this needs to be done outside of testthat due to sinking
 
+suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
 unitizer:::read_line_set_vals(c("1 +", "1", "H", "Y"))
 txt <- capture.output(
   res <- unitizer:::unitizer_prompt(
-      "hello", valid.opts=c(Y="[Y]es", N="[N]o")
+    "hello", valid.opts=c(Y="[Y]es", N="[N]o"), global=glob
   )
 )
 unitizer:::read_line_set_vals(c("1 +", "1", "H", "Q"))
 txt2 <- capture.output(
   res2 <- unitizer:::unitizer_prompt(
     "hello", valid.opts=c(Y="[Y]es", N="[N]o"),
-    help="This is all the help you get"
+    help="This is all the help you get", global=glob
   )
 )
 unitizer:::read_line_set_vals(c("hell())", "Q"))
 txt3 <- capture.output(
   unitizer:::unitizer_prompt("hello", valid.opts=c(Y="[Y]es", N="[N]o")),
-  type="message"
+  type="message", global=glob
 )
 test_that("unitizer prompt", {
   expect_equal(
@@ -85,21 +96,24 @@ test_that("unitizer prompt", {
   )
   expect_error(
     unitizer:::unitizer_prompt(
-      "hello", valid.opts=c(Y="[Y]es", N="[N]o"), browse.env="not an env"
+      "hello", valid.opts=c(Y="[Y]es", N="[N]o"), browse.env="not an env",
+      global=glob
     ),
     "Argument `browse.env` must be an environment"
   )
   expect_identical(res2, "Q")
   unitizer:::read_line_set_vals(character())
   expect_error(
-    unitizer:::unitizer_prompt("hello", valid.opts=c(Y="[Y]es", N="[N]o")),
+    unitizer:::unitizer_prompt(
+      "hello", valid.opts=c(Y="[Y]es", N="[N]o"), global=glob
+    ),
     "Logic Error: ran out of predefined readline input"
   )
   unitizer:::read_line_set_vals("1L")
   expect_error(
     unitizer:::unitizer_prompt(
       "hello", valid.opts=c(Y="[Y]es", N="[N]o"),
-      exit.condition=unitizer:::exit_fun, valid.vals=2:3
+      exit.condition=unitizer:::exit_fun, valid.vals=2:3, global=glob
     ),
     "Logic Error: ran out of predefined readline input"
   )
@@ -107,7 +121,7 @@ test_that("unitizer prompt", {
   expect_equal(
     unitizer:::unitizer_prompt(
       "hello", valid.opts=c(Y="[Y]es", N="[N]o"),
-      exit.condition=unitizer:::exit_fun, valid.vals=2:3
+      exit.condition=unitizer:::exit_fun, valid.vals=2:3, global=glob
     ),
     2L
   )
