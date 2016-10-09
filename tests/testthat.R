@@ -15,9 +15,9 @@ test_dir(
     # "ischecks",
     # "item",
     # "list",
-    "misc"
+    # "misc",
     # "options",
-    # "parse",
+    "parse"
     # "prompt",
     # "rename",
     # "repairenvs",
