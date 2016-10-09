@@ -30,6 +30,7 @@ test_that("Headers", {
   "No margin"
 } )
 test_that("Sweet'n short descriptions work",{
+  expect_equal(unitizer:::desc(NULL), "NULL")
   expect_match(
     unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))),
     "list lm \\[12,4;28\\] \\{coefficients:num\\(2\\);"

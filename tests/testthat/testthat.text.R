@@ -210,5 +210,7 @@ local({
       desc(iris, 200),
       "data.frame(Sepal.Length=num[150], Sepal.Width=num[150], Petal.Length=num[150], Petal.Width=num[150], Species=fct[150])"
     )
+    expect_equal(desc(list(NULL, 1L)), "list(NULL, int[1])")
+    expect_equal(desc(NULL), "NULL")
   })
 })
