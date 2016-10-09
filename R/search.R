@@ -605,7 +605,7 @@ get_package_data <- function() {
     function(x) {
       loc <- if(grepl("^package:.+", x))
         try(path.package(sub("^package:(.*)", "\\1", x))) else ""
-      ver <- try(getNamespaceVersion(x))
+      ver <- try(getNamespaceVersion(x), silent=TRUE)
       new(
         "unitizerNamespaceData",
         name=x,
