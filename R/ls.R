@@ -83,15 +83,20 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   ls.res <- character()
   env.list <- list()
   i <- 0L
+  max.envs <- getOption("unitizer.max.env.depth")
+  if(!is.numeric(max.envs) || length(max.envs) != 1L || max.envs < 1)
+    max.envs <- 20000L
+  max.envs <- as.integer(max.envs)
+
   attempt <- try(
     # Get list of environments that are relevant
     while(!identical(env, stop.env)) {
       env.list <- c(env.list, env)
       env <- parent.env(env)
-      if((i <- i + 1L) > 20000)
+      if((i <- i + 1L) > max.envs)
         stop(
-          "Logic error: not finding `stop.env` after 20000 iterations; ",
-          "contact package maintainer if this is an error."
+          "Logic error: not finding `stop.env` after ", max.envs,
+          " iterations; contact package maintainer if this is an error."
         )
   } )
   if(inherits(attempt, "try-error"))

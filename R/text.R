@@ -595,16 +595,16 @@ summ_matrix_to_text <- function(
   )
   res
 }
-## Capture Both StdOut and StdErr
-##
-## Will sink both "output" and "message" streams without checking whether they
-## are already sunk, and will unsink them the same way.
-##
-## @keywords internal
-## @param a quoted to evaluate
-## @param env an environment to evaluate them in
-## @return a list with stdout and stderr captured separately, classed as
-##   "captured_output"
+#' Capture Both StdOut and StdErr
+#'
+#' Will sink both "output" and "message" streams without checking whether they
+#' are already sunk, and will unsink them the same way.
+#'
+#' @keywords internal
+#' @param a quoted to evaluate
+#' @param env an environment to evaluate them in
+#' @return a list with stdout and stderr captured separately, classed as
+#'   "captured_output"
 
 capture_output <- function(expr, env=parent.frame()) {
   std.out <- tempfile()

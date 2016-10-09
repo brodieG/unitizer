@@ -273,8 +273,7 @@ setMethod(
               meta_word_msg(
                 "Running in `force.update` mode so `unitizer` will be re-saved",
                 "even though there are no changes to record (see `?unitize`",
-                "for details).", sep="",
-                file=stderr()
+                "for details).", sep=""
               )
             if(update) {
               tar <- getTarget(x)

@@ -249,8 +249,10 @@ options_update <- function(tar.opts) {
 }
 
 .unitizer.opts.default <- list(
-  unitizer.par.env=NULL,                   # NULL means use the special unitizer environment
-  unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
+  # NULL means use the special unitizer environment
+  unitizer.par.env=NULL,
+  # Will display output/msg to stdout/stderr in addition to capturing it
+  unitizer.show.output=FALSE,
   # Attempt to ANSI colorize output, TRUE to force, FALSE to force off, NULL to
   # auto-detect based on terminal capability
   unitizer.color=NULL,
@@ -263,25 +265,40 @@ options_update <- function(tar.opts) {
   # How many lines of context to display when showing failed objects
   # (note banner means one more line than this displayed)
   unitizer.test.fail.context.lines=c(10L, 3L),
-  unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
-  unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
+  # If unitizer runs in fewer seconds than this and has no reviewed items, `Q`
+  # will quit directly without prompting for review
+  unitizer.prompt.b4.quit.time=10,
+  # Maximum number of characters we allow capture of per test
+  unitizer.max.capture.chars=200000L,
   unitizer.history.file="",                # "" is interpreted as tempfile()
-  unitizer.search.path.keep=character(),   # User specified objects to keep on search path; if you modify this make sure you ajdust `unitizer.opts.asis` accordingly as well (see reproducible state vignette)
-  unitizer.search.path.keep.base=c(        # Default objects to keep on search path when initializing unitizer;
+  # User specified objects to keep on search path; if you modify this make sure
+  # you ajdust `unitizer.opts.asis` accordingly as well (see reproducible state
+  # vignette)
+  unitizer.search.path.keep=character(),
+  # Default objects to keep on search path when initializing unitizer;
+  unitizer.search.path.keep.base=c(
     .unitizer.base.packages,
     "tools:rstudio", "package:unitizer"
   ),
   unitizer.namespace.keep = character(),   # names of namespaces not auto-unload
-  unitizer.namespace.keep.base=c(          # system namespaces not to auto-unload, no matter what
+  # system namespaces not to auto-unload, no matter what
+  unitizer.namespace.keep.base=c(
     .unitizer.namespace.keep
   ),
   unitizer.state="default",                # default reproducible state mode
-  unitizer.opts.init=list(),               # User default option values when running with options state tracking
-  unitizer.opts.init.base=.unitizer.opts.base,  # Default option values when running with options state tracking
-  unitizer.opts.asis=character(0L),             # User specified options that should not be changed; these are matched as regular expressions
-  unitizer.opts.asis.base=.unitizer.opts.asis,  # Default options not to change; these are primarily system dependent and other options; these are matched as regular expressions
-  unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
-      list(seed=42L, kind="Wichmann-Hill")
+  # User default option values when running with options state tracking
+  unitizer.opts.init=list(),
+  # Default option values when running with options state tracking
+  unitizer.opts.init.base=.unitizer.opts.base,
+  # User specified options that should not be changed; these are matched as
+  # regular expressions
+  unitizer.opts.asis=character(0L),
+  # Default options not to change; these are primarily system dependent and
+  # other options; these are matched as regular expressions
+  unitizer.opts.asis.base=.unitizer.opts.asis,
+  # random seed to use by default, "Wichman-Hill" because default seed is large
+  unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
+  unitizer.max.env.depth=20000L
 )
 
 #' Checks that options meet expectations before anything gets run
