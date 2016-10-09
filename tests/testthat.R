@@ -18,8 +18,8 @@ test_dir(
     # "misc",
     # "options",
     # "parse",
-    "prompt"
-    # "rename",
+    # "prompt",
+    "rename"
     # "repairenvs",
     # "search",
     # "section",
