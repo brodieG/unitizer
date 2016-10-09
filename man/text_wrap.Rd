@@ -19,7 +19,7 @@ meta_word_cat(..., sep = "\\n", width = getOption("width"),
   tolerance = 8L, file = stdout(), trail.nl = TRUE)
 
 meta_word_msg(..., sep = "\\n", width = getOption("width"),
-  tolerance = 8L, file = stderr(), trail.nl = TRUE)
+  tolerance = 8L, trail.nl = TRUE)
 
 word_cat(..., sep = " ", width = getOption("width"), tolerance = 8L,
   file = stdout())
@@ -42,8 +42,8 @@ word_comment(x, width = getOption("width"), tolerance = 8L,
 an element of a list, otherwise one character vector is returned}
 }
 \value{
-a list with, for each item in \code{`x`}, a character vector
-  of the item wrapped to length \code{`width`}
+a list with, for each item in \code{x}, a character vector
+  of the item wrapped to length \code{width}
 
 if \code{unlist} is a parameter, then a character vector, or
   if not or if \code{unlist} is FALSE, a list with each element from \code{x}
@@ -64,6 +64,7 @@ Functions to break up character vector components to a specified width.
   \item \code{meta_word_cat} is like \code{word_cat}, except it wraps output
     in formatting to highlight this is not normal output
 }
+
 Newlines are replaced by empty strings in the output so that each character
 vector in the output represents a line of screen output.
 }

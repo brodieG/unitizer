@@ -1,6 +1,6 @@
-#' Display helper function
-#'
-#' @keywords internal
+## Display helper function
+##
+## @keywords internal
 
 screen_out <- function(
   txt, max.len=getOption("unitizer.test.out.lines"), file=stdout(),
@@ -27,16 +27,16 @@ screen_out <- function(
         file=file, sep=""
       )
 } } }
-#' Print Only First X characters
-#'
-#' @keywords internal
-#' @param x string to reduce length
-#' @param nchar.max how many characters to reduce each string to
-#' @param ctd 1 length character vector for what to use to indicate string
-#'   truncated
-#' @param disambig logical 1L whether to disambiguate strings that end up
-#'   the same after truncation (not currently implemented)
-#' @param from what side to truncate from
+## Print Only First X characters
+##
+## @keywords internal
+## @param x string to reduce length
+## @param nchar.max how many characters to reduce each string to
+## @param ctd 1 length character vector for what to use to indicate string
+##   truncated
+## @param disambig logical 1L whether to disambiguate strings that end up
+##   the same after truncation (not currently implemented)
+## @param from what side to truncate from
 
 strtrunc <- function(
   x, nchar.max=getOption("width"), ctd="...", disambig=FALSE,
@@ -94,12 +94,13 @@ strtrunc <- function(
 #'   \item \code{meta_word_cat} is like \code{word_cat}, except it wraps output
 #'     in formatting to highlight this is not normal output
 #' }
+#'
 #' Newlines are replaced by empty strings in the output so that each character
 #' vector in the output represents a line of screen output.
 #'
 #' @keywords internal
-#' @return a list with, for each item in \code{`x`}, a character vector
-#'   of the item wrapped to length \code{`width`}
+#' @return a list with, for each item in \code{x}, a character vector
+#'   of the item wrapped to length \code{width}
 #' @param x character vector
 #' @param width what width to wrap at
 #' @param tolerance how much earlier than \code{width} we're allowed to wrap
@@ -329,14 +330,14 @@ word_comment <- function(
   if(unlist) unlist(res) else res
 }
 
-#' Over-write a Line
-#'
-#' @keywords internal
-#' @param x character(1L)
-#' @param min.width integer(1L) minimum character width to print to
-#' @param max.width integer(1L) max width to print to
-#' @param append to last non-append \code{x} value
-#' @return NULL used only for side effect of cating ot screen
+## Over-write a Line
+##
+## @keywords internal
+## @param x character(1L)
+## @param min.width integer(1L) minimum character width to print to
+## @param max.width integer(1L) max width to print to
+## @param append to last non-append \code{x} value
+## @return NULL used only for side effect of cating to screen
 
 over_print <- (
   function() {
@@ -395,7 +396,7 @@ desc_simple <- function(val) {
 #' in square brackets.  For example, \dQuote{int[10]} means an integer of length
 #' ten.  Typically an object will be identified by \code{head(class(obj), 1L)}
 #' along with its dimensions.  Recursive objects will have the first level shown
-#' provided that doing so fits within \code{limit}}.
+#' provided that doing so fits within \code{limit}.
 #'
 #' Eventually this will be migrated to an S3 generic to allow recursive dispatch
 #' on object type.
@@ -405,7 +406,7 @@ desc_simple <- function(val) {
 #' @param limit max characters to display
 #' @return character(1L) describing object
 #' @examples
-#' desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2))
+#' desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2)))
 
 desc <- function(val, limit=getOption("width")) {
   type <- desc_type(val)
@@ -424,11 +425,11 @@ desc <- function(val, limit=getOption("width")) {
   if(nchar(res) > limit - 3L)
       paste0(substr(res, 1L, limit - 3L), "...") else res
 }
-#' Collapse Multi-line Character into one line
-#'
-#' @param x character
-#' @param chars how many characters to display
-#' @keywords internal
+## Collapse Multi-line Character into one line
+##
+## @param x character
+## @param chars how many characters to display
+## @keywords internal
 
 one_line <- function(x, chars=0L) {
   if(!is.character(x) || any(is.na(x)))
@@ -474,12 +475,12 @@ change_first <- function(x, fun) {
     ifelse(nchar(x) == 1L, fun(x), x)
   )
 }
-#' Substring To a Length, but end In Consonant
-#'
-#' @keywords internal
-#' @param x character vector to substring
-#' @param stop integer max number of characters
-#' @param justify character(1L) passed on to format
+## Substring To a Length, but end In Consonant
+##
+## @keywords internal
+## @param x character vector to substring
+## @param stop integer max number of characters
+## @param justify character(1L) passed on to format
 
 substr_cons <- function(x, stop, justify="left") {
   if(!is.character(x)) stop("Argument `x` must be ")
@@ -487,13 +488,13 @@ substr_cons <- function(x, stop, justify="left") {
   z <- sub("[^bcdfghjklmnpqrstvwxz]*$", "", y, ignore.case=TRUE)
   format(z, width=stop, justify=justify)
 }
-#' Remove Common Characters From Values in a Vector
-#'
-#' Note that one length \code{x} is a degenerate case that returns "".
-#'
-#' @keywords internal
-#' @param x character the vector to make more unique
-#' @param from the direction to remove common elements from
+## Remove Common Characters From Values in a Vector
+##
+## Note that one length \code{x} is a degenerate case that returns "".
+##
+## @keywords internal
+## @param x character the vector to make more unique
+## @param from the direction to remove common elements from
 
 str_reduce_unique <- function(x, from="left") {
   if(
@@ -524,12 +525,12 @@ str_reduce_unique <- function(x, from="left") {
   }
   res
 }
-#' Convert A Matrix of Test Outcomes for Display
-#'
-#' Used by \code{show} methods for both \code{unitizerSummary} and
-#' \code{unitizerSummaryList}
-#'
-#' @keywords internal
+## Convert A Matrix of Test Outcomes for Display
+##
+## Used by \code{show} methods for both \code{unitizerSummary} and
+## \code{unitizerSummaryList}
+##
+## @keywords internal
 
 summ_matrix_to_text <- function(
   mx, from="right", width=getOption("width"), show.nums=TRUE
@@ -594,16 +595,16 @@ summ_matrix_to_text <- function(
   )
   res
 }
-#' Capture Both StdOut and StdErr
-#'
-#' Will sink both "output" and "message" streams without checking whether they
-#' are already sunk, and will unsink them the same way.
-#'
-#' @keywords internal
-#' @param a quoted to evaluate
-#' @param env an environment to evaluate them in
-#' @return a list with stdout and stderr captured separately, classed as
-#'   "captured_output"
+## Capture Both StdOut and StdErr
+##
+## Will sink both "output" and "message" streams without checking whether they
+## are already sunk, and will unsink them the same way.
+##
+## @keywords internal
+## @param a quoted to evaluate
+## @param env an environment to evaluate them in
+## @return a list with stdout and stderr captured separately, classed as
+##   "captured_output"
 
 capture_output <- function(expr, env=parent.frame()) {
   std.out <- tempfile()

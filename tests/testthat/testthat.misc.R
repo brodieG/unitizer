@@ -29,16 +29,6 @@ test_that("Headers", {
   print(unitizer:::H2("No margin"), margin="none")
   "No margin"
 } )
-test_that("Sweet'n short descriptions work",{
-  expect_equal(unitizer:::desc(NULL), "NULL")
-  expect_match(
-    unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))),
-    "list lm \\[12,4;28\\] \\{coefficients:num\\(2\\);"
-  )
-  expect_equal(unitizer:::desc(new("unitizerItem", call=quote(1+1), env=new.env())), "S4 unitizerItem")
-  expect_equal(unitizer:::desc(array(1:27, dim=rep(3, 3))), "integer array [3,3,3]")
-  expect_equal(unitizer:::desc(data.frame(a=letters[1:10], b=1:10)), "list data.frame [10,{a:fct;b:int}]")
-} )
 test_that("Valid Names convert names to valid", {
   expect_equal(unitizer:::valid_names("hello"), "hello")
   expect_equal(unitizer:::valid_names(".hello"), ".hello")
@@ -184,6 +174,7 @@ test_that("Compare Conditions", {
     file.path("helper", "refobjs", "misc_cndlistshow1.rds")
   )
   attr(lst3[[1L]], "unitizer.printed") <- TRUE
+  lst3[[2L]] <- simpleWarning("warning2", quote(yo2 + yoyo))
   show2 <- capture.output(show(lst3))
   expect_equal_to_reference(
     show2,
@@ -315,11 +306,5 @@ test_that("is", {
 test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
-})
-test_that("quit restart", {
-  expect_equal(
-    withRestarts(unitizer:::unitizer_quit(), unitizerQuitExit=function(e) e),
-    list(save="default", status=0, runLast=TRUE)
-  )
 })
 

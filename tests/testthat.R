@@ -13,9 +13,9 @@ test_dir(
     # "handledruns"
     # "inpkg",
     # "ischecks",
-    "item"
+    # "item",
     # "list",
-    # "misc",
+    "misc"
     # "options",
     # "parse",
     # "prompt",

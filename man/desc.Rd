@@ -4,7 +4,7 @@
 \alias{desc}
 \title{One Line Description of Object}
 \usage{
-desc(val, depth = 0, limit = getOption("width"))
+desc(val, limit = getOption("width"))
 }
 \arguments{
 \item{val}{object to describe}
@@ -17,9 +17,15 @@ character(1L) describing object
 \description{
 Objects are described by class, and dimensions.  Dimensions is always denoted
 in square brackets.  For example, \dQuote{int[10]} means an integer of length
-ten.
+ten.  Typically an object will be identified by \code{head(class(obj), 1L)}
+along with its dimensions.  Recursive objects will have the first level shown
+provided that doing so fits within \code{limit}.
+}
+\details{
+Eventually this will be migrated to an S3 generic to allow recursive dispatch
+on object type.
 }
 \examples{
-desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2))
+desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2)))
 }
 

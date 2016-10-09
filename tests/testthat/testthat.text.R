@@ -212,5 +212,21 @@ local({
     )
     expect_equal(desc(list(NULL, 1L)), "list(NULL, int[1])")
     expect_equal(desc(NULL), "NULL")
-  })
+    expect_equal(unitizer:::desc(NULL), "NULL")
+    expect_match(
+      unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))), "lm[12]"
+    )
+    expect_equal(
+      unitizer:::desc(new("unitizerItem", call=quote(1+1), env=new.env())),
+      "unitizerItem"
+    )
+    expect_equal(
+      unitizer:::desc(array(1:27, dim=rep(3, 3))),
+      "array[3,3,3]"
+    )
+    expect_equal(
+      unitizer:::desc(data.frame(a=letters[1:10], b=1:10)),
+      "data.frame(a=fct[10], b=int[10])"
+    )
+  } )
 })
