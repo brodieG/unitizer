@@ -381,7 +381,7 @@ desc_type <- function(val) {
 desc_size <- function(val) {
   if(!is.null(dim(val))) {
     paste0("[", paste0(dim(val), collapse=","), "]")
-  } else if(length(val) != 1L) {
+  } else if((length(val) != 1L || !is.object(val)) && !is.null(val)) {
     paste0("[", length(val), "]")
   }
 }
@@ -422,7 +422,7 @@ desc <- function(val, limit=getOption("width")) {
     if(nchar(rec) < limit) rec else simple
   } else simple
   if(nchar(res) > limit - 3L)
-    paste0(substr(res, 1L, limit - 3L), "...") else res
+      paste0(substr(res, 1L, limit - 3L), "...") else res
 }
 #' Collapse Multi-line Character into one line
 #'
