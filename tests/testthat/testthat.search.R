@@ -2,15 +2,15 @@ library(testthat)
 library(devtools)
 context("Search")
 
-message("\n\nStarting\n\n")
-
 old.opts <- options(
   unitizer.search.path.keep=c(
     getOption("unitizer.search.path.keep"), "package:testthat"
 ) )
 unitizer.dir <- system.file(package="unitizer")
-install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
-install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg2"))
+install.packages(
+  file.path(unitizer.dir, "example.pkgs", sprintf("unitizerdummypkg%d", 1:2)),
+  repos=NULL, lib=head(.libPaths(), 1L), type="src", verbose=FALSE, quiet=TRUE
+)
 unitizer.dummy.list <- list(A=1, B=2, C=3)
 unitizer.dummy.list.2 <- list(A=13, B=24, C=35)
 
@@ -292,5 +292,7 @@ test_that("Prevent Namespace Unload Works", {
 try(detach("package:unitizer"), silent=TRUE)
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
-remove.packages(c("unitizerdummypkg1", "unitizerdummypkg2"))
+remove.packages(
+  c("unitizerdummypkg1", "unitizerdummypkg2"), lib=head(.libPaths(), 1L)
+)
 options(old.opts)
