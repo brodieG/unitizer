@@ -187,10 +187,11 @@ unitizer_sect <- function(
   title=NULL, expr=expression(), details=character(),
   compare=new("testFuns")
 ) {
-  if(!is(compare, "testFuns") & !is.function(compare))
+  if(!is(compare, "testFuns") && !is.function(compare))
     stop("Argument `compare` must be \"testFuns\" or a function")
   if(!is.character(details)) stop("Argument `details` must be character")
-  if(!is.null(title) && (!is.character(title) || length(title) != 1L)) stop("Argument `title` must be a 1 length character vector.")
+  if(!is.null(title) && (!is.character(title) || length(title) != 1L)) 
+    stop("Argument `title` must be a 1 length character vector.")
   exp.sub <- substitute(expr)
   if(is.call(exp.sub) && is.symbol(exp.sub[[1L]])) expr <- exp.sub
   if(is.call(expr)) {
@@ -207,22 +208,24 @@ unitizer_sect <- function(
     )
   }
   if(!is(compare, "testFuns")) {
-    if(is.function(compare)) {
-      compare <- try(
-        new(
-          "testFuns",
-          value=new(
-            "unitizerItemTestFun", fun=compare,
-            fun.name=deparse_fun(substitute(compare))
-          )
-      ) )
-      if(inherits(compare, "try-error")) {
-        stop(
-          "Problem with provided function for argument `compare`; see ",
-          "previous errors for details"
-        )
-      }
-    } else stop("Logic Error: contact package maintainer.")
+    fun.name <- deparse_fun(substitute(compare))
+    if(!isTRUE(err.fun <- is.two_arg_fun(compare))) {
+      stop(
+        "Argument `compare`, if a function, must accept two arguments and ",
+        "require no more than two (", err.fun, ")"
+      )
+    }
+    compare <- try(
+      new(
+        "testFuns",
+        value=new("unitizerItemTestFun", fun=compare, fun.name=fun.name)
+    ) )
+    if(inherits(compare, "try-error")) {
+      stop(
+        "Problem with provided function for argument `compare`; see ",
+        "previous errors for details"
+      )
+    }
   }
   if(length(expr) < 1L) {
     warning("`unitizer_sect` \"", strtrunc(title, 15), "\" is empty.")

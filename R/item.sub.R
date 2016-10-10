@@ -27,32 +27,15 @@ setClass("unitizerItemTests", contains="VIRTUAL",
 
 setClass(
   "unitizerItemTestFun",
-  representation(fun="function", fun.name="character"),
+  slots=c(fun="function", fun.name="character"),
+  prototype=list(fun=all.equal),
   validity=function(object) {
-    frms <- formals(object@fun)
-    frms <- frms[!(names(frms) %in% "...")]
-    if(
-      length(frms) < 2L |
-      any(
-        vapply(
-          head(frms, 2L),
-          function(frm)
-            !(is.symbol(frm) && nchar(as.character(frm)) == 0L),
-          logical(1L))
-       ) |
-      any(
-        vapply(
-          tail(frms, -2L),
-          function(frm) (is.symbol(frm) && nchar(as.character(frm)) == 0L),
-          logical(1L)
-      ) )
-    ) {
+    if(!isTRUE(err <- is.two_arg_fun(object@fun)))
       return(
         cc(
-         "slot `@fun` must be a function with the first two parameters ",
-         "non-optional and all others optional."
+         "Slot `@fun` must be a function with the first two parameters ",
+         "non-optional and all others optional (", err, ")."
       ) )
-    }
     TRUE
   }
 )
@@ -169,6 +152,24 @@ if(
     "slots not identical; contact maintainer."
   )
 }
+setMethod("$", "unitizerItemTestsErrorsDiffs",
+  function(x, name) {
+    what <- substitute(name)
+    what <- if(is.symbol(what)) as.character(what) else name
+    x[[what]]@diff
+} )
+setMethod("[[",  "unitizerItemTestsErrorsDiffs",
+  function(x, i, j, ..., exact=TRUE) {
+    if(!is.chr1plain(i))
+      stop("Argument `i` must be character(1L) and not NA")
+    sn <- slotNames(x)
+    if(!i %in% sn)
+      stop(
+        "Argument `i` must be one of ",
+        paste0(deparse(sn, width.cutoff=500L), collapse="")
+      )
+    slot(x, i)
+})
 
 setClass(
   "unitizerItemsTestsErrors", contains="unitizerList"

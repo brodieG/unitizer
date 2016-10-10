@@ -21,8 +21,8 @@ test_dir(
     # "prompt",
     # "rename",
     # "repairenvs",
-    "search"
-    # "section",
+    # "search",
+    "section"
     # "shim",
     # "state",
     # "text",

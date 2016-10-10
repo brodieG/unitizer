@@ -132,4 +132,24 @@ is.valid_capt_setting <- function(x) {
   TRUE
 }
 
+is.two_arg_fun <- function(x) {
+  if(!is.function(x)) {
+    "is not a function"
+  } else if(
+    length(formals(x)) < 2L &&
+    !identical(head(names(formals(x)), 1L), "...")
+  ) {
+    "does not have at least two arguments"
+  } else {
+    nm.forms <- vapply(formals(x), is.name, logical(1L))
+    forms.chr <- character(length(nm.forms))
+    forms.chr[nm.forms] <- as.character(formals(x)[nm.forms])
+    if(
+      any(
+        tail(!nzchar(forms.chr) & nm.forms & names(nm.forms) != "..." , -2L)
+      ) && !identical(head(names(nm.forms), 1L), "...")
+    )
+      "cannot have any non-optional arguments other than first two" else TRUE
+  }
+}
 
