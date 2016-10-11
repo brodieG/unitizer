@@ -6,8 +6,6 @@ context("Shim")
 prev.trace.state <- tracingState(TRUE)
 if(!prev.trace.state) message("Turned on tracing state for tests")
 
-unitizer.dir <- system.file(package="unitizer")
-install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 unitizer.dummy.list <- list(z=23, x=1, y="hello")
@@ -31,7 +29,6 @@ test_that("Parent Env Stays on Top", {
   expect_identical(
     environmentName(parent.env(my.env)), "package:unitizerdummypkg1"
   )
-
   attach(unitizer.dummy.list)
   expect_identical(environmentName(parent.env(my.env)), "unitizer.dummy.list")
 
@@ -134,7 +131,6 @@ test_that("Checks, errors, etc.", {
 
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
 while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
-remove.packages(c("unitizerdummypkg1"))
 tracingState(prev.trace.state)
 
 test_that("find_returns", {
@@ -194,5 +190,30 @@ test_that("trace_at_end", {
   expect_equal(conditionMessage(cond), "hello")
   expect_equal(
     conditionCall(cond), quote(unitizer:::trace_test_fun(stop("hello")))
+  )
+  # return/missing etc. corner cases
+
+  f <- function(x, y, z=5) {
+    if(missing(x)) {
+      return(TRUE)
+    } else if(z > 5) {
+      stop("OMG, z > 5")
+    } else FALSE
+  }
+  unitizer:::trace_at_end("f", quote(cat("hello\n")), FALSE, environment())
+
+  expect_equal(capture.output(res <- f()), "hello")
+  expect_true(res, TRUE)
+  expect_equal(capture.output(res2 <- f(1)), "hello")
+  expect_true(res2, FALSE)
+  err <- try(out <- capture.output(f(1, z=6)), silent=TRUE)
+  expect_equal(out, "hello")
+  expect_is(err, "try-error")
+  expect_equal(
+    attr(err, "condition"),
+    structure(
+      list(message = "OMG, z > 5", call = quote(f(x = 1, z = 6))),
+      class = c("simpleError", "error", "condition")
+    )
   )
 })
