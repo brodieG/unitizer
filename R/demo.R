@@ -175,10 +175,21 @@ unitizer_check_demo_state <- function() {
     meta_word_msg(
       "Variables", paste0("`", vars, "`", collapse=", "), " already exist, but",
       "must be overwritten for demo to proceed.  These could have been left",
-      "over by a previous run of the demo that did not complete properly.\n",
+      "over by a previous run of the demo that did not complete properly.",
       sep=" "
     )
     choice <- simple_prompt("Overwrite variables?")
+    if(!identical(choice, "Y")) stop("Cannot continue demo.")
+    rm(list=vars[vars.exist], envir=parent.frame())
+  }
+  if("unitizer.fastlm" %in% rownames(installed.packages())) {
+    meta_word_msg(
+      "'unitizer.fastlm' pacakge already installed.  This could be because of "
+      "a prior demo run that was unable to clean-up properly after itself. ",
+      "Continuing with demo will overwrite existing installation."
+      sep=" "
+    )
+    choice <- simple_prompt("Overwrite existing installation?")
     if(!identical(choice, "Y")) stop("Cannot continue demo.")
     rm(list=vars[vars.exist], envir=parent.frame())
   }
@@ -189,7 +200,7 @@ unitizer_check_demo_state <- function() {
 #' @rdname demo
 
 unitizer_cleanup_demo <- function() {
-  vars <- c(".unitizer.fastlm", ".unitizer.test.file")
+  vars <- c(".unitizer.fastlm", ".unitizer.test.file", ".unitizer.test.store")
   try(detach("package:unitizer.fastlm"), silent=TRUE)
   try(unloadNamespace("unitizer.fastlm"), silent=TRUE)
   remove.packages("unitizer.fastlm", .libPaths()[[1L]])
@@ -197,6 +208,7 @@ unitizer_cleanup_demo <- function() {
   if(
     !inherits(pkg.dir, "try-error") && is.chr1plain(pkg.dir) &&
     file_test("-d", pkg.dir) && grepl("unitizer\\.fastlm$", pkg.dir)
-  ) unlink(pkg.dir, recursive=TRUE)
+  )
+  unlink(pkg.dir, recursive=TRUE)
   rm(list=vars, envir=parent.frame())
 }

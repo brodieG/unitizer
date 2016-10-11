@@ -5,6 +5,7 @@ context("Shim")
 
 prev.trace.state <- tracingState(TRUE)
 if(!prev.trace.state) message("Turned on tracing state for tests")
+
 unitizer.dir <- system.file(package="unitizer")
 install(paste0(unitizer.dir, "/example.pkgs/unitizerdummypkg1"))
 try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
@@ -192,10 +193,6 @@ test_that("trace_at_end", {
   cond <- attr(err, "condition")$condition
   expect_equal(conditionMessage(cond), "hello")
   expect_equal(
-    conditionCall(cond),quote(unitizer:::trace_test_fun(stop("hello")))
-  )
-
-    "Error in unitizer:::trace_test_fun(stop(\"hello\")) : hello",
-    fixed=TRUE
+    conditionCall(cond), quote(unitizer:::trace_test_fun(stop("hello")))
   )
 })

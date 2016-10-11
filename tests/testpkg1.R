@@ -2,7 +2,8 @@
 
 library("unitizer")
 if(interactive()) {
-  if("testpkg1" %in% loadedNamespaces()) stop("`testpkg1` already loaded")
+  if("testpkg1" %in% rownames(installed.packages()))
+    stop("`testpkg1` already installed")
   if(!identical(basename(getwd()), "tests")) stop("Should be in /tests")
   if(!file_test("-d", file.path(getwd(), "test_pkgs", "testpkg1")))
     stop("`testpkg1` dir not found")
