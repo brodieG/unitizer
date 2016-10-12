@@ -184,9 +184,9 @@ unitizer_check_demo_state <- function() {
   }
   if("unitizer.fastlm" %in% rownames(installed.packages())) {
     meta_word_msg(
-      "'unitizer.fastlm' pacakge already installed.  This could be because of "
+      "'unitizer.fastlm' pacakge already installed.  This could be because of ",
       "a prior demo run that was unable to clean-up properly after itself. ",
-      "Continuing with demo will overwrite existing installation."
+      "Continuing with demo will overwrite existing installation.",
       sep=" "
     )
     choice <- simple_prompt("Overwrite existing installation?")
