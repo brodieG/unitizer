@@ -645,3 +645,17 @@ print.captured_output <- function(x, ...) {
   cat(x$message, sep="\n")
 }
 
+## Convert a Character Vector into a List in English
+##
+## @param x character elements to list
+## @param singular follow on
+## @param plural follow on
+
+char_to_eng <- function(x, singular="was", plural="were") {
+  stopifnot(is.character(x), is.chr1(singular), is.chr1(plural))
+  if(length(x) == 1L) {
+    paste(x, singular)
+  } else if (length(x)) {
+    paste0(paste0(head(x, -1L), ", "), ", and ", tail(x, 1L), plural)
+  } else ""
+}
