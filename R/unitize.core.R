@@ -257,14 +257,16 @@ unitize_core <- function(
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
     meta_word_cat(
       "In order to proceed unitizer must create the following ", dir.word,
-      ":\n", sep="", trail.nl=FALSE
+      ":\n\n", sep="", trail.nl=FALSE
     )
     meta_word_cat(
-      as.character(UL(dir.names.clean), option=getOption("width") - 2L),
+      as.character(
+        UL(dir.names.clean), width=getOption("width") - 2L, hyphens=FALSE
+      ),
       trail.nl=FALSE
     )
     prompt <- paste0("Create ", dir.word)
-    meta_word_cat(prompt, "?", sep="")
+    meta_word_cat("\n", prompt, "?", sep="")
 
     pick <- unitizer_prompt(
       prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
