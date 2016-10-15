@@ -271,14 +271,14 @@ meta_word_cat <- function(
 meta_word_msg <- function(
   ..., sep="\n", width=getOption("width"), tolerance=8L, trail.nl=TRUE
 ) {
-  out <- c(
-    paste0(
+  out <- paste0(
+    c(
       word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| "),
-      collapse=sep
+      if(trail.nl) ""
     ),
-    if(trail.nl) "\n"
+    collapse="\n"
   )
-  if(length(out)) message(out)
+  if(length(out)) message(paste0(out))
   invisible(out)
 }
 ## Like word_wrap, but handles some additional duties needed for word_cat
