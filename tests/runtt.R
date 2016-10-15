@@ -76,8 +76,8 @@ local({
       # "section",
       # "shim",
       # "state",
-      "text"
-      # "translate",
+      # "text",
+      "translate"
       # "unitize",
       # "unitize2",
       # "upgrade",
