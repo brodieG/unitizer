@@ -213,7 +213,7 @@ local({
     expect_equal(desc(list(NULL, 1L)), "list(NULL, int[1])")
     expect_equal(desc(NULL), "NULL")
     expect_equal(unitizer:::desc(NULL), "NULL")
-    expect_match(
+    expect_equal(
       unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))), "lm[12]"
     )
     expect_equal(
