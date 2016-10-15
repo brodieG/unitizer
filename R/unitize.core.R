@@ -69,7 +69,7 @@ unitize_core <- function(
   state <- try(as.state(state, test.files))
   if(inherits(state, "try-error"))
     stop("Argument `state` could not be evaluated.")
-  par.env <- state@par.env
+  par.env <- state@par.env  # NOTE: this could be NULL until later when replaced
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
   )
@@ -119,64 +119,6 @@ unitize_core <- function(
 
   check_call_stack()
 
-  # Create parent directories for untizer stores if needed, doing now so that
-  # we can later ensure that store ids are being specified on an absolute basis,
-  # and also so we can prompt the user now
-
-  dir.names <- vapply(
-    store.ids,
-    function(x) {
-      if(is.character(x) && !is.object(x) && !file_test("-d", dirname(x))) {
-        dirname(x)
-      } else NA_character_
-    },
-    character(1L)
-  )
-  dir.names.clean <- Filter(Negate(is.na), unique(dir.names))
-  if(length(dir.names.clean)) {
-    dir.word <-
-      paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
-    meta_word_cat(
-      "In order to proceed unitizer must create the following ", dir.word,
-      ":\n", sep="", trail.nl=FALSE
-    )
-    meta_word_cat(
-      as.character(UL(dir.names.clean), option=getOption("width") - 2L),
-      trail.nl=FALSE
-    )
-    prompt <- paste0("Create ", dir.word)
-    meta_word_cat(prompt, "?", sep="")
-
-    pick <- unitizer_prompt(
-      prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
-      browse.env=new.env(parent=par.env)
-    )
-    if(!identical(pick, "Y"))
-      stop("Cannot proceed without creating directories.")
-    if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
-      # nocov start
-      # no good way to test
-      stop(
-        "Cannot proceed, failed to create the following directories:\n",
-        paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
-      )
-      # nocov end
-  } }
-  # Ensure directory names are normalized, but only if dealing with char objects
-
-  norm.attempt <- try(
-    store.ids <- lapply(
-      store.ids,
-      function(x) {
-        if(is.character(x) && !is.object(x)) {
-          file.path(normalize_path(dirname(x), mustWork=TRUE), basename(x))
-        } else x
-  } ) )
-  if(inherits(norm.attempt, "try-error"))
-    stop(
-      "Logic Error: some `store.ids` could not be normalized; contact ",
-      "maintainer."
-    )
   # - Global Controls ----------------------------------------------------------
 
   # Store a copy of the unitizer options, though make sure to validate them
@@ -294,6 +236,66 @@ unitize_core <- function(
       )
       # nocov end
   } }
+  # - Directories --------------------------------------------------------------
+
+  # Create parent directories for untizer stores if needed, doing now so that
+  # we can later ensure that store ids are being specified on an absolute basis,
+  # and also so we can prompt the user now
+
+  dir.names <- vapply(
+    store.ids,
+    function(x) {
+      if(is.character(x) && !is.object(x) && !file_test("-d", dirname(x))) {
+        dirname(x)
+      } else NA_character_
+    },
+    character(1L)
+  )
+  dir.names.clean <- Filter(Negate(is.na), unique(dir.names))
+  if(length(dir.names.clean)) {
+    dir.word <-
+      paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
+    meta_word_cat(
+      "In order to proceed unitizer must create the following ", dir.word,
+      ":\n", sep="", trail.nl=FALSE
+    )
+    meta_word_cat(
+      as.character(UL(dir.names.clean), option=getOption("width") - 2L),
+      trail.nl=FALSE
+    )
+    prompt <- paste0("Create ", dir.word)
+    meta_word_cat(prompt, "?", sep="")
+
+    pick <- unitizer_prompt(
+      prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
+      browse.env=new.env(parent=par.env)
+    )
+    if(!identical(pick, "Y"))
+      stop("Cannot proceed without creating directories.")
+    if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
+      # nocov start
+      # no good way to test
+      stop(
+        "Cannot proceed, failed to create the following directories:\n",
+        paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
+      )
+      # nocov end
+  } }
+  # Ensure directory names are normalized, but only if dealing with char objects
+
+  norm.attempt <- try(
+    store.ids <- lapply(
+      store.ids,
+      function(x) {
+        if(is.character(x) && !is.object(x)) {
+          file.path(normalize_path(dirname(x), mustWork=TRUE), basename(x))
+        } else x
+  } ) )
+  if(inherits(norm.attempt, "try-error"))
+    stop(
+      "Logic Error: some `store.ids` could not be normalized; contact ",
+      "maintainer."
+    )
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
