@@ -72,12 +72,12 @@ local({
       # "prompt",
       # "rename",
       # "repairenvs",
-      # "search",
+      "search"
       # "section",
       # "shim",
       # "state",
       # "text",
-      "translate"
+      # "translate",
       # "unitize",
       # "unitize2",
       # "upgrade",
