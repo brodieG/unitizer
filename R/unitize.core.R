@@ -272,8 +272,11 @@ unitize_core <- function(
       prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
       browse.env=new.env(parent=par.env)
     )
-    if(!identical(pick, "Y"))
+    if(!identical(pick, "Y")) {
+      on.exit(NULL)
+      reset_and_unshim(global)
       stop("Cannot proceed without creating directories.")
+    }
     if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
       # nocov start
       # no good way to test
