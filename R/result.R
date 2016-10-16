@@ -181,7 +181,7 @@ print.unitizer_results <- function(x, ...) {
       cc(
         "Summary of tests (accept/total):\n",
         head(fin.out, -1L), paste0(rep("-", max(nchar(fin.out))), collapse=""),
-        tail(fin.out, 1L),
+        tail(fin.out, 1L)
       ),
       sep="\n"
     )
