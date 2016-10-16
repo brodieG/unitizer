@@ -53,6 +53,7 @@ local({
 
   test.res <- test_dir(
     "testthat",
+    env=environment(),
     filter=paste(sep="|",
       # "browse",
       # "capture",
@@ -72,13 +73,13 @@ local({
       # "prompt",
       # "rename",
       # "repairenvs",
-      "search"
+      # "search",
       # "section",
       # "shim",
       # "state",
       # "text",
       # "translate",
-      # "unitize",
+      "unitize"
       # "unitize2",
       # "upgrade",
       # "zzrunlast"

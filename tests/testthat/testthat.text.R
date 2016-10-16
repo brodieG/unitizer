@@ -95,6 +95,23 @@ local({
       c("- there was once a time when ", "  the fantastic unicorns could", "  fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks", "  1. there was once a time ", "     when the fantastic ", "     unicorns could fly", "  2. bugs bunny ate carrots ", "     and drank milk while ", "     hunting ducks", "    - there was once a time ", "      when the fantastic ", "      unicorns could fly", "    - bugs bunny ate carrots ", "      and drank milk while ", "      hunting ducks", "- yowza it is raining toads ",  "  today!")
     )
     expect_error(unitizer:::as.character.bullet(hello, 1:10))
+
+    # Extra args to word_wrap
+
+    expect_error(
+      as.character(unitizer:::OL(c("hello", "there")), unlist=TRUE),
+      "argument is used internally"
+    )
+    expect_equal(
+      as.character(unitizer:::OL("asdfasdfqwerjhdfkasdfasdfasd"), width=20L),
+      c("1. asdfasdfqwerjhdf-", "   kasdfasdfasd")
+    )
+    expect_equal(
+      as.character(
+        unitizer:::OL("asdfasdfqwerjhdfkasdfasdfasd"), width=20L, hyphens=FALSE
+      ),
+      c("1. asdfasdfqwerjhdfk", "   asdfasdfasd")
+    )
   })
   test_that("substr_const", {
     expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L), c("ab  ", "abcd", "abc "))
@@ -196,6 +213,17 @@ local({
     expect_equal(
       capture.output(unitizer:::meta_word_cat("hello", "there", sep=" ")),
       c("| hello there", "")
+    )
+  })
+  test_that("meta_word_msg", {
+    expect_message(
+      unitizer:::meta_word_msg("hello"), c("| hello\n"), fixed=TRUE
+    )
+    txt <- "hello there how are you this wraps"
+    expect_message(
+      unitizer:::meta_word_msg(txt, width=20),
+      "| hello there how\n| are you this wraps\n",
+      fixed=TRUE
     )
   })
   test_that("desc", {

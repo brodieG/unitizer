@@ -20,7 +20,9 @@ local({
 
   unitizer:::read_line_set_vals(c("1 + 1", "Y", "Y", "Y", "Y", "N"))
   hist.file <- tempfile()
-  unitize(.unitizer.test.file, interactive.mode=TRUE, history=hist.file)
+  unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE, history=hist.file)
+  )
   hist.dat <- readLines(hist.file)
   unlink(hist.file)
 
@@ -43,12 +45,12 @@ local({
       txtopt1, file.path("helper", "refobjs", "unitize_txtop1.rds")
     )
     # supplied seed not valid int
-    # unexpectedly exited; not clear why all stderr is not being captured by capture_output...
+    # unexpectedly exited; not clear why all stderr is not being captured by
+    # capture_output...
     expect_equal_to_reference(
       txtopt2, file.path("helper", "refobjs", "unitize_txtop2.rds")
     )
   })
-
   # Unitizers in different directories that don't exist; also test using a
   # function to generate those directories
 
@@ -76,6 +78,9 @@ local({
   txt2$output <- rem_txt(txt2$output)
 
   test_that("create dir", {
+    expect_is(untz1, "try-error")
+    expect_is(untz2, "unitizer_results")
+
     # must create the following directory
     # cannot proceed w/o creating directories
 
@@ -107,22 +112,28 @@ local({
   )
   untz3a.get.all <- vapply(get_unitizer(untz3a), class, character(1L))
   untz3a.cpy <- untz3a
-  for(i in seq_along(untz3a.cpy)) {  # need to drop temp file attributes for tests
-    attr(untz3a.cpy[[i]], "test.file") <- basename(attr(untz3a.cpy[[i]], "test.file"))
-    attr(untz3a.cpy[[i]], "store.id") <- basename(attr(untz3a.cpy[[i]], "store.id"))
+  # need to drop temp file attributes for tests
+  for(i in seq_along(untz3a.cpy)) {
+    attr(untz3a.cpy[[i]], "test.file") <-
+      basename(attr(untz3a.cpy[[i]], "test.file"))
+    attr(untz3a.cpy[[i]], "store.id") <-
+      basename(attr(untz3a.cpy[[i]], "store.id"))
   }
+  browser()
   untz3a.all <- capture.output(print(untz3a))
   untz3a.first <- capture.output(print(untz3a[[1L]]))
 
   # Now accept the last remaining tests
-  # unlink(list.files(test.dir, pattern="\\.unitizer$", full.names=TRUE), recursive=TRUE)
+  # unlink(list.files(test.dir, pattern="\\.unitizer$", full.names=TRUE),
+  # recursive=TRUE)
 
   unitizer:::read_line_set_vals(
     c(
       "3000",                         # Invalid input
       "3",                            # Review third unitizer
       "Y", "Y", "Y", "Y",             # Accept all
-      "R"                             # Re-eval and exit (again, not clear this is right thing to do)
+      # Re-eval and exit (again, not clear this is right thing to do)
+      "R"
     )
   )
   txt3b <- unitizer:::capture_output(
