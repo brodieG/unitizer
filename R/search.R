@@ -484,7 +484,8 @@ unload_namespaces <- function(
     # nocov start
     # no good way to test this
     warning(
-      "Unable to unload the following namespaces:\n", deparse(names(lns)),
+      "Unable to unload the following namespaces:\n", 
+      char_to_eng(sort(names(lns))),
       immediate.=TRUE
     )
     # nocov end
