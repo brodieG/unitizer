@@ -12,17 +12,17 @@ local({
     unitizer.fastlm="fastlm.0"
   )
   lib <- head(.libPaths(), 1L)
-  if(
-    any(which.inst <- names(tmp.pkgs) %in% rownames(installed.packages()))
-  ) {
-    # remove.packages(sprintf("unitizerdummypkg%d", 1:2))
-    stop(
-      "Packages\n",
-      paste0(
-        deparse(names(tmp.pkgs)[which.inst], width.cutoff=500), collapse=""
-      ),
-      "\nalready installed; cannot proceed with tests"
-  ) }
+  # if(
+  #   any(which.inst <- names(tmp.pkgs) %in% rownames(installed.packages()))
+  # ) {
+  #   # remove.packages(sprintf("unitizerdummypkg%d", 1:2))
+  #   stop(
+  #     "Packages\n",
+  #     paste0(
+  #       deparse(names(tmp.pkgs)[which.inst], width.cutoff=500), collapse=""
+  #     ),
+  #     "\nalready installed; cannot proceed with tests"
+  # ) }
 
   unitizer.dir <- system.file(package="unitizer")
   pkg.dirs <- file.path(unitizer.dir, "example.pkgs", tmp.pkgs)

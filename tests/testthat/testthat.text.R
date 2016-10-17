@@ -222,7 +222,7 @@ local({
     txt <- "hello there how are you this wraps"
     expect_message(
       unitizer:::meta_word_msg(txt, width=20),
-      "| hello there how\n| are you this wraps\n",
+      "| hello there how \n| are you this wraps\n\n",
       fixed=TRUE
     )
   })
@@ -257,4 +257,12 @@ local({
       "data.frame(a=fct[10], b=int[10])"
     )
   } )
+  test_that("char_to_eng", {
+    expect_equal(unitizer:::char_to_eng(character(), "", ""), "")
+    expect_equal(unitizer:::char_to_eng(letters[1:4], "", ""), "a, b, c, and d")
+    expect_equal(unitizer:::char_to_eng(letters[1:2], "", ""), "a, and b")
+    expect_equal(unitizer:::char_to_eng(letters[1], "", ""), "a")
+    expect_equal(unitizer:::char_to_eng(letters[1]), "a was")
+    expect_equal(unitizer:::char_to_eng(letters[1:2]), "a, and b were")
+  })
 })

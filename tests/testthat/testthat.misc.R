@@ -325,3 +325,15 @@ test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
 })
+test_that("pretty_path", {
+  # not supposed to exist
+  expect_warning(res <- unitizer:::pretty_path('xadfasdfxcfasdfasd'), NA)
+  expect_identical(res, 'xadfasdfxcfasdfasd')
+  expect_identical(unitizer:::pretty_path(normalizePath('.')), '.')
+  expect_identical(
+    unitizer:::pretty_path(
+      file.path(system.file(package="stats"), "DESCRIPTION")
+    ),
+    "package:stats/DESCRIPTION"
+  )
+})
