@@ -386,7 +386,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          meta_word_msg("No changes recorded.")
+          meta_word_msg("No changes recorded.", trail.nl=FALSE)
           break
         }
     } }
@@ -636,7 +636,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
       cat(deparse_prompt(parsed.call), sep="\n")
       history_write(x@hist.con, item.main@call.dep)
 
-      # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant; options need to be
       # retrieved from unitizer object since they get reset
 

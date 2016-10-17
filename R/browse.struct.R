@@ -407,7 +407,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     item.id.formatted <- format(justify="right",
       paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id.ord)
     )
-    num.pad <- ".  "
+    num.pad <- ". "
     front.pad <- "  "
     rev.type <- format(as.character(x@mapping@review.type), justify="right")
     rev.fail.corr <- rev.type %in% c("Failed", "Corrupted")
@@ -466,9 +466,9 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
 
     call.chrs <- nchar(out.calls)
     call.chrs.max <- max(call.chrs)
-    tar.len <- min(disp.len, call.chrs.max + 3L)
+    tar.len <- min(disp.len, max(call.chrs.max + 3L, 15L))
     dot.pad <- substr(  # this will be the padding template
-      paste0(rep(".  ", ceiling(tar.len / 3)), collapse=""), 1L, tar.len
+      paste0(rep(" . ", ceiling(tar.len / 3)), collapse=""), 1L, tar.len
     )
     calls.fin <- rep(dot.pad, length(call.chrs))
     substr(calls.fin, 1L, call.chrs) <- out.calls
@@ -677,7 +677,8 @@ setClass("unitizerBrowseSubSection",
     tests.result="matrix"
   ),
   prototype=list(
-    show.msg=FALSE, show.fail=FALSE, show.out=FALSE, action.default="N"
+    show.msg=FALSE, show.fail=FALSE, show.out=TRUE, action.default="N",
+    show.msg=TRUE
   ),
   validity=function(object) {
     if(
