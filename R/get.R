@@ -440,7 +440,7 @@ get_package_dir <- function(name=getwd(), has.tests=FALSE) {
     is.character(name), !any(is.na(name)), is.TF(has.tests),
     as.logical(length(name))
   )
-  name <- normalize_path(name)
+  name <- normalize_path(name, mustWork=FALSE)
   if(length(name) > 1L) name <- attr(unique_path(name), "common_dir")
   is.package <- FALSE
   prev.dir <- par.dir <- name

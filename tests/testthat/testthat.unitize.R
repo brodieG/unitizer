@@ -11,8 +11,9 @@ local({
   context("Unitize")
 
   update_fastlm(.unitizer.fastlm, "0.1.0")
-  install.packages(.unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src")
-
+  install.packages(
+    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
+  )
   test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
   unlink(.unitizer.test.store, recursive=TRUE)
 
@@ -119,7 +120,6 @@ local({
     attr(untz3a.cpy[[i]], "store.id") <-
       basename(attr(untz3a.cpy[[i]], "store.id"))
   }
-  browser()
   untz3a.all <- capture.output(print(untz3a))
   untz3a.first <- capture.output(print(untz3a[[1L]]))
 
@@ -180,20 +180,25 @@ local({
 
   old.keep.ns <- options(unitizer.namespace.keep=c("testthat"))
   unitizer:::read_line_set_vals("Y")
-  txt4 <- unitizer:::capture_output(unitize_dir(test.dir, state="pristine", interactive.mode=TRUE))
+  txt4 <- unitizer:::capture_output(
+    unitize_dir(test.dir, state="pristine", interactive.mode=TRUE)
+  )
   unitizer:::read_line_set_vals("N")
-  txt5 <- unitizer:::capture_output(unitize_dir(test.dir, state="pristine", interactive.mode=TRUE))
-
+  txt5 <- unitizer:::capture_output(
+    unitize_dir(test.dir, state="pristine", interactive.mode=TRUE)
+  )
   # Non-interactive; also testing what happens when we run a test with errors
   # inside a try block (txt6)
 
+  # unitize_dir(test.dir, auto.accept="new")
   txt6 <- unitizer:::capture_output(
     try(unitize_dir(test.dir, state="pristine", interactive.mode=FALSE))
   )
   txt7 <- unitizer:::capture_output(
     try(
       unitize(
-        file.path(test.dir, "fastlm2.R"), state="pristine", interactive.mode=FALSE
+        file.path(test.dir, "fastlm2.R"), state="pristine", 
+        interactive.mode=FALSE
   ) ) )
   options(old.keep.ns)
   # Note that if `data.table` namespace is loaded these tests are likely to fail
@@ -216,7 +221,6 @@ local({
   # Removing tests; del2 has the same tests as del1, but with some removed
 
   extra.dir <- file.path(test.dir,"..", "extra")
-  "YYYY"
   txt7aa <- unitizer:::capture_output(
     unitize(
       file.path(extra.dir, "del1.R"), auto.accept="new", interactive.mode=FALSE
@@ -234,16 +238,19 @@ local({
       txt7aa, file.path("helper", "refobjs", "unitize_rem1.rds")
     )
     expect_equal_to_reference(
-      txt7aa, file.path("helper", "refobjs", "unitize_rem2.rds")
+      txt7ab, file.path("helper", "refobjs", "unitize_rem2.rds")
     )
   })
   # Update `fastlm` to cause unitizers to fail, and go through the errors
 
   update_fastlm(.unitizer.fastlm, version="0.1.1")
-  install.packages(.unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src")
+  install.packages(
+    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
+  )
 
   # Try navigating through the unitizer
 
+  browser()
   unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N", "N", "B", "U", "Q"))
   txt7a <- unitizer:::capture_output(
     untz7a <- unitize(.unitizer.test.file, interactive.mode=TRUE)
