@@ -473,7 +473,7 @@ unload_namespaces <- function(
   # Unload any dynamic libraries associated with the stuff we detached by
   # matching paths to what's in dynlibs
 
-  dyn.lib.fnames <- vapply(.dynLibs(), `[[`, character(1L), "path")
+  dyn.lib.fnames <- vapply(.dynLibs(), "[[", character(1L), "path")
   dls <- sub("/libs/[^/].*$", "", dyn.lib.fnames)
   lib.locs.ul <- lib.locs[unloaded.success]
   dls.to.ul <-  lib.locs.ul[lib.locs.ul %in% dls]
@@ -484,9 +484,8 @@ unload_namespaces <- function(
     # nocov start
     # no good way to test this
     warning(
-      "Unable to unload the following namespaces:\n", 
-      char_to_eng(sort(names(lns))),
-      immediate.=TRUE
+      "Unable to unload the following namespaces: ",
+      char_to_eng(sort(names(lns)), "", ""), immediate.=TRUE
     )
     # nocov end
   }

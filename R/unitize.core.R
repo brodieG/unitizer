@@ -623,8 +623,9 @@ unitize_browse <- function(
         paste0("test file \"", global$ns.opt.conflict@file, "\""),
       " because the following namespace", if(many > 1L) "s", " could not be ",
       "unloaded: ",
-      char_to_eng(sprintf("`%s`", global$ns.opt.conflict@namespaces)),
-      ".", sep=""
+      char_to_eng(
+        sprintf("`%s`", sort(global$ns.opt.conflict@namespaces)), "", ""
+      ), ".", sep=""
     )
     if(interactive.mode) {
       meta_word_msg(
