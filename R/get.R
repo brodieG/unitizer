@@ -387,7 +387,7 @@ infer_unitizer_location.character <- function(
     return(store.id)
   } else if(!selection)
     stop(
-      "Logic Error: should never have non.interative zero selection; ", "
+      "Logic Error: should never have non.interactive zero selection; ", "
       contact maintainer."
     )
   # Return

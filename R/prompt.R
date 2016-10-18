@@ -342,7 +342,10 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
     y[[1L]] != as.integer(y[[1L]])
   ) return(FALSE)
   if(!isTRUE(y[[1L]] %in% valid.vals)) {
-    meta_word_msg("Input must be in `", deparse(valid.vals), "`", sep="")
+    meta_word_msg(
+      "Type a number in `", deparse(valid.vals), "` at the prompt", 
+      sep="", trail.nl=FALSE
+    )
     return(FALSE)
   }
   return(y[[1L]])
