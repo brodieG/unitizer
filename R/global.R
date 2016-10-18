@@ -444,11 +444,14 @@ unitizerGlobal <- setRefClass(
         } else {
           new.env()  # guaranteed unique
         }
-        if(!identical(new.obj, ref.obj))
+        if(!identical(new.obj, ref.obj)) {
           slot(tracking, i) <<- append(slot(tracking, i), list(new.obj))
-        if(identical(mode, "init"))
+          slot(indices.last, i) <<- length(slot(tracking, i))
+        }
+        if(identical(mode, "init")) {
           slot(indices.init, i) <<- length(slot(tracking, i))
-        slot(indices.last, i) <<- length(slot(tracking, i))
+          slot(indices.last, i) <<- length(slot(tracking, i))
+        }
       }
       indices.last
     },

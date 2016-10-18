@@ -52,6 +52,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
         "possible, contact maintainer."
       )
     browse.res <- browseUnitizerInternal(x, y, force.update=force.update)
+    x@global$resetInit()  # reset state
 
     # Need to store our `unitizer`
 
