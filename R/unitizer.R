@@ -677,6 +677,6 @@ setMethod("as.character", "unitizer",
     name <- try(getName(x))
     name.fin <- if(inherits(name, "try-error")) "<name retrieval failure>" else
       name
-    sprintf("unitizer for '%s'", name)
+    sprintf("unitizer for '%s'", pretty_path(name))
 } )
 

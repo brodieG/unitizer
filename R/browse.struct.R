@@ -430,7 +430,7 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     rev.type[rev.new] <- crayon::blue(rev.type[rev.new])
 
     review.formatted <- paste(sep=":",
-      ifelse(!x@mapping@ignored, rev.type, "-"),
+      format(ifelse(!x@mapping@ignored, rev.type, "-"), justify="right"),
       format(
         ifelse(x@mapping@reviewed, as.character(x@mapping@review.val), "-")
       )
