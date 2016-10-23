@@ -270,7 +270,7 @@ review_prompt <- function(x, nav.env) {
 
   if(nav.id <= length(x@mapping@ignored)) {
     x@inspect.all <- x@mapping@ignored[[nav.id]] || (
-        identical(x@mode, "unitize") &&
+        identical(x@mode, "unitize") && !x@start.at.browser &&
         identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
       )
     x@review <- if(x@inspect.all) -1L else 1L

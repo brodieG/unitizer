@@ -202,9 +202,9 @@ normalize_path <- function(path, mustWork=NA)
 #     to access an actual file from the current working directory
 #   \item \code{pretty_path}  returns the most readable path that we can
 #     produce, but may not usable to access an actual file, main difference with
-#   \code{relativize_path} is that it will figure out if a file is in a package
-#   and return a path relative to the package directory if it turns out that one
-#   is shorter than the one produced with relativize path
+#     \code{relativize_path} is that it will figure out if a file is in a
+#     package and return a path relative to the package directory if it turns
+#     out that one is shorter than the one produced with relativize path
 #   \item \code{unique_path} is used to separate out a common path from a list
 #     of files, the unique paths are returned as a value, with the common
 #     directory attached as an attribute

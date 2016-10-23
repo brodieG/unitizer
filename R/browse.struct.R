@@ -9,15 +9,21 @@ NULL
 # Mainly, splits up the tests by section and subsection and creates an indexing
 # structure to keep track of what tests are in which section/subsection.  This
 # simplifies implementation of non-linear navigation through the tests.
+#
+# @param start.at.browser used to force the review of the unitizer to start at
+#   browser, useful when in review mode, or when all tests passed but user
+#   elected to review unitizer anyway from the unitize_dir menu
 
 setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
 setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
-  function(x, mode, hist.con=NULL, interactive=FALSE, ...) {
+  function(
+    x, mode, hist.con=NULL, interactive=FALSE, start.at.browser=FALSE, ...
+  ) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
     unitizer.browse <- new(
       "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive,
-      global=x@global
+      global=x@global, start.at.browser=start.at.browser
     )
     # - Unitize ----------------------------------------------------------------
 
@@ -180,7 +186,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         # Note: anything querying reference items has to go through items.new.map
         # since order isn't same.
 
-        browse.sect <- browse.sect + new(                            # Passed tests
+        # Passed tests
+
+        browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionPassed",
           items.new=x@items.ref[sect.map],
           show.msg=TRUE, new.conditions=rep(FALSE, sum(sect.map)),
@@ -293,7 +301,10 @@ setClass("unitizerBrowse", contains="unitizerList",
     global="unitizerGlobal",    # object for global settings
     auto.accept="logical",      # indicate whether any auto-accepts were triggered
     multi="logical",            # whether many unitizers are being browsed
-    multi.quit="logical"        # whether many unitizers are being browsed
+    multi.quit="logical",       # whether many unitizers are being browsed
+    # whether to show browser first, also disables warnings about reviewing
+    # tests that are not usually reviewed
+    start.at.browser="logical"
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -313,7 +324,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     interactive.error=FALSE,
     auto.accept=FALSE,
     multi=FALSE,
-    multi.quit=FALSE
+    multi.quit=FALSE,
+    start.at.browser=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -321,6 +333,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     }
     if(!is.TF(object@inspect.all))
       return("Slot `@inspect.all` must be TRUE or FALSE")
+    if(!is.TF(object@start.at.browser))
+      return("Slot `@start.at.browser` must be TRUE or FALSE")
     if(!is.TF(object@navigating))
       return("Slot `@navigating` must be TRUE or FALSE")
     if(!is.TF(object@browsing))

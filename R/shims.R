@@ -285,15 +285,13 @@ unitizerGlobal$methods(
       err.1 <- err.2 <- ""
       if(length(not.equal)) {
         err.1 <- cc(
-          char_to_eng(sprintf("`%s`", not.equal), "was", "were"),
+          char_to_eng(sprintf("`%s`", not.equal)),
           " not untraced because they were modified by something other ",
           "than unitizer.\n"
       ) }
       if(any(still.traced.other <- !still.traced %in% not.equal)) {
         err.2 <- cc(
-          char_to_eng(
-            sprintf("`%s`", still.traced[still.traced.other])
-          ),
+          char_to_eng(sprintf("`%s`", still.traced[still.traced.other])),
           " not untraced for unknown reasons; please report to ",
           "maintainer.\n"
       ) }

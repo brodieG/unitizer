@@ -98,9 +98,10 @@ setMethod(
     something.happened <- any(
       y@mapping@review.type != "Passed" & !y@mapping@ignored
     ) || (
-      any(!y@mapping@ignored) && identical(y@mode, "review")  # Not sure this is
+      any(!y@mapping@ignored) && (
+        identical(y@mode, "review") || y@start.at.browser
+      )
     )
-
     if(!length(y)) {
       meta_word_cat("No tests to review.", trail.nl=FALSE)
     } else if(!something.happened && !force.update) {
@@ -151,7 +152,10 @@ setMethod(
           withRestarts(
             {
               if(!done(y)) {
-                if(first.time && identical(y@mode, "review")) {
+                if(
+                  first.time && 
+                  (identical(y@mode, "review") || y@start.at.browser)
+                ) {
                   # for passed tests, start by showing the list of tests
                   first.time <- FALSE
                   y@review <- 0L
@@ -274,7 +278,7 @@ setMethod(
               meta_word_msg(
                 "Running in `force.update` mode so `unitizer` will be re-saved",
                 "even though there are no changes to record (see `?unitize`",
-                "for details).", sep=""
+                "for details).", sep=" "
               )
             if(update) {
               tar <- getTarget(x)
@@ -505,7 +509,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     ignore.passed <- !identical(x@mode, "review") &&
       is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
-      !x@inspect.all
+      !x@inspect.all && !x@start.at.browser
 
     ignore.sec <- all(
       (       # ignored and no errors
@@ -513,7 +517,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
       ) | (   # passed and not in review mode
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
-        !identical(x@mode, "review")
+        (!identical(x@mode, "review") || !x@start.at.browser)
       ) | (   # auto.accept
         x@mapping@reviewed[x@mapping@sec.id == curr.sec] &
         !x@navigating
@@ -597,6 +601,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
       new.glob.indices <- item.new@glob.indices
     }
+    # PROBLEM HERE: in "pass mode" we want the reference state, not the new
+    # state, but the default behavior appears to be to bind to the new state
+
     if(!identical(x@global$indices.last, new.glob.indices))
       x@global$reset(new.glob.indices)
 

@@ -130,10 +130,11 @@ setMethod(
 
 search_path_update <- function(id, global) {
   stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
-  if(!id %in% seq_along(global$tracking@search.path))
+  if(!id %in% seq_along(global$tracking@search.path)) {
     stop(
       "Logic Error: attempt to reset state to unknown index; contact maintainer"
     )
+  }
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 

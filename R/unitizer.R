@@ -602,7 +602,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         }
         test.error.tpl[[i]] <- err.tpl
         if(identical(i, "conditions")) {  #only failed/error tests get this far
-          if(length(item.new@data@conditions))  # if a mismatch, and new conditions, we'll want to show these
+          # if a mismatch, and new conditions, we'll want to show these
+          if(length(item.new@data@conditions))
             tests.conditions.new <- TRUE
         }
       }
@@ -623,7 +624,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         e1@tests.error <- append(e1@tests.error, FALSE)
       }
     }
-    e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)  # so added irrespective of pass/fail
+    # so added irrespective of pass/fail
+    e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)
 
     if(length(e1@tests.status)) {
       e1@tests.status <- unlist(

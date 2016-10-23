@@ -556,13 +556,15 @@ unitize_browse <- function(
   to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
 
   # Determine implied review mode (all tests passed in a particular unitizer,
-  # but user may still pick it to review)
+  # but user may still pick it to review); we got lazy and tried to leverage
+  # the review mechanism for passed tests, but this is not ideal because then
+  # we're using reference items instead of the newly evaluated versions.  Will
+  # switch this, but still have to deal with situations where a new state 
+  # doesn't exist (in particular, deleted tests)
 
-  review.mode <- ifelse(
-    !to.review & !force.update & test.len > 1L, "review", mode
-  )
   untz.browsers <- mapply(
-    browsePrep, as.list(unitizers), review.mode,
+    browsePrep, as.list(unitizers), mode=mode,
+    start.at.browser=(identical(mode, "review") | !to.review) & !force.update,
     MoreArgs=list(hist.con=hist.obj$con, interactive=interactive.mode),
     SIMPLIFY=FALSE
   )
