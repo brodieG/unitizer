@@ -7,19 +7,19 @@ if(!file_test("-d", file.path("helper", "refobjs")))
 
 library(unitizer)
 library(testthat)
-local({
+local(envir=.GlobalEnv, {
   old.opt.outer <- options(unitizer.color=FALSE, width=80L)
   on.exit({
     options(old.opt.outer)
     unitizer:::read_line_set_vals(NULL)
   })
-  context("Unitize 2\n")
+  context("Unitize 2")
 
   update_fastlm(.unitizer.fastlm, "0.1.0")
-  install.packages(.unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src")
-
-  test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
-  unlink(.unitizer.test.store, recursive=TRUE)
+  install.packages(
+    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
+  )
+  unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
 
   # Test unreviewed
 
@@ -67,31 +67,30 @@ local({
       untz1.clean, file.path("helper", "refobjs", "unitize2_rerun_res.rds")
     )
   } )
-  # Make sure that deleted items from a section are still marked from that section
-  # upgrade to version two to use the files that are set up for that there
+  # Make sure that deleted items from a section are still marked from that
+  # section upgrade to version two to use the files that are set up for that
+  # there; notice update_fastlm_*extra*
 
-  unitizer_cleanup_demo()
+  # Re-set by dropping unitizers
 
-  (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
+  unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
   unitizer:::update_fastlm_extra(.unitizer.fastlm)
-  install.packages(.unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src")
+  install.packages(
+    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
+  )
+  test.file.1 <- file.path(test.dir, "unitizer.fastlm.R")
+  test.file.2 <- file.path(test.dir, "unitizer.fastlm2.R")
+  test.store <- file.path(test.dir, "store2.unitizer")
 
-  .unitizer.test.file <- file.path(
-    .unitizer.fastlm, "tests", "unitizer", "unitizer.fastlm.R"
-  )
-  .unitizer.test.file.2 <- file.path(
-    .unitizer.fastlm, "tests", "unitizer", "unitizer.fastlm2.R"
-  )
-  .unitizer.test.store <- file.path(
-    .unitizer.fastlm, "tests", "unitizer", "fastlm1.unitizer"
-  )
   # First auto accept all initial tests, and then re-run with second version to
   # make sure deleted tests are where we think they should be
 
-  unitize(.unitizer.test.file, .unitizer.test.store, auto.accept="new")
+  out.1 <- unitizer:::capture_output(
+    unitize(test.file.1, test.store, auto.accept="new")
+  )
   unitizer:::read_line_set_vals(c("B", "Q"))
-  untz.2 <- unitize(
-    .unitizer.test.file.2, .unitizer.test.store, interactive.mode=TRUE
+  out.2 <- unitizer:::capture_output(
+    untz.2 <- unitize(test.file.2, test.store, interactive.mode=TRUE)
   )
   test_that("Section Extra", {
     expect_equal_to_reference(

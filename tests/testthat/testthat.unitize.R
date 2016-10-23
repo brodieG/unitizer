@@ -5,7 +5,7 @@ if(!file_test("-d", file.path("helper", "refobjs")))
 library(unitizer)
 library(testthat)
 
-local({
+local(envir=.GlobalEnv, {
   old.opt.outer <- options(unitizer.color=FALSE, width=80L)
   on.exit(options(old.opt.outer))
   context("Unitize")
@@ -146,6 +146,7 @@ local({
   # y <- readRDS(file.path("helper", "refobjs", "unitize_resprint3.rds"))
   # cat(capture.output(print(x)), sep="\n", file=(f1 <- tempfile())); cat(capture.output(print(y)), sep="\n", file=(f2 <- tempfile())); tools::Rdiff(f1, f2);
   # unlink(paste0("f", 1:2))
+
   test_that("unitize_dir", {
     expect_equal_to_reference(
       txt3a, file.path("helper", "refobjs", "unitize_txtdir.rds")
@@ -197,7 +198,7 @@ local({
   txt7 <- unitizer:::capture_output(
     try(
       unitize(
-        file.path(test.dir, "fastlm2.R"), state="pristine", 
+        file.path(test.dir, "fastlm2.R"), state="pristine",
         interactive.mode=FALSE
   ) ) )
   options(old.keep.ns)
@@ -250,7 +251,6 @@ local({
 
   # Try navigating through the unitizer
 
-  browser()
   unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N", "N", "B", "U", "Q"))
   txt7a <- unitizer:::capture_output(
     untz7a <- unitize(.unitizer.test.file, interactive.mode=TRUE)
@@ -274,7 +274,8 @@ local({
   # incorrect selection
 
   unitizer:::read_line_set_vals(c("H", "4", "1", "Q", "Q"))
-  txt8a <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+  txt8a <-
+    unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
 
   # simulate slow unitizer review
 
@@ -334,7 +335,6 @@ local({
   txt11 <- unitizer:::capture_output(
     untz11 <- unitize_dir(test.dir, interactive.mode=TRUE)
   )
-
   test_that("review dir", {
     expect_equal_to_reference(
       txt8, file.path("helper", "refobjs", "unitize_revdir1.rds")
@@ -379,13 +379,16 @@ local({
   # Upgrade again, and try with deleted tests and other things
 
   update_fastlm(.unitizer.fastlm, version="0.1.2")
-  devtools::install(.unitizer.fastlm)
-
-  unitizer:::read_line_set_vals(c("3", "ref(res)", "Y", "Y", "B", "1", "B", "U", "Y", "RR", "Y", "Q"))
+  install.packages(
+    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
+  )
+  unitizer:::read_line_set_vals(
+    c("3", "ref(res)", "Y", "Y", "B", "1", "B", "U", "Y", "RR", "Y", "Q")
+  )
   txt20 <- unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+  txt20$output <- gsub("^<\\w+: .*?>", "", txt20$output)
 
   test_that("multi-sect", {
-    txt20$output <- gsub("^<\\w+: .*?>", "", txt20$output)
     expect_equal_to_reference(
       txt20, file.path("helper", "refobjs", "unitize_multisect1.rds")
     )
