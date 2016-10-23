@@ -428,13 +428,20 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     rev.new <- rev.type == "New"
     rev.type[rev.fail.corr] <- crayon::yellow(rev.type[rev.fail.corr])
     rev.type[rev.new] <- crayon::blue(rev.type[rev.new])
+    rev.type <- ifelse(!x@mapping@ignored, rev.type, "-")
+
+    rev.type.n <- crayon::col_nchar(rev.type)
+    rev.type.pad <- max(rev.type.n) - rev.type.n
+    pads <-
+      vapply(Map(rep, " ", rev.type.pad), paste0, collapse="", character(1L))
 
     review.formatted <- paste(sep=":",
-      format(ifelse(!x@mapping@ignored, rev.type, "-"), justify="right"),
+      paste0(" ", pads, rev.type),
       format(
         ifelse(x@mapping@reviewed, as.character(x@mapping@review.val), "-")
       )
     )[tests.to.show]
+
     disp.len <- width.max - max(nchar(item.id.formatted)) -
       max(nchar(crayon::strip_style(review.formatted))) -
       nchar(num.pad) - nchar(front.pad)
