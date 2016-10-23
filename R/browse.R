@@ -249,10 +249,15 @@ setMethod(
           # update decision; also, need to know if we started off in re.eval
           # mode since that tells us we activated re-eval while viewing tests
           # and not at the end
+          #
+          # Note, this is a nested repeat; there is an outer repeat that handles
+          # individual test review, and this repeat handles the final prompt
+          # to exit
+
+          re.eval.started <- !!y@re.eval  # Were we already in re-eval mode?
 
           repeat {
             update <- length(x@changes) || force.update || y@force.up
-            re.eval.started <- !!y@re.eval  # check at end that we started off
 
             # Make sure we did not skip anything we were supposed to review
 
