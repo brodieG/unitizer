@@ -7,7 +7,7 @@ if(!file_test("-d", file.path("helper", "refobjs")))
 
 library(unitizer)
 library(testthat)
-local(envir=.GlobalEnv, {
+local({
   old.opt.outer <- options(unitizer.color=FALSE, width=80L)
   on.exit({
     options(old.opt.outer)
