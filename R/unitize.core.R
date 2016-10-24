@@ -139,10 +139,80 @@ unitize_core <- function(
     unitizer.opts=opts.untz,  # need to reconcile with normal options
     set.global=TRUE
   )
+  set.shim.funs <- FALSE
   if(is.null(par.env)) {
-    global$shimFuns()
+    set.shim.funs <- TRUE
     par.env <- global$par.env
   }
+  gpar.frame <- par.env
+
+  # - Directories --------------------------------------------------------------
+
+  # Create parent directories for untizer stores if needed, doing now so that
+  # we can later ensure that store ids are being specified on an absolute basis,
+  # and also so we can prompt the user now
+
+  dir.names <- vapply(
+    store.ids,
+    function(x) {
+      if(is.character(x) && !is.object(x) && !file_test("-d", dirname(x))) {
+        dirname(x)
+      } else NA_character_
+    },
+    character(1L)
+  )
+  dir.names.clean <- Filter(Negate(is.na), unique(dir.names))
+  if(length(dir.names.clean)) {
+    dir.word <-
+      paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
+    meta_word_cat(
+      "In order to proceed unitizer must create the following ", dir.word,
+      ":\n\n", sep="", trail.nl=FALSE
+    )
+    meta_word_cat(
+      as.character(
+        UL(dir.names.clean), width=getOption("width") - 2L, hyphens=FALSE
+      ),
+      trail.nl=FALSE
+    )
+    prompt <- paste0("Create ", dir.word)
+    meta_word_cat("\n", prompt, "?", sep="")
+
+    pick <- unitizer_prompt(
+      prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
+      browse.env=new.env(parent=par.env)
+    )
+    if(!identical(pick, "Y")) {
+      on.exit(NULL)
+      reset_and_unshim(global)
+      stop("Cannot proceed without creating directories.")
+    }
+    if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
+      # nocov start
+      # no good way to test
+      stop(
+        "Cannot proceed, failed to create the following directories:\n",
+        paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
+      )
+      # nocov end
+  } }
+  # Ensure directory names are normalized, but only if dealing with char objects
+
+  norm.attempt <- try(
+    store.ids <- lapply(
+      store.ids,
+      function(x) {
+        if(is.character(x) && !is.object(x)) {
+          file.path(normalize_path(dirname(x), mustWork=TRUE), basename(x))
+        } else x
+  } ) )
+  if(inherits(norm.attempt, "try-error"))
+    stop(
+      "Logic Error: some `store.ids` could not be normalized; contact ",
+      "maintainer."
+    )
+  # - Set Global State ---------------------------------------------------------
+
   on.exit(
     {
       reset_and_unshim(global)
@@ -159,7 +229,7 @@ unitize_core <- function(
     },
     add=TRUE
   )
-  gpar.frame <- par.env
+  if(set.shim.funs) global$shimFuns()
 
   # Set the zero state if needed; `seach.path` should be done first so that we
   # can disable options if there is a conflict there; WARNING, there is some
@@ -236,71 +306,6 @@ unitize_core <- function(
       )
       # nocov end
   } }
-  # - Directories --------------------------------------------------------------
-
-  # Create parent directories for untizer stores if needed, doing now so that
-  # we can later ensure that store ids are being specified on an absolute basis,
-  # and also so we can prompt the user now
-
-  dir.names <- vapply(
-    store.ids,
-    function(x) {
-      if(is.character(x) && !is.object(x) && !file_test("-d", dirname(x))) {
-        dirname(x)
-      } else NA_character_
-    },
-    character(1L)
-  )
-  dir.names.clean <- Filter(Negate(is.na), unique(dir.names))
-  if(length(dir.names.clean)) {
-    dir.word <-
-      paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
-    meta_word_cat(
-      "In order to proceed unitizer must create the following ", dir.word,
-      ":\n\n", sep="", trail.nl=FALSE
-    )
-    meta_word_cat(
-      as.character(
-        UL(dir.names.clean), width=getOption("width") - 2L, hyphens=FALSE
-      ),
-      trail.nl=FALSE
-    )
-    prompt <- paste0("Create ", dir.word)
-    meta_word_cat("\n", prompt, "?", sep="")
-
-    pick <- unitizer_prompt(
-      prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
-      browse.env=new.env(parent=par.env)
-    )
-    if(!identical(pick, "Y")) {
-      on.exit(NULL)
-      reset_and_unshim(global)
-      stop("Cannot proceed without creating directories.")
-    }
-    if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
-      # nocov start
-      # no good way to test
-      stop(
-        "Cannot proceed, failed to create the following directories:\n",
-        paste0(" - ", dir.names.clean[!dir.created], collapse="\n")
-      )
-      # nocov end
-  } }
-  # Ensure directory names are normalized, but only if dealing with char objects
-
-  norm.attempt <- try(
-    store.ids <- lapply(
-      store.ids,
-      function(x) {
-        if(is.character(x) && !is.object(x)) {
-          file.path(normalize_path(dirname(x), mustWork=TRUE), basename(x))
-        } else x
-  } ) )
-  if(inherits(norm.attempt, "try-error"))
-    stop(
-      "Logic Error: some `store.ids` could not be normalized; contact ",
-      "maintainer."
-    )
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
@@ -329,7 +334,6 @@ unitize_core <- function(
   # - Evaluate / Browse --------------------------------------------------------
 
   # Parse, and use `eval.which` to determine which tests to evaluate
-
 
   while(
     (length(eval.which) || mode == identical(mode, "review")) && length(valid)
