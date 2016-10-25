@@ -153,6 +153,7 @@ setClass(
   prototype(
     version=as.character(packageVersion("unitizer")),
     tests.status=factor(levels=.unitizer.tests.levels),
+    base.env=baseenv(),
     zero.env=baseenv(),
     test.file.loc=NA_character_,
     eval=FALSE,
@@ -282,11 +283,13 @@ setMethod("initialize", "unitizer",
     .Object <- callNextMethod()
     .Object@tests.result <- tests_result_mat(0L)
 
-    # We re-use the potentially default `base.env` object instead of creating
-    # a new one to allow the user to pass a pre-defined `base.env` if desired;
-    # in theory this should be a base.env that already has for parent the
-    # `zero.env` because we're trying to recreate the same environment chain
-    # of a different unitizer for when we re-use a unitizer in unitize_dir
+    # Re-use assigned @base.env if it isn't the baseenv(), since that means
+    # user provided a base env.  in theory this should be a base.env that
+    # already has for parent the `zero.env` because we're trying to recreate the
+    # same environment chain of a different unitizer for when we re-use a
+    # unitizer in unitize_dir
+
+    if(identical(.Object@base.env, baseenv())) .Object@base.env <- new.env()
 
     parent.env(.Object@base.env) <- .Object@zero.env
     parent.env(.Object@items.new@base.env) <- .Object@base.env
