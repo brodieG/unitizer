@@ -123,15 +123,12 @@ local( {
     expect_equal(unitizer:::ignored(my.unitizer2@items.ref), c(F, T, T, F, T, F))
   } )
   test_that("Size Measurement works", {
-    # Produces errors b/c there are environments that have search path envs as
-    # parents; oddly doesn't seem to cause warnings in test_file but does in
-    # test_dir...
-    #
-    # can't seem to reproduce warnings anymore
+    # Used to produce warnings because the same base.env was used for every
+    # unitizer because it was created on package load as part of the S4 class
+    # definition instead of in "initialize", so any time we instantiated more
+    # than one object they all shared the same environment, causing issues with
+    # saveRDS
 
-    # expect_warning(
-    #   x <- unitizer:::sizeUntz(my.unitizer2), "package.* may not be available"
-    # )
     x <- unitizer:::sizeUntz(my.unitizer2)
     expect_true(is.matrix(x) && is.numeric(x))
     expect_identical(colnames(x), c("size", "rds"))
@@ -425,9 +422,10 @@ local( {
       ),
       "invalid class .* object"
     )
-    expect_error(
+    # this should work too now, since technically has two args
+    expect_is(
       new("testFuns", output=all.equal, value=function(x, y=1, z=1) TRUE),
-      "invalid class .* object"
+      "testFuns"
     )
     expect_error( new("testFuns", cabbage=all.equal),
       "Can't initialize invalid slots .*cabbage"

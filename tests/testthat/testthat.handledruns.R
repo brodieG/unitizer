@@ -1,6 +1,9 @@
 library(unitizer)
 context("Handled Runs")
 
+if(!file_test("-d", file.path("helper", "refobjs")))
+  stop("Make sure wd is set to tests/testthat")
+
 test_that("Ensure we get warning if we try to run in handlers", {
   expect_warning(
     capture.output(

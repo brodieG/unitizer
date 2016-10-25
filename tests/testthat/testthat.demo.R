@@ -3,8 +3,7 @@ context("Demo")
 
 local({
 
-  .unitizer.fastlm <- copy_fastlm_to_tmpdir()
-  on.exit(unlink(.unitizer.fastlm, recursive=TRUE))
+  unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
 
   test_that("copy fastlm dir works", {
     expect_identical(
@@ -56,13 +55,6 @@ local({
 
   # options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
 
-  library(unitizer)
-  .unitizer.test.file <- file.path(
-    .unitizer.fastlm, "tests", "unitizer", "fastlm1.R"
-  )
-  .unitizer.test.store <- file.path(
-    .unitizer.fastlm, "tests", "unitizer", "fastlm1.unitizer"
-  )
   # In tests, initial version of package should be 0.1.0; the test store
   # does not exist so it doesn't get overwritten with subsequent updates
   # Note the initial install happens in the test running script
@@ -82,7 +74,7 @@ local({
 
   update_fastlm(.unitizer.fastlm, version="0.1.1")
   install.packages(
-    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src"
+    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
   )
   unitizer:::read_line_set_vals(c("N", "N", "Y"))
   txt3 <- unitizer:::capture_output(
@@ -114,10 +106,8 @@ local({
       "Error in fastlm\\(1:100, 1:10\\).*You will IRREVERSIBLY modify.*unitizer updated"
     )
     expect_match(
-      paste0(txt2$message, collapse=""), "All tests passed; nothing to review\\."
-    )
-    expect_match(
-      paste0(txt3$message, collapse=""), "unitizer test fails on value mismatch:.*unitizer unchanged\\."
+      paste0(txt2$message, collapse=""),
+      "| 4/4 tests passed; nothing to review.", fixed=TRUE
     )
   })
   # review is always in interactive mode
@@ -132,7 +122,7 @@ local({
     )
     expect_match(
       paste0(txt4$message, collapse=""),
-      "No changes recorded.unitizer unchanged."
+      "| No changes recorded.", fixed=TRUE
     )
   })
   unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
@@ -146,7 +136,7 @@ local({
     )
     expect_match(
       paste0(txt5$message, collapse=""),
-      "\\*value\\* mismatch: mean relative difference: 19854602162.*You will IRREVERSIBLY modify"
+      "| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:| - Replacing 2 out of 2 failed tests| unitizer updated."
     )
   })
   unitizer:::read_line_set_vals(NULL)

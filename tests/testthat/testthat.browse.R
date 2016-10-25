@@ -1,6 +1,6 @@
 library(unitizer)
 library(testthat)
-context("Browse\n")
+context("Browse")
 
 local( {
   zero.env <- parent.env(.GlobalEnv)
@@ -57,10 +57,12 @@ local( {
     } )
   )
   my.unitizer <- new("unitizer", id=1, zero.env=zero.env)
-  my.unitizer <- my.unitizer + exps1
+  capture_output(my.unitizer <- my.unitizer + exps1)
   my.unitizer2 <- new("unitizer", id=2, zero.env=zero.env)
-  my.unitizer2 <- my.unitizer2 + my.unitizer@items.new          # make previous items into reference items
-  my.unitizer2 <- my.unitizer2 + exps2                          # now add back items to compare
+  # make previous items into reference items
+  capture_output(my.unitizer2 <- my.unitizer2 + my.unitizer@items.new)
+  # now add back items to compare
+  capture.output(my.unitizer2 <- my.unitizer2 + exps2)
   unitizer.prepped <- unitizer:::browsePrep(my.unitizer2, mode="unitize")
 
   # NOTE: for some reason, changes in between revisions d9619db and a46e941

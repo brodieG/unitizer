@@ -261,8 +261,7 @@ local({
     cat("helloworld", file=f)
     expect_true(length(unitizer:::get_package_dir(f)) == 0L)
     unlink(f)
-    expect_warning(check.pkg <- unitizer:::get_package_dir(f), "No such file")
-    expect_equal(check.pkg, character(0L))
+    expect_equal(unitizer:::get_package_dir(f), character(0L))
     test.dir <- file.path(
       system.file(package="unitizer"), "example.pkgs", "fastlm.0",
       "unitizer.fastlm.Rcheck", "unitizer.fastlm", "R"
