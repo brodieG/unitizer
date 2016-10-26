@@ -10,7 +10,7 @@ local({
   tmp.pkgs <- c(
     unitizerdummypkg1="unitizerdummypkg1",
     unitizerdummypkg2="unitizerdummypkg2",
-    unitizer.fastlm="fastlm.0"
+    utzflm="flm0"
   )
   lib <- head(.libPaths(), 1L)
   if(
@@ -26,7 +26,7 @@ local({
   ) }
 
   unitizer.dir <- system.file(package="unitizer")
-  pkg.dirs <- file.path(unitizer.dir, "example.pkgs", tmp.pkgs)
+  pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
   lib <- head(.libPaths(), 1L)
 
   pkg.inst <- try(
@@ -49,8 +49,10 @@ local({
   .unitizer.test.file <- file.path(test.dir,  "fastlm1.R")
   .unitizer.test.store <- file.path(test.dir,  "fastlm1.unitizer")
   # Ensure same behavior interactive and non-interactive
-  .old.err.call.opt <- options(showErrorCalls=FALSE)
-  on.exit({
+  .old.err.call.opt <- if(isTRUE(getOption("showErrorCalls")))
+     options(showErrorCalls=FALSE) else list()
+  on.exit(
+    {
       options(.old.err.call.opt)
       unitizer_cleanup_demo()
     },

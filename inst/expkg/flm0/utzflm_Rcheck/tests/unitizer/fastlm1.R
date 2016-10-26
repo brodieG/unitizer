@@ -1,7 +1,7 @@
 # Assignments and calls to `library` are not considered tests by
 # `unitizer` so you will not need to review them
 
-library(unitizer.fastlm)
+library(utzflm)
 dat <- data.frame(x=1:100, y=(1:100) ^ 2)
 res <- fastlm(dat$x, dat$y)
 

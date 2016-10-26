@@ -255,7 +255,7 @@ test_that("word_cat", {
   )
 })
 test_that("relativize_path", {
-  base <- file.path(system.file(package="unitizer"), "example.pkgs")
+  base <- file.path(system.file(package="unitizer"), "expkg")
   wd <- file.path(base, "infer")
   p1 <- file.path(wd, "R")
   p2 <- file.path(base, "unitizerdummypkg1")

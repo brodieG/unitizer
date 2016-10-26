@@ -1,5 +1,6 @@
 #' Calculate Slope, Intercept and Rsq
 #'
+#' @import stats
 #' @export
 #' @param x numeric the independent variable
 #' @param y numeric the dependent variable

@@ -1,6 +1,7 @@
 #' Calculate Slope, Intercept and Rsq
 #'
 #' @export
+#' @import stats
 #' @param x numeric the independent variable
 #' @param y numeric the dependent variable
 #' @return list with three parameters: slope, intercept, and RSql
