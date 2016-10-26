@@ -131,10 +131,11 @@ history_capt <- function(hist.file=NULL) {
   if(is.null(hist.file)) return(list(con=NULL, file=NULL))
   # nocov start
   if(!interactive()) {
-    warning(
-      "Unable to capture history in non-interactive mode.",
-      immediate.=TRUE
-    )
+    if(!interactive_mode()) {
+      warning(
+        "Unable to capture history in non-interactive mode.",
+        immediate.=TRUE
+    ) }
     return(list(con=NULL, file=NULL))
   }
   hist.try <- try(savehistory(), silent=TRUE)
