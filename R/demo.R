@@ -107,8 +107,17 @@ copy_fastlm_to_tmpdir <- function() {
   fastlm.files <- list.files(
     fastlm.dir, full.names=TRUE, include.dirs=TRUE, no..=TRUE
   )
+
   if(inherits(try(file.copy(fastlm.files, dir, recursive=TRUE)), "try-error"))
     stop("Unable to copy `fastlm` sources")
+  # need to do this because R CMD build removes files ending in .Rcheck
+
+  fastlm.check <- file.path(dir, "unitizer.fastlm_Rcheck")
+  fastlm.check.new <- file.path(dir, "unitizer.fastlm.Rcheck")
+
+  if(inherits(try(file.rename(fastlm.check, fastlm.check.new)), "try-error"))
+    stop("Unable to rename fastlm check directory")
+
   dir
 }
 # Helper fun for update_fastlm_*
