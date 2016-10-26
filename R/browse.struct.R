@@ -9,15 +9,21 @@ NULL
 # Mainly, splits up the tests by section and subsection and creates an indexing
 # structure to keep track of what tests are in which section/subsection.  This
 # simplifies implementation of non-linear navigation through the tests.
+#
+# @param start.at.browser used to force the review of the unitizer to start at
+#   browser, useful when in review mode, or when all tests passed but user
+#   elected to review unitizer anyway from the unitize_dir menu
 
 setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
 setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
-  function(x, mode, hist.con=NULL, interactive=FALSE, ...) {
+  function(
+    x, mode, hist.con=NULL, interactive=FALSE, start.at.browser=FALSE, ...
+  ) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
     unitizer.browse <- new(
       "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive,
-      global=x@global
+      global=x@global, start.at.browser=start.at.browser
     )
     # - Unitize ----------------------------------------------------------------
 
@@ -180,7 +186,9 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         # Note: anything querying reference items has to go through items.new.map
         # since order isn't same.
 
-        browse.sect <- browse.sect + new(                            # Passed tests
+        # Passed tests
+
+        browse.sect <- browse.sect + new(
           "unitizerBrowseSubSectionPassed",
           items.new=x@items.ref[sect.map],
           show.msg=TRUE, new.conditions=rep(FALSE, sum(sect.map)),
@@ -293,7 +301,10 @@ setClass("unitizerBrowse", contains="unitizerList",
     global="unitizerGlobal",    # object for global settings
     auto.accept="logical",      # indicate whether any auto-accepts were triggered
     multi="logical",            # whether many unitizers are being browsed
-    multi.quit="logical"        # whether many unitizers are being browsed
+    multi.quit="logical",       # whether many unitizers are being browsed
+    # whether to show browser first, also disables warnings about reviewing
+    # tests that are not usually reviewed
+    start.at.browser="logical"
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
@@ -313,7 +324,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     interactive.error=FALSE,
     auto.accept=FALSE,
     multi=FALSE,
-    multi.quit=FALSE
+    multi.quit=FALSE,
+    start.at.browser=FALSE
   ),
   validity=function(object) {
     if(length(object@mode) != 1L || ! object@mode %in% c("unitize", "review")) {
@@ -321,6 +333,8 @@ setClass("unitizerBrowse", contains="unitizerList",
     }
     if(!is.TF(object@inspect.all))
       return("Slot `@inspect.all` must be TRUE or FALSE")
+    if(!is.TF(object@start.at.browser))
+      return("Slot `@start.at.browser` must be TRUE or FALSE")
     if(!is.TF(object@navigating))
       return("Slot `@navigating` must be TRUE or FALSE")
     if(!is.TF(object@browsing))
@@ -407,20 +421,27 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     item.id.formatted <- format(justify="right",
       paste0(ifelse(x@mapping@ignored, "*", ""), x@mapping@item.id.ord)
     )
-    num.pad <- ".  "
+    num.pad <- ". "
     front.pad <- "  "
     rev.type <- format(as.character(x@mapping@review.type), justify="right")
     rev.fail.corr <- rev.type %in% c("Failed", "Corrupted")
     rev.new <- rev.type == "New"
     rev.type[rev.fail.corr] <- crayon::yellow(rev.type[rev.fail.corr])
     rev.type[rev.new] <- crayon::blue(rev.type[rev.new])
+    rev.type <- ifelse(!x@mapping@ignored, rev.type, "-")
+
+    rev.type.n <- crayon::col_nchar(rev.type)
+    rev.type.pad <- max(rev.type.n) - rev.type.n
+    pads <-
+      vapply(Map(rep, " ", rev.type.pad), paste0, collapse="", character(1L))
 
     review.formatted <- paste(sep=":",
-      ifelse(!x@mapping@ignored, rev.type, "-"),
+      paste0(" ", pads, rev.type),
       format(
         ifelse(x@mapping@reviewed, as.character(x@mapping@review.val), "-")
       )
     )[tests.to.show]
+
     disp.len <- width.max - max(nchar(item.id.formatted)) -
       max(nchar(crayon::strip_style(review.formatted))) -
       nchar(num.pad) - nchar(front.pad)
@@ -466,9 +487,9 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
 
     call.chrs <- nchar(out.calls)
     call.chrs.max <- max(call.chrs)
-    tar.len <- min(disp.len, call.chrs.max + 3L)
+    tar.len <- min(disp.len, max(call.chrs.max + 3L, 15L))
     dot.pad <- substr(  # this will be the padding template
-      paste0(rep(".  ", ceiling(tar.len / 3)), collapse=""), 1L, tar.len
+      paste0(rep(" . ", ceiling(tar.len / 3)), collapse=""), 1L, tar.len
     )
     calls.fin <- rep(dot.pad, length(call.chrs))
     substr(calls.fin, 1L, call.chrs) <- out.calls
@@ -677,7 +698,8 @@ setClass("unitizerBrowseSubSection",
     tests.result="matrix"
   ),
   prototype=list(
-    show.msg=FALSE, show.fail=FALSE, show.out=FALSE, action.default="N"
+    show.msg=FALSE, show.fail=FALSE, show.out=TRUE, action.default="N",
+    show.msg=TRUE
   ),
   validity=function(object) {
     if(

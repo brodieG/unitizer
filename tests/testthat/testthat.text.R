@@ -56,7 +56,7 @@ local({
     )
     com <- "# this is supposed to be a relatively long comment that will get re-flowed"
     old.opt <- options(crayon.enabled=FALSE)
-    on.exit(old.opt)
+    on.exit(options(old.opt))
     expect_identical(
       unitizer:::word_comment(com, width=30L),
       c("# this is supposed to be a ", "#relatively long comment that ", "#will get re-flowed")
@@ -95,6 +95,23 @@ local({
       c("- there was once a time when ", "  the fantastic unicorns could", "  fly", "- bugs bunny ate carrots and ", "  drank milk while hunting ", "  ducks", "  1. there was once a time ", "     when the fantastic ", "     unicorns could fly", "  2. bugs bunny ate carrots ", "     and drank milk while ", "     hunting ducks", "    - there was once a time ", "      when the fantastic ", "      unicorns could fly", "    - bugs bunny ate carrots ", "      and drank milk while ", "      hunting ducks", "- yowza it is raining toads ",  "  today!")
     )
     expect_error(unitizer:::as.character.bullet(hello, 1:10))
+
+    # Extra args to word_wrap
+
+    expect_error(
+      as.character(unitizer:::OL(c("hello", "there")), unlist=TRUE),
+      "argument is used internally"
+    )
+    expect_equal(
+      as.character(unitizer:::OL("asdfasdfqwerjhdfkasdfasdfasd"), width=20L),
+      c("1. asdfasdfqwerjhdf-", "   kasdfasdfasd")
+    )
+    expect_equal(
+      as.character(
+        unitizer:::OL("asdfasdfqwerjhdfkasdfasdfasd"), width=20L, hyphens=FALSE
+      ),
+      c("1. asdfasdfqwerjhdfk", "   asdfasdfasd")
+    )
   })
   test_that("substr_const", {
     expect_equal(unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L), c("ab  ", "abcd", "abc "))
@@ -198,6 +215,17 @@ local({
       c("| hello there", "")
     )
   })
+  test_that("meta_word_msg", {
+    expect_message(
+      unitizer:::meta_word_msg("hello"), c("| hello\n"), fixed=TRUE
+    )
+    txt <- "hello there how are you this wraps"
+    expect_message(
+      unitizer:::meta_word_msg(txt, width=20),
+      "| hello there how \n| are you this wraps\n\n",
+      fixed=TRUE
+    )
+  })
   test_that("desc", {
     obj1 <- list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2))
     expect_equal(
@@ -210,5 +238,31 @@ local({
       desc(iris, 200),
       "data.frame(Sepal.Length=num[150], Sepal.Width=num[150], Petal.Length=num[150], Petal.Width=num[150], Species=fct[150])"
     )
+    expect_equal(desc(list(NULL, 1L)), "list(NULL, int[1])")
+    expect_equal(desc(NULL), "NULL")
+    expect_equal(unitizer:::desc(NULL), "NULL")
+    expect_equal(
+      unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))), "lm[12]"
+    )
+    expect_equal(
+      unitizer:::desc(new("unitizerItem", call=quote(1+1), env=new.env())),
+      "unitizerItem"
+    )
+    expect_equal(
+      unitizer:::desc(array(1:27, dim=rep(3, 3))),
+      "array[3,3,3]"
+    )
+    expect_equal(
+      unitizer:::desc(data.frame(a=letters[1:10], b=1:10)),
+      "data.frame(a=fct[10], b=int[10])"
+    )
+  } )
+  test_that("char_to_eng", {
+    expect_equal(unitizer:::char_to_eng(character(), "", ""), "")
+    expect_equal(unitizer:::char_to_eng(letters[1:4], "", ""), "a, b, c, and d")
+    expect_equal(unitizer:::char_to_eng(letters[1:2], "", ""), "a, and b")
+    expect_equal(unitizer:::char_to_eng(letters[1], "", ""), "a")
+    expect_equal(unitizer:::char_to_eng(letters[1]), "a was")
+    expect_equal(unitizer:::char_to_eng(letters[1:2]), "a, and b were")
   })
 })

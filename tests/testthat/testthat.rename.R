@@ -22,7 +22,9 @@ test_that("Rename Works", {
   )
   unitizer:::read_line_set_vals("Y")
   expect_warning(
-    x.edit2 <- editCalls(x, quote(x), quote(y), interactive.only=TRUE),
+    capture.output(
+      x.edit2 <- editCalls(x, quote(x), quote(y), interactive.only=TRUE)
+    ),
     "experimental"
   )
   unitizer:::read_line_set_vals(NULL)

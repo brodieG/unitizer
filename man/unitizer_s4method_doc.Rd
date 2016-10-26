@@ -21,7 +21,6 @@
 \alias{all.equal,ANY,unitizerDummy-method}
 \alias{all.equal,unitizerDummy,ANY-method}
 \alias{all.equal,unitizerDummy,unitizerDummy-method}
-\alias{all.equal,unitizerGlobalState,unitizerGlobalState-method}
 \alias{all.equal,unitizerSearchData,unitizerSearchData-method}
 \alias{append,factor,factor-method}
 \alias{append,unitizerList,ANY-method}
@@ -132,9 +131,6 @@
 \S4method{show}{unitizerInPkg}(object)
 
 \S4method{show}{unitizerState}(object)
-
-\S4method{all.equal}{unitizerGlobalState,unitizerGlobalState}(target, current,
-  verbose = TRUE, strict = FALSE, ...)
 
 \S4method{all.equal}{unitizerDummy,unitizerDummy}(target, current, ...)
 

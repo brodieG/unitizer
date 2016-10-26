@@ -18,7 +18,7 @@ Create a Store ID from a Test File Name
 \examples{
 filename_to_storeid(file.path("tests", "unitizer", "foo.R"))
 filename_to_storeid(file.path("tests", "unitizer", "boo.r"))
-# does not end in [rR] 
-filename_to_storeid(file.path("tests", "unitizer", "boo"))  
+# does not end in [rR]
+filename_to_storeid(file.path("tests", "unitizer", "boo"))
 }
 

@@ -27,32 +27,15 @@ setClass("unitizerItemTests", contains="VIRTUAL",
 
 setClass(
   "unitizerItemTestFun",
-  representation(fun="function", fun.name="character"),
+  slots=c(fun="function", fun.name="character"),
+  prototype=list(fun=all.equal),
   validity=function(object) {
-    frms <- formals(object@fun)
-    frms <- frms[!(names(frms) %in% "...")]
-    if(
-      length(frms) < 2L |
-      any(
-        vapply(
-          head(frms, 2L),
-          function(frm)
-            !(is.symbol(frm) && nchar(as.character(frm)) == 0L),
-          logical(1L))
-       ) |
-      any(
-        vapply(
-          tail(frms, -2L),
-          function(frm) (is.symbol(frm) && nchar(as.character(frm)) == 0L),
-          logical(1L)
-      ) )
-    ) {
+    if(!isTRUE(err <- is.two_arg_fun(object@fun)))
       return(
         cc(
-         "slot `@fun` must be a function with the first two parameters ",
-         "non-optional and all others optional."
+         "Slot `@fun` must be a function with the first two parameters ",
+         "non-optional and all others optional (", err, ")."
       ) )
-    }
     TRUE
   }
 )
@@ -169,6 +152,24 @@ if(
     "slots not identical; contact maintainer."
   )
 }
+setMethod("$", "unitizerItemTestsErrorsDiffs",
+  function(x, name) {
+    what <- substitute(name)
+    what <- if(is.symbol(what)) as.character(what) else name
+    x[[what]]@diff
+} )
+setMethod("[[",  "unitizerItemTestsErrorsDiffs",
+  function(x, i, j, ..., exact=TRUE) {
+    if(!is.chr1plain(i))
+      stop("Argument `i` must be character(1L) and not NA")
+    sn <- slotNames(x)
+    if(!i %in% sn)
+      stop(
+        "Argument `i` must be one of ",
+        paste0(deparse(sn, width.cutoff=500L), collapse="")
+      )
+    slot(x, i)
+})
 
 setClass(
   "unitizerItemsTestsErrors", contains="unitizerList"
@@ -241,13 +242,11 @@ setMethod("show", "unitizerItemTestsErrorsDiffs",
 } )
 setMethod("show", "unitizerItemTestsErrorsDiff",
   function(object) {
-    file <- if(object@err) stderr() else stdout()
-    meta_word_cat(
-      if(object@show.diff) object@txt else object@txt.alt, file=file
-    )
+    cat_fun <- if(object@err) meta_word_msg else meta_word_cat
+    cat_fun(if(object@show.diff) object@txt else object@txt.alt)
     if(object@show.diff) {
-    res <- show(object@diff)
-    cat("\n")
+      res <- show(object@diff)
+      cat("\n")
     }
     invisible(NULL)
 } )
@@ -276,10 +275,10 @@ setMethod("show", "unitizerItemTestsErrors",
       for(i in slots[slot.errs]) {
         curr.err <- slot(object, i)
         mismatch <- if(curr.err@compare.err) {
-          out.file <- stderr()
+          out.fun <- meta_word_msg
           paste0("Unable to compare ", i, ": ")
         } else {
-          out.file <- stdout()
+          out.fun <- meta_word_cat
           paste0(cap_first(i), " mismatch: ")
         }
         out <- if(length(curr.err@value) < 2L) {
@@ -292,7 +291,7 @@ setMethod("show", "unitizerItemTestsErrors",
               width=getOption("width") - 2L
           ) )
         }
-        meta_word_cat(out, file=out.file)
+        out.fun(out)
         make_cont <- function(x) {
           res <- if(identical(i, "value")) {
             as.name(x)
@@ -304,51 +303,14 @@ setMethod("show", "unitizerItemTestsErrors",
           cur.banner=make_cont(".new")
         )
         diffs[[i]] <- new(
-          "unitizerItemTestsErrorsDiff", diff=diff, text=out,
-          err=out.file==std.err()
+          "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
+          err=curr.err@compare.err
         )
         show(diff)
         cat("\n")
       }
     }
     invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
-} )
-
-#' Summary Method for unitizerItemTestsErrors Objects
-#'
-#' DEPRECATED
-#'
-#' Used to generate the blurb ahead of each failed test with the components
-#' that the test failed on.
-#'
-#' Only intended to be called within the \code{show} method.
-#'
-#' @param object a \code{unitizerItemTestsErrors} object
-#' @return NULL, invisibly
-#' @export
-
-setMethod("summary", "unitizerItemTestsErrors",
-  function(object, ...) {
-    warning("this method is deprecated")
-    slots <- grep("^[^.]", slotNames(object), value=TRUE)
-    slot.err <- logical(length(slots))
-    for(i in seq_along(slots))
-      slot.err[[i]] <- !is.null(slot(object, slots[[i]])@value)
-
-    errs <- slots[slot.err]
-    if(!length(errs)) return(invisible(NULL))
-
-    if(length(errs) > 1L) {
-      err.chr <- paste(
-        paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
-      )
-      plrl <- "es"
-    } else {
-      err.chr <- errs
-      plrl <- ""
-    }
-    meta_word_cat(cc(err.chr, " mismatch", plrl, ":"))
-    return(invisible(NULL))
 } )
 #' Like all.equal but Returns FALSE If Not all.equal
 #'

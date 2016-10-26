@@ -52,6 +52,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
         "possible, contact maintainer."
       )
     browse.res <- browseUnitizerInternal(x, y, force.update=force.update)
+    x@global$resetInit()  # reset state
 
     # Need to store our `unitizer`
 
@@ -97,9 +98,10 @@ setMethod(
     something.happened <- any(
       y@mapping@review.type != "Passed" & !y@mapping@ignored
     ) || (
-      any(!y@mapping@ignored) && identical(y@mode, "review")  # Not sure this is
+      any(!y@mapping@ignored) && (
+        identical(y@mode, "review") || y@start.at.browser
+      )
     )
-
     if(!length(y)) {
       meta_word_cat("No tests to review.", trail.nl=FALSE)
     } else if(!something.happened && !force.update) {
@@ -150,7 +152,10 @@ setMethod(
           withRestarts(
             {
               if(!done(y)) {
-                if(first.time && identical(y@mode, "review")) {
+                if(
+                  first.time && 
+                  (identical(y@mode, "review") || y@start.at.browser)
+                ) {
                   # for passed tests, start by showing the list of tests
                   first.time <- FALSE
                   y@review <- 0L
@@ -244,10 +249,15 @@ setMethod(
           # update decision; also, need to know if we started off in re.eval
           # mode since that tells us we activated re-eval while viewing tests
           # and not at the end
+          #
+          # Note, this is a nested repeat; there is an outer repeat that handles
+          # individual test review, and this repeat handles the final prompt
+          # to exit
+
+          re.eval.started <- !!y@re.eval  # Were we already in re-eval mode?
 
           repeat {
             update <- length(x@changes) || force.update || y@force.up
-            re.eval.started <- !!y@re.eval  # check at end that we started off
 
             # Make sure we did not skip anything we were supposed to review
 
@@ -270,11 +280,10 @@ setMethod(
               QQ=if(y@multi) "[QQ]uit All"
             )
             if(!length(x@changes) && (force.update || y@force.up))
-              meta_word_cat(
+              meta_word_msg(
                 "Running in `force.update` mode so `unitizer` will be re-saved",
                 "even though there are no changes to record (see `?unitize`",
-                "for details).", sep="",
-                file=stderr()
+                "for details).", sep=" "
               )
             if(update) {
               tar <- getTarget(x)
@@ -387,7 +396,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          meta_word_msg("No changes recorded.")
+          meta_word_msg("No changes recorded.", trail.nl=FALSE)
           break
         }
     } }
@@ -505,7 +514,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     ignore.passed <- !identical(x@mode, "review") &&
       is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
-      !x@inspect.all
+      !x@inspect.all && !x@start.at.browser
 
     ignore.sec <- all(
       (       # ignored and no errors
@@ -513,7 +522,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
       ) | (   # passed and not in review mode
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
-        !identical(x@mode, "review")
+        (!identical(x@mode, "review") || !x@start.at.browser)
       ) | (   # auto.accept
         x@mapping@reviewed[x@mapping@sec.id == curr.sec] &
         !x@navigating
@@ -597,6 +606,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
       new.glob.indices <- item.new@glob.indices
     }
+    # PROBLEM HERE: in "pass mode" we want the reference state, not the new
+    # state, but the default behavior appears to be to bind to the new state
+
     if(!identical(x@global$indices.last, new.glob.indices))
       x@global$reset(new.glob.indices)
 
@@ -637,7 +649,6 @@ setMethod("reviewNext", c("unitizerBrowse"),
       cat(deparse_prompt(parsed.call), sep="\n")
       history_write(x@hist.con, item.main@call.dep)
 
-      # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant; options need to be
       # retrieved from unitizer object since they get reset
 

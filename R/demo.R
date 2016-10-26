@@ -107,8 +107,17 @@ copy_fastlm_to_tmpdir <- function() {
   fastlm.files <- list.files(
     fastlm.dir, full.names=TRUE, include.dirs=TRUE, no..=TRUE
   )
+
   if(inherits(try(file.copy(fastlm.files, dir, recursive=TRUE)), "try-error"))
     stop("Unable to copy `fastlm` sources")
+  # need to do this because R CMD build removes files ending in .Rcheck
+
+  fastlm.check <- file.path(dir, "unitizer.fastlm_Rcheck")
+  fastlm.check.new <- file.path(dir, "unitizer.fastlm.Rcheck")
+
+  if(inherits(try(file.rename(fastlm.check, fastlm.check.new)), "try-error"))
+    stop("Unable to rename fastlm check directory")
+
   dir
 }
 # Helper fun for update_fastlm_*
@@ -175,10 +184,21 @@ unitizer_check_demo_state <- function() {
     meta_word_msg(
       "Variables", paste0("`", vars, "`", collapse=", "), " already exist, but",
       "must be overwritten for demo to proceed.  These could have been left",
-      "over by a previous run of the demo that did not complete properly.\n",
+      "over by a previous run of the demo that did not complete properly.",
       sep=" "
     )
     choice <- simple_prompt("Overwrite variables?")
+    if(!identical(choice, "Y")) stop("Cannot continue demo.")
+    rm(list=vars[vars.exist], envir=parent.frame())
+  }
+  if("unitizer.fastlm" %in% rownames(installed.packages())) {
+    meta_word_msg(
+      "'unitizer.fastlm' pacakge already installed.  This could be because of ",
+      "a prior demo run that was unable to clean-up properly after itself. ",
+      "Continuing with demo will overwrite existing installation.",
+      sep=" "
+    )
+    choice <- simple_prompt("Overwrite existing installation?")
     if(!identical(choice, "Y")) stop("Cannot continue demo.")
     rm(list=vars[vars.exist], envir=parent.frame())
   }
@@ -189,14 +209,15 @@ unitizer_check_demo_state <- function() {
 #' @rdname demo
 
 unitizer_cleanup_demo <- function() {
-  vars <- c(".unitizer.fastlm", ".unitizer.test.file")
+  vars <- c(".unitizer.fastlm", ".unitizer.test.file", ".unitizer.test.store")
   try(detach("package:unitizer.fastlm"), silent=TRUE)
   try(unloadNamespace("unitizer.fastlm"), silent=TRUE)
-  remove.packages("unitizer.fastlm", .libPaths()[[1L]])
+  try(remove.packages("unitizer.fastlm", .libPaths()[[1L]]), silent=TRUE)
   pkg.dir <- try(get(".unitizer.fastlm", envir=parent.frame()))
   if(
     !inherits(pkg.dir, "try-error") && is.chr1plain(pkg.dir) &&
     file_test("-d", pkg.dir) && grepl("unitizer\\.fastlm$", pkg.dir)
-  ) unlink(pkg.dir, recursive=TRUE)
+  )
+  unlink(pkg.dir, recursive=TRUE)
   rm(list=vars, envir=parent.frame())
 }

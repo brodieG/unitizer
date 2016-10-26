@@ -1,19 +1,20 @@
-# Store Retrieve Unitizer
-#
-# If this errors, calling function should abort
-#
-# @keywords internal
-# @param unitizer a \code{\link{unitizer-class}} object
-# @param store.id anything for which there is a defined \code{`\link{get_unitizer}`}
-#   method; by default should be the path to a unitizer; if \code{`\link{get_unitizer}`}
-#   returns \code{`FALSE`} then this will create a new unitizer
-# @param par.frame the environment to use as the parent frame for the \code{unitizer}
-# @param test.file the R file associated with the store id
-# @param force.upgrade whether to allow upgrades in non-interactive mode, for
-#   testing purposes
-# @param global the global tracking object
-# @return a \code{unitizer} object, or anything, in which case the calling
-#   code should exit
+## Store Retrieve Unitizer
+##
+## If this errors, calling function should abort
+##
+## @keywords internal
+## @param unitizer a \code{\link{unitizer-class}} object
+## @param store.id anything for which there is a defined \code{\link{get_unitizer}}
+##   method; by default should be the path to a unitizer; if
+##   \code{`\link{get_unitizer}`} returns \code{`FALSE`} then this will create
+##   a new unitizer
+## @param par.frame the environment to use as the parent frame for the \code{unitizer}
+## @param test.file the R file associated with the store id
+## @param force.upgrade whether to allow upgrades in non-interactive mode, for
+##   testing purposes
+## @param global the global tracking object
+## @return a \code{unitizer} object, or anything, in which case the calling
+##   code should exit
 
 load_unitizers <- function(
   store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE,
@@ -183,7 +184,7 @@ load_unitizers <- function(
   # Issue errors as required
 
   if(length(invalid.idx)) {
-    meta_word_cat(
+    meta_word_msg(
       paste0(
         "\nThe following unitizer", if(length(invalid.idx) > 1L) "s",
         " could not be loaded:"
@@ -191,12 +192,11 @@ load_unitizers <- function(
       as.character(
         UL(paste0(chr.ids[invalid.idx], ": ",  valid[invalid.idx])),
         width=getOption("width") - 2L
-      ),
-      file=stderr()
+      )
     )
   }
   if(length(toup.fail.idx)) {
-    meta_word_cat(
+    meta_word_msg(
       paste0(
         "\nThe following unitizer", if(length(toup.fail.idx) > 1L) "s",
         " could not be upgraded to version '", as.character(curr.version),
@@ -210,12 +210,11 @@ load_unitizers <- function(
             "': ", valid[toup.fail.idx]
         ) ),
         width=getOption("width") - 2L
-      ),
-      file=stderr()
+      )
     )
   }
   if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))
-    meta_word_cat(
+    meta_word_msg(
       "No valid unitizer", if(length(store.ids) > 1L) "s", " to load", sep=""
     )
   # Create fail load objects for all failures

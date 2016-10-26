@@ -1,8 +1,13 @@
 library(unitizer)
 library(testthat)
 context("Item")
-cat("\n")
 old.opt <- options(unitizer.color=FALSE)
+
+if(!identical(basename(getwd()), "testthat"))
+  stop("Working dir does not appear to be /testthat, is ", getwd())
+
+rdsf <- function(x)
+  file.path(getwd(), "helper", "item", sprintf("%s.rds", x))
 
 # These tests are intended to cover all the functions/classes/methods in:
 # - item.R
@@ -41,12 +46,15 @@ local( {
     e <- 5 * a,
     e ^ 3
   )
+  Sys.sleep(.2)
   my.unitizer <- new("unitizer", id=1, zero.env=new.env())
-  my.unitizer <- my.unitizer + ref.exps   # add ref.exps as new items
+  # add ref.exps as new items
+  capture.output(my.unitizer <- my.unitizer + ref.exps)
   my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
   # now convert them to reference items
-  my.unitizer2 <- my.unitizer2 + my.unitizer@items.new
-  my.unitizer2 <- my.unitizer2 + new.exps   # now test against new.exps
+  capture.output(my.unitizer2 <- my.unitizer2 + my.unitizer@items.new)
+  # now test against new.exps
+  capture.output(my.unitizer2 <- my.unitizer2 + new.exps)
 
   test_that("item funs", {
     item <- my.unitizer@items.new[[1L]]
@@ -62,9 +70,9 @@ local( {
   })
   test_that("unitizer creation worked as expected", {
     expect_true(validObject(my.unitizer, complete=TRUE))
-    expect_equal(
+    expect_equal_to_reference(
       capture.output(show(my.unitizer@items.new[[1L]])),
-      c("~~~ New Test ~~~", "1 + 1", "* value: double numeric [1]", "* output: 6 chars", "Access component `x` with `.NEW$x`; see `help(\"$\", \"unitizer\")`")
+      rdsf(100)
     )
     expect_equal(length(my.unitizer2), length(new.exps))
     expect_equal(length(my.unitizer2@items.new), length(new.exps))
@@ -99,25 +107,35 @@ local( {
 
     expect_equal(my.unitizer2@items.new.map, c(1L, 2L, 3L, 4L, 5L, NA, NA, NA))
     expect_equal(my.unitizer2@items.ref.map, c(1L, 2L, 3L, 4L, 5L, NA))
-    expect_equal(my.unitizer2@tests.fail, c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))
-    expect_equal(my.unitizer2@tests.status, structure(c(1L, 1L, 1L, 1L, 1L, 3L, 3L, 3L), .Label = c("Pass", "Fail", "New", "Deleted", "Error"), class = "factor"))
+    expect_equal(
+      my.unitizer2@tests.fail,
+      c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE)
+    )
+    expect_equal(
+      my.unitizer2@tests.status,
+      structure(
+        c(1L, 1L, 1L, 1L, 1L, 3L, 3L, 3L),
+        .Label = c("Pass", "Fail", "New", "Deleted", "Error"), class = "factor"
+      )
+    )
     expect_equal(my.unitizer2@section.map, c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L))
     expect_equal(unitizer:::ignored(my.unitizer2@items.new), c(F, T, T, F, T, F, T, F))
     expect_equal(unitizer:::ignored(my.unitizer2@items.ref), c(F, T, T, F, T, F))
   } )
   test_that("Size Measurement works", {
-    # Produces errors b/c there are environments that have search path envs as
-    # parents; oddly doesn't seem to cause warnings in test_file but does in
-    # test_dir...
+    # Used to produce warnings because the same base.env was used for every
+    # unitizer because it was created on package load as part of the S4 class
+    # definition instead of in "initialize", so any time we instantiated more
+    # than one object they all shared the same environment, causing issues with
+    # saveRDS
 
-    expect_warning(
-      x <- unitizer:::sizeUntz(my.unitizer2), "package.* may not be available"
-    )
+    x <- unitizer:::sizeUntz(my.unitizer2)
     expect_true(is.matrix(x) && is.numeric(x))
     expect_identical(colnames(x), c("size", "rds"))
   })
   test_that("Environment healing works", {
-    items.mixed <- my.unitizer2@items.new[4:5] + my.unitizer2@items.ref[[1]] + my.unitizer2@items.new[c(2, 6, 8)]
+    items.mixed <- my.unitizer2@items.new[4:5] +
+      my.unitizer2@items.ref[[1]] + my.unitizer2@items.new[c(2, 6, 8)]
     items.sorted <- unitizer:::healEnvs(items.mixed, my.unitizer2)
     env.anc <- lapply(
       unitizer:::as.list(items.sorted),
@@ -129,7 +147,11 @@ local( {
     # Here only the first item is reference, all others
 
     expect_equal(length(unique(unlist(env.anc.df[2, ]))), 1L)
-    expect_true(all(apply(env.anc.df[-(1:2), -1], 1, function(x) length(unique(Filter(Negate(is.na), x)))) == 1L))
+    expect_true(
+      all(
+        apply(env.anc.df[-(1:2), -1], 1,
+        function(x) length(unique(Filter(Negate(is.na), x)))) == 1L
+    ) )
     expect_equal(  # First item is reference, all others are new
       unitizer:::itemsType(items.sorted), c("reference", rep("new", 7L))
     )
@@ -148,20 +170,19 @@ local( {
   my_fun <- function() {warning("hello"); 25}
   ref.exps1a <- expression(stop("boom"), my_fun())
   my.unitizer1a <- new("unitizer", id=100, zero.env=new.env())
-  my.unitizer1a <- my.unitizer1a + ref.exps1a   # add ref.exps as new items
+  # add ref.exps as new items
+  capture.output(my.unitizer1a <- my.unitizer1a + ref.exps1a)
 
   test_that("Items with conditions", {
-    expect_equal(
-      capture.output(show(my.unitizer1a@items.new[[1L]])),
-      c("~~~ New Test ~~~", "stop(\"boom\")", "* value: NULL", "* message: 12 chars", "* conditions: 1 error", "Access component `x` with `.NEW$x`; see `help(\"$\", \"unitizer\")`")
+    expect_equal_to_reference(
+      capture.output(show(my.unitizer1a@items.new[[1L]])), rdsf(200)
     )
-    expect_equal(
-      capture.output(show(my.unitizer1a@items.new[[2L]])),
-      c("~~~ New Test ~~~", "my_fun()", "* value: double numeric [1]", "* output: 7 chars", "* message: 28 chars", "* conditions: 1 warning", "Access component `x` with `.NEW$x`; see `help(\"$\", \"unitizer\")`")
+    expect_equal_to_reference(
+      capture.output(show(my.unitizer1a@items.new[[2L]])), rdsf(300)
     )
-    expect_equal(
+    expect_equal_to_reference(
       capture.output(show(my.unitizer1a@items.new[[1L]]@data@conditions)),
-      c("Condition list with 1 condition:", "  <simpleError: boom>", "You can access conditions directly (e.g. `.NEW$conditions[[1L]]`).")
+      rdsf(400)
     )
   })
   new.exps2 <- expression(
@@ -193,11 +214,17 @@ local( {
   # surprised if tests fail in those circumstances
 
   my.unitizer3 <- new("unitizer", id=1, zero.env=new.env())
-  my.unitizer3 <- my.unitizer3 + ref.exps2   # add ref.exps as new items
+  # add ref.exps as new items
+  capture.output(my.unitizer3 <- my.unitizer3 + ref.exps2)
   my.unitizer4 <- new("unitizer", id=2, zero.env=new.env())
-  my.unitizer4 <- my.unitizer4 + my.unitizer3@items.new    # now convert them to reference items
-  my.unitizer4 <- my.unitizer4 + new.exps2   # now test against new.exps
-  items.mixed2 <- my.unitizer4@items.ref[c(8, 10, 3, 5, 11)] + my.unitizer4@items.new[c(1, 4, 5, 9)]
+  # now convert them to reference items
+  capture.output(my.unitizer4 <- my.unitizer4 + my.unitizer3@items.new)
+  # now test against new.exps
+  capture.output(my.unitizer4 <- my.unitizer4 + new.exps2)
+  capture.output(
+    items.mixed2 <- my.unitizer4@items.ref[c(8, 10, 3, 5, 11)] +
+      my.unitizer4@items.new[c(1, 4, 5, 9)]
+  )
   items.sorted2 <- unitizer:::healEnvs(items.mixed2, my.unitizer4)
 
   test_that("Environment healing works 2", {
@@ -239,8 +266,9 @@ local( {
     )
   } )
   my.unitizer5 <- new("unitizer", id=2, zero.env=new.env())
-  my.unitizer5 <- my.unitizer5 + items.sorted2   # now add back our composite elements as references
-  my.unitizer5 <- my.unitizer5 + new.exps2       # and new items
+  # now add back our composite elements as references
+  capture.output(my.unitizer5 <- my.unitizer5 + items.sorted2)
+  capture.output(my.unitizer5 <- my.unitizer5 + new.exps2)      # and new items
 
   test_that("ls works", {
     # This is an ignored test, so there will be some problems
@@ -261,10 +289,10 @@ local( {
       ls.res <- evalq(unitizer:::unitizer_ls(), env.eval),
       "The ls output for `.ref` is invalid"
     )
-    expect_equal(  # Reference tests won't show up since they were nuked by `healEnvs`
-      structure(list(new = c("a", "b"), tests = c(".new", ".NEW", ".ref", ".REF")), .Names = c("new", "tests"), class = "unitizer_ls", mods = character(0)),
-      ls.res
-    )
+    # Reference tests won't show up since they were nuked by `healEnvs`
+
+    expect_equal_to_reference(ls.res, rdsf(500))
+
     # These are normal tests so should work
 
     env.val <- new.env(parent=my.unitizer5@items.new[[9]]@env)
@@ -279,18 +307,12 @@ local( {
       my.unitizer5@items.ref[[my.unitizer5@items.new.map[[9]]]]@data@value[[1L]],
       env.val
     )
-    expect_equal(
-      structure(
-        list(new = c("a", "b", "e", "f", "howdy"),
-        ref = c("a", "b", "e", "f", "howdy"),
-        tests = c(".new", ".NEW", ".ref", ".REF")),
-        .Names = c("new", "ref", "tests"), class = "unitizer_ls",
-        mods = character(0)),
-      evalq(unitizer:::unitizer_ls(), env.eval)
+    expect_equal_to_reference(
+      evalq(unitizer:::unitizer_ls(), env.eval), rdsf(600)
     )
-    expect_equal(
+    expect_equal_to_reference(
       capture.output(print(evalq(unitizer:::unitizer_ls(), env.eval))),
-      c("$`objects in new test env:`", "[1] \"a\"     \"b\"     \"e\"     \"f\"     \"howdy\"", "", "$`objects in ref test env:`", "[1] \"a\"     \"b\"     \"e\"     \"f\"     \"howdy\"", "", "$`unitizer objects:`", "[1] \".new\" \".NEW\" \".ref\" \".REF\"", "", "Use `ref(.)` to access objects in ref test env", "`.new` / `.ref` for test value, `.NEW` / `.REF` for details.")
+      rdsf(700)
     )
   } )
   # Test that reference tests moving around doesn't cause major issues
@@ -319,11 +341,15 @@ local( {
     a ^ 2                 # 10
   )
   my.unitizer10 <- new("unitizer", id=1, zero.env=new.env())
-  my.unitizer10 <- my.unitizer10 + ref.exps6   # add ref.exps as new items
+  # add ref.exps as new items
+  capture.output(my.unitizer10 <- my.unitizer10 + ref.exps6)
   my.unitizer11 <- new("unitizer", id=2, zero.env=new.env())
-  my.unitizer11 <- my.unitizer11 + my.unitizer10@items.new    # now convert them to reference items
-  my.unitizer11 <- my.unitizer11 + new.exps6   # now test against new.exps
-  items.mixed3 <- my.unitizer11@items.ref[c(4, 7)] + my.unitizer11@items.new[c(1, 7, 8)]
+  # now convert them to reference items
+  capture.output(my.unitizer11 <- my.unitizer11 + my.unitizer10@items.new)
+  # now test against new.exps
+  capture.output(my.unitizer11 <- my.unitizer11 + new.exps6)
+  items.mixed3 <- my.unitizer11@items.ref[c(4, 7)] +
+    my.unitizer11@items.new[c(1, 7, 8)]
   items.sorted3 <- unitizer:::healEnvs(items.mixed3, my.unitizer11)
 
   # Main difference to previous versions is that we're testing that moving the
@@ -356,10 +382,13 @@ local( {
   new.exps3 <- expression(1 + 1,  a <- 54, b <- 5, 2 + 2, runif(1))
   ref.exps3 <- expression(1 + 1,  a <- 54, 2 + 2, runif(1))
   my.unitizer6 <- new("unitizer", id=1, zero.env=new.env())
-  my.unitizer6 <- my.unitizer6 + ref.exps3   # add ref.exps as new items
+  # add ref.exps as new items
+  capture.output(my.unitizer6 <- my.unitizer6 + ref.exps3)
   my.unitizer7 <- new("unitizer", id=2, zero.env=new.env())
-  my.unitizer7 <- my.unitizer7 + my.unitizer6@items.new    # now convert them to reference items
-  my.unitizer7 <- my.unitizer7 + new.exps3   # now test against new.exps
+  # now convert them to reference items
+  capture.output(my.unitizer7 <- my.unitizer7 + my.unitizer6@items.new)
+  # now test against new.exps
+  capture.output(my.unitizer7 <- my.unitizer7 + new.exps3)
 
   # Note this doesn't test that there are no circular references, only that what
   # used to fail no longer fails.
@@ -379,30 +408,34 @@ local( {
     #   "^@@ \\.ref @@;-  \\[1\\] [0-9.]+;@@ \\.new @@", "+  \\[1\\] [0-9.]$"
     # )
     expect_match(
-      capture.output(show(my.unitizer7@tests.errorDetails[[5L]]), type="message"),
-      "^\\*value\\* mismatch: mean relative difference: "
-    )
-    expect_match(
-      capture.output(
-        summary(my.unitizer7@tests.errorDetails[[5L]]), type="message"
-      ),
-      "^unitizer test fails on value mismatch:"
+      capture.output(show(my.unitizer7@tests.errorDetails[[5L]])),
+      "Value mismatch:", all=FALSE
     )
   })
-
-  test_that("unitizerItemTestsFuns", {
+  test_that("testFuns", {
     # these two should just work fine
-    new("unitizerItemTestsFuns", output=all.equal, value=function(x, y) TRUE)
-    new("unitizerItemTestsFuns")
-    expect_error(new("unitizerItemTestsFuns", output=all.equal, value=function(x, y, z) TRUE), "invalid class .* object")
-    expect_error(new("unitizerItemTestsFuns", output=all.equal, value=function(x, y=1, z=1) TRUE), "invalid class .* object")
-    expect_error(new("unitizerItemTestsFuns", cabbage=all.equal), "Can't initialize invalid slots .*cabbage")
+    new("testFuns", output=all.equal, value=function(x, y) TRUE)
+    new("testFuns")
+    expect_error(
+      new(
+        "testFuns", output=all.equal, value=function(x, y, z) TRUE
+      ),
+      "invalid class .* object"
+    )
+    # this should work too now, since technically has two args
+    expect_is(
+      new("testFuns", output=all.equal, value=function(x, y=1, z=1) TRUE),
+      "testFuns"
+    )
+    expect_error( new("testFuns", cabbage=all.equal),
+      "Can't initialize invalid slots .*cabbage"
+    )
   } )
   new.exps4 <- expression(a <- function() b(), b <- function() TRUE, a())
   my.unitizer8 <- new("unitizer", id=3, zero.env=new.env())
   new.exps5 <- expression(a <- function() b(), NULL, b <- function() TRUE, a())
   my.unitizer9 <- new("unitizer", id=4, zero.env=new.env())
-  x <- my.unitizer9 + new.exps5
+  capture.output(x <- my.unitizer9 + new.exps5)
 
   test_that("Misc", {
     fun <- function() quote(stop("This error should not be thrown"))
@@ -419,8 +452,9 @@ local( {
     # this first one should work because there are no tests until after all
     # the pieces necessary to run `a()` are defined:
 
+    capture.output(res <- my.unitizer8 + new.exps4)
     expect_true(info="This is where `unitizer` nested environments fail",
-      is(my.unitizer8 + new.exps4, "unitizer")
+      is(res, "unitizer")
     )
     # this should break because the NULL forces `b` to be stored in a different
     # environment to `a`.
@@ -440,12 +474,15 @@ local( {
       })
     )
     my.unitizer <- new("unitizer", id=25, zero.env=new.env())
-    my.unitizer <- my.unitizer + exps   # add ref.exps as new items
+    # add ref.exps as new items
+    capture.output(my.unitizer <- my.unitizer + exps)
 
-    my.unitizer2 <- new("unitizer", id=26, zero.env=new.env()) +
-      my.unitizer@items.new
+    capture.output(
+      my.unitizer2 <-
+        new("unitizer", id=26, zero.env=new.env()) + my.unitizer@items.new
+    )
     expect_warning(
-      my.unitizer2 <- my.unitizer2 + exps,
+      capture.output(my.unitizer2 <- my.unitizer2 + exps),
       "not gonna work"
     )
     expect_identical(as.character(my.unitizer2@tests.status), c("Pass", "Error"))
@@ -463,10 +500,14 @@ local( {
       quote(expression(1 + y))
     )
     my.unitizer <- new("unitizer", id=27, zero.env=new.env())
-    my.unitizer <- my.unitizer + exps   # add ref.exps as new items
+    # add ref.exps as new items
+    capture.output(my.unitizer <- my.unitizer + exps)
 
-    my.unitizer2 <- new("unitizer", id=28, zero.env=new.env()) + my.unitizer@items.new
-    my.unitizer2 <- my.unitizer2 + exps
+    capture.output(
+      my.unitizer2 <-
+        new("unitizer", id=28, zero.env=new.env()) + my.unitizer@items.new
+    )
+    capture.output(my.unitizer2 <- my.unitizer2 + exps)
 
     # This used to error b/c expressions returning unevaluated calls/symbols were
     # not compared as such (they were evaluated)

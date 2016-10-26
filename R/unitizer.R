@@ -153,6 +153,7 @@ setClass(
   prototype(
     version=as.character(packageVersion("unitizer")),
     tests.status=factor(levels=.unitizer.tests.levels),
+    base.env=baseenv(),
     zero.env=baseenv(),
     test.file.loc=NA_character_,
     eval=FALSE,
@@ -282,11 +283,13 @@ setMethod("initialize", "unitizer",
     .Object <- callNextMethod()
     .Object@tests.result <- tests_result_mat(0L)
 
-    # We re-use the potentially default `base.env` object instead of creating
-    # a new one to allow the user to pass a pre-defined `base.env` if desired;
-    # in theory this should be a base.env that already has for parent the
-    # `zero.env` because we're trying to recreate the same environment chain
-    # of a different unitizer for when we re-use a unitizer in unitize_dir
+    # Re-use assigned @base.env if it isn't the baseenv(), since that means
+    # user provided a base env.  in theory this should be a base.env that
+    # already has for parent the `zero.env` because we're trying to recreate the
+    # same environment chain of a different unitizer for when we re-use a
+    # unitizer in unitize_dir
+
+    if(identical(.Object@base.env, baseenv())) .Object@base.env <- new.env()
 
     parent.env(.Object@base.env) <- .Object@zero.env
     parent.env(.Object@items.new@base.env) <- .Object@base.env
@@ -602,7 +605,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         }
         test.error.tpl[[i]] <- err.tpl
         if(identical(i, "conditions")) {  #only failed/error tests get this far
-          if(length(item.new@data@conditions))  # if a mismatch, and new conditions, we'll want to show these
+          # if a mismatch, and new conditions, we'll want to show these
+          if(length(item.new@data@conditions))
             tests.conditions.new <- TRUE
         }
       }
@@ -623,7 +627,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         e1@tests.error <- append(e1@tests.error, FALSE)
       }
     }
-    e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)  # so added irrespective of pass/fail
+    # so added irrespective of pass/fail
+    e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)
 
     if(length(e1@tests.status)) {
       e1@tests.status <- unlist(
@@ -675,6 +680,6 @@ setMethod("as.character", "unitizer",
     name <- try(getName(x))
     name.fin <- if(inherits(name, "try-error")) "<name retrieval failure>" else
       name
-    sprintf("unitizer for '%s'", name)
+    sprintf("unitizer for '%s'", pretty_path(name))
 } )
 

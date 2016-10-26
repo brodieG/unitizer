@@ -2,8 +2,11 @@ library(testthat)
 library(unitizer)
 context("Misc")
 
-if(!file_test("-d", file.path("helper", "refobjs")))
-  stop("Make sure wd is set to tests/testthat")
+if(!identical(basename(getwd()), "testthat"))
+  stop("Working dir does not appear to be /testthat, is ", getwd())
+
+rdsf <- function(x)
+  file.path(getwd(), "helper", "misc", sprintf("%s.rds", x))
 
 test_that("Text wrapping", {
   var <- "humpty dumpty sat on a truck and had a big dump"
@@ -17,26 +20,32 @@ test_that("Text wrapping", {
 test_that("Headers", {
   # these basically require visual inspection
 
-  print(unitizer:::H1("hello world"))
-  print(unitizer:::H2("hello world"))
-  print(unitizer:::H3("hello world"))
-
-  expect_error(print(unitizer:::H1(rep_len("hello world", 10)))) # cause an error
-  print(unitizer:::H1(paste0(rep_len("hello world", 10), collapse=" ")))
-  print(unitizer:::H2(paste0(rep_len("hello world", 10), collapse=" ")))
-
-  "No margin"
-  print(unitizer:::H2("No margin"), margin="none")
-  "No margin"
-} )
-test_that("Sweet'n short descriptions work",{
-  expect_match(
-    unitizer:::desc(lm(y ~ x, data.frame(y=1:10, x=runif(10)))),
-    "list lm \\[12,4;28\\] \\{coefficients:num\\(2\\);"
+  old.opt <- options(width=80L)
+  on.exit(old.opt)
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H1("hello world"))),
+    rdsf(100)
   )
-  expect_equal(unitizer:::desc(new("unitizerItem", call=quote(1+1), env=new.env())), "S4 unitizerItem")
-  expect_equal(unitizer:::desc(array(1:27, dim=rep(3, 3))), "integer array [3,3,3]")
-  expect_equal(unitizer:::desc(data.frame(a=letters[1:10], b=1:10)), "list data.frame [10,{a:fct;b:int}]")
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H2("hello world"))),
+    rdsf(200)
+  )
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H3("hello world"))),
+    rdsf(300)
+  )
+  expect_error(print(unitizer:::H1(rep_len("hello world", 10)))) # cause an error
+
+  h.w.long <- paste0(rep_len("hello world", 10), collapse=" ")
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H1(h.w.long))), rdsf(400)
+  )
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H2(h.w.long))), rdsf(500)
+  )
+  expect_equal_to_reference(
+    capture.output(print(unitizer:::H2("No margin"), margin="none")), rdsf(600)
+  )
 } )
 test_that("Valid Names convert names to valid", {
   expect_equal(unitizer:::valid_names("hello"), "hello")
@@ -183,6 +192,7 @@ test_that("Compare Conditions", {
     file.path("helper", "refobjs", "misc_cndlistshow1.rds")
   )
   attr(lst3[[1L]], "unitizer.printed") <- TRUE
+  lst3[[2L]] <- simpleWarning("warning2", quote(yo2 + yoyo))
   show2 <- capture.output(show(lst3))
   expect_equal_to_reference(
     show2,
@@ -237,13 +247,12 @@ test_that("word_cat", {
   )
   # Make sure default works
 
-  width <- getOption("width")
-  options(width=20L)
+  old.width <- options(width=20L)
+  on.exit(options(old.width))
   expect_equal(
     capture.output(unitizer:::word_cat(str)),
     c("Humpty dumpty sat on", "a wall and took a ", "big fall.  All the ", "kings horses and men", "couldn't put humpty ", "dumpty together ", "again")
   )
-  options(width=width)
 })
 test_that("relativize_path", {
   base <- file.path(system.file(package="unitizer"), "example.pkgs")
@@ -315,10 +324,15 @@ test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")
 })
-test_that("quit restart", {
-  expect_equal(
-    withRestarts(unitizer:::unitizer_quit(), unitizerQuitExit=function(e) e),
-    list(save="default", status=0, runLast=TRUE)
+test_that("pretty_path", {
+  # not supposed to exist
+  expect_warning(res <- unitizer:::pretty_path('xadfasdfxcfasdfasd'), NA)
+  expect_identical(res, 'xadfasdfxcfasdfasd')
+  expect_identical(unitizer:::pretty_path(normalizePath('.')), '.')
+  expect_identical(
+    unitizer:::pretty_path(
+      file.path(system.file(package="stats"), "DESCRIPTION")
+    ),
+    "package:stats/DESCRIPTION"
   )
 })
-

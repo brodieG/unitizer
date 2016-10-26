@@ -11,14 +11,14 @@
 
 NULL
 
-# Print a header
-#
-# @aliases print.H2, print.H3, print.header
-# @param x a 1 length character vector
-# @param margin one of "both", "top", "bottom", "none", whether to add newlines
-#   at top or bottom
-# @return 1 length character vector
-# @export
+#' Print a Header
+#'
+#' @aliases print.H2, print.H3, print.header
+#' @param x a 1 length character vector
+#' @param margin one of "both", "top", "bottom", "none", whether to add newlines
+#'   at top or bottom
+#' @return 1 length character vector
+#' @export
 
 print.header <- function(x, margin="bottom", ...) {
   y <- as.character(x, margin, ...)
@@ -191,7 +191,7 @@ print.bullet <- function(x, width=0L, ...) {
 #' @param x object to render
 #' @param width how many characters to wrap at
 #' @param pre what to pre-pend to each bullet
-#' @param ... dots
+#' @param ... dots, other arguments to pass to \code{word_wrap}
 #' @return character vector containing rendered object, where each element
 #'   corresponds to a line
 #' @keywords internal
@@ -200,11 +200,17 @@ as.character.bullet <- function(x, width=0L, ...) {
   if(!is.numeric(width) || length(width) != 1L || width < 0) {
     stop("Argument `width` must be a one length positive numeric.")
   }
+  mc <- match.call()
+  if("unlist" %in% names(mc))
+    stop(
+      "You may not specify `unlist` as part of `...` as that argument is ",
+      "used internally"
+    )
   width <- as.integer(width)
   if(width == 0) width <- getOption("width")
-  bullet_with_offset(x, width)
+  bullet_with_offset(x, width, ...)
 }
-bullet_with_offset <- function(x, width, pad=0L) {
+bullet_with_offset <- function(x, width, pad=0L, ...) {
   stopifnot(is.int.1L(pad), pad >= 0L)
   stopifnot(is.int.1L(width), width >= 0L)
   pad.num <- pad + attr(x, "offset")
@@ -217,7 +223,7 @@ bullet_with_offset <- function(x, width, pad=0L) {
   char.pad.size <- nchar(char.pad[[1L]])
   text.width <- max(width - char.pad.size, 8L)
   char.wrapped <- word_wrap(
-    unlist(x[which(char.vals)]), width=text.width, unlist=FALSE
+    unlist(x[which(char.vals)]), width=text.width, unlist=FALSE, ...
   )
   pad.extra <- paste0(rep(" ", char.pad.size), collapse="")
   char.padded <- Map(

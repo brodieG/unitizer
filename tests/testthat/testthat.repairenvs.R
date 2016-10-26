@@ -14,9 +14,10 @@ local({
     matrix(rep(f, 20))
   )
   my.unitizer <- new("unitizer", id=1, zero.env=new.env())
-  my.unitizer <- my.unitizer + exps   # add ref.exps as new items
+  capture.output(my.unitizer <- my.unitizer + exps) # add ref.exps as new items
   my.unitizer2 <- new("unitizer", id=2, zero.env=new.env())
-  my.unitizer2 <- my.unitizer2 + my.unitizer@items.new    # now convert them to reference items
+  # now convert them to reference items
+  capture.output(my.unitizer2 <- my.unitizer2 + my.unitizer@items.new)
 
   test_that(
     "messed up env ancestry repair works", {
@@ -24,11 +25,19 @@ local({
 
     parent.env(my.unitizer2@items.ref[[2]]@env) <- baseenv()
     expect_warning(
-      x <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
+      capture.output(
+        x <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
+        type="message"
+      ),
       "Detected corrupted environment history"
     )
+    old.opt <- options(unitizer.max.env.depth=20)
+    on.exit(old.opt)
     expect_warning(
-      res <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
+      capture.output(
+        res <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2),
+        type="message"
+      ),
       "Detected corrupted environment history"
     )
     expect_true(is(res,"unitizerItems"))
@@ -42,7 +51,9 @@ local({
 
   test_that(
     "re-assigning to ignored environments handled properly", {
-    items.picked <- my.unitizer@items.new[-3L]  # now `a + b` could try to re-assign to `a <- 54`, but that is same env as `a + b` b/c it is ignored
+    # now `a + b` could try to re-assign to `a <- 54`, but that is same env as
+    # `a + b` b/c it is ignored
+    items.picked <- my.unitizer@items.new[-3L]
     items.heal <- unitizer:::healEnvs(items.picked, my.unitizer)
   } )
 

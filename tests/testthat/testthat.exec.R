@@ -82,7 +82,6 @@ local( {
   }) )
   # NOTE: deparsed test values generated with unitizer:::deparse_mixed
 
-  diffobj::diffStr(obj, ex2)
   test_that("User Expression Evaluation", {
     # a condition error, signaled, not stop (hence no aborted, etc.)
     expect_equal_to_reference(ex1, rdsf(100))

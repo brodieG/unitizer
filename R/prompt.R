@@ -270,7 +270,7 @@ review_prompt <- function(x, nav.env) {
 
   if(nav.id <= length(x@mapping@ignored)) {
     x@inspect.all <- x@mapping@ignored[[nav.id]] || (
-        identical(x@mode, "unitize") &&
+        identical(x@mode, "unitize") && !x@start.at.browser &&
         identical(as.character(x@mapping@review.type[[nav.id]]), "Passed")
       )
     x@review <- if(x@inspect.all) -1L else 1L
@@ -342,7 +342,10 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
     y[[1L]] != as.integer(y[[1L]])
   ) return(FALSE)
   if(!isTRUE(y[[1L]] %in% valid.vals)) {
-    meta_word_msg("Input must be in `", deparse(valid.vals), "`", sep="")
+    meta_word_msg(
+      "Type a number in `", deparse(valid.vals), "` at the prompt", 
+      sep="", trail.nl=FALSE
+    )
     return(FALSE)
   }
   return(y[[1L]])

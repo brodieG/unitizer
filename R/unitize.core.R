@@ -69,7 +69,7 @@ unitize_core <- function(
   state <- try(as.state(state, test.files))
   if(inherits(state, "try-error"))
     stop("Argument `state` could not be evaluated.")
-  par.env <- state@par.env
+  par.env <- state@par.env  # NOTE: this could be NULL until later when replaced
   reproducible.state <- vapply(
     setdiff(slotNames(state), "par.env"), slot, integer(1L), object=state
   )
@@ -119,6 +119,35 @@ unitize_core <- function(
 
   check_call_stack()
 
+  # - Global Controls ----------------------------------------------------------
+
+  # Store a copy of the unitizer options, though make sure to validate them
+  # first (note validation is potentially a bit duplicative since some of the
+  # params would have been pulled from options); we store the opts because they
+  # get nuked by `options_zero` but we still need some of the unitizer ones
+
+  opts <- options()
+  opts.untz <- opts[grep("^unitizer\\.", names(opts))]
+  validate_options(opts.untz, test.files)
+
+  # Initialize new tracking object; this will also record starting state and
+  # store unitizer options; open question of how exposed we want to be to
+  # user manipulation of options
+
+  global <- unitizerGlobal$new(
+    enable.which=reproducible.state,
+    unitizer.opts=opts.untz,  # need to reconcile with normal options
+    set.global=TRUE
+  )
+  set.shim.funs <- FALSE
+  if(is.null(par.env)) {
+    set.shim.funs <- TRUE
+    par.env <- global$par.env
+  }
+  gpar.frame <- par.env
+
+  # - Directories --------------------------------------------------------------
+
   # Create parent directories for untizer stores if needed, doing now so that
   # we can later ensure that store ids are being specified on an absolute basis,
   # and also so we can prompt the user now
@@ -138,21 +167,26 @@ unitize_core <- function(
       paste0("director", if(length(dir.names.clean) > 1L) "ies" else "y")
     meta_word_cat(
       "In order to proceed unitizer must create the following ", dir.word,
-      ":\n", sep="", trail.nl=FALSE
+      ":\n\n", sep="", trail.nl=FALSE
     )
     meta_word_cat(
-      as.character(UL(dir.names.clean), option=getOption("width") - 2L),
+      as.character(
+        UL(dir.names.clean), width=getOption("width") - 2L, hyphens=FALSE
+      ),
       trail.nl=FALSE
     )
     prompt <- paste0("Create ", dir.word)
-    meta_word_cat(prompt, "?", sep="")
+    meta_word_cat("\n", prompt, "?", sep="")
 
     pick <- unitizer_prompt(
       prompt, valid.opts=c(Y="[Y]es", N="[N]o"), global=NULL,
       browse.env=new.env(parent=par.env)
     )
-    if(!identical(pick, "Y"))
+    if(!identical(pick, "Y")) {
+      on.exit(NULL)
+      reset_and_unshim(global)
       stop("Cannot proceed without creating directories.")
+    }
     if(!all(dir.created <- dir.create(dir.names.clean, recursive=TRUE))) {
       # nocov start
       # no good way to test
@@ -177,30 +211,8 @@ unitize_core <- function(
       "Logic Error: some `store.ids` could not be normalized; contact ",
       "maintainer."
     )
-  # - Global Controls ----------------------------------------------------------
+  # - Set Global State ---------------------------------------------------------
 
-  # Store a copy of the unitizer options, though make sure to validate them
-  # first (note validation is potentially a bit duplicative since some of the
-  # params would have been pulled from options); we store the opts because they
-  # get nuked by `options_zero` but we still need some of the unitizer ones
-
-  opts <- options()
-  opts.untz <- opts[grep("^unitizer\\.", names(opts))]
-  validate_options(opts.untz, test.files)
-
-  # Initialize new tracking object; this will also record starting state and
-  # store unitizer options; open question of how exposed we want to be to
-  # user manipulation of options
-
-  global <- unitizerGlobal$new(
-    enable.which=reproducible.state,
-    unitizer.opts=opts.untz,  # need to reconcile with normal options
-    set.global=TRUE
-  )
-  if(is.null(par.env)) {
-    global$shimFuns()
-    par.env <- global$par.env
-  }
   on.exit(
     {
       reset_and_unshim(global)
@@ -217,7 +229,7 @@ unitize_core <- function(
     },
     add=TRUE
   )
-  gpar.frame <- par.env
+  if(set.shim.funs) global$shimFuns()
 
   # Set the zero state if needed; `seach.path` should be done first so that we
   # can disable options if there is a conflict there; WARNING, there is some
@@ -305,11 +317,9 @@ unitize_core <- function(
 
   global$state("init")  # mark post pre-load state
 
-  # Place quit functions in the correct frame
+  # Used to put q/quit here before we switched to tracing them
 
   util.frame <- new.env(parent=pre.load.frame)
-  assign("quit", unitizer_quit, util.frame)
-  assign("q", unitizer_quit, util.frame)
 
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
@@ -324,7 +334,6 @@ unitize_core <- function(
   # - Evaluate / Browse --------------------------------------------------------
 
   # Parse, and use `eval.which` to determine which tests to evaluate
-
 
   while(
     (length(eval.which) || mode == identical(mode, "review")) && length(valid)
@@ -551,13 +560,15 @@ unitize_browse <- function(
   to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
 
   # Determine implied review mode (all tests passed in a particular unitizer,
-  # but user may still pick it to review)
+  # but user may still pick it to review); we got lazy and tried to leverage
+  # the review mechanism for passed tests, but this is not ideal because then
+  # we're using reference items instead of the newly evaluated versions.  Will
+  # switch this, but still have to deal with situations where a new state 
+  # doesn't exist (in particular, deleted tests)
 
-  review.mode <- ifelse(
-    !to.review & !force.update & test.len > 1L, "review", mode
-  )
   untz.browsers <- mapply(
-    browsePrep, as.list(unitizers), review.mode,
+    browsePrep, as.list(unitizers), mode=mode,
+    start.at.browser=(identical(mode, "review") | !to.review) & !force.update,
     MoreArgs=list(hist.con=hist.obj$con, interactive=interactive.mode),
     SIMPLIFY=FALSE
   )
@@ -618,10 +629,9 @@ unitize_browse <- function(
         paste0("test file \"", global$ns.opt.conflict@file, "\""),
       " because the following namespace", if(many > 1L) "s", " could not be ",
       "unloaded: ",
-      paste0(
-        deparse(global$ns.opt.conflict@namespaces, width.cutoff=500L), sep=""
-      ),
-      ".", sep=""
+      char_to_eng(
+        sprintf("`%s`", sort(global$ns.opt.conflict@namespaces)), "", ""
+      ), ".", sep=""
     )
     if(interactive.mode) {
       meta_word_msg(
@@ -882,17 +892,17 @@ check_call_stack <- function() {
     )
   restarts <- computeRestarts()
   restart.names <- vapply(restarts, `[[`, character(1L), 1L)
-  reserved.restarts <- c("unitizerQuitExit", "unitizerInteractiveFail")
+  reserved.restarts <- c("unitizerInteractiveFail")
   if(any(res.err <- reserved.restarts %in% restart.names)) {
     many <- sum(res.err) > 1L
     stop(
       word_wrap(collapse="\n",
         cc(
           deparse(reserved.restarts[res.err], width.cutoff=500L),
-          "restart", if(many) "s are" else "  is", " already defined; ",
-          "unitizer relies on ", if(many) "these restarts" else "this restart",
+          " restart", if(many) "s are" else " is", " already defined; ",
+          "unitizer relies on ", if(many) "these restarts" else "this restart ",
           "to manage evaluation so unitizer will not run if ",
-          if(many) "they are" else "it is", "defined outside of `unitize`.  ",
+          if(many) "they are" else "it is", " defined outside of `unitize`.  ",
           "If you did not define ", if(many) "these restarts" else
           "this restart", " contact maintainer."
   ) ) ) }

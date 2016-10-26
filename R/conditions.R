@@ -154,8 +154,8 @@ setMethod("show", "conditionList",
     cond.calls <- vapply(
       as.list(object), function(x) !is.null(conditionCall(x)), logical(1L)
     )
+    nums <- paste0(format(seq_along(object)), ". ")
     out <- paste0(
-      format(seq_along(object)), ": ",
       ifelse(
         print.show <- vapply(
           as.list(object),
@@ -166,7 +166,8 @@ setMethod("show", "conditionList",
       vapply(as.list(object), get_condition_type, character(1L)),
       ifelse(cond.calls, " in ", "")
     )
-    desc.chars <- max(width - nchar(out), 20L)
+    desc.chars <- max(width - max(nchar(nums)), 20L)
+
     cond.detail <- vapply(
       as.list(object), FUN.VALUE=character(1L),
       function(y) {
@@ -176,16 +177,29 @@ setMethod("show", "conditionList",
           paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
         }
     } )
-    out <- paste0(out, substr(cond.detail, 1, desc.chars))
+    out.w <- word_wrap(paste0(out, cond.detail), width=desc.chars, unlist=FALSE)
+    out.lens <- vapply(out.w, length, integer(1L))
+    if(!all(out.lens))
+      stop("Logic Error: empty condition data; contact maintainer.")
+
+    nums.pad <- Map(
+      function(x, y) c(x, rep(paste0(rep(" ", nchar(x)), collapse=""), y - 1L)),
+      nums, out.lens
+    )
+    out.fin <- unlist(Map(paste0, nums.pad, out.w))
+
     if(any(print.show)) {
-      out <- c(
-        out,
-        paste0(
-          "[print] means condition was issued in print/show method rather ",
-          "than in actual evaluation."
+      out.fin <- c(
+        out.fin,
+        word_wrap(
+          cc(
+            "\n[print] means condition was issued by a print or show method ",
+            "for an auto-printed result."
+          ),
+          width=width
     ) ) }
-    out <- c(out)
-    cat(out, sep="\n")
+    out.fin <- c(out.fin)
+    cat(out.fin, sep="\n")
     return(invisible(object))
   }
 )

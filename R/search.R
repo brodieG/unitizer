@@ -130,10 +130,11 @@ setMethod(
 
 search_path_update <- function(id, global) {
   stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
-  if(!id %in% seq_along(global$tracking@search.path))
+  if(!id %in% seq_along(global$tracking@search.path)) {
     stop(
       "Logic Error: attempt to reset state to unknown index; contact maintainer"
     )
+  }
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
 
@@ -183,8 +184,11 @@ search_path_update <- function(id, global) {
     )
     sc.id.tmp <- append(sc.id.tmp, st.id[[i]], i - 1L)
   }
-  # Now see what needs to be swapped
+  # Now see what needs to be swapped; make sure not to detach environments that
+  # are not package environments that should be kept on the search path as doing
+  # so leads to them getting copied
 
+  search.keep <- keep_sp_default(global$unitizer.opts)
   j <- 0
   repeat {
     reord <- match(sc.id.tmp, st.id)
@@ -196,7 +200,18 @@ search_path_update <- function(id, global) {
     if((j <- j + 1) > length(st.id) || length(which(mismatch)) < 2L)
       stop("Logic Error: unable to reorder search path; contact maintainer.")
 
-    swap.id <- min(reord[mismatch])
+    swap.valid <- mismatch & (
+      grepl("package:.+", sc.id.tmp) | !sc.id.tmp %in% search.keep
+    )
+    if(!any(swap.valid))
+      stop(
+        "Logic Error: unable to reorder search path because of ",
+        "'unitizer.search.path.keep' limitations. If you added objects ",
+        "to that option, make sure you're not also attaching/detaching ",
+        "them in your tests.  If you are not doing those things, contact ",
+        "maintainer."
+      )
+    swap.id <- min(reord[swap.valid])
     swap.pos <- which(reord == swap.id)
     move_on_path(new.pos=swap.id, old.pos=swap.pos, global=global)
     sc.id.tmp <- unitizerUniqueNames(search_as_envs())
@@ -213,13 +228,12 @@ search_path_update <- function(id, global) {
 
   tar.objs <- vapply(search.new, is.loaded_package, logical(1L))
   cur.objs <- vapply(names(search_as_envs()), is.loaded_package, logical(1L))
-  search.keep <- keep_sp_default(global$unitizer.opts)
 
   if(!identical(tar.objs, cur.objs))
     stop("Logic Error: search path object type mismatch; contact maintainer.")
 
   if(!all(tar.objs)) {
-    for(i in which(!tar.objs && !(search.new %in% search.keep))) {
+    for(i in which(!tar.objs & !(search.new %in% search.keep))) {
       # Don't replace identical elements; this is meant to avoid re-attaching
       # environments since doing so actually leads to a copy of the
       # environment being made
@@ -460,7 +474,7 @@ unload_namespaces <- function(
   # Unload any dynamic libraries associated with the stuff we detached by
   # matching paths to what's in dynlibs
 
-  dyn.lib.fnames <- vapply(.dynLibs(), `[[`, character(1L), "path")
+  dyn.lib.fnames <- vapply(.dynLibs(), "[[", character(1L), "path")
   dls <- sub("/libs/[^/].*$", "", dyn.lib.fnames)
   lib.locs.ul <- lib.locs[unloaded.success]
   dls.to.ul <-  lib.locs.ul[lib.locs.ul %in% dls]
@@ -471,8 +485,8 @@ unload_namespaces <- function(
     # nocov start
     # no good way to test this
     warning(
-      "Unable to unload the following namespaces:\n", deparse(names(lns)),
-      immediate.=TRUE
+      "Unable to unload the following namespaces: ",
+      char_to_eng(sort(names(lns)), "", ""), immediate.=TRUE
     )
     # nocov end
   }
@@ -605,7 +619,7 @@ get_package_data <- function() {
     function(x) {
       loc <- if(grepl("^package:.+", x))
         try(path.package(sub("^package:(.*)", "\\1", x))) else ""
-      ver <- try(getNamespaceVersion(x))
+      ver <- try(getNamespaceVersion(x), silent=TRUE)
       new(
         "unitizerNamespaceData",
         name=x,

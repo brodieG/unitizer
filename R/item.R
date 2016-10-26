@@ -370,21 +370,3 @@ setMethod(
     slot(x@data, what)
   }
 )
-setMethod("$", "unitizerItemTestsErrorsDiffs",
-  function(x, name) {
-    what <- substitute(name)
-    what <- if(is.symbol(what)) as.character(what) else name
-    x[[what]]@diff
-} )
-setMethod("[[",  "unitizerItemTestsErrorsDiffs",
-  function(x, i, j, ..., exact=TRUE) {
-    if(!is.chr1plain(i))
-      stop("Argument `i` must be character(1L) and not NA")
-    sn <- slotNames(x)
-    if(!i %in% sn)
-      stop(
-        "Argument `i` must be one of ",
-        paste0(deparse(sn, width.cutoff=500L), collapse="")
-      )
-    slot(x, i)
-})
