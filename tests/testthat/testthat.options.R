@@ -1,4 +1,5 @@
 library(unitizer)
+context("Options")
 
 old.opts <- options()
 new.opts <- unitizer:::options_zero()

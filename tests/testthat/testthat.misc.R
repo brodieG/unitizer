@@ -247,13 +247,12 @@ test_that("word_cat", {
   )
   # Make sure default works
 
-  width <- getOption("width")
-  options(width=20L)
+  old.width <- options(width=20L)
+  on.exit(options(old.width))
   expect_equal(
     capture.output(unitizer:::word_cat(str)),
     c("Humpty dumpty sat on", "a wall and took a ", "big fall.  All the ", "kings horses and men", "couldn't put humpty ", "dumpty together ", "again")
   )
-  options(width=width)
 })
 test_that("relativize_path", {
   base <- file.path(system.file(package="unitizer"), "example.pkgs")

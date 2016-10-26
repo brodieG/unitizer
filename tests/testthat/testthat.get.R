@@ -262,19 +262,18 @@ local({
     expect_true(length(unitizer:::get_package_dir(f)) == 0L)
     unlink(f)
     expect_equal(unitizer:::get_package_dir(f), character(0L))
-    test.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "fastlm.0",
-      "unitizer.fastlm.Rcheck", "unitizer.fastlm", "R"
-    )
-    expect_equal(unitizer:::get_package_dir(test.dir), dirname(test.dir))
-    # try package dir in R CMD Check structure
-    test.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "fastlm.0",
-      "unitizer.fastlm.Rcheck"
+    test.dir.1 <- file.path(
+      .unitizer.fastlm, "unitizer.fastlm.Rcheck", "unitizer.fastlm", "R"
     )
     expect_equal(
-      unitizer:::get_package_dir(file.path(test.dir, "tests", "tests.R")),
-      file.path(test.dir, "unitizer.fastlm")
+      unitizer:::get_package_dir(test.dir.1),
+      normalizePath(dirname(test.dir.1))
+    )
+    # try package dir in R CMD Check structure
+    test.dir.2 <- file.path(.unitizer.fastlm, "unitizer.fastlm.Rcheck")
+    expect_equal(
+      unitizer:::get_package_dir(file.path(test.dir.2, "tests", "tests.R")),
+      normalizePath(file.path(test.dir.2, "unitizer.fastlm"))
     )
   } )
   test_that("is_unitizer_dir", {

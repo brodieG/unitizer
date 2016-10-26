@@ -4,6 +4,7 @@ local({
   # Install test packages, and set them up for removal, here in package name
   # =dirname format
 
+  library(methods)
   library(unitizer)
   cat("setup packages\n")
   tmp.pkgs <- c(
@@ -47,7 +48,14 @@ local({
   test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
   .unitizer.test.file <- file.path(test.dir,  "fastlm1.R")
   .unitizer.test.store <- file.path(test.dir,  "fastlm1.unitizer")
-  on.exit(unitizer_cleanup_demo(), add=TRUE)
+  # Ensure same behavior interactive and non-interactive
+  .old.err.call.opt <- options(showErrorCalls=FALSE)
+  on.exit({
+      options(.old.err.call.opt)
+      unitizer_cleanup_demo()
+    },
+    add=TRUE
+  )
 
   # Run tests
 

@@ -28,10 +28,15 @@ local({
   unlink(hist.file)
 
   test_that("custom history file", {
-    expect_identical(
-      hist.dat,
-      c("## <unitizer> (original history will be restored on exit)", "library(unitizer.fastlm)", "dat <- data.frame(x = 1:100, y = (1:100)^2)", "res <- fastlm(dat$x, dat$y)", "res", "1 + 1", "get_slope(res)", "get_rsq(res)", "fastlm(1:100, 1:10)")
-    )
+    # History only works in interactive mode
+    if(interactive()) {
+      expect_identical(
+        hist.dat,
+        c("## <unitizer> (original history will be restored on exit)", "library(unitizer.fastlm)", "dat <- data.frame(x = 1:100, y = (1:100)^2)", "res <- fastlm(dat$x, dat$y)", "res", "1 + 1", "get_slope(res)", "get_rsq(res)", "fastlm(1:100, 1:10)")
+      )
+    } else {
+      expect_identical(hist.dat, character())
+    }
   })
   # Bad seed
 

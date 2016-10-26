@@ -1,4 +1,3 @@
-library(unitizer)
 context("Demo")
 
 local({
@@ -7,15 +6,16 @@ local({
 
   test_that("copy fastlm dir works", {
     expect_identical(
-      list.files(.unitizer.fastlm),
-      c(
-        "DESCRIPTION", "man", "NAMESPACE", "R", "tests",
-        "unitizer.fastlm.Rcheck"
-      )
-    )
-    expect_identical(
       readLines(file.path(.unitizer.fastlm, "DESCRIPTION"))[[5L]],
       "Version: 0.1.0"
+    )
+    expect_equal(
+      sort(list.files(.unitizer.fastlm)),
+      sort(
+        c(
+          "DESCRIPTION", "man", "NAMESPACE", "R", "tests",
+          "unitizer.fastlm.Rcheck"
+      ) ) 
     )
     update_fastlm(.unitizer.fastlm, version="0.1.1")
     expect_identical(
