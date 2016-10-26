@@ -25,6 +25,7 @@
 ### Bugfixes:
 
  * Fix unintended detaching of `tools:rstudio`, and [many others](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.2.0%20label%3Abug%20)
+ * `base.env` now unique for each `unitizer`
 
 ## v1.1.0
 
