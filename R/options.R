@@ -214,7 +214,7 @@ options_zero <- function(
   )
   opt.success <- vapply(names(all.opts),
     function(opt.name) {
-      opt.attempt <- try(options(all.opts[opt.name]))
+      opt.attempt <- try(options(all.opts[opt.name]), silent=TRUE)
       return(!inherits(opt.attempt, "try-error"))
     },
     logical(1L)
@@ -224,7 +224,7 @@ options_zero <- function(
       word_wrap(
         cc(
           "Unable to reset following options: ",
-          cat(deparse(names(all.opts)[!opt.success]), width.cutoff=500L)
+          deparse(names(all.opts)[!opt.success], width.cutoff=500L)
     ) ) )
   }
   # Reset others
