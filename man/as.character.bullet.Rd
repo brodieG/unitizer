@@ -11,7 +11,7 @@
 
 \item{width}{how many characters to wrap at}
 
-\item{...}{dots}
+\item{...}{dots, other arguments to pass to \code{word_wrap}}
 
 \item{pre}{what to pre-pend to each bullet}
 }

@@ -6,17 +6,16 @@ local({
 
   library(methods)
   library(unitizer)
+
   cat("setup packages\n")
   tmp.pkgs <- c(
     unitizerdummypkg1="unitizerdummypkg1",
     unitizerdummypkg2="unitizerdummypkg2",
-    unitizer.fastlm="fastlm.0"
+    utzflm="flm0"
   )
-  lib <- head(.libPaths(), 1L)
   if(
     any(which.inst <- names(tmp.pkgs) %in% rownames(installed.packages()))
   ) {
-    # remove.packages(sprintf("unitizerdummypkg%d", 1:2))
     stop(
       "Packages\n",
       paste0(
@@ -24,39 +23,43 @@ local({
       ),
       "\nalready installed; cannot proceed with tests"
   ) }
-
-  unitizer.dir <- system.file(package="unitizer")
-  pkg.dirs <- file.path(unitizer.dir, "example.pkgs", tmp.pkgs)
-  lib <- head(.libPaths(), 1L)
-
-  pkg.inst <- try(
-    install.packages(pkg.dirs, repos=NULL, lib=lib, type="src", quiet=TRUE)
-  )
-  if(inherits(pkg.inst, "try-error")) stop("Unable to install test packages")
-  cat("setup demos\n")
-
+  old.opt.1 <- options(useFancyQuotes=FALSE)
   on.exit({
     for(i in names(tmp.pkgs)) {
       try(detach(sprintf("package:%s", i)), silent=TRUE)
       try(unloadNamespace(i), silent=TRUE)
     }
-    remove.packages(names(tmp.pkgs), lib=lib)
+    suppressWarnings(remove.packages(names(tmp.pkgs)))
+    options(old.opt.1)
   })
+  unitizer.dir <- system.file(package="unitizer")
+  pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
+
+  pkg.inst <- try(
+    for(pkg in pkg.dirs)
+      devtools::install(pkg, quiet=TRUE, quick=TRUE, local=FALSE)
+  )
+  if(inherits(pkg.inst, "try-error")) stop("install error")
+  cat("setup demos\n")
+
   # Setup the demo files used by a number of tests
 
   .unitizer.fastlm <- copy_fastlm_to_tmpdir()
   test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
   .unitizer.test.file <- file.path(test.dir,  "fastlm1.R")
   .unitizer.test.store <- file.path(test.dir,  "fastlm1.unitizer")
+
   # Ensure same behavior interactive and non-interactive
-  .old.err.call.opt <- options(showErrorCalls=FALSE)
-  on.exit({
+
+  .old.err.call.opt <- if(isTRUE(getOption("showErrorCalls")))
+     options(showErrorCalls=FALSE) else list()
+  on.exit(
+    {
       options(.old.err.call.opt)
       unitizer_cleanup_demo()
     },
     add=TRUE
   )
-
   # Run tests
 
   test.res <- test_dir(
@@ -93,6 +96,9 @@ local({
       "zzrunlast"
     )
   )
+
+  # Check for failures and throw error if they exist since test_dir does not
+  # do so on its own
   # Check for failures and throw error if they exist since test_dir does not
   # do so on its own
 

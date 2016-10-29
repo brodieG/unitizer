@@ -312,8 +312,10 @@ word_msg <- function(...) word_cat(..., file=stderr())
 #' @rdname text_wrap
 
 word_comment <- function(
-  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE
+  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE,
+  color=crayon::has_color()
 ) {
+  if(is.null(color)) color <- crayon::has_color()
   if(!is.character(x)) stop("Argument `x` must be character")
   if(!all(grep("^#", x)))
     stop("Argument `x` must be character with all elements starting with '#'")
@@ -323,9 +325,7 @@ word_comment <- function(
   )
   res <- lapply(
     res,
-    function(x)
-      if(crayon::has_color()) crayon::silver(paste0("#", x)) else
-        paste0("#", x)
+    function(x) if(color) crayon::silver(paste0("#", x)) else paste0("#", x)
   )
   if(unlist) unlist(res) else res
 }

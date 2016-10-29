@@ -327,24 +327,29 @@ setMethod("+",
 #'   \item \code{message} anything that was output to \code{stderr}, mostly
 #'     this is all contained in the conditions as well, though there could be
 #'     other output here, as a character vector
-#'   \item \code{conditions} a \code{\link{conditionList-class}} containing all
+#'   \item \code{conditions} a \code{\link{conditionList}} containing all
 #'     the conditions produced during test evaluation
 #'   \item \code{aborted} whether the test call issues a restart call to the
 #'     `abort` restart, as `stop` does.
 #' }
 #' @export
-#' @aliases $
+#' @rdname extract-unitizerItem-method
 #' @param x a \code{unitizerItem} object, typically \code{.NEW} or \code{.REF}
 #'   at the \code{unitizer} interactive prompt
 #' @param name a valid test sub-component
+#' @param i a valid test sub-component as a character string, or a sub-component
+#'   index
+#' @param j missing for compatibility with generic
+#' @param ... missing for compatibility with generic
+#' @param exact unused, always matches exact
+#'
 #' @return the test component requested
 #' @examples
 #' ## From the unitizer> prompt:
-#' \dontrun{
+#' .NEW <- mock_item()  # .NEW is normally available at unitizer prompt
 #' .NEW$call
-#' .REF$conditions
+#' .NEW$conditions
 #' .NEW$value              # equivalent to `.new`
-#' }
 
 setMethod("$", c("unitizerItem"),
   function(x, name) {
@@ -352,6 +357,9 @@ setMethod("$", c("unitizerItem"),
     what <- if(is.symbol(what)) as.character(what) else name
     x[[what]]
 } )
+#' @export
+#' @rdname extract-unitizerItem-method
+
 setMethod(
   "[[", signature=c(x="unitizerItem"),
   function(x, i, j, ..., exact=TRUE) {

@@ -27,7 +27,7 @@ word_cat(..., sep = " ", width = getOption("width"), tolerance = 8L,
 word_msg(...)
 
 word_comment(x, width = getOption("width"), tolerance = 8L,
-  hyphens = TRUE, unlist = TRUE)
+  hyphens = TRUE, unlist = TRUE, color = crayon::has_color())
 }
 \arguments{
 \item{x}{character vector}

@@ -17,6 +17,7 @@ NULL
 #' @param x a 1 length character vector
 #' @param margin one of "both", "top", "bottom", "none", whether to add newlines
 #'   at top or bottom
+#' @param ... passed on to \code{as.character}
 #' @return 1 length character vector
 #' @export
 

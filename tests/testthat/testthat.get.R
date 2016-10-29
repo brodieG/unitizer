@@ -246,7 +246,7 @@ local({
     expect_match(
       unitizer:::is_package_dir(
         file.path(
-          system.file(package="unitizer"), "example.pkgs", "baddescription1"
+          system.file(package="unitizer"), "expkg", "baddescription1"
       ) ),
       "DESCRIPTION file did not have a package name entry"
     )
@@ -263,22 +263,22 @@ local({
     unlink(f)
     expect_equal(unitizer:::get_package_dir(f), character(0L))
     test.dir.1 <- file.path(
-      .unitizer.fastlm, "unitizer.fastlm.Rcheck", "unitizer.fastlm", "R"
+      .unitizer.fastlm, "utzflm.Rcheck", "utzflm", "R"
     )
     expect_equal(
       unitizer:::get_package_dir(test.dir.1),
       normalizePath(dirname(test.dir.1))
     )
     # try package dir in R CMD Check structure
-    test.dir.2 <- file.path(.unitizer.fastlm, "unitizer.fastlm.Rcheck")
+    test.dir.2 <- file.path(.unitizer.fastlm, "utzflm.Rcheck")
     expect_equal(
       unitizer:::get_package_dir(file.path(test.dir.2, "tests", "tests.R")),
-      normalizePath(file.path(test.dir.2, "unitizer.fastlm"))
+      normalizePath(file.path(test.dir.2, "utzflm"))
     )
   } )
   test_that("is_unitizer_dir", {
     base.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "infer"
+      system.file(package="unitizer"), "expkg", "infer"
     )
     expect_false(unitizer:::is_unitizer_dir(base.dir))
     expect_true(
@@ -290,7 +290,7 @@ local({
   test_that("infer_unitizer_location", {
     infer <- function(...) infer_unitizer_location(..., interactive.mode=FALSE)
     base.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "infer"
+      system.file(package="unitizer"), "expkg", "infer"
     )
     # Verify package is still in state we built tests on
 

@@ -152,12 +152,20 @@ if(
     "slots not identical; contact maintainer."
   )
 }
+#' Subsetting Methods for unitizerItemTestsErrorsDiffs objects
+#'
+#' @rdname extract-unitizerItemTestsErrorsDiffs-method
+#' @keywords internal
+
 setMethod("$", "unitizerItemTestsErrorsDiffs",
   function(x, name) {
     what <- substitute(name)
     what <- if(is.symbol(what)) as.character(what) else name
     x[[what]]@diff
 } )
+#' @rdname extract-unitizerItemTestsErrorsDiffs-method
+#' @keywords internal
+
 setMethod("[[",  "unitizerItemTestsErrorsDiffs",
   function(x, i, j, ..., exact=TRUE) {
     if(!is.chr1plain(i))
@@ -231,6 +239,11 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
     invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
   }
 )
+#' Show Method for unitizerItemTestsErrorsDiffs objects
+#'
+#' @rdname show-unitizerItemTestsErrorsDiffs-method
+#' @keywords internal
+
 setMethod("show", "unitizerItemTestsErrorsDiffs",
   function(object) {
     sn <- slotNames(object)
@@ -240,6 +253,11 @@ setMethod("show", "unitizerItemTestsErrorsDiffs",
     }
     invisible(object)
 } )
+#' Show Method for unitizerItemTestsErrorsDiff objects
+#'
+#' @rdname show-unitizerItemTestsErrorsDiff-method
+#' @keywords internal
+
 setMethod("show", "unitizerItemTestsErrorsDiff",
   function(object) {
     cat_fun <- if(object@err) meta_word_msg else meta_word_cat

@@ -1,3 +1,4 @@
+library(unitizer)
 context("Demo")
 
 local({
@@ -6,16 +7,16 @@ local({
 
   test_that("copy fastlm dir works", {
     expect_identical(
-      readLines(file.path(.unitizer.fastlm, "DESCRIPTION"))[[5L]],
-      "Version: 0.1.0"
-    )
-    expect_equal(
       sort(list.files(.unitizer.fastlm)),
       sort(
         c(
           "DESCRIPTION", "man", "NAMESPACE", "R", "tests",
-          "unitizer.fastlm.Rcheck"
-      ) ) 
+          "utzflm.Rcheck"
+      ) )
+    )
+    expect_identical(
+      readLines(file.path(.unitizer.fastlm, "DESCRIPTION"))[[5L]],
+      "Version: 0.1.0"
     )
     update_fastlm(.unitizer.fastlm, version="0.1.1")
     expect_identical(
@@ -60,6 +61,7 @@ local({
   # Note the initial install happens in the test running script
 
   unitizer:::update_fastlm(.unitizer.fastlm, version="0.1.0")
+  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
 
   unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
   txt1 <- unitizer:::capture_output(
@@ -73,9 +75,7 @@ local({
   # Rejecting failed tests does not change unitizer
 
   update_fastlm(.unitizer.fastlm, version="0.1.1")
-  install.packages(
-    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
-  )
+  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
   unitizer:::read_line_set_vals(c("N", "N", "Y"))
   txt3 <- unitizer:::capture_output(
     untz3 <- unitize(.unitizer.test.file, interactive.mode=TRUE)

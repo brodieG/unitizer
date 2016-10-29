@@ -16,7 +16,8 @@ NULL
 #' first) assuming they are S4 objects.  We don't run on every object to avoid
 #' potentially expensive computation on all objects.
 #'
-#' @keywords internal
+#' @name unitizerList
+#' @rdname unitizerList
 #' @slot .items a list or expression
 #' @slot .pointer integer, used for implementing iterators
 #' @slot .seek.fwd logical used to track what direction iterators are going
@@ -117,7 +118,7 @@ setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.ite
 
 setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 
-#' Iterate through items of a \code{\link{unitizerList-class}} Object
+#' Iterate through items of a \code{\link{unitizerList}} ObjectJK
 #'
 #' Extraction process is a combination of steps:
 #' \enumerate{
@@ -135,8 +136,8 @@ setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 #'   getItem,unitizerList-method, reset,unitizerList-method, done,unitizerList-method
 #' @keywords internal
 #'
-#' @param x a \code{\link{unitizerList-class}} object
-#' @return \code{\link{unitizerList-class}} for \code{getItem},
+#' @param x a \code{\link{unitizerList}} object
+#' @return \code{\link{unitizerList}} for \code{getItem},
 #'   an item from the list, which could be anything
 
 setMethod("nextItem", "unitizerList", valueClass="unitizerList",
@@ -203,7 +204,7 @@ setMethod("done", "unitizerList",
 
 setGeneric("append")
 
-# Append To a \code{\link{unitizerList-class}} Object
+# Append To a \code{\link{unitizerList}} Object
 #
 # \code{values} is coerced to list or expression depending on
 # type of \code{x} \code{.items} slot.
@@ -239,7 +240,7 @@ setMethod("append", c("unitizerList", "ANY"),
     # validObject(y) # too expensive, commented
     y
 } )
-#' Concatenate to a \code{\link{unitizerList-class}}
+#' Concatenate to a \code{\link{unitizerList}}
 #'
 #' @keywords internal
 

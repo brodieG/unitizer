@@ -193,7 +193,7 @@ local( {
   txt3 <- "# Calls to `library` and assignments are not normally considered tests, so
   # you will not be prompted to review them
 
-  library(unitizer.fastlm)
+  library(utzflm)
   x <- 1:100
   y <- x ^ 2
   res <- fastlm(x, y)
@@ -232,7 +232,7 @@ local( {
   })
   test_that("uncommenting works", {
     expect_identical(
-      quote(library(unitizer.fastlm)),
+      quote(library(utzflm)),
       unitizer:::uncomment(expr[[1]])
     )
     expect_equal(info="don't blow away function arg names",
