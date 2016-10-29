@@ -118,7 +118,7 @@ setMethod("as.expression", "unitizerList", function(x, ...) as.expression(x@.ite
 
 setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 
-#' Iterate through items of a \code{\link{unitizerList}} Object
+#' Iterate through items of a \code{\link{unitizerList}} ObjectJK
 #'
 #' Extraction process is a combination of steps:
 #' \enumerate{

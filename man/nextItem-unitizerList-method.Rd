@@ -8,7 +8,7 @@
 \alias{nextItem,unitizerList-method,}
 \alias{prevItem,unitizerList-method,}
 \alias{reset,unitizerList-method,}
-\title{Iterate through items of a \code{\link{unitizerList}} Object}
+\title{Iterate through items of a \code{\link{unitizerList}} ObjectJK}
 \usage{
 \S4method{nextItem}{unitizerList}(x)
 }
