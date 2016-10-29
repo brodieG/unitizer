@@ -46,25 +46,25 @@ character(1L)
 \section{Demo Details}{
 
 
-The demo centers around simulated development of the \code{unitizer.fastlm}
+The demo centers around simulated development of the \code{utzflm}
 package.  \code{unitizer} includes in its sources three copies of the source
-code for the \code{unitizer.fastlm} package, each at a different stage of
+code for the \code{utzflm} package, each at a different stage of
 development.  This allows us to create reference \code{unitizer} tests under
 one version, move to a new version and check for regressions, and finally
 fix the regressions with the last version.  The version switching is
 intended to represent the package development process.
 
-The demo manages the \code{unitizer.fastlm} code changes, but between each
+The demo manages the \code{utzflm} code changes, but between each
 update allows the user to interact with \code{unitizer}.  The demo operates
 under the assumption that the user will accept the first set of tests and
 reject the failing tests after the first update.  If the user does anything
 different then the demo commentary may not apply anymore.
 }
 
-\section{\code{unitizer.fastlm}}{
+\section{\code{utzflm}}{
 
 
-\code{unitizer.fastlm} is a "dummy" package that implements a faster
+\code{utzflm} is a "dummy" package that implements a faster
 computation of slope, intercept, and R^2 for single variable linear
 regressions than is available via \code{summary(lm()...)}.
 }
@@ -73,9 +73,9 @@ regressions than is available via \code{summary(lm()...)}.
 
 
 \code{copy_fastlm_to_tmpdir} copies the initial version of the
-\code{unitizer.fastlm} sources to a temporary directory, \code{show_file}
+\code{utzflm} sources to a temporary directory, \code{show_file}
 displays the contents of a source code file, \code{update_fastlm} changes the
-source code of \code{unitizer.fastlm}, and \code{unitizer_check_demo_state}
+source code of \code{utzflm}, and \code{unitizer_check_demo_state}
 and \code{unitizer_cleanup_demo} perform janitorial functions.  None of
 these functions are intended for use outside of the unitizer demo.
 }

@@ -7,6 +7,15 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## Color Options
+
+Right now a total mess; need a unified way of addressing color usage in:
+
+* `diffobj` calls from within unitizer
+* `comment` coloring
+* `browse` menu coloring (failed/removed/etc)
+* anything else we end up adding
+
 ## Display Improvements
 
 ### Pager

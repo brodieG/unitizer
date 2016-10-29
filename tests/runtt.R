@@ -6,17 +6,31 @@ local({
 
   library(methods)
   library(unitizer)
+
+  # Lightweight install function
+
+  # Create a temporary library in non-interactive mode to install our test
+  # packages to; only in non-interactive b/c we don't know how to remove temp
+  # lib from lib tree other than to restart
+
+  .lib.temp <- NULL
+  .lib <- if(!interactive()) {
+    .lib.temp <- tempfile()
+    dir.create(.lib.temp)
+    .libPaths(.lib.temp)
+    .lib.temp
+  } else {
+    head(.libPaths(), 1L)
+  }
   cat("setup packages\n")
   tmp.pkgs <- c(
     unitizerdummypkg1="unitizerdummypkg1",
     unitizerdummypkg2="unitizerdummypkg2",
     utzflm="flm0"
   )
-  lib <- head(.libPaths(), 1L)
   if(
     any(which.inst <- names(tmp.pkgs) %in% rownames(installed.packages()))
   ) {
-    # remove.packages(sprintf("unitizerdummypkg%d", 1:2))
     stop(
       "Packages\n",
       paste0(
@@ -24,24 +38,26 @@ local({
       ),
       "\nalready installed; cannot proceed with tests"
   ) }
-
-  unitizer.dir <- system.file(package="unitizer")
-  pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
-  lib <- head(.libPaths(), 1L)
-
-  pkg.inst <- try(
-    install.packages(pkg.dirs, repos=NULL, lib=lib, type="src", quiet=TRUE)
-  )
-  if(inherits(pkg.inst, "try-error")) stop("Unable to install test packages")
-  cat("setup demos\n")
-
+  old.opt.1 <- options(useFancyQuotes=FALSE)
   on.exit({
     for(i in names(tmp.pkgs)) {
       try(detach(sprintf("package:%s", i)), silent=TRUE)
       try(unloadNamespace(i), silent=TRUE)
     }
-    remove.packages(names(tmp.pkgs), lib=lib)
+    suppressWarnings(remove.packages(names(tmp.pkgs), lib=.lib))
+    unlink(.lib.temp, recursive=TRUE)
+    options(old.opt.1)
   })
+  unitizer.dir <- system.file(package="unitizer")
+  pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
+
+  pkg.inst <- try(
+    for(pkg in pkg.dirs)
+      devtools::install(pkg, quiet=TRUE, quick=TRUE, local=FALSE)
+  )
+  if(inherits(pkg.inst, "try-error")) stop("install error")
+  cat("setup demos\n")
+
   # Setup the demo files used by a number of tests
 
   .unitizer.fastlm <- copy_fastlm_to_tmpdir()
@@ -49,6 +65,7 @@ local({
   .unitizer.test.file <- file.path(test.dir,  "fastlm1.R")
   .unitizer.test.store <- file.path(test.dir,  "fastlm1.unitizer")
   # Ensure same behavior interactive and non-interactive
+
   .old.err.call.opt <- if(isTRUE(getOption("showErrorCalls")))
      options(showErrorCalls=FALSE) else list()
   on.exit(
@@ -58,43 +75,45 @@ local({
     },
     add=TRUE
   )
-
   # Run tests
 
   test.res <- test_dir(
     "testthat",
     env=environment(),
     filter=paste(sep="|",
-      "browse",
-      "capture",
-      "change",
-      "demo",
-      "exec",
-      "get",
-      "global",
-      "handledruns",
-      "inpkg",
-      "ischecks",
-      "item",
-      "list",
-      "misc",
-      "options",
-      "parse",
-      "prompt",
-      "rename",
-      "repairenvs",
-      "search",
-      "section",
-      "shim",
-      "state",
-      "text",
-      "translate",
-      "unitize",
-      "unitize2",
-      "upgrade",
-      "zzrunlast"
+      # "browse",
+      # "capture",
+      # "change",
+      # "demo",
+      # "exec",
+      # "get",
+      # "global",
+      # "handledruns",
+      "inpkg"
+      # "ischecks",
+      # "item",
+      # "list",
+      # "misc",
+      # "options",
+      # "parse",
+      # "prompt",
+      # "rename",
+      # "repairenvs",
+      # "search",
+      # "section",
+      # "shim",
+      # "state",
+      # "text",
+      # "translate",
+      # "unitize",
+      # "unitize2",
+      # "upgrade",
+      # "zzrunlast"
     )
   )
+
+  # Check for failures and throw error if they exist since test_dir does not
+  # do so on its own
   # Check for failures and throw error if they exist since test_dir does not
   # do so on its own
 

@@ -10,11 +10,7 @@ rdsf <- function(x)
 
 local({
   update_fastlm(.unitizer.fastlm, version="0.1.0")
-  try(detach("utzflm", unload=TRUE), silent=TRUE)
-  try(remove.packages("utzflm", lib=head(.libPaths(), 1L)))
-  install.packages(
-    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
-  )
+  devtools::install(.unitizer.fastlm)
   base.dir <- file.path(.unitizer.fastlm, "tests", "extra")
   in.pkg.file <- file.path(base.dir, "inpkg.R")
   old.opt <- options(width=80L)

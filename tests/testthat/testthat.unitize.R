@@ -6,14 +6,18 @@ library(unitizer)
 library(testthat)
 
 local({
-  old.opt.outer <- options(unitizer.color=FALSE, width=80L)
+  # horrible options a result of having stored all the RDses with the wrong type
+  # of options in the first place.  Should have been without colors at all
+
+  old.opt.outer <- options(
+    unitizer.color=FALSE, width=80L, crayon.enabled=TRUE, 
+    diffobj.term.colors=8
+  )
   on.exit(options(old.opt.outer))
   context("Unitize")
 
   update_fastlm(.unitizer.fastlm, "0.1.0")
-  install.packages(
-    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
-  )
+  devtools::install(.unitizer.fastlm)
   test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
   unlink(.unitizer.test.store, recursive=TRUE)
 
@@ -250,9 +254,7 @@ local({
   # Update `fastlm` to cause unitizers to fail, and go through the errors
 
   update_fastlm(.unitizer.fastlm, version="0.1.1")
-  install.packages(
-    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
-  )
+  devtools::install(.unitizer.fastlm)
 
   # Try navigating through the unitizer
 
@@ -384,9 +386,7 @@ local({
   # Upgrade again, and try with deleted tests and other things
 
   update_fastlm(.unitizer.fastlm, version="0.1.2")
-  install.packages(
-    .unitizer.fastlm, quiet=TRUE, verbose=FALSE, type="src", repos=NULL
-  )
+  devtools::install(.unitizer.fastlm)
   unitizer:::read_line_set_vals(
     c("3", "ref(res)", "Y", "Y", "B", "1", "B", "U", "Y", "RR", "Y", "Q")
   )
