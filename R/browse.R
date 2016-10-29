@@ -153,7 +153,7 @@ setMethod(
             {
               if(!done(y)) {
                 if(
-                  first.time && 
+                  first.time &&
                   (identical(y@mode, "review") || y@start.at.browser)
                 ) {
                   # for passed tests, start by showing the list of tests
@@ -640,7 +640,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
       }
       if(length(item.main@comment)) {
         if(prev.is.expr && x@mapping@ignored[last.id]) cat("\n")
-        cat(word_comment(item.main@comment), sep="\n")
+        cat(
+          word_comment(
+            item.main@comment,
+            color=unitizer@global$unitizer.opts[["unitizer.color"]]
+          ), sep="\n"
+        )
         cat("\n")
       }
       parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
