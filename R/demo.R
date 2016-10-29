@@ -110,13 +110,30 @@ copy_fastlm_to_tmpdir <- function() {
 
   if(inherits(try(file.copy(fastlm.files, dir, recursive=TRUE)), "try-error"))
     stop("Unable to copy `fastlm` sources")
-  # need to do this because R CMD build removes files ending in .Rcheck
+
+  # need to do this because R CMD build removes files ending in .Rcheck, and
+  # complains about "pre-installed" package in sources, when we explcitly need a
+  # pre installed structure for a different dummy package for our tests
 
   fastlm.check <- file.path(dir, "utzflm_Rcheck")
   fastlm.check.new <- file.path(dir, "utzflm.Rcheck")
 
   if(inherits(try(file.rename(fastlm.check, fastlm.check.new)), "try-error"))
     stop("Unable to rename fastlm check directory")
+
+  check.dirs <- list.files(
+    file.path(fastlm.check.new, "utzflm"), full.names=TRUE
+  )
+  if(
+    inherits(
+      try(
+        file.rename(
+          check.dirs,
+          file.path(dirname(check.dirs), sub("^_", "", basename(check.dirs)))
+      ) ),
+      "try-error"
+  ) )
+    stop("Unable to unmask package sub dirs")
 
   dir
 }
