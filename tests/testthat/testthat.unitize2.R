@@ -1,7 +1,5 @@
 # Overflow tests from testthat.unitize.R
 
-# devtools::install(); library(testthat); library(unitizer); setwd("tests/testthat")
-
 if(!file_test("-d", file.path("helper", "refobjs")))
   stop("Make sure wd is set to tests/testthat")
 
@@ -16,7 +14,7 @@ local({
   context("Unitize 2")
 
   update_fastlm(.unitizer.fastlm, "0.1.0")
-  devtools::install(.unitizer.fastlm)
+  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
 
   # Test unreviewed
@@ -73,7 +71,7 @@ local({
 
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
   unitizer:::update_fastlm_extra(.unitizer.fastlm)
-  devtools::install(.unitizer.fastlm)
+  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
   test.file.1 <- file.path(test.dir, "unitizer.fastlm.R")
   test.file.2 <- file.path(test.dir, "unitizer.fastlm2.R")
   test.store <- file.path(test.dir, "store2.unitizer")

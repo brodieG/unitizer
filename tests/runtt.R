@@ -7,21 +7,6 @@ local({
   library(methods)
   library(unitizer)
 
-  # Lightweight install function
-
-  # Create a temporary library in non-interactive mode to install our test
-  # packages to; only in non-interactive b/c we don't know how to remove temp
-  # lib from lib tree other than to restart
-
-  .lib.temp <- NULL
-  .lib <- if(!interactive()) {
-    .lib.temp <- tempfile()
-    dir.create(.lib.temp)
-    .libPaths(.lib.temp)
-    .lib.temp
-  } else {
-    head(.libPaths(), 1L)
-  }
   cat("setup packages\n")
   tmp.pkgs <- c(
     unitizerdummypkg1="unitizerdummypkg1",
@@ -44,8 +29,7 @@ local({
       try(detach(sprintf("package:%s", i)), silent=TRUE)
       try(unloadNamespace(i), silent=TRUE)
     }
-    suppressWarnings(remove.packages(names(tmp.pkgs), lib=.lib))
-    unlink(.lib.temp, recursive=TRUE)
+    suppressWarnings(remove.packages(names(tmp.pkgs)))
     options(old.opt.1)
   })
   unitizer.dir <- system.file(package="unitizer")
@@ -64,6 +48,7 @@ local({
   test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
   .unitizer.test.file <- file.path(test.dir,  "fastlm1.R")
   .unitizer.test.store <- file.path(test.dir,  "fastlm1.unitizer")
+
   # Ensure same behavior interactive and non-interactive
 
   .old.err.call.opt <- if(isTRUE(getOption("showErrorCalls")))
@@ -81,34 +66,34 @@ local({
     "testthat",
     env=environment(),
     filter=paste(sep="|",
-      # "browse",
-      # "capture",
-      # "change",
-      # "demo",
-      # "exec",
-      # "get",
-      # "global",
-      # "handledruns",
-      "inpkg"
-      # "ischecks",
-      # "item",
-      # "list",
-      # "misc",
-      # "options",
-      # "parse",
-      # "prompt",
-      # "rename",
-      # "repairenvs",
-      # "search",
-      # "section",
-      # "shim",
-      # "state",
-      # "text",
-      # "translate",
-      # "unitize",
-      # "unitize2",
-      # "upgrade",
-      # "zzrunlast"
+      "browse",
+      "capture",
+      "change",
+      "demo",
+      "exec",
+      "get",
+      "global",
+      "handledruns",
+      "inpkg",
+      "ischecks",
+      "item",
+      "list",
+      "misc",
+      "options",
+      "parse",
+      "prompt",
+      "rename",
+      "repairenvs",
+      "search",
+      "section",
+      "shim",
+      "state",
+      "text",
+      "translate",
+      "unitize",
+      "unitize2",
+      "upgrade",
+      "zzrunlast"
     )
   )
 
