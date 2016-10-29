@@ -1,3 +1,22 @@
+#' Generates a Dummy Item For Use in Examples
+#'
+#' The only purpose of this function is to create a \code{unitizerItem} for use
+#' by examples.
+#'
+#' @export
+#' @return unitizerItem object
+
+mock_item <- function() {
+  new(
+    "unitizerItem", call=quote(fun()), value=42,
+    conditions=new(
+      "conditionList",
+      .items=list(
+        simpleWarning("hello", call=quote(fun())),
+        simpleWarning("goodbye", call=quote(fun()))
+  ) ) )
+}
+
 #' Contains A List of Conditions
 #'
 #' Condition lists are S4 classes that contain \code{link{condition}} objects
@@ -17,9 +36,11 @@
 #' \code{\link{unitizerList}}.
 #'
 #' @name conditionList
+#' @rdname conditionList
 #' @seealso \code{\link{unitizer_sect}}, \code{\link{unitizerList}}
-#' @export
+#' @exportClass conditionList
 #' @examples
+#' .NEW <- mock_item()  # .NEW is normally available at unitizer prompt
 #' ## Access the first condition from the new test evaluation
 #' .NEW$conditions[[1L]]
 #' ## loop through all conditions

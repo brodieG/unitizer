@@ -153,7 +153,7 @@ R insists these need to be documented as user facing, but they are not really
 so were throwing them all in here.  Actual docs are in non roxygen comments
 by fun definitions.
 
-Concatenate to a \code{\link{unitizerList-class}}
+Concatenate to a \code{\link{unitizerList}}
 }
 \details{
 Put in this file because this file is included by almost every other file

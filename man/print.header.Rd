@@ -13,6 +13,8 @@
 
 \item{margin}{one of "both", "top", "bottom", "none", whether to add newlines
 at top or bottom}
+
+\item{...}{passed on to \code{as.character}}
 }
 \value{
 1 length character vector

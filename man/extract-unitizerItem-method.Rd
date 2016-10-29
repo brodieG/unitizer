@@ -2,17 +2,28 @@
 % Please edit documentation in R/item.R
 \docType{methods}
 \name{$,unitizerItem-method}
-\alias{$}
 \alias{$,unitizerItem-method}
+\alias{[[,unitizerItem,ANY-method}
 \title{Retrieve Test Contents From Test Item}
 \usage{
 \S4method{$}{unitizerItem}(x, name)
+
+\S4method{[[}{unitizerItem,ANY}(x, i, j, ..., exact = TRUE)
 }
 \arguments{
 \item{x}{a \code{unitizerItem} object, typically \code{.NEW} or \code{.REF}
 at the \code{unitizer} interactive prompt}
 
 \item{name}{a valid test sub-component}
+
+\item{i}{a valid test sub-component as a character string, or a sub-component
+index}
+
+\item{j}{missing for compatibility with generic}
+
+\item{...}{missing for compatibility with generic}
+
+\item{exact}{unused, always matches exact}
 }
 \value{
 the test component requested
@@ -38,7 +49,7 @@ Currently the following elements are available:
   \item \code{message} anything that was output to \code{stderr}, mostly
     this is all contained in the conditions as well, though there could be
     other output here, as a character vector
-  \item \code{conditions} a \code{\link{conditionList-class}} containing all
+  \item \code{conditions} a \code{\link{conditionList}} containing all
     the conditions produced during test evaluation
   \item \code{aborted} whether the test call issues a restart call to the
     `abort` restart, as `stop` does.
@@ -46,10 +57,9 @@ Currently the following elements are available:
 }
 \examples{
 ## From the unitizer> prompt:
-\dontrun{
+.NEW <- mock_item()  # .NEW is normally available at unitizer prompt
 .NEW$call
-.REF$conditions
+.NEW$conditions
 .NEW$value              # equivalent to `.new`
-}
 }
 

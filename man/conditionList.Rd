@@ -24,6 +24,7 @@ compatibility issues; the \code{conditionList} class contains
 \code{\link{unitizerList}}.
 }
 \examples{
+.NEW <- mock_item()  # .NEW is normally available at unitizer prompt
 ## Access the first condition from the new test evaluation
 .NEW$conditions[[1L]]
 ## loop through all conditions
