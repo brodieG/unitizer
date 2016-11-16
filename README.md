@@ -1,34 +1,22 @@
 # unitizeR - Easy R Unit Tests
-<table style="border: none; background-color: transparent; vertical-align: middle;">
-  <tr style="border: none; background-color: transparent; padding: 2px;">
-    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
-      <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=master'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">RC:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=rc'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://travis-ci.org/brodieG/unitizer'><img src='https://travis-ci.org/brodieG/unitizer.png?branch=development'></a>
-  <tr style="border: none; background-color: transparent; padding: 2px;">
-    <td style="border: none; background-color: transparent; padding: 2px; padding-right: 50px;">
-      <a href='https://codecov.io/github/brodieG/unitizer?branch=master'><img src='https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">RC:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://codecov.io/github/brodieG/unitizer?branch=rc'><img src='https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=rc'></a>
-    <td style="border: none; background-color: transparent; padding: 2px;">Dev:
-    <td style="border: none; background-color: transparent; padding: 2px;">
-      <a href='https://codecov.io/github/brodieG/unitizer?branch=dev'><img src='https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=development'></a>
-</table>
+
+[![](https://travis-ci.org/brodieG/unitizer.svg?branch=master)](https://travis-ci.org/brodieG/unitizer)
+[![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
+[![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
+[![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
+
+**DISCLAIMER**: This package does a lot of things that CRAN would likely not
+approve of.  For example, we trace some `base` functions and manipulate the
+search path, though we only do so while the `unitizer` functions are evaluating
+and restore everything to its original state `on.exit`.  For more details see
+the [things you should know about `unitizer`](https://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html#things-you-should-know-about-unitizer) introduction vignette section.  We will likely turn off these features by default for the final release.
 
 ## TL;DR
 
 `unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
 ```
-library(devtools)
-install_github("brodieg/unitizer")
+devtools::install_github("brodieg/unitizer")
 ```
-We will release to CRAN once version 1.0.x is more thoroughly tested.
-
 `unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
 ```
 library(unitizer)
@@ -62,7 +50,7 @@ To use `unitizer`:
 
 * `help(package="unitizer")`, in particular `?unitize`
 * `demo(package="unitizer")`
-* [`vignette("unitizer_index")` for a list of vignettes](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html), or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
+* [`vignette("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
 
 ## Acknowledgments
 
