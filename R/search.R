@@ -172,12 +172,12 @@ search_path_update <- function(id, global) {
     obj.type <- if(grepl("^package:.+", obj.name)) "package" else "object"
     obj.name.clean <- sub("^package:", "", obj.name)
 
-    extra <- if(!is.null(attr(search.target[[i]], "path")))
-      dirname(attr(search.target[[i]], "path"))
+    extra <- if(!is.null(attr(search.target$search.path[[i]], "path")))
+      dirname(attr(search.target$search.path[[i]], "path"))
 
     reattach(
-      i, name=obj.name.clean, type=obj.type, data=search.target[[i]],
-      extra=extra, global=global
+      i, name=obj.name.clean, type=obj.type,
+      data=search.target$search.path[[i]], extra=extra, global=global
     )
     sc.id.tmp <- append(sc.id.tmp, st.id[[i]], i - 1L)
   }
@@ -243,7 +243,7 @@ search_path_update <- function(id, global) {
       detach(pos=i, character.only=TRUE)
       reattach(
         i, names(search.target$search.path)[[i]], type="object",
-        data=search.target[[i]],
+        data=search.target$search.path[[i]],
         global=global
   ) } }
   # Updated comparison method (might be too stringent)
