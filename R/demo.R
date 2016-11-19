@@ -217,7 +217,6 @@ unitizer_check_demo_state <- function() {
     )
     choice <- simple_prompt("Overwrite existing installation?")
     if(!identical(choice, "Y")) stop("Cannot continue demo.")
-    rm(list=vars[vars.exist], envir=parent.frame())
   }
 }
 # nocov end
@@ -226,7 +225,7 @@ unitizer_check_demo_state <- function() {
 #' @rdname demo
 
 unitizer_cleanup_demo <- function() {
-  vars <- c(".unitizer.fastlm", ".unitizer.test.file", ".unitizer.test.store")
+  vars <- c(".unitizer.fastlm", ".unitizer.test.file")
   try(detach("package:utzflm"), silent=TRUE)
   try(unloadNamespace("utzflm"), silent=TRUE)
   try(remove.packages("utzflm", .libPaths()[[1L]]), silent=TRUE)

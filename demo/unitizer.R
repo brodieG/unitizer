@@ -74,7 +74,7 @@ unitize(.unitizer.test.file)
 local({
   DF <- data.frame(x=1:1e5, y=(1:1e5) ^ 2)
   rbind(
-    fastlm=system.time(with(DF, unitizer.fastlm::fastlm(x, y))),
+    fastlm=system.time(with(DF, utzflm::fastlm(x, y))),
     lm=system.time(c((lm.res <- lm(y ~ x, DF))$coefficients, summary(lm.res)$r.squared))
   )[, 1:3]
 })
