@@ -258,17 +258,19 @@ search_as_envs <- function() {
 
   list(search.path=res, ns.dat=get_namespace_data())
 }
+# Accessing namespace info in not really documented manner, but muuuch faster
+# than using getNamespaceInfo
+
 get_namespace_data <- function() {
   sapply(
     loadedNamespaces(),
     function(x) {
-      loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
-      ver <- try(getNamespaceVersion(x))
-      list(
-        name=x,
-        lib.loc=if(!inherits(loc, "try-error")) loc else "",
-        version=if(!inherits(ver, "try-error")) ver else ""
-      )
+      ns <- getNamespace(x)
+      loc <- ns[[".__NAMESPACE__."]][["path"]]
+      ver <- ns[[".__NAMESPACE__."]][["spec"]]["version"]
+      if(is.null(ver)) ver <- ""
+      if(is.null(loc)) loc <- ""
+      list(name=x, lib.loc=loc, version=ver)
     },
     simplify=FALSE
   )
