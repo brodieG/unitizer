@@ -80,11 +80,20 @@ compared test components are considered equivalent, or FALSE.  Instead of
 FALSE, the function may also return a character vector describing the
 mismatch, as \code{\link{all.equal}} does.
 
+\bold{WARNING}: Comparison functions that set and/or unset \code{\link{sink}}
+can potentially cause problems.  If for whatever reason you must really  sink
+and unsink output streams, please take extreme care to restore the streams to
+the state they were in when the comparison function was called.
+
+Any output to \code{stdout} or \code{stderr} is captured and only checked at
+the end of the \code{unitizer} process with the expectation that there will
+be no such output.
+
 \code{value} and \code{conditions} are compared with \code{\link{all.eq}},
 which is a wrapper to \code{\link{all.equal}} except that it returns FALSE
 instead of a descriptive string on failure.  This is because \code{unitizer}
-will run \code{\link[diffobj]{diffObj}} on the test data components do not
-match and including the \code{all.equal} output would be redundant.
+will run \code{\link[diffobj]{diffObj}} on the test data components that do
+not match and including the \code{all.equal} output would be redundant.
 
 If a comparison function signals a condition (e.g. throws a warning) the
 test will not be evaluated, so make sure that your function does not signal
@@ -100,8 +109,8 @@ Comparisons will be evaluated in the environment of the test.  By default
 \code{\link{unitize}} runs tests in environments that are not children to
 the global environment, so functions defined there will not be automatically
 available.  You can either specify the function in the test file before the
-section that uses it, or change the base environment tests are evaluated in with
-\code{unitize(..., par.env)}, or make sure that the package that
+section that uses it, or change the base environment tests are evaluated in
+with \code{unitize(..., par.env)}, or make sure that the package that
 contains your function is loaded within the test script.
 }
 

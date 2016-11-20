@@ -104,7 +104,7 @@ It is possible to have nested sections, though at this point in time `unitizer` 
 
 ### Controlling Test Comparison
 
-By default tested components (values and conditions) are compared with `all.equal`.  If you want to override the function used for value comparisons it is as simple as creating a new section for the tests you want to compare differently and use the `compare` argument:
+By default tested components (values and conditions) are compared with `all.eq`, a wrapper around `all.equal` that returns FALSE on inequality instead of a character description of the inequality.  If you want to override the function used for value comparisons it is as simple as creating a new section for the tests you want to compare differently and use the `compare` argument:
 
 ```
 unitizer_sect("Accessor Functions", compare=identical,
