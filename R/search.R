@@ -43,8 +43,8 @@ get_package_versions <- function(x) {
   ns.loaded <- names(x$ns.dat)
   ns.version <- vapply(x$ns.dat, "[[", character(1L), "version")
 
-  pkg.names <- names(x)
-  are.pkg <- grepl("^package:.+", names(x$search.path))
+  pkg.names <- names(x$search.path)
+  are.pkg <- grepl("^package:.+", pkg.names)
   pkg.names <- sub("^package:(.*)", "\\1", pkg.names)
   pkg.sub <- match(pkg.names, ns.loaded)
   pkg.ver <- ns.version[pkg.sub]
@@ -611,11 +611,13 @@ setMethod(
     )
   }
 )
-# Generate An Identifier out of SP objects
-#
-# Not perfect, by any means, but necessary because we can't directly compare
-# the search path environments as they change on detach / re-attach
-# @keywords internal
+## Generate An Identifier out of SP objects
+##
+## If this needs to be optimized look at `get_namespace_data` that is very
+## similar but runs on `loadedNamespaces`.
+##
+## Not perfect, by any means, but necessary because we can't directly compare
+## the search path environments as they change on detach / re-attach
 
 get_package_data <- function() {
   sapply(
@@ -624,8 +626,7 @@ get_package_data <- function() {
       loc <- if(grepl("^package:.+", x))
         try(path.package(sub("^package:(.*)", "\\1", x))) else ""
       ver <- try(getNamespaceVersion(x), silent=TRUE)
-      new(
-        "unitizerNamespaceData",
+      list(
         name=x,
         lib.loc=if(!inherits(loc, "try-error")) loc else "",
         version=if(!inherits(ver, "try-error")) ver else ""
