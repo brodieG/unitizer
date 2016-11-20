@@ -114,7 +114,7 @@ unitizer_sect("Accessor Functions", compare=identical,
     get_intercept(res)
 } )
 ```
-The values produced by these three tests will be compared using `identical` instead of `all.equal`.  If you want to modify how other components of the test are compared, then you can pass a `unitizerItemTestsFuns` object as the value to the `compare` argument instead of a function:
+The values produced by these three tests will be compared using `identical` instead of `all.eq`.  If you want to modify how other components of the test are compared, then you can pass a `unitizerItemTestsFuns` object as the value to the `compare` argument instead of a function:
 ```
 unitizer_sect("Accessor Functions",
   compare=unitizerItemTestsFuns(

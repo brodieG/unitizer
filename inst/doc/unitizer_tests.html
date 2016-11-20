@@ -131,14 +131,14 @@ unitize(file.path(.unitizer.fastlm, &quot;tests&quot;, &quot;unitizer&quot;, &qu
 </div>
 <div id="controlling-test-comparison" class="section level3">
 <h3>Controlling Test Comparison</h3>
-<p>By default tested components (values and conditions) are compared with <code>all.equal</code>. If you want to override the function used for value comparisons it is as simple as creating a new section for the tests you want to compare differently and use the <code>compare</code> argument:</p>
+<p>By default tested components (values and conditions) are compared with <code>all.eq</code>, a wrapper around <code>all.equal</code> that returns FALSE on inequality instead of a character description of the inequality. If you want to override the function used for value comparisons it is as simple as creating a new section for the tests you want to compare differently and use the <code>compare</code> argument:</p>
 <pre><code>unitizer_sect(&quot;Accessor Functions&quot;, compare=identical,
   {
     get_slope(res)
     get_rsq(res)
     get_intercept(res)
 } )</code></pre>
-<p>The values produced by these three tests will be compared using <code>identical</code> instead of <code>all.equal</code>. If you want to modify how other components of the test are compared, then you can pass a <code>unitizerItemTestsFuns</code> object as the value to the <code>compare</code> argument instead of a function:</p>
+<p>The values produced by these three tests will be compared using <code>identical</code> instead of <code>all.eq</code>. If you want to modify how other components of the test are compared, then you can pass a <code>unitizerItemTestsFuns</code> object as the value to the <code>compare</code> argument instead of a function:</p>
 <pre><code>unitizer_sect(&quot;Accessor Functions&quot;,
   compare=unitizerItemTestsFuns(
     value=identical,
