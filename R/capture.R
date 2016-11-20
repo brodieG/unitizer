@@ -289,7 +289,8 @@ close_and_clear <- function(cons) {
   }
   close(cons@err.c)
   close(cons@out.c)
-  file.remove(cons@err.f, cons@out.f)
+  close(cons@dump.c)
+  file.remove(cons@err.f, cons@out.f, cons@dump.f)
   invisible(status)
 }
 # Check whether provided connection is active stdout capture stream
@@ -312,7 +313,9 @@ setClass(
   slots=c(
     err.f="ANY", err.c="ANY", out.f="ANY", out.c="ANY",
     stdout.level="integer", stderr.level="integer",
-    stderr.con="ANY"  # whatever connection was set for sink #2 prior to running
+    # whatever connection was set for sink #2 prior to running
+    stderr.con="ANY",
+    dump.f="ANY", dump.c="ANY"
   ),
   validity=function(object) {
     # Allow NULLs since that is how the con object is stored
@@ -331,6 +334,12 @@ setClass(
       (!inherits(object@out.c, "file") || !isOpen(object@out.c))
     )
        return("Slot `out.c` must be an open file connection")
+    if(
+      !is.null(object@dump.f) &&
+      (!inherits(object@dump.c, "file") || !isOpen(object@dump.c))
+    )
+       return("Slot `dump.c` must be an open file connection")
+    TRUE
     TRUE
   }
 )
@@ -346,6 +355,8 @@ setMethod("initialize", "unitizerCaptCons", function(.Object, ...) {
     .Object@err.c <- file(.Object@err.f, "w+b")
     .Object@out.f <- tempfile()
     .Object@out.c <- file(.Object@out.f, "w+b")
+    .Object@dump.f <- tempfile()
+    .Object@dump.c <- file(.Object@dump.f, "w+b")
     .Object
   }
 } )

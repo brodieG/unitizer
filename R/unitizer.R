@@ -551,13 +551,26 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         # code was initially written; note we don't use `global` here b/c
         # we don't need to track state during comparison (but what happens
         # if user comparison function changes state??)
+        #
+        # We also don't use eval_with_capture which would be a natural thing to
+        # do because that is slow.  We just keep writing to the dump file and
+        # then will get rid of it at the end.  One possible issue here is that
+        # we no longer detect sink issues caused by user possibly changing sinks
+        # in the comparison function.
 
-        # NOTE: THIS IS EXPENSIVE COMPUTATIONALLY; DO WE REALLY NEED TO RUN THE
-        # COMPARISON WITH `eval_with_capture`? COULD WE RUN IT WITH SOMETHING
-        # ELSE INSTEAD THAT ISN'T AS EXPENSIVE
+        sink(file=e1@global$cons@dump.c, append=TRUE)
+        sink(type="message", file=e1@global$cons@dump.c, append=TRUE)
+        on.exit({
+          sink(type="message")
+          sink()
+        })
+        res.tmp <- eval_user_exp(
+          test.call, e2@env, global=NULL, with.display=FALSE
+        )
+        on.exit(NULL)
+        sink(type="message")
+        sink()
 
-        res.tmp <- eval_with_capture(test.call, e2@env, global=e1@global)
-        e1@global$cons <- res.tmp$cons # In case cons was modified
         cond <- res.tmp$conditions
         test.res <- if(length(cond)) {
           structure(

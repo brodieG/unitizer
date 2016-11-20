@@ -63,6 +63,8 @@ setGeneric("exec", function(x, ...) standardGeneric("exec"))
 ## @param test.env the environment to evaluate the \code{test} in
 ## @param global unitizerGlobal, required by \code{eval_user_exp} to record
 ##   state every time a user expression is evaluated
+## @param with.display whether to print/show output if visible
+## @param with.state whether to log state after each evaluation
 
 setMethod("exec", "ANY", valueClass="unitizerItem",
   function(x, test.env, global) {
@@ -111,7 +113,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       ignore=identical(res$visible, FALSE) && !length(res$conditions)
     )
 } )
-eval_user_exp <- function(unitizerUSEREXP, env, global) {
+eval_user_exp <- function(unitizerUSEREXP, env, global, with.display=TRUE) {
   if(!is(global, "unitizerGlobal") && !is.null(global))
     stop(
       "Logic Error: `global` argument must be a 'unitizerGlobal' object or NULL"
@@ -124,7 +126,8 @@ eval_user_exp <- function(unitizerUSEREXP, env, global) {
   } else call("withVisible", unitizerUSEREXP)
   res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
   if(
-    !res$aborted && res$value$visible && length(unitizerUSEREXP)
+    !res$aborted && res$value$visible && length(unitizerUSEREXP) &&
+    with.display
   ) {
     res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
     res$conditions <- append(res$conditions, res2$conditions)
@@ -143,7 +146,9 @@ eval_user_exp <- function(unitizerUSEREXP, env, global) {
     res[-1L]
   )
 }
-eval_with_capture <- function(x, test.env=new.env(), global) {
+eval_with_capture <- function(
+  x, test.env=new.env(), global, with.display=TRUE, with.state=TRUE
+) {
   stopifnot(is(global, "unitizerGlobal"))
   # These used to be parameters, but now that we have `global` we use that
   # instead
@@ -199,7 +204,9 @@ eval_with_capture <- function(x, test.env=new.env(), global) {
   # Evaluate expression
 
   options(error=NULL)
-  res <- eval_user_exp(x, test.env, global=global)
+  res <- eval_user_exp(
+    x, test.env, global=if(with.state) global, with.display=with.display
+  )
 
   # Revert settings, get captured messages, if any and if user isn't capturing
   # already; do.call so we can rely on default get_capture settings if those
