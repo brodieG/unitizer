@@ -552,6 +552,10 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         # we don't need to track state during comparison (but what happens
         # if user comparison function changes state??)
 
+        # NOTE: THIS IS EXPENSIVE COMPUTATIONALLY; DO WE REALLY NEED TO RUN THE
+        # COMPARISON WITH `eval_with_capture`? COULD WE RUN IT WITH SOMETHING
+        # ELSE INSTEAD THAT ISN'T AS EXPENSIVE
+
         res.tmp <- eval_with_capture(test.call, e2@env, global=e1@global)
         e1@global$cons <- res.tmp$cons # In case cons was modified
         cond <- res.tmp$conditions
