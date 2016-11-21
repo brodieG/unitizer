@@ -84,14 +84,14 @@ local({
       # "prompt",
       # "rename",
       # "repairenvs",
-      "search"
+      # "search",
       # "section",
       # "shim",
       # "state",
       # "text",
       # "translate",
       # "unitize",
-      # "unitize2",
+      "unitize2"
       # "upgrade",
       # "zzrunlast"
     )

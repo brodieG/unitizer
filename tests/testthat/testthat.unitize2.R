@@ -92,4 +92,19 @@ local({
       file.path("helper", "refobjs", "unitize2_del_sec.rds")
     )
   } )
+
+  # Sections with comp funs that output to stdout/stderr
+
+  temp.loc <- tempfile()
+  dir.create(temp.loc)
+  on.exit(unlink(temp.loc, recursive=TRUE))
+  file.copy(file.path("helper", "sects.R"), temp.loc)
+  capture.output(
+    unitize(file.path(temp.loc, "sects.R"), auto.accept="new"),
+    interactive.mode=FALSE
+  )
+  expect_warning(
+    unitize(file.path(temp.loc, "sects.R"), interactive.mode=FALSE),
+    "Test comparison functions appear to have produced output"
+  )
 })
