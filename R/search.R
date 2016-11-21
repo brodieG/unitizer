@@ -285,7 +285,7 @@ namespace_update <- function(id, global) {
 
   # may contain nulls
 
-  tar.lns.loc <- sapply(as.list(ns.target), slot, "lib.loc", simplify=FALSE)
+  tar.lns.loc <- sapply(as.list(ns.target), "[[", "lib.loc", simplify=FALSE)
   tar.lns <- names(ns.target)
   to.unload <- setdiff(cur.lns, tar.lns)
 

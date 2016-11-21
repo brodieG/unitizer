@@ -129,7 +129,6 @@ local({
     st.2 <- untz.glob$state()
     expect_equal(st.2@search.path, 2L) # have two recorded states
     # should have one more item
-    browser()
     expect_equal(
       diff(
         sapply(
@@ -268,9 +267,8 @@ local({
 
     # compare with all.equal to make sure we use S4 method
     expect_true(
-      unitizer:::search_dat_equal(
-        unitizer:::search_as_envs()$search, search.init
-    ) )
+      unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
+    )
   } )
 
   test_that("Search Path Trim / Restore", {
@@ -286,12 +284,14 @@ local({
     sp.keep <- unitizer:::keep_sp_default()
     expect_identical(
       search(),
-      sp.keep[match(names(search.init@.items), sp.keep,  nomatch=0L)]
+      sp.keep[match(names(search.init$search.path), sp.keep,  nomatch=0L)]
     )
     untz.glob$resetFull()
     untz.glob$release()
 
-    expect_true(all.equal(unitizer:::search_as_envs(), search.init))
+    expect_true(
+      unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
+    )
   } )
   try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
   try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)
