@@ -290,6 +290,19 @@ close_and_clear <- function(cons) {
   close(cons@err.c)
   close(cons@out.c)
   close(cons@dump.c)
+  # Check to see if any output was stored in the dump files.  These in theory
+  # should contain no output and are used primarily when running the comparisons
+  # between new and reference objects
+
+  if(length(dump.txt <- readLines(cons@dump.f))) {
+    warning(
+      "Test comparison functions appear to have produced output, which should ", 
+      "not happen (see `?unitizer_sect` for more details).  If you did not ",
+      "provide custom testing functions, contact maintainer.  First 50 lines ",
+      "follow:\n",
+      paste0(head(dump.txt, 50), "\n")
+    )
+  }
   file.remove(cons@err.f, cons@out.f, cons@dump.f)
   invisible(status)
 }
