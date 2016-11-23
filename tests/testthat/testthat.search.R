@@ -38,13 +38,22 @@ local({
     expect_error(unitizer:::is.loaded_package(letters))
     expect_false(unitizer:::is.loaded_package("Autoloads"))
     expect_true(is.list(pkg.dat <- unitizer:::get_package_data()))
-    expect_true(all(vapply(pkg.dat, is, logical(1L), "unitizerNamespaceData")))
+    expect_true(
+      all(
+        vapply(
+          pkg.dat,
+          function(x)
+            is.list(x) &&
+            identical(names(x), c("name", "lib.loc", "version")),
+          logical(1L)
+    ) ) )
   } )
-  search.init <- unitizer:::search_as_envs()
+  search.init.full <- unitizer:::search_as_envs()
+  search.init <- search.init.full$search.path
 
   test_that("Path Compression", {
     expect_identical(
-      head(unitizer:::unitizerCompressTracking(search.init), 3L),
+      head(unitizer:::compress_search_data(search.init.full), 3L),
       c(
         ".GlobalEnv", "package:unitizerdummypkg2 (v0.1)",
         "package:unitizerdummypkg1 (v0.1)"
@@ -63,16 +72,17 @@ local({
     # can't compare actual environments as they change when detached and
     # re-attached
     expect_equal(
-      names(unitizer:::search_as_envs()@.items),
-      names(search.init[c(1L, 5L, 2L:4L, 6L:length(search.init))]@.items)
+      names(unitizer:::search_as_envs()$search.path),
+      names(search.init[c(1L, 5L, 2L:4L, 6L:length(search.init))])
     )
     # Now let's undo the previous move
 
     for(i in rep(5L, 3L))            # Push second pack back to original position
       unitizer:::move_on_path(2L, 5L, untz.glob)
 
-    # Make sure S4 all.equal method is used
-    expect_true(all.equal(unitizer:::search_as_envs(), search.init))
+    expect_true(
+      unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init.full)
+    )
   })
   try(detach("package:unitizer"), silent=TRUE)
   try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
@@ -119,26 +129,40 @@ local({
     st.2 <- untz.glob$state()
     expect_equal(st.2@search.path, 2L) # have two recorded states
     # should have one more item
-    expect_equal(diff(sapply(untz.glob$tracking@search.path, length)), 1L)
     expect_equal(
-      environmentName(untz.glob$tracking@search.path[[2L]][[2L]]),
+      diff(
+        sapply(
+          untz.glob$tracking@search.path, function(x) length(x$search.path)
+      ) ),
+      1L
+    )
+    expect_equal(
+      environmentName(untz.glob$tracking@search.path[[2L]]$search.path[[2L]]),
       "package:unitizerdummypkg1"
     )
     sp.tmp <- untz.glob$tracking@search.path
     # note we compare attribute separately because subsetting drops them
-    expect_identical(sp.tmp[[1L]]@.items, sp.tmp[[2L]][-2L]@.items)
+    expect_identical(sp.tmp[[1L]]$search.path, sp.tmp[[2L]]$search.path[-2L])
     expect_identical(
-      sp.tmp[[1L]]@ns.dat,
-      sp.tmp[[2L]]@ns.dat[names(sp.tmp[[2L]]@ns.dat) != "unitizerdummypkg1"]
+      sp.tmp[[1L]]$ns.dat,
+      sp.tmp[[2L]]$ns.dat[names(sp.tmp[[2L]]$ns.dat) != "unitizerdummypkg1"]
     )
     # Add another package at a different position
 
     library("unitizerdummypkg2", pos=4L)
     st.3 <- untz.glob$state()
 
-    expect_equal(diff(sapply(untz.glob$tracking@search.path, length)), c(1L, 1L))
     expect_equal(
-      environmentName(untz.glob$tracking@search.path[[st.3@search.path]][[4L]]),
+      diff(
+        sapply(
+          untz.glob$tracking@search.path, function(x) length(x$search.path)
+      ) ),
+      c(1L, 1L)
+    )
+    expect_equal(
+      environmentName(
+        untz.glob$tracking@search.path[[st.3@search.path ]]$search.path[[4L]]
+      ),
       "package:unitizerdummypkg2"
     )
     # Attach a list
@@ -148,12 +172,16 @@ local({
 
     expect_equal(
       environmentName(
-        untz.glob$tracking@search.path[[search.ref@search.path]][[2L]]
+        untz.glob$tracking@search.path[[
+          search.ref@search.path
+        ]]$search.path[[2L]]
       ),
       "unitizer.dummy.list"
     )
     expect_identical(
-      as.list(untz.glob$tracking@search.path[[search.ref@search.path]][[2L]]),
+      as.list(untz.glob$tracking@search.path[[
+        search.ref@search.path
+      ]]$search.path[[2L]]),
       unitizer.dummy.list
     )
     # And one more, but modified
@@ -165,24 +193,27 @@ local({
     curr.sp.ind <- untz.glob$indices.last@search.path
 
     expect_equal(
-      environmentName(untz.glob$tracking@search.path[[curr.sp.ind]][[4L]]),
+      environmentName(
+        untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]]
+      ),
       "unitizer.dummy.list"
     )
     # Make sure search path is lining up
 
-    expect_equal(names(untz.glob$tracking@search.path[[curr.sp.ind]]), search())
-
+    expect_equal(
+      names(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path), search()
+    )
     expect_identical(
-      as.list(untz.glob$tracking@search.path[[curr.sp.ind]][[4L]]),
+      as.list(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]]),
       unitizer.dummy.list.2
     )
     expect_identical(
-      as.list(untz.glob$tracking@search.path[[curr.sp.ind]][[2L]]),
+      as.list(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[2L]]),
       unitizer.dummy.list
     )
     expect_identical(  # should still point to same environment
-      untz.glob$tracking@search.path[[curr.sp.ind - 1L]][[2L]],
-      untz.glob$tracking@search.path[[curr.sp.ind]][[2L]]
+      untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[[2L]],
+      untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[2L]]
     )
     # state shouldn't have changed
 
@@ -195,16 +226,16 @@ local({
     curr.sp.ind <- untz.glob$indices.last@search.path
 
     expect_identical(
-      untz.glob$tracking@search.path[[curr.sp.ind]]@.items,
-      untz.glob$tracking@search.path[[curr.sp.ind - 1L]][-2L]@.items
+      untz.glob$tracking@search.path[[curr.sp.ind]]$search.path,
+      untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[-2L]
     )
     detach("package:unitizerdummypkg2")
     untz.glob$state()
     curr.sp.ind <- untz.glob$indices.last@search.path
 
     expect_identical(
-      untz.glob$tracking@search.path[[curr.sp.ind]]@.items,
-      untz.glob$tracking@search.path[[curr.sp.ind - 1L]][-5L]@.items
+      untz.glob$tracking@search.path[[curr.sp.ind]]$search.path,
+      untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[-5L]
     )
   })
   # Now, lets try to restore some stuff
@@ -225,16 +256,19 @@ local({
     # NOTE: not sure if with updates this can work
 
     expect_equal(
-      names(unitizer:::search_as_envs()@.items),
-      names(untz.glob$tracking@search.path[[search.ref@search.path]]@.items)
-    )
+      names(unitizer:::search_as_envs()$search.path),
+      names(
+        untz.glob$tracking@search.path[[search.ref@search.path]]$search.path
+    ) )
     # Reset to very beginning
 
     untz.glob$resetFull()
     untz.glob$release()
 
     # compare with all.equal to make sure we use S4 method
-    expect_true(all.equal(unitizer:::search_as_envs(), search.init))
+    expect_true(
+      unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
+    )
   } )
 
   test_that("Search Path Trim / Restore", {
@@ -250,12 +284,14 @@ local({
     sp.keep <- unitizer:::keep_sp_default()
     expect_identical(
       search(),
-      sp.keep[match(names(search.init@.items), sp.keep,  nomatch=0L)]
+      sp.keep[match(names(search.init$search.path), sp.keep,  nomatch=0L)]
     )
     untz.glob$resetFull()
     untz.glob$release()
 
-    expect_true(all.equal(unitizer:::search_as_envs(), search.init))
+    expect_true(
+      unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
+    )
   } )
   try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
   try(detach("package:unitizerdummypkg2", unload=TRUE), silent=TRUE)

@@ -331,3 +331,22 @@ merge_lists <- function(x, y, keep.null=TRUE) {
   x[names(y)] <- y
   x
 }
+
+# Comparison functions that output to stdout/stderr for testing of effect of
+# doing so (should be captured and ignored, then at end warn about it)
+
+comp_stdout <- function(x, y) {
+  cat("I'm outputting to stdout\n")
+  TRUE
+}
+comp_stderr <- function(x, y) {
+  cat("I'm outputting to stderr\n", file=stderr())
+  TRUE
+}
+comp_stdboth <- function(x, y) {
+  cat("I'm outputting to both 1\n")
+  cat("I'm outputting to both 2\n", file=stderr())
+  TRUE
+}
+
+

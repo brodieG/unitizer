@@ -214,8 +214,8 @@ setMethod(
   function(x, opts.ignore, ...) {
     stopifnot(is.character(opts.ignore))
     res <- new("unitizerGlobalTrackingStore")
-    res@search.path <- lapply(x@search.path, unitizerCompressTracking)
-    res@namespaces <- lapply(x@namespaces, unitizerCompressTracking)
+    res@search.path <- lapply(x@search.path, compress_search_data)
+    res@namespaces <- lapply(x@namespaces, compress_ns_data)
 
     # Don't store stuff with environments or stuff that is too big
     # (size cut-off should be an option?), or stuff that is part of the base or
@@ -256,25 +256,24 @@ search_as_envs <- function() {
   sp <- search()
   res <- setNames(lapply(seq_along(sp), as.environment), sp)
 
-  new("unitizerSearchData", .items=res, ns.dat=get_namespace_data())
+  list(search.path=res, ns.dat=get_namespace_data())
 }
+# Accessing namespace info in not really documented manner, but muuuch faster
+# than using getNamespaceInfo
+
 get_namespace_data <- function() {
-  new(
-    "unitizerNsListData",
-    .items=sapply(
-      loadedNamespaces(),
-      function(x) {
-        loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
-        ver <- try(getNamespaceVersion(x))
-        new(
-          "unitizerNamespaceData",
-          name=x,
-          lib.loc=if(!inherits(loc, "try-error")) loc else "",
-          version=if(!inherits(ver, "try-error")) ver else ""
-        )
-      },
-      simplify=FALSE
-  ) )
+  sapply(
+    loadedNamespaces(),
+    function(x) {
+      ns <- getNamespace(x)
+      loc <- ns[[".__NAMESPACE__."]][["path"]]
+      ver <- ns[[".__NAMESPACE__."]][["spec"]]["version"]
+      if(is.null(ver)) ver <- ""
+      if(is.null(loc)) loc <- ""
+      list(name=x, lib.loc=loc, version=ver)
+    },
+    simplify=FALSE
+  )
 }
 #' @rdname global_structures
 #' @keywords internal

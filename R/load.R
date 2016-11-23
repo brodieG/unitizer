@@ -97,7 +97,7 @@ load_unitizers <- function(
   )
   valid.idx <- which(!nchar(valid))
   invalid.idx <- which(nchar(valid) & !version.out.of.date)
-  toup.idx <- which(version.out.of.date)
+  toup.idx <- which(version.out.of.date & nchar(valid))
   toup.fail.idx <- integer(0L)
 
   # Attempt to resolve failures by upgrading if relevant
@@ -169,6 +169,7 @@ load_unitizers <- function(
       meta_word_msg("unitizer(s) listed above will not be tested")
       toup.fail.idx <- toup.idx
       valid[toup.fail.idx] <- "User elected not to upgrade unitizers"
+      valid.idx <- which(!nchar(valid))
     }
   }
   # Cleanup the unitizers
@@ -179,7 +180,8 @@ load_unitizers <- function(
 
     parent.env(unitizers[[i]]@zero.env) <- par.frame
     unitizers[[i]]@global <- global
-    unitizers[[i]]@eval <- identical(mode, "unitize") #awkward, shouldn't be done this way
+    # awkward, shouldn't be done this way
+    unitizers[[i]]@eval <- identical(mode, "unitize")
   }
   # Issue errors as required
 

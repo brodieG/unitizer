@@ -78,7 +78,7 @@ setMethod(
       # Map the global indices in reference to values starting from 1 up beyond
       # the end of the indices in the new indices, though use zeros for zero;
       # these are the index location for the reference items once we append
-      # them to the
+      # them to the tracking object
 
       ref.ind.mx <- do.call(cbind, lapply(ref.indices, as.integer))
       ref.ind.mx.map <- t(
