@@ -81,11 +81,12 @@ setMethod(
       # them to the tracking object
 
       ref.ind.mx <- do.call(cbind, lapply(ref.indices, as.integer))
-      ref.ind.mx.map <- as.matrix(  #b/c apply will return vec at times
-        apply(
-          ref.ind.mx, 1, function(w) {
-            match(w, sort(Filter(as.logical, unique(w))), nomatch=0L)
-      } ) ) + as.integer(max.indices)
+      ref.ind.mx.map <- t(
+        as.matrix(  #b/c apply will return vec at times
+          apply(
+            ref.ind.mx, 1, function(w) {
+              match(w, sort(Filter(as.logical, unique(w))), nomatch=0L)
+      } ) ) ) + as.integer(max.indices)
 
       if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map))) {
         stop(
