@@ -341,7 +341,7 @@ comp_stdout <- function(x, y) {
 }
 comp_stderr <- function(x, y) {
   cat("I'm outputting to stderr\n", file=stderr())
-  FALSE
+  TRUE
 }
 comp_stdboth <- function(x, y) {
   cat("I'm outputting to both 1\n")
