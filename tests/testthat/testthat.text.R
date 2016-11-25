@@ -83,8 +83,8 @@ local({
       c("1. there was once a time when ", "   the fantastic unicorns ",  "   could fly", "2. bugs bunny ate carrots and ", "   drank milk while hunting ",  "   ducks"),
     )
     expect_identical(
-      as.character(unitizer:::OL(rep(letters, 2), style="LETTERS")),
-      c(" A. a", " B. b", " C. c", " D. d", " E. e", " F. f", " G. g", " H. h", " I. i", " J. j", " K. k", " L. l", " M. m", " N. n", " O. o", " P. p", " Q. q", " R. r", " S. s", " T. t", " U. u", " V. v", " W. w", " X. x", " Y. y", " Z. z", "AA. a", "AB. b", "AC. c", "AD. d", "AE. e", "AF. f", "AG. g", "AH. h", "AI. i", "AJ. j", "AK. k", "AL. l", "AM. m", "AN. n", "AO. o", "AP. p", "AQ. q", "AR. r", "AS. s", "AT. t", "AU. u", "AV. v", "AW. w", "AX. x", "AY. y", "AZ. z")
+      sort(as.character(unitizer:::OL(rep(letters, 2), style="LETTERS"))),
+      sort(c(" A. a", " B. b", " C. c", " D. d", " E. e", " F. f", " G. g", " H. h", " I. i", " J. j", " K. k", " L. l", " M. m", " N. n", " O. o", " P. p", " Q. q", " R. r", " S. s", " T. t", " U. u", " V. v", " W. w", " X. x", " Y. y", " Z. z", "AA. a", "AB. b", "AC. c", "AD. d", "AE. e", "AF. f", "AG. g", "AH. h", "AI. i", "AJ. j", "AK. k", "AL. l", "AM. m", "AN. n", "AO. o", "AP. p", "AQ. q", "AR. r", "AS. s", "AT. t", "AU. u", "AV. v", "AW. w", "AX. x", "AY. y", "AZ. z"))
     )
     xl <- as.list(x)
     y <- unitizer:::UL(
