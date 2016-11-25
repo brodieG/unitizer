@@ -208,11 +208,13 @@ local({
   test_that("is_package", {
     expect_true(unitizer:::is_package_dir(system.file(package="stats")))
     expect_true(unitizer:::is_package_dir(system.file(package="methods")))
-    # stats and methods don't always appear to have tests directory, so had to
-    # remove the tests that assumed they did
-    expect_true(
-      unitizer:::is_package_dir(system.file(package="unitizer"), has.tests=TRUE)
-    )
+    ## Seems like some change now tests no longer installed by default with
+    ## packages, at least in the unix distros, so can't easily test with
+    ## has.tests==TRUE
+    #
+    # expect_true(
+    #   unitizer:::is_package_dir(system.file(package="unitizer"), has.tests=TRUE)
+    # )
     expect_equal(
       unitizer:::pretty_path(
         file.path(system.file(package="stats"), "DESCRIPTION")
