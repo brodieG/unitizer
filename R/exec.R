@@ -375,8 +375,14 @@ clean_message <- function(res) {
   # this all assumes options(warn=1)
 
   reg.base <- paste0(
-    "((?:Warning|Error) in ",
-    "(?:withVisible\\(.*?\\)?|eval\\(expr, envir, enclos\\)) :)",
+    "(",
+      "(?:Warning|Error) in ",
+      "(?:",
+        "withVisible\\(.*?\\)?|",
+        "eval\\(expr, envir, enclos\\)|",
+        "eval\\(expression\\(.*?\\)\\)",
+      ")",
+    " :)",
     "((?:\\n|\\s)*%s)\\n.*"
   )
   if(nchar(res$message)) {
