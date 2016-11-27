@@ -354,7 +354,7 @@ comp_stdboth <- function(x, y) {
 
 clean_eval_exp <- function(x) {
   clean_elem <- function(y)
-    gsub("^(Error|Warning) in eval\\(expr.*?\\) :", "\\1 in :", y)
+    gsub("^(Error|Warning) in eval\\(.*?\\) :", "\\1 in :", y)
 
   if(is.list(x)) {
     x[] <- lapply(x, clean_elem)
