@@ -50,9 +50,12 @@ local({
   txtopt2 <- unitizer:::capture_output(try(unitize(.unitizer.test.file)))
   options(old.opt)
 
+  # gsub needed b/c of inconsistent error calls in 3.3.2 and 3.4
+
   test_that("bad seed", {
     expect_equal_to_reference(
-      txtopt1, file.path("helper", "refobjs", "unitize_txtop1.rds")
+      gsub("Error in eval\\(.*\\) :", "Error in :", txtopt1),
+      file.path("helper", "refobjs", "unitize_txtop1.rds")
     )
     # supplied seed not valid int
     # unexpectedly exited; not clear why all stderr is not being captured by
