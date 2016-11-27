@@ -23,17 +23,18 @@ There are even more subtle factors that can affect test evaluation.  For example
 
 Here is a non-exhaustive list of aspects of state that might affect test outcomes:
 
-1. Workspace
-2. Random seed
-3. Working directory
-4. Search path
-5. Global options
-6. System time
-7. System variables
-8. Locale
-9. etc.
+1. Workspace / Evaluation Environment
+1. Random seed
+1. Working directory
+1. Search path
+1. Global options
+1. Loaded namespaces
+1. System time
+1. System variables
+1. Locale
+1. etc.
 
-Ideally a unit testing framework would nullify these environmental factors such that the only changes in test evaluation are caused by changes in the code that is being tested.  `unitizer` attempts to do this by setting some aspects of session state to known "clean" values ahead of the evaluation of each test.  Currently `unitizer` is capable of managing the first five aspects of state listed above, with the first three enabled by default.
+Ideally a unit testing framework would nullify these environmental factors such that the only changes in test evaluation are caused by changes in the code that is being tested.  `unitizer` attempts to do this by setting some aspects of session state to known "clean" values ahead of the evaluation of each test.  Currently `unitizer` is capable of managing the first six aspects of state listed above, with the first four enabled by default.
 
 This vignette focuses on the rationale, implementation, and limitations of state tracking and modification within `unitizer`.  For a more pragmatic guide on actually using state tracking with `unitizer` see `?unitizerState`.
 
@@ -58,7 +59,7 @@ By default `unitize` will run tests in an environment that has the same parent a
 ```
              .GlobalEnv
                        \
-                        +--> package:x --> package:y --> ... --> Base
+                        +--> package:x --> ... --> Base
                        /
 TestEnv --> UnitizerEnv
 ```
@@ -68,13 +69,27 @@ Unfortunately implementing this structure is not trivial because we need to ensu
 ```
              .GlobalEnv
                        \
-                        +--> package:z --> package:x --> package:y --> ... --> Base
+                        +--> package:y --> package:x --> ... --> Base
                        /
 TestEnv --> UnitizerEnv
 ```
-Clearly overriding such fundamental functions such as `library` / `attach` / `detach` is not good form.  We recognize this, and try to do the overriding in as lightweight a manner as possible.  For `attach` and `detach` we rely primarily on the `exit` parameter to `trace` so that the functions are as close to their original form as possible.  Unfortunately this method is not compatible with `library` since it uses `on.exit`, but again we use an implementation that should be transparent to users.  Additionally, these functions are only traced during `unitizer` execution and are returned to their original state on exit.  The untracing is registered to the `on.exit` of `unitize` so the functions should get untraced even if `unitize` fails.
+Clearly overriding such fundamental functions such as `library` / `attach` / `detach` is not good form.  We recognize this, and try to do the overriding in as lightweight a manner as possible by tracing them only to record the search path in the `unitizer` environment.  This should be completely transparent to the user.  The untracing is registered to the `on.exit` of `unitize` so the functions should get untraced even if `unitize` fails.
 
 Aside from the issues raised above, this method is not completely robust.  Any tests that turn tracing off using `tracingState`, or `trace`/`untrace` `library` / `attach` / `detach` will interfere with `unitizer`.  If you must do any of the above you should consider specifying a parent environment for your tests through the `state` parameter to `unitize` (see `?unitize`).
+
+Some functions that expect to find `.GlobalEnv` on the search path may not work
+as expected.  For example, `setClass` uses `topenv` by default to find an
+environment to define classes in.  When `setClass` is called at the top level,
+this normally results in the class being defined in `.GlobalEnv`, but if
+`.GlobalEnv` is not available `setClass` will attempt to define the class in the
+first environment on the search path, which will likely be a locked namespace.
+You can work around this by specifying an environment in calls to `setClass`.
+
+### Package Namespace as Parent Environment
+
+Sometimes it is convenient to use the namespace of a package as the parent environment.  This allows you to write tests that use internal package functions without having to resort to `:::`.  You can set the parent evaluation environment with the `state` argument to `unitize` / `unitize_dir`.  See `?unitize` and `?unitizeState`.
+
+If you do use this feature keep in mind that your tests will be exposed to the global environment as well since R looks through the search path after looking in the package namespace and imports.
 
 ### Test Environments
 
@@ -119,7 +134,7 @@ This is not an ideal outcome, but the compromise was necessary to avoid the poss
 
 One other way tests can change behavior unexpectedly is if the packages / objects attached to the search path change.  A simple example is a test script that relies on package "X", and the user attached that package at some point during interactive use, but forgot to add the requisite `library` call to the test script itself.  During testing, the scripts will work fine, but at some future date if the test scripts are run again they are likely to fail due to the dependency on the package that is not explicitly loaded in the test scripts.
 
-If you enable the search path tracking feature (see `?unitizerState`) `unitizer` runs on a "trimmed" search path that contains only the packages loaded by default in R (i.e. the packages between `package:base` and `package:stats`).  You will need to explicitly load packages that your tests depend on in your test file (e.g. by using `library()`).  `unitize` will restore the search path to its original state once you complete review.
+By default `unitizer` runs on a "trimmed" search path that contains only the packages loaded by in a freshly loaded R session (i.e. the packages between `package:base` and `package:stats`; see `?unitizerState`).  You will need to explicitly load packages that your tests depend on in your test file (e.g. by using `library()`).  `unitize` will restore the search path to its original state once you complete review.
 
 `unitizer` also relies on tracing `library`/`attach`/`detach` to implement this feature, so the caveats described [above](#The-Parent-Environment) apply equally here.  `unitizer` **does not modify the search path itself** other than by using `library`, `attach`, and `detach`.
 
@@ -127,9 +142,7 @@ When search path tracking is enabled, `unitizer` tracks the versions of the pack
 
 ### Potential Issues
 
-This feature is not enabled by default because search path tracking involves unloading namespaces in addition to attaching / detaching packages, and this can cause problems with some packages (namespace and search path manipulation may be separated in the future; see issue #132).
-
-Additionally, when `unitizer` manipulates the search path it restores the original one by using `library/attach` on any previously detached objects or packages.  This generally works fine with the notable exception of environments containing objects that contain environment references to the search path object itself.
+When `unitizer` manipulates the search path it restores the original one by using `library/attach` on any previously detached objects or packages.  This generally works fine with the notable exception of environments containing objects that contain environment references to the search path object itself.
 
 A good example of this is the `tools:rstudio` environment attached to the search path in R sessions run through RStudio.  It contains functions that have for environment the `tools:rstudio` environment.  The problem is that once that environment is detached from the search path, those functions no longer have access to the search path.  Re-attaching the environment to the search path does not solve the problem because `attach` attaches a _copy_ of the environment, not the environment itself.  This new environment will contain the same objects as the original environment, but all the functions therein will have for environment the original detached environment, not the copy that is attached to the search path.
 
@@ -141,7 +154,7 @@ Another possibility would be to re-set the environments of functions inside deta
 
 ## Global Options
 
-`unitizer` can track and reset global options.  Because many packages set options when their namespaces are attached, implementation of this feature must be coordinated with a careful management of search path and loaded namespaces.  For example, we can reasonably easily set options to be what you would expect in a freshly loaded vanilla R session, but if some packages were already loaded, these must be unloaded along with their namespaces as otherwise they would be in a compromised set with their options wiped out.
+`unitizer` can track and reset global options.  Because many packages set options when their namespaces are attached, implementation of this feature must be coordinated with a careful management of loaded namespaces.  For example, we can reasonably easily set options to be what you would expect in a freshly loaded vanilla R session, but if some namespaces as otherwise they would be in a compromised set with their options wiped out.
 
 `unitizer` can manage search paths and namespaces, but unfortunately some package namespaces cannot be unloaded so options management can be problematic when such packages are involved (one example is `data.table`).  Because of this options management is not enabled by default.
 

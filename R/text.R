@@ -1,6 +1,6 @@
-#' Display helper function
-#'
-#' @keywords internal
+## Display helper function
+##
+## @keywords internal
 
 screen_out <- function(
   txt, max.len=getOption("unitizer.test.out.lines"), file=stdout(),
@@ -27,240 +27,16 @@ screen_out <- function(
         file=file, sep=""
       )
 } } }
-#' Show a Faux Diff Between Two Objects
-#'
-#' The idea is to save the user the need to print out the objects to screen.
-#' This will print two objects to screen in a faux git diff look, focusing on a
-#' snippet of the object.
-#'
-#' @export
-#' @param obj.rem object to compare
-#' @param obj.add object to compare
-#' @param obj.rem.name object to compare
-#' @param obj.add.name object to compare
-#' @param width at what width to wrap output
-#' @param max.len 2 length integer vector with first value threshold at which we
-#'   start trimming output and the second the length we tri to
-#' @param file whether to show to stdout or stderr
-#' @param frame what frame to capture in, relevant mostly if looking for a print
-#'   method
-#' @return character, invisibly, the text representation of the diff
-
-diff_obj_out <- function(
-  obj.rem, obj.add, obj.rem.name=deparse(substitute(obj.rem))[[1L]],
-  obj.add.name=deparse(substitute(obj.add))[[1L]], width=getOption("width"),
-  max.len=NULL, file=stdout(), frame=parent.frame()
-) {
-  err.type <- "Argument"
-  if(is.null(max.len)) {
-    max.len <- getOption("unitizer.test.fail.out.lines")
-    err.type <- "Option"
-  }
-  if(
-    !is.numeric(max.len) || !identical(length(max.len), 2L) || any(max.len < 1)
-  )
-    stop(
-      err.type, " `unitizer.test.fail.out.lines` must be integer(2L) and ",
-      "greater than or equal to 1"
-    )
-  max.len <- as.integer(max.len)
-  frame # force
-  tar.width <- width - 4L
-  obj.add.capt <- sub("\\s+$", "", obj_capt(obj.add, tar.width, frame))
-  obj.rem.capt <- sub("\\s+$", "", obj_capt(obj.rem, tar.width, frame))
-
-  min.len <- min(length(obj.add.capt), length(obj.rem.capt))
-  diffs <-
-    gsub("\\s+", " ", obj.add.capt[1L:min.len]) !=
-    gsub("\\s+", " ", obj.rem.capt[1L:min.len])  # shouldn't have NAs
-
-  first.diff <- if(!any(diffs)) 1L else which(diffs)[[1L]]
-  if(first.diff < max.len[[2L]]) first.diff <- 1L   # don't advance if not needed to show first difference
-  if(first.diff > min.len - max.len[[1L]]) {        # could show more error, so will
-    first.diff <- max(1L, min.len - max.len[[1L]] + 1L)
-    max.len <- rep(max.len[[1L]], 2L)
-  }
-  diff <- char_diff(obj.rem.capt, obj.add.capt)
-  pad.rem <- rep("   ", length(obj.rem.capt))
-  pad.add <- rep("   ", length(obj.add.capt))
-  pad.rem[diff[[1L]]] <- "-  "
-  pad.add[diff[[2L]]] <- "+  "
-
-  res <- c(
-    obj_screen_chr(
-      obj.rem.capt, obj.rem.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad=pad.rem
-    ),
-    obj_screen_chr(
-      obj.add.capt, obj.add.name, first.diff=first.diff, max.len=max.len,
-      width=tar.width, pad=pad.add
-  ) )
-  if(!is.null(file)) cat(sep="\n", res, file=file)
-  invisible(res)
-}
-#' Do a \code{tools::Rdiff} Between R Objects
-#'
-#' Just a wrapper that saves the \code{print} / \code{show} representation of an
-#' object to a temp file and then runs \code{tools::Rdiff} on them.  For
-#' each of \code{from}, \code{to}, will check if they are 1 length character
-#' vectors referencing an RDS file, and will use the contents of that RDS file
-#' as the object to compare.
-#'
-#' @export
-#' @seealso \code{tools::Rdiff}
-#' @param from an R object (see details)
-#' @param to another R object (see details)
-#' @param ... passed on to \code{Rdiff}
-#' @return whatever \code{Rdiff} returns
-
-Rdiff_obj <- function(from, to, ...) {
-  dummy.env <- new.env()  # used b/c unique object
-  files <- try(
-    vapply(
-      list(from, to),
-      function(x) {
-        if(is.chr1(x) && file_test("-f", x)) {
-          rdstry <- tryCatch(readRDS(x), error=function(x) dummy.env)
-          if(!identical(rdstry, dummy.env)) x <- rdstry
-        }
-        f <- tempfile()
-        capture.output(if(isS4(x)) show(x) else print(x), file=f)
-        f
-      },
-      character(1L)
-  ) )
-  if(inherits(files, "try-error"))
-    stop("Unable to store text representation of objects")
-  res <- tools::Rdiff(files[[1L]], files[[2L]], ...)
-  unlink(files)
-  invisible(res)
-}
-# @rdname diff_obj_out
-
-char_diff <- function(x, y) {
-  stopifnot(
-    is.character(x), is.character(y), !any(is.na(c(x, y)))
-  )
-  # find first difference
-
-  len.match <- min(length(x), length(y))
-  eq <- head(x, len.match) == head(y, len.match)
-  diffs <- which(!eq)
-  if(!length(diffs)) return(
-    list(
-      c(rep(FALSE, len.match), c(rep(TRUE, length(x) - len.match))),
-      c(rep(FALSE, len.match), c(rep(TRUE, length(y) - len.match)))
-    )
-  )
-  first.diff <- diffs[[1L]]
-  eq.so.far <- rep(FALSE, first.diff - 1L)
-  eq.extra <- logical(0L)
-
-  # Try to see if difference exists in y, and if not see if any subsequent line
-  # does exit, indicating deletions from x
-
-  for(i in seq(first.diff, length(x), by=1L)) {
-    n.match <- head(which(x[[i]] == tail(y, -first.diff)), 1L)
-    if(length(n.match)) {
-      tmp.res <- Recall(
-        x[i:length(x)], y[(n.match[[1L]] + first.diff):length(y)]
-      )
-      return(
-        list(
-          c(eq.so.far, eq.extra, tmp.res[[1L]]),
-          c(eq.so.far, rep(TRUE, n.match[[1L]]), tmp.res[[2L]])
-    ) ) }
-    eq.extra <- c(eq.extra, TRUE)
-  }
-  # Difference did not exist in y
-
-  list(
-    c(eq.so.far, eq.extra),
-    c(eq.so.far, rep(TRUE, length(y) - first.diff + 1L))
-  )
-}
-# @rdname diff_obj_out
-
-obj_capt <- function(obj, width=getOption("width"), frame=parent.frame()) {
-  if(!is.numeric(width) || length(width) != 1L)
-    stop("Argument `width` must be a one long numeric/integer.")
-  if(!is.environment(frame))
-    stop("Argument `frame` must be an environment") # note this forces eval, which is needed
-  width.old <- getOption("width")
-  on.exit(options(width=width.old))
-  width <- max(width, 10L)
-
-  options(width=width)
-  obj.out <- capture.output(
-    invisible(print.res <- user_exp_display(obj, frame, quote(obj)))
-  )
-  options(width=width.old)
-  on.exit(NULL)
-
-  if(print.res$aborted) {  # If failed during eval retrieve conditions
-    err.cond <-
-      which(vapply(print.res$conditions, inherits, logical(1L), "error"))
-    err.cond.msg <- if(length(err.cond)) {
-      c(
-        paste0(
-          "<Error in print/show",
-          if(is.object(obj))
-            paste0(" method for object of class \"", class(obj)[[1L]], "\""),
-          ">"
-        ),
-        paste0(
-          conditionMessage(print.res$conditions[[err.cond[[1L]]]]), collapse=""
-      ) )
-    } else ""
-    obj.out <- c(obj.out, err.cond.msg)
-  }
-  obj.out
-}
-# @rdname diff_obj_out
-
-obj_screen_chr <- function(
-  obj.chr, obj.name, first.diff, max.len, width, pad
-) {
-  pre <- post <- NULL
-  extra <- paste0("; see `", obj.name, "`")
-  if(length(obj.chr) > max.len[[1L]] && first.diff > 1L) {
-    obj.chr <- tail(obj.chr, -(first.diff - 1L))
-    pre <- paste0("... omitted ", first.diff - 1L, " lines")
-    pad <- tail(pad, -(first.diff - 1L))
-  }
-  if((len <- length(obj.chr)) > max.len[[1L]]) {
-    obj.chr <- head(obj.chr, max.len[[2L]])
-    post <- paste0("... omitted ", len - max.len[[2L]], " lines")
-    pad <- head(pad, max.len[[2L]])
-  }
-  pad <- format(pad)
-  pad.pre.post <- paste0(rep(" ", nchar(pad[[1L]])), collapse="")
-  if(!is.null(post)) {
-    post <- paste0(
-      pad.pre.post,
-      word_wrap(paste0(post, extra, " ..."), width - nchar(pad[[1L]]))
-    )
-  }
-  if (!is.null(pre)) {
-    pre <- paste0(
-      pad.pre.post,
-      word_wrap(
-        paste0(pre, if(is.null(post)) extra, " ..."), width - nchar(pad[[1L]])
-  ) ) }
-  c(
-    paste0("@@ ", obj.name, " @@"),
-    paste0(c(pre, paste0(pad, obj.chr), post))
-  )
-}
-#' Print Only First X characters
-#'
-#' @keywords internal
-#' @param x string to reduce length
-#' @param nchar.max how many characters to reduce each string to
-#' @param ctd 1 length character vector for what to use to indicate string truncated
-#' @param disambig logical 1L whether to disambiguate strings that end up
-#'   the same after truncation (not currently implemented)
-#' @param from what side to truncate from
+## Print Only First X characters
+##
+## @keywords internal
+## @param x string to reduce length
+## @param nchar.max how many characters to reduce each string to
+## @param ctd 1 length character vector for what to use to indicate string
+##   truncated
+## @param disambig logical 1L whether to disambiguate strings that end up
+##   the same after truncation (not currently implemented)
+## @param from what side to truncate from
 
 strtrunc <- function(
   x, nchar.max=getOption("width"), ctd="...", disambig=FALSE,
@@ -280,24 +56,28 @@ strtrunc <- function(
       "Argument `from` must be character(1L) %in% c(\"left\", \"right\") ",
       "and not NA"
     )
-  len.target <- nchar.max - nchar(ctd)
-  if(len.target < 1L)
-    stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
-  chars <- nchar(x)
-  pre <- post <- ""
-  if(identical(from, "right")) {
-    start <- 1L
-    stop <- len.target
-    post <- ctd
+  if(all(nchar(x) <= nchar.max)) {
+    x
   } else {
-    start <- chars - len.target + 1L
-    stop <- chars
-    pre <- ctd
+    len.target <- nchar.max - nchar(ctd)
+    if(len.target < 1L)
+      stop("`nchar.max` too small, make bigger or make `ctd` shorter.")
+    chars <- nchar(x)
+    pre <- post <- ""
+    if(identical(from, "right")) {
+      start <- 1L
+      stop <- len.target
+      post <- ctd
+    } else {
+      start <- chars - len.target + 1L
+      stop <- chars
+      pre <- ctd
+    }
+    ifelse(
+      nchar(x) <= nchar.max,
+      x, paste0(pre, substr(x, start, stop), post)
+    )
   }
-  ifelse(
-    nchar(x) <= nchar.max,
-    x, paste0(pre, substr(x, start, stop), post)
-  )
 }
 #' Text Wrapping Utilities
 #'
@@ -311,11 +91,16 @@ strtrunc <- function(
 #'     necessary; note that unlike \code{text_wrap} \code{width} must be scalar
 #'   \item \code{word_cat} is like \code{word_wrap}, except it outputs to screen
 #'   \item \code{word_msg} is like \code{word_cat}, except it ouputs to stderr
+#'   \item \code{meta_word_cat} is like \code{word_cat}, except it wraps output
+#'     in formatting to highlight this is not normal output
 #' }
 #'
+#' Newlines are replaced by empty strings in the output so that each character
+#' vector in the output represents a line of screen output.
+#'
 #' @keywords internal
-#' @return a list with, for each item in \code{`x`}, a character vector
-#'   of the item wrapped to length \code{`width`}
+#' @return a list with, for each item in \code{x}, a character vector
+#'   of the item wrapped to length \code{width}
 #' @param x character vector
 #' @param width what width to wrap at
 #' @param tolerance how much earlier than \code{width} we're allowed to wrap
@@ -399,7 +184,8 @@ word_wrap <- function(
   )
   break_char <- function(x) {
     lines.raw <- ceiling(nchar(x) / (width - tolerance))
-    res <- character(lines.raw + ceiling(lines.raw / (width - tolerance))) # for hyphens
+    # for hyphens
+    res <- character(lines.raw + ceiling(lines.raw / (width - tolerance)))
     res.idx <- 1
 
     if(!nchar(x)) return(x)
@@ -428,8 +214,8 @@ word_wrap <- function(
             } }
         } }
         if(!matched) x.trim <- substr(x, 1L, width)  # Failed, truncate
-
-        x.trim <- substr(x.trim, 1L, width)  # we allow one extra char for pattern matching in some cases, remove here
+        # we allow one extra char for pattern match some cases, remove here
+        x.trim <- substr(x.trim, 1L, width)
         x <- sub(  # remove leading space if any
           "^\\s(.*)", "\\1",
           substr(x, min(nchar(x.trim), width) + 1L - pad, nchar(x)),
@@ -448,9 +234,10 @@ word_wrap <- function(
 
   x.lst <- as.list(x)
 
-  # replace new lines with 0 char item
+  # replace new lines with 0 char item; note that leading NLs need special
+  # treatment; used to put in two newlines here; not sure why though
 
-  x.lst[nchar(x) > 0] <- strsplit(gsub("\n", "\n\n", x[nchar(x) > 0]), "\n")
+  x.lst[nchar(x) > 0] <- strsplit(x[nchar(x) > 0], "\n")
 
   res <- lapply(x.lst, function(x) unlist(lapply(x, break_char)))
   res.fin <- if(unlist) unlist(res) else res
@@ -466,17 +253,56 @@ cc <- function(..., c="") paste0(c(...), collapse=c)
 
 #' @rdname text_wrap
 
-word_cat <- function(
-  ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
+meta_word_cat <- function(
+  ..., sep="\n", width=getOption("width"), tolerance=8L, file=stdout(),
+  trail.nl=TRUE
 ) {
+  # NOTE: if we change `pre` nchar width there are several calls to
+  # meta_word_wrap involving `UL` that will need to be udpated as well
+
+  out <-
+    word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| ")
+  if(!is.null(out)) cat(out, sep="\n", file=file)
+  if(trail.nl) cat("\n")
+  invisible(out)
+}
+#' @rdname text_wrap
+
+meta_word_msg <- function(
+  ..., sep="\n", width=getOption("width"), tolerance=8L, trail.nl=TRUE
+) {
+  out <- paste0(
+    c(
+      word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| "),
+      if(trail.nl) ""
+    ),
+    collapse="\n"
+  )
+  if(length(out)) message(paste0(out))
+  invisible(out)
+}
+## Like word_wrap, but handles some additional duties needed for word_cat
+
+word_wrap_split <- function(
+  ..., width=getOption("width"), tolerance=8L, pre="", sep=" "
+) {
+  stopifnot(is.chr1(pre))
+  width <- width - nchar(pre)
+  if(width < 10L) width <- 10L
   vec <- try(
     paste0(unlist(list(...)), collapse=sep),
     silent=TRUE
   )
   if(inherits(vec, "try-error")) stop(conditionMessage(attr(vec, "condition")))
-  vec <- unlist(strsplit(vec, "\n"))
-  out <- word_wrap(vec, width, tolerance)
-  cat(out, file=file, sep="\n")
+  paste0(pre, word_wrap(vec, width=width, tolerance=tolerance))
+}
+#' @rdname text_wrap
+
+word_cat <- function(
+  ..., sep=" ", width=getOption("width"), tolerance=8L, file=stdout()
+) {
+  out <- word_wrap_split(..., width=width, tolerance=tolerance, sep=sep)
+  if(!is.null(out)) cat(out, file=file, sep="\n")
   invisible(out)
 }
 #' @rdname text_wrap
@@ -486,8 +312,10 @@ word_msg <- function(...) word_cat(..., file=stderr())
 #' @rdname text_wrap
 
 word_comment <- function(
-  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE
+  x, width=getOption("width"), tolerance=8L, hyphens=TRUE, unlist=TRUE,
+  color=crayon::has_color()
 ) {
+  if(is.null(color)) color <- crayon::has_color()
   if(!is.character(x)) stop("Argument `x` must be character")
   if(!all(grep("^#", x)))
     stop("Argument `x` must be character with all elements starting with '#'")
@@ -495,18 +323,21 @@ word_comment <- function(
     x=sub("^#", "", x), width=width - 1L, tolerance=tolerance, hyphens=hyphens,
     unlist=FALSE
   )
-  res <- lapply(res, function(x) paste0("#", x))
+  res <- lapply(
+    res,
+    function(x) if(color) crayon::silver(paste0("#", x)) else paste0("#", x)
+  )
   if(unlist) unlist(res) else res
 }
 
-#' Over-write a Line
-#'
-#' @keywords internal
-#' @param x character(1L)
-#' @param min.width integer(1L) minimum character width to print to
-#' @param max.width integer(1L) max width to print to
-#' @param append to last non-append \code{x} value
-#' @return NULL used only for side effect of cating ot screen
+## Over-write a Line
+##
+## @keywords internal
+## @param x character(1L)
+## @param min.width integer(1L) minimum character width to print to
+## @param max.width integer(1L) max width to print to
+## @param append to last non-append \code{x} value
+## @return NULL used only for side effect of cating to screen
 
 over_print <- (
   function() {
@@ -532,64 +363,73 @@ over_print <- (
       invisible(NULL)
 } } ) ()
 
-#' Produces 1 Line Description of Value
+class_map <- function(val) {
+  abb <- c(
+    numeric="num", integer="int", character="chr", complex="cpx", factor="fct",
+    matrix="mat", logical="logi"
+  )
+  if(is.na(mapped <- abb[match(val, names(abb))])) val else mapped
+}
+desc_type <- function(val) {
+  class.map <- c(
+    numeric="num", integer="int", character="chr", complex="cpx", factor="fct",
+    logical="logi"
+  )
+  if(is.matrix(val))
+    paste(class_map(typeof(val)), "mat") else
+    class_map(head(class(val), 1L))
+}
+desc_size <- function(val) {
+  if(!is.null(dim(val))) {
+    paste0("[", paste0(dim(val), collapse=","), "]")
+  } else if((length(val) != 1L || !is.object(val)) && !is.null(val)) {
+    paste0("[", length(val), "]")
+  }
+}
+desc_simple <- function(val) {
+  type <- desc_type(val)
+  paste0(type, desc_size(val))
+}
+#' One Line Description of Object
 #'
-#' @keywords internal
+#' Objects are described by class, and dimensions.  Dimensions is always denoted
+#' in square brackets.  For example, \dQuote{int[10]} means an integer of length
+#' ten.  Typically an object will be identified by \code{head(class(obj), 1L)}
+#' along with its dimensions.  Recursive objects will have the first level shown
+#' provided that doing so fits within \code{limit}.
+#'
+#' Eventually this will be migrated to an S3 generic to allow recursive dispatch
+#' on object type.
+#'
+#' @export
 #' @param val object to describe
 #' @param limit max characters to display
-#' @return character vector describing object
+#' @return character(1L) describing object
+#' @examples
+#' desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2)))
 
 desc <- function(val, limit=getOption("width")) {
-  if(!is.numeric(limit) | !identical(length(limit), 1L) | limit <= 4L) {
-    stop("Argument `limit` must be a 1 length integer with value greater than 3")
-  }
-  if(is.null(val)) return("NULL")
-  val.desc <- typeof(val)
-  if(!is.null(class(val)) && !identical(class(val)[[1]], typeof(class(val)))) {
-    val.desc <- paste(val.desc, class(val)[[1]])
-  }
-  first_lvl <- function(x, inc.len=TRUE) {
-    class.map <- c(numeric="num", integer="int", character="chr", complex="cpx", factor="fct")
-    classes <- vapply(x, function(y) class(y)[[1L]], character(1L))
-    lens <- if(inc.len) {
-      vapply(
-        x,
-        function(y) if(length(y) > 1L) paste0("(", length(y), ")") else "",
-        character(1L)
-      )
-    } else character(length(x))
-    paste0(
-      ifelse(nchar(nms <- names(x)), valid_names(nms), seq_along(x)), ":",
-      ifelse(is.na(new.class <- class.map[classes]), classes, new.class),
-      lens, collapse=";"
-    )
-  }
-  if(inherits(val, "data.frame")) {
-    val.desc <- paste0(val.desc, " [", nrow(val), ",{", first_lvl(val, FALSE), "}]")
-  } else if(!is.null(val.dim <- dim(val))) {
-    val.desc <- paste0(val.desc, paste0(" [", paste0(val.dim, collapse=",")), "]")
-  } else if (is.atomic(val)) {
-    val.desc <- paste0(val.desc, paste0(" [", length(val), "]"))
-  } else if (is.recursive(val)) {
-    count_rec <- function(x, lvl=0) {
-      if(is.recursive(x) && length(x)) {
-        lvl <- lvl + 1L
-        res <- vapply(x, count_rec, numeric(2L), lvl=lvl)
-        return(c(lvl=max(res["lvl", ]), counts=sum(res["counts",])))
-      } else {
-        return(c(lvl=lvl, counts=1L))
-      }
-    }
-    val.desc <- paste(val.desc, paste0("[", paste0(c(length(val), paste0(count_rec(val), collapse=";")), collapse=","), "]"))
-    val.desc <- paste0(val.desc, " {", first_lvl(val), "}")
-  }
-  if(nchar(val.desc) > limit - 3L) paste0(substr(val.desc, 1L, limit - 3L), "...") else val.desc
+  type <- desc_type(val)
+  simple <- desc_simple(val)
+  res <- if(nchar(simple) < limit && is.recursive(val) && length(val)) {
+    descs <- vapply(val, desc_simple, character(1L))
+    names <- if(is.null(names(val))) character(length(val)) else names(val)
+    rec <- sprintf(
+      "%s(%s)", type,
+      paste0(
+        ifelse(nzchar(names), paste0(names, "=", descs), descs),
+        collapse=", "
+    ) )
+    if(nchar(rec) < limit) rec else simple
+  } else simple
+  if(nchar(res) > limit - 3L)
+      paste0(substr(res, 1L, limit - 3L), "...") else res
 }
-#' Collapse Multi-line Character into one line
-#'
-#' @param x character
-#' @param chars how many characters to display
-#' @keywords internal
+## Collapse Multi-line Character into one line
+##
+## @param x character
+## @param chars how many characters to display
+## @keywords internal
 
 one_line <- function(x, chars=0L) {
   if(!is.character(x) || any(is.na(x)))
@@ -635,12 +475,12 @@ change_first <- function(x, fun) {
     ifelse(nchar(x) == 1L, fun(x), x)
   )
 }
-#' Substring To a Length, but end In Consonant
-#'
-#' @keywords internal
-#' @param x character vector to substring
-#' @param stop integer max number of characters
-#' @param justify character(1L) passed on to format
+## Substring To a Length, but end In Consonant
+##
+## @keywords internal
+## @param x character vector to substring
+## @param stop integer max number of characters
+## @param justify character(1L) passed on to format
 
 substr_cons <- function(x, stop, justify="left") {
   if(!is.character(x)) stop("Argument `x` must be ")
@@ -648,13 +488,13 @@ substr_cons <- function(x, stop, justify="left") {
   z <- sub("[^bcdfghjklmnpqrstvwxz]*$", "", y, ignore.case=TRUE)
   format(z, width=stop, justify=justify)
 }
-#' Remove Common Characters From Values in a Vector
-#'
-#' Note that one length \code{x} is a degenerate case that returns "".
-#'
-#' @keywords internal
-#' @param x character the vector to make more unique
-#' @param from the direction to remove common elements from
+## Remove Common Characters From Values in a Vector
+##
+## Note that one length \code{x} is a degenerate case that returns "".
+##
+## @keywords internal
+## @param x character the vector to make more unique
+## @param from the direction to remove common elements from
 
 str_reduce_unique <- function(x, from="left") {
   if(
@@ -685,14 +525,16 @@ str_reduce_unique <- function(x, from="left") {
   }
   res
 }
-#' Convert A Matrix of Test Outcomes for Display
-#'
-#' Used by \code{show} methods for both \code{unitizerSummary} and
-#' \code{unitizerSummaryList}
-#'
-#' @keywords internal
+## Convert A Matrix of Test Outcomes for Display
+##
+## Used by \code{show} methods for both \code{unitizerSummary} and
+## \code{unitizerSummaryList}
+##
+## @keywords internal
 
-summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
+summ_matrix_to_text <- function(
+  mx, from="right", width=getOption("width"), show.nums=TRUE
+) {
   # Ignore any columns with zero totals other than pass/fail
 
   if(
@@ -707,9 +549,15 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
 
   col.names <- substr_cons(names(totals.keep), 4L, justify="right")
   col.count <- length(col.names)
-  num.width <- max(nchar(col.names), nchar(as.character(totals.keep)))
+  tot.chr <- as.character(totals.keep)
+  tot.chr[is.na(totals.keep)] <- "?"
+  tot.chr[!is.na(totals.keep) & !totals.keep] <- "-"
 
-  test.nums <- paste0(" ", format(seq.int(nrow(mx.keep))), ".")
+  num.width <- max(nchar(col.names), nchar(tot.chr))
+
+  test.len <- nrow(mx.keep)
+  test.nums <- if(show.nums)
+    paste0(" ", format(seq.int(test.len)), ".") else character(test.len)
   rns <- rownames(mx.keep)
 
   scr.width <- width
@@ -741,9 +589,6 @@ summ_matrix_to_text <- function(mx, from="right", width=getOption("width")) {
   # totals.keep
 
   res <- c(res, paste0(rep(".", nchar(res[[1L]])), collapse=""))
-  tot.chr <- as.character(totals.keep)
-  tot.chr[is.na(totals.keep)] <- "?"
-  tot.chr[!totals.keep] <- "-"
   res <- c(
     res,
     do.call(sprintf, c(list(fmt, "", ""), as.list(tot.chr)))
@@ -794,7 +639,24 @@ capture_output <- function(expr, env=parent.frame()) {
 #' @rdname capture_output
 
 print.captured_output <- function(x, ...) {
+  cat(as.character(H3("Output")))
   cat(x$output, sep="\n")
-  cat(x$message, sep="\n", file=stderr())
+  cat(as.character(H3("Message")))
+  cat(x$message, sep="\n")
 }
 
+## Convert a Character Vector into a List in English
+##
+## @param x character elements to list
+## @param singular follow on
+## @param plural follow on
+
+char_to_eng <- function(x, singular="was", plural="were") {
+  stopifnot(is.character(x), is.chr1(singular), is.chr1(plural))
+  if(length(x) == 1L) {
+    if(nzchar(singular)) paste(x, singular) else x
+  } else if (length(x)) {
+    base <- paste0(paste0(head(x, -1L), collapse=", "), ", and ", tail(x, 1L))
+    if(nzchar(plural)) paste(base, plural) else base
+  } else ""
+}

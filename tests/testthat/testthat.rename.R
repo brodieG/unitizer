@@ -3,8 +3,10 @@ context("Rename")
 
 test_that("Rename Works", {
   x <- readRDS("helper/trivial.unitizer/data.rds")
-  x.edit <- editCalls(x, quote(x), quote(y), interactive.only=FALSE)
-
+  expect_warning(
+    x.edit <- editCalls(x, quote(x), quote(y), interactive.only=FALSE),
+    "experimental"
+  )
   expect_identical(
     x.edit@items.ref.calls.deparse,
     vapply(unitizer:::as.list(x.edit@items.ref), slot, character(1L), "call.dep")
@@ -19,7 +21,12 @@ test_that("Rename Works", {
     )
   )
   unitizer:::read_line_set_vals("Y")
-  x.edit2 <- editCalls(x, quote(x), quote(y), interactive.only=TRUE)
+  expect_warning(
+    capture.output(
+      x.edit2 <- editCalls(x, quote(x), quote(y), interactive.only=TRUE)
+    ),
+    "experimental"
+  )
   unitizer:::read_line_set_vals(NULL)
   expect_identical(
     x.edit@items.ref.calls.deparse, x.edit2@items.ref.calls.deparse

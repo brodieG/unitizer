@@ -31,9 +31,12 @@ setClassUnion("unitizerTestsOrExpression", c("unitizerTests", "expression"))
 
 #' @rdname unitizer_s4method_doc
 
-setMethod("+", c("unitizerTests", "unitizerSectionExpressionOrExpression"), valueClass="unitizerTests",
+setMethod("+",
+  c("unitizerTests", "unitizerSectionExpressionOrExpression"),
+  valueClass="unitizerTests",
   function(e1, e2) {
-    if(e1@.pointer > length(e1) | e1@.pointer < 0L) stop("Logic Error: invalid internal index value ", e1@.pointer)
+    if(e1@.pointer > length(e1) | e1@.pointer < 0L)
+      stop("Logic Error: invalid internal index value ", e1@.pointer)
     if(e1@.pointer > 0L) {
       e1@.items[[e1@.pointer]] <- NULL
       e1@.pointer <- e1@.pointer - 1L

@@ -81,7 +81,6 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 setMethod("healEnvs", c("unitizerItems", "unitizer"),
   valueClass="unitizerItems",
   function(x, y, ...) {
-
     # Now need to reconstruct all the parenthood relationships between items,
     # start by figuring out the indices of all the new and reference items
 
@@ -110,7 +109,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
     # ignored tests are considered gaps as they don't have their own environment
 
     gap.order <- order(items.new.idx, decreasing=TRUE)
-    gaps <- diff(c(items.new.idx[gap.order], 0L)) # note gaps are -ve and there is a gap if gap < -1
+    # note gaps are -ve and there is a gap if gap < -1
+    gaps <- diff(c(items.new.idx[gap.order], 0L))
 
     for(i in seq_along(gaps)) {
       i.org <- gap.order[[i]]
@@ -129,7 +129,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         # during a test, which is not default behavior
 
         for(j in (gaps[[i]] + 1L):-1L) {
-          interim.env <- y@items.new[[items.new.idx[[i.org]] + j]]@env  # assumes continuous ids in items.new
+          # assumes continuous ids in items.new
+          interim.env <- y@items.new[[items.new.idx[[i.org]] + j]]@env
           interim.names <- ls(envir=interim.env, all.names=T)
           lapply(
             interim.names,
@@ -213,7 +214,10 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         item.env <- y@items.new[[tail(matching.new.older, 1L)]]@env
         slot.in[[i]] <- tail(matching.new.older, 1L)
       }
-      if(!repair) {  # once we need to repair, stop doing this otherwise get spammed with errors
+      # once we need to repair, stop doing this otherwise get spammed with
+      # errors
+
+      if(!repair) {
         item.ref.updated <- try(
           updateLs(
             x[items.ref.select][[i]], y@base.env, item.env

@@ -101,11 +101,14 @@ NULL
 #'     maximum number of lines of screen output to show for each test, and
 #'     second value is the number of lines to show if there are more lines than
 #'     allowed by the first value
-#'   \item \code{unitizer.test.fail.out.lines}: like
-#'     \code{unitizer.test.out.lines}, but used for limiting the size of the
-#'     diffs comparing new and reference objects
 #'   \item \code{unitizer.test.msg.lines}: like \code{unitizer.test.out.lines},
 #'     but for \code{stderr output}
+#'   \item \code{unitizer.test.fail.context.lines}: integer(2L), used
+#'     exclusively when comparing new to references tests when test faile; first
+#'     values is maximum number of lines of context to show around a test,
+#'     centered on differences if there are any, and second value is the number
+#'     of context lines to show if using the first value is not sufficient to
+#'     fully display the test results
 #'   \item \code{unitizer.show.output}: TRUE or FALSE, whether to display test
 #'     \code{stdout} and \code{stderr} output as it is evaluated.
 #'   \item \code{unitizer.disable.capt}: logical(2L), not NA, with names
@@ -114,8 +117,10 @@ NULL
 #'     stream is still captured but setting the value to FALSE tees it.
 #'   \item \code{unitizer.max.capture.chars}: integer(1L) maximum number of
 #'     characters to allow capture of per test
+#'   \item \code{unitizer.color} whether to use ANSI color escape sequences,
+#'     set to TRUE to force, FALSE to force off, or NULL to attempt to auto
+#'     detect (based on code from package:crayon, thanks Gabor Csardi)
 #' }
-#'
 #' @section Misc Options:
 #'
 #' \itemize{
@@ -166,7 +171,7 @@ NULL
   "^editor$", "^papersize$", "^bitmapType$",  "^menu\\.graphics$",
   "^unitizer\\."
 )
-.unitizer.namespace.keep <- c("data.table", "covr")
+.unitizer.namespace.keep <- c("data.table", "covr", "crayon", "tools")
 
 .unitizer.base.packages <- c(
   "package:stats", "package:graphics", "package:grDevices", "package:utils",
@@ -209,7 +214,7 @@ options_zero <- function(
   )
   opt.success <- vapply(names(all.opts),
     function(opt.name) {
-      opt.attempt <- try(options(all.opts[opt.name]))
+      opt.attempt <- try(options(all.opts[opt.name]), silent=TRUE)
       return(!inherits(opt.attempt, "try-error"))
     },
     logical(1L)
@@ -219,7 +224,7 @@ options_zero <- function(
       word_wrap(
         cc(
           "Unable to reset following options: ",
-          cat(deparse(names(all.opts)[!opt.success]), width.cutoff=500L)
+          deparse(names(all.opts)[!opt.success], width.cutoff=500L)
     ) ) )
   }
   # Reset others
@@ -244,32 +249,56 @@ options_update <- function(tar.opts) {
 }
 
 .unitizer.opts.default <- list(
-  unitizer.par.env=NULL,                   # NULL means use the special unitizer environment
-  unitizer.show.output=FALSE,              # Will display output/msg to stdout/stderr in addition to capturing it
+  # NULL means use the special unitizer environment
+  unitizer.par.env=NULL,
+  # Will display output/msg to stdout/stderr in addition to capturing it
+  unitizer.show.output=FALSE,
+  # Attempt to ANSI colorize output, TRUE to force, FALSE to force off, NULL to
+  # auto-detect based on terminal capability
+  unitizer.color=NULL,
   unitizer.disable.capt=
     c(output=FALSE, message=FALSE),        # Will prevent capture
-  unitizer.test.out.lines=c(50L, 15L),     # How many lines to display when showing test values, or truncate to if exceeds
-  unitizer.test.fail.out.lines=c(10L, 5L), # How many lines to display when showing failed objects (note banner means one more line than this displayed)
-  unitizer.test.msg.lines=c(10L, 3L),      # How many lines to display when showing test errors, or truncate to if exceeds
-  unitizer.prompt.b4.quit.time=10,         # If unitizer runs in fewer seconds than this and has no reviewed items, `Q` will quit directly without prompting for review
-  unitizer.max.capture.chars=200000L,      # Maximum number of characters we allow capture of per test
+  # How many lines to display when showing test values, or truncate to if exceeds
+  unitizer.test.out.lines=c(50L, 15L),
+  # How many lines to display when showing test errors, or truncate to if exceeds
+  unitizer.test.msg.lines=c(10L, 3L),
+  # How many lines of context to display when showing failed objects
+  # (note banner means one more line than this displayed)
+  unitizer.test.fail.context.lines=c(10L, 3L),
+  # If unitizer runs in fewer seconds than this and has no reviewed items, `Q`
+  # will quit directly without prompting for review
+  unitizer.prompt.b4.quit.time=10,
+  # Maximum number of characters we allow capture of per test
+  unitizer.max.capture.chars=200000L,
   unitizer.history.file="",                # "" is interpreted as tempfile()
-  unitizer.search.path.keep=character(),   # User specified objects to keep on search path; if you modify this make sure you ajdust `unitizer.opts.asis` accordingly as well (see reproducible state vignette)
-  unitizer.search.path.keep.base=c(        # Default objects to keep on search path when initializing unitizer;
+  # User specified objects to keep on search path; if you modify this make sure
+  # you ajdust `unitizer.opts.asis` accordingly as well (see reproducible state
+  # vignette)
+  unitizer.search.path.keep=character(),
+  # Default objects to keep on search path when initializing unitizer;
+  unitizer.search.path.keep.base=c(
     .unitizer.base.packages,
     "tools:rstudio", "package:unitizer"
   ),
   unitizer.namespace.keep = character(),   # names of namespaces not auto-unload
-  unitizer.namespace.keep.base=c(          # system namespaces not to auto-unload, no matter what
+  # system namespaces not to auto-unload, no matter what
+  unitizer.namespace.keep.base=c(
     .unitizer.namespace.keep
   ),
   unitizer.state="default",                # default reproducible state mode
-  unitizer.opts.init=list(),               # User default option values when running with options state tracking
-  unitizer.opts.init.base=.unitizer.opts.base,  # Default option values when running with options state tracking
-  unitizer.opts.asis=character(0L),             # User specified options that should not be changed; these are matched as regular expressions
-  unitizer.opts.asis.base=.unitizer.opts.asis,  # Default options not to change; these are primarily system dependent and other options; these are matched as regular expressions
-  unitizer.seed=                           # random seed to use by default, "Wichman-Hill" because default seed is massive
-      list(seed=42L, kind="Wichmann-Hill")
+  # User default option values when running with options state tracking
+  unitizer.opts.init=list(),
+  # Default option values when running with options state tracking
+  unitizer.opts.init.base=.unitizer.opts.base,
+  # User specified options that should not be changed; these are matched as
+  # regular expressions
+  unitizer.opts.asis=character(0L),
+  # Default options not to change; these are primarily system dependent and
+  # other options; these are matched as regular expressions
+  unitizer.opts.asis.base=.unitizer.opts.asis,
+  # random seed to use by default, "Wichman-Hill" because default seed is large
+  unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
+  unitizer.max.env.depth=20000L
 )
 
 #' Checks that options meet expectations before anything gets run
@@ -281,33 +310,44 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     is.list(opts.to.validate),
     all(grep("^unitizer\\.", names(opts.to.validate)))
   )
-  names.def <- setdiff(names(.unitizer.opts.default), "unitizer.par.env")  # unitizer.par.env can be NULL
+  # Check all option existence except those that can be NULL
+
+  names.def <- setdiff(
+    names(.unitizer.opts.default), c("unitizer.par.env", "unitizer.color")
+  )
   if(any(missing.opts <- !names.def %in% names(opts.to.validate)))
     stop(
       "The following options must be set in order for `unitizer` to work: ",
       deparse(names.def[missing.opts], width.cutoff=500L)
     )
+  # Now validate
+
   with(
     opts.to.validate,
     {
       if(!is.TF(unitizer.show.output))
         stop("Option `unitizer.show.output` must be TRUE or FALSE")
+      if(
+        exists("unitizer.color", inherits=FALSE) &&
+        !is.TF(unitizer.color) && !is.null(unitizer.color)
+      )
+        stop("Option `unitizer.color` must be TRUE, FALSE, or NULL")
       if(!is.valid_capt_setting(unitizer.disable.capt))
         stop("Option `unitizer.disable.capt` is invalid (see prior message)")
-      if(!is.int.pos.2L(unitizer.test.out.lines))
+      if(!is.screen.out.vec(unitizer.test.out.lines))
         stop(
           "Option `unitizer.test.out.lines` must be integer(2L), strictly ",
-          "positive, and not NA"
+          "positive, not NA, with first value larger than second"
         )
-      if(!is.int.pos.2L(unitizer.test.fail.out.lines))
+      if(!is.context.out.vec(unitizer.test.fail.context.lines))
         stop(
-          "Option `unitizer.test.fail.out.lines` must be integer(2L), ",
-          "strictly positive, and not NA"
+          "Option `unitizer.test.fail.context.lines` must be integer(2L), ",
+          "positive, not NA, with first value larger than second"
         )
-      if(!is.int.pos.2L(unitizer.test.msg.lines))
+      if(!is.screen.out.vec(unitizer.test.msg.lines))
         stop(
-          "Option `unitizer.test.msg.lines` must be integer(2L), strictly ",
-          "positive, and not NA"
+          "Option `unitizer.test.msg` must be integer(2L), strictly ",
+          "positive, not NA, with first value larger than second"
         )
       if(
         !is.numeric(unitizer.prompt.b4.quit.time) ||

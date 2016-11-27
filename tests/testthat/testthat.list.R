@@ -96,4 +96,10 @@ local( {
     expect_error(append(vec2, vec, 20))
     expect_error(append(vec2, vec, -5))
   } )
+  test_that("List coersion works even inside apply functions", {
+    ulist <- new("unitizerList", .items=list("a", 1, 2, "b"))
+    expect_identical(lapply(ulist, identity), ulist@.items)
+  })
+
+
 } )

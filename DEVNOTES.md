@@ -7,6 +7,54 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## Color Options
+
+Right now a total mess; need a unified way of addressing color usage in:
+
+* `diffobj` calls from within unitizer
+* `comment` coloring
+* `browse` menu coloring (failed/removed/etc)
+* anything else we end up adding
+
+## Display Improvements
+
+### Pager
+
+Use pager?  Seems like almost definitely want to do this for elements like
+[B]rowse, etc.  Have to think about how it impacts flow if the pager is external
+like in RStudio.
+
+### Colorizing Output
+
+All meta-text should be grey...  But what about large portions of text such as
+those we get in [B]rowse?  Maybe the headers and all that in gray, but the
+contents in white?  What about the prompts?  Will have to play around.
+
+Color in code comments?  Could do so pretty easily
+
+One of the key objectives is differentiating `unitizer` meta output from normal
+code output.  Will need to provide a solution for terminals without color
+support, perhaps something like prepending `>>` to every meta line.
+
+### Simple Value Failures
+
+Need some way of mitigating the amount of output put out by `unitizer`.  Right
+now with the addition of the new diff it's pretty jarring to see so much red and
+yellow and blue.  Some options:
+
+* If only a `value` error, squash `all.equal` and rely instead on `diffobj`
+  output only; one issue here is that we might conceal some errors that
+  `all.equal` would otherwise show; partly relies on making sure `diffobj` shows
+  the `all.equal` output when there are no visible differences.
+* Another big issue with quashing the `value` error is that we need to handle
+  those cases where the user provides their own comparison function with its own
+  output preferences.  The auto-output of `diffObj` might conflict with this.
+* The whole `diff_state` business; what's the best way to handle it?
+
+### Value and Condition
+
+
+
 ## Return values
 
 Still somewhat conflicted about what the return values should be for a unitizer.
@@ -38,6 +86,8 @@ post eval but pre-browse `unitizers`, combined in some way with the post-browse
 `unitizerBrowse` objects, with mechanisms for extracting the data in easy to
 manipulate structures (e.g. matrices).
 
+Right now we're just returning the data.frame.
+
 ## Optim
 
 * A lot of the overhead is related to the display and capture of text.  One
@@ -49,7 +99,6 @@ manipulate structures (e.g. matrices).
   that is a bit finicky
 * `all.equal` adds a little overhead, but not a huge ammount
 * `append` also adds some overhead
-
 
 ## Capture
 
@@ -248,8 +297,6 @@ consideration.  The reasonable thing would be to run in some lower level of
 reproducibility, though annoyingly any time we re-run the tests we would have
 to use those exact settings.  This is somewhat mitigated if we
 
-
-
 ### Philosophy
 
 Offer two options for each setting:
@@ -265,6 +312,20 @@ that you can only have zero-set options if you also have zero set search path.
 Additionally this means that the search path trimming should happen with
 unloading namespaces as well so that when they are re-attached onload scripts
 get run again (and define options as they often do)?
+
+### Search Path Tracking
+
+Shimming library/attach/detach likely to be a major obstacle to CRAN approval,
+and also introduces complexity and instability as new R versions are released.
+Simplest solution is to just add library/attach/detach functions in a "shims"
+environment, but not as robust as tracing the actual functions.  In particular,
+things can fail if there is a compound expression that uses `base::library`,
+either via package namespace or directly.  We can detect the direct calls via
+parsing and issue warnings, but this is limited since people can get creative.
+
+Note that even shimming `base::library`, etc, not fullproof since some packages
+may be calling internals directly, or some base R functions may do that too?
+(seems unlikely though).
 
 ### Seed Tracking
 

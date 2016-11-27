@@ -193,7 +193,7 @@ local( {
   txt3 <- "# Calls to `library` and assignments are not normally considered tests, so
   # you will not be prompted to review them
 
-  library(unitizer.fastlm)
+  library(utzflm)
   x <- 1:100
   y <- x ^ 2
   res <- fastlm(x, y)
@@ -205,7 +205,7 @@ local( {
   fastlm(x, head(y))      # This should cause an error; press Y to add to store"
   expr <- unitizer:::parse_with_comments(text=txt3)
   my.unitizer <- new("unitizer", id=1, zero.env=new.env())
-  my.unitizer <- my.unitizer + expr
+  capture.output(my.unitizer <- my.unitizer + expr)
   test_that("Weird missing comment on `res` works", {
     expect_identical(
       list(c("# Calls to `library` and assignments are not normally considered tests, so", "# you will not be prompted to review them"), character(0), character(0), character(0), "# first reviewable expression", character(0), character(0), "# This should cause an error; press Y to add to store"),
@@ -232,7 +232,7 @@ local( {
   })
   test_that("uncommenting works", {
     expect_identical(
-      quote(library(unitizer.fastlm)),
+      quote(library(utzflm)),
       unitizer:::uncomment(expr[[1]])
     )
     expect_equal(info="don't blow away function arg names",
@@ -259,11 +259,18 @@ local( {
   } )
   test_that("failing parses produce proper errors", {
     txt <- "this is a + syntax error that cannot be parsed"
-    expect_error(unitizer:::parse_tests(text=txt), "Unable to parse test file")
+    expect_error(
+      capture.output(unitizer:::parse_tests(text=txt), type="message"),
+      "Unable to parse test file"
+    )
     f <- tempfile()
     cat(txt, "\n", sep="", file=f)
-    expect_error(unitizer:::parse_tests(f), "Unable to parse test file")
+    expect_error(
+      capture.output(unitizer:::parse_tests(f), type="message"),
+      "Unable to parse test file"
+    )
     unlink(f)
-    expect_error(unitizer:::parse_tests(text=txt, comment=FALSE), "Error in parse")
+    expect_error(
+      unitizer:::parse_tests(text=txt, comment=FALSE), "unexpected symbol")
   })
 } )

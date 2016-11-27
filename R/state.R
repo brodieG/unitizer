@@ -61,6 +61,20 @@ NULL
 #' \code{in_pkg} functions as the values for the \code{state} parameter for
 #' \code{unitize}.
 #'
+#' @section Avoiding \code{.GlobalEnv}:
+#'
+#' For the most part avoiding \code{.GlobalEnv} leads to more robust and
+#' reproducible tests since the tests are not influenced by objects in the
+#' workspace that may well be changing from test to test.  There are some
+#' potential issues when dealing with functions that expect \code{.GlobalEnv} to
+#' be on the search path.  For example, \code{setClass} uses \code{topenv} to
+#' find a default environment to assign S4 classes to.  Typically this will be
+#' the package environment, or \code{.GlobalEnv}.  However, when you are in
+#' \code{unitizer} this becomes the next environment on the search path, which
+#' is typically locked, which will cause \code{setClass} to fail.  For those
+#' types of functions you should specify them with an environment directly, e.g.
+#' \code{setClass("test", slots=c(a="integer"), where=environment())}.
+#'
 #' @section State Presets:
 #'
 #' For convenience \code{unitizer} provides several state management presets
@@ -102,15 +116,15 @@ NULL
 #' \itemize{
 #'   \item For \code{par.env}: any of the following:
 #'     \itemize{
-#'       \item: \code{NULL} to use the special \code{unitizer} parent
+#'       \item \code{NULL} to use the special \code{unitizer} parent
 #'         environment as the parent environment; this environment has for
 #'         parent the parent of \code{.GlobalEnv}, so any tests evaluated
 #'         therein will not be affected by objects in \code{.GlobalEnv}
 #'         see (\code{vignette("unitizer_reproducible_state")}).
-#'       \item: an environment to use as the parent evaluation environment
-#'       \item: the name of a package to use that package's namespace
+#'       \item an environment to use as the parent evaluation environment
+#'       \item the name of a package to use that package's namespace
 #'         environment as the parent environment
-#'       \item: the return value of \code{in_pkg}; used primarily to autodetect
+#'       \item the return value of \code{in_pkg}; used primarily to autodetect
 #'         what package namespace to use based on package directory structure
 #'     }
 #'   \item For all other slots, the settings are in \code{0:2} and mean:
@@ -269,7 +283,7 @@ setClassUnion(
   "environmentOrNULLOrCharacterUnitizerInPkg",
   c("environment", "NULL", "character", "unitizerInPkg")
 )
-# unitizerState is an abstract class and is not meant to be isntantiated.  It
+# unitizerState is an abstract class and is not meant to be instantiated.  It
 # defines basic structure for unitizerStateRaw and unitizerStateProcessed.
 # `as.state` will process a unitizerStateRaw class into a unitizerStateProcessed`
 # objects.  Note that `unitizerState` does not have a `par.env` slot as that is
@@ -438,7 +452,7 @@ in_pkg_to_env <- function(inPkg, test.files) {
     ) ) )
   pkg.env
 }
-# This method is a bit odd because it has logic for dealin with slots that are
+# This method is a bit odd because it has logic for dealing with slots that are
 # not actually defined in the class but are in the child classes that are
 # expected to kick of the method
 #' @rdname unitizer_s4method_doc

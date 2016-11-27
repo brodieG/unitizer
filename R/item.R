@@ -125,6 +125,7 @@ setMethod("initialize", "unitizerItem", function(.Object, ...) {
   if("env" %in% dots.names) .Object@env <- dots.all$env
   if("comment" %in% dots.names) .Object@comment <- dots.all$comment
   if("trace" %in% dots.names) .Object@trace <- dots.all$trace
+  if("reference" %in% dots.names) .Object@reference <- dots.all$reference
   if("glob.indices" %in% dots.names)
     .Object@glob.indices <- dots.all$glob.indices
   dots <- dots.all[!(dots.names %in% unitizerItemSlotNames)]
@@ -204,20 +205,20 @@ setMethod("show", "unitizerItem",
             levels=c("error", "warning", "message", "other condition")),
           length
       ) )
-      word_cat(
+      cat(
         "* conditions:",
         paste0(
           cond.types.summ, " ",
           paste0(
             names(cond.types.summ),
             ifelse(cond.types.summ > 1L, "s", "")
-          ), collapse=", "
+          ), "\n", collapse=", "
       ) )
     }
-    word_cat(
-      "Access component `x` with",
-      paste0("`", if(object@reference) ".REF" else ".NEW", "$x`;"),
-      "see `help(\"$\", \"unitizer\")`"
+    cat(
+      "\nAccess components with `$`, e.g.",
+      paste0("`", if(object@reference) ".REF" else ".NEW", "$value`;"),
+      "see `help(\"$\", \"unitizer\")`\n"
     )
 } )
 # Methods to Track Whether a \code{\link{unitizerItem-class}} Object is New Or Reference
@@ -318,35 +319,51 @@ setMethod("+",
 #'     item the environment may not be the same so you could get different
 #'     results (\code{ls} will provide more details)
 #'   \item \code{value} the value that results from evaluating the test, note
-#'     this is equivalent to using \code{.new} or \code{.ref}
+#'     this is equivalent to using \code{.new} or \code{.ref}; note that the
+#'     value is displayed using \code{\link{desc}} when viewing all of
+#'     \code{.NEW} or \code{.REF}
 #'   \item \code{output} the screen output (i.e. anything produced by cat/print,
 #'     or any visible evaluation output) as a character vector
 #'   \item \code{message} anything that was output to \code{stderr}, mostly
 #'     this is all contained in the conditions as well, though there could be
 #'     other output here, as a character vector
-#'   \item \code{conditions} a \code{\link{conditionList-class}} containing all
+#'   \item \code{conditions} a \code{\link{conditionList}} containing all
 #'     the conditions produced during test evaluation
 #'   \item \code{aborted} whether the test call issues a restart call to the
 #'     `abort` restart, as `stop` does.
 #' }
 #' @export
-#' @aliases $
+#' @rdname extract-unitizerItem-method
 #' @param x a \code{unitizerItem} object, typically \code{.NEW} or \code{.REF}
 #'   at the \code{unitizer} interactive prompt
 #' @param name a valid test sub-component
+#' @param i a valid test sub-component as a character string, or a sub-component
+#'   index
+#' @param j missing for compatibility with generic
+#' @param ... missing for compatibility with generic
+#' @param exact unused, always matches exact
+#'
 #' @return the test component requested
 #' @examples
 #' ## From the unitizer> prompt:
-#' \dontrun{
+#' .NEW <- mock_item()  # .NEW is normally available at unitizer prompt
 #' .NEW$call
-#' .REF$conditions
+#' .NEW$conditions
 #' .NEW$value              # equivalent to `.new`
-#' }
 
 setMethod("$", c("unitizerItem"),
   function(x, name) {
     what <- substitute(name)
     what <- if(is.symbol(what)) as.character(what) else name
+    x[[what]]
+} )
+#' @export
+#' @rdname extract-unitizerItem-method
+
+setMethod(
+  "[[", signature=c(x="unitizerItem"),
+  function(x, i, j, ..., exact=TRUE) {
+    what <- i
     data.slots <- slotNames(x@data)
     extras <- c("call", "state")
     valid <- c(extras, data.slots)
@@ -355,8 +372,9 @@ setMethod("$", c("unitizerItem"),
     if(length(what) != 1L || !what %in% data.slots) {
       stop(
         "Argument `name` must be in ",
-        paste0(deparse(valid, width.cutoff=500L), collapse=", ")
+        paste0(deparse(valid, width.cutoff=500L), collapse="")
     ) }
     if(identical(what, "value")) return(x@data@value[[1L]])
     slot(x@data, what)
-} )
+  }
+)

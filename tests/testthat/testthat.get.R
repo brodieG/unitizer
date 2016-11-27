@@ -7,24 +7,43 @@ local({
   test_that("Error Cases", {
     expect_error(get_unitizer(1), "No method defined")
     expect_error(get_unitizer(letters), "Argument `store.id`")
-    expect_error(get_unitizer("../interactive"), "does not appear to refer to a unitizer directory")
-    expect_error(get_unitizer("testthat.get.R"), "does not appear to refer to a unitizer directory")
+    expect_error(
+      get_unitizer("../interactive"),
+      "does not appear to refer to a unitizer directory"
+    )
+    expect_error(
+      get_unitizer("testthat.get.R"),
+      "does not appear to refer to a unitizer directory"
+    )
     expect_error(set_unitizer(1), "No method defined")
-    expect_error(set_unitizer(letters), "Argument `store.id` must be a 1 length character vector")
-    expect_error(set_unitizer("a"), "argument \"unitizer\" is missing, with no default")
-    expect_error(set_unitizer("a", "blergh"), "Argument `unitizer` must be a unitizer")
+    expect_error(
+      set_unitizer(letters),
+      "Argument `store.id` must be a 1 length character vector"
+    )
+    expect_error(
+      set_unitizer("a"), "argument \"unitizer\" is missing, with no default"
+    )
+    expect_error(
+      set_unitizer("a", "blergh"), "Argument `unitizer` must be a unitizer"
+    )
     expect_true(!file.exists("a"))
-    expect_error(set_unitizer("tests/# ;!./# \\/", toy.stor), "Could not create")
+    expect_error(
+      suppressWarnings(
+        set_unitizer("tests/# ;!./# \\/", toy.stor), "Could not create")
+      )
   } )
   test_that("Get works as expected", {
     expect_false(get_unitizer("asldkfjskfa"))
-    expect_equal(get_unitizer("../interactive/unitizer/misc.unitizer"), toy.stor)
+    expect_equal(
+      get_unitizer("../interactive/unitizer/misc.unitizer"), toy.stor
+    )
     expect_true(is(toy.stor, "unitizer"))
   } )
   tmp.dir <- tempdir()
   tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
   tmp.sub.dir2 <- paste0(tmp.dir, "/get.test.dir2")
   tmp.sub.dir3 <- paste0(tmp.dir, "/load.dirs")
+  on.exit(unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE))
   dir.create(tmp.dir)
 
   test_that("Set works as expected", {
@@ -38,7 +57,8 @@ local({
     # not unitizers, etc.)
 
     dir.create(tmp.sub.dir3)
-    make.path <- lapply(file.path(tmp.sub.dir3, dir("helper/load/")), dir.create)
+    make.path <-
+      lapply(file.path(tmp.sub.dir3, dir("helper/load/")), dir.create)
     if(!all(unlist(make.path))) stop("Failed making paths")
     file.copy(
       list.files("helper/load", full.names=TRUE),
@@ -48,18 +68,24 @@ local({
     store.ids <- as.list(list.files(tmp.sub.dir3, full.names=TRUE))
 
     expect_error(
-      unitizer:::load_unitizers(
-        store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-        interactive.mode=FALSE, mode="unitize", force.upgrade=FALSE
+      expect_output(
+        unitizer:::load_unitizers(
+          store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+          interactive.mode=FALSE, mode="unitize", force.upgrade=FALSE
+        ),
+        "must be upgraded"
       ),
       "Cannot upgrade .* in non-interactive"
     )
     # try weird store ids
 
-    invalid.store.return <- unitizer:::load_unitizers(
-      list(structure("hello", class="unitizer_error_store")), NA_character_,
-      par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
-      force.upgrade=FALSE
+    expect_message(
+      invalid.store.return <- unitizer:::load_unitizers(
+        list(structure("hello", class="unitizer_error_store")), NA_character_,
+        par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
+        force.upgrade=FALSE
+      ),
+      "could not be loaded|No valid unitizer"
     )
     expect_is(invalid.store.return[[1L]], "unitizerLoadFail")
     expect_match(
@@ -68,9 +94,13 @@ local({
     # don't agree to upgrade in interactive mode
 
     unitizer:::read_line_set_vals("N")
-    untzs0 <- unitizer:::load_unitizers(
-      store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-      interactive.mode=TRUE, mode="unitize"
+    expect_output(
+      untzs0 <- unitizer:::load_unitizers(
+        store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
+        interactive.mode=TRUE, mode="unitize",
+        global=suppressWarnings(unitizer:::unitizerGlobal$new())
+      ),
+      "The following unitizers must be upgraded"
     )
     unitizer:::read_line_set_vals(NULL)
     expect_true(
@@ -88,10 +118,20 @@ local({
     )
     # Load mix of loadable and not loadable objects
 
-    untzs <- unitizer:::load_unitizers(
-      store.ids, rep(NA_character_, length(store.ids)), par.frame=par.frame,
-      interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
+    glob <- suppressWarnings(unitizer:::unitizerGlobal$new())
+    expect_output(
+      expect_warning(
+        msg.capt <- capture.output(
+          untzs <- unitizer:::load_unitizers(
+            store.ids, rep(NA_character_, length(store.ids)),
+            par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
+            force.upgrade=TRUE, global=glob
+          ), type="message"
+        ), "does not exist|test file does not"
+      ),
+      "following unitizers will be upgraded"
     )
+    expect_true(any(grepl("no slot of name", msg.capt)))
     untzs.classes <- vapply(unitizer:::as.list(untzs), class, character(1L))
     expect_equal(
       untzs.classes,
@@ -103,37 +143,46 @@ local({
     txt1 <- paste0(collapse=";", capture.output(show(untzs[[1L]])))
     txt2 <- paste0(collapse=";", capture.output(show(untzs[[3L]])))
     expect_match(
-      txt1, "Failed Loading Unitizer:;- Test file.*;- Store.*;- Reason: `get_unitizer` error: Retrieved object is not a unitizer store"
+      txt1, "| Failed Loading Unitizer:;| - Test file.*;| - Store.*;| - Reason: `get_unitizer` error: Retrieved object is not a unitizer store"
     )
     expect_match(
-      txt2, "Failed Loading Unitizer:;- Test file.*;- Store.*;- Reason: Upgrade failed: no slot of name \"items.ref\" for this object"
+      txt2, "| Failed Loading Unitizer:;| - Test file.*;| - Store.*;| - Reason: Upgrade failed: no slot of name \"items.ref\" for this object"
     )
     options(old.width)
     # Try reloading already loaded unitisers
 
     reload <- unitizer:::as.list(untzs)[untzs.classes == "unitizer"]
-    untzs1a <- unitizer:::load_unitizers(
-      reload, rep(NA_character_, length(reload)),
-      par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
-      force.upgrade=FALSE
+    expect_warning( # this creates a global object, hence warning
+      untzs1a <- unitizer:::load_unitizers(
+        reload, rep(NA_character_, length(reload)),
+        par.frame=par.frame, interactive.mode=FALSE, mode="unitize",
+        force.upgrade=FALSE
+      ),
+      "Instantiated global object without "
     )
     expect_true(
       all(vapply(unitizer:::as.list(untzs1a), is, logical(1L), "unitizer"))
     )
     # misc tests
 
-    untzs2 <- unitizer:::load_unitizers(
-      list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
-      mode="unitize", force.upgrade=FALSE
+    expect_warning(
+      untzs2 <- unitizer:::load_unitizers(
+        list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+        mode="unitize", force.upgrade=FALSE
+      ),
+      "Instantiated global object without "
     )
     expect_true(is(untzs2[[1L]], "unitizer"))
     expect_identical(parent.env(untzs2[[1L]]@zero.env), par.frame)
     untzs2[[1L]]@eval.time <- 33  # something that won't get rest on load so we can check our re-load
 
     expect_true(unitizer:::store_unitizer(untzs2[[1L]]))
-    untzs2.1 <- unitizer:::load_unitizers(
-      list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
-      mode="unitize", force.upgrade=FALSE
+    expect_warning(
+      untzs2.1 <- unitizer:::load_unitizers(
+        list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+        mode="unitize", force.upgrade=FALSE
+      ),
+      "Instantiated global object without "
     )
     expect_equal(untzs2.1[[1L]]@eval.time, 33)
 
@@ -144,12 +193,14 @@ local({
     untz.tmp@version <- "9999.0.0"
     saveRDS(untz.tmp, file.path(tmp.sub.dir2, "data.rds"))
 
-    expect_is(
-      unitizer:::load_unitizers(
-        list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
-        mode="unitize", force.upgrade=FALSE
-      )[[1L]],
-      "unitizerLoadFail"
+    expect_message(
+      expect_is(
+        unitizer:::load_unitizers(
+          list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+          mode="unitize", force.upgrade=FALSE
+        )[[1L]],
+        "unitizerLoadFail"
+      ), "No valid "
     )
   } )
   unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE)
@@ -157,8 +208,13 @@ local({
   test_that("is_package", {
     expect_true(unitizer:::is_package_dir(system.file(package="stats")))
     expect_true(unitizer:::is_package_dir(system.file(package="methods")))
-    expect_true(unitizer:::is_package_dir(system.file(package="stats"), has.tests=TRUE))
-    expect_true(unitizer:::is_package_dir(system.file(package="methods"), has.tests=TRUE))
+    ## Seems like some change now tests no longer installed by default with
+    ## packages, at least in the unix distros, so can't easily test with
+    ## has.tests==TRUE
+    #
+    # expect_true(
+    #   unitizer:::is_package_dir(system.file(package="unitizer"), has.tests=TRUE)
+    # )
     expect_equal(
       unitizer:::pretty_path(
         file.path(system.file(package="stats"), "DESCRIPTION")
@@ -180,8 +236,9 @@ local({
       "."
     )
     setwd(old.wd)
+    # just picked some folder we know will not work
     expect_match(
-      unitizer:::is_package_dir(file.path(system.file(package="stats"), "R")),  # just picked some folder we know will not work
+      unitizer:::is_package_dir(file.path(system.file(package="stats"), "R")),
       "No DESCRIPTION file"
     )
     expect_equal(
@@ -190,7 +247,7 @@ local({
     expect_match(
       unitizer:::is_package_dir(
         file.path(
-          system.file(package="unitizer"), "example.pkgs", "baddescription1"
+          system.file(package="unitizer"), "expkg", "baddescription1"
       ) ),
       "DESCRIPTION file did not have a package name entry"
     )
@@ -206,24 +263,23 @@ local({
     expect_true(length(unitizer:::get_package_dir(f)) == 0L)
     unlink(f)
     expect_equal(unitizer:::get_package_dir(f), character(0L))
-    test.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "fastlm.0",
-      "unitizer.fastlm.Rcheck", "unitizer.fastlm", "R"
-    )
-    expect_equal(unitizer:::get_package_dir(test.dir), dirname(test.dir))
-    # try package dir in R CMD Check structure
-    test.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "fastlm.0",
-      "unitizer.fastlm.Rcheck"
+    test.dir.1 <- file.path(
+      .unitizer.fastlm, "utzflm.Rcheck", "utzflm", "R"
     )
     expect_equal(
-      unitizer:::get_package_dir(file.path(test.dir, "tests", "tests.R")),
-      file.path(test.dir, "unitizer.fastlm")
+      unitizer:::get_package_dir(test.dir.1),
+      normalizePath(dirname(test.dir.1))
+    )
+    # try package dir in R CMD Check structure
+    test.dir.2 <- file.path(.unitizer.fastlm, "utzflm.Rcheck")
+    expect_equal(
+      unitizer:::get_package_dir(file.path(test.dir.2, "tests", "tests.R")),
+      normalizePath(file.path(test.dir.2, "utzflm"))
     )
   } )
   test_that("is_unitizer_dir", {
     base.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "infer"
+      system.file(package="unitizer"), "expkg", "infer"
     )
     expect_false(unitizer:::is_unitizer_dir(base.dir))
     expect_true(
@@ -235,12 +291,17 @@ local({
   test_that("infer_unitizer_location", {
     infer <- function(...) infer_unitizer_location(..., interactive.mode=FALSE)
     base.dir <- file.path(
-      system.file(package="unitizer"), "example.pkgs", "infer"
+      system.file(package="unitizer"), "expkg", "infer"
     )
-    # Verify package is still in state we built tests on
+    # Verify package is still in state we built tests on; need to sort b/c
+    # different platforms have different lexical sorts
 
     expect_equal(
-      c("aaa.R", "aaa.unitizer", "abc.R", "abc.unitizer", "inf.R", "inf.unitizer", "infer.R", "infer.unitizer", "zzz.R", "zzz.unitizer"),
+      sort(
+        c(
+          "aaa.R", "aaa.unitizer", "abc.R", "abc.unitizer", "inf.R",
+          "inf.unitizer", "infer.R", "infer.unitizer", "zzz.R", "zzz.unitizer"
+      ) ),
       list.files(file.path(base.dir, "tests", "unitizer"))
     )
     # Package dir
@@ -261,7 +322,8 @@ local({
     # Normal dir
 
     base.dir2 <- file.path(base.dir, "tests", "unitizer")
-    expect_warning(inf.dir2 <- infer(base.dir2), "5 possible targets")  # note don't need * to generate warning
+    # note don't need * to generate warning
+    expect_warning(inf.dir2 <- infer(base.dir2), "5 possible targets")
     expect_equal(base.dir2, inf.dir2)
     expect_warning(infer(file.path(base.dir2, "a")), "2 possible targets")
     expect_warning(
@@ -275,31 +337,53 @@ local({
     # Interactive mode
 
     unitizer:::read_line_set_vals(c("26", "Q"))
-    expect_equal(
-      unitizer:::infer_unitizer_location(file.path(base.dir, "*"), type="f", interactive.mode=TRUE),
-      file.path(base.dir, "*")
+    expect_warning(
+      expect_output(
+        select <- unitizer:::infer_unitizer_location(
+          file.path(base.dir, "*"), type="f", interactive.mode=TRUE
+        ),
+        "Possible matching"
+      ),
+      "Invalid user selection"
     )
+    expect_equal(select, file.path(base.dir, "*"))
     unitizer:::read_line_set_vals(c("5"))
-    expect_equal(
-      unitizer:::infer_unitizer_location(file.path(base.dir, "*"), type="f", interactive.mode=TRUE),
-      file.path(base.dir, "tests", "unitizer", "zzz.R")
+    expect_output(
+      sel.loc <- unitizer:::infer_unitizer_location(
+        file.path(base.dir, "*"), type="f", interactive.mode=TRUE
+      ),
+      "Possible matching"
     )
+    expect_equal(sel.loc, file.path(base.dir, "tests", "unitizer", "zzz.R"))
     unitizer:::read_line_set_vals(NULL)
   })
   test_that("test file / store manip", {
     expect_identical(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello")
-    expect_error(unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")), "Unable to convert")
+    capt.msg <- capture.output(
+      expect_error(
+        unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")),
+        "Unable to convert"
+      ),
+      type="message"
+    )
+    expect_match(capt.msg, "stochrerr", all=FALSE)
     as.character.custstore <- function(x, ...) x
     expect_match(
-      unitizer:::best_store_name(structure(list("hello", class="custstore")), "hello"),
+      unitizer:::best_store_name(
+        structure(list("hello", class="custstore")), "hello"
+      ),
       "unitizer for .*hello"
     )
     expect_match(
-      unitizer:::best_store_name(structure(list("hello", class="custstore")), NA_character_),
+      unitizer:::best_store_name(
+        structure(list("hello", class="custstore")), NA_character_
+      ),
       "untranslateable"
     )
     expect_match(
-      unitizer:::best_file_name(structure(list("hello", class="custstore")), NA_character_),
+      unitizer:::best_file_name(
+        structure(list("hello", class="custstore")), NA_character_
+      ),
       "unknown-test-file"
     )
   })

@@ -19,7 +19,8 @@ unitizer_check_demo_state()
 
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 list.files(.unitizer.fastlm)                     # contains our sources
-devtools::install(.unitizer.fastlm, quiet=TRUE)  # install first version
+
+install.packages(.unitizer.fastlm, repos=NULL, type="src", quiet=TRUE)
 
 # And in our sources is the test file, which we will `unitize`:
 
@@ -47,7 +48,7 @@ unitize(.unitizer.test.file)
 `[Press ENTER to Continue]`()
 
 update_fastlm(.unitizer.fastlm, version="0.1.1")
-devtools::install(.unitizer.fastlm, quiet=TRUE)
+install.packages(.unitizer.fastlm, repos=NULL, type="src", quiet=TRUE)
 
 unitize(.unitizer.test.file)
 
@@ -56,7 +57,7 @@ unitize(.unitizer.test.file)
 `[Press ENTER to Continue]`()
 
 update_fastlm(.unitizer.fastlm, version="0.1.2")
-devtools::install(.unitizer.fastlm, quiet=TRUE)
+install.packages(.unitizer.fastlm, repos=NULL, type="src", quiet=TRUE)
 
 unitize(.unitizer.test.file)
 
@@ -73,7 +74,7 @@ unitize(.unitizer.test.file)
 local({
   DF <- data.frame(x=1:1e5, y=(1:1e5) ^ 2)
   rbind(
-    fastlm=system.time(with(DF, unitizer.fastlm::fastlm(x, y))),
+    fastlm=system.time(with(DF, utzflm::fastlm(x, y))),
     lm=system.time(c((lm.res <- lm(y ~ x, DF))$coefficients, summary(lm.res)$r.squared))
   )[, 1:3]
 })

@@ -9,6 +9,25 @@ NULL
 
 .unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
 
+# Allow us to find a specific test based on deparse call and id
+# `parse.mod` indicates whether the parse is not the same as it was when the
+# bookmark was set, which indicates the bookmark may not be correct any more
+
+setClass("unitizerBrowseBookmark",
+  slots=c(call="character", id="integer", parse.mod="logical"),
+  prototype=list(call="", id=0L, parse.mod=FALSE),
+  validity=function(object) {
+    if(!is.chr1(object@call))
+      return("Slot `@call` must be character(1L) and not NA")
+    if(!length(object@id) == 1L || object@id < 0L)
+      return("Slot `@id` must be integer(1L) and positive")
+    if(!is.TF(object@parse.mod))
+      return("Slot `@parse.mode` must be TRUE or FALSE")
+  }
+)
+setClassUnion(
+  "unitizerBrowseBookmarkOrNULL", c("unitizerBrowseBookmark", "NULL")
+)
 # Contains All The Data for Our Tests!
 #
 # Generally is populated through the \code{+} methods, with the exception of
@@ -47,6 +66,8 @@ NULL
 #   new items will show up as NA here
 # @slot items.new.calls.deparse a character vector of the deparsed calls in
 #   \code{items.new}
+# @slot items.new.calls.deparse integer() tracks what instance of a particular
+#   deparse string this is to allow us to disambiguate duplicate tests for
 # @slot items.envs contains the environments for each call
 # @slot tests.fail vector highlighting which tests failed
 # @slot tests.new vector highlighting which tests did not exist in reference
@@ -76,15 +97,21 @@ setClass(
     zero.env="environment",         # keep functions and stuff here
     base.env="environment",
     test.file.loc="character",      # location of test file that produced `unitizer`
-    eval="logical",                 # internal used during browsing to determine a re-eval instruction by user
-    eval.time="numeric",            # eval time for all tests in `unitizer`, computed in `+.unitizer.unitizerTestsOrExpression`
-    updated="logical",              # whether this unitizer has been queued for update
-    updated.at.least.once="logical",# should reflect whether a unitizer was modified at least once so that we can report this in return values
+    # internal used during browsing to determine a re-eval instruction by user
+    eval="logical",
+    # eval time for all tests in `unitizer`, computed in
+    # `+.unitizer.unitizerTestsOrExpression`
+    eval.time="numeric",
+    updated="logical",              # unitizer has been queued for update
+    # should reflect whether a unitizer was modified at least once so that we
+    # can report this in return values
+    updated.at.least.once="logical",
     global="unitizerGlobalOrNULL",  # Global object used to track state
 
     items.new="unitizerItems",                         # Should all be same length
     items.new.map="integer",
     items.new.calls.deparse="character",
+    items.new.calls.deparse.id="integer",
     items.envs="list",
 
     tests.fail="logical",                  # really need tests.fail?
@@ -114,21 +141,26 @@ setClass(
     sections.ref="list",
     section.ref.map="integer",
 
-    state.new="unitizerGlobalTrackingStore",  # "compressed" versions of the tracking data in @global
+    # "compressed" versions of the tracking data in @global
+
+    state.new="unitizerGlobalTrackingStore",
     state.ref="unitizerGlobalTrackingStore",
 
-    changes="unitizerChanges",                # Summary of user changes
-    res.data="data.frameOrNULL"               # details of test evaluation and user review
+    changes="unitizerChanges",       # Summary of user changes
+    res.data="data.frameOrNULL",     # details of test evaluation and user review
+    bookmark="unitizerBrowseBookmarkOrNULL"  # used for re-eval navigation
   ),
   prototype(
     version=as.character(packageVersion("unitizer")),
     tests.status=factor(levels=.unitizer.tests.levels),
+    base.env=baseenv(),
     zero.env=baseenv(),
     test.file.loc=NA_character_,
     eval=FALSE,
     eval.time=0,
     updated=FALSE,
     updated.at.least.once=FALSE,
+    bookmark=NULL,
     global=unitizerGlobal$new(enable.which=character())  # dummy so tests will run
   ),
   validity=function(object) {
@@ -136,7 +168,7 @@ setClass(
       # # No guarantees store id actually exists, so not enforcing this check
       # if(
       #   !file_test("-d", dirname(object@id)) ||
-      #   !identical(dirname(object@id), normalizePath(dirname(object@id)))
+      #   !identical(dirname(object@id), normalize_path(dirname(object@id)))
       # ) {
       #   return(
       #     paste0(
@@ -227,7 +259,10 @@ setMethod("show", "unitizerSummary",
   function(object) {
     sum.mx <- object@data
     rownames(sum.mx) <- strtrunc(rownames(sum.mx), 80L)
-    cat(summ_matrix_to_text(sum.mx), "", sep="\n")
+    cat(
+      summ_matrix_to_text(sum.mx, show.nums=FALSE), "",
+      sep="\n"
+    )
     invisible(NULL)
 } )
 
@@ -248,11 +283,13 @@ setMethod("initialize", "unitizer",
     .Object <- callNextMethod()
     .Object@tests.result <- tests_result_mat(0L)
 
-    # We re-use the potentially default `base.env` object instead of creating
-    # a new one to allow the user to pass a pre-defined `base.env` if desired;
-    # in theory this should be a base.env that already has for parent the
-    # `zero.env` because we're trying to recreate the same environment chain
-    # of a different unitizer for when we re-use a unitizer in unitize_dir
+    # Re-use assigned @base.env if it isn't the baseenv(), since that means
+    # user provided a base env.  in theory this should be a base.env that
+    # already has for parent the `zero.env` because we're trying to recreate the
+    # same environment chain of a different unitizer for when we re-use a
+    # unitizer in unitize_dir
+
+    if(identical(.Object@base.env, baseenv())) .Object@base.env <- new.env()
 
     parent.env(.Object@base.env) <- .Object@zero.env
     parent.env(.Object@items.new@base.env) <- .Object@base.env
@@ -368,11 +405,12 @@ setMethod("show", "unitizerObjectListSummary",
 
     review.req <- !vapply(as.list(object), passed, logical(1L))
 
-    # Display
+    # Display; if updated, mark with `NA` as we don't know what the deal is
+    # until we re-run the tests
 
     totals <- t(vapply(as.list(object), slot, object[[1L]]@totals, "totals"))
-    totals[object@updated, ] <- NA_integer_
     rownames(totals) <- test.files.trim
+    totals[object@updated, ] <- NA_integer_
     disp <- summ_matrix_to_text(totals, from="left")
 
     # Post processing
@@ -386,21 +424,24 @@ setMethod("show", "unitizerObjectListSummary",
         sub("^(\\s*) (\\d+\\.)", "\\1*\\2", disp[[j]])
       } else disp[[j]]
     }
-    cat("\n")
-    word_cat(
+    meta_word_cat(
       "Summary of files in common directory '", relativize_path(full.dir),
-      "':", sep=""
+      "':\n\n", sep="", trail.nl=FALSE
     )
-    cat(disp, sep="\n")
+    meta_word_cat(disp, "", trail.nl=FALSE)
+
     # Legends
 
-    if(any(review.req || object@updated)) word_cat("Legend:")
-    if(any(review.req)) word_cat("* `unitizer` requires review")
+    if(any(review.req || object@updated))
+      meta_word_cat("Legend:", trail.nl=FALSE)
+    if(any(review.req & !object@updated))
+      meta_word_cat("* `unitizer` requires review", trail.nl=FALSE)
     if(any(object@updated))
-      word_cat(
-        "$ `unitizer` has been updated and needs to be re-evaluted to",
-        "recompute summary"
+      meta_word_cat(
+        "$ `unitizer` has been modified and needs to be re-run to",
+        "recompute summary", sep=" ", trail.nl=FALSE
       )
+    cat("\n")
     invisible(NULL)
 } )
 setGeneric(
@@ -422,6 +463,9 @@ setMethod("registerItem", c("unitizer", "unitizerItem"),
     e1@items.new <- e1@items.new + item.new
     e1@items.new.calls.deparse <-
       c(e1@items.new.calls.deparse, call.dep <- item.new@call.dep)
+    e1@items.new.calls.deparse.id <- c(
+      e1@items.new.calls.deparse.id, sum(e1@items.new.calls.deparse == call.dep)
+    )
     if(length(e1@items.new.map) > 0L) {
       idx.vec <- seq_along(e1@items.ref.calls.deparse)
       items.already.matched <- e1@items.new.map[!is.na(e1@items.new.map)]
@@ -458,7 +502,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       e1@tests.error <- c(e1@tests.error, FALSE)
       e1@tests.new <- c(e1@tests.new, TRUE)
       e1@tests.result <- rbind(e1@tests.result, test.result.tpl)
-      if(length(item.new@data@conditions)) tests.conditions.new <- TRUE  # A new test with conditions by definition has new conditions
+      # A new test with conditions by definition has new conditions
+      if(length(item.new@data@conditions)) tests.conditions.new <- TRUE
     } else {
       e1@items.ref.map[[item.map]] <- length(e1@items.new)
       item.ref <- e1@items.ref[[item.map]]
@@ -471,9 +516,9 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       # Test functions and the data to test is organized in objects with
       # the exact same structure as item.new@data, so cycle through the slots.
       # Status is always "Error" if something indeterminable happens,
-      # if not and a failure happens, then it is "Fail", and if nothing goes wrong
-      # for any of the slots, it is "Pass" (there is only one status for all
-      # slots)
+      # if not and a failure happens, then it is "Fail", and if nothing goes
+      # wrong for any of the slots, it is "Pass" (there is only one status for
+      # all slots)
 
       test.status <- "Pass"
       test.result <- test.result.tpl
@@ -503,14 +548,29 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           )
         }
         # this is a bit roundabout b/c we added this hack in long after the
-        # code was initially written
+        # code was initially written; note we don't use `global` here b/c
+        # we don't need to track state during comparison (but what happens
+        # if user comparison function changes state??)
+        #
+        # We also don't use eval_with_capture which would be a natural thing to
+        # do because that is slow.  We just keep writing to the dump file and
+        # then will get rid of it at the end.  One possible issue here is that
+        # we no longer detect sink issues caused by user possibly changing sinks
+        # in the comparison function.
 
-        res.tmp <- eval_with_capture(
-          test.call, e2@env, cons=e1@global$cons,
-          disable.capt=e1@global$unitizer.opts[["unitizer.disable.capt"]],
-          max.capt.chars=e1@global$unitizer.opts[["unitizer.max.capture.chars"]]
+        sink(file=e1@global$cons@dump.c, append=TRUE)
+        sink(type="message", file=e1@global$cons@dump.c, append=TRUE)
+        on.exit({
+          sink(type="message")
+          sink()
+        })
+        res.tmp <- eval_user_exp(
+          test.call, e2@env, global=NULL, with.display=FALSE
         )
-        e1@global$cons <- res.tmp$cons # In case cons was modified
+        on.exit(NULL)
+        sink(type="message")
+        sink()
+
         cond <- res.tmp$conditions
         test.res <- if(length(cond)) {
           structure(
@@ -550,17 +610,20 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           err.tpl@value <- test.res
         } else if(identical(test.res, FALSE)) {
           test.status <- "Fail"
-          err.tpl@value <- paste0(err.msg, " found a mismatch")
+          err.tpl@value <- ""
         } else {
           test.status <- "Error"
           err.tpl@value <- paste0(
-            err.msg, " returned something other than TRUE or character vector"
+            err.msg,
+            " returned something other than TRUE, FALSE, or character vector ",
+            sprintf("(%s of length %d)", typeof(test.res), length(test.res))
           )
           err.tpl@compare.err <- TRUE
         }
         test.error.tpl[[i]] <- err.tpl
         if(identical(i, "conditions")) {  #only failed/error tests get this far
-          if(length(item.new@data@conditions))  # if a mismatch, and new conditions, we'll want to show these
+          # if a mismatch, and new conditions, we'll want to show these
+          if(length(item.new@data@conditions))
             tests.conditions.new <- TRUE
         }
       }
@@ -581,7 +644,8 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         e1@tests.error <- append(e1@tests.error, FALSE)
       }
     }
-    e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)  # so added irrespective of pass/fail
+    # so added irrespective of pass/fail
+    e1@tests.conditions.new <- c(e1@tests.conditions.new, tests.conditions.new)
 
     if(length(e1@tests.status)) {
       e1@tests.status <- unlist(
@@ -633,6 +697,6 @@ setMethod("as.character", "unitizer",
     name <- try(getName(x))
     name.fin <- if(inherits(name, "try-error")) "<name retrieval failure>" else
       name
-    sprintf("unitizer for '%s'", name)
+    sprintf("unitizer for '%s'", pretty_path(name))
 } )
 

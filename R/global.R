@@ -3,6 +3,8 @@
 
 NULL
 
+.loaded <- FALSE   # gets set by .onLoad
+
 .unitizer.global.settings.names <-
   c("search.path", "options", "working.directory", "random.seed", "namespaces")
 
@@ -157,6 +159,33 @@ setClass(
     TRUE
   }
 )
+#' @rdname unitizer_s4method_doc
+
+setMethod(
+  "as.integer", "unitizerGlobalIndices",
+  function(x, ...) {
+    s.n <- slotNames(x)
+    res <- setNames(unlist(lapply(s.n, slot, object=x)), s.n)
+    if(!is.integer(res))
+      stop(
+        "Logic Error: unable to convert `unitizerGlobalIndices` object to ",
+        "integer; contact maintainer."
+      )
+    res
+} )
+# Create a `unitizerGlobalIndices` object that points to the last stored states;
+# used primarily so we can then add more states to the ends and can compute what
+# the indices for the added states should be; used by `mergeStates`
+
+setGeneric(
+  "unitizerStateMaxIndices",
+  function(x, ...) standardGeneric("unitizerStateMaxIndices")
+)
+setMethod("unitizerStateMaxIndices", c("unitizerGlobalTrackingStore"),
+  function(x, ...) {
+    last.ids <- Map(function(y) length(slot(x, y)), slotNames(x))
+    do.call("new", c(list("unitizerGlobalIndices"), last.ids))
+} )
 # Pull out a single state from a tracking object
 
 setGeneric(
@@ -185,8 +214,8 @@ setMethod(
   function(x, opts.ignore, ...) {
     stopifnot(is.character(opts.ignore))
     res <- new("unitizerGlobalTrackingStore")
-    res@search.path <- lapply(x@search.path, unitizerCompressTracking)
-    res@namespaces <- lapply(x@namespaces, unitizerCompressTracking)
+    res@search.path <- lapply(x@search.path, compress_search_data)
+    res@namespaces <- lapply(x@namespaces, compress_ns_data)
 
     # Don't store stuff with environments or stuff that is too big
     # (size cut-off should be an option?), or stuff that is part of the base or
@@ -227,25 +256,24 @@ search_as_envs <- function() {
   sp <- search()
   res <- setNames(lapply(seq_along(sp), as.environment), sp)
 
-  new("unitizerSearchData", .items=res, ns.dat=get_namespace_data())
+  list(search.path=res, ns.dat=get_namespace_data())
 }
+# Accessing namespace info in not really documented manner, but muuuch faster
+# than using getNamespaceInfo
+
 get_namespace_data <- function() {
-  new(
-    "unitizerNsListData",
-    .items=sapply(
-      loadedNamespaces(),
-      function(x) {
-        loc <- try(getNamespace(x)[[".__NAMESPACE__."]][["path"]])
-        ver <- try(getNamespaceVersion(x))
-        new(
-          "unitizerNamespaceData",
-          name=x,
-          lib.loc=if(!inherits(loc, "try-error")) loc else "",
-          version=if(!inherits(ver, "try-error")) ver else ""
-        )
-      },
-      simplify=FALSE
-  ) )
+  sapply(
+    loadedNamespaces(),
+    function(x) {
+      ns <- getNamespace(x)
+      loc <- ns[[".__NAMESPACE__."]][["path"]]
+      ver <- ns[[".__NAMESPACE__."]][["spec"]]["version"]
+      if(is.null(ver)) ver <- ""
+      if(is.null(loc)) loc <- ""
+      list(name=x, lib.loc=loc, version=ver)
+    },
+    simplify=FALSE
+  )
 }
 #' @rdname global_structures
 #' @keywords internal
@@ -339,12 +367,13 @@ unitizerGlobal <- setRefClass(
       } else if(set.global) {
         .global$global <- .self
         locked <<- TRUE
-      } else
+      } else if(.loaded) {
         warning(
           "Instantiated global object without global namespace registry; ",
-          "you should only see this warning during package install",
-          immediate.=TRUE
+          "you should only see this warning you are using ",
+          "`repair_environments`.", immediate.=TRUE
         )
+      }
       obj
     },
     enable=function(
@@ -414,11 +443,14 @@ unitizerGlobal <- setRefClass(
         } else {
           new.env()  # guaranteed unique
         }
-        if(!identical(new.obj, ref.obj))
+        if(!identical(new.obj, ref.obj)) {
           slot(tracking, i) <<- append(slot(tracking, i), list(new.obj))
-        if(identical(mode, "init"))
+          slot(indices.last, i) <<- length(slot(tracking, i))
+        }
+        if(identical(mode, "init")) {
           slot(indices.init, i) <<- length(slot(tracking, i))
-        slot(indices.last, i) <<- length(slot(tracking, i))
+          slot(indices.last, i) <<- length(slot(tracking, i))
+        }
       }
       indices.last
     },

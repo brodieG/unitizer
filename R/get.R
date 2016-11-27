@@ -184,9 +184,9 @@ get_unitizer.unitizer_results <- function(store.id) {
 #' here is for the \code{"character"} method which is what \code{unitizer} uses
 #' by default.
 #'
-#' If \code{name} is a directory that appears to be an R package (contains
+#' If \code{store.id} is a directory that appears to be an R package (contains
 #' DESCRIPTION, an R folder, a tests folder), will look for candidate files in
-#' \code{file.path(name, "tests", "unitizer")}, starting with files with the
+#' \code{file.path(store.id, "tests", "unitizer")}, starting with files with the
 #' same name as the package (ending in ".R" or ".unitizer" if \code{type} is
 #' \code{"f"} or \code{"u"} respectively), or if there is only one file, that
 #' file, or if there are multiple candidate files and in interactive mode
@@ -203,13 +203,20 @@ get_unitizer.unitizer_results <- function(store.id) {
 #' Inference assumes your files end in \code{".R"} for code files and
 #' \code{".unitizer"} for \code{unitizer} data directories.
 #'
+#' If \code{store.id} is NULL, the default \code{infer_unitizer_location} method
+#' will attempt to find the top level package directory and then call the
+#' character method with that directory as \code{store.id}.  If the parent
+#' package directory cannot be found, then the character method is called with
+#' the current directory as the argument.
+#'
 #' @export
 #' @seealso \code{\link{get_unitizer}} for discussion of alternate
 #'   \code{store.id} objects
 #' @param store.id character(1L) file or directory name, the file name portion
 #'   (i.e after the last slash) may be partially specified
-#' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test file,
-#'   \code{"d"} for a directory, \code{"u"} for a \code{unitizer} directory
+#' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test
+#'   file, \code{"d"} for a directory, \code{"u"} for a \code{unitizer}
+#'   directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
 #'   ambiguities
 #' @param ... arguments to pass on to other methods
@@ -223,7 +230,15 @@ infer_unitizer_location <- function(store.id, ...)
 #' @export
 
 infer_unitizer_location.default <- function(store.id, ...) {
-  if(missing(store.id)) return(infer_unitizer_location.character(".", ...))
+  if(is.null(store.id)) {
+    def.dir <- if(
+      length(pkg.dir <- get_package_dir(".")) &&
+      file_test("-d", file.path(pkg.dir, "tests", "unitizer"))
+    ) {
+      file.path(pkg.dir, "tests", "unitizer")
+    } else "."
+    return(infer_unitizer_location.character(def.dir, ...))
+  }
   store.id
 }
 
@@ -263,7 +278,9 @@ infer_unitizer_location.character <- function(
     type.name <- "test directory"
   }
   inf_msg <- function(name)
-    word_msg("Inferred", type.name, "location:", relativize_path(name))
+    meta_word_msg(
+      "Inferred", type.name, "location:", relativize_path(name), sep=" "
+    )
 
   # Is a directory, check if a package and pick tests/unitizer as the directory
 
@@ -274,7 +291,7 @@ infer_unitizer_location.character <- function(
     dir.store.id <- store.id
     file.store.id <- NULL
   }
-  dir.store.id <- normalizePath(dir.store.id)
+  dir.store.id <- normalize_path(dir.store.id)
   at.package.dir <-
     file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))
 
@@ -299,7 +316,8 @@ infer_unitizer_location.character <- function(
       inf_msg(fp)
       return(fp)
     }
-    dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
+    # use tests/unitizer as starting point for any package
+    dir.store.id.proc <- test.base
   } else {
     dir.store.id.proc <- dir.store.id
   }
@@ -332,8 +350,8 @@ infer_unitizer_location.character <- function(
       paste0(
         " from \"",
         sub(
-          paste0("^", normalizePath(dir.store.id), "/?"), "",
-          normalizePath(dir.store.id.proc)
+          paste0("^", normalize_path(dir.store.id), "/?"), "",
+          normalize_path(dir.store.id.proc)
         ),
         "\""
       )
@@ -348,7 +366,7 @@ infer_unitizer_location.character <- function(
       "Pick a matching file",
       valid.opts=c("Type a number"),
       exit.condition=exit_fun, valid.vals=valid,
-      hist.con=NULL
+      hist.con=NULL, global=NULL, browse.env=.GlobalEnv
     )
     if(identical(pick, "Q")) {
       message("No file selected")
@@ -369,7 +387,7 @@ infer_unitizer_location.character <- function(
     return(store.id)
   } else if(!selection)
     stop(
-      "Logic Error: should never have non.interative zero selection; ", "
+      "Logic Error: should never have non.interactive zero selection; ", "
       contact maintainer."
     )
   # Return
@@ -422,6 +440,7 @@ get_package_dir <- function(name=getwd(), has.tests=FALSE) {
     is.character(name), !any(is.na(name)), is.TF(has.tests),
     as.logical(length(name))
   )
+  name <- normalize_path(name, mustWork=FALSE)
   if(length(name) > 1L) name <- attr(unique_path(name), "common_dir")
   is.package <- FALSE
   prev.dir <- par.dir <- name
@@ -519,7 +538,7 @@ source_files <- function(files, env.par, pattern="\\.[rR]$") {
     !inherits(try(grepl(pattern, "a"), silent=TRUE), "try-error"),
     is.environment(env.par)
   )
-  file.norm <- try(normalizePath(files, mustWork=TRUE))
+  file.norm <- try(normalize_path(files, mustWork=TRUE))
   if(inherits(file.norm, "try-error"))
     return("Unable to normalize file paths; see previous error")
 

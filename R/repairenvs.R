@@ -25,7 +25,8 @@ repair_environments <- function(x) {
         interactive.mode=interactive_mode(), mode="unitize"
       )[[1L]]
     )
-    if(inherits(unitizer, "try-error")) stop("Unable to load `unitizer`; see prior errors.")
+    if(inherits(unitizer, "try-error"))
+      stop("Unable to load `unitizer`; see prior errors.")
     save <- TRUE
   } else {
     unitizer <- x

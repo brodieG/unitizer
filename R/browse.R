@@ -7,40 +7,40 @@ setGeneric(
   "browseUnitizer", function(x, y, ...) standardGeneric("browseUnitizer")
 )
 
-# Browse unitizer
-#
-# Here we are reviewing all the tests in the unitizer under three different
-# lenses
-# \enumerate{
-#   \item tests that don't match the stored reference tests
-#   \item tests that don't exist in the reference tests
-#   \item tests that exist in the reference tests but no the new file
-#   \item tests that passed (these are omitted )
-# }
-# Because a lot of the logic for browsing these three types of situations is
-# shared, that logic has been split off into
-# \code{\link{reviewNext,unitizerBrowse-method}}. The key is that that function
-# will return the items that are supposed to be stored in the unitizer.  These
-# items will either be new or reference ones based on user decisions.
-#
-# Unfortunately, in order to be able to use the same logic for tasks that are
-# not quite the same, a bit of contortion was needed.  In particular, the
-# user is always asked to input either Y, N, or Q, but the corresponding output
-# from \code{\link{reviewNext,unitizerBrowse-method}} is very different
-# depending on what situation we're dealing with.
-#
-# One important point is that by default the user input is defined as N.  In
-# all cases N means no change to the store, though again the interpretation is
-# different depending on the situation.  For example, if we add a test to the
-# test script, N means don't add it to the store.  If we remove a test, N means
-# keep it in the store.
-#
-# @keywords internal
-# @param x the object to browse
-# @param y the derivative unitizerBrowse object of x; this needs to be passed
-#   in as an argument because the logic for generating it is different
-#   depending on whether we are using `unitize` or `review`.
-# @return a unitizer if the unitizer was modified, FALSE otherwise
+## Browse unitizer
+##
+## Here we are reviewing all the tests in the unitizer under three different
+## lenses
+## \enumerate{
+##   \item tests that don't match the stored reference tests
+##   \item tests that don't exist in the reference tests
+##   \item tests that exist in the reference tests but no the new file
+##   \item tests that passed (these are omitted )
+## }
+## Because a lot of the logic for browsing these three types of situations is
+## shared, that logic has been split off into
+## \code{\link{reviewNext,unitizerBrowse-method}}. The key is that that function
+## will return the items that are supposed to be stored in the unitizer.  These
+## items will either be new or reference ones based on user decisions.
+##
+## Unfortunately, in order to be able to use the same logic for tasks that are
+## not quite the same, a bit of contortion was needed.  In particular, the
+## user is always asked to input either Y, N, or Q, but the corresponding output
+## from \code{\link{reviewNext,unitizerBrowse-method}} is very different
+## depending on what situation we're dealing with.
+##
+## One important point is that by default the user input is defined as N.  In
+## all cases N means no change to the store, though again the interpretation is
+## different depending on the situation.  For example, if we add a test to the
+## test script, N means don't add it to the store.  If we remove a test, N means
+## keep it in the store.
+##
+## @keywords internal
+## @param x the object to browse
+## @param y the derivative unitizerBrowse object of x; this needs to be passed
+##   in as an argument because the logic for generating it is different
+##   depending on whether we are using `unitize` or `review`.
+## @return a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
@@ -51,18 +51,20 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
         "non-interactive state or in force.update mode,  which should not be ",
         "possible, contact maintainer."
       )
-    browse.res <- withRestarts(
-      browseUnitizerInternal(x, y, force.update=force.update),
-      unitizerQuitExit=unitizer_quit_handler
-    )
+    browse.res <- browseUnitizerInternal(x, y, force.update=force.update)
+    x@global$resetInit()  # reset state
+
     # Need to store our `unitizer`
 
     if(browse.res@updated) {
       attempt <- try(store_unitizer(browse.res@unitizer))
       if(inherits(attempt, "try-error"))
-        word_msg("Unable to store '", getTarget(browse.res@unitizer, "'"))
+        meta_word_msg(
+          "Unable to store '", getTarget(browse.res@unitizer, "'"),
+          trail.nl=FALSE
+        )
     } else {
-      message("unitizer unchanged.")
+      meta_word_cat("unitizer unchanged.")
     }
     # Note how we don't actually return the result unitizer, but rather the
     # original one since that one will be re-used  in `unitize_browse` if it
@@ -71,6 +73,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
     # environments in `browseUnitizerInternal`
 
     x@updated <- browse.res@updated
+    x@bookmark <- browse.res@bookmark
     browse.res@unitizer <- x
     browse.res
   }
@@ -89,19 +92,49 @@ setMethod(
     quit.time <- getOption("unitizer.prompt.b4.quit.time")
     if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
+    update.reeval <- FALSE
     slow.run <- x@eval.time > quit.time
 
     something.happened <- any(
       y@mapping@review.type != "Passed" & !y@mapping@ignored
     ) || (
-      any(!y@mapping@ignored) && identical(y@mode, "review")  # Not sure this is
+      any(!y@mapping@ignored) && (
+        identical(y@mode, "review") || y@start.at.browser
+      )
     )
-
     if(!length(y)) {
-      word_msg("No tests to review.")
+      meta_word_cat("No tests to review.", trail.nl=FALSE)
     } else if(!something.happened && !force.update) {
-      word_msg("All tests passed, unitizer store unchanged.")
+      meta_word_cat(
+        "All tests passed, unitizer store unchanged.", trail.nl=FALSE
+      )
     } else {
+      # Check we if we requested a re-eval and if so set the id where we were
+      # before re-eval
+
+      if(!is.null(x@bookmark)) {
+        cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
+        cand.match.len <- length(cand.match)
+        if(!cand.match.len || x@bookmark@id > cand.match.len) {
+          meta_word_msg(
+            cc(
+              "Unable to find test you toggled re-eval from; starting ",
+              "from beginning."
+          ) )
+        } else {
+          match.id <- cand.match[x@bookmark@id]
+          id.map <-
+            which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
+          # nocov start
+          if(!length(id.map) == 1L)
+            stop(
+              "Logic Error: unable to find bookmarked test; contact maintainer."
+            )
+          # nocov end
+          y@last.id <- y@mapping@item.id[id.map] - 1L
+          y@jumping.to <- TRUE
+        }
+      }
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
 
@@ -119,7 +152,11 @@ setMethod(
           withRestarts(
             {
               if(!done(y)) {
-                if(first.time && identical(y@mode, "review")) { # for passed tests, start by showing the list of tests
+                if(
+                  first.time &&
+                  (identical(y@mode, "review") || y@start.at.browser)
+                ) {
+                  # for passed tests, start by showing the list of tests
                   first.time <- FALSE
                   y@review <- 0L
                 } else {
@@ -184,8 +221,9 @@ setMethod(
         # Finalize depending on situation
 
         if(y@interactive.error) {
-          word_msg(
-            "User input required to proceed, but we are in non-interactive mode."
+          meta_word_msg(
+            "User input required to proceed, but we are in non-interactive ",
+            "mode.", sep=""
           )
           break
         } else if(!y@human && !user.quit && y@auto.accept) {
@@ -195,71 +233,100 @@ setMethod(
               "Logic Error: should only get here in `auto.accept` mode, ",
               "contact maintainer"
             )
-          word_msg("Auto-accepting changes...")
+          meta_word_msg("Auto-accepting changes...", trail.nl=FALSE)
           update <- TRUE
           break
         } else if(
           length(x@changes) > 0L || (
             something.happened && (slow.run || !user.quit)
-          ) || y@re.eval || force.update
+          ) || y@re.eval || force.update || y@force.up
         ) {
-          cat("\n")
           print(H2("Finalize Unitizer"))
 
           # default update status; this can be modified if we cancel on exit
+          # reeval update required to store last.id and must be tracked
+          # separately so we can toggle it on or off without modifying overall
+          # update decision; also, need to know if we started off in re.eval
+          # mode since that tells us we activated re-eval while viewing tests
+          # and not at the end
+          #
+          # Note, this is a nested repeat; there is an outer repeat that handles
+          # individual test review, and this repeat handles the final prompt
+          # to exit
 
-          update <- length(x@changes) || force.update
+          re.eval.started <- !!y@re.eval  # Were we already in re-eval mode?
 
-          # Make sure we did not skip anything we were supposed to review
-
-          if(identical(y@mode, "unitize")) {
-            unreviewed <- sum(
-              !y@mapping@reviewed & y@mapping@review.type != "Passed" &
-              !y@mapping@ignored
-            )
-            if(unreviewed) {
-              word_cat(
-                "You have ", unreviewed, " unreviewed tests; press `B` to ",
-                "browse tests, `U` to go to first unreviewed test.\n\n", sep=""
-          ) } }
-          valid.opts <- c(
-            Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
-            R="[R]erun", RR=""
-          )
-          if(!length(x@changes) && force.update)
-            word_msg(
-              "Running in `force.update` mode so `unitizer` will be re-saved",
-              "even though there are no changes to record (see `?unitize` for",
-              "details)."
-            )
-          if(update) {
-            tar <- getTarget(x)
-            wd <- if(file.exists(tar)) get_package_dir(tar) else
-              if(file.exists(dirname(tar)))
-                get_package_dir(dirname(tar)) else ""
-
-            tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
-              relativize_path(tar)
-
-            word_msg(
-              "You will IRREVERSIBLY modify '", tar.final, "'",
-              if(length(x@changes)) " by", ":", sep=""
-            )
-          }
-          if(length(x@changes) > 0) {
-            show(x@changes)
-            cat("\n")
-          }
           repeat {
+            update <- length(x@changes) || force.update || y@force.up
+
+            # Make sure we did not skip anything we were supposed to review
+
+            unrevavail <- 0L
+            if(identical(y@mode, "unitize")) {
+              unreviewed <- unreviewed(y)
+              unrevavail  <- length(unreviewed)
+              if(unrevavail) {
+                meta_word_cat(
+                  "You have ", unrevavail, " unreviewed tests; press ",
+                  "`B` to browse tests, `U` to go to first unreviewed test.\n",
+                  sep=""
+                )
+            } }
+            valid.opts <- c(
+              Y="[Y]es", N=if(update) "[N]o", P="[P]rev", B="[B]rowse",
+              U=if(unrevavail) "[U]nreviewed",  R="[R]erun", RR="",
+              O=if(!length(x@changes) || (force.update || y@force.up))
+                "f[O]rce" else "",
+              QQ=if(y@multi) "[QQ]uit All"
+            )
+            if(!length(x@changes) && (force.update || y@force.up))
+              meta_word_msg(
+                "Running in `force.update` mode so `unitizer` will be re-saved",
+                "even though there are no changes to record (see `?unitize`",
+                "for details).", sep=" "
+              )
+            if(update) {
+              tar <- getTarget(x)
+              wd <- if(file.exists(tar)) get_package_dir(tar) else
+                if(file.exists(dirname(tar)))
+                  get_package_dir(dirname(tar)) else ""
+
+              tar.final <- if(length(wd)) relativize_path(tar, wd=wd) else
+                relativize_path(tar)
+
+              if(!length(x@changes)) {
+                meta_word_msg(
+                  "You are about to update '", tar.final, "' with re-evaluated ",
+                  "but otherwise unchanged tests.", sep=""
+                )
+              } else {
+                meta_word_msg(
+                  "You will IRREVERSIBLY modify '", tar.final, "'",
+                  if(length(x@changes)) " by", ":", sep="", trail.nl=FALSE
+                )
+              }
+            } else {
+              meta_word_cat(
+                "You made no changes to the unitizer so there is no need to",
+                "update it.  While unnecessary, you can force an update by",
+                "typing O at the prompt.", sep=" "
+              )
+            }
+            if(length(x@changes) > 0) {
+              meta_word_msg(
+                as.character(x@changes, width=getOption("width") - 2L)
+              )
+            }
             # Can this be rationalized with the logic in `reviewNext`?
 
             actions <- character()
             if(update) {
               actions <- c(actions, "update unitizer")
               nav.hlp <- paste0(
-                "Pressing Y will replace the previous unitizer with a new one, ",
-                "pressing P or B will allow you to re-review your choices.  ",
-                "Pressing N or Q both quit without saving changes to the unitizer"
+                "Pressing Y will replace the previous unitizer with a new ",
+                "one, pressing P or B will allow you to re-review your ",
+                "choices.  Pressing N or Q both quit without saving changes to ",
+                "the unitizer."
               )
             } else if(!length(x@changes)) {
               nav.hlp <- paste0(
@@ -283,12 +350,14 @@ setMethod(
             }
             if(!length(actions)) actions <- "exit unitizer"
             nav.msg <- cap_first(paste0(actions, collapse= " and "))
-            word_cat(
+            meta_word_cat(
               nav.msg,
               paste0("(",
                 paste0(valid.opts[nchar(valid.opts) > 0L], collapse=", "),
                 ")?"
-            ) )
+              ),
+              sep=" "
+            )
             user.input <- navigate_prompt(
               y, curr.id=max(y@mapping@item.id) + 1L,
               text=nav.msg, browse.env1=x@zero.env, help=nav.hlp,
@@ -302,12 +371,19 @@ setMethod(
             } else if (isTRUE(grepl("^RR?$", user.input))) {      # Re-eval
               y <- toggleReeval(y, user.input)
               next
-            } else if (grepl("^[QN]$", user.input)) {
+            } else if (isTRUE(grepl("^O$", user.input))) { # Force update
+              y <- toggleForceUp(y)
+              next
+            } else if (
+              grepl("^[QN]$", user.input) || identical(user.input, "QQ")
+            ) {
               update <- FALSE
-              word_msg("Changes discarded; unitizer store unchanged.")
-              if(y@re.eval) word_msg("Re-evaluation disabled")
+              meta_word_msg("Changes discarded.", trail.nl=FALSE)
+              if(y@re.eval)
+                meta_word_msg("Re-evaluation disabled.", trail.nl=FALSE)
               y@re.eval <- 0L
               loop.status <- "b"
+              if(identical(user.input, "QQ")) y@multi.quit <- TRUE
               break
             } else if (identical(user.input, "Y")) {
               loop.status <- "b"
@@ -320,7 +396,7 @@ setMethod(
             stop("Logic Error: invalid loop status, contact maintainer.")
           )
         } else {
-          word_msg("No changes recorded; exiting.")
+          meta_word_msg("No changes recorded.", trail.nl=FALSE)
           break
         }
     } }
@@ -332,11 +408,18 @@ setMethod(
     items.ref <- processInput(y)
     items.ref <- healEnvs(items.ref, x) # repair the environment ancestry
 
+    # Need to reconcile state.new / state.ref with items.ref here
+
+    state.merged <- mergeStates(items.ref, x@state.new, x@state.ref)
+
+    # Instantiate new unitizer and add selected items as reference items
+
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
-      base.env=x@base.env, test.file.loc=x@test.file.loc, state.ref=x@state.new
+      base.env=x@base.env, test.file.loc=x@test.file.loc,
+      state.ref=state.merged$states
     )
-    unitizer <- unitizer + items.ref
+    unitizer <- unitizer + state.merged$items
 
     # Extract and re-map sections of tests we're saving as reference
 
@@ -353,12 +436,25 @@ setMethod(
     }
     unitizer <- refSections(unitizer, x)
 
+    # If `re.eval.started` set, means we asked for re-eval while browsing tests
+    # so we want to restart there; translate a browse id to a bookmark so we can
+    # look it up later
+
+    id.cur <- y@last.id
+    bookmark <- if(
+      y@re.eval && re.eval.started && !y@mapping@item.ref[[id.cur]]
+    ) {
+      id.map <- y@mapping@item.id.orig[[id.cur]]
+      call.dep <- x@items.new.calls.deparse[id.map]
+      call.dep.id <- x@items.new.calls.deparse.id[id.map]
+      new("unitizerBrowseBookmark", call=call.dep, id=call.dep.id)
+    }
     # Return structure
 
     new(
       "unitizerBrowseResult", unitizer=unitizer, re.eval=y@re.eval,
       updated=update, interactive.error=y@interactive.error,
-      data=as.data.frame(y)
+      data=as.data.frame(y), bookmark=bookmark, multi.quit=y@multi.quit
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
@@ -374,7 +470,13 @@ setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
 
 setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
+    browsed <- x@browsing
+    jumping <- x@jumping.to
+    x@browsing <- x@jumping.to <- FALSE
+    last.id <- x@last.id
     curr.id <- x@last.id + 1L
+    x@last.id <- curr.id
+
     if(x@last.reviewed) {
       last.reviewed.sec <-
         x@mapping@sec.id[[which(x@mapping@item.id == x@last.reviewed)]]
@@ -403,15 +505,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     valid.opts <- c(
       Y="[Y]es", N="[N]o", P="[P]rev", B="[B]rowse", YY="", YYY="", YYYY="",
-      NN="", NNN="", NNNNN="",
-      if(identical(x@mode, "unitize")) c(R="[R]erun", RR="")
+      NN="", NNN="", NNNN="", O="",
+      if(identical(x@mode, "unitize")) c(R="[R]erun", RR=""),
+      if(x@multi) c(QQ="[QQ]uit All")
     )
     # Pre compute whether sections are effectively ignored or not; these will
     # control whether stuff gets shown to screen or not
 
     ignore.passed <- !identical(x@mode, "review") &&
       is(curr.sub.sec.obj, "unitizerBrowseSubSectionPassed") &&
-      !x@inspect.all
+      !x@inspect.all && !x@start.at.browser
 
     ignore.sec <- all(
       (       # ignored and no errors
@@ -419,7 +522,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         !x@mapping@new.conditions[x@mapping@sec.id == curr.sec]
       ) | (   # passed and not in review mode
         x@mapping@review.type[x@mapping@sec.id == curr.sec] == "Passed" &
-        !identical(x@mode, "review")
+        (!identical(x@mode, "review") || !x@start.at.browser)
       ) | (   # auto.accept
         x@mapping@reviewed[x@mapping@sec.id == curr.sec] &
         !x@navigating
@@ -440,19 +543,31 @@ setMethod("reviewNext", c("unitizerBrowse"),
       unique(x@mapping@sec.id[!(x@mapping@ignored & !x@mapping@new.conditions)])
     ) > 1L
 
+    # Used to track whether the previous thing displayed is an expression or
+    # meta info
+
+    prev.is.expr <- TRUE
+
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
-    # conditions
+    # conditions, or if we just got here via a browse statement
 
-    if(!identical(last.reviewed.sec, curr.sec) && !ignore.sec && multi.sect) {
+    if(
+      (
+        !identical(last.reviewed.sec, curr.sec) && !ignore.sec ||
+        browsed || jumping
+      ) && multi.sect
+    ) {
+      prev.is.expr <- FALSE
       print(H2(x[[curr.sec]]@section.title))
     }
     if(        # Print sub-section title if appropriate
       (
         !identical(last.reviewed.sub.sec, curr.sub.sec) ||
         !identical(last.reviewed.sec, curr.sec)
-      ) && !ignore.sub.sec
+      ) && !ignore.sub.sec || browsed || jumping
     ) {
+      prev.is.expr <- FALSE
       print(H3(curr.sub.sec.obj@title))
       rev.count <- sum(!x@mapping@ignored[cur.sub.sec.items])
 
@@ -470,7 +585,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             ),
             ")?\n"
       ) )
-      word_cat(prompt.txt, "\n")
+      meta_word_cat(prompt.txt)
     }
     # Retrieve actual tests objects
 
@@ -491,6 +606,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
       base.env.pri <- parent.env(curr.sub.sec.obj@items.new@base.env)
       new.glob.indices <- item.new@glob.indices
     }
+    # PROBLEM HERE: in "pass mode" we want the reference state, not the new
+    # state, but the default behavior appears to be to bind to the new state
+
     if(!identical(x@global$indices.last, new.glob.indices))
       x@global$reset(new.glob.indices)
 
@@ -498,15 +616,36 @@ setMethod("reviewNext", c("unitizerBrowse"),
     # not passed tests, and requesting that those not be shown, and not elected
     # to review a test that isn't usually reviewed (x@review)
 
+    diffs <- NULL
+
     if(!ignore.sub.sec || x@review == 0L) {
       if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
-        message(
+        prev.is.expr <- FALSE
+        meta_word_msg(
           "You are re-reviewing a test; previous selection was: \"",
-          x@mapping@review.val[[curr.id]], "\""
+          x@mapping@review.val[[curr.id]], "\"", sep=""
       ) }
+      if(jumping) {
+        prev.is.expr <- FALSE
+        meta_word_msg(
+          sep="",
+          "Jumping to test #", x@mapping@item.id.ord[[curr.id]], " because ",
+          "that was the test under review when test re-run was requested.",
+          if(!is.null(unitizer@bookmark) && unitizer@bookmark@parse.mod)
+            cc(
+              " Note that since the test file was modified we cannot guarantee ",
+              "the jump is to the correct test."
+            )
+        )
+      }
       if(length(item.main@comment)) {
-        if(x@last.id && x@mapping@ignored[[x@last.id]]) cat("\n")
-        cat(word_comment(item.main@comment), sep="\n")
+        if(prev.is.expr && x@mapping@ignored[last.id]) cat("\n")
+        cat(
+          word_comment(
+            item.main@comment,
+            color=unitizer@global$unitizer.opts[["unitizer.color"]]
+          ), sep="\n"
+        )
         cat("\n")
       }
       parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
@@ -515,47 +654,50 @@ setMethod("reviewNext", c("unitizerBrowse"),
       cat(deparse_prompt(parsed.call), sep="\n")
       history_write(x@hist.con, item.main@call.dep)
 
-      # If there are conditions that showed up in main that are not in reference
       # show the message, and set the trace if relevant; options need to be
       # retrieved from unitizer object since they get reset
 
+      out.std <- out.err <- FALSE
+      if(
+        (curr.sub.sec.obj@show.out || x@review == 0L) &&
+        sum(nchar(item.main@data@output))
+      ) {
+        screen_out(
+          item.main@data@output,
+          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
+        )
+        out.std <- TRUE
+      }
       if(
         !is.null(item.new) && !is.null(item.ref) &&
         x@mapping@new.conditions[[curr.id]] || curr.sub.sec.obj@show.msg ||
         x@review == 0L
       ) {
-        if(length(item.main@data@message) && nchar(item.main@data@message))
+        if(length(item.main@data@message) && nchar(item.main@data@message)) {
           screen_out(
             item.main@data@message,
             max.len=unitizer@global$unitizer.opts[["unitizer.test.msg.lines"]],
             stderr()
           )
+          out.err <- TRUE
+        }
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
-      if(
-        (curr.sub.sec.obj@show.out || x@review == 0L) &&
-        nchar(item.main@data@output)
-      )
-        screen_out(
-          item.main@data@output,
-          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
-        )
-      # If test failed, show details of failure; note this should mean there must
-      # be a `.new` and a `.ref`
+      # If test failed, show details of failure; note this should mean there
+      # must be a `.new` and a `.ref`
 
       state.comp <- FALSE
       if(
         is(curr.sub.sec.obj@show.fail, "unitizerItemsTestsErrors") &&
         !item.main@ignore
       ) {
+        cat("\n")
         err.obj <- curr.sub.sec.obj@show.fail[[id.rel]]
-        err.obj@.max.out.len <-
-          unitizer@global$unitizer.opts[["unitizer.test.fail.out.lines"]]
-        summary(err.obj)
-        eval(  # must eval to make sure that correct methods are available when outputing failures to screen
-          call("show", err.obj),
-          if(is.environment(item.main@env)) item.main@env else base.env.pri
-        )
+        err.obj@.fail.context <-
+          unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]
+
+        diffs <- as.Diffs(err.obj)
+
         # Extract specific state based on indices and attach the to the objects;
         # these objects will be discarded so we don't need to worry about
         # nulling them out
@@ -567,12 +709,30 @@ setMethod("reviewNext", c("unitizerBrowse"),
           unitizer@state.ref, item.ref@glob.indices
         )
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
-        if(!isTRUE(state.comp))
-          word_msg(
-            "Additionally, there are state differences (compare with",
-            "`diff_state()`)."
-          )
-    } }
+        if(!isTRUE(state.comp)) {
+          diffs@state <- new(
+            "unitizerItemTestsErrorsDiff", err=FALSE,
+            txt="State mismatch:",
+            txt.alt="State mismatch; see `.DIFF$state` for details.",
+            show.diff=FALSE,
+            diff=diffPrint(
+              item.ref@state, item.new@state,
+              tar.banner=quote(.REF$state),
+              cur.banner=quote(.NEW$state)
+        ) ) }
+        # must eval to make sure that correct methods are available when
+        # outputing failures to screen
+
+        eval(
+          call("show", diffs),
+          if(is.environment(item.main@env)) item.main@env else base.env.pri
+        )
+        # Reset the diff to show state details in future
+
+        if(!is.null(diffs@state)) diffs@state@show.diff <- TRUE
+
+      } else if (out.std || out.err) cat("\n")
+    }
     # Need to add ignored tests as default action is N, though note that ignored
     # tests are treated specially in `healEnvs` and are either included or removed
     # based on what happens to the subsequent non-ignored test.
@@ -580,9 +740,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
     if(!x@inspect.all) {
       if(
         x@mapping@ignored[[curr.id]] || ignore.passed ||
-        (x@mapping@reviewed[[curr.id]] && !x@navigating)  # reviewed items are skipped unless we're actively navigating to support `auto.accept`
+        (x@mapping@reviewed[[curr.id]] && !x@navigating)
       ) {
-        x@last.id <- curr.id
+        # reviewed items are skipped unless we're actively navigating to support
+        # `auto.accept`
         return(x)
       }
     }
@@ -596,26 +757,29 @@ setMethod("reviewNext", c("unitizerBrowse"),
     x@human <- TRUE
 
     # Create evaluation environment; these are really two nested environments,
-    # with the parent environment containing the unitizerItem values and the child
-    # environment containing the actual unitizer items.  This is so that when
-    # user evaluates `.new` or `.ref` they see the value, but then we can
+    # with the parent environment containing the unitizerItem values and the
+    # child environment containing the actual unitizer items.  This is so that
+    # when user evaluates `.new` or `.ref` they see the value, but then we can
     # easily retrieve the full object with the `get*` functions.
 
-    var.list <- list()
-    if(!is.null(item.new)) {
-      var.list <- c(
-        var.list, list(.NEW=item.new, .new=item.new@data@value[[1L]])
-    ) }
-    if(!is.null(item.ref)) {
-      var.list <- c(
-        var.list, list(.REF=item.ref, .ref=item.ref@data@value[[1L]])
-    ) }
+    var.list <- c(
+      if(!is.null(item.new))
+        list(.NEW=item.new, .new=item.new@data@value[[1L]]),
+      if(!is.null(item.ref))
+        list(.REF=item.ref, .ref=item.ref@data@value[[1L]]),
+      if(!is.null(diffs)) {
+        c(
+          list(.DIFF=diffs),
+          if(!is.null(diffs@value)) list(.diff=diffs@value@diff)
+      ) }
+    )
     browse.env <- list2env(var.list, parent=item.main@env)
     browse.eval.env <- new.env(parent=browse.env)
 
     # Functions to override
 
-    env.sec <- if(!is.null(item.new) && !is.null(item.ref)) item.ref@env else NULL
+    env.sec <- if(!is.null(item.new) && !is.null(item.ref))
+      item.ref@env else NULL
     assign("ls", unitizer_ls, base.env.pri)
     if(!is.null(env.sec)) {
       assign("ref", function(x) eval(substitute(x), env.sec), base.env.pri)
@@ -628,13 +792,40 @@ setMethod("reviewNext", c("unitizerBrowse"),
         ) },
         base.env.pri
     ) }
+    # More details for help in failure case
+    help.extra.1 <- help.extra.2 <- ""
+    if(identical(tolower(curr.sub.sec.obj@title), "failed")) {
+      fails <- x@mapping@tests.result[curr.id, ]
+      fail.name <- names(fails)[!fails]
+      help.extra.1 <- if(length(fail.name) > 1L) {
+        paste0(
+          "mismatches in test ",
+          paste0(head(fail.name, -1L), collapse=", "), ", and ",
+          tail(fail.name, 1L)
+        )
+      } else if(length(fail.name) == 1L) {
+        sprintf("mismatch in test %s", fail.name)
+      } else {
+        stop(
+          "Logic Error: test failures must have populated @tests.results ",
+          "values; contact maintainer."
+        )
+      }
+      if("conditions" %in% fail.name) {
+        help.extra.2 <- cc(
+          "\n\nYou can retrieve individual conditions from the `conditionList` ",
+          "objects inside the test objects; for example, use ",
+          "`.NEW$conditions[[1L]]` to get first condition from new evaluation."
+        )
+      }
+    }
     # Options to navigate; when navigating the name of the game is set `@last.id`
     # to the non-ignored test just previous to the one you want to navigate to,
     # the loop will then advance you to that test
 
     help.prompt <- paste0(
       "Reviewing test #", curr.id, " (type: ", tolower(curr.sub.sec.obj@title),
-      "). ", curr.sub.sec.obj@help,
+      "). ", sprintf(curr.sub.sec.obj@help, help.extra.1, help.extra.2),
       "\n\nIn addition to any valid R expression, you may type the following ",
       "at the prompt (without backticks):\n\n"
     )
@@ -649,26 +840,37 @@ setMethod("reviewNext", c("unitizerBrowse"),
           "`.ref` for the reference value, or `.REF` for the full reference ",
           "object"
         ),
-      if(!isTRUE(state.comp))
+      if(!is.null(item.new) && !is.null(item.ref))
         paste0(
-          "`diff_state()` to see differences in state (e.g. search path, ",
-          "random seed) between new and reference tests"
+          "`.diff` for a diff between `.new` and `.ref`, and `.DIFF`  for the ",
+          "differences between all components in `.NEW` and `.REF`."
         ),
       paste0(
         "`YY`/`NN`, `YYY`/`NNN`, `YYYY`/`NNNN` to apply same choice to all ",
         "remaining unreviewed items in, respectively, the sub-section, ",
         "section, or unitizer"
       ),
-      if(identical(x@mode, "unitize"))
+      if(identical(x@mode, "unitize")) {
+        c(
+          paste0(
+            "`R` to re-run the unitizer or `RR` to re-run all loaded ",
+            "unitizers; used typically after you re-`install` the package you ",
+            "are testing via the unitizer prompt"
+          ),
+          paste0(
+            "`O` to f[O]rce update of store even when there are no accepted ",
+            "changes"
+        ) )
+      },
+      if(x@multi)
         paste0(
-          "`R` to re-run the unitizer or `RR` to re-run all loaded ",
-          "unitizers; used typically after you re-`install` the package you ",
-          "are testing via the unitizer prompt."
+          "`QQ` to quit this unitizer and interrupt review of other queued  ",
+          "unitizers"
         )
     )
     # navigate_prompt handles the P and B cases internally and modifies the
-    # unitizerBrowse to be at the appropriate location; this is done as a function
-    # because same logic is re-used elsewhere
+    # unitizerBrowse to be at the appropriate location; this is done as a
+    # function because same logic is re-used elsewhere
 
     repeat {   # repeat needed just for re-eval toggle
       if(
@@ -678,10 +880,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
             browse.env1=browse.eval.env,
             browse.env2=new.env(parent=parent.env(base.env.pri)),
             valid.opts=valid.opts,
-            help=c(
-              help.prompt,
-              paste0(as.character(UL(help.opts)), collapse="\n"), "\n"
-          ) ),
+            help=help.prompt, help.opts=help.opts
+          ),
           "unitizerBrowse"
         )
       ) {
@@ -690,6 +890,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x <- toggleReeval(x, x.mod)
         Sys.sleep(0.3)  # so people can see the toggle message
         invokeRestart("earlyExit", extra=x)
+      } else if (isTRUE(grepl("^O$", x.mod))) {             # Force update
+        x <- toggleForceUp(x)
+        next
       } else if (isTRUE(grepl("^(Y|N)\\1{0,3}$", x.mod))) { # Yes No handling
         act <- substr(x.mod, 1L, 1L)
         act.times <- nchar(x.mod)
@@ -726,7 +929,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             help <- paste0(
               paste0(
                 "The effect of 'Y' or 'N' depends on what type of test you ",
-                "are reviewing.  Consult the following table for details:\n\n"
+                "are reviewing.  Consult the following table for details:\n"
               ),
               paste0(help.txt, collapse="\n")
             )
@@ -737,10 +940,14 @@ setMethod("reviewNext", c("unitizerBrowse"),
             cat(prompt, " ([Y]es, [N]o)?\n", sep="")
             act.conf <- unitizer_prompt(
               prompt, new.env(parent=parent.env(base.env.pri)), help,
-              valid.opts=c(Y="[Y]es", N="[N]o")
+              valid.opts=c(Y="[Y]es", N="[N]o"), global=x@global,
+              browse.env=new.env(parent=parent.env(base.env.pri))
             )
             if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
-            if(identical(act.conf, "N")) return(x)
+            if(identical(act.conf, "N")) {
+              x@last.id <- x@last.id - 1L  # Otherwise we advance to next test
+              return(x)
+            }
           }
           indices
         }
@@ -750,6 +957,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@mapping@review.val[rev.ind] <- act
         x@last.id <- max(rev.ind)
       } else if (identical(x.mod, "Q")) {
+        invokeRestart("earlyExit", extra=x)
+      } else if (identical(x.mod, "QQ")) {
+        x@multi.quit <- TRUE
         invokeRestart("earlyExit", extra=x)
       } else {
         stop(
@@ -772,8 +982,16 @@ setMethod("toggleReeval", "unitizerBrowse",
     re.mode <- switch(
       nchar(y), "this unitizer", "all loaded unitizers"
     )
-    word_msg("Toggling re-run mode", re.status, "for", re.mode)
+    meta_word_msg("Toggling re-run mode", re.status, "for", re.mode, sep=" ")
     x@re.eval <- if(x@re.eval) 0L else nchar(y)
+    x
+})
+setGeneric("toggleForceUp", function(x, ...) standardGeneric("toggleForceUp"))
+setMethod("toggleForceUp", "unitizerBrowse",
+  function(x, ...) {
+    re.status <- if(x@force.up) "OFF" else "ON"
+    meta_word_msg("Toggling force update mode", re.status, sep=" ")
+    x@force.up <- !x@force.up
     x
 })
 

@@ -5,32 +5,32 @@
 #'
 #' @section Demo Details:
 #'
-#' The demo centers around simulated development of the \code{unitizer.fastlm}
+#' The demo centers around simulated development of the \code{utzflm}
 #' package.  \code{unitizer} includes in its sources three copies of the source
-#' code for the \code{unitizer.fastlm} package, each at a different stage of
+#' code for the \code{utzflm} package, each at a different stage of
 #' development.  This allows us to create reference \code{unitizer} tests under
 #' one version, move to a new version and check for regressions, and finally
 #' fix the regressions with the last version.  The version switching is
 #' intended to represent the package development process.
 #'
-#' The demo manages the \code{unitizer.fastlm} code changes, but between each
+#' The demo manages the \code{utzflm} code changes, but between each
 #' update allows the user to interact with \code{unitizer}.  The demo operates
 #' under the assumption that the user will accept the first set of tests and
 #' reject the failing tests after the first update.  If the user does anything
 #' different then the demo commentary may not apply anymore.
 #'
-#' @section \code{unitizer.fastlm}:
+#' @section \code{utzflm}:
 #'
-#' \code{unitizer.fastlm} is a "dummy" package that implements a faster
+#' \code{utzflm} is a "dummy" package that implements a faster
 #' computation of slope, intercept, and R^2 for single variable linear
 #' regressions than is available via \code{summary(lm()...)}.
 #'
 #' @section Helper Functions:
 #'
 #' \code{copy_fastlm_to_tmpdir} copies the initial version of the
-#' \code{unitizer.fastlm} sources to a temporary directory, \code{show_file}
+#' \code{utzflm} sources to a temporary directory, \code{show_file}
 #' displays the contents of a source code file, \code{update_fastlm} changes the
-#' source code of \code{unitizer.fastlm}, and \code{unitizer_check_demo_state}
+#' source code of \code{utzflm}, and \code{unitizer_check_demo_state}
 #' and \code{unitizer_cleanup_demo} perform janitorial functions.  None of
 #' these functions are intended for use outside of the unitizer demo.
 #'
@@ -99,45 +99,90 @@ show_file <- function(f, width=getOption("width", 80L)) {
 #' @rdname demo
 
 copy_fastlm_to_tmpdir <- function() {
-  dir <- file.path(tempfile(), "unitizer.fastlm")
+  dir <- file.path(tempfile(), "utzflm")
   if(inherits(try(dir.create(dir, recursive=TRUE)), "try-error"))
     stop("Unable to create temporary directory '", dir, "'")
   untz.dir <- system.file(package="unitizer")
-  fastlm.dir <- file.path(untz.dir, "example.pkgs", "fastlm.0")
+  fastlm.dir <- file.path(untz.dir, "expkg", "flm0")
   fastlm.files <- list.files(
     fastlm.dir, full.names=TRUE, include.dirs=TRUE, no..=TRUE
   )
+
   if(inherits(try(file.copy(fastlm.files, dir, recursive=TRUE)), "try-error"))
     stop("Unable to copy `fastlm` sources")
+
+  # need to do this because R CMD build removes files ending in .Rcheck, and
+  # complains about "pre-installed" package in sources, when we explcitly need a
+  # pre installed structure for a different dummy package for our tests
+
+  fastlm.check <- file.path(dir, "utzflm_Rcheck")
+  fastlm.check.new <- file.path(dir, "utzflm.Rcheck")
+
+  if(inherits(try(file.rename(fastlm.check, fastlm.check.new)), "try-error"))
+    stop("Unable to rename fastlm check directory")
+
+  check.dirs <- list.files(
+    file.path(fastlm.check.new, "utzflm"), full.names=TRUE
+  )
+  if(
+    inherits(
+      try(
+        file.rename(
+          check.dirs,
+          file.path(dirname(check.dirs), sub("^_", "", basename(check.dirs)))
+      ) ),
+      "try-error"
+  ) )
+    stop("Unable to unmask package sub dirs")
+
   dir
+}
+# Helper fun for update_fastlm_*
+
+.test.core.files <- c(
+  "DESCRIPTION", file.path("R", "fastlm.R"),
+  file.path(
+    "tests", "unitizer", c("fastlm1.R", "fastlm2.R", "unitizer.fastlm.R")
+) )
+check_test_dir <- function(dir) {
+  stopifnot(
+    file_test("-d", dir),
+    file_test("-d", file.path(dir, "tests", "unitizer")),
+    all(file_test("-f", file.path(dir, .test.core.files)))
+  )
 }
 #' @export
 #' @rdname demo
 
 update_fastlm <- function(dir, version) {
-  stopifnot(
-    version %in% c("0.1.0", "0.1.1", "0.1.2"),
-    file_test("-d", dir),
-    file_test("-f", file.path(dir, "DESCRIPTION")),
-    file_test("-f", file.path(dir, "R", "fastlm.R")),
-    file_test("-d", file.path(dir, "tests", "unitizer")),
-    file_test("-f", file.path(dir, "tests", "unitizer", "fastlm1.R")),
-    file_test("-f", file.path(dir, "tests", "unitizer", "fastlm2.R")),
-    file_test("-f", file.path(dir, "tests", "unitizer", "unitizer.fastlm.R"))
-
-  )
+  check_test_dir(dir)
+  stopifnot(version %in% c("0.1.0", "0.1.1", "0.1.2"))
   lm.dir <- switch(
-    version, "0.1.0"="fastlm.0", "0.1.1"="fastlm.1", "0.1.2"="fastlm.2",
+    version, "0.1.0"="flm0", "0.1.1"="flm1", "0.1.2"="flm2",
     stop("Logic Error; unknown version")
   )
   untz.dir <- system.file(package="unitizer")
-  lm.dir.full <- file.path(untz.dir, "example.pkgs", lm.dir)
-  cpy.files <- c(
-    "DESCRIPTION", file.path("R", "fastlm.R"),
-    file.path("tests", "unitizer", "fastlm1.R"),
-    file.path("tests", "unitizer", "fastlm2.R"),
-    file.path("tests", "unitizer", "unitizer.fastlm.R")
+  lm.dir.full <- file.path(untz.dir, "expkg", lm.dir)
+  cpy.files <- .test.core.files
+  cpy.from <- file.path(lm.dir.full, cpy.files)
+  cpy.to <- file.path(dir, cpy.files)
+
+  invisible(file.copy(cpy.from, cpy.to, overwrite=TRUE))
+}
+# copy extra file for tests, this is primarily just for the section tests and
+# should be used with care as it will mess up all the other tests by adding
+# an extra file.  This also installs version 0.1.2
+
+update_fastlm_extra <- function(dir) {
+  check_test_dir(dir)
+  lm.dir <- "flm2"
+  untz.dir <- system.file(package="unitizer")
+  lm.dir.full <- file.path(untz.dir, "expkg", lm.dir)
+  file.extra <- file.path("tests", "unitizer", "unitizer.fastlm2.R")
+  stopifnot(
+    file_test("-f", file.path(lm.dir.full, file.extra))
   )
+  cpy.files <- c(.test.core.files, file.extra)
   cpy.from <- file.path(lm.dir.full, cpy.files)
   cpy.to <- file.path(dir, cpy.files)
 
@@ -153,14 +198,25 @@ unitizer_check_demo_state <- function() {
   for(i in seq_along(vars))
     vars.exist[[i]] <- exists(vars[[i]], envir=parent.frame(), inherits=FALSE)
   if(any(vars.exist)) {
-    word_msg(
+    meta_word_msg(
       "Variables", paste0("`", vars, "`", collapse=", "), " already exist, but",
       "must be overwritten for demo to proceed.  These could have been left",
-      "over by a previous run of the demo that did not complete properly.\n"
+      "over by a previous run of the demo that did not complete properly.",
+      sep=" "
     )
     choice <- simple_prompt("Overwrite variables?")
     if(!identical(choice, "Y")) stop("Cannot continue demo.")
     rm(list=vars[vars.exist], envir=parent.frame())
+  }
+  if("utzflm" %in% rownames(installed.packages())) {
+    meta_word_msg(
+      "'utzflm' pacakge already installed.  This could be because of ",
+      "a prior demo run that was unable to clean-up properly after itself. ",
+      "Continuing with demo will overwrite existing installation.",
+      sep=" "
+    )
+    choice <- simple_prompt("Overwrite existing installation?")
+    if(!identical(choice, "Y")) stop("Cannot continue demo.")
   }
 }
 # nocov end
@@ -170,13 +226,14 @@ unitizer_check_demo_state <- function() {
 
 unitizer_cleanup_demo <- function() {
   vars <- c(".unitizer.fastlm", ".unitizer.test.file")
-  try(detach("package:unitizer.fastlm"), silent=TRUE)
-  try(unloadNamespace("unitizer.fastlm"), silent=TRUE)
-  remove.packages("unitizer.fastlm", .libPaths()[[1L]])
+  try(detach("package:utzflm"), silent=TRUE)
+  try(unloadNamespace("utzflm"), silent=TRUE)
+  try(remove.packages("utzflm", .libPaths()[[1L]]), silent=TRUE)
   pkg.dir <- try(get(".unitizer.fastlm", envir=parent.frame()))
   if(
     !inherits(pkg.dir, "try-error") && is.chr1plain(pkg.dir) &&
     file_test("-d", pkg.dir) && grepl("unitizer\\.fastlm$", pkg.dir)
-  ) unlink(pkg.dir, recursive=TRUE)
+  )
+  unlink(pkg.dir, recursive=TRUE)
   rm(list=vars, envir=parent.frame())
 }

@@ -54,35 +54,34 @@ identical_fun <- function(x, y) {
   }
   identical(x, y)
 }
-# Overrides Default quit() Behavior
-#
-# Necessary because quit short circuits the `on.exit` clean-up functions and
-# would leave stuff in a weird state (history not reset, etc.).
-#
-# This is used in \code{`\link{unitize}`}.
-#
-# @aliases unitizer_quit_handler
-# @keywords internal
+## Overrides Default quit() Behavior
+##
+## Necessary because quit short circuits the \code{on.exit} clean-up functions
+## and would leave stuff in a weird state (history not reset, etc.).
+##
+## This is used in \code{\link{unitize}}.
+##
+## @keywords internal
 
 unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
-  invokeRestart(
-    "unitizerQuitExit", list(save=save, status=status, runLast=runLast)
-) }
-# nocov start
-# can't test this without quitting R!
-
-unitizer_quit_handler <- function(quitArgs) {
-  word_msg(
-    paste0(
-      "Encountered `quit()`/`q()`; unitizer not updated.  For more graceful ",
-      "quitting type `Q` (without quotes) at the unitizer prompt, or avoid ",
-      "using test code that involves calls to `quit()`/`q()`."
-    )
+  meta_word_msg(
+    "You are attempting to quit R from within `unitizer`.  If you do so ",
+    "you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` ",
+    "gracefully.  Are you sure you want to exit R?"
   )
-  do.call("quit", quitArgs)
+  quit.count <- 5
+  while(
+    !(res <- head(tolower(readline("Quit R? [y/n]: ")), 1L)) %in% c("y", "n")
+  ) {
+    quit.count <- quit.count - 1L
+    if(quit.count < 0) {
+      meta_word_msg("Sorry, could not understand you, quitting then.")
+      quit(save=save, status=status, runLast=runLast)
+    }
+  }
+  if(res == "y") quit(save=save, status=status, runLast=runLast)
+  invisible(NULL)
 }
-# nocov end
-
 # Cleans a Path to be In Standard Format
 #
 # Uses \code{`\link{dirname}`} to convert paths on windows machines with back
@@ -106,7 +105,8 @@ path_clean <- function(path) {
 #' @examples
 #' filename_to_storeid(file.path("tests", "unitizer", "foo.R"))
 #' filename_to_storeid(file.path("tests", "unitizer", "boo.r"))
-#' filename_to_storeid(file.path("tests", "unitizer", "boo"))  # does not end in [rR]
+#' # does not end in [rR]
+#' filename_to_storeid(file.path("tests", "unitizer", "boo"))
 
 filename_to_storeid <- function(x) {
   if(is.character(x) && length(x) == 1L){
@@ -131,10 +131,11 @@ history_capt <- function(hist.file=NULL) {
   if(is.null(hist.file)) return(list(con=NULL, file=NULL))
   # nocov start
   if(!interactive()) {
-    warning(
-      "Unable to capture history in non-interactive mode.",
-      immediate.=TRUE
-    )
+    if(!interactive_mode()) {
+      warning(
+        "Unable to capture history in non-interactive mode.",
+        immediate.=TRUE
+    ) }
     return(list(con=NULL, file=NULL))
   }
   hist.try <- try(savehistory(), silent=TRUE)
@@ -190,17 +191,21 @@ history_write <- function(hist.con, data) {
   } }
   # nocov end
 }
+## Variation on 'normalizePath' with \code{winslash} Pre-Specified
+
+normalize_path <- function(path, mustWork=NA)
+  normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
+
 # Simplify a Path As Much as Possible to Working Directory
 #
 # \itemize{
 #   \item \code{relativize_path} returns a path that can actually be used
 #     to access an actual file from the current working directory
-#   \item \code{pretty_path} (not really used currently) returns the most
-#     readable path that we can produce, but may not usable to access an actual
-#     file, main difference with \code{relativize_path} is that it will
-#     figure out if a file is in a package and return a path relative to the
-#     package directory if it turns out that one is shorter than the one
-#     produced with relativize path
+#   \item \code{pretty_path}  returns the most readable path that we can
+#     produce, but may not usable to access an actual file, main difference with
+#     \code{relativize_path} is that it will figure out if a file is in a
+#     package and return a path relative to the package directory if it turns
+#     out that one is shorter than the one produced with relativize path
 #   \item \code{unique_path} is used to separate out a common path from a list
 #     of files, the unique paths are returned as a value, with the common
 #     directory attached as an attribute
@@ -223,12 +228,12 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   )
     stop("Argument `wd` must be NULL or a reference of to a directory")
   if(is.null(wd)) wd <- getwd()
-  wd <- try(normalizePath(wd, mustWork=TRUE), silent=TRUE)
+  wd <- try(normalize_path(wd, mustWork=TRUE), silent=TRUE)
   res <- if(
     !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
     identical(length(.Platform$file.sep), 1L)
   ) {
-    norm <- normalizePath(path, mustWork=FALSE)
+    norm <- normalize_path(path, mustWork=FALSE)
     to.norm <- TRUE  # used to be only for existing files, but can't recall why
 
     # Break up into pieces; we re-append "" to make sure the root shows up if
@@ -264,22 +269,27 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     norm[to.norm] <- reled
     norm
   } else path
-  if(!nchar(res)) res <- "."
+  res[!nzchar(res)] <- "."
   if(only.if.shorter) {
     ifelse(nchar(res) < nchar(path), res, path)
   } else res
 }
 pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
-  rel.path <- relativize_path(path, wd, only.if.shorter)
-  pkg.dir <- get_package_dir(path)
-  if(!length(pkg.dir) || !identical(substr(path, 1L, nchar(pkg.dir)), pkg.dir))
+  path.norm <- normalize_path(path, mustWork=FALSE)
+  rel.path <- relativize_path(path.norm, wd, only.if.shorter)
+  pkg.dir <- get_package_dir(path.norm)
+  if(
+    !length(pkg.dir) ||
+    !identical(substr(path.norm, 1L, nchar(pkg.dir)), pkg.dir)
+  )
     return(rel.path)
 
   pkg.name <- try(get_package_name(pkg.dir))
   if(inherits(pkg.name, "try-error"))
     stop("Logic Error: failed getting package name; contact maintainer")
   pkg.path <- file.path(
-    paste0("package:", pkg.name), substr(path, nchar(pkg.dir) + 2L, nchar(path))
+    paste0("package:", pkg.name),
+    substr(path.norm, nchar(pkg.dir) + 2L, nchar(path.norm))
   )
   if(nchar(rel.path) <= nchar(pkg.path)) rel.path else pkg.path
 }
@@ -322,6 +332,21 @@ merge_lists <- function(x, y, keep.null=TRUE) {
   x
 }
 
+# Comparison functions that output to stdout/stderr for testing of effect of
+# doing so (should be captured and ignored, then at end warn about it)
 
+comp_stdout <- function(x, y) {
+  cat("I'm outputting to stdout\n")
+  TRUE
+}
+comp_stderr <- function(x, y) {
+  cat("I'm outputting to stderr\n", file=stderr())
+  TRUE
+}
+comp_stdboth <- function(x, y) {
+  cat("I'm outputting to both 1\n")
+  cat("I'm outputting to both 2\n", file=stderr())
+  TRUE
+}
 
 

@@ -1,123 +1,6 @@
-# Compare State Between Reference and New Tests
+# This used to have all the state comparison methods, but those just became
+# unneeded with the advent of diffobj
 #
-# These functions were implemented before \code{\link{diff_state}}, and we
-# recommend you use \code{\link{diff_state}} to get a high level view of
-# state differences instead of these.
-#
-# Designed to compare the state snapshots as stored and recorded in a
-# \code{unitizer}.  These approximate various aspects of global state.
-# The approximation is because state objects that are too large are not kept,
-# so we are not always certain whether some parts of state changed or not.
-#
-# We report several levels of differences between state values:
-# \itemize{
-#    \item affirmative difference, when we know with certainty the state values
-#      are different
-#    \item probable difference, when we have one known value and one unknown
-#      value, typically because one was too large to store
-#    \item possible difference, when both values are unknown
-# }
-# Additionally, it is possible that the state tracking settings change between
-# \code{unitizer} runs.  If that happens, then:
-# \itemize{
-#   \item if state type is not tracked in new (current), then we assume state
-#     is unchanged
-#   \item if state is tracked in new, but was not in reference (target), then
-#     we report a probable difference
-# }
-# @keywords internal
-
-#' @rdname unitizer_s4method_doc
-
-setMethod(
-  "all.equal",
-  c("unitizerGlobalState", "unitizerGlobalState"),
-  function(target, current, verbose=TRUE, strict=FALSE, ...) {
-    stopifnot(is.TF(verbose), is.TF(strict))
-    valid.diff <- 0L:3L
-    err.msgs <- paste0(c("possible ", "likely ", "known "), "differences")
-    deltas <- setNames(
-      vector("list", length(.unitizer.global.settings.names)),
-      .unitizer.global.settings.names
-    )
-    for(i in .unitizer.global.settings.names) {
-      tar <- slot(target, i)
-      cur <- slot(current, i)
-      msg.header <- sprintf("`%s` state mismatch:", i)
-
-      deltas[[i]] <- if(is.null(tar) && !is.null(cur)) {
-        paste(msg.header, "reference state not recorded")
-      } else if(is.null(cur)) {
-        NULL
-      } else {
-        if(identical(i, "options")) {
-          # Compare common options with state_item_compare, all others are
-          # assumed to be different; note that system and asis options should
-          # not be part of these lists
-
-          common.opts <- intersect(names(tar), names(cur))
-          deltas.opts <- unlist(
-            Map(
-              state_item_compare, tar[common.opts], cur[common.opts]
-          ) )
-          mismatch.opts <- c(
-            setdiff(names(tar), names(cur)), setdiff(names(cur), names(tar))
-          )
-          deltas.opts <- c(
-            deltas.opts, setNames(rep(3L, length(mismatch.opts)), mismatch.opts)
-          )
-          if(any(deltas.opts > !strict)) {
-            deltas.split <- split(names(deltas.opts), deltas.opts)
-            deltas.by.type <- unlist(  # unlist drops any NULL values so we get rid of "0"
-              lapply(
-                sort(names(deltas.split), decreasing=TRUE),
-                function(x) {
-                  if(x %in% c("0", if(!strict) "1")) return(NULL)
-                  paste0(
-                    err.msgs[[as.integer(x)]], " for option",
-                    if(length(deltas.split[[x]]) > 1L) "s", " ",
-                    paste0(sprintf("\"%s\"", deltas.split[[x]]), collapse=", ")
-            ) } ) )
-            # Bulleted list of more than one type of option delta
-
-            if(length(deltas.by.type) > 1L) {
-              c(msg.header, as.character(UL(deltas.by.type)))
-            } else paste(msg.header, deltas.by.type)
-          }
-        } else {
-          # States other than options that don't need to be compared element
-          # for element
-
-          state.diff <- state_item_compare(tar, cur)
-          if(state.diff)
-            paste(
-              msg.header,
-              if(identical(state.diff, 3L)) {
-                aq <- all.equal(tar, cur)
-                if(isTRUE(aq) || !is.character(aq)) {
-                  err.msgs[[state.diff]]
-                } else {
-                  if(length(aq) > 1L) paste0(aq[[1L]], "...") else aq
-                }
-              } else err.msgs[[state.diff]]
-            )
-    } } }
-    # Finalize
-
-    if(length(deltas)) {
-      res <- vapply(deltas, paste0, character(1L), collapse="\n")
-      if(verbose) word_cat(res, sep="\n")
-      invisible(res)
-    } else TRUE
-} )
-# Helper function for all.equal
-
-state_item_compare <- function(tar, cur) {
-  tar.dum <- is(tar, "unitizerDummy")
-  cur.dum <- is(cur, "unitizerDummy")
-  if(tar.dum && cur.dum) 1L else if (tar.dum || cur.dum) 2L else {
-    if(identical(tar, cur)) 0L else 3L
-} }
 # \code{all.equal} methods involving dummy
 
 #' @rdname unitizer_s4method_doc
@@ -163,149 +46,78 @@ all.equal.unitizerDummy <- function(target, current, ...) {
 all.equal.unitizer_glob_state_test <- function(target, current, ...)
   list(1, 2, list("woohoo"))
 
-#' Display State Differences Between New and Reference Tests
-#'
-#' Intended to be called primarily from \code{unitizer} prompt where it can
-#' find the \code{.NEW} and \code{.REF} objects; interface params provided for
-#' testing.
-#'
-#' @export
-#' @param target unitizerGlobalState object
-#' @param current unitizerGlobalState object
-#' @param width how many characters wide the display should be
-#' @param file connection to output to
-#' @return NULL
-#' @examples
-#' \dontrun{
-#' ## type at `unitizer` prompt
-#' diff_state()
-#' }
+## Merge State Data Between Reference and New Indices
+##
+## Required because we track these separately, but when we merge new and
+## reference items we have to account for states from both.
+##
+## The items will be what is created by the review process and will contain a
+## mix of new and reference items.  We go through and identify the reference
+## items, and pull out the relevant states from the ref states tracking store
+## and append them to the new states.  As part of this process, we need to
+## re-index all the reference state elements to start counting after the end of
+## the new state elements.
+##
+## @param x items, typically "reference" item being prepared for storage
+## @param y new states
+## @param z ref states
 
-diff_state <- function(
-  target=NULL, current=NULL, width=getOption("width"), file=stdout()
-) {
-  target <- if(!is.null(target))
-    target else try(get(".REF", parent.env(parent.frame()))$state, silent=T)
-  current <- if(!is.null(current))
-    current else try(get(".NEW", parent.env(parent.frame()))$state, silent=T)
-  if(inherits(target, "try-error")) return(cat("`.NEW` object not present"))
-  if(inherits(current, "try-error")) return(cat("`.REF` object not present"))
-  stopifnot(
-    is(target, "unitizerGlobalState"), is(current, "unitizerGlobalState")
-  )
-  out <- character(0L) # we're growing this, but it's small
-  for(i in .unitizer.global.settings.names) {
-    cur <- slot(current, i)
-    tar <- slot(target, i)
-    if(is.null(cur) || identical(tar, cur)) next
+setGeneric("mergeStates", function(x, y, z, ...) standardGeneric("mergeStates"))
+setMethod(
+  "mergeStates", c(
+    "unitizerItems", "unitizerGlobalTrackingStore",
+    "unitizerGlobalTrackingStore"
+  ),
+  function(x, y, z, ...) {
+    types <- itemsType(x)
+    types.ref <- which(types == "reference")
+    if(length(types.ref)) {
+      ref.indices <- lapply(x[types.ref ], slot, "glob.indices")
+      max.indices <- unitizerStateMaxIndices(y)  # max new index
 
-    msg.header <- sprintf("`%s` state mismatch:", i)
-    if(!is.int.1L(width) || width < 8L) width <- 8L else width <- width - 4L
+      # Map the global indices in reference to values starting from 1 up beyond
+      # the end of the indices in the new indices, though use zeros for zero;
+      # these are the index location for the reference items once we append
+      # them to the tracking object
 
-    diff.string <- if(identical(i, "options")) {
-      # Compare common options with state_item_compare, all others are
-      # assumed to be different; note that system and asis options should
-      # not be part of these lists
+      ref.ind.mx <- do.call(cbind, lapply(ref.indices, as.integer))
+      ref.ind.mx.map <- t(
+        as.matrix(  #b/c apply will return vec at times
+          apply(
+            ref.ind.mx, 1, function(w) {
+              match(w, sort(Filter(as.logical, unique(w))), nomatch=0L)
+      } ) ) ) + as.integer(max.indices)
 
-      common.opts <- intersect(names(tar), names(cur))
-      deltas.common <- Map(all.equal, tar[common.opts], cur[common.opts])
-      deltas.cur.miss <- Map(
-        setdiff(names(tar), names(cur)),
-        f=function(x) "this option is missing from `.NEW` state"
-      )
-      deltas.tar.miss <- Map(
-        setdiff(names(cur), names(tar)),
-        f=function(x) "this option is missing from `.REF` state"
-      )
-      deltas.opts <- c(deltas.common, deltas.cur.miss, deltas.tar.miss)
-      deltas.real <- vapply(deltas.opts, Negate(isTRUE), logical(1L))
-      deltas.names <- names(deltas.opts)
-      deltas.count <- sum(deltas.real)
-
-      # Depending on how many options there are, either show a full diff, or
-      # the all.equal output, or just what options are different
-
-      if(deltas.count < 1L) next
-
-      if(deltas.count == 1L) {
-        diff.name <- deltas.names[[which(deltas.real)]]
-        diff_obj_out(
-          tar[[diff.name]], cur[[diff.name]],
-          obj.rem.name=sprintf(".REF$state@%s[[\"%s\"]]", i, diff.name),
-          obj.add.name=sprintf(".NEW$state@%s[[\"%s\"]]", i, diff.name),
-          width=width, file=NULL
+      if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map))) {
+        stop(
+          "Logic Error: global index mapping matrix malformed; contact ",
+          "maintainer."
         )
-      } else if(deltas.count <= 10L) {
-        # Depending on whether `all.equal` output is one or more lines, use
-        # different display mode
-
-        diff.list <- vector("list", 2 * deltas.count)
-        k <- 0L
-
-        for(j in which(deltas.real)) {
-          k <- k + 1L
-          if(!is.character(deltas.opts[[j]]) || !length(deltas.opts[[j]])) {
-            diff.list[[k]] <-
-              paste0(deltas.names[[j]], ": <unknown difference>")
-          } else if(length(deltas.opts[[j]]) == 1L) {
-            diff.list[[k]] <-
-              paste0(deltas.names[[j]], ": ", deltas.opts[[j]])
-          } else {
-            diff.list[[k]] <- paste0(deltas.names[[j]], ": not `all.equal`:")
-            diff.list[[k + 1L]] <- OL(deltas.opts[[j]])
-            k <- k + 1L
-        } }
-        as.character(UL(diff.list[seq.int(k)]), width=width)
-      } else {
-        # this is a mess, need to cleanup someday
-
-        tmp <- character()
-        common.fail <- vapply(deltas.common, Negate(isTRUE), logical(1L))
-        if(any(common.fail)) {
-          tmp.out <- capture.output(
-            print(sort(names(deltas.common)[common.fail]), width=width)
-          )
-          tmp <- c(tmp, "The following options have mismatches: ", tmp.out)
-        }
-        if(length(deltas.cur.miss)) {
-          tmp.out <- capture.output(
-            print(sort(names(deltas.cur.miss)), width=width)
-          )
-          tmp <- c(
-            tmp, "The following options are missing from `.NEW`: ", tmp.out
-          )
-        }
-        if(length(deltas.tar.miss)) {
-          tmp.out <- capture.output(
-            print(sort(names(deltas.tar.miss)), width=width)
-          )
-          tmp <- c(
-            tmp, "The following options are missing from `.REF`: ", tmp.out
-          )
-        }
-        word_wrap(tmp, width=width)
       }
-    } else {
-      diff_obj_out(  # should try to collapse this with the one for options
-        tar, cur,
-        obj.rem.name=sprintf(".REF$state@%s", i),
-        obj.add.name=sprintf(".NEW$state@%s", i),
-        width=width, file=NULL
-      )
-    }
-    out <- c(out, msg.header, paste0("    ", diff.string))
-  }
-  msg.no.diff <- paste0(
-    "Note that there may be state differences that are not reported here as ",
-    "state tracking is incomplete.  See vignette for details."
-  )
-  msg.extra <- word_wrap(
-    if(length(out)) paste0(
-      "For a more detailed comparison you can access state values ",
-      "directly (e.g. .NEW$state@options).  ", msg.no.diff
-    ) else c("No state differences detected.", "", msg.no.diff)
-  )
-  out <- c(out, msg.extra)
-  if(!is.null(file)) cat(out, sep="\n", file=file)
-  invisible(out)
-}
+      ref.ind.mx.map[!ref.ind.mx] <- 0L  # these all map to the starting state
+
+      # Pull out the states from ref and copy them into new
+
+      for(i in slotNames(y)) {
+        needed.state.ids <- unique(ref.ind.mx[i, ])
+        needed.state.ids.map <- unique(ref.ind.mx.map[i, ])
+        length(slot(y, i)) <- max(needed.state.ids.map)
+
+        for(j in seq_along(needed.state.ids)) {
+          id <- needed.state.ids[[j]]
+          id.map <- needed.state.ids.map[[j]]
+          if(!id.map) next
+          slot(y, i)[[id.map]] <- slot(z, i)[[id]]
+        }
+      }
+      # For each ref index, remap to the new positions in new state
+
+      for(i in seq_along(types.ref)) {
+        old.id <- types.ref[[i]]
+        x[[old.id]]@glob.indices <- do.call(
+          "new", c(list("unitizerGlobalIndices"), as.list(ref.ind.mx.map[, i]))
+    ) } }
+    # Return a list with the update item list and the states
+
+    list(items=x, states=y)
+} )

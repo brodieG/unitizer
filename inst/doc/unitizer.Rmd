@@ -17,6 +17,7 @@ vignette: >
 ### TL;DR
 
 `unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
+
 ```
 library(devtools)
 install_github("brodieg/unitizer")
@@ -121,6 +122,16 @@ unitize_dir("unitizer")
 ```
 The path specification for test files should be relative to the `tests` directory as that is what `R CMD check` uses.  When `unitize` is run by `R CMD check` it will run in a non-interactive mode that will succeed only if all tests pass.
 
+You can use any folder name for your tests, but if you use "tests/unitizer"
+`unitize` will look for files automatically, so the following work assuming your
+working directory is a folder within the package:
+
+```
+unitize_dir()          # same as `unitize_dir("unitizer")`
+unitize("fast")        # same as `unitize("fastlm.R")`
+unitize()              # Will prompt for a file to `unitize`
+```
+
 Remember to include `unitizer` as a "suggests" package in your DESCRIPTION file.
 
 ## Things You Should Know About `unitizer`
@@ -129,19 +140,48 @@ Remember to include `unitizer` as a "suggests" package in your DESCRIPTION file.
 
 The `unitize`d tests need to be saved someplace, and the default action is to save to the same directory as the test file.  You will always be prompted by `unitizer` before it writes to your file system.  See [storing `unitized` tests](unitizer_miscellaneous.html#storing-unitized-tests) for implications and alternatives.
 
-### Tests Pass If They `all.equal` Stored Reference Values
+### And Manipulates the Search Path
 
-Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](unitizer_tests.html)).
+`unitizer` tracks and manages many aspects of state to make your tests more reproducible.  For example, `unitizer` will set your search path to what is found in a vanilla R session prior to running tests so that you can ensure your test is not affected by libraries you happen to have loaded in your session (the corollary to this is you must explicitly load libraries your tests need from within your tests). The following aspects of state are actively tracked and managed:
 
-### State and Reference Objects
-
-`unitizer` tracks and manages many aspects of state so that it can be reproduced later, and so that your workspace is restored to its original state after running the tests.  The following aspects of state are actively tracked and managed:
-
+* Search path
 * Parent environment (objects in your workspace will not be visible to tests)
 * Random seed
 * Working directory
 
-Additionally, `unitizer` is able to control the search path and global options, though these last two features are disabled by default.  For more details, see `?unitizerState` and the [reproducible tests vignette](unitizer_reproducible_tests.html).
+Additionally, `unitizer` is able to control global options and namespaces, though these last two features are disabled by default.  For more details and on for instructions on how to modify this behavior, see `?unitizerState` and the [reproducible tests vignette](unitizer_reproducible_tests.html).
+
+### Some Base Functions are Modified
+
+`unitizer` traces some functions during `unitize` evaluation.  The functions are
+then untraced `on.exit`, so the only R evaluations that are affected are test
+expressions that are `unitized`.
+
+`library`, `require`, `attach`, and `detach` are traced to implement search path tracking.  The `trace` is only used for internal logging and should be completely transparent to users.
+
+`q` and `quit` are traced to give the user an opportunity to cancel the quit
+action in case they meant to quit from `unitizer` instead of R.  Use Q to
+quit from `unitizer`, as you would from `browser`.
+
+`ls` is overwritten with a specialized version for use in `unitizer`.  You can
+still access the original function with `base::ls`.
+
+See [esoteric topics vignette](unitizer_miscellaneous.html).
+
+### Beware of Force Quitting from `unitizer`
+
+If you interrupt evaluation with CTRL+C (or with ESC in RStudio), or if you
+`browser`/`debug` and quit with 'Q', you will exit `unitizer` with no
+opportunity to save any modifications you made during `unitizer` review.  Make
+sure you quit by typing 'Q' at the `unitizer` prompt.  If you are in `browser`,
+you will need to let the browsed function finish evaluation to return to the
+`unitizer` prompt, and only then quit.
+
+### Tests Pass If They `all.equal` Stored Reference Values
+
+Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](unitizer_tests.html)).
+
+### Reference Objects
 
 Tests that modify objects by reference are not perfectly suited for use with `unitizer`.  The tests will work fine, but `unitizer` will only be able to show you the most recent version of the reference object when you review a test, not what it was like when the test was evaluated.  This is only an issue with reference objects that are modified (e.g. environments, RC objects, `data.table` modified with `:=` or `set*`).
 
@@ -149,8 +189,8 @@ Tests that modify objects by reference are not perfectly suited for use with `un
 
 In order to re-create the feel of the R prompt within `unitizer` we resorted to a fair bit of trickery.  For the most part this should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it.  Here is a non-exhaustive list of some of the tricky things we do:
 
-* `library`, `require`, `attach`, and `detach` are `trace`d during `unitize` evaluation (see [reproducible tests vignette](unitizer_reproducible_tests.html))
-* Each tests is evaluated in its own environment, a child of the previous test's environment; because `R` looks up objects in parent environments it appears that all tests are evaluated in one environment (see [interactive environment vignette](unitizer_interactive_env.html))
+* Some base functions are [modified](#some-base-functions-are-modified)
+* Each tests is evaluated in its own environment, a child of the previous test's environment; because R looks up objects in parent environments it appears that all tests are evaluated in one environment (see [interactive environment vignette](unitizer_interactive_env.html))
 * We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics vignette](unitizer_miscellaneous.html)) at the `unitizer` prompt
 * `traceback` should work when reviewing tests that produce errors, but only because we capture the trace with `sys.calls` and write it to `base::.Traceback` during review
 * We sink `stdout` and `stderr` during test evaluation to capture those streams (see [details on tests vignette](unitizer_tests.html)), though we take care to do so responsibly

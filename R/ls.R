@@ -37,19 +37,22 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
       "of; contact Maintainer"
     )
   }
-  if (!inherits(new.item, "try-error")) {
+  if(!inherits(new.item, "try-error")) {
     if(nrow(new.item@ls))
       ls.lst[["new"]] <- paste0(new.item@ls$names, new.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".new", ".NEW"))
     mods <- c(mods, Filter(nchar, unique(new.item@ls$status)))
     new.inv <- isTRUE(attr(new.item@ls, "invalid"))
   }
-  if (!inherits(ref.item, "try-error")) {
+  if(!inherits(ref.item, "try-error")) {
     if(nrow(ref.item@ls))
       ls.lst[["ref"]] <- paste0(ref.item@ls$names, ref.item@ls$status)
     ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".ref", ".REF"))
     mods <- c(mods, Filter(nchar, unique(ref.item@ls$status)))
     ref.inv <- isTRUE(attr(ref.item@ls, "invalid"))
+  }
+  if(!inherits(ref.item, "try-error") && !inherits(new.item, "try-error")) {
+    ls.lst[["tests"]] <- c(ls.lst[["tests"]], c(".diff", ".DIFF"))
   }
   if(new.inv || ref.inv) {
     warning(
@@ -70,8 +73,9 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
 #' @param stop.env the environment to stop at
 #' @param all.names, same as \code{`ls`}
 #' @param pattern same as \code{`ls`}
-#' @param store.env NULL or environment, if the latter will populate that environment
-#'   with all the objects found between \code{`env`} and \code{`stop.env`}
+#' @param store.env NULL or environment, if the latter will populate that
+#'    environment with all the objects found between \code{`env`} and
+#'    \code{`stop.env`}
 #' @return character or environment depending on \code{`store.env`}
 #' @keywords internal
 
@@ -79,20 +83,27 @@ run_ls <- function(env, stop.env, all.names, pattern, store.env=NULL) {
   ls.res <- character()
   env.list <- list()
   i <- 0L
+  max.envs <- getOption("unitizer.max.env.depth")
+  if(!is.numeric(max.envs) || length(max.envs) != 1L || max.envs < 1)
+    max.envs <- 20000L
+  max.envs <- as.integer(max.envs)
+
   attempt <- try(
-    while(!identical(env, stop.env)) {  # Get list of environments that are relevant
+    # Get list of environments that are relevant
+    while(!identical(env, stop.env)) {
       env.list <- c(env.list, env)
       env <- parent.env(env)
-      if((i <- i + 1L) > 20000)
+      if((i <- i + 1L) > max.envs)
         stop(
-          "Logic error: not finding `stop.env` after 20000 iterations; ",
-          "contact package maintainer if this is an error."
+          "Logic error: not finding `stop.env` after ", max.envs,
+          " iterations; contact package maintainer if this is an error."
         )
   } )
   if(inherits(attempt, "try-error"))
     stop("Specified `stop.env` does not appear to be in parent environments.")
 
-  for(i in rev(seq_along(env.list))) {   # Reverse, so when we copy objects the "youngest" overwrite the "eldest"
+  # Reverse, so when we copy objects the "youngest" overwrite the "eldest"
+  for(i in rev(seq_along(env.list))) {
     ls.res <-
       c(ls.res, ls(envir=env.list[[i]], all.names=all.names, pattern=pattern))
     if(!is.null(store.env)) {
@@ -109,7 +120,6 @@ print.unitizer_ls <- function(x, ...) {
   x.copy <- x
   x <- unclass(x)
   attr(x, "mods") <- NULL
-  if(length(x) == 1L) x <- unlist(x, use.names=FALSE)
   if(is.list(x)) {
     name.match <- c(
       tests="unitizer objects:",
@@ -130,10 +140,6 @@ print.unitizer_ls <- function(x, ...) {
   if(length(attr(x.copy, "mods"))) {
     extra <- c(extra, explain[attr(x.copy, "mods")])
   }
-  if("tests" %in% names(x.copy))
-    extra <- c(
-      extra, "`.new` / `.ref` for test value, `.NEW` / `.REF` for details."
-    )
   if(length(extra)) cat(extra, sep="\n")
   invisible(val)
 }
