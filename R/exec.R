@@ -367,24 +367,18 @@ get_trace <- function(trace.base, trace.new, printed, exp) {
 }
 clean_message <- function(res) {
   # Deal with top level warnings and errors that show up weird in the message
-  # output because they are not truly top level within unitizer
+  # output because they are not truly top level within unitizer; top level
+  # warnings will have the `call` component set to NULL; we compose a regular
+  # expression that contains all the warning / errors and their messages to
+  # match against the output stream to give use the location of the
+  # "Error in .*: " and such
 
   stopifnot(
     is.list(res), is.character(res$message), identical(length(res$message), 1L)
   )
   # this all assumes options(warn=1)
 
-  reg.base <- paste0(
-    "(",
-      "(?:Warning|Error) in ",
-      "(?:",
-        "withVisible\\(.*?\\)?|",
-        "eval\\(expr, envir, enclos\\)|",
-        "eval\\(expression\\(.*?\\)\\)",
-      ")",
-    " :)",
-    "((?:\\n|\\s)*%s)\\n.*"
-  )
+  reg.base <- "(%s in .*? :)((?:\\n|\\s)*%%s)\\n.*"
   if(nchar(res$message)) {
     pats <- lapply(
       res$conditions,
@@ -392,10 +386,14 @@ clean_message <- function(res) {
         token <- NULL
         if(
           is.null(conditionCall(cond)) &&
-          (inherits(cond, "simpleWarning") || inherits(cond, "simpleError"))
+          (
+            (is.warn <- inherits(cond, "simpleWarning")) ||
+            inherits(cond, "simpleError")
+          )
         ) {
+          type <- if(is.warn) "Warning" else "Error"
           sprintf(
-            reg.base,
+            sprintf(reg.base, type),
             gsub(
               "([-\\\\^$*+?.()|[\\]{}])", "\\\\\\1", conditionMessage(cond),
               perl=TRUE
@@ -439,4 +437,3 @@ clean_message <- function(res) {
   } }
   res
 }
-
