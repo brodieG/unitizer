@@ -10,7 +10,7 @@ local({
   # of options in the first place.  Should have been without colors at all
 
   old.opt.outer <- options(
-    unitizer.color=FALSE, width=80L, crayon.enabled=TRUE, 
+    unitizer.color=FALSE, width=80L, crayon.enabled=TRUE,
     diffobj.term.colors=8
   )
   on.exit(options(old.opt.outer))
@@ -54,7 +54,7 @@ local({
 
   test_that("bad seed", {
     expect_equal_to_reference(
-      gsub("Error in eval\\(.*\\) :", "Error in :", txtopt1),
+      unitizer:::clean_eval_exp(txtopt1),
       file.path("helper", "refobjs", "unitize_txtop1.rds")
     )
     # supplied seed not valid int

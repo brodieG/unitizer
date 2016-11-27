@@ -12,7 +12,7 @@ local({
     unitizer:::read_line_set_vals(NULL)
   })
   context("Unitize 2")
-  
+
   update_fastlm(.unitizer.fastlm, "0.1.0")
   devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
@@ -32,7 +32,8 @@ local({
   )
   test_that("unreviewed variations", {
     expect_equal_to_reference(
-      txt0, file.path("helper", "refobjs", "unitize2_unreview.rds")
+      unitizer:::clean_eval_exp(txt0),
+      file.path("helper", "refobjs", "unitize2_unreview.rds")
     )
   } )
   # Test re-eval
