@@ -5,55 +5,80 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-Version: 0.9.0
-Author: Brodie Gaslam
-Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
+Version: 1.3.0
+Authors@R: c(
+    person(
+    "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
+    role=c("aut", "cre")),
+    person(
+    family="R Core Team",
+    email="R-core@r-project.org", role="cph",
+    comment="Copy of source for library / attach / detach")
+    )
 Depends:
-    R (>= 3.1.2)
+    R (>= 3.2.2)
 Imports:
     methods,
-    stats
+    stats,
+    utils,
+    crayon (>= 1.3.2),
+    diffobj (>= 0.1.5.9000)
 VignetteBuilder: knitr
 Suggests:
+    covr,
     knitr,
+    rmarkdown,
     testthat,
     devtools
-License: GPL-3
+License: GPL-3 + file LICENSE
 LazyData: true
+URL: https://github.com/brodieG/unitizer
+BugReports: https://github.com/brodieG/unitizer/issues
 Collate:
+    'asciiml.R'
+    'capture.R'
+    'is.R'
+    'global.R'
+    'change.R'
     'class_unions.R'
     'list.R'
-    'asciiml.R'
-    'text.R'
     'conditions.R'
     'item.R'
     'deparse.R'
+    'text.R'
     'item.sub.R'
     'section.R'
     'test.R'
-    'change.R'
     'unitizer.R'
     'exec.R'
     'prompt.R'
     'browse.struct.R'
     'browse.R'
-    'capture.R'
     'demo.R'
+    'diff.R'
     'faux_prompt.R'
+    'fun.ref.R'
     'get.R'
     'heal.R'
-    'is.R'
     'load.R'
     'ls.R'
     'misc.R'
+    'search.R'
+    'options.R'
     'onload.R'
     'parse.R'
     'rename.R'
     'repairenvs.R'
+    'result.R'
+    'shims.R'
+    'size.R'
+    'state.R'
+    'state.compare.R'
+    'testfuns.R'
     'translate.R'
     'unitize.R'
     'unitize.core.R'
     'unitizer-package.r'
     'unitizer.add.R'
     'upgrade.R'
-    'zeroenv.R'
+RoxygenNote: 5.0.1

@@ -71,16 +71,16 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   \code{c("unitizer", "x")} where x is just a data frame with column 1
 #'   the item index, and column 2 whether it originated from "new" or "ref"
 #'
-#' @seealso \code{\link{updateLs,unitizerItem-method}}
-#' @param x \code{\link{unitizerItems-class}} object
-#' @param y \code{\link{unitizer-class}} object \code{x} was generated from
+#' @seealso \code{updateLs,unitizerItem-method}
+#' @param x \code{unitizerItems} object
+#' @param y \code{unitizer} object \code{x} was generated from
 #' @param ... unused, here for inheriting methods
-#' @return \code{unitizerItems-class}
+#' @return \code{unitizerItems}
+#' @rdname healEnvs
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"),
   valueClass="unitizerItems",
   function(x, y, ...) {
-
     # Now need to reconstruct all the parenthood relationships between items,
     # start by figuring out the indices of all the new and reference items
 
@@ -109,7 +109,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
     # ignored tests are considered gaps as they don't have their own environment
 
     gap.order <- order(items.new.idx, decreasing=TRUE)
-    gaps <- diff(c(items.new.idx[gap.order], 0L)) # note gaps are -ve and there is a gap if gap < -1
+    # note gaps are -ve and there is a gap if gap < -1
+    gaps <- diff(c(items.new.idx[gap.order], 0L))
 
     for(i in seq_along(gaps)) {
       i.org <- gap.order[[i]]
@@ -117,7 +118,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         if(items.new.idx[[i.org]] + gaps[[i]] == 0L) {
           item.env <- x@base.env
         } else if (items.new.idx[[i.org]] + gaps[[i]] < 0) {
+          # nocov start
           stop("Logic Error, gap too low, contact maintainer.")
+          # nocov end
         } else {
           item.env <- y@items.new[[items.new.idx[[i.org]] + gaps[[i]]]]@env
         }
@@ -126,7 +129,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         # during a test, which is not default behavior
 
         for(j in (gaps[[i]] + 1L):-1L) {
-          interim.env <- y@items.new[[items.new.idx[[i.org]] + j]]@env  # assumes continuous ids in items.new
+          # assumes continuous ids in items.new
+          interim.env <- y@items.new[[items.new.idx[[i.org]] + j]]@env
           interim.names <- ls(envir=interim.env, all.names=T)
           lapply(
             interim.names,
@@ -142,12 +146,14 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
           # it's parent env assigned to itself.  Here we had a unit test that
           # relied on this so we don't want to outright forbid it out of lazyness...
 
+          # nocov start
           warning(
             "Logic Problem: would have assigned circular environment ",
             "reference but over-rode that; this message should only show up ",
             "in `unitizer` development tests, if you see it please contact ",
             " maintainer."
           )
+          # nocov end
         } else {
           parent.env(x[items.new.select][[i.org]]@env) <- item.env
         }
@@ -208,18 +214,23 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         item.env <- y@items.new[[tail(matching.new.older, 1L)]]@env
         slot.in[[i]] <- tail(matching.new.older, 1L)
       }
-      if(!repair) {  # once we need to repair, stop doing this otherwise get spammed with errors
+      # once we need to repair, stop doing this otherwise get spammed with
+      # errors
+
+      if(!repair) {
         item.ref.updated <- try(
           updateLs(
             x[items.ref.select][[i]], y@base.env, item.env
         ) )
       }
       if(inherits(item.ref.updated, "try-error")) {
+        # nocov start
         stop(
           "Logic Error: item environment history corrupted in unknown way; ",
           "contact maintainer.  You can attempt to recover your `unitizer` by ",
           "using `repair_envs`."
         )
+        # nocov end
       } else if (identical(item.ref.updated, FALSE)) {  # Corrupted env history, will have to repair
         repair <- TRUE
         item.ref.updated <- x[items.ref.select][[i]]
@@ -253,6 +264,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
     new.ig.assign <- ig_assign(y@items.new)
     ref.ig.assign <- ig_assign(y@items.ref)
 
+    # nocov start
     if(
       any(!items.new.idx %in% new.ig.assign) ||
       any(!items.ref.idx %in% ref.ig.assign)
@@ -261,6 +273,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         "Logic Error: error re-assigning ignored items to actual tests; ",
         "contact maintainer"
       )
+    # nocov end
+
     # For each selected test, add back the ignored ones; for new ones this is
     # easy because we know they are all in the right order already in y@items.new
 
@@ -302,43 +316,45 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
 
     if(repair) {
       items.final <- try(repairEnvs(items.final))
+      # nocov start
       if(inherits(x, "try-error")) {
         stop(
           "Logic Error: unable to repair reference test environments; contact ",
           "maintainer."
       ) }
+      # nocov end
     }
     items.final
 } )
 setGeneric("updateLs", function(x, ...) standardGeneric("updateLs"))
 
-#' Compare The Objects In Environment for Ref vs. New Item
-#'
-#' Makes sure that when we call \code{`ls`} when browsing its environment
-#' the information reflecting any limitations on what objects are actually
-#' available to browse is properly reflected.
-#'
-#' The status of environment objects is tracked in \code{`x@@ls$status`},
-#' where objects of different status are marked like so:
-#' \itemize{
-#'   \item ': object exists in browsing environment, but not the same as
-#'      it was when test was evalaluated
-#'   \item *: object was present during test evaluation but is not
-#'      available in unitizer anymore
-#'   \item **: object was not present during test evaluation, but exists
-#'      in current environment
-#' }
-#'
-#' This could definitely be optimized for new items.  It actually represents
-#' a substantial portion of total evaluation time and does a lot of repetitive
-#' stuff that could easily be avoided if we put some work into it.
-#'
-#' @keywords internal
-#' @param x the \code{`\link{unitizerItem-class}`}
-#' @param base.env the last environment to search through for objects
-#' @return \code{`\link{unitizerItem-class}`} object with updated
-#'   \code{`ls`} field and environment reference parent, or FALSE if the item
-#'   has a corrupted environment history
+# Compare The Objects In Environment for Ref vs. New Item
+#
+# Makes sure that when we call \code{ls} when browsing its environment
+# the information reflecting any limitations on what objects are actually
+# available to browse is properly reflected.
+#
+# The status of environment objects is tracked in \code{x@@ls$status},
+# where objects of different status are marked like so:
+# \itemize{
+#   \item ': object exists in browsing environment, but not the same as
+#      it was when test was evalaluated
+#   \item *: object was present during test evaluation but is not
+#      available in unitizer anymore
+#   \item **: object was not present during test evaluation, but exists
+#      in current environment
+# }
+#
+# This could definitely be optimized for new items.  It actually represents
+# a substantial portion of total evaluation time and does a lot of repetitive
+# stuff that could easily be avoided if we put some work into it.
+#
+# @keywords internal
+# @param x the \code{\link{unitizerItem-class}}
+# @param base.env the last environment to search through for objects
+# @return \code{\link{unitizerItem-class}} object with updated
+#   \code{ls} field and environment reference parent, or FALSE if the item
+#   has a corrupted environment history
 
 setMethod("updateLs", "unitizerItem",
   function(x, base.env, new.par.env=NULL,  ...) {

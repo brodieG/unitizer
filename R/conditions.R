@@ -1,18 +1,50 @@
+#' Generates a Dummy Item For Use in Examples
+#'
+#' The only purpose of this function is to create a \code{unitizerItem} for use
+#' by examples.
+#'
+#' @export
+#' @return unitizerItem object
+
+mock_item <- function() {
+  new(
+    "unitizerItem", call=quote(fun()), value=42,
+    conditions=new(
+      "conditionList",
+      .items=list(
+        simpleWarning("hello", call=quote(fun())),
+        simpleWarning("goodbye", call=quote(fun()))
+  ) ) )
+}
+
 #' Contains A List of Conditions
 #'
-#' Used by \code{`unitizer`} to capture conditions emitted by tests.
+#' Condition lists are S4 classes that contain \code{\link{condition}} objects
+#' emitted by \code{unitizer} tests.  Condition lists will typically be
+#' accessible via the \code{.NEW} and \code{.REF} \code{unitizer} test objects.
+#' You can access individual conditions using \code{[[} (see examples), and for
+#' the most part you can treat them as you would an S3 list containing
+#' conditions.
 #'
-#' When submitting custom comparison functions with:
+#' There are \code{show} and \code{all.equal} methods implemented for them, the
+#' latter of which is used to compare conditions across tests.  If you wish to
+#' implement a custom comparison function via \code{\link{unitizer_sect}}, your
+#' function will need to compare \code{conditionList} objects.
 #'
-#' \code{`unitizer_sect(..., compare=unitizerItemTestsFuns(...))`}
+#' @note Implemented as an S4 class to avoid \code{setOldClass} and related
+#' compatibility issues; the \code{conditionList} class contains
+#' \code{\link{unitizerList}}.
 #'
-#' functions that compare conditions must compare \code{`conditionList`} objects
-#'
-#' @note Implemented as an S4 class to avoid \code{`setOldClass`} and apparent
-#' compatibility issues.
-#'
-#' @seealso \code{`\link{unitizer_sect}`}
+#' @aliases conditionList
+#' @slot .items list of conditions
+#' @seealso \code{\link{unitizer_sect}}, \code{\link{unitizerList}}
 #' @export
+#' @examples
+#' .NEW <- mock_item()  # .NEW is normally available at unitizer prompt
+#' ## Access the first condition from the new test evaluation
+#' .NEW$conditions[[1L]]
+#' ## loop through all conditions
+#' for(i in seq_along(.NEW$conditions)) .NEW$conditions[[i]]
 
 setClass("conditionList", contains="unitizerList")
 
@@ -24,12 +56,12 @@ setClass("conditionList", contains="unitizerList")
 #' attribute on each conditions which indicate that the condition occurred
 #' in the print/show methods as applied to the result of a call.
 #'
-#' @keywords internal
 #' @export
 #' @param target the list of conditions that we are matching against
 #' @param current the list of conditions we are checking
-#' @return TRUE if the lists of conditions are equivalent, an character vector explaining
-#'   why they are not otherwise
+#' @param ... provided for compatibility with generic
+#' @return TRUE if the lists of conditions are equivalent, a character
+#'   vector explaining why they are not otherwise
 
 setMethod("all.equal", "conditionList",
   function(target, current, ...) {
@@ -64,13 +96,20 @@ setMethod("all.equal", "conditionList",
     }
     if(err.len) return(err.msg)
 } )
+# So that S3 dispatch works
+#' @export
+
+all.equal.conditionList <- function(target, current, ...)
+  all.equal(target, current, ...)
+
 #' Compare Conditions
 #'
-#' @keywords internal
 #' @export
 #' @param target a condition
 #' @param current another condition to compare
-#' @return TRUE if conditions match, character vector describing differences otherwise
+#' @param ... provided for compatibility with generic
+#' @return TRUE if conditions match, character vector describing differences
+#'   otherwise
 
 all.equal.condition <- function(target, current, ...) {
   if(!inherits(target, "condition") || !inherits(current, "condition"))
@@ -79,8 +118,10 @@ all.equal.condition <- function(target, current, ...) {
   target.printed <- isTRUE(attr(target, "unitizer.printed"))
   current.printed <- isTRUE(attr(current, "unitizer.printed"))
 
-  if(!is.null(attr(target, "unitizer.printed"))) attr(target, "unitizer.printed") <- NULL
-  if(!is.null(attr(current, "unitizer.printed"))) attr(current, "unitizer.printed") <- NULL
+  if(!is.null(attr(target, "unitizer.printed")))
+    attr(target, "unitizer.printed") <- NULL
+  if(!is.null(attr(current, "unitizer.printed")))
+    attr(current, "unitizer.printed") <- NULL
 
   err.msg <- character()
   if(
@@ -114,7 +155,6 @@ all.equal.condition <- function(target, current, ...) {
 }
 #' Prints A list of Conditions
 #'
-#' @keywords internal
 #' @export
 #' @param object a \code{`conditionList`} object (list of conditions)
 #' @return object, invisibly
@@ -124,7 +164,7 @@ setMethod("show", "conditionList",
     width=getOption("width")
     cond.len <- length(object)
     if(!cond.len) {
-      cat("Empty condition list\n")
+      word_cat("Empty condition list")
       return(invisible(object))
     } else {
       word_cat(
@@ -135,8 +175,8 @@ setMethod("show", "conditionList",
     cond.calls <- vapply(
       as.list(object), function(x) !is.null(conditionCall(x)), logical(1L)
     )
+    nums <- paste0(format(seq_along(object)), ". ")
     out <- paste0(
-      format(seq_along(object)), ": ",
       ifelse(
         print.show <- vapply(
           as.list(object),
@@ -147,7 +187,8 @@ setMethod("show", "conditionList",
       vapply(as.list(object), get_condition_type, character(1L)),
       ifelse(cond.calls, " in ", "")
     )
-    desc.chars <- max(width - nchar(out), 20L)
+    desc.chars <- max(width - max(nchar(nums)), 20L)
+
     cond.detail <- vapply(
       as.list(object), FUN.VALUE=character(1L),
       function(y) {
@@ -157,23 +198,39 @@ setMethod("show", "conditionList",
           paste0(deparse(conditionCall(y))[[1L]], " : ", conditionMessage(y))
         }
     } )
-    out <- paste0(out, substr(cond.detail, 1, desc.chars))
+    out.w <- word_wrap(paste0(out, cond.detail), width=desc.chars, unlist=FALSE)
+    out.lens <- vapply(out.w, length, integer(1L))
+    if(!all(out.lens))
+      stop("Logic Error: empty condition data; contact maintainer.")
+
+    nums.pad <- Map(
+      function(x, y) c(x, rep(paste0(rep(" ", nchar(x)), collapse=""), y - 1L)),
+      nums, out.lens
+    )
+    out.fin <- unlist(Map(paste0, nums.pad, out.w))
+
     if(any(print.show)) {
-      out <- c(out, "[print] means condition was issued in print/show method rather than in actual evaluation.")
-    }
-    out <- c(out)
-    cat(out, sep="\n")
-    cat("Access a condition directly with `[[` (e.g. `conditions[[1L]]`)\n")
+      out.fin <- c(
+        out.fin,
+        word_wrap(
+          cc(
+            "\n[print] means condition was issued by a print or show method ",
+            "for an auto-printed result."
+          ),
+          width=width
+    ) ) }
+    out.fin <- c(out.fin)
+    cat(out.fin, sep="\n")
     return(invisible(object))
   }
 )
-#' Extracts Condition Type From Condition Classes
-#'
-#' Type (e.g. Error, Warning), is taken to be the second to last class.
-#'
-#' @keywords internal
-#' @param x a condition
-#' @return character 1 length the type of condition
+# Extracts Condition Type From Condition Classes
+#
+# Type (e.g. Error, Warning), is taken to be the second to last class.
+#
+# @keywords internal
+# @param x a condition
+# @return character 1 length the type of condition
 
 get_condition_type <- function(x) {
   if(!inherits(x, "condition")) stop("Argument `x` must be a condition")

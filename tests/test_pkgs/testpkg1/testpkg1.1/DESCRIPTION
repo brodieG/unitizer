@@ -1,0 +1,11 @@
+Package: testpkg1
+Title: Test Package for Unitizer
+Description: Package used for testing unitizer functionality.
+Version: 0.0.1
+Author: Brodie Gaslam
+Maintainer: Brodie Gaslam <brodie.gaslam@yahoo.com>
+Suggests:
+    unitizer
+License: GPL-3
+LazyData: true
+RoxygenNote: 5.0.1

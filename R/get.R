@@ -1,7 +1,7 @@
 #' Set and Retrieve Store Contents
 #'
 #' These functions are not used directly; rather, they are used by
-#' \code{`\link{unitize}`} to get and set the \code{unitizer} objects.
+#' \code{\link{unitize}} to get and set the \code{unitizer} objects.
 #' You should only need to understand these functions if you are
 #' looking to implement a special storage mechanism for the \code{unitizer}
 #' objects.
@@ -11,11 +11,11 @@
 #'
 #' You may write your own methods for special storage situations (
 #' e.g SQL database, ftp server, etc) with the understanding that the
-#' getting method may only accept one argument, the \code{`store.id`}, and
-#' the setting method only two arguments, the \code{`store.id`} and the
+#' getting method may only accept one argument, the \code{store.id}, and
+#' the setting method only two arguments, the \code{store.id} and the
 #' \code{unitizer}.
 #'
-#' S3 dispatch will be on \code{`store.id`}, and \code{`store.id`} may
+#' S3 dispatch will be on \code{store.id}, and \code{store.id} may
 #' be any R object that identifies the unitizer.  For example, a potential
 #' SQL implementation where the unitizers get stored in blobs may look
 #' like so:
@@ -38,28 +38,33 @@
 #' produce a human readable identifying string.
 #'
 #' For inspirations for the bodies of the _store functions look at the source
-#' code for \code{`unitizer:::get_unitizer.character`} and \code{`unitizer:::set_unitizer.character`}.
-#' Expectations for the functions are as follows.  \code{`get_unitizer`} must:
+#' code for \code{unitizer:::get_unitizer.character} and
+#' \code{unitizer:::set_unitizer.character}.
+#' Expectations for the functions are as follows.  \code{get_unitizer} must:
 #' \itemize{
-#'   \item return a \code{`\link{unitizer-class}`} object if \code{`store.id`} exists and contains a valid object
-#'   \item return FALSE if the object doesn't exist (e.g. first time run-through, so reference copy doesn't exist yet)
-#'   \item \code{`\link{stop}`} on error
+#'   \item return a \code{unitizer-class} object if \code{store.id}
+#'      exists and contains a valid object
+#'   \item return FALSE if the object doesn't exist (e.g. first time
+#'     run-through, so reference copy doesn't exist yet)
+#'   \item \code{\link{stop}} on error
 #' }
-#' \code{`set_unitizer`} must:
+#' \code{set_unitizer} must:
 #' \itemize{
 #'   \item return TRUE on success
-#'   \item \code{`\link{stop}`} on error
+#'   \item \code{\link{stop}} on error
 #' }
 #'
 #' @aliases get_unitizer
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
-#' @param unitizer a \code{`\link{unitizer-class}`} object containing the store data
+#' @param unitizer a \code{unitizer-class} object containing the store
+#'   data
 #' @return
 #'   \itemize{
 #'     \item set_unitizer TRUE if unitizer storing worked, error otherwise
-#'     \item get_unitizer a \code{`\link{unitizer-class}`} object, FALSE
-#'       if \code{`store.id`} doesn't exist yet , or error otherwise
+#'     \item get_unitizer a \code{unitizer-class} object, FALSE
+#'       if \code{store.id} doesn't exist yet, or error otherwise; note that
+#'       the \code{unitizer_results} method returns a list
 #'   }
 
 set_unitizer <- function(store.id, unitizer) {
@@ -82,7 +87,10 @@ set_unitizer.character <- function(store.id, unitizer) {
   new.file <- FALSE
   if(!file.exists(store.id)) {
     if(!isTRUE(dir.create(store.id)))
-      stop("Could not create `store.id`; make sure it is a valid file name; see warning for details")
+      stop(
+        "Could not create `store.id`; make sure it is a valid file name; see ",
+        "warning for details"
+      )
   } else if (!file_test("-d", store.id)) {
     stop("'", store.id, "' is not a directory.")
   }
@@ -97,6 +105,7 @@ set_unitizer.character <- function(store.id, unitizer) {
 get_unitizer <- function(store.id) {
   UseMethod("get_unitizer")
 }
+#' @rdname set_unitizer
 #' @export
 
 get_unitizer.character <- function(store.id) {
@@ -138,10 +147,30 @@ get_unitizer.character <- function(store.id) {
   # } }
   unitizer
 }
+#' @rdname set_unitizer
 #' @export
 
 get_unitizer.default <- function(store.id) {
   stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
+}
+#' @rdname set_unitizer
+#' @export
+
+get_unitizer.unitizer_result <- function(store.id) {
+  store.id <- attr(store.id, "store.id")
+  get_unitizer(store.id)
+}
+# used purely for testing, but has to be exported
+#' @export
+
+get_unitizer.unitizer_error_store <- function(store.id)
+  structure("error", class="unitizer_store_error")
+
+#' @rdname set_unitizer
+#' @export
+
+get_unitizer.unitizer_results <- function(store.id) {
+  lapply(store.id, get_unitizer)
 }
 
 #' Infers Possible Unitizer Path From Context
@@ -155,9 +184,9 @@ get_unitizer.default <- function(store.id) {
 #' here is for the \code{"character"} method which is what \code{unitizer} uses
 #' by default.
 #'
-#' If \code{name} is a directory that appears to be an R package (contains
+#' If \code{store.id} is a directory that appears to be an R package (contains
 #' DESCRIPTION, an R folder, a tests folder), will look for candidate files in
-#' \code{file.path(name, "tests", "unitizer")}, starting with files with the
+#' \code{file.path(store.id, "tests", "unitizer")}, starting with files with the
 #' same name as the package (ending in ".R" or ".unitizer" if \code{type} is
 #' \code{"f"} or \code{"u"} respectively), or if there is only one file, that
 #' file, or if there are multiple candidate files and in interactive mode
@@ -174,13 +203,20 @@ get_unitizer.default <- function(store.id) {
 #' Inference assumes your files end in \code{".R"} for code files and
 #' \code{".unitizer"} for \code{unitizer} data directories.
 #'
+#' If \code{store.id} is NULL, the default \code{infer_unitizer_location} method
+#' will attempt to find the top level package directory and then call the
+#' character method with that directory as \code{store.id}.  If the parent
+#' package directory cannot be found, then the character method is called with
+#' the current directory as the argument.
+#'
 #' @export
 #' @seealso \code{\link{get_unitizer}} for discussion of alternate
 #'   \code{store.id} objects
-#' @param store.id character(1L) file or directory name, the file name portion (i.e
-#'   after the last slash) may be partially specified
-#' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test file,
-#'   \code{"d"} for a directory, \code{"u"} for a \code{unitizer} directory
+#' @param store.id character(1L) file or directory name, the file name portion
+#'   (i.e after the last slash) may be partially specified
+#' @param type character(1L) in \code{c("f", "u", "d")}, \code{"f"} for test
+#'   file, \code{"d"} for a directory, \code{"u"} for a \code{unitizer}
+#'   directory
 #' @param interactive.mode logical(1L) whether to allow user input to resolve
 #'   ambiguities
 #' @param ... arguments to pass on to other methods
@@ -194,7 +230,15 @@ infer_unitizer_location <- function(store.id, ...)
 #' @export
 
 infer_unitizer_location.default <- function(store.id, ...) {
-  if(missing(store.id)) return(infer_unitizer_location.character(".", ...))
+  if(is.null(store.id)) {
+    def.dir <- if(
+      length(pkg.dir <- get_package_dir(".")) &&
+      file_test("-d", file.path(pkg.dir, "tests", "unitizer"))
+    ) {
+      file.path(pkg.dir, "tests", "unitizer")
+    } else "."
+    return(infer_unitizer_location.character(def.dir, ...))
+  }
   store.id
 }
 
@@ -234,7 +278,9 @@ infer_unitizer_location.character <- function(
     type.name <- "test directory"
   }
   inf_msg <- function(name)
-    word_msg("Inferred", type.name, "location:", relativize_path(name))
+    meta_word_msg(
+      "Inferred", type.name, "location:", relativize_path(name), sep=" "
+    )
 
   # Is a directory, check if a package and pick tests/unitizer as the directory
 
@@ -245,7 +291,7 @@ infer_unitizer_location.character <- function(
     dir.store.id <- store.id
     file.store.id <- NULL
   }
-  dir.store.id <- normalizePath(dir.store.id)
+  dir.store.id <- normalize_path(dir.store.id)
   at.package.dir <-
     file_test("-d", dir.store.id) && isTRUE(is_package_dir(dir.store.id))
 
@@ -270,7 +316,8 @@ infer_unitizer_location.character <- function(
       inf_msg(fp)
       return(fp)
     }
-    dir.store.id.proc <- test.base           # use tests/unitizer as starting point for any package
+    # use tests/unitizer as starting point for any package
+    dir.store.id.proc <- test.base
   } else {
     dir.store.id.proc <- dir.store.id
   }
@@ -303,8 +350,8 @@ infer_unitizer_location.character <- function(
       paste0(
         " from \"",
         sub(
-          paste0("^", normalizePath(dir.store.id), "/?"), "",
-          normalizePath(dir.store.id.proc)
+          paste0("^", normalize_path(dir.store.id), "/?"), "",
+          normalize_path(dir.store.id.proc)
         ),
         "\""
       )
@@ -319,7 +366,7 @@ infer_unitizer_location.character <- function(
       "Pick a matching file",
       valid.opts=c("Type a number"),
       exit.condition=exit_fun, valid.vals=valid,
-      hist.con=NULL
+      hist.con=NULL, global=NULL, browse.env=.GlobalEnv
     )
     if(identical(pick, "Q")) {
       message("No file selected")
@@ -340,7 +387,7 @@ infer_unitizer_location.character <- function(
     return(store.id)
   } else if(!selection)
     stop(
-      "Logic Error: should never have non.interative zero selection; ", "
+      "Logic Error: should never have non.interactive zero selection; ", "
       contact maintainer."
     )
   # Return
@@ -349,127 +396,169 @@ infer_unitizer_location.character <- function(
   if(cand.len == 1L) inf_msg(file.final)
   file.final
 }
-#' Check Whether a Directory Likey Contains An R Package
-#'
-#' Approximate check based on DESCRIPTION file and directory structure.
-#'
-#' @keywords internal
-#' @param name a directory to check for package-ness
-#' @param has.tests whether to require that the package have tests to qualify
-#' @return TRUE if criteria met, character vector explaining first failure
-#'   otherwise
+# Check Whether Directories Are Likely R Package Source Directories
+#
+# Heuristic check to see whether a directory contains what likely could be
+# built into an R package.  This is based on the DESCRIPTION file and directory
+# structure.
+#
+# \code{is_package_dir} checks whether a directory is the top level directory
+# of a package.
+#
+# \code{get_package_dir} checks whether a directory or any of its parents is the
+# top level directory of a package, and returns the top level package directory
+# or character(0L) if not
+#
+# @keywords internal
+# @param name a directory to check for package-ness
+# @param has.tests whether to require that the package have tests to qualify
+# @param DESCRIPTION the DESCRIPTION file path
+# @return TRUE if criteria met, character vector explaining first failure
+#   otherwise
 
 is_package_dir <- function(name, has.tests=FALSE) {
-  if(!file_test("-d", name)) stop("Argument `name` must be a directory")
+  stopifnot(is.character(name), is.TF(has.tests))
+  if(!is.character(name)) return("not character so cannot be a directory")
+  if(!file_test("-d", name)) return("not an existing directory")
+  pkg.name <- try(get_package_name(name), silent=TRUE)
+  if(inherits(pkg.name, "try-error"))
+    return(conditionMessage(attr(pkg.name, "condition")))
 
-  # DESCRIPTION file matches directory?
-
-  if(!file_test("-f", file.path(name, "DESCRIPTION")))
-    return("No DESCRIPTION file")
-  desc <- try(readLines(file.path(name, "DESCRIPTION")))
-  if(inherits(desc, "try-error"))
-    return("Unable to read DESCRIPTION file")
-
-  pkg.pat <- "^\\s*package:\\s+(\\S+)\\s*$"
-  desc.pkg <- grep(pkg.pat, desc, value=T, perl=T, ignore.case=TRUE)
-  if(length(desc.pkg) != 1L)
-    return(
-      paste0(
-        "DESCRIPTION file ",
-        if(length(desc.pkg)) "had more than one" else "did not have a",
-        " package name entry"
-    ) )
-  desc.pkg.name <- sub(pkg.pat, "\\1", desc.pkg, perl=T, ignore.case=TRUE)
-  dir.name <- if(identical(dirname(name), ".")) name else basename(name)
-
-  if(!identical(tolower(dir.name), tolower(desc.pkg.name)))
-    return(
-      paste0(
-        "DESCRIPTION package name (", desc.pkg.name,
-        ") does not match dir name (", dir.name, ")"
-    ) )
   # Has requisite directories?
 
   if(!file_test("-d", file.path(name, "R")))
-    return("Missing 'R' directory")
+    return("missing 'R' directory")
   if(has.tests && !file_test("-d", file.path(name, "tests")))
-    return("Missing 'tests' directory")
+    return("missing 'tests' directory")
 
   # Woohoo
 
   TRUE
 }
-#' Check Whether a Directory as a Unitizer Data Directory
-#'
-#' Just checks that it \emph{could} be a data directory, the test ultimately is
-#' to attempt a \code{\link{get_unitizer}} call and see if we actually resurrect
-#' a working \code{unitizer}
-#'
-#' @keywords internal
-#' @param dir character(1L) directory to check
-#' @return logical(1L)
+get_package_dir <- function(name=getwd(), has.tests=FALSE) {
+  stopifnot(
+    is.character(name), !any(is.na(name)), is.TF(has.tests),
+    as.logical(length(name))
+  )
+  name <- normalize_path(name, mustWork=FALSE)
+  if(length(name) > 1L) name <- attr(unique_path(name), "common_dir")
+  is.package <- FALSE
+  prev.dir <- par.dir <- name
+
+  repeat {
+    if(isTRUE(is_package_dir(par.dir, has.tests))) {
+      return(par.dir)
+    } else if (isTRUE(is_rcmdcheck_dir(par.dir, has.tests))) {
+      return(get_rcmdcheck_dir(par.dir, has.tests))
+    }
+    if(nchar(par.dir <- dirname(prev.dir)) >= nchar(prev.dir)) break
+    prev.dir <- par.dir
+  }
+  character(0L)
+}
+# Checks Whether a Directory Could be of the Type Used by R CMD check
+
+is_rcmdcheck_dir <- function(name, has.tests=FALSE) {
+  stopifnot(is.chr1(name), is.TF(has.tests))
+  dir <- basename(name)
+  if(grepl(".*\\.Rcheck", dir)) {
+    pkg.name <- sub("(.*)\\.Rcheck", "\\1", dir)
+    if(identical(pkg.name, dir))
+      stop(
+        "Logic error; failed extracting package name from Rcheck dir; ",
+        "contact maintianer"
+      )
+    if(isTRUE(is.pd <- is_package_dir(file.path(name, pkg.name), has.tests))) {
+      return(TRUE)
+    } else return(is.pd)
+  } else return("not a .Rcheck directory")
+}
+# Extracts the Source Directory from an R CMD check directory
+
+get_rcmdcheck_dir <- function(name, has.tests=FALSE) {
+  stopifnot(is.chr1(name), is.TF(has.tests))
+  if(isTRUE(chk.dir <- is_rcmdcheck_dir(name, has.tests))) {
+    pkg.name <- sub("(.*)\\.Rcheck", "\\1", basename(name))
+    return(file.path(name, pkg.name))
+  } else stop("Logic Error: not an R CMD check dir")
+}
+# Pulls Out Package Name from DESCRIPTION File
+#
+# Dir must be a package directory, check with is_package_dir first
+
+get_package_name <- function(pkg.dir) {
+  stopifnot(is.chr1(pkg.dir))
+
+  DESCRIPTION <- file.path(pkg.dir, "DESCRIPTION")
+  if(!file_test("-f", DESCRIPTION)) stop("No DESCRIPTION file")
+  desc <- try(readLines(DESCRIPTION))
+  if(inherits(desc, "try-error")) stop("Unable to read DESCRIPTION file")
+
+  pkg.pat <- "^\\s*package:\\s+(\\S+)\\s*$"
+  desc.pkg <- grep(pkg.pat, desc, value=T, perl=T, ignore.case=TRUE)
+  if(length(desc.pkg) != 1L)
+    stop(
+      "DESCRIPTION file ",
+      if(length(desc.pkg)) "had more than one" else "did not have a",
+      " package name entry"
+    )
+  desc.pkg.name <- sub(pkg.pat, "\\1", desc.pkg, perl=T, ignore.case=TRUE)
+  return(desc.pkg.name)
+}
+# Check Whether a Directory as a Unitizer Data Directory
+#
+# Just checks that it \emph{could} be a data directory, the test ultimately is
+# to attempt a \code{\link{get_unitizer}} call and see if we actually resurrect
+# a working \code{unitizer}
+#
+# @keywords internal
+# @param dir character(1L) directory to check
+# @return logical(1L)
 
 is_unitizer_dir <- function(dir)
   is.character(dir) && length(dir) == 1L && !is.na(dir) &&
   file_test("-d", dir) && file_test("-f", file.path(dir, "data.rds"))
 
-#' Preload Objects Generated By Files Into An Environment
-#'
-#' @keywords internal
-#' @param source the directory of files to load, or a list to turn into
-#'   an environment
-#' @param env.par the parent of the environment to source the files into
-#' @return an environment containing the objects created by the sourcing of the
-#'   files in \code{source}
+# Run \code{sys.source} On All Provided Files
+#
+# Sorts them before sourcing on the paths as specified in \code{files}, returns
+# an environment containing any objects created by the code in the source
+# files.  If a file is a directory, the files in that directory are sourced,
+# though only top level files in that directory are sourced.
+#
+# @keywords internal
+# @param files character() pointing to files or directories
+# @param env an environment
+# @return environment, or a character message explaining why it failed
 
-pre_load <- function(source, env.par=.GlobalEnv) {
-  if(is.list(source)) return(list2env(source, parent=env.par))
-  if(!is.character(source) || length(source) != 1L || is.na(source))
-    stop("Argument `source` must be a list or character(1L) and not NA")
-  if(file.exists(source) && !file_test("-d", source))
-    stop("Argument `source` must be a directory")
-  if(!is.environment(env.par)) stop("Argument `env.par` must be an environment")
+source_files <- function(files, env.par, pattern="\\.[rR]$") {
+  stopifnot(
+    is.character(files),
+    is.chr1(pattern),
+    !inherits(try(grepl(pattern, "a"), silent=TRUE), "try-error"),
+    is.environment(env.par)
+  )
+  file.norm <- try(normalize_path(files, mustWork=TRUE))
+  if(inherits(file.norm, "try-error"))
+    return("Unable to normalize file paths; see previous error")
 
   env <- new.env(parent=env.par)
-  file.list <- sort(dir(source, full.names=TRUE))
 
-  source_many(file.list, env)
-  env
-}
-#' Run \code{sys.source} on a list of files
-#'
-#' Sorts them before sourcing on the paths as specified in \code{files}
-#'
-#' @keywords internal
-#' @param files character()
-#' @param env an environment
-#' @param allow.side.effects checks for changes to \code{options} or working
-#'   directory, and fails if there are any (though note that original values
-#'   are not restored); should probably add this check to main \code{unitizer}?
-#' @return NULL, parameter \code{env} is modified by reference (note this
-#'   happens even if we hit an error before getting through all the files)
-
-source_many <- function(files, env, allow.side.effects=FALSE) {
-  if(!is.character(files)) stop("Argument `files` must be character")
-  if(!is.environment(env)) stop("Argument `env` must be an environment")
-
-  file.norm <- try(normalizePath(sort(files), mustWork=TRUE))
-  if(inherits(file.norm, "try-error"))
-    stop("Unable to normalize file paths; see previous error")
-
-  base.opts <- options()
-  base.wd <- getwd()
-
-  for(i in files) {
-    fail <- inherits(try(sys.source(i, env)), "try-error")
-    # if(!identical(base.opts, new.opts <- options()))
-    #   stop("Options changed by sourcing file `", i, "`, unable to proceed")
-    # if(!identical(base.wd, getwd()))
-    #   stop(
-    #     "Working directory changed by sourcing file `", i,
-    #     "`, unable to proceed (was: '", base.wd, "')"
-    #   )
-    if(fail) stop("Error sourcing file `", i, "`, see above for details")
+  for(i in sort(file.norm)) {
+    sub.files <- if(file_test("-d", i)) {
+      dir.cont <- try(
+        list.files(
+          i, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
+      ) )
+      if(inherits(dir.cont, "try-error"))
+        return("Unable to list file contents of directory; see previous error")
+      dir.cont
+    } else i
+    for(j in sub.files) {
+      fail <- inherits(try(sys.source(j, env)), "try-error")
+      if(fail)
+        return(paste0("Error sourcing file `", j, "`, see above for details"))
+    }
   }
-  NULL
+  env
 }

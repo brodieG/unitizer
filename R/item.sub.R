@@ -11,9 +11,9 @@ NULL
 
 unitizerItemDataSlots <- slotNames("unitizerItemData")  # cache this for validity
 
-#' Virtual Class To Enforce Slots on Subclasses
-#'
-#' @keywords internal
+# Virtual Class To Enforce Slots on Subclasses
+#
+# @keywords internal
 
 setClass("unitizerItemTests", contains="VIRTUAL",
   validity=function(object) {
@@ -22,22 +22,20 @@ setClass("unitizerItemTests", contains="VIRTUAL",
     TRUE
   }
 )
-#' Validates Functions for Use in New vs. Reference Object Comparison
-#' @keywords internal
+# Validates Functions for Use in New vs. Reference Object Comparison
+# @keywords internal
 
 setClass(
   "unitizerItemTestFun",
-  representation(fun="function", fun.name="character"),
+  slots=c(fun="function", fun.name="character"),
+  prototype=list(fun=all.equal),
   validity=function(object) {
-    frms <- formals(object@fun)
-    frms <- frms[!(names(frms) %in% "...")]
-    if(
-      length(frms) < 2L |
-      any(vapply(head(frms, 2L), function(frm) !(is.symbol(frm) && nchar(as.character(frm)) == 0L), logical(1L))) |
-      any(vapply(tail(frms, -2L), function(frm) (is.symbol(frm) && nchar(as.character(frm)) == 0L), logical(1L)))
-    ) {
-      return("slot `@fun` must be a function with the first two paramaters non-optional and all others optional.")
-    }
+    if(!isTRUE(err <- is.two_arg_fun(object@fun)))
+      return(
+        cc(
+         "Slot `@fun` must be a function with the first two parameters ",
+         "non-optional and all others optional (", err, ")."
+      ) )
     TRUE
   }
 )
@@ -51,18 +49,20 @@ setMethod("initialize", "unitizerItemTestFun", function(.Object, ...) {
   return(callNextMethod())
 } )
 
-#' Stores Errors from Evaluating New vs. Ref Comparisons
-#'
-#' There various nested objects involved:
-#' \itemize{
-#'   \item \code{`unitizerItemTestError`} contains the error produced from a comparison
-#'   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot of an item
-#'   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the
-#'      \code{`\link{unitizer-class}`} object
-#' }
-#'
-#' @aliases unitizerItemsTestsErrors-class, unitizerItemTestsErrors-class
-#' @keywords internal
+# Stores Errors from Evaluating New vs. Ref Comparisons
+#
+# There various nested objects involved:
+# \itemize{
+#   \item \code{`unitizerItemTestError`} contains the error produced from a
+#     comparison
+#   \item \code{`unitizerItemTestsErrors`} aggregates the errors for each slot
+#     of an item
+#   \item \code{`unitizerItemsTestsErrors`} aggregates all the errors for the
+#     \code{`\link{unitizer-class}`} object
+# }
+#
+# @aliases unitizerItemsTestsErrors-class, unitizerItemTestsErrors-class
+# @keywords internal
 
 setClass("unitizerItemTestError",
   representation(
@@ -81,10 +81,14 @@ setClass("unitizerItemTestsErrors",
     conditions="unitizerItemTestError",
     output="unitizerItemTestError",
     message="unitizerItemTestError",
-    aborted="unitizerItemTestError"
+    aborted="unitizerItemTestError",
+    .fail.context="numericOrNULL" # for passing around options for
 ) )
-unitizerItemTestsErrorsSlots <- slotNames("unitizerItemTestsErrors")
-if(!identical(unitizerItemDataSlots, unitizerItemTestsErrorsSlots)) { # used to do this with virtual class, but slow
+unitizerItemTestsErrorsSlots <-
+  grep("^[^.]", slotNames("unitizerItemTestsErrors"), value=TRUE)
+
+# used to do this with virtual class, but slow
+if(!identical(unitizerItemDataSlots, unitizerItemTestsErrorsSlots)) {
   stop(
     "Install error: `unitizerItemData` and `unitizerItemTestsErrors` slots ",
     "not identical; contact maintainer."
@@ -102,119 +106,270 @@ setMethod("initialize", "unitizerItemTestsErrors",
       } else dots[[i]]
     .Object
 } )
+## Track Diff And Comparison Error Text
+##
+## Store whether to show the diff or not in `show.diff`, and the alternate
+## text to show in that circumstances in `txt.alt`.
+
+setClass("unitizerItemTestsErrorsDiff",
+  slots=c(
+    diff="DiffOrNULL",
+    txt="character",
+    txt.alt="character",
+    err="logical",
+    show.diff="logical"
+  ),
+  prototype=list(show.diff=TRUE)
+)
+setClassUnion(
+  "unitizerItemTestsErrorsDiffOrNULL", c("unitizerItemTestsErrorsDiff", "NULL")
+)
+# Hold diffs for display; only used when a test actually fails and is queued up
+# for review by user
+
+setClass("unitizerItemTestsErrorsDiffs",
+  slots=c(
+    value="unitizerItemTestsErrorsDiffOrNULL",
+    conditions="unitizerItemTestsErrorsDiffOrNULL",
+    output="unitizerItemTestsErrorsDiffOrNULL",
+    message="unitizerItemTestsErrorsDiffOrNULL",
+    aborted="unitizerItemTestsErrorsDiffOrNULL",
+    state="unitizerItemTestsErrorsDiffOrNULL"
+) )
+if("state" %in% unitizerItemDataSlots)
+  stop(
+    "Install error: `unitizerItemData` may not contain a \"state\" slot; ",
+    "contact maintainer."
+  )
+if(
+  !identical(
+    c(unitizerItemDataSlots, "state"),
+    slotNames("unitizerItemTestsErrorsDiffs")
+  )
+){
+  stop(
+    "Install error: `unitizerItemData` and `unitizerItemTestsErrorsDiffs` ",
+    "slots not identical; contact maintainer."
+  )
+}
+#' Subsetting Methods for unitizerItemTestsErrorsDiffs objects
+#'
+#' @rdname extract-unitizerItemTestsErrorsDiffs-method
+#' @keywords internal
+
+setMethod("$", "unitizerItemTestsErrorsDiffs",
+  function(x, name) {
+    what <- substitute(name)
+    what <- if(is.symbol(what)) as.character(what) else name
+    x[[what]]@diff
+} )
+#' @rdname extract-unitizerItemTestsErrorsDiffs-method
+#' @keywords internal
+
+setMethod("[[",  "unitizerItemTestsErrorsDiffs",
+  function(x, i, j, ..., exact=TRUE) {
+    if(!is.chr1plain(i))
+      stop("Argument `i` must be character(1L) and not NA")
+    sn <- slotNames(x)
+    if(!i %in% sn)
+      stop(
+        "Argument `i` must be one of ",
+        paste0(deparse(sn, width.cutoff=500L), collapse="")
+      )
+    slot(x, i)
+})
+
 setClass(
   "unitizerItemsTestsErrors", contains="unitizerList"
   # ,validity=function(object) { # commented out for computation cost
-  #   tests <- vapply(as.list(object), is, logical(1L), class2="unitizerItemTestsErrors")
-  #   if(!all(tests)) return("\"unitizerItemsTestsErrors\" may only contain objects of class \"unitizerItemTestsErrors\"")
+  #   tests <- vapply(
+  #     as.list(object), is, logical(1L), class2="unitizerItemTestsErrors"
+  #   )
+  #   if(!all(tests))
+  #      return(
+  #        paste0(
+  #          "\"unitizerItemsTestsErrors\" may only contain objects of class ",
+  #          "\"unitizerItemTestsErrors\""
+  #        )
   #   TRUE
   # }
 )
-setClassUnion("unitizerItemsTestsErrorsOrLogical", c("unitizerItemsTestsErrors", "logical"))
+setClassUnion(
+  "unitizerItemsTestsErrorsOrLogical",
+  c("unitizerItemsTestsErrors", "logical")
+)
 
-#' Convert An Error Into Character
-#' @keywords internal
+setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff"))
+setMethod("as.Diffs", "unitizerItemTestsErrors",
+  function(x, state.ref, state.new, width=getOption("width"), ...) {
+    slots <- grep("^[^.]", slotNames(x), value=TRUE)
+    slot.errs <- vapply(
+      slots, function(y) !is.null(slot(x, y)@value), logical(1L)
+    )
+    diffs <- vector("list", length(slots))
+    names(diffs) <- slots
 
-setMethod("as.character", "unitizerItemTestsErrors",
-  function(x, ...) {
-    err.lst <- list()
-    for(i in slotNames(x)) {
-      if(!is.null(slot(x, i)@value)) err.lst[[i]] <- slot(x, i)
-    }
-    chr <- character()
-    prep <- if(length(err.lst) > 1L) "- " else ""
-    for(i in names(err.lst)) {
-      err <- err.lst[[i]]@value
-      mismatch <- if(err.lst[[i]]@compare.err) {
-        paste0(prep, "Unable to compare ", i, ": ")
-      } else {
-        paste0(prep, cap_first(i), " mismatch: ")
-      }
-      if(length(err) < 2L) {
-        chr <- c(chr, paste0(mismatch, err))
-      } else {
-        chr <- c(chr, mismatch, paste0("  + ", err))
-    } }
-    chr
-} )
-#' Display Test Errors
-#' @keywords internal
-
-setMethod("show", "unitizerItemTestsErrors",
-  function(object) {
-    slots <- slotNames(object)
-    for(i in slots) {
-      curr.err <- slot(object, i)
-      if(is.null(curr.err@value)) next  # No error, so continue
+    for(i in slots[slot.errs]) {
+      curr.err <- slot(x, i)
       mismatch <- if(curr.err@compare.err) {
         paste0("Unable to compare ", i, ": ")
       } else {
-        paste0("*", i, "* mismatch: ")
+        paste0(cap_first(i), " mismatch: ")
       }
-      if(length(curr.err@value) < 2L) {
-        word_cat(paste0(mismatch, decap_first(curr.err@value)), file=stderr())
+      out <- if(length(curr.err@value) < 2L) {
+        paste0(mismatch, decap_first(curr.err@value))
       } else {
-        word_cat(mismatch, file=stderr())
-        cat(as.character(UL(decap_first(curr.err@value))), sep="\n", file=stderr())
+        c(mismatch, as.character(UL(decap_first(curr.err@value)), width=width))
       }
-      make_cont <- function(x)
-        if(identical(i, "value")) x else paste0(toupper(x), "$", i)
-
-      diff_obj_out(
-        curr.err@.ref, curr.err@.new, make_cont(".ref"), make_cont(".new")
+      make_cont <- function(x) {
+        res <- if(identical(i, "value")) {
+          as.name(x)
+        } else call("$", as.name(toupper(x)), as.name(i))
+        call("quote", res)
+      }
+      diff <- diffObj(
+        curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+        cur.banner=make_cont(".new")
       )
+      diffs[[i]] <- new(
+        "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
+        err=curr.err@compare.err
+      )
+    }
+    invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
+  }
+)
+#' Show Method for unitizerItemTestsErrorsDiffs objects
+#'
+#' @rdname show-unitizerItemTestsErrorsDiffs-method
+#' @keywords internal
+
+setMethod("show", "unitizerItemTestsErrorsDiffs",
+  function(object) {
+    sn <- slotNames(object)
+    null.slots <- vapply(sn, function(x) is.null(slot(object, x)), logical(1L))
+    if(any(null.slots)) {
+      for(i in sn[!null.slots]) show(slot(object, i))
+    }
+    invisible(object)
+} )
+#' Show Method for unitizerItemTestsErrorsDiff objects
+#'
+#' @rdname show-unitizerItemTestsErrorsDiff-method
+#' @keywords internal
+
+setMethod("show", "unitizerItemTestsErrorsDiff",
+  function(object) {
+    cat_fun <- if(object@err) meta_word_msg else meta_word_cat
+    cat_fun(if(object@show.diff) object@txt else object@txt.alt)
+    if(object@show.diff) {
+      res <- show(object@diff)
+      cat("\n")
     }
     invisible(NULL)
 } )
 
-setMethod("summary", "unitizerItemTestsErrors",
-  function(object, ...) {
-    slots <- slotNames(object)
-    slot.err <- logical(length(slots))
-    for(i in seq_along(slots))
-      slot.err[[i]] <- !is.null(slot(object, slots[[i]])@value)
+## Display Test Errors
+##
+## Also generates the object that records the diffs and the function output
+## for re-display by user.
+##
+## This is somewhat convoluted.  Better would be to compute the object that has
+## all this info, and then use the show method both when we first.
+##
+#' @rdname unitizer_s4method_doc
 
-    errs <- slots[slot.err]
-    if(!length(errs)) return(invisible(NULL))
-    if(length(errs) > 1L) {
-      err.chr <- paste(
-        paste0(head(errs, -1L), collapse=", "), tail(errs, 1L), sep=", and "
+setMethod("show", "unitizerItemTestsErrors",
+  function(object) {
+    if(TRUE) {
+      slots <- grep("^[^.]", slotNames(object), value=TRUE)
+      slot.errs <- vapply(
+        slots, function(x) !is.null(slot(object, x)@value), logical(1L)
       )
-      plrl <- "es"
-    } else {
-      err.chr <- errs
-      plrl <- ""
+      diffs <- text <- vector("list", length(slots))
+      errs <- logical(length(slots))
+      names(diffs) <- names(text) <- names(errs) <- slots
+
+      for(i in slots[slot.errs]) {
+        curr.err <- slot(object, i)
+        mismatch <- if(curr.err@compare.err) {
+          out.fun <- meta_word_msg
+          paste0("Unable to compare ", i, ": ")
+        } else {
+          out.fun <- meta_word_cat
+          paste0(cap_first(i), " mismatch: ")
+        }
+        out <- if(length(curr.err@value) < 2L) {
+          paste0(mismatch, decap_first(curr.err@value))
+        } else {
+          c(
+            mismatch,
+            as.character(
+              UL(decap_first(curr.err@value)),
+              width=getOption("width") - 2L
+          ) )
+        }
+        out.fun(out)
+        make_cont <- function(x) {
+          res <- if(identical(i, "value")) {
+            as.name(x)
+          } else call("$", as.name(toupper(x)), as.name(i))
+          call("quote", res)
+        }
+        diff <- diffObj(
+          curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+          cur.banner=make_cont(".new")
+        )
+        diffs[[i]] <- new(
+          "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
+          err=curr.err@compare.err
+        )
+        show(diff)
+        cat("\n")
+      }
     }
-    word_cat(
-      "unitizer test fails on", err.chr, paste0("mismatch", plrl, ":"),
-      file=stderr()
-    )
-    return(invisible(NULL))
+    invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
 } )
+#' Like all.equal but Returns FALSE If Not all.equal
+#'
+#' Used as the default value comparison function since when values mismatch
+#' we use \code{\link{diffObj}} which would make the text output from
+#' \code{\link{all.equal}} somewhat redundant.
+#'
+#' @export all.eq
+#' @param target R object
+#' @param current other R object to be compared to \code{target}
+#' @param ... arguments to pass to \code{\link{all.equal}}
+#' @return TRUE if \code{all.equal} returns TRUE, "" otherwise
+
+all.eq <- function(target, current, ...)
+  if(isTRUE(all.equal(target, current, ...))) TRUE else ""
+
 #' Store Functions for New vs. Reference Test Comparisons
 #'
-#' \code{`unitizerItemTestsFuns`} contains the functions used to compare the results
-#' and side effects of running test expresssions.
+#' \code{testFuns} contains the functions used to compare the results and side
+#' effects of running test expressions.
 #'
-#' By default, the comparison for each of the \code{`unitizerItem-class`} elements
-#' are carried out as follows (i.e. this is what the default
-#' \code{`unitizerItemTestsFuns-class`} is populated with)
+#' The default comparison functions are as follows:
 #' \itemize{
-#'   \item value: compared using \code{`\link{all.equal}`}
-#'   \item conditions: each item in this list is compared to the corresponding item
-#'     in the reference list with \code{`\link{all.equal}`}
-#'   \item output: not compared (too variable, e.g. screen widths, etc.)
-#'   \item message: not compared (note this is presumably included in \code{`conditions`})
-#'   \item aborted: not compared (also implied in conditions, hopefully)
+#'   \item value: \code{\link{all.eq}}
+#'   \item conditions: \code{\link{all.eq}}
+#'   \item output: \code{function(x, y) TRUE}, i.e. not compared
+#'   \item message: \code{function(x, y) TRUE}, i.e. not compared as conditions
+#'     should be capturing warnings/errors
+#'   \item aborted: \code{function(x, y) TRUE}, i.e. not compared as conditions
+#'     should also be capturing this implicitly
 #' }
-#' @seealso \code{`\link{unitizer_sect}`}
-#' @rdname unitizerItemTestsFuns
-#' @export unitizerItemTestsFuns
+#' @seealso \code{\link{unitizer_sect}}, \code{\link{all.eq}}
+#' @rdname testFuns
+#' @name testFuns
+#' @export testFuns
 #' @examples
-#' unitizerItemTestsFuns(value=identical)  # use `identical` instead of `all.equal` to compare values
+#' # use `identical` instead of `all.equal` to compare values
+#' testFuns(value=identical)
 
-unitizerItemTestsFuns <- setClass(
-  "unitizerItemTestsFuns", contains="unitizerItemTests",
+testFuns <- setClass(
+  "testFuns", contains="unitizerItemTests",
   representation(
     value="unitizerItemTestFun",
     conditions="unitizerItemTestFun",
@@ -223,21 +378,22 @@ unitizerItemTestsFuns <- setClass(
     aborted="unitizerItemTestFun"
   ),
   prototype(
-    value=new("unitizerItemTestFun", fun=all.equal),
-    conditions=new("unitizerItemTestFun", fun=all.equal),  # note this will dispatch all.equal.condition_list
+    value=new("unitizerItemTestFun", fun=all.eq),
+    # note this will dispatch all.equal.condition_list
+    conditions=new("unitizerItemTestFun", fun=all.eq),
     output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)
 ) )
 
-#' Ensures Functions are In Correct Format
-#'
-#' Also, allows the user to specify functions directly instead of having
-#' to instantiate \code{`\link{unitizerItemTestFun-class}`} for each function.
-#' Finally, recovers the deparsed passed function name.
-#' @keywords internal
+# Ensures Functions are In Correct Format
+#
+# Also, allows the user to specify functions directly instead of having
+# to instantiate \code{`\link{unitizerItemTestFun-class}`} for each function.
+# Finally, recovers the deparsed passed function name.
+# @keywords internal
 
-setMethod("initialize", "unitizerItemTestsFuns", function(.Object, ...) {
+setMethod("initialize", "testFuns", function(.Object, ...) {
   dots <- list(...)
   if(!all(err.slots <- names(dots) %in% slotNames(getClass(.Object))))
     stop("Can't initialize invalid slots ", deparse(names(dots)[!err.slots]))

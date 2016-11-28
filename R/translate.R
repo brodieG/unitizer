@@ -30,15 +30,20 @@
 #'
 #' \enumerate{
 #'   \item Start a fresh R session
-#'   \item Run your \code{testthat} tests with \code{test_file} to
-#'     ensure they are still passing.  If you cannot use \code{test_file}
-#'     because your tests require prior set-up, or are runnable only via
-#'     \code{test_check} because they directly access the namespace of your
+#'   \item Run your \code{testthat} tests with \code{test_dir} to
+#'     ensure they are still passing.  If your tests are are runnable only
+#'     via \code{test_check} because they directly access the namespace of your
 #'     package, see "Differences That May Cause Problems" below
-#'   \item Run \code{testthat_file_translate} or \code{testthat_dir_translate}
+#'   \item Run \code{testthat_dir_translate}
 #'   \item [optional] use \code{\link{review}} to review the resulting
 #'      unitizer(s)
 #' }
+#' We recommend using \code{testthat_translate_dir} over
+#' \code{testthat_translate_file} because the former also copies and loads any
+#' helper files that may be defined.  Since libraries used by multiple test
+#' files are commonly loaded in these helper files, it is likely that just
+#' translating a single file without also copying the helper files will not
+#' work properly.
 #'
 #' @section How the Conversion Works:
 #'
@@ -90,30 +95,22 @@
 #' cases.
 #'
 #' When using \code{testthat_translate_dir}, any files that match
-#' \code{"^helper.*[rR]$"} are copied over to a '/helper' subdirectory
+#' \code{"^helper.*[rR]$"} are copied over to a '/_pre' subdirectory
 #' in \code{"target.dir"}, and are pre-loaded by default before the tests are
-#' \code{unitize}d.  We provide this feature for compatibility, but recommend
-#' avoiding it (see below).
+#' \code{unitize}d.
 #'
 #' @section \code{unitizer} Differences That May Cause Problems:
 #'
-#' \code{unitize} by default runs each \code{unitizer} test file in a clean
-#' environment with a clean search path.  This means that if you load libraries
-#' before you run your tests you will have to set
-#' \code{search.path.clean=FALSE} for them to be loaded in your tests.  One
-#' exception is if you load the libraries in helper files, in which case they
-#' will be available to your tests, and unloaded upon completion.
-#'
-#' If you run your tests during development with \code{test_file} odds
+#' If you run your tests during development with \code{test_dir} odds
 #' are the translation will work just fine.  On the other hand, if you rely
 #' exclusively on \code{test_check} you may need to use
-#' \code{par.env=getNamespace("pkgName")} when you translate to make sure your
-#' tests have access to the internal namespace functions.
+#' \code{state=unitizerStateNoOpt(par.env="pkgName")} when you translate to
+#' make sure your tests have access to the internal namespace functions.
+#' See \code{\link{unitizerState}} for details on how to modify state tracking.
 #'
-#' If your tests were translated with parameters \code{par.env} and/or
-#' \code{search.path.clean} changed from their default values, you will have
-#' to use the same values for those parameters in future \code{unitize} or
-#' \code{unitize_dir} runs.
+#' If your tests were translated with the \code{state} parameter changed from
+#' its default value, you will have to use the same value for that parameter in
+#' future \code{unitize} or \code{unitize_dir} runs.
 #'
 #' @note In order for the conversion to succeed \code{testthat} must be
 #' installed on your system.  We do not rely on \code{NAMESPACE} imports to
@@ -122,7 +119,7 @@
 #' are called.  We use the functions as the \code{definition} argument of
 #' \code{match.call} to find the \code{object} argument.
 #'
-#' @note Translation of \code{testthat} is not striclty necessary; you can just
+#' @note Translation of \code{testthat} is not strictly necessary; you can just
 #' copy them to a new location and \code{unitize} them.  \code{unitizer} will
 #' just capture the results of the \code{expect_*} functions and will alert
 #' you if those change.  You can then just review the tests that change.
@@ -131,7 +128,7 @@
 #' without further ado.
 #'
 #' @export
-#' @seealso \code{\link{unitize}}
+#' @seealso \code{\link{unitize}}, \code{\link{unitizerState}}
 #' @aliases testthat_translate_name, testthat_translate_dir
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param dir.name a path to the \code{testthat} directory to convert
@@ -166,21 +163,25 @@
 #' @param force logical(1L) whether to allow writing to a \code{target.dir} that
 #'   contains files (implies \code{prompt="never"} when
 #'   \code{testthat_translate_dir} runs \code{testthat_translate_file})
-#' @param par.env parent environment for tests (see same argument for
+#' @param state what state control to use (see same argument for
 #'   \code{\link{unitize}})
-#' @param search.path.clean whether to unload search path to bare minimum before
-#'   \code{unitize}ing tests (see same argument for \code{\link{unitize}})
+#' @param interactive.mode logical(1L) primarily for testing purposes, allows
+#'   us to force prompting in non-interactive mode; note that \code{unitize}
+#'   and \code{unitize_dir} are always called in non-interactive mode by these
+#'   functions, this parameter only controls prompts generated directly by these
+#'   functions.
 #' @return a file path or a character vector (see \code{target.dir})
 #' @examples
 #' \dontrun{
 #' library(testthat)  # required
 #' testthat_translate_file("tests/testthat/test-random.R")
 #'
-#' # Translate `dplyr` tests (assumes `dplyr` source is in './dplyr'):
+#' # Translate `dplyr` tests (assumes `dplyr` source is in './dplyr')
+#' # Normally we would use default `state` value but we cannot in this case
+#' # due to conflicting packages and setup
 #'
 #' testthat_translate_dir(
-#'   "dplyr/tests/testthat", par.env=getNamespace("dplyr"),
-#'   search.path.clean=FALSE
+#'   "dplyr/tests/testthat", state=unitizerStateSafe(par.env="dplyr")
 #' )
 #' # Make sure translation worked (checking one file here)
 #' # *NOTE*: folder we are looking at has changed
@@ -190,25 +191,23 @@
 #' # Now we can unitize any time we change our code
 #'
 #' unitize_dir(
-#'   "dplyr/tests/unitizer", par.env=getNamespace("dplyr"),
-#'   search.path.clean=FALSE
+#'   "dplyr/tests/unitizer", state=unitizerStateSafe(par.env="dplyr")
 #' )
 #' }
 
 testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  par.env=NULL, search.path.clean=TRUE, keep.testthat.call=TRUE,
-  prompt="always", ...
+  state=getOption("unitizer.state"),
+  keep.testthat.call=TRUE, prompt="always", interactive.mode=interactive(),
+  ...
 ) {
-  if(!is.null(par.env) && !is.environment(par.env))
-    stop("Argument `par.env` must be an environment or NULL")
-
   untz.file <- testthat_transcribe_file(
-    file.name, target.dir, keep.testthat.call, prompt, ...
+    file.name, target.dir, keep.testthat.call, prompt,
+    interactive.mode=interactive.mode, ...
   )
   if(!is.null(target.dir)) {
     unitize(
-      test.file=untz.file, auto.accept="new", par.env=par.env,
+      test.file=untz.file, auto.accept="new", state=state,
       interactive.mode=FALSE
     )
   }
@@ -225,7 +224,7 @@ testthat_translate_file <- function(
 
 testthat_transcribe_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  keep.testthat.call=TRUE, prompt="always", ...
+  keep.testthat.call=TRUE, prompt="always", interactive.mode, ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
@@ -245,10 +244,13 @@ testthat_transcribe_file <- function(
   # Get function list to extract
 
   tt.env <- as.environment("package:testthat")
-  funs.special <- c("test_that", "context")  # functions that shouldn't be simply replaced
+  # functions that shouldn't be simply replaced
+  funs.special <- c("test_that", "context")
   obj.names <- ls(tt.env)
   obj.list <- mget(obj.names, tt.env)
-  obj.funs <- vapply(obj.list, function(x) is.function(x) && ! isS4(x), logical(1L))
+  obj.funs <- vapply(
+    obj.list, function(x) is.function(x) && ! isS4(x), logical(1L)
+  )
   fun.list <- obj.list[obj.funs]
   fun.names <- obj.names[obj.funs]
 
@@ -269,6 +271,7 @@ testthat_transcribe_file <- function(
 
   testthat_extract_all <- function(expr, mode="all") {
 
+    stopifnot(mode %in% c("all", "sub"))
     result.final <- character()
 
     for(i in seq_along(expr)) {
@@ -295,8 +298,8 @@ testthat_transcribe_file <- function(
           if(!identical(mode, "all")) {  # check we don't have nested `test_that`
             result <- c(
               result, paste0(
-                "# [ERROR: testthat -> unitizer] cannot extract nested `test_that` ",
-                "calls"
+                "# [ERROR: testthat -> unitizer] cannot extract nested ",
+                "`test_that` calls"
             ) )
             result <- c(result, deparse(expr[[i]]))
           } else {
@@ -409,7 +412,7 @@ testthat_transcribe_file <- function(
     }
     if(!file.exists(target.dir)) {
       if(!identical(prompt, "never") && !identical(prompt, "overwrite")) {
-        u.inp <- if(interactive()) {
+        u.inp <- if(interactive.mode) {
           simple_prompt(
             paste0("Create directory ", target.dir," for unitizer tests?")
           )
@@ -423,16 +426,16 @@ testthat_transcribe_file <- function(
         )
       )
         stop(
-          "Unable to create test directory `", normalizePath(target.dir),
+          "Unable to create test directory `", normalize_path(target.dir),
           "`; see prior errors."
         )
     }
     # prompt if file already exists
 
     if(!identical(prompt, "never") && file.exists(untz.test)) {
-      u.inp <- if(interactive()) {
+      u.inp <- if(interactive.mode) {
         simple_prompt(
-          paste0("Overwrite file '", normalizePath(untz.test), "'?")
+          paste0("Overwrite file '", normalize_path(untz.test), "'?")
         )
       } else "N"
       if(!identical(u.inp, "Y"))
@@ -456,8 +459,9 @@ testthat_transcribe_file <- function(
 
 testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
-  filter="^test.*\\.[rR]", par.env=NULL, search.path.clean=TRUE,
-  keep.testthat.call=TRUE, force=FALSE, ...
+  filter="^test.*\\.[rR]", state=getOption("unitizer.state"),
+  keep.testthat.call=TRUE, force=FALSE, interactive.mode=interactive(),
+  ...
 ) {
   is_testthat_attached()
   # Validate
@@ -478,23 +482,18 @@ testthat_translate_dir <- function(
   if(!file_test("-d", dir.name))
     stop("Argument `", dir.name, "` is not a directory name")
 
-  if(!is.null(par.env) && !is.environment(par.env))
-    stop("Argument `par.env` must be an environment or NULL")
-
-  # note, parent env below doesn't matter since we're going to change it
-
-  env <- new.env(parent=if(is.null(par.env)) baseenv() else par.env)
-
   # Get file names
 
   file.list <- sort(dir(dir.name))
-  files.helper <- normalizePath(
+  files.helper <- normalize_path(
     file.path(dir.name, grep("^helper.*[rR]$", file.list, value=TRUE))
   )
-  files.test <- normalizePath(
+  files.test <- normalize_path(
     file.path(dir.name, grep(filter, file.list, value=TRUE))
   )
   res <- character(length(files.test))
+  unparseable <- unparseable.src <-  character()
+
   if(length(files.test)) {
     # Checks
     if(file.exists(target.dir) && !file_test("-d", target.dir))
@@ -504,7 +503,7 @@ testthat_translate_dir <- function(
       length(dir(all.files=TRUE, include.dirs=TRUE, no..=TRUE))
     )
       stop(
-        "`target.dir` '", normalizePath(target.dir) ,"' contains files so we ",
+        "`target.dir` '", normalize_path(target.dir) ,"' contains files so we ",
         "cannot proceed; manually clear or set `force` to TRUE.  This is a ",
         "safety feature to ensure files are not accidentally overwritten."
       )
@@ -514,22 +513,20 @@ testthat_translate_dir <- function(
     # Load helper files and copy them to new location
 
     if(length(files.helper)) {
-      dir.create(help.dir <- file.path(target.dir, "helper"))
+      dir.create(help.dir <- file.path(target.dir, "_pre"))
       file.copy(files.helper, help.dir)
     }
     # Translate files, need to unitize one by one mostly because we wrote the
     # `testthat_translate_file` function first, but would probably be better
     # if we separate the file translation and unitizing
 
-    unparseable <- character()
-    unparseable.src <- character()
-
     for(i in seq_along(files.test)) {
       # Attempt to parse to make sure parse -> deparse translation didn't go
       # awry
 
       untz.file <- testthat_transcribe_file(
-        files.test[[i]], target.dir, keep.testthat.call, prompt="never", ...
+        files.test[[i]], target.dir, keep.testthat.call, prompt="never",
+        interactive.mode=interactive.mode, ...
       )
       res[[i]] <- untz.file
       if(inherits(try(parse(untz.file)), "try-error")) {
@@ -543,8 +540,8 @@ testthat_translate_dir <- function(
     # Unitize all files in directory
 
     unitize_dir(
-      test.dir=target.dir, auto.accept="new", par.env=par.env,
-      search.path.clean=search.path.clean, interactive.mode=FALSE
+      test.dir=target.dir, auto.accept="new", state=state,
+      interactive.mode=FALSE
     )
   }
   if(length(unparseable))
@@ -612,9 +609,7 @@ testthat_translate_name <- function(
     )
   file.path(target.dir, base.new)
 }
-#' Determine if a Function Meets Translatable Profile
-#'
-#' @keywords internal
+# Determine if a Function Meets Translatable Profile
 
 testthat_translatable_fun <- function(x) {
   # Look at non default formals
@@ -639,10 +634,9 @@ testthat_translatable_fun <- function(x) {
     return(TRUE)
   return(FALSE)
 }
-#' Pull out parameter from call
-#'
-#' @param target.params parameters required in the matched call
-#' @keywords internal
+# Pull out parameter from call
+#
+# @param target.params parameters required in the matched call
 
 testthat_match_call <- function(call, fun, target.params) {
   call.matched <- try(match.call(definition=fun, call), silent=TRUE)
@@ -668,13 +662,11 @@ testthat_match_call <- function(call, fun, target.params) {
   }
   list(call=call.matched, msg=fail.msg)
 }
-#' Confirm that `testthat` Is Attached
-#'
-#' Would normally do this via NAMESPACE, but do not want to introduce an
-#' explicit dependency to \code{testthat} since it is only required for the
-#' conversion to \code{unitizer}
-#'
-#' @keywords internal
+# Confirm that `testthat` Is Attached
+#
+# Would normally do this via NAMESPACE, but do not want to introduce an
+# explicit dependency to \code{testthat} since it is only required for the
+# conversion to \code{unitizer}
 
 is_testthat_attached <- function() {
   if(inherits(try(as.environment("package:testthat"), silent=TRUE), "try-error"))

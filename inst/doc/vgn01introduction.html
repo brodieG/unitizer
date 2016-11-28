@@ -10,7 +10,7 @@
 
 <meta name="author" content="Brodie Gaslam" />
 
-<meta name="date" content="2015-05-13" />
+<meta name="date" content="2015-10-03" />
 
 <title>unitizeR - Easy R Unit Tests</title>
 
@@ -28,130 +28,134 @@
 <div id="header">
 <h1 class="title">unitizeR - Easy R Unit Tests</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
-<h4 class="date"><em>2015-05-13</em></h4>
+<h4 class="date"><em>2015-10-03</em></h4>
 </div>
 
 <div id="TOC">
 <ul>
 <li><a href="#introduction">Introduction</a><ul>
-<li><a href="#motivation">Motivation</a></li>
-<li><a href="#demo">Demo</a></li>
-<li><a href="#how-does-unitizer-differ-from-testthat">How Does <code>unitizer</code> Differ from <code>testthat</code>?</a></li>
-<li><a href="#unitizer-and-packages"><code>unitizer</code> and Packages</a></li>
+<li><a href="#tldr">TL;DR</a></li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#documentation">Documentation</a></li>
 </ul></li>
-<li><a href="#installation-instructions">Installation Instructions</a></li>
+<li><a href="#how-does-unitizer-differ-from-testthat">How Does <code>unitizer</code> Differ from <code>testthat</code>?</a><ul>
+<li><a href="#testing-style">Testing Style</a></li>
+<li><a href="#converting-testthat-tests-to-unitizer">Converting <code>testthat</code> tests to <code>unitizer</code></a></li>
+</ul></li>
+<li><a href="#unitizer-and-packages"><code>unitizer</code> and Packages</a></li>
 <li><a href="#things-you-should-know-about-unitizer">Things You Should Know About <code>unitizer</code></a><ul>
 <li><a href="#unitizer-writes-to-your-filesystem"><code>unitizer</code> Writes To Your Filesystem</a></li>
-<li><a href="#beware-of-tests-that-cause-side-effects">Beware of Tests That Cause Side Effects</a></li>
-<li><a href="#tests-are-evaluated-in-clean-environments">Tests are Evaluated in Clean Environments</a></li>
 <li><a href="#tests-pass-if-they-all.equal-stored-reference-values">Tests Pass If They <code>all.equal</code> Stored Reference Values</a></li>
+<li><a href="#state-and-side-effects">State and Side Effects</a></li>
 <li><a href="#unitizer-is-complex"><code>unitizer</code> Is Complex</a></li>
 <li><a href="#avoid-tests-that-require-user-input">Avoid Tests That Require User Input</a></li>
 <li><a href="#avoid-running-unitize-within-try-trycatch-blocks">Avoid running <code>unitize</code> within <code>try</code> / <code>tryCatch</code> Blocks</a></li>
 </ul></li>
-<li><a href="#acknowledgments">Acknowledgments</a></li>
 <li><a href="#about-the-author">About the Author</a></li>
 </ul>
 </div>
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<div id="motivation" class="section level3">
-<h3>Motivation</h3>
-<p><code>unitizer</code> makes unit tests easy by turning the “informal” tests you write during code development into unit tests. It does so by storing the test expressions <strong>and</strong> their results. <code>unitizer</code> is particularly useful when testing expressions that produce complex objects, but also generally simplifies unit testing.</p>
-<p>To use <code>unitizer</code>:</p>
-<ul>
-<li>Write up test expressions for your functions as you would when informally testing them on the command line, and save them to a file (e.g. “my_file_name.R”)</li>
-<li>Run <code>unitize(&quot;my_file_name.R&quot;)</code></li>
-</ul>
-<p><code>unitize</code> will step through the tests in an interactive environment for you to review and accept as unit tests. Subsequently, any time you make changes to your project you can re-run <code>unitize</code>. <code>unitizer</code> will detect any changes to the results of your expressions so you will be alerted to any regressions you introduce. <code>unitizer</code> is compatible with <code>R CMD check</code> and travis.</p>
-</div>
-<div id="demo" class="section level3">
-<h3>Demo</h3>
-<p>A big part of <code>unitizer</code> is the <a href="vgn04interactiveenvironment.html">interactive environment</a>. It allows you to quickly review, add, and remove tests from your unit test store. The best way to get a feel for the <code>unitizer</code> process is to run the provided demo:</p>
+<div id="tldr" class="section level3">
+<h3>TL;DR</h3>
+<p><code>unitizer</code> simplifies creating, reviewing, and debugging unit tests in R. To install:</p>
+<pre><code>library(devtools)
+install_github(&quot;brodieg/unitizer&quot;)</code></pre>
+<p>We will release to CRAN once version 1.0.x is more thoroughly tested.</p>
+<p><code>unitizer</code> bakes in a lot of contextual help so you can get started without reading all the documentation. Try the demo to get an idea:</p>
 <pre><code>library(unitizer)
 demo(unitizer)</code></pre>
-<p>There is a <a href="vgn02democompanion.html">companion vignette</a> for the demo as well.</p>
+<p>Or just write up some test expressions in a file, and run:</p>
+<pre><code>library(unitizer)
+unitize(&quot;my_file_name.R&quot;)</code></pre>
 </div>
-<div id="how-does-unitizer-differ-from-testthat" class="section level3">
-<h3>How Does <code>unitizer</code> Differ from <code>testthat</code>?</h3>
-<div id="examples" class="section level4">
-<h4>Examples</h4>
-<p><code>unitizer</code> trades off some formality for ease of use, and as with any trade-off, there are pros and cons. Let us illustrate with some unit tests for the <code>base::log10</code> function. First, as implemented in <code>testthat</code>:</p>
-<pre><code>expect_equal(
-  log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)),
-  c(2, NaN, -Inf, -1, Inf, NaN, NA, 2.69897000433602)
-)
-expect_warning(
-  log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500)),
-  &quot;NaNs produced&quot;
-)
+<div id="usage" class="section level3">
+<h3>Usage</h3>
+<p><code>unitizer</code> stores R expressions and the result of evaluating them so that it can detect code regressions. This is similar to saving test output to a <code>.Rout.save</code> file as documented in <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories">Writing R Extensions</a>, except that:</p>
+<ul>
+<li>Result objects and signaled conditions are automatically saved</li>
+<li>You can review each test separately before it is stored</li>
+<li>When a test fails, you can immediately review it interactively with all variables set to the same values they had when the test was run</li>
+<li>You can easily add, remove, and modify tests</li>
+</ul>
+<p>To use <code>unitizer</code>:</p>
+<ul>
+<li>Write test expressions as you would when informally testing code on the command line, and save them to a file (e.g. “my_file_name.R”)</li>
+<li>Run <code>unitize(&quot;my_file_name.R&quot;)</code> and follow the prompts</li>
+<li>Continue developing your package</li>
+<li>Re-run <code>unitize(&quot;my_file_name.R&quot;)</code>; if any tests fail you will be able to review and debug them in an interactive prompt</li>
+</ul>
+<p><code>unitizer</code> can run in a non-interactive mode for use with <code>R CMD check</code>.</p>
+</div>
+<div id="documentation" class="section level3">
+<h3>Documentation</h3>
+<ul>
+<li><code>help(package=&quot;unitizer&quot;)</code> for major user facing functions, in particular <code>?unitize</code></li>
+<li><code>demo(package=&quot;unitizer&quot;)</code> for a demo (and <code>?unitizer::demo</code>)</li>
+<li>Vignettes:
+<ul>
+<li><a href="unitizer_tests.html">Test details</a> how to modify how new tests are compared to reference values, how to organize your tests into sections, and what aspects of expression evaluation can be tested (e.g. stdout, stderr, etc.).</li>
+<li><a href="unitizer_interactive_env.html">Interactive Environment</a> reviews the <code>unitizer</code> interactive environments, highlights differences with the standard R prompt, explains the different unitizer commands, discusses the .new/.NEW and .ref/.REF <code>unitizer</code> objects, and introduces some of the complexities of unitizer evaluation environments.</li>
+<li><a href="unitizer_reproducible_tests.html">Reproducible Tests</a> reviews how <code>unitizer</code> tracks and manages different aspects of session state to insulate tests from variability in user workspace state</li>
+<li><a href="unitizer_miscellaneous.html">Esoteric Topics</a> more details on test environment structure, how <code>unitizer</code>s are stored (and alteranatives), version control issues, troubleshooting tips, and other miscellaneous topics</li>
+</ul></li>
+</ul>
+</div>
+</div>
+<div id="how-does-unitizer-differ-from-testthat" class="section level2">
+<h2>How Does <code>unitizer</code> Differ from <code>testthat</code>?</h2>
+<div id="testing-style" class="section level3">
+<h3>Testing Style</h3>
+<p><code>unitizer</code> requires you to review test outputs and confirm they are as expected. <code>testthat</code> requires you to assert what the test outputs should be beforehand. There are trade-offs between these strategies that we illustrate here, first with <code>testthat</code>:</p>
+<pre><code>vec &lt;- c(10, -10, 0, .1, Inf, NA)
 expect_error(
   log10(letters),
   &quot;Error in log10\\(letters\\) : non-numeric argument to mathematical function\n&quot;
-)</code></pre>
-<p>And as implemented in <code>unitizer</code>:</p>
-<pre><code>log10(c(100, -100, 0, 1/10, Inf, -Inf, NA, 500))  # succeed with warnings
-log10(letters)                                    # input error</code></pre>
-<p>These two unit test implementations are functionally equivalent, though clearly different in terms of what the user needs to do. There are benefits to both approaches. In favor of <code>unitizer</code>:</p>
+)
+expect_equal(log10(vec), c(1, NaN, -Inf, -1, Inf, NA))
+expect_warning(log10(vec), &quot;NaNs produced&quot;)</code></pre>
+<p>And with <code>unitizer</code>:</p>
+<pre><code>vec &lt;- c(10, -10, 0, .1, Inf, NA)
+log10(letters)                            # input error
+log10(vec)                                # succeed with warnings</code></pre>
+<p>These two unit test implementations are functionally equivalent. There are benefits to both approaches. In favor of <code>unitizer</code>:</p>
 <ul>
 <li>Tests are easy to write</li>
-<li>Conditions are captured automatically
-<ul>
-<li>Values and warnings are both captured at the same time</li>
-<li>Errors do not require any special handling</li>
-</ul></li>
+<li>Conditions are captured automatically, with no need for special handling</li>
 </ul>
 <p>In favor of <code>testthat</code>:</p>
 <ul>
-<li>The tests are self documenting
-<ul>
-<li>Expected results are obvious from the source, whereas it is not so with <code>unitizer</code></li>
-</ul></li>
-<li>Once you write the test you are done
-<ul>
-<li>With <code>unitizer</code> you still need to <code>unitize</code> and review the tests</li>
-</ul></li>
+<li>The tests are self documenting; expected results are obvious</li>
+<li>Once you write the test you are done; with <code>unitizer</code> you still need to <code>unitize</code> and review the tests</li>
 </ul>
+<p><code>unitizer</code> is particularly convenient when the tests return complex objects (e.g as <code>lm</code> does) or produce conditions. There is no need for complicated assertions involving deparsed objects.</p>
+<p>Additionally, <code>unitizer</code> provides an interactive environment that allows you to immediately review each failing test <em>in that test’s evaluation environment</em>. It is also trivial to update tests if the test result changes are legitimate.</p>
 </div>
-<div id="key-unitizer-features" class="section level4">
-<h4>Key <code>unitizer</code> features</h4>
-<p>Tests in <code>unitizer</code> are comparatively easy to write, particularly when the functions you are testing return more complex objects (e.g as <code>lm</code> does) or produce conditions. There is no need to write complicated assertions or copy and paste deparsed objects; all of that is handled implicitly by <code>unitizer</code>.</p>
-<p>Another difference between <code>unitizer</code> and <code>testthat</code> is that test failures can be debugged immediately. Upon completing test evaluation <code>unitizer</code> will drop you into an interactive UI that steps through each failing test, <em>in that test’s evaluation environment</em>. You can examine the test result directly, as well as the values of objects visible to the test <em>as they were when the test was evaluated</em>.</p>
-<p>One shortcoming of <code>unitizer</code> is that it is not conducive to either self documentation or to test driven / <a href="http://www.extremeprogramming.org/rules/testfirst.html">extreme</a> programming. If these features are critical to you then you are likely better off using more formal unit testing frameworks.</p>
-</div>
-<div id="converting-testthat-tests-to-unitizer" class="section level4">
-<h4>Converting <code>testthat</code> tests to <code>unitizer</code></h4>
+<div id="converting-testthat-tests-to-unitizer" class="section level3">
+<h3>Converting <code>testthat</code> tests to <code>unitizer</code></h3>
 <p>If you have a stable set of tests it is probably not worth trying to convert them to <code>unitizer</code> unless you expect the code those tests cover to change substantially. If you do decide to convert tests you can use the provided <code>testthat_translate*</code> functions (see <code>?testthat_translate_file</code>).</p>
 </div>
 </div>
-<div id="unitizer-and-packages" class="section level3">
-<h3><code>unitizer</code> and Packages</h3>
-<p>The simplest way to use <code>unitizer</code> as part of your package development process is to create a <code>tests/unitizer</code> folder for all your <code>unitizer</code> test scripts. Then, in <code>tests</code>, add an additional file with calls to <code>unitize</code>. Here is a sample test structure for our <code>unitizer.fastlm</code> demo package:</p>
+<div id="unitizer-and-packages" class="section level2">
+<h2><code>unitizer</code> and Packages</h2>
+<p>The simplest way to use <code>unitizer</code> as part of your package development process is to create a <code>tests/unitizer</code> folder for all your <code>unitizer</code> test scripts. Here is a sample test structure from the demo package:</p>
 <pre><code>unitizer.fastlm/         # top level package directory
     R/
     tests/
-        run.R            # &lt;- calls `unitize`
+        run.R            # &lt;- calls `unitize` or `unitize_dir`
         unitizer/
             fastlm.R
             cornerCases.R</code></pre>
-<p>And this is what the <code>run.R</code> file would look like</p>
+<p>And this is what the <code>tests/run.R</code> file would look like</p>
 <pre><code>library(unitizer)
 unitize(&quot;unitizer/fastlm.R&quot;)
 unitize(&quot;unitizer/cornerCases.R&quot;)</code></pre>
 <p>or equivalently</p>
 <pre><code>library(unitizer)
 unitize_dir(&quot;unitizer&quot;)</code></pre>
-<p>The path specification for test files should be relative to the <code>tests</code> directory as that is what <code>R CMD check</code> effectively sets the working directory to before running the files in <code>tests/</code>. This means you cannot just source your <code>run.R</code> file without also first setting the working directory to <code>tests/</code>.</p>
-<p>When <code>unitize</code> is run by <code>R CMD check</code> it will run in a non-interactive mode that will succeed only if all tests pass.</p>
+<p>The path specification for test files should be relative to the <code>tests</code> directory as that is what <code>R CMD check</code> uses. When <code>unitize</code> is run by <code>R CMD check</code> it will run in a non-interactive mode that will succeed only if all tests pass.</p>
 <p>Remember to include <code>unitizer</code> as a “suggests” package in your DESCRIPTION file.</p>
-</div>
-</div>
-<div id="installation-instructions" class="section level2">
-<h2>Installation Instructions</h2>
-<p>Currently <code>unitizer</code> is only available on github:</p>
-<pre><code>library(devtools)
-install_github(&quot;brodieg/unitizer&quot;)</code></pre>
 </div>
 <div id="things-you-should-know-about-unitizer" class="section level2">
 <h2>Things You Should Know About <code>unitizer</code></h2>
@@ -159,27 +163,36 @@ install_github(&quot;brodieg/unitizer&quot;)</code></pre>
 <h3><code>unitizer</code> Writes To Your Filesystem</h3>
 <p>The <code>unitize</code>d tests need to be saved someplace, and the default action is to save to the same directory as the test file. You will always be prompted by <code>unitizer</code> before it writes to your file system. See <a href="vgn06nittygritty.html#storing-unitized-tests">storing <code>unitized</code> tests</a> for implications and alternatives.</p>
 </div>
-<div id="beware-of-tests-that-cause-side-effects" class="section level3">
-<h3>Beware of Tests That Cause Side Effects</h3>
-<p>Tests that modify objects by reference or change <code>options</code> or <code>setwd</code> or other similar global settings are not perfectly suited for use with <code>unitizer</code>. The tests will work fine, but <code>unitizer</code> will not be able to recreate the environment for you to review exactly as it was when the test was originally evaluated, which will likely prove confusing (see <a href="vgn06nittygritty.html#subtleties-of-the-interactive-environment">subtleties of interactive environment</a>).</p>
-</div>
-<div id="tests-are-evaluated-in-clean-environments" class="section level3">
-<h3>Tests are Evaluated in Clean Environments</h3>
-<p>Objects in <code>.GlobalEnv</code> will not be visible, and any non-basic packages will be detached prior to test evaluation (you can re-attach those you need in your tests with <code>library</code>). For more details see the <a href="vgn05reproducibletests.html">reproducible tests vignette</a>.</p>
-</div>
 <div id="tests-pass-if-they-all.equal-stored-reference-values" class="section level3">
 <h3>Tests Pass If They <code>all.equal</code> Stored Reference Values</h3>
 <p>Once you have created your first <code>unitizer</code> with <code>unitize</code>, subsequent calls to <code>unitize</code> will compare the old stored value to the new one using <code>all.equal</code>. You can change the comparison function by using <code>unitizer_sect</code> (see <a href="vgn03tests.html">tests vignette</a>).</p>
 </div>
+<div id="state-and-side-effects" class="section level3">
+<h3>State and Side Effects</h3>
+<div id="state" class="section level4">
+<h4>State</h4>
+<p><code>unitizer</code> tracks and manages many aspects of state so that it can be reproduced later, and so that your workspace is restored to its original state after running the tests. The following aspects of state are actively tracked and managed:</p>
+<ul>
+<li>Parent environment (objects in your workspace will not be visible to tests)</li>
+<li>Random seed</li>
+<li>Working directory</li>
+</ul>
+<p>Additionally, <code>unitizer</code> is able to control the search path and global options, though these last two features are disabled by default. For more details, see <code>?unitizerState</code> and the <a href="vgn05reproducibletests.html">reproducible tests vignette</a>.</p>
+</div>
+<div id="reference-objects" class="section level4">
+<h4>Reference Objects</h4>
+<p>Tests that modify objects by reference are not perfectly suited for use with <code>unitizer</code>. The tests will work fine, but <code>unitizer</code> will only be able to show you the most recent version of the reference object when you review a test, not what it was like when the test was evaluated. This is only an issue with reference objects that are modified (e.g. environments, RC objects, <code>data.table</code> modified with <code>:=</code> or <code>set*</code>).</p>
+</div>
+</div>
 <div id="unitizer-is-complex" class="section level3">
 <h3><code>unitizer</code> Is Complex</h3>
-<p>In order to create an intuitive (hopefully) interactive unit testing framework we had to resort to a fair bit of trickery. For the most part this trickery should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it. Here is a non-exhaustive list of some of the tricky things we do:</p>
+<p>In order to re-create the feel of the R prompt within <code>unitizer</code> we resorted to a fair bit of trickery. For the most part this should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it. Here is a non-exhaustive list of some of the tricky things we do:</p>
 <ul>
 <li><code>library</code>, <code>require</code>, <code>attach</code>, and <code>detach</code> are <code>trace</code>d during <code>unitize</code> evaluation (see <a href="vgn05reproducibletests.html">reproducible tests vignette</a>)</li>
 <li>Each tests is evaluated in its own environment, a child of the previous test’s environment; because <code>R</code> looks up objects in parent environments it appears that all tests are evaluated in one environment (see <a href="vgn04interactiveenvironment.html">interactive environment vignette</a>)</li>
 <li>We provide modified versions of <code>quit</code>/<code>q</code> and <code>ls</code> (see <a href="vgn06nittygritty.html">esoteric topics vignette</a>) at the <code>unitizer</code> prompt</li>
 <li><code>traceback</code> should work when reviewing tests that produce errors, but only because we capture the trace with <code>sys.calls</code> and write it to <code>base::.Traceback</code> during review</li>
-<li>We sink <code>stdout</code> and <code>stderr</code> during test evaluation to capture those streams; be careful if you are also sinking those streams (see <a href="vgn03tests.html">details on tests vignette</a>)</li>
+<li>We sink <code>stdout</code> and <code>stderr</code> during test evaluation to capture those streams (see <a href="vgn03tests.html">details on tests vignette</a>), though we take care to do so responsibly</li>
 <li>We parse the test file and extract comments so that they can be attached to the correct test for review</li>
 <li>The history file is temporary replaced so that your <code>unitizer</code> interactions do not pollute it</li>
 </ul>
@@ -192,10 +205,6 @@ install_github(&quot;brodieg/unitizer&quot;)</code></pre>
 <h3>Avoid running <code>unitize</code> within <code>try</code> / <code>tryCatch</code> Blocks</h3>
 <p>Doing so will cause <code>unitize</code> to quit if any test expressions throw conditions. See discussion in <a href="vgn06nittygritty.html#error-handling">error handling</a>.</p>
 </div>
-</div>
-<div id="acknowledgments" class="section level2">
-<h2>Acknowledgments</h2>
-<p>A big thank you to Hadley Wickham for devoting so much of his life to making the R universe a better place to live in. <code>unitizer</code> borrows several concepts from <code>testthat</code>, and uses <code>testthat</code> for internal unit tests. Additionally, we used <code>devtools</code> extensively during package development.</p>
 </div>
 <div id="about-the-author" class="section level2">
 <h2>About the Author</h2>

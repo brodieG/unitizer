@@ -1,0 +1,16 @@
+Package: utzflm
+Title: Quickly Compute Simple Linear Regressions
+Description: This is a demo package used to illustrate usage of the `unitizer`
+    package.
+Version: 0.1.2
+Author: Brodie Gaslam
+Maintainer: Brodie Gaslam <brodieDOTgaslam@MARISSAMAYERSCOMPANY.com>
+Depends:
+    R (>= 3.0.2)
+Imports:
+    stats
+Suggests:
+    unitizer
+License: GPL-2
+LazyData: true
+RoxygenNote: 5.0.1

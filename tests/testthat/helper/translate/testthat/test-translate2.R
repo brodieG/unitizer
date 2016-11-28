@@ -23,3 +23,8 @@ test_that("errors", {
   expect_error(stop("hello"))
   expect_warning(warning("yoyo"))
 })
+# Cause error
+
+test_that("Nested test_that", {
+  test_that("Inner test_that", TRUE)
+} )

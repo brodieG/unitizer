@@ -1,15 +1,11 @@
 #' Unitize an R Test Script
 #'
-#' Turn standard R scripts into unit tests by evaluating the expressions and
-#' storing them along with their resuls.
+#' Turn standard R scripts into unit tests by storing the expressions therein
+#' along with the results of their evaluation.
 #'
 #' \code{unitize} creates unit tests from a single R file, and
 #' \code{unitize_dir} creates tests from all the R files in the specified
 #' directory (analogous to \code{testthat::test_dir}).
-#'
-#' \code{review} allows you to review existing \code{unitizer}s and modify them
-#' by dropping tests from them.  This is useful if you ever have second thoughts
-#' about previously accepted tests and wish to inspect them.
 #'
 #' \code{unitizer} stores are identified by \code{unitizer} ids, which by
 #' default are character strings containing the location of the folder the
@@ -20,42 +16,43 @@
 #' implementing S3 methods for \code{\link{get_unitizer}} and
 #' \code{\link{set_unitizer}}.
 #'
-#' See \code{unitizer} vignettes and demo for details and examples.
+#' \code{review} allows you to review existing \code{unitizer}s and modify them
+#' by dropping tests from them.  Tests are not evaluated in this mode; you are
+#' just allowed to review the results of previous evaluations of the tests
+#' Because of this, no effort is made to create reproducible state in the
+#' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
+#' (see \code{state} parameter).
+#'
+#' You are strongly encouraged to read through \code{vignette("unitizer")}
+#' for details and examples.  The demo (\code{demo("unitizer")}) is also a
+#' good introduction to these functions.
+#'
+#' @section Default Settings:
+#'
+#' Many of the default settings are specfied in the form \code{getOption("...")}
+#' to allow the user to "permanently" set them to their prefered modes by
+#' setting options in their \code{.Rprofile} file.
 #'
 #' @export
 #' @aliases unitize review unitize_dir
-#' @seealso \code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}}
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
-#'   path (see \code{\link{infer_unitizer_location}})
+#'   path.  If NULL, will look for a file in the \dQuote{tests/unitizer} package
+#'   folder if it exists, or in \dQuote{.} if it does not.
+#'   See \code{\link{infer_unitizer_location}}) for details.
+#' @param test.dir the directory to run the tests on; if NULL will use the
+#'   \dQuote{tests/unitizer} package folder if it exists, or \dQuote{.} if it
+#'   does not.  See \code{\link{infer_unitizer_location}}) for details.
+#' @param pattern a regular expression used to match what subset of files in
+#'   \code{test.dir} to \code{unitize}
 #' @param store.id if NULL (default), \code{unitizer} will select a directory
 #'   based on the \code{test.file} name by replacing \code{.[rR]} with
 #'   \code{.unitizer}.  You can also specify a directory name, or pass any
 #'   object that has a defined \code{\link{get_unitizer}} method which allows
 #'   you to specify non-standard \code{unitizer} storage mechanisms (see
 #'   \code{\link{get_unitizer}}).  Finally, you can pass an actual
-#'   \code{unitizer} object if you are using \code{review}
-##' @param interactive.mode logical(1L) whether to run in interactive mode (
-#'   request user input when needed) or not (error if user input is required,
-#'   e.g. if all tests do not pass).
-#' @param par.env NULL or environment, if NULL tests are run in a clean
-#'   environment, if an environment they are run with that environment as the
-#'   parent environment.
-#' @param search.path.clean logical(1L) if TRUE all items on the search path
-#'   that are not part of a clean R session are detached prior to running tests.
-#'   Namespaces for detached packages remain loaded, so re-attaching those
-#'   packages during tests with \code{library} should carry little overhead.
-#'   The search path is restored to its initial state upon exiting
-#'   \code{unitizer} so any packages added/removed, or objects attached/detached
-#'   from search path are restored to original state.  See "Reproducible Tests"
-#'   vignette for details.
-#' @param search.path.keep character any additional items on the search path
-#'   to keep attached; has no effect if \code{search.path.clean} is FALSE
-#' @param force.update logical(1L) if TRUE will give the option to re-store a
-#'   unitizer after re-evaluating all the tests even if all tests passed.
-#' @param test.dir the directory to run the tests on
-#' @param pattern a regular expression used to match what subset of files in
-#'   \code{test.dir} to \code{unitize}
+#'   \code{unitizer} object if you are using \code{review}; see \code{store.ids}
+#'   for \code{unitize_dir}
 #' @param store.ids one of \itemize{
 #'   \item a function that converts test file names to \code{unitizer} ids; if
 #'     \code{unitize}ing multiple files will be \code{lapply}ed over each file
@@ -65,103 +62,140 @@
 #'     test files being reviewed; useful when you implement special storage
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
-#' @param auto.accept character(XL) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
+#' @param state character(1L) one of
+#'   \code{c("prisitine", "default", "basic", "off", "safe")}, an environment,
+#'   or a state object produced by \code{\link{state}} or \code{\link{in_pkg}};
+#'   modifies how \code{unitizer} manages aspects of session state that could
+#'   affect test evaluation, including the parent evaluation environment.  For
+#'   more details see \code{\link{unitizerState}} documentation and
+#'   \code{vignette("unitizer_reproducible_tests")}
+#' @param pre NULL, or a character vector pointing to files and/or directories.
+#'   If a character vector, then any files referenced therein will be sourced,
+#'   and any directories referenced therein will be scanned non-recursively for
+#'   visible files ending in ".r" or ".R", which are then also sourced.  If
+#'   NULL, then \code{unitizer} will look for a directory named "_pre" in the
+#'   directory containing the first test file and will treat it as if you had
+#'   specified it in \code{pre}.  Any objects created by those scripts will be
+#'   put into a parent environment for all tests.  This provides a mechanism for
+#'   creating objects that are shared across different test files, as well as
+#'   loading shared packages.  Unlike objects created during test evaluation,
+#'   any objects created here will not be stored in the \code{unitizer} so you
+#'   will have not direct way to check whether these objects changed across
+#'   \code{unitizer} runs.  Additionally, typing \code{ls} from the review
+#'   prompt will not list these objects.
+#' @param post NULL, or a character vector pointing to files and/or directories.
+#'   See \code{pre}.  If NULL will look for a directory named "_post" in the
+#'   directory containing the first test file.  Scripts are run just prior to
+#'   exiting \code{unitizer}. \code{post} code will be run in an environment
+#'   with the environment used to run \code{pre} as the parent.  This means that
+#'   any objects created in \code{pre} will be available to \code{post}, which
+#'   you can use to your advantage if there are some things you do in \code{pre}
+#'   you wish to undo in \code{post}. Keep in mind that \code{unitizer} can
+#'   manage most aspects of global state, so you should not need to use this
+#'   parameter to unload packages, remove objects, etc.  See details.
+#' @param history character path to file to use to store history generated
+#'   during interactive unitizer session; the default is an empty string, which
+#'   leads to \code{unitizer} using a temporary file
+#' @param interactive.mode logical(1L) whether to run in interactive mode (
+#'   request user input when needed) or not (error if user input is required,
+#'   e.g. if all tests do not pass).
+#' @param force.update logical(1L) if TRUE will give the option to re-store a
+#'   unitizer after re-evaluating all the tests even if all tests passed.
+#'   you can also toggle this option from the unitizer prompt by typing \code{O},
+#'   though \code{force.update=TRUE} will force update irrespective of what
+#'   you do with \code{O} at the prompt
+#' @param auto.accept character(X) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
 #'   YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
 #'   prompting, use values in \code{c("new", "failed", "deleted", "error")} to
 #'   specify which type(s) of test you wish to auto accept (i.e. same as typing
 #'   \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
 #'   off (default)
-#' @param pre.load \code{NULL}, \code{FALSE}, a directory or a list of objects:
-#'   \itemize{
-#'     \item if \code{NULL}, looks for a 'helper' directory in same directory as
-#'       test file (or first test file if using \code{unitize_dir}) and
-#'       \code{\link{sys.source}}s the files therein into an environment that
-#'       has for parent \code{par.env}
-#'     \item if a directory, then the same as \code{NULL}, except it uses files
-#'       in the specified directory
-#'     \item if a list transforms the list into an environment that has for
-#'       parent \code{par.env}
-#'     \item if \code{FALSE} does nothing
-#'   }
-#'   The environment generated by this process will be a parent to the
-#'   environments the tests are run in.  The primary purpose of this file is to
-#'   run \code{library} calls that are shared by multiple \code{unitizer} files.
-#'   Any packages you load in these files will be unloaded upon completion of
-#'   the \code{unitize} process unless you modify the \code{search.path.clean}
-#'   setting. You can also pre-load objects shared amongst tests, but you should
-#'   use this feature sparingly because these objects are not recorded in the
-#'   \code{unitizer}s and don't show up in \code{ls} calls from the
-#'   \code{unitizer} prompt, which makes it difficult to troubleshoot problems
-#'   related to those objects changing between \code{unitizer} runs
-#' @return the \code{unitizer} object updated as per user instructions,
-#'   invisibly, or for \code{unitize_dir}, a list of the \code{unitizer}
-#'   objects generated by each test file, invisibly
+#' @return \code{unitize} and company are intended to be used primarily for
+#'   the interactive environment and side effects.  The functions do return
+#'   summary data about test outcomes and user input as
+#'   \code{unitizer_result} objects, or for \code{unitize_dir} as
+#'   \code{unitizer_results} objects, invisbly.  See
+#'   \code{\link{unitizer_result}}.
+#' @seealso \code{\link{unitizerState}}, \code{\link{unitizer.opts}},
+#'   \code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}},
+#'   \code{\link{unitizer_result}}
 
 unitize <- function(
-  test.file, store.id=NULL,
+  test.file=NULL, store.id=NULL,
+  state=getOption("unitizer.state"),
+  pre=NULL, post=NULL,
+  history=getOption("unitizer.history.file"),
   interactive.mode=interactive(),
-  par.env=getOption("unitizer.par.env"),
-  search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=getOption("unitizer.search.path.keep"),
   force.update=FALSE,
-  auto.accept=character(0L),
-  pre.load=NULL
+  auto.accept=character(0L)
 ) {
+  # Initial spacer, must be done in each top level call
+
+  cat("\n")
+
   test.file.inf <- infer_unitizer_location(test.file)
   store.id.inf <- store.id
   if(is.null(store.id)) store.id.inf <- filename_to_storeid(test.file.inf)
   invisible(
     unitize_core(
-      test.file.inf, list(store.id.inf),
-      interactive.mode=interactive.mode, par.env=par.env,
-      search.path.clean=search.path.clean,
-      search.path.keep=search.path.keep,
-      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
-      mode="unitize"
-  ) )
+      test.file.inf, list(store.id.inf), state=state,
+      pre=pre, post=post, history=history,
+      interactive.mode=interactive.mode,  force.update=force.update,
+      auto.accept=auto.accept, mode="unitize"
+    )[[1L]]
+  )
 }
 #' @rdname unitize
 #' @export
 
-review <- function(
-  store.id,
-  par.env=getOption("unitizer.par.env"),
-  search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=getOption("unitizer.search.path.keep")
-) {
-  if(!interactive()) stop("`review` only available in interactive mode")
+review <- function(store.id=NULL) {
+  if(!interactive_mode()) stop("`review` only available in interactive mode")
+  # Initial spacer, must be done in each top level call
+
+  cat("\n")
+
   invisible(
     unitize_core(
       test.files=NA_character_,
       store.ids=list(infer_unitizer_location(store.id, type="u")),
+      state="off",
+      pre=FALSE, post=FALSE,
+      history=getOption("unitizer.history.file"),
       interactive.mode=TRUE,
-      par.env=par.env, search.path.clean=search.path.clean,
-      search.path.keep=search.path.keep, force.update=FALSE,
-      auto.accept=character(0L), pre.load=list(), mode="review"
-  ) )
+      force.update=FALSE,
+      auto.accept=character(0L),
+      mode="review"
+    )[[1L]]
+  )
 }
 #' @rdname unitize
 #' @export
 
 unitize_dir <- function(
-  test.dir,
+  test.dir=NULL,
   store.ids=filename_to_storeid,
   pattern="^[^.].*\\.[Rr]$",
+  state=getOption("unitizer.state"),
+  pre=NULL, post=NULL,
+  history=getOption("unitizer.history.file"),
   interactive.mode=interactive(),
-  par.env=getOption("unitizer.par.env"),
-  search.path.clean=getOption("unitizer.search.path.clean"),
-  search.path.keep=getOption("unitizer.search.path.keep"),
   force.update=FALSE,
-  auto.accept=character(0L),
-  pre.load=NULL
+  auto.accept=character(0L)
 ) {
   # Validations
-  if(!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir))
-    stop("Argument `test.dir` must be character(1L) and not NA.")
+  if(
+    (!is.character(test.dir) || length(test.dir) != 1L || is.na(test.dir)) &&
+    !is.null(test.dir)
+  )
+    stop("Argument `test.dir` must be character(1L) and not NA, or NULL.")
   if(!is.character(pattern) || length(pattern) != 1L || is.na(pattern))
     stop("Argument `pattern` must be character(1L) and not NA.")
-  if(file.exists(test.dir) && !file_test("-d", test.dir))
+  if(!is.null(test.dir) && file.exists(test.dir) && !file_test("-d", test.dir))
     stop("Argument `test.dir` points to a file instead of a directory")
+
+  # Initial spacer, must be done in each top level call
+
+  cat("\n")
 
   # Infer
 
@@ -170,9 +204,13 @@ unitize_dir <- function(
   if(!file_test("-d", test.dir))
     stop("Argument `test.dir` must point to a direcctory")
 
-  test.files <- list.files(
-    path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE, no..=TRUE
-  )
+  test.files <- Filter(
+    function(x) file_test("-f", x),
+    sort(
+      list.files(
+        path=test.dir, pattern=pattern, all.files=TRUE, full.names=TRUE,
+        no..=TRUE
+  ) ) )
   if(!length(test.files))
     stop("No files to test in '", test.dir, "'")
 
@@ -188,10 +226,9 @@ unitize_dir <- function(
   invisible(
     unitize_core(
       test.files=test.files, store.ids=store.ids,
-      interactive.mode=interactive.mode, par.env=par.env,
-      search.path.clean=search.path.clean,
-      search.path.keep=search.path.keep,
-      force.update=force.update, auto.accept=auto.accept, pre.load=pre.load,
-      mode="unitize"
+      state=state,
+      pre=pre, post=post, history=history,
+      interactive.mode=interactive.mode, force.update=force.update,
+      auto.accept=auto.accept, mode="unitize"
   ) )
 }

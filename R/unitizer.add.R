@@ -4,11 +4,11 @@
 
 NULL
 
-#' Add a \code{`\link{unitizerSection-class}`} to a \code{`\link{unitizer-class}`}
-#'
-#' Registers the section, and the mapping of items to section.
-#'
-#' @keywords internal
+# Add a \code{`\link{unitizerSection-class}`} to a \code{`\link{unitizer-class}`}
+#
+# Registers the section, and the mapping of items to section.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
   function(e1, e2) {
@@ -25,30 +25,35 @@ setMethod("+", c("unitizer", "unitizerSection"), valueClass="unitizer",
       # If not initial section add, then must be a nested section, so have to
       # remove value
 
-      e1@sections[[e1@section.map[start]]]@length <-      # reduce length of section with nested unitizer section
+      # reduce length of section with nested unitizer section
+      e1@sections[[e1@section.map[start]]]@length <-
         e1@sections[[e1@section.map[start]]]@length - 1L
-      e1@section.map <- e1@section.map[-start]  # remove mapping for the unitizer section element that we are expanding
-      e1@section.map <- append(e1@section.map, rep(id, length(e2)), start - 1L) # add mapping for the now expanded section
-
+      # remove mapping for the unitizer section element that we are expanding
+      e1@section.map <- e1@section.map[-start]
+      # add mapping for the now expanded section
+      e1@section.map <- append(e1@section.map, rep(id, length(e2)), start - 1L)
     }
     e1@section.parent <- c(
       e1@section.parent, if(isTRUE(is.na(e2@parent))) id else e2@parent
     )
-    if(e2@title %in% (titles <- vapply(e1@sections, function(x) x@title, character(1L)))) {
+    if(
+      e2@title %in%
+        (titles <- vapply(e1@sections, function(x) x@title, character(1L)))
+    ) {
       e2@title <- tail(make.unique(c(titles, e2@title)), 1L)
     }
     e1@sections <- append(e1@sections, list(e2))
     e1
 } )
+# Adds Expressions to unitizer
+#
+# Expressions can be added as \code{\link{unitizerTests-class}} object
+# or a straight up expression, though in most cases it should be the
+# latter.
+#
+# NOTE: you can only do this once for a \code{unitizer}.
 
-#' Adds Expressions to unitizer
-#'
-#' Expressions can be added as \code{`\link{unitizerTests-class}`} object
-#' or a straight up expression, though in most cases it should be the
-#' latter.
-#'
-#' @note you can only do this once for a `unitizer`.
-#' @keywords internal
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer",
   function(e1, e2) {
@@ -64,49 +69,46 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     matched.calls <- rep(NA_integer_, length(e2))
     i <- 1L
     sect.par <- NA_integer_
-    sect.end <- 0L  # Used to track if there is an active section and to manage nested sections
+    # Used to track if there is an active section and to manage nested sections
+
+    sect.end <- 0L
 
     test.env <- new.env(parent=e1@items.new@base.env)
     chr.width <- getOption("width")
-    std.err.capt <- tempfile()
-    std.err.capt.con <- file(std.err.capt, "w+b")
-    std.out.capt <- tempfile()
-    std.out.capt.con <- file(std.out.capt, "w+b")
 
-    capt.cons <- list(
-      err.f=std.err.capt, err.c=std.err.capt.con, out.f=std.out.capt,
-      out.c=std.out.capt.con
-    )
-    on.exit(close_and_clear(capt.cons))
+    e1@global$cons <- new("unitizerCaptCons")
+    on.exit(close_and_clear(e1@global$cons))
 
     repeat {
       if(done(e2 <- nextItem(e2))) break
 
-      item <- withRestarts(
-        exec(getItem(e2), test.env, capt.cons),
-        unitizerQuitExit=unitizer_quit_handler
-      )
-      # If item is a section, added to the store and update the tests with the contents of
-      # the section, and re-loop (this is how we handle nested tests), if not, store the
-      # evaluated test
+      item <- exec(getItem(e2), test.env, e1@global)
 
-      if(is(item@data@value, "unitizerSectionExpression")) {
+      # If item is a section, added to the store and update the tests with the
+      # contents of the section, and re-loop (this is how we handle nested
+      #  tests), if not, store the evaluated test
+
+      if(is(item@data@value[[1L]], "unitizerSectionExpression")) {
+        sect.obj <- item@data@value[[1L]]
         if(i <= sect.end) {
-          sect.end <- i + length(item@data@value) - 1L
+          sect.end <- i + length(sect.obj) - 1L
           sect.par <- e1@section.parent[e1@section.map[[i]]]
         } else if (i > sect.end) {
-          sect.end <- i + length(item@data@value) - 1L
+          sect.end <- i + length(sect.obj) - 1L
           sect.par <- NA_integer_
         }
         e1 <- e1 + new(
-          "unitizerSection", title=item@data@value@title, details=item@data@value@details,
-          length=length(item@data@value), parent=sect.par, compare=item@data@value@compare
+          "unitizerSection", title=sect.obj@title,
+          details=sect.obj@details, length=length(sect.obj),
+          parent=sect.par, compare=sect.obj@compare
         )
-        e2 <- e2 + item@data@value
+        e2 <- e2 + sect.obj
         next
       }
-      item@section.id <- e1@section.parent[[e1@section.map[[i]]]]  # record parent section id for when we create reference sections
-      item@section.name <- e1@sections[[item@section.id]]@title    # record name for attempting to match deleted tests to section
+      # record parent section id for when we create reference sections
+      item@section.id <- e1@section.parent[[e1@section.map[[i]]]]
+      # record name for attempting to match deleted tests to section
+      item@section.name <- e1@sections[[item@section.id]]@title
       over_print(deparse(item@call)[[1L]], append=TRUE)
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
@@ -140,23 +142,28 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
           e1@section.ref.map[[i]] <- NA_integer_
         }
     } }
+    # Finalize
+
     over_print("")
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
+    on.exit()
+    close_and_clear(e1@global$cons)
+    e1@global$cons <- NULL
     e1
 } )
-#' Adds \code{`\link{unitizerItems-class}`} objects to unitizer
-#'
-#' Any added \code{`\link{unitizerItems-class}`} objects are treated as
-#' reference items.  The only way to add new items is by adding each
-#' item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
-#'
-#' One aspect of copying reference items which isn't handled here is moving
-#' over the section data because this is kept at the \code{`\link{unitizer-class}`}
-#' level, not at the \code{`\link{unitizerItems-class}`} level.  The
-#' section copying is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.
-#' This is something that we should clean-up eventually.
-#'
-#' @keywords internal
+# Adds \code{`\link{unitizerItems-class}`} objects to unitizer
+#
+# Any added \code{`\link{unitizerItems-class}`} objects are treated as
+# reference items.  The only way to add new items is by adding each
+# item individually with \code{`\link{+,unitizer,unitizerItem-method}`}.
+#
+# One aspect of copying reference items which isn't handled here is moving
+# over the section data because this is kept at the \code{`\link{unitizer-class}`}
+# level, not at the \code{`\link{unitizerItems-class}`} level.  The
+# section copying is handled by \code{`\link{refSections,unitizer,unitizer-method}`}.
+# This is something that we should clean-up eventually.
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
   function(e1, e2) {
@@ -165,7 +172,7 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
     e1@items.ref <- e2
     if(length(e1@items.ref)) {
       e1@items.ref.calls.deparse <- vapply(
-        as.list(e1@items.ref), function(x) deparse_call(x@call), character(1L)
+        as.list(e1@items.ref), slot, character(1L), "call.dep"
       )
       e1@items.ref.map <- rep(NA_integer_, length(e1@items.ref))
     }
@@ -173,19 +180,18 @@ setMethod("+", c("unitizer", "unitizerItems"), valueClass="unitizer",
   }
 )
 setGeneric("refSections", function(x, y) standardGeneric("refSections"))
-#' Extract Reference Section Data
-#'
-#' Using one unitizer with existing new items, and another unitizer that we
-#' just created from it by pulling out the tests we intend to keep, recreate
-#' the sections for the tests we intend to keep.
-#'
-#' This isn't super robust as we're not ensuring that the two unitizers used
-#' here are related in any way.  Would be better to have something that does
-#' this properly...
-#'
-#' @keywords internal
-#' @param x the new unitizer that will be stored with the reference tests
-#' @param y the unitizer that will be used to generate the sections
+# Extract Reference Section Data
+#
+# Using one unitizer with existing new items, and another unitizer that we
+# just created from it by pulling out the tests we intend to keep, recreate
+# the sections for the tests we intend to keep.
+#
+# This isn't super robust as we're not ensuring that the two unitizers used
+# here are related in any way.  Would be better to have something that does
+# this properly...
+#
+# @param x the new unitizer that will be stored with the reference tests
+# @param y the unitizer that will be used to generate the sections
 
 setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
   function(x, y) {
@@ -222,13 +228,14 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
     x
   }
 )
-#' Adds \code{`\link{unitizerItem-class}`} to \code{`\link{unitizer-class}`}
-#'
-#' All tests are run on addition, and mapping information between reference and
-#' new tests is also recored.
-#'
-#' @seealso \code{`\link{registerItem,unitizer,unitizerItem-method}`}
-#' @keywords internal
+# Adds \code{`\link{unitizerItem-class}`} to \code{`\link{unitizer-class}`}
+#
+# All tests are run on addition, and mapping information between reference and
+# new tests is also recored.
+#
+# @seealso \code{`\link{registerItem,unitizer,unitizerItem-method}`}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerItem"),
   function(e1, e2) {
@@ -239,8 +246,9 @@ setMethod("+", c("unitizer", "unitizerItem"),
     e1 <- testItem(e1, e2)
     e1
 } )
-#' Add Test Errors to \code{`\link{unitizer-class}`}
-#' @keywords internal
+# Add Test Errors to \code{`\link{unitizer-class}`}
+
+#' @rdname unitizer_s4method_doc
 
 setMethod("+", c("unitizer", "unitizerItemTestsErrors"),
   function(e1, e2) {

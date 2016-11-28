@@ -38,19 +38,17 @@ setMethod("editCalls", c("unitizer", "language", "language"),
       "This is an experimental function; make sure you backup any unitizers ",
       "before you edit them", immediate.=TRUE
     )
-    if(!interactive() && interactive.only)
+    if(!interactive_mode() && interactive.only)
       stop("Set interactive.only to FALSE to run in non-interactive mode")
     i <- 0L
-    repeat {
-      ans <- readline("Do you wish to proceed ([Y]es/[N]o)? ")
-      if(tolower(ans) %in% c("y", "yes")) break
-      else if(tolower(ans) %in% c("n", "no")) {
-        message("Existing without edits")
+    if(interactive.only) {
+      u.inp <-simple_prompt(
+        "Do you wish to proceed ([Y]es/[N]o)? "
+      )
+      if(!identical(u.inp, "Y")){
+        message("Exiting without edits")
         return(x)
-      } else {
-        message("Invalid input, should be \"Y\" or \"N\"")
       }
-      if((i <- i + 1L) > 2L) stop("You are not making sense; I give up!")
     }
     call_sub <- function(call, old.name, new.name) {
       if(is.language(call)) {
@@ -63,9 +61,26 @@ setMethod("editCalls", c("unitizer", "language", "language"),
       call
     }
     for(i in seq_along(x@items.ref)) {
+      # complexity here driven by a change from storing the actual call to
+      # only keeping the deparsed version, but not wanting to re-write all the
+      # code for the renaming
+
+      call.is.null <- FALSE
+      if(is.null(x@items.ref[[i]]@call)) {
+        call.parsed <- parse(text=x@items.ref[[i]]@call.dep)
+        if(!is.expression(call.parsed) || length(call.parsed) != 1L)
+          stop(
+            "Logic Error: call `", x@items.ref[[i]]@call.dep,
+            "` did not produce a length one expression when parsed"
+          )
+        x@items.ref[[i]]@call <- call.parsed[[1L]]
+        call.is.null <- TRUE
+      }
       x@items.ref[[i]]@call <-
         call_sub(x@items.ref[[i]]@call, lang.old, lang.new)
-      x@items.ref.calls.deparse[[i]] <- deparse_call(x@items.ref[[i]]@call)
+      x@items.ref[[i]]@call.dep <- deparse_call(x@items.ref[[i]]@call)
+      x@items.ref.calls.deparse[[i]] <- x@items.ref[[i]]@call.dep
+      if(call.is.null) x@items.ref[[i]]@call <- NULL
     }
     x
 } )

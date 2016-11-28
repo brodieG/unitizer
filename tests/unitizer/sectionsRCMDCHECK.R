@@ -15,7 +15,8 @@ unitizer_sect("strict tests", compare=identical, {
   print("heya there")
   warning("wow")
 } )
-unitizer_sect("I care about screen output", compare=new("unitizerItemTestsFuns", output=all.equal), {
-  sqrt(2) + 3 ^ 5
-  print(paste0("heya there how's it going", sample(1:1000, 1)))
-} )
+# Had to remove this because of cover issues (See #115)
+# unitizer_sect("I care about screen output", compare=new("unitizerItemTestsFuns", output=all.equal), {
+#   sqrt(2) + 3 ^ 5
+#   print(paste0("heya there how's it going", sample(1:1000, 1)))
+# } )
