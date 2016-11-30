@@ -28,10 +28,10 @@ Interim release to get changes over past year out on the master branch.
 
 ### Bugfixes:
 
-* [#184](https://github.com/brodieG/unitizer/issues/184): Search path issues
-  in r-devel
- * Fix unintended detaching of `tools:rstudio`, and [many](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.2.0%20label%3Abug%20) [others](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.3.0%20label%3Abug%20)
- * `base.env` now unique for each `unitizer`
+* [#188](https://github.com/brodieG/unitizer/issues/188): Search path issues
+  in r-devel @[richierocks](https://github.com/richierocks)
+* Fix unintended detaching of `tools:rstudio`, and [many](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.2.0%20label%3Abug%20) [others](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.3.0%20label%3Abug%20)
+* `base.env` now unique for each `unitizer`
 
 ## v1.1.0
 
