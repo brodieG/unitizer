@@ -349,4 +349,16 @@ comp_stdboth <- function(x, y) {
   TRUE
 }
 
+# Cleanup text output that contains "Error|Warning in eval(...)" because of how
+# that behaves differently between 3.3.2 and 3.4
+
+clean_eval_exp <- function(x) {
+  clean_elem <- function(y)
+    gsub("^(Error|Warning) in eval\\(.*?\\) :", "\\1 in :", y)
+
+  if(is.list(x)) {
+    x[] <- lapply(x, clean_elem)
+    x
+  } else if(is.character(x))  clean_elem(x) else x
+}
 

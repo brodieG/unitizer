@@ -459,11 +459,13 @@ local({
         is(res, "unitizer")
       )
       # this should break because the NULL forces `b` to be stored in a different
-      # environment to `a`.
+      # environment to `a`; note: funky error message matching because in
+      # at least some versions of rdevel reported fun name seems to change
+      # (possibly related to level 3 bytecode)
 
       expect_match(
         x@items.new[[4]]@data@message[[1]],
-        "Error in a() : could not find function \"b\"\n", fixed=TRUE
+        "Error in [ab]\\(\\) : could not find function "
       )
     } )
 

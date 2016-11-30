@@ -208,12 +208,13 @@ local({
   test_that("is_package", {
     expect_true(unitizer:::is_package_dir(system.file(package="stats")))
     expect_true(unitizer:::is_package_dir(system.file(package="methods")))
-    expect_true(
-      unitizer:::is_package_dir(system.file(package="stats"), has.tests=TRUE)
-    )
-    expect_true(
-      unitizer:::is_package_dir(system.file(package="methods"), has.tests=TRUE)
-    )
+    ## Seems like some change now tests no longer installed by default with
+    ## packages, at least in the unix distros, so can't easily test with
+    ## has.tests==TRUE
+    #
+    # expect_true(
+    #   unitizer:::is_package_dir(system.file(package="unitizer"), has.tests=TRUE)
+    # )
     expect_equal(
       unitizer:::pretty_path(
         file.path(system.file(package="stats"), "DESCRIPTION")
@@ -292,13 +293,15 @@ local({
     base.dir <- file.path(
       system.file(package="unitizer"), "expkg", "infer"
     )
-    # Verify package is still in state we built tests on
+    # Verify package is still in state we built tests on; need to sort b/c
+    # different platforms have different lexical sorts
 
     expect_equal(
-      c(
-        "aaa.R", "aaa.unitizer", "abc.R", "abc.unitizer", "inf.R",
-        "inf.unitizer", "infer.R", "infer.unitizer", "zzz.R", "zzz.unitizer"
-      ),
+      sort(
+        c(
+          "aaa.R", "aaa.unitizer", "abc.R", "abc.unitizer", "inf.R",
+          "inf.unitizer", "infer.R", "infer.unitizer", "zzz.R", "zzz.unitizer"
+      ) ),
       list.files(file.path(base.dir, "tests", "unitizer"))
     )
     # Package dir

@@ -142,7 +142,10 @@ make_let_combn_fun <- function(dat) {
         list(dat),
         replicate(let.count - 1L, c(" ", dat), simplify=FALSE)
     ) )
-    paste0(head(sort(do.call(paste0, do.call(expand.grid, let.list))), x), ".")
+    raw.vals <-
+      paste0(do.call(paste0, do.call(expand.grid, let.list)), ".")
+    # try to get a consistent sort across locales
+    head(raw.vals[order(nchar(trimws(raw.vals)), raw.vals)], x)
 } }
 .bullet.funs <- list(
   numbers=function(x) paste0(seq.int(x), "."),

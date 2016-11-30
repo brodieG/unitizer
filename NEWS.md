@@ -1,9 +1,13 @@
 # `unitizer` NEWS
 
-## v1.2.0
+## v1.2.0 - v1.3.0
+
+Interim release to get changes over past year out on the master branch.
 
 ### Improvement / Changes:
 
+* [#194](https://github.com/brodieG/unitizer/issues/194): Performance
+  improvements
 * [#102](https://github.com/brodieG/unitizer/issues/102): Ability to break out
   of multi file review with `QQ`
 * [#186](https://github.com/brodieG/unitizer/issues/186): If you type `q()` or
@@ -24,7 +28,9 @@
 
 ### Bugfixes:
 
- * Fix unintended detaching of `tools:rstudio`, and [many others](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.2.0%20label%3Abug%20)
+* [#184](https://github.com/brodieG/unitizer/issues/184): Search path issues
+  in r-devel
+ * Fix unintended detaching of `tools:rstudio`, and [many](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.2.0%20label%3Abug%20) [others](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.3.0%20label%3Abug%20)
  * `base.env` now unique for each `unitizer`
 
 ## v1.1.0
