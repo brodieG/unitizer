@@ -93,9 +93,10 @@
 #'   you wish to undo in \code{post}. Keep in mind that \code{unitizer} can
 #'   manage most aspects of global state, so you should not need to use this
 #'   parameter to unload packages, remove objects, etc.  See details.
-#' @param history character path to file to use to store history generated
+#' @param history character(1L) path to file to use to store history generated
 #'   during interactive unitizer session; the default is an empty string, which
-#'   leads to \code{unitizer} using a temporary file
+#'   leads to \code{unitizer} using a temporary file, set to NULL to disable
+#'   history capture.
 #' @param interactive.mode logical(1L) whether to run in interactive mode (
 #'   request user input when needed) or not (error if user input is required,
 #'   e.g. if all tests do not pass).
