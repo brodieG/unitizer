@@ -313,7 +313,8 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
   # Check all option existence except those that can be NULL
 
   names.def <- setdiff(
-    names(.unitizer.opts.default), c("unitizer.par.env", "unitizer.color")
+    names(.unitizer.opts.default),
+    c("unitizer.par.env", "unitizer.color", "unitizer.history.file")
   )
   if(any(missing.opts <- !names.def %in% names(opts.to.validate)))
     stop(
@@ -369,11 +370,6 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
           "Option `unitizer.max.capture.chars` must be integer(1L), not NA, ",
           "and strictly positive"
         )
-      if(!is.chr1(unitizer.history.file))
-        stop(
-          "Option `unitizer.history.file` must be character(1L) and not NA, ",
-          " or NULL"
-        )
       if(
         !is.character(unitizer.search.path.keep) ||
         any(is.na(unitizer.search.path.keep))
@@ -413,5 +409,13 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     !is.environment(opts.to.validate[["unitizer.par.env"]])
   )
     stop("Option `unitizer.par.env` must be an environment or NULL")
+  if(
+    !is.chr1(opts.to.validate[["unitizer.history.file"]]) &&
+    !is.null(opts.to.validate[["unitizer.history.file"]])
+  )
+    stop(
+      "Option `unitizer.history.file` must be character(1L) and not NA, ",
+      " or NULL"
+    )
   TRUE
 }

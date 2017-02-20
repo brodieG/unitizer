@@ -70,9 +70,10 @@ you wish to undo in \code{post}. Keep in mind that \code{unitizer} can
 manage most aspects of global state, so you should not need to use this
 parameter to unload packages, remove objects, etc.  See details.}
 
-\item{history}{character path to file to use to store history generated
+\item{history}{character(1L) path to file to use to store history generated
 during interactive unitizer session; the default is an empty string, which
-leads to \code{unitizer} using a temporary file}
+leads to \code{unitizer} using a temporary file, set to NULL to disable
+history capture.}
 
 \item{interactive.mode}{logical(1L) whether to run in interactive mode (
 request user input when needed) or not (error if user input is required,

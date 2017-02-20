@@ -103,17 +103,24 @@ unitize_core <- function(
 
   # Make sure history is kosher
 
-  if(nchar(history)) {
-    test.con <- try(file(history, "at"))
-    if(inherits(test.con, "try-error"))
-      stop(
-        "Argument `history` must be the name of a file that can be opened in ",
-        "\"at\" mode"
-      )
-    close(test.con)
-  } else {
-    history <- tempfile()
-    attr(history, "hist.tmp") <- TRUE
+  if(is.character(history)) {
+    if(nchar(history)) {
+      test.con <- try(file(history, "at"))
+      if(inherits(test.con, "try-error"))
+        stop(
+          "Argument `history` must be the name of a file that can be opened in ",
+          "\"at\" mode"
+        )
+      close(test.con)
+    } else {
+      history <- tempfile()
+      attr(history, "hist.tmp") <- TRUE
+    }
+  } else if (!is.null(history)) {
+    stop(
+      "Argument `history` must be the name of a file that can be opened in ",
+      "\"at\" mode, or \"\", or NULL"
+    )
   }
   # Make sure nothing untoward will happen if a test triggers an error
 
@@ -563,7 +570,7 @@ unitize_browse <- function(
   # but user may still pick it to review); we got lazy and tried to leverage
   # the review mechanism for passed tests, but this is not ideal because then
   # we're using reference items instead of the newly evaluated versions.  Will
-  # switch this, but still have to deal with situations where a new state 
+  # switch this, but still have to deal with situations where a new state
   # doesn't exist (in particular, deleted tests)
 
   untz.browsers <- mapply(
