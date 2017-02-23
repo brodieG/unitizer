@@ -72,7 +72,7 @@ setMethod(
     types <- itemsType(x)
     types.ref <- which(types == "reference")
     if(length(types.ref)) {
-      ref.indices <- lapply(x[types.ref ], slot, "glob.indices")
+      ref.indices <- lapply(x[types.ref], slot, "glob.indices")
       max.indices <- unitizerStateMaxIndices(y)  # max new index
 
       # Map the global indices in reference to values starting from 1 up beyond
@@ -96,18 +96,22 @@ setMethod(
       }
       ref.ind.mx.map[!ref.ind.mx] <- 0L  # these all map to the starting state
 
-      # Pull out the states from ref and copy them into new
+      # Pull out the states from ref and copy them into new; note that it is
+      # possible for reference states to all reference the 0 index, meaning a
+      # state wasn't captured, in that case we don't do anything
 
       for(i in slotNames(y)) {
         needed.state.ids <- unique(ref.ind.mx[i, ])
         needed.state.ids.map <- unique(ref.ind.mx.map[i, ])
-        length(slot(y, i)) <- max(needed.state.ids.map)
-
-        for(j in seq_along(needed.state.ids)) {
-          id <- needed.state.ids[[j]]
-          id.map <- needed.state.ids.map[[j]]
-          if(!id.map) next
-          slot(y, i)[[id.map]] <- slot(z, i)[[id]]
+        max.map.id <- max(needed.state.ids.map)
+        if(max.map.id) { # 0 index only
+          length(slot(y, i)) <- max.map.id
+          for(j in seq_along(needed.state.ids)) {
+            id <- needed.state.ids[[j]]
+            id.map <- needed.state.ids.map[[j]]
+            if(!id.map) next
+            slot(y, i)[[id.map]] <- slot(z, i)[[id]]
+          }
         }
       }
       # For each ref index, remap to the new positions in new state
