@@ -72,7 +72,7 @@ setMethod(
     types <- itemsType(x)
     types.ref <- which(types == "reference")
     if(length(types.ref)) {
-      ref.indices <- lapply(x[types.ref ], slot, "glob.indices")
+      ref.indices <- lapply(x[types.ref], slot, "glob.indices")
       max.indices <- unitizerStateMaxIndices(y)  # max new index
 
       # Map the global indices in reference to values starting from 1 up beyond
