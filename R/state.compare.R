@@ -78,15 +78,16 @@ setMethod(
       # Map the global indices in reference to values starting from 1 up beyond
       # the end of the indices in the new indices, though use zeros for zero;
       # these are the index location for the reference items once we append
-      # them to the tracking object
+      # them to the tracking object; use `do.call` because `vapply`/`apply`
+      # unstable in 1 column vs multi column inputs (#212, #199)
 
+      remap <- function(w)
+        match(w, sort(Filter(as.logical, unique(w))), nomatch=0L)
       ref.ind.mx <- do.call(cbind, lapply(ref.indices, as.integer))
-      ref.ind.mx.map <- t(
-        as.matrix(  #b/c apply will return vec at times
-          apply(
-            ref.ind.mx, 1, function(w) {
-              match(w, sort(Filter(as.logical, unique(w))), nomatch=0L)
-      } ) ) ) + as.integer(max.indices)
+      ref.ind.mx.map <- do.call(
+        rbind, lapply(split(ref.ind.mx, row(ref.ind.mx)), remap)
+      ) + as.integer(max.indices)
+      rownames(ref.ind.mx.map) <- rownames(ref.ind.mx)
 
       if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map))) {
         stop(
