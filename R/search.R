@@ -93,7 +93,7 @@ compress_search_data <- function(x) {
   res <- names(x$search.path)
   res.pkg <- grepl("^package:.+", res)
   ver <- get_package_versions(x)
-  res[res.pkg] <- paste0(res[res.pkg],  " (v", ver[res.pkg], ")")
+  res[!is.na(ver)] <- paste0(res[!is.na(ver)],  " (v", ver[!is.na(ver)], ")")
   res
 }
 compress_ns_data <- function(x) {
