@@ -46,9 +46,15 @@ get_package_versions <- function(x) {
   pkg.names <- names(x$search.path)
   are.pkg <- grepl("^package:.+", pkg.names)
   pkg.names <- sub("^package:(.*)", "\\1", pkg.names)
+
+  # base packages should not show version (issue203)
+
+  base.pkg <- sessionInfo()$basePkgs
+
   pkg.sub <- match(pkg.names, ns.loaded)
   pkg.ver <- ns.version[pkg.sub]
-  pkg.ver[!are.pkg] <- NA_character_
+  pkg.ver[!are.pkg | pkg.names %in% base.pkg] <- NA_character_
+  pkg.ver[pkg.names == "base"] <- as.character(getRversion())
   pkg.ver
 }
 # Used to be an S4 method for the search data objects
