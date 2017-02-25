@@ -371,7 +371,7 @@ unitize_core <- function(
         if(is(utz, "unitizer") && is(utz@bookmark, "unitizerBrowseBookmark")) {
           # compare expressions without attributes
           if(
-            !identical(
+            !all.equal(
               `attributes<-`(tests.parsed.prev[[i]], NULL),
               `attributes<-`(tests.parsed[[i]], NULL)
           ) ) {
