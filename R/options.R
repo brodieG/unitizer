@@ -261,7 +261,7 @@ options_update <- function(tar.opts) {
   # How many lines to display when showing test values, or truncate to if exceeds
   unitizer.test.out.lines=c(50L, 15L),
   # How many lines to display when showing test errors, or truncate to if exceeds
-  unitizer.test.msg.lines=c(10L, 3L),
+  unitizer.test.msg.lines=c(50L, 15L),
   # How many lines of context to display when showing failed objects
   # (note banner means one more line than this displayed)
   unitizer.test.fail.context.lines=c(10L, 3L),
