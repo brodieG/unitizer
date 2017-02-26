@@ -1,5 +1,4 @@
 #' @include class_unions.R
-#' @include fun.ref.R
 #' @include global.R
 
 NULL
