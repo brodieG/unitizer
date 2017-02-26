@@ -8,15 +8,21 @@ NULL
 #'
 #' While R generally adheres to a "functional" programming style, there are
 #' several aspects of session state that can affect the results of code
-#' evaluation.  \code{unitizer} attempts to make tests as reproducible as
-#' possible by controlling session state so that it is the same every time a
-#' test is run.  You can control how \code{unitizer} manages state via the
-#' state argument to \code{unitize}.  This help file discusses state management
-#' with \code{unitizer}, and also documents two functions that, in conjunction
-#' with \code{\link{unitize}} or \code{\link{unitize_dir}} allow you to control
-#' state management.
+#' evaluation (e.g. global environment, search path).  \code{unitizer} provides
+#' functionality to increase test reproducibility by controlling session state
+#' so that it is the same every time a test is run.  This functionality is
+#' turned off by default to comply with CRAN requirements.  You can
+#' permanently enable the recommended state tracking level by adding
+#' \code{options(unitizer.state='recommended')} in your \code{.Rprofile} file
+#' or by calling \code{unitizer_track_state()} from the R prompt.
 #'
 #' @section Overview:
+#'
+#' You can control how \code{unitizer} manages state via
+#' the state argument to \code{unitize}.  This help file discusses state
+#' management with \code{unitizer}, and also documents two functions that, in
+#' conjunction with \code{\link{unitize}} or \code{\link{unitize_dir}} allow you
+#' to control state management.  
 #'
 #' \bold{Note}: most of what is written in this page about \code{unitize}
 #' applies equally to \code{unitize_dir}
@@ -257,6 +263,13 @@ state <- function(
     stop("Unable to create state object; see prior errors.")
   state
 }
+#' @export
+#' @rdname unitizerState
+
+track_state <- function() {
+  stop("This function is not implemented yet.")
+}
+
 unitizerInPkg <- setClass(
   "unitizerInPkg",
   slots=c(package="character"),
