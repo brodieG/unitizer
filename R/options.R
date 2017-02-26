@@ -285,7 +285,7 @@ options_update <- function(tar.opts) {
   unitizer.namespace.keep.base=c(
     .unitizer.namespace.keep
   ),
-  unitizer.state="default",                # default reproducible state mode
+  unitizer.state="off",                    # default reproducible state mode
   # User default option values when running with options state tracking
   unitizer.opts.init=list(),
   # Default option values when running with options state tracking
