@@ -497,15 +497,16 @@ as.state <- function(x, test.files=NULL) {
     !is(x, "unitizerStateRaw") &&
     !(is.chr1(x) && x %in% .unitizer.valid.state.abbr) &&
     !is.environment(x) &&
-    !is(x, "unitizerInPkg")
+    !is(x, "unitizerInPkg") &&
+    !is.null(x)
   ) {
     stop(
       word_wrap(collapse="\n",
         cc(
           "Argument must be character(1L) %in% ",
-          deparse(.unitizer.valid.state.abbr), ", an environment, or must ",
-          "inherit from S4 classes `unitizerStateRaw` or `unitizerInPkg` in ",
-          "order to be interpreted as a unitizer state object."
+          deparse(.unitizer.valid.state.abbr), ", NULL, an environment, or ",
+          "must inherit from S4 classes `unitizerStateRaw` or `unitizerInPkg` ",
+          "in order to be interpreted as a unitizer state object."
     ) ) )
   }
   stopifnot(
@@ -513,6 +514,7 @@ as.state <- function(x, test.files=NULL) {
     !is(x, "unitizerInPkg") || is.character(test.files) ||
     !!nchar(x@package)
   )
+  if(is.null(x)) x <- "off"  # default state
   x <- if(is.character(x)){
     switch(
       x, default=new("unitizerStateDefault"),
@@ -540,8 +542,8 @@ as.state <- function(x, test.files=NULL) {
     stop(
       word_wrap(collapse="\n",
         cc(
-          "Options state tracking (", x@options, ") must be less than namespace ",
-          "state tracking (", x@namespaces, ")."
+          "Options state tracking (", x@options, ") must be less than ",
+          "namespace state tracking (", x@namespaces, ")."
     ) ) )
   }
   if(x@namespaces > x@search.path) {
