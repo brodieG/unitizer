@@ -56,7 +56,8 @@ permanently enable the recommended state tracking level by adding
 
 
 You can control how \code{unitizer} manages state via
-the state argument to \code{unitize}.  This help file discusses state
+the state argument to \code{unitize} or by setting the
+\dQuote{unitizer.state} option.  This help file discusses state
 management with \code{unitizer}, and also documents two functions that, in
 conjunction with \code{\link{unitize}} or \code{\link{unitize_dir}} allow you
 to control state management.
@@ -134,7 +135,7 @@ The simplest method is to specify the preset name as a character value:
 
 \itemize{
   \item "recommended": \itemize{
-      \item Use special (non \code{.GlobalEnv}) parent environemtn
+      \item Use special (non \code{.GlobalEnv}) parent environemnt
       \item Manage search path
       \item Manage random seed
       \item Manage workign directory
