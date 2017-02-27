@@ -408,7 +408,12 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     stop("Option `unitizer.par.env` must be an environment or NULL")
   if( # needs to be outside b/c var may not be defined in option list
     !is.null(opts.to.validate[["unitizer.state"]]) &&
-    !is(try(as.state(unitizer.state, test.files)), "unitizerState")
+    !is(
+      try(
+        as.state(opts.to.validate[["unitizer.state"]], test.files)
+      ),
+      "unitizerState"
+    )
   )
     stop("Option `unitizer.state` is invalid; see prior errors")
   if(
