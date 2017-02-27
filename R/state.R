@@ -2,7 +2,8 @@
 
 NULL
 
-.unitizer.valid.state.abbr <-  c("pristine", "default", "basic", "off", "safe")
+.unitizer.valid.state.abbr <-
+  c("pristine", "recommended", "basic", "off", "safe")
 
 #' Tests and Session State
 #'
@@ -13,8 +14,7 @@ NULL
 #' so that it is the same every time a test is run.  This functionality is
 #' turned off by default to comply with CRAN requirements.  You can
 #' permanently enable the recommended state tracking level by adding
-#' \code{options(unitizer.state='recommended')} in your \code{.Rprofile} file
-#' or by calling \code{unitizer_track_state()} from the R prompt.
+#' \code{options(unitizer.state='recommended')} in your \code{.Rprofile}.
 #'
 #' @section Overview:
 #'
@@ -22,43 +22,43 @@ NULL
 #' the state argument to \code{unitize}.  This help file discusses state
 #' management with \code{unitizer}, and also documents two functions that, in
 #' conjunction with \code{\link{unitize}} or \code{\link{unitize_dir}} allow you
-#' to control state management.  
+#' to control state management.
 #'
 #' \bold{Note}: most of what is written in this page about \code{unitize}
-#' applies equally to \code{unitize_dir}
+#' applies equally to \code{unitize_dir}.
 #'
 #' \code{unitizer} provides functionality to insulate test code from variability
 #' in the following:
 #'
 #' \itemize{
-#'   \item Workspace / Parent Environment (enabled by default): all tests are
+#'   \item Workspace / Parent Environment: all tests are
 #'      evaluated in environments that are children of a special environment
 #'      that does not inherit from \code{.GlobalEnv}.  This prevents objects
 #'      that are lying around in your workspace from interfering with your
 #'      tests.
-#'   \item Random Seed (enabled by default): is set to a specific value at the
+#'   \item Random Seed: is set to a specific value at the
 #'     beginning of each test file so that tests using random values get the
 #'     same value at every test iteration. If you change the order of  your
 #'     tests, or add a test that uses a random sampling before the end of
 #'     the file, that will still affect the random seed.
-#'   \item Working Directory (enabled by default): is set to the tests directory
+#'   \item Working Directory: is set to the tests directory
 #'     inside the package directory provided all test files are in the same
 #'     sub-directory of a package.
-#'   \item Search Path (enabled by default): is set to what you would
+#'   \item Search Path: is set to what you would
 #'     typically find in a freshly loaded vanilla R session.  This means any non
 #'     default packages that are loaded when you run your tests are unloaded
 #'     prior to running your tests.  If you want to use the same libraries
 #'     across multiple tests you can load them with the \code{pre} argument to
 #'     \code{\link{unitize}} or \code{\link{unitize_dir}}.
-#'   \item Options (\bold{disabled} by default): same as search path
-#'   \item Namespaces (\bold{disabled} by default): same as search path; this
+#'   \item Options: same as search path
+#'   \item Namespaces: same as search path; this
 #'     option is only made available to support options since many namespaces
 #'     set options \code{onLoad}, and as such it is necessary to unload and
 #'     re-load them to ensure default options are set.
 #' }
-#' State is reset after running each test file when running multiple test
-#' files with \code{unitize_dir}, which means state changes in one test file
-#' will not affect the next one.
+#'
+#' In the \dQuote{recommended} state tracking mode parent environment, random
+#' seed, working directory, and search path are all managed.
 #'
 #' You can modify what aspects of state are managed by using the \code{state}
 #' parameter to \code{\link{unitize}}.  If you are satisfied with basic default
@@ -66,6 +66,10 @@ NULL
 #' want more control you can use the return values of the \code{state} and
 #' \code{in_pkg} functions as the values for the \code{state} parameter for
 #' \code{unitize}.
+#'
+#' State is reset after running each test file when running multiple test
+#' files with \code{unitize_dir}, which means state changes in one test file
+#' will not affect the next one.
 #'
 #' @section Avoiding \code{.GlobalEnv}:
 #'
@@ -88,12 +92,16 @@ NULL
 #' The simplest method is to specify the preset name as a character value:
 #'
 #' \itemize{
-#'   \item "default" turns off options and namespace tracking,
-#'     but otherwise enables all other state tracking.  This is the default
-#'     behavior.
-#'   \item "safe" turns off tracking for search path, namespaces and options.
-#'     These settings, particularly the last two, are the most likely to cause
-#'     compatibility problems.
+#'   \item "recommended": \itemize{
+#'       \item Use special (non \code{.GlobalEnv}) parent environemtn
+#'       \item Manage search path
+#'       \item Manage random seed
+#'       \item Manage workign directory
+#'       \item Leave namespace and options untouched
+#'     }
+#'   \item "safe" like recommended, but turns off tracking for search path in
+#'     addition to namespaces and options.  These settings, particularly the
+#'     last two, are the most likely to cause compatibility problems.
 #'   \item "pristine" implements the highest level of state tracking and control
 #'   \item "basic" keeps all tracking, but at a less aggressive level; state is
 #'     reset between each test file to the state before you started
@@ -101,7 +109,7 @@ NULL
 #'     state of your workspace, search path, etc. when you launch
 #'     \code{unitizer} will affect all the tests (see the Custom Control)
 #'     section.
-#'   \item "off" state tracking is turned off
+#'   \item "off" (default) state tracking is turned off
 #' }
 #' @section Custom Control:
 #'
@@ -145,10 +153,9 @@ NULL
 #' } }
 #' @section Namespaces and Options:
 #'
-#' Options and namespace state management are turned off by default
-#' because in order to work they require the ability to fully unload any
-#' non-default packages and namespaces, and there are some packages that cannot
-#' be unloaded, or should not be unloaded (e.g.
+#' Options and namespace state management require the ability to fully unload
+#' any non-default packages and namespaces, and there are some packages that
+#' cannot be unloaded, or should not be unloaded (e.g.
 #' \href{https://github.com/Rdatatable/data.table/issues/990}{data.table}). If
 #' you know the packages you typically load in your sessions can be unloaded,
 #' you can turn this functionality on by setting
@@ -209,17 +216,17 @@ NULL
 #' ## In this examples we use `...` to denote other arguments to `unitize` that
 #' ## you should specify.  All examples here apply equally to `unitize_dir`
 #'
-#' ## Turn off state tracking completely
-#' unitize(..., state="off")
+#' ## Run with recommended state tracking settings
+#' unitize(..., state="recommended")
 #' ## Manage as much of state as possible
 #' unitize(..., state="pristine")
 #'
-#' ## Use default state management, but evaluate in a custom environment
+#' ## No state management, but evaluate with custom env as parent env
 #' my.env <- new.env()
 #' unitize(..., state=my.env)
-#' ## use custom environment, and turn off search.path tracking
+#' ## use custom environment, and turn on search.path tracking
 #' ## here we must use the `state` function to construct a state object
-#' unitize(..., state=state(par.env=my.env, search.path=0))
+#' unitize(..., state=state(par.env=my.env, search.path=2))
 #'
 #' ## Specify a namespace to run in by name
 #' unitize(..., state="stats")
@@ -232,8 +239,8 @@ NULL
 #' }
 
 state <- function(
-  par.env=NULL, search.path=2L, options=0L, working.directory=2L,
-  random.seed=2L, namespaces=0L
+  par.env=.GlobalEnv, search.path=0L, options=0L, working.directory=0L,
+  random.seed=0L, namespaces=0L
 ) {
   if(!identical(c("par.env", .unitizer.global.settings.names), names(formals())))
     stop(
@@ -263,13 +270,6 @@ state <- function(
     stop("Unable to create state object; see prior errors.")
   state
 }
-#' @export
-#' @rdname unitizerState
-
-track_state <- function() {
-  stop("This function is not implemented yet.")
-}
-
 unitizerInPkg <- setClass(
   "unitizerInPkg",
   slots=c(package="character"),
@@ -366,7 +366,7 @@ unitizerStateRaw <- setClass(
   "unitizerStateRaw",
   slots=c(par.env="environmentOrNULLOrCharacterUnitizerInPkg"),
   contains="unitizerState",
-  prototype=list(par.env=NULL),
+  prototype=list(par.env=.GlobalEnv),
   validity=function(object){
     if(is.character(object@par.env) && !is.chr1(object@par.env))
      return("Slot `par.env` must be 1 long and not NA if it is character")
@@ -377,7 +377,7 @@ unitizerStateProcessed <- setClass(
   "unitizerStateProcessed",
   slots=c(par.env="environmentOrNULL"),
   contains="unitizerState",
-  prototype=list(par.env=NULL)
+  prototype=list(par.env=.GlobalEnv)
 )
 setMethod("initialize", "unitizerState",
   function(.Object, ...) {
@@ -386,8 +386,8 @@ setMethod("initialize", "unitizerState",
       if(is.numeric(dots[[i]])) dots[[i]] <- as.integer(dots[[i]])
     do.call(callNextMethod, c(.Object, dots))
 } )
-unitizerStateDefault <- setClass(
-  "unitizerStateDefault",
+unitizerStateRecommended <- setClass(
+  "unitizerStateRecommended",
   contains="unitizerStateProcessed",
   prototype=list(
     search.path=2L, options=0L, working.directory=2L, random.seed=2L,
@@ -530,9 +530,10 @@ as.state <- function(x, test.files=NULL) {
   if(is.null(x)) x <- "off"  # default state
   x <- if(is.character(x)){
     switch(
-      x, default=new("unitizerStateDefault"),
+      x, recommended=new("unitizerStateRecommended"),
       pristine=new("unitizerStatePristine"),
-      basic=new("unitizerStateBasic"), off=new("unitizerStateOff"),
+      basic=new("unitizerStateBasic"),
+      off=new("unitizerStateOff"),
       safe=new("unitizerStateSafe")
     )
   } else if(is(x, "unitizerStateRaw")) {
@@ -543,13 +544,13 @@ as.state <- function(x, test.files=NULL) {
     }
     if(inherits(par.env, "try-error"))
       stop("Unable to convert `par.env` value to a namespace environment")
-    x.fin <- unitizerStateDefault(par.env=par.env)
+    x.fin <- unitizerStateOff(par.env=par.env)
     for(i in .unitizer.global.settings.names) slot(x.fin, i) <- slot(x, i)
     x.fin
   } else if(is(x, "unitizerInPkg")){
-    unitizerStateDefault(par.env=in_pkg_to_env(x, test.files))
+    unitizerStateOff(par.env=in_pkg_to_env(x, test.files))
   } else if(is.environment(x)){
-    unitizerStateDefault(par.env=x)
+    unitizerStateOff(par.env=x)
   }
   if(x@options > x@namespaces) {
     stop(

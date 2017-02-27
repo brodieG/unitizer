@@ -17,8 +17,10 @@ NULL
 .onAttach <- function(libname, pkgname) {
   if(is.null(getOption('unitizer.state'))) {
     packageStartupMessage(
-      "State tracking is disabled by default to comply with CRAN policies; ",
-      "For more reproducible tests we recommend you enable state tracking."
+      "State tracking is disabled by default to comply with CRAN policies. ",
+      "Add `options(unitizer.state='recommended')` to your 'Rprofile' file ",
+      "to enable, or `options(unitizer.state='off')` to quash this message ",
+      "without enabling.  See `?unitizerState` for details."
     )
   }
 }
