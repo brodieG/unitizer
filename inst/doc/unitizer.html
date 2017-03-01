@@ -13,7 +13,7 @@
 <meta name="author" content="Brodie Gaslam" />
 
 
-<title>unitizeR - Easy R Unit Tests</title>
+<title>unitizer - Easy R Unit Tests</title>
 
 
 
@@ -29,7 +29,7 @@
 
 
 
-<h1 class="title toc-ignore">unitizeR - Easy R Unit Tests</h1>
+<h1 class="title toc-ignore">unitizer - Easy R Unit Tests</h1>
 <h4 class="author"><em>Brodie Gaslam</em></h4>
 
 
@@ -47,16 +47,15 @@
 <li><a href="#unitizer-and-packages"><code>unitizer</code> and Packages</a></li>
 <li><a href="#things-you-should-know-about-unitizer">Things You Should Know About <code>unitizer</code></a><ul>
 <li><a href="#unitizer-writes-to-your-filesystem"><code>unitizer</code> Writes To Your Filesystem</a></li>
-<li><a href="#and-manipulates-the-search-path">And Manipulates the Search Path</a></li>
-<li><a href="#some-base-functions-are-modified">Some Base Functions are Modified</a></li>
-<li><a href="#beware-of-force-quitting-from-unitizer">Beware of Force Quitting from <code>unitizer</code></a></li>
 <li><a href="#tests-pass-if-they-all.equal-stored-reference-values">Tests Pass If They <code>all.equal</code> Stored Reference Values</a></li>
+<li><a href="#increase-reproducibility-with-advanced-state-management">Increase Reproducibility with Advanced State Management</a></li>
+<li><a href="#beware-of-force-quitting-from-unitizer">Beware of Force Quitting from <code>unitizer</code></a></li>
 <li><a href="#reference-objects">Reference Objects</a></li>
 <li><a href="#unitizer-is-complex"><code>unitizer</code> Is Complex</a></li>
 <li><a href="#avoid-tests-that-require-user-input">Avoid Tests That Require User Input</a></li>
 <li><a href="#avoid-running-unitize-within-try-trycatch-blocks">Avoid running <code>unitize</code> within <code>try</code> / <code>tryCatch</code> Blocks</a></li>
+<li><a href="#some-base-functions-are-masked-at-the-unitizer-prompt">Some Base Functions are Masked at the <code>unitizer</code> Prompt</a></li>
 </ul></li>
-<li><a href="#about-the-author">About the Author</a></li>
 </ul>
 </div>
 
@@ -67,7 +66,7 @@
 <p><code>unitizer</code> simplifies creating, reviewing, and debugging unit tests in R. To install:</p>
 <pre><code>library(devtools)
 install_github(&quot;brodieg/unitizer&quot;)</code></pre>
-<p>We will release to CRAN once version 1.0.x is more thoroughly tested.</p>
+<p>We are targeting v1.4.0 for CRAN. Please keep in mind this is an experimental framework that has been thoroughly tested by <em>one</em> person.</p>
 <p><code>unitizer</code> bakes in a lot of contextual help so you can get started without reading all the documentation. Try the demo to get an idea:</p>
 <pre><code>library(unitizer)
 demo(unitizer)</code></pre>
@@ -77,12 +76,12 @@ unitize(&quot;my_file_name.R&quot;)</code></pre>
 </div>
 <div id="description-and-usage" class="section level3">
 <h3>Description and Usage</h3>
-<p><code>unitizer</code> stores R expressions and the result of evaluating them so that it can detect code regressions. This is similar to saving test output to a <code>.Rout.save</code> file as documented in <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories">Writing R Extensions</a>, except that:</p>
+<p><code>unitizer</code> stores R expressions and the result of evaluating them so that it can detect code regressions. This is akin to saving test output to a <code>.Rout.save</code> file as documented in <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories">Writing R Extensions</a>, except that:</p>
 <ul>
-<li>Result objects and signaled conditions are automatically saved</li>
+<li>Result objects and signaled conditions are automatically saved so they can be examined in detail</li>
 <li>You can review each test separately before it is stored</li>
-<li>When a test fails, you can immediately review it interactively with all variables set to the same values they had when the test was run</li>
-<li>You can easily add, remove, and modify tests</li>
+<li>When a test fails, you can immediately review it interactively in the environment in which it was evaluated</li>
+<li>You can easily add, remove, and modify tests with a couple of keystrokes</li>
 </ul>
 <p>To use <code>unitizer</code>:</p>
 <ul>
@@ -122,6 +121,8 @@ log10(vec)                                # succeed with warnings</code></pre>
 <ul>
 <li>Tests are easy to write</li>
 <li>Conditions are captured automatically, with no need for special handling</li>
+<li>You can immediately review failing tests in an interactive environment</li>
+<li>Updating tests when function output legitimately changes is easy</li>
 </ul>
 <p>In favor of <code>testthat</code>:</p>
 <ul>
@@ -129,7 +130,6 @@ log10(vec)                                # succeed with warnings</code></pre>
 <li>Once you write the test you are done; with <code>unitizer</code> you still need to <code>unitize</code> and review the tests</li>
 </ul>
 <p><code>unitizer</code> is particularly convenient when the tests return complex objects (e.g as <code>lm</code> does) or produce conditions. There is no need for complicated assertions involving deparsed objects.</p>
-<p>Additionally, <code>unitizer</code> provides an interactive environment that allows you to immediately review each failing test <em>in that test’s evaluation environment</em>. It is also trivial to update tests if the test result changes are legitimate.</p>
 </div>
 <div id="converting-testthat-tests-to-unitizer" class="section level3">
 <h3>Converting <code>testthat</code> tests to <code>unitizer</code></h3>
@@ -166,32 +166,25 @@ unitize()              # Will prompt for a file to `unitize`</code></pre>
 <h3><code>unitizer</code> Writes To Your Filesystem</h3>
 <p>The <code>unitize</code>d tests need to be saved someplace, and the default action is to save to the same directory as the test file. You will always be prompted by <code>unitizer</code> before it writes to your file system. See <a href="unitizer_miscellaneous.html#storing-unitized-tests">storing <code>unitized</code> tests</a> for implications and alternatives.</p>
 </div>
-<div id="and-manipulates-the-search-path" class="section level3">
-<h3>And Manipulates the Search Path</h3>
-<p><code>unitizer</code> tracks and manages many aspects of state to make your tests more reproducible. For example, <code>unitizer</code> will set your search path to what is found in a vanilla R session prior to running tests so that you can ensure your test is not affected by libraries you happen to have loaded in your session (the corollary to this is you must explicitly load libraries your tests need from within your tests). The following aspects of state are actively tracked and managed:</p>
+<div id="tests-pass-if-they-all.equal-stored-reference-values" class="section level3">
+<h3>Tests Pass If They <code>all.equal</code> Stored Reference Values</h3>
+<p>Once you have created your first <code>unitizer</code> with <code>unitize</code>, subsequent calls to <code>unitize</code> will compare the old stored value to the new one using <code>all.equal</code>. You can change the comparison function by using <code>unitizer_sect</code> (see <a href="unitizer_tests.html">tests vignette</a>).</p>
+</div>
+<div id="increase-reproducibility-with-advanced-state-management" class="section level3">
+<h3>Increase Reproducibility with Advanced State Management</h3>
+<p><code>unitizer</code> can track and manage many aspects of state to make your tests more reproducible. For example, <code>unitizer</code> can reset your search path to what is in a fresh R session prior to running tests to avoid conflicts with loaded whatever libraries you happen to have loaded at the time. Your session state is restored when <code>unitizer</code> exits. The following aspects of state can be actively tracked and managed:</p>
 <ul>
-<li>Search path</li>
-<li>Parent environment (objects in your workspace will not be visible to tests)</li>
+<li>Search path (including removing the global environment from search path)</li>
 <li>Random seed</li>
 <li>Working directory</li>
+<li>Options</li>
+<li>Loaded namespaces</li>
 </ul>
-<p>Additionally, <code>unitizer</code> is able to control global options and namespaces, though these last two features are disabled by default. For more details and on for instructions on how to modify this behavior, see <code>?unitizerState</code> and the <a href="unitizer_reproducible_tests.html">reproducible tests vignette</a>.</p>
-</div>
-<div id="some-base-functions-are-modified" class="section level3">
-<h3>Some Base Functions are Modified</h3>
-<p><code>unitizer</code> traces some functions during <code>unitize</code> evaluation. The functions are then untraced <code>on.exit</code>, so the only R evaluations that are affected are test expressions that are <code>unitized</code>.</p>
-<p><code>library</code>, <code>require</code>, <code>attach</code>, and <code>detach</code> are traced to implement search path tracking. The <code>trace</code> is only used for internal logging and should be completely transparent to users.</p>
-<p><code>q</code> and <code>quit</code> are traced to give the user an opportunity to cancel the quit action in case they meant to quit from <code>unitizer</code> instead of R. Use Q to quit from <code>unitizer</code>, as you would from <code>browser</code>.</p>
-<p><code>ls</code> is overwritten with a specialized version for use in <code>unitizer</code>. You can still access the original function with <code>base::ls</code>.</p>
-<p>See <a href="unitizer_miscellaneous.html">esoteric topics vignette</a>.</p>
+<p>State management is turned off by default because it requires tracing some base functions which is against CRAN policy. If you wish to enable this feature use <code>unitize(..., state='recommended')</code> or <code>options(unitizer.state='recommended')</code>. For more details see <code>?unitizerState</code> and the <a href="unitizer_reproducible_tests.html">reproducible tests vignette</a>.</p>
 </div>
 <div id="beware-of-force-quitting-from-unitizer" class="section level3">
 <h3>Beware of Force Quitting from <code>unitizer</code></h3>
 <p>If you interrupt evaluation with CTRL+C (or with ESC in RStudio), or if you <code>browser</code>/<code>debug</code> and quit with ‘Q’, you will exit <code>unitizer</code> with no opportunity to save any modifications you made during <code>unitizer</code> review. Make sure you quit by typing ‘Q’ at the <code>unitizer</code> prompt. If you are in <code>browser</code>, you will need to let the browsed function finish evaluation to return to the <code>unitizer</code> prompt, and only then quit.</p>
-</div>
-<div id="tests-pass-if-they-all.equal-stored-reference-values" class="section level3">
-<h3>Tests Pass If They <code>all.equal</code> Stored Reference Values</h3>
-<p>Once you have created your first <code>unitizer</code> with <code>unitize</code>, subsequent calls to <code>unitize</code> will compare the old stored value to the new one using <code>all.equal</code>. You can change the comparison function by using <code>unitizer_sect</code> (see <a href="unitizer_tests.html">tests vignette</a>).</p>
 </div>
 <div id="reference-objects" class="section level3">
 <h3>Reference Objects</h3>
@@ -201,7 +194,6 @@ unitize()              # Will prompt for a file to `unitize`</code></pre>
 <h3><code>unitizer</code> Is Complex</h3>
 <p>In order to re-create the feel of the R prompt within <code>unitizer</code> we resorted to a fair bit of trickery. For the most part this should be transparent to the user, but you should be aware it exists in the event something unexpected happens that exposes it. Here is a non-exhaustive list of some of the tricky things we do:</p>
 <ul>
-<li>Some base functions are <a href="#some-base-functions-are-modified">modified</a></li>
 <li>Each tests is evaluated in its own environment, a child of the previous test’s environment; because R looks up objects in parent environments it appears that all tests are evaluated in one environment (see <a href="unitizer_interactive_env.html">interactive environment vignette</a>)</li>
 <li>We provide modified versions of <code>quit</code>/<code>q</code> and <code>ls</code> (see <a href="unitizer_miscellaneous.html">esoteric topics vignette</a>) at the <code>unitizer</code> prompt</li>
 <li><code>traceback</code> should work when reviewing tests that produce errors, but only because we capture the trace with <code>sys.calls</code> and write it to <code>base::.Traceback</code> during review</li>
@@ -218,10 +210,13 @@ unitize()              # Will prompt for a file to `unitize`</code></pre>
 <h3>Avoid running <code>unitize</code> within <code>try</code> / <code>tryCatch</code> Blocks</h3>
 <p>Doing so will cause <code>unitize</code> to quit if any test expressions throw conditions. See discussion in <a href="unitizer_miscellaneous.html#running-unitize-within-error-handling-blocks">error handling</a>.</p>
 </div>
+<div id="some-base-functions-are-masked-at-the-unitizer-prompt" class="section level3">
+<h3>Some Base Functions are Masked at the <code>unitizer</code> Prompt</h3>
+<p><code>q</code> and <code>quit</code> are masked to give the user an opportunity to cancel the quit action in case they meant to quit from <code>unitizer</code> instead of R. Use Q to quit from <code>unitizer</code>, as you would from <code>browser</code>.</p>
+<p><code>ls</code> is masked with a specialized version for use in <code>unitizer</code>.</p>
+<p>In both cases you can still access the original functions by preceding them with <code>base::</code></p>
+<p>See <a href="unitizer_miscellaneous.html#overriden-functions">miscellanous topics vignette</a>.</p>
 </div>
-<div id="about-the-author" class="section level2">
-<h2>About the Author</h2>
-<p>Brodie Gaslam is a hobbyist programmer based in the US East Coast.</p>
 </div>
 
 

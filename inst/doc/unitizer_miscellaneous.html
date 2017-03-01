@@ -96,15 +96,9 @@
 <li>do not track the binary files at all (but they are valuable and now not backed up)</li>
 <li>do not track the binary files at all, but implement a secondary back-up system (this sounds really annoying)</li>
 <li>Use a backed-up, non-file system store (see “Alternate Store Locations” above)</li>
-<li>Track the binary files, but only commit them for major releases</li>
+<li>Track the binary files, but manage how often they are committed.</li>
 </ul>
-<p>The approach we suggest is the last one above: just commit your <code>rds</code> files for major releases. Also, note that to the extent you have a lot of test files that aren’t changing, this should minimize how much binary data you commit. One possible way to handle this with Git is to use the following command (adapted from twalberg’s <a href="http://stackoverflow.com/questions/12288212/git-update-index-assume-unchanged-on-directory">SO answer</a>).</p>
-<p><strong>Warning</strong>: be careful when you reset your working directory as your <code>rds</code> files will get reset to the last version that you committed (i.e. <code>git checkout -- .</code> will replace your currend <code>rds</code> with the one in the repo). If you update your <code>rds</code> within a branch and then merge the branch back, make sure you either commit or stash the <code>rds</code> before the merge.</p>
-<p>To implement:</p>
-<pre><code>git ls-files *.rds -z | xargs -0 git update-index --assume-unchanged</code></pre>
-<p>This will prevent the <code>rds</code> files as showing up as being modified when you run <code>git status</code>. Just make sure you still commit your <code>rds</code> at key release points so you have backups of them. Once you reach the major release point, you can:</p>
-<pre><code>git ls-files *.rds -z | xargs -0 git update-index --no-assume-unchanged</code></pre>
-<p>If you <code>--assume-unchanged</code> other files such as <code>.o</code> or <code>.so</code> files, you may need to remove those after a checkout as well so that <code>devtools::install</code> will recreate them from current sources.</p>
+<p>We recommend splitting tests for different functionality into different files. This should mitigate the number of rds files that change with any given source code update, and is good practice anyway. Additionally, we typically only commit the rds files when a feature branch or issue resolution is fully complete.</p>
 </div>
 <div id="modifying-an-existing-unitizer" class="section level2">
 <h2>Modifying an Existing Unitizer</h2>

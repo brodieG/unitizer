@@ -22,7 +22,8 @@ vignette: >
 library(devtools)
 install_github("brodieg/unitizer")
 ```
-We will release to CRAN once version 1.0.x is more thoroughly tested.
+We are targeting v1.4.0 for CRAN.  Please keep in mind this is an experimental
+framework that has been thoroughly tested by *one* person.
 
 `unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
 ```
@@ -37,19 +38,27 @@ unitize("my_file_name.R")
 
 ### Description and Usage
 
-`unitizer` stores R expressions and the result of evaluating them so that it can detect code regressions.  This is similar to saving test output to a `.Rout.save` file as documented in [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories), except that:
+`unitizer` stores R expressions and the result of evaluating them so that it can
+detect code regressions.  This is akin to saving test output to a
+`.Rout.save` file as documented in [Writing R
+Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories),
+except that:
 
-* Result objects and signaled conditions are automatically saved
+* Result objects and signaled conditions are automatically saved so they can be
+  examined in detail
 * You can review each test separately before it is stored
-* When a test fails, you can immediately review it interactively with all variables set to the same values they had when the test was run
+* When a test fails, you can immediately review it interactively in the
+  environment in which it was evaluated
 * You can easily add, remove, and modify tests with a couple of keystrokes
 
 To use `unitizer`:
 
-* Write test expressions as you would when informally testing code on the command line, and save them to a file (e.g. "my_file_name.R")
+* Write test expressions as you would when informally testing code on the
+  command line, and save them to a file (e.g. "my_file_name.R")
 * Run `unitize("my_file_name.R")` and follow the prompts
 * Continue developing your package
-* Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to review and debug them in an interactive prompt
+* Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to
+  review and debug them in an interactive prompt
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
@@ -63,7 +72,10 @@ To use `unitizer`:
 
 ### Testing Style
 
-`unitizer` requires you to review test outputs and confirm they are as expected.  `testthat` requires you to assert what the test outputs should be beforehand.  There are trade-offs between these strategies that we illustrate here, first with `testthat`:
+`unitizer` requires you to review test outputs and confirm they are as expected.
+`testthat` requires you to assert what the test outputs should be beforehand.
+There are trade-offs between these strategies that we illustrate here, first
+with `testthat`:
 ```
 vec <- c(10, -10, 0, .1, Inf, NA)
 expect_error(
@@ -83,15 +95,18 @@ These two unit test implementations are functionally equivalent.  There are bene
 
 * Tests are easy to write
 * Conditions are captured automatically, with no need for special handling
+* You can immediately review failing tests in an interactive environment
+* Updating tests when function output legitimately changes is easy
 
 In favor of `testthat`:
 
 * The tests are self documenting; expected results are obvious
-* Once you write the test you are done; with `unitizer` you still need to `unitize` and review the tests
+* Once you write the test you are done; with `unitizer` you still need to
+  `unitize` and review the tests
 
-`unitizer` is particularly convenient when the tests return complex objects (e.g as `lm` does) or produce conditions.  There is no need for complicated assertions involving deparsed objects.
-
-Additionally, `unitizer` provides an interactive environment that allows you to immediately review each failing test _in that test's evaluation environment_.  It is also trivial to update tests if the test result changes are legitimate.
+`unitizer` is particularly convenient when the tests return complex objects (e.g
+as `lm` does) or produce conditions.  There is no need for complicated
+assertions involving deparsed objects.
 
 ### Converting `testthat` tests to `unitizer`
 
@@ -120,7 +135,10 @@ or equivalently
 library(unitizer)
 unitize_dir("unitizer")
 ```
-The path specification for test files should be relative to the `tests` directory as that is what `R CMD check` uses.  When `unitize` is run by `R CMD check` it will run in a non-interactive mode that will succeed only if all tests pass.
+The path specification for test files should be relative to the `tests`
+directory as that is what `R CMD check` uses.  When `unitize` is run by `R CMD
+check` it will run in a non-interactive mode that will succeed only if all tests
+pass.
 
 You can use any folder name for your tests, but if you use "tests/unitizer"
 `unitize` will look for files automatically, so the following work assuming your

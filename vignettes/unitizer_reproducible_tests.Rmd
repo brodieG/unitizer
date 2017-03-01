@@ -11,7 +11,10 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
-## Reproducibility
+
+## Managing State
+
+### Reproducibility
 
 R's emphasis on avoiding side effects generally means that if you run the same R
 code more than once you can be relatively certain that you will get the same
@@ -52,38 +55,81 @@ is capable of managing the first six aspects of state listed above.
 **In order to comply with CRAN policies state management is turned off by
 default.**
 
-## Enabling State Management
+### Batch Evaluation and Deferred Review
+
+`unitizer` batch processes all the tests when it is first run before it breaks
+into interactive mode.  It does this to:
+
+1. display useful summary data (how many tests passed/failed in which
+   sections), which is often helpful to know before beginning to debug
+2. allow time consuming process to run unattended so that the interactive test
+   review process is not interrupted by slow tests
+
+The batch-evaluate-and-review-later creates the need for a mechanism to recreate
+state for when we review the tests.  Imagine trying to figure out why a test
+failed when all the variables may have been changed by subsequent tests.
+`unitizer` will always recreate the state of the variables defined by the test
+scripts, and can optionally recreate other aspects of state provided that is
+enabled.
+
+### Enabling State Management
 
 You can turn on the "recommended" state management level to manage the first
 four elements of state listed in the previous section.  To do so, 
 use `unitize(..., state='recommended')` or
 `options(unitizer.state='recommended')`.  For more details see `?unitizerState`.
 
-## Batch Evaluation and State
-
-`unitizer` batch processes all the tests when it is first run before it breaks
-into interactive mode.  It does this for two reasons:
-
-1. this allows it to display useful summary data (how many tests passed/failed
-   in which sections), and more importantly,
-2. it means a potentially time consuming process can be left to run unattended,
-   and then the interactive portion of the test review is not interrupted by
-   lengthy evaluations each time a user moves on to the next test.
-
-There is a substantial drawback to the batch-evaluate-and-review-later approach:
-we need some mechanism for recreating the state each test was run in so that
-when we review the test we review it in the appropriate context.  Imagine trying
-to figure out why a test failed when all the variables may have been changed by
-subsequent tests.
-
-The other major drawback is that we rule out the simplest way of ensuring tests
-are run in a consistent environment: run all tests in a new vanilla R session.
-
-Because of all this `unitizer` implements mechanisms to modify session state,
-both to ensure a consistent evaluation environment for tests and to allow tests
-to be reviewed in their evaluation environment.
-
 ## Workspace And Evaluation Environments
+
+### Test Environments
+
+In order to allow review of each test in its evaluation environment each test is
+evaluated in its own environment. Each of these environments has for parent the
+environment of the previous test.  This means that a test has access to all the
+objects created/used by earlier tests, but not objects created/used by
+subsequent tests.  When a later test "modifies" an existing object, the existing
+object is not really modified; rather, the test creates a new object of the same
+name in the child environment which masks the object in the earlier test.  This
+is functionally equivalent to overwriting the object as far as the later test is
+concerned.
+
+For the most part this environment trickery should be transparent to the user.
+The `ls` function is specially modified to, among other things, list objects in
+all the parent test environments.  But there are exceptions to this
+"transparency".  The simplest exception is that you can not actually remove an
+object created in an earlier test (well, it is possible, but the how isn't
+documented and you are advised not to attempt it).  Here is a more complex
+exception:
+
+    a <- function() b()
+    b <- function() TRUE
+    a()
+
+In this case, when we evaluate `a()` we must step back two environments to find
+`a`, but that's okay.  The problem is that once inside `a`, we must now evaluate
+`b()`, but `b` is defined in a child environment, not a parent environment so
+R's object lookup fails.
+
+It turns out the above example actually works because as noted in [details on
+tests vignette](unitizer_tests.html), environments are only defined for tests,
+and neither the `a` or `b` assignments are tests, so both `a` and `b` are
+assigned to the environment of the `a()` call.  However, this really breaks:
+
+    a <- function() b()
+    NULL
+    b <- function() TRUE
+    a()
+
+Since NULL is a valid test, `a` is assigned to the environment associated with
+the `NULL` line, and `b` is assigned to the `a()` test environment, the above
+test fails because `b` is not found and the illusion is shattered [DEV NOTE:
+CHECK THIS EXAMPLE].
+
+If you are getting weird "object not found" errors when you run your tests, but
+the same code does not generate those errors when run directly in the command
+line, this illusion could be failing you.  In those situations, make sure that
+you assign all the variables necessary right ahead of the test so they will all
+get stored in the same environment.
 
 ### The Parent Environment
 
@@ -146,56 +192,6 @@ environment with the `state` argument to `unitize` / `unitize_dir`.  See
 If you do use this feature keep in mind that your tests will be exposed to the
 global environment as well since R looks through the search path after looking
 in the package namespace and imports.
-
-### Test Environments
-
-In order to allow review of each test in its evaluation environment each test is
-evaluated in its own environment. Each of these environments has for parent the
-environment of the previous test.  This means that a test has access to all the
-objects created/used by earlier tests, but not objects created/used by
-subsequent tests.  When a later test "modifies" an existing object, the existing
-object is not really modified; rather, the test creates a new object of the same
-name in the child environment which masks the object in the earlier test.  This
-is functionally equivalent to overwriting the object as far as the later test is
-concerned.
-
-For the most part this environment trickery should be transparent to the user.
-The `ls` function is specially modified to, among other things, list objects in
-all the parent test environments.  But there are exceptions to this
-"transparency".  The simplest exception is that you can not actually remove an
-object created in an earlier test (well, it is possible, but the how isn't
-documented and you are advised not to attempt it).  Here is a more complex
-exception:
-
-    a <- function() b()
-    b <- function() TRUE
-    a()
-
-In this case, when we evaluate `a()` we must step back two environments to find
-`a`, but that's okay.  The problem is that once inside `a`, we must now evaluate
-`b()`, but `b` is defined in a child environment, not a parent environment so
-R's object lookup fails.
-
-It turns out the above example actually works because as noted in [details on
-tests vignette](unitizer_tests.html), environments are only defined for tests,
-and neither the `a` or `b` assignments are tests, so both `a` and `b` are
-assigned to the environment of the `a()` call.  However, this really breaks:
-
-    a <- function() b()
-    NULL
-    b <- function() TRUE
-    a()
-
-Since NULL is a valid test, `a` is assigned to the environment associated with
-the `NULL` line, and `b` is assigned to the `a()` test environment, the above
-test fails because `b` is not found and the illusion is shattered [DEV NOTE:
-CHECK THIS EXAMPLE].
-
-If you are getting weird "object not found" errors when you run your tests, but
-the same code does not generate those errors when run directly in the command
-line, this illusion could be failing you.  In those situations, make sure that
-you assign all the variables necessary right ahead of the test so they will all
-get stored in the same environment.
 
 ### Issues With Reference Objects
 
