@@ -102,7 +102,7 @@ local({
   })
   test_that("as.state", {
     expect_identical(
-      unitizer:::as.state("default"), unitizer:::unitizerStateDefault()
+      unitizer:::as.state("recommended"), unitizer:::unitizerStateRecommended()
     )
     expect_identical(
       unitizer:::as.state("pristine"),
