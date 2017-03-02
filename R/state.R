@@ -528,46 +528,67 @@ as.state <- function(x, test.files=NULL) {
     !is(x, "unitizerInPkg") || is.character(test.files) ||
     !!nchar(x@package)
   )
+  # Under several input values we need to figure what state to use because it
+  # may not be specified at all
+
+  x.fin <- if(is.null(x) || is.character(x)) {
+    char_or_null_as_state(x)
+  } else {
+    state.opt <- getOption('unitizer.state')
+    state.def <- if(is.character(state.opt) || is.null(state.opt)) {
+      char_or_null_as_state(state.opt)
+    } else new("unitizerStateOff")
+
+    if(is(x, "unitizerStateRaw")) {
+      par.env <- if(is.character(x@par.env)) {
+        try(getNamespace(x@par.env))
+      } else if(is(x@par.env, "unitizerInPkg")) {
+        try(in_pkg_to_env(x@par.env, test.files))
+      }
+      if(inherits(par.env, "try-error"))
+        stop("Unable to convert `par.env` value to a namespace environment")
+      state.def@par.env <- par.env
+      for(i in .unitizer.global.settings.names)
+        slot(state.def, i) <- slot(x, i)
+      state.def
+    } else if(is(x, "unitizerInPkg")){
+      state.def@par.env <- in_pkg_to_env(x, test.files)
+      state.def
+    } else if(is.environment(x)){
+      state.def@par.env <- x
+      state.def
+  } }
+  if(x.fin@options > x.fin@namespaces) {
+    stop(
+      word_wrap(collapse="\n",
+        cc(
+          "Options state tracking (", x.fin@options, ") must be less than ",
+          "namespace state tracking (", x.fin@namespaces, ")."
+    ) ) )
+  }
+  if(x.fin@namespaces > x.fin@search.path) {
+    stop(
+      word_wrap(collapse="\n",
+        cc(
+          "Namespace state tracking (", x.fin@namespaces, ") must be less ",
+          "than or equal to search path state tracking (", x.fin@search.path, 
+          ")."
+    ) ) )
+  }
+  return(x.fin)
+}
+char_or_null_as_state <- function(x) {
   if(is.null(x)) x <- "off"  # default state
-  x <- if(is.character(x)){
-    switch(
-      x, recommended=new("unitizerStateRecommended"),
-      pristine=new("unitizerStatePristine"),
-      basic=new("unitizerStateBasic"),
-      off=new("unitizerStateOff"),
-      safe=new("unitizerStateSafe")
+  if(!is.character(x) || !x %in% .unitizer.valid.state.abbr)
+    stop(
+      "Internal error, `x` must be char and match a known unitizer state ",
+      "setting to convert to state, contact maintainer."
     )
-  } else if(is(x, "unitizerStateRaw")) {
-     par.env <- if(is.character(x@par.env)) {
-       try(getNamespace(x@par.env))
-     } else if(is(x@par.env, "unitizerInPkg")) {
-       try(in_pkg_to_env(x@par.env, test.files))
-    }
-    if(inherits(par.env, "try-error"))
-      stop("Unable to convert `par.env` value to a namespace environment")
-    x.fin <- unitizerStateOff(par.env=par.env)
-    for(i in .unitizer.global.settings.names) slot(x.fin, i) <- slot(x, i)
-    x.fin
-  } else if(is(x, "unitizerInPkg")){
-    unitizerStateOff(par.env=in_pkg_to_env(x, test.files))
-  } else if(is.environment(x)){
-    unitizerStateOff(par.env=x)
-  }
-  if(x@options > x@namespaces) {
-    stop(
-      word_wrap(collapse="\n",
-        cc(
-          "Options state tracking (", x@options, ") must be less than ",
-          "namespace state tracking (", x@namespaces, ")."
-    ) ) )
-  }
-  if(x@namespaces > x@search.path) {
-    stop(
-      word_wrap(collapse="\n",
-        cc(
-          "Namespace state tracking (", x@namespaces, ") must be less than ",
-          "or equal to search path state tracking (", x@search.path, ")."
-    ) ) )
-  }
-  return(x)
+  switch(
+    x, recommended=new("unitizerStateRecommended"),
+    pristine=new("unitizerStatePristine"),
+    basic=new("unitizerStateBasic"),
+    off=new("unitizerStateOff"),
+    safe=new("unitizerStateSafe")
+  )
 }
