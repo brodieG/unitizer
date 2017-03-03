@@ -7,8 +7,7 @@
 \alias{unitizerState}
 \title{Tests and Session State}
 \usage{
-state(par.env = .GlobalEnv, search.path = 0L, options = 0L,
-  working.directory = 0L, random.seed = 0L, namespaces = 0L)
+state(par.env, search.path, options, working.directory, random.seed, namespaces)
 
 in_pkg(package = NULL)
 }
@@ -17,17 +16,17 @@ in_pkg(package = NULL)
 environment, or an environment to use as the parent environment, or
 the name of a package as a character string to use that packages'
 namespace as the parent environment, or a \code{unitizerInPkg} object
-as produced by \code{\link{in_pkg}}}
+as produced by \code{\link{in_pkg}}, assumes .GlobalEnv if unspecified}
 
-\item{search.path}{one of \code{0:2}}
+\item{search.path}{one of \code{0:2}, assumes 0 if unspecified}
 
-\item{options}{one of \code{0:2}}
+\item{options}{one of \code{0:2}, assumes 0 if unspecified}
 
-\item{working.directory}{one of \code{0:2}}
+\item{working.directory}{one of \code{0:2}, assumes 0 if unspecified}
 
-\item{random.seed}{one of \code{0:2}}
+\item{random.seed}{one of \code{0:2}, assumes 0 if unspecified}
 
-\item{namespaces}{one of \code{0:2}}
+\item{namespaces}{one of \code{0:2}, assumes 0 if unspecified}
 
 \item{package}{character(1L) or NULL; if NULL will tell \code{unitize}
 to attempt to identify if the test file is inside an R package folder
@@ -40,7 +39,8 @@ environment, it just tells \code{unitize} to do so.}
 \value{
 for \code{state} a \code{unitizerStateRaw} object, for \code{in_pkg}
   a \code{unitizerInPkg} object, both of which are suitable as values for
-  the \code{state} paramter for \code{\link{unitize}}.
+  the \code{state} parameter for \code{\link{unitize}} or as values for the
+  \dQuote{unitizer.state} global option.
 }
 \description{
 While R generally adheres to a "functional" programming style, there are
@@ -69,20 +69,20 @@ applies equally to \code{unitize_dir}.
 in the following:
 
 \itemize{
-  \item Workspace / Parent Environment: all tests are
+  \item Workspace / Parent Environment: all tests can be
      evaluated in environments that are children of a special environment
      that does not inherit from \code{.GlobalEnv}.  This prevents objects
      that are lying around in your workspace from interfering with your
      tests.
-  \item Random Seed: is set to a specific value at the
+  \item Random Seed: can be set to a specific value at the
     beginning of each test file so that tests using random values get the
     same value at every test iteration. If you change the order of  your
     tests, or add a test that uses a random sampling before the end of
     the file, that will still affect the random seed.
-  \item Working Directory: is set to the tests directory
+  \item Working Directory: can be set to the tests directory
     inside the package directory provided all test files are in the same
     sub-directory of a package.
-  \item Search Path: is set to what you would
+  \item Search Path: can be set to what you would
     typically find in a freshly loaded vanilla R session.  This means any non
     default packages that are loaded when you run your tests are unloaded
     prior to running your tests.  If you want to use the same libraries
@@ -96,7 +96,8 @@ in the following:
 }
 
 In the \dQuote{recommended} state tracking mode parent environment, random
-seed, working directory, and search path are all managed.
+seed, working directory, and search path are all managed.  All these settings
+are returned to their original values when \code{unitizer} exits.
 
 You can modify what aspects of state are managed by using the \code{state}
 parameter to \code{\link{unitize}}.  If you are satisfied with basic default
@@ -108,22 +109,6 @@ want more control you can use the return values of the \code{state} and
 State is reset after running each test file when running multiple test
 files with \code{unitize_dir}, which means state changes in one test file
 will not affect the next one.
-}
-
-\section{Avoiding \code{.GlobalEnv}}{
-
-
-For the most part avoiding \code{.GlobalEnv} leads to more robust and
-reproducible tests since the tests are not influenced by objects in the
-workspace that may well be changing from test to test.  There are some
-potential issues when dealing with functions that expect \code{.GlobalEnv} to
-be on the search path.  For example, \code{setClass} uses \code{topenv} to
-find a default environment to assign S4 classes to.  Typically this will be
-the package environment, or \code{.GlobalEnv}.  However, when you are in
-\code{unitizer} this becomes the next environment on the search path, which
-is typically locked, which will cause \code{setClass} to fail.  For those
-types of functions you should specify them with an environment directly, e.g.
-\code{setClass("test", slots=c(a="integer"), where=environment())}.
 }
 
 \section{State Presets}{
@@ -196,6 +181,31 @@ to what the various parameter values for \code{state} do:
         set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
         as that seed is substantially smaller than the R default seed).
 } }
+}
+
+\section{Permanently Setting State Tracking}{
+
+
+You can permanently change the default state by setting the
+\dQuote{unitizer.state} option to the name of the state presets above or to a
+or to a state settings option object generated with \code{state} as described
+in the previous section.
+}
+
+\section{Avoiding \code{.GlobalEnv}}{
+
+
+For the most part avoiding \code{.GlobalEnv} leads to more robust and
+reproducible tests since the tests are not influenced by objects in the
+workspace that may well be changing from test to test.  There are some
+potential issues when dealing with functions that expect \code{.GlobalEnv} to
+be on the search path.  For example, \code{setClass} uses \code{topenv} to
+find a default environment to assign S4 classes to.  Typically this will be
+the package environment, or \code{.GlobalEnv}.  However, when you are in
+\code{unitizer} this becomes the next environment on the search path, which
+is typically locked, which will cause \code{setClass} to fail.  For those
+types of functions you should specify them with an environment directly, e.g.
+\code{setClass("test", slots=c(a="integer"), where=environment())}.
 }
 
 \section{Namespaces and Options}{

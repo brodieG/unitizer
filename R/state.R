@@ -140,7 +140,7 @@ NULL
 #'         set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
 #'         as that seed is substantially smaller than the R default seed).
 #' } }
-#' @section Permanently Setting State Tracking
+#' @section Permanently Setting State Tracking:
 #'
 #' You can permanently change the default state by setting the
 #' \dQuote{unitizer.state} option to the name of the state presets above or to a
@@ -598,7 +598,8 @@ as.state <- function(x, test.files=NULL) {
       stop("Unable to convert `par.env` value to a namespace environment")
 
     as.unitizerStateProcessed(x.raw)
-  }
+  } else x.raw
+
   # Final sanity checks
 
   if(x.fin@options > x.fin@namespaces) {
@@ -638,7 +639,10 @@ char_or_null_as_state <- function(x) {
 ## Generate a state raw object
 ##
 ## "unitizerStateProcessed" objects are returned as is.  The `x` argument is one
-## of the things that can be converted to a state object.
+## of the things that can be converted to a state object.  This function is a
+## little misleading because it will return "unitizerStateProcessed" objects if
+## it can, and only if not "unitizerStateRaw" objects (e.g. if we're dealing
+## with "in_pkg")
 
 as.state_raw <- function(x) {
   if(
