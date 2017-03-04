@@ -176,7 +176,7 @@ local({
     state.obj <- unitizer:::unitizerStateRaw()
     state.obj@options <- 2L
 
-    expect_error(us.uJKUnitizer:::as.state(state.obj), "Options state tracking")
+    expect_error(unitizer:::as.state(state.obj), "Options state tracking")
 
     state.obj@namespaces <- 2L
     state.obj@search.path <- 1L
