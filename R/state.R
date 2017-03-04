@@ -297,10 +297,11 @@ state <- function(
     )
   for(i in supplied.args) slot(state.def, i) <- get(i, inherits=FALSE)
 
-  if(!isTRUE(validObject(state.def))) {
+  state.fin <- as.state(state.def)
+  if(!isTRUE(validObject(state.fin, test=TRUE))) {
     stop("Unable to create valid `unitizerStateRaw` object; see prior errors")
   }
-  state.def
+  state.fin
 }
 process_par_env <- function(par.env) {
   if(
@@ -451,35 +452,35 @@ setMethod("initialize", "unitizerState",
 } )
 unitizerStateRecommended <- setClass(
   "unitizerStateRecommended",
-  contains="unitizerStateProcessed",
+  contains="unitizerStateRaw",
   prototype=list(
     search.path=2L, options=0L, working.directory=2L, random.seed=2L,
     namespaces=0L, par.env=NULL
   )
 )
 unitizerStatePristine <- setClass(
-  "unitizerStatePristine", contains="unitizerStateProcessed",
+  "unitizerStatePristine", contains="unitizerStateRaw",
   prototype=list(
     search.path=2L, options=2L, working.directory=2L, random.seed=2L,
     namespaces=2L, par.env=NULL
   )
 )
 unitizerStateSafe <- setClass(
-  "unitizerStateSafe", contains="unitizerStateProcessed",
+  "unitizerStateSafe", contains="unitizerStateRaw",
   prototype=list(
     search.path=0L, options=0L, working.directory=2L, random.seed=2L,
     namespaces=0L, par.env=NULL
   )
 )
 unitizerStateBasic <- setClass(
-  "unitizerStateBasic", contains="unitizerStateProcessed",
+  "unitizerStateBasic", contains="unitizerStateRaw",
   prototype=list(
     search.path=1L, options=1L, working.directory=1L, random.seed=1L,
     par.env=NULL
   )
 )
 unitizerStateOff <- setClass(
-  "unitizerStateOff", contains="unitizerStateProcessed",
+  "unitizerStateOff", contains="unitizerStateRaw",
   prototype=list(
     search.path=0L, options=0L, working.directory=0L, random.seed=0L,
     namespaces=0L, par.env=.GlobalEnv
@@ -634,6 +635,8 @@ char_or_null_as_state <- function(x) {
       "Internal error, `x` must be char and match a known unitizer state ",
       "setting to convert to state, contact maintainer."
     )
+  # note these are all raw objects
+
   switch(
     x, recommended=new("unitizerStateRecommended"),
     pristine=new("unitizerStatePristine"),
@@ -672,7 +675,7 @@ as.state_raw <- function(x) {
     if(is.null(x) || is.character(x)) {
       char_or_null_as_state(x)
     } else if (is.environment(x)) {
-      new("unitizerStateProcessed", par.env=x)
+      new("unitizerStateRaw", par.env=x)
     } else if (is(x, "unitizerInPkg")) {
       new("unitizerStateRaw", par.env=x)
     } else
