@@ -433,6 +433,9 @@ unitizerStateRaw <- setClass(
     TRUE
   }
 )
+# Note that an instantiation of `unitizerStateProcessed` basically should be the
+# default state object
+
 unitizerStateProcessed <- setClass(
   "unitizerStateProcessed",
   slots=c(par.env="environmentOrNULL"),
@@ -585,18 +588,17 @@ as.state <- function(x, test.files=NULL) {
   x.raw <- as.state_raw(x)
 
   x.fin <- if(is(x.raw, "unitizerStateRaw")) {
-    stopifnot(
-      is.character(test.files) || is.null(test.files),
-      is.character(test.files) || nzchar(x.raw@package)
-    )
     par.env <- if(is.character(x.raw@par.env)) {
       try(getNamespace(x.raw@par.env))
     } else if(is(x.raw@par.env, "unitizerInPkg")) {
+      stopifnot(is.character(test.files) || is.null(test.files))
+
       try(in_pkg_to_env(x.raw@par.env, test.files))
     }
     if(inherits(par.env, "try-error"))
       stop("Unable to convert `par.env` value to a namespace environment")
 
+    x.raw@par.env <- par.env
     as.unitizerStateProcessed(x.raw)
   } else x.raw
 
@@ -665,7 +667,9 @@ as.state_raw <- function(x) {
   x.raw <- if(!is(x, "unitizerState")) {
     if(is.null(x) || is.character(x)) {
       char_or_null_as_state(x)
-    } else if (is.environment(x) || is(x, "unitizerInPkg")) {
+    } else if (is.environment(x)) {
+      new("unitizerStateProcessed", par.env=x)
+    } else if (is(x, "unitizerInPkg")) {
       new("unitizerStateRaw", par.env=x)
     } else
       stop(

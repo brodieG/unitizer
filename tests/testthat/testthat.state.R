@@ -108,18 +108,21 @@ local({
       unitizer:::as.state("pristine"),
       unitizer:::unitizerStatePristine()
     )
+    # unitizerStateProcessed should produce the default object (which currently
+    # is "off")
+
     expect_identical(
       unitizer:::as.state(.GlobalEnv),
-      unitizer:::unitizerStateDefault(par.env=.GlobalEnv)
+      unitizer:::unitizerStateProcessed(par.env=.GlobalEnv)
     )
     expect_identical(
       unitizer:::as.state(in_pkg("stats")),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("stats"))
     )
     stats.lib <- file.path(system.file(package="stats"), "R")
     expect_identical(
       unitizer:::as.state(in_pkg(), test.files=stats.lib),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("stats"))
     )
     expect_error(unitizer:::as.state(200))
     state <- unitizer:::unitizerStateOff()
