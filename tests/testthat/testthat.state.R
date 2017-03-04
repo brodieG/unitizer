@@ -102,11 +102,12 @@ local({
   })
   test_that("as.state", {
     expect_identical(
-      unitizer:::as.state("recommended"), unitizer:::unitizerStateRecommended()
+      unitizer:::as.state("recommended"), 
+      unitizer:::as.state(unitizer:::unitizerStateRecommended())
     )
     expect_identical(
       unitizer:::as.state("pristine"),
-      unitizer:::unitizerStatePristine()
+      unitizer:::as.state(unitizer:::unitizerStatePristine())
     )
     # unitizerStateProcessed should produce the default object (which currently
     # is "off")
@@ -184,17 +185,18 @@ local({
     expect_error(unitizer:::as.state(state.obj), "Namespace state tracking")
   })
   test_that("state", {
-    expect_identical(
+    # all these assume we set the options to be in recommended mode
+    expect_equal(
       state("stats"),
-      unitizer:::unitizerStateRaw(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateRecommended(par.env="stats")
     )
-    expect_identical(
+    expect_equal(
       state(in_pkg("stats")),
-      unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))
+      unitizer:::unitizerStateRecommended(par.env=in_pkg("stats"))
     )
-    expect_identical(
+    expect_equal(
       state(in_pkg()),
-      unitizer:::unitizerStateRaw(par.env=in_pkg())
+      unitizer:::unitizerStateRecommended(par.env=in_pkg())
     )
   })
   test_that("in_pkg", {

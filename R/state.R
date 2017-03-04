@@ -297,11 +297,10 @@ state <- function(
     )
   for(i in supplied.args) slot(state.def, i) <- get(i, inherits=FALSE)
 
-  state.fin <- as.state(state.def)
-  if(!isTRUE(validObject(state.fin, test=TRUE))) {
+  if(!isTRUE(validObject(state.def, test=TRUE))) {
     stop("Unable to create valid `unitizerStateRaw` object; see prior errors")
   }
-  state.fin
+  state.def
 }
 process_par_env <- function(par.env) {
   if(
