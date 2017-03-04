@@ -653,34 +653,43 @@ char_or_null_as_state <- function(x) {
 ## with "in_pkg")
 
 as.state_raw <- function(x) {
+  err.msg <- cc(
+    "%s must be character(1L) %in% ",
+    deparse(.unitizer.valid.state.abbr), ", NULL, an environment, or ",
+    "must inherit from S4 classes `unitizerStateRaw`, ",
+    "`unitizerStateProcessed` or `unitizerInPkg` ",
+    "in order to be interpreted as a unitizer state object."
+  )
   if(
     !is(x, "unitizerState") &&
     !(is.chr1(x) && x %in% .unitizer.valid.state.abbr) &&
     !is.environment(x) &&
     !is(x, "unitizerInPkg") &&
     !is.null(x)
-  ) {
-    stop(
-      word_wrap(collapse="\n",
-        cc(
-          "Argument must be character(1L) %in% ",
-          deparse(.unitizer.valid.state.abbr), ", NULL, an environment, or ",
-          "must inherit from S4 classes `unitizerStateRaw`, ",
-          "`unitizerStateProcessed` or `unitizerInPkg` ",
-          "in order to be interpreted as a unitizer state object."
-    ) ) )
-  }
+  )
+    stop(word_wrap(collapse="\n", sprintf(err.msg, "Argument")))
+
   x.raw <- if(!is(x, "unitizerState")) {
     if(is.null(x) || is.character(x)) {
       char_or_null_as_state(x)
-    } else if (is.environment(x)) {
-      new("unitizerStateRaw", par.env=x)
-    } else if (is(x, "unitizerInPkg")) {
-      new("unitizerStateRaw", par.env=x)
-    } else
-      stop(
-        "Internal Error: unexpected input to generate 'unitizerStateRaw' object"
-      )
+    } else {
+      state.opt <- getOption("unitizer.state")
+      if(is.null(state.opt) || is.character(state.opt)) {
+        state.tmp <- char_or_null_as_state(state.opt)
+        state.tmp@par.env <- x
+        state.tmp
+      } else if(is.environment(state.opt) || is(state.opt, "unitizerInPkg")) {
+        new("unitizerStateRaw", par.env=state.opt)
+      } else if(is(state.opt, "unitizerState")) {
+        state.opt
+      } else
+        stop(
+          word_wrap(
+            collapse="\n",
+            sprintf(err.msg, "`getOption('unitizer.state')`")
+          )
+        )
+    }
   } else x
 
   x.raw

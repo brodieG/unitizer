@@ -74,7 +74,7 @@ local({
       # "get",
       # "global",
       # "handledruns",
-      # "inpkg",
+      "inpkg"
       # "ischecks",
       # "item",
       # "list",
@@ -87,7 +87,7 @@ local({
       # "search",
       # "section",
       # "shim",
-      "state"
+      # "state",
       # "text",
       # "translate",
       # "unitize",
