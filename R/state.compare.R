@@ -29,6 +29,18 @@ setMethod(
       "different"
     )
 )
+#' @export
+
+setMethod("all.equal", c("unitizerStateRaw", "unitizerStateRaw"), 
+  function(target, current, ...) {
+    for(i in slotNames(target)) {
+      if(!isTRUE(diff <- all.equal(slot(target, i), slot(current, i))))
+        return(sprintf("Slot `%s` is not all equal: %s", i, diff))
+    }
+    TRUE
+  }
+)
+
 # To force recognizing the S4 method when called from inside another package
 # which happens when we're doing `in_pkg`; will only work if the first argument
 # is `unitizerDummy`, which should be the most common use case

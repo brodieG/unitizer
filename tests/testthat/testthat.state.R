@@ -102,24 +102,34 @@ local({
   })
   test_that("as.state", {
     expect_identical(
-      unitizer:::as.state("default"), unitizer:::unitizerStateDefault()
+      unitizer:::as.state("recommended"), 
+      unitizer:::as.state(unitizer:::unitizerStateRecommended())
     )
     expect_identical(
       unitizer:::as.state("pristine"),
-      unitizer:::unitizerStatePristine()
+      unitizer:::as.state(unitizer:::unitizerStatePristine())
     )
-    expect_identical(
+    # unitizerStateProcessed should produce the default object (which currently
+    # is "off")
+
+    expect_equal(
       unitizer:::as.state(.GlobalEnv),
-      unitizer:::unitizerStateDefault(par.env=.GlobalEnv)
+      unitizer:::as.state(
+        unitizer:::unitizerStateRecommended(par.env=.GlobalEnv)
+      )
     )
-    expect_identical(
+    expect_equal(
       unitizer:::as.state(in_pkg("stats")),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::as.state(
+        unitizer:::unitizerStateRecommended(par.env=getNamespace("stats"))
+      )
     )
     stats.lib <- file.path(system.file(package="stats"), "R")
-    expect_identical(
+    expect_equal(
       unitizer:::as.state(in_pkg(), test.files=stats.lib),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::as.state(
+        unitizer:::unitizerStateRecommended(par.env=getNamespace("stats"))
+      )
     )
     expect_error(unitizer:::as.state(200))
     state <- unitizer:::unitizerStateOff()
@@ -130,17 +140,17 @@ local({
 
     expect_identical(
       unitizer:::as.state(unitizer:::unitizerStateRaw()),
-      unitizer:::unitizerStateDefault()
+      unitizer:::unitizerStateProcessed()
     )
     expect_identical(
       unitizer:::as.state(unitizer:::unitizerStateRaw(par.env="stats")),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("stats"))
     )
     expect_identical(
       unitizer:::as.state(
         unitizer:::unitizerStateRaw(par.env=in_pkg()), test.files=getwd()
       ),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("unitizer"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("unitizer"))
     )
     expect_error(
       capture.output(
@@ -151,7 +161,7 @@ local({
     )
     expect_identical(
       unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("stats"))
     )
     expect_error(
       capture.output(
@@ -181,17 +191,18 @@ local({
     expect_error(unitizer:::as.state(state.obj), "Namespace state tracking")
   })
   test_that("state", {
-    expect_identical(
+    # all these assume we set the options to be in recommended mode
+    expect_equal(
       state("stats"),
-      unitizer:::unitizerStateRaw(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateRecommended(par.env="stats")
     )
-    expect_identical(
+    expect_equal(
       state(in_pkg("stats")),
-      unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))
+      unitizer:::unitizerStateRecommended(par.env=in_pkg("stats"))
     )
-    expect_identical(
+    expect_equal(
       state(in_pkg()),
-      unitizer:::unitizerStateRaw(par.env=in_pkg())
+      unitizer:::unitizerStateRecommended(par.env=in_pkg())
     )
   })
   test_that("in_pkg", {

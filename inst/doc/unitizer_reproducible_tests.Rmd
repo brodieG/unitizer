@@ -11,17 +11,29 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
-## Reproducibility
 
-R's emphasis on avoiding side effects generally means that if you run the same R code more than once you can be relatively certain that you will get the same result each time.  While this is generally true, there are some exceptions.  If you evaluate:
+## Managing State
+
+### Reproducibility
+
+R's emphasis on avoiding side effects generally means that if you run the same R
+code more than once you can be relatively certain that you will get the same
+result each time.  While this is generally true, there are some exceptions.  If
+you evaluate:
 ```
 x <- x + 5
 ```
-on the command line, the result will depend on what the value of `x` was in the workspace prior to evaluation.  Since workspaces are littered with objects from day to day R use tests are better run elsewhere to avoid conflicts with those objects.
+on the command line, the result will depend on what the value of `x` was in the
+workspace prior to evaluation.  Since workspaces are littered with objects from
+day to day R use tests are better run elsewhere to avoid conflicts with those
+objects.
 
-There are even more subtle factors that can affect test evaluation.  For example, if `x` is an S3 object, the packages loaded on the search path could affect the result of the command.  Global options could also affect the outcome.
+There are even more subtle factors that can affect test evaluation.  For
+example, if `x` is an S3 object, the packages loaded on the search path could
+affect the result of the command.  Global options could also affect the outcome.
 
-Here is a non-exhaustive list of aspects of state that might affect test outcomes:
+Here is a non-exhaustive list of aspects of state that might affect test
+outcomes:
 
 1. Workspace / Evaluation Environment
 1. Random seed
@@ -34,28 +46,95 @@ Here is a non-exhaustive list of aspects of state that might affect test outcome
 1. Locale
 1. etc.
 
-Ideally a unit testing framework would nullify these environmental factors such that the only changes in test evaluation are caused by changes in the code that is being tested.  `unitizer` attempts to do this by setting some aspects of session state to known "clean" values ahead of the evaluation of each test.  Currently `unitizer` is capable of managing the first six aspects of state listed above, with the first four enabled by default.
+Ideally a unit testing framework would nullify these environmental factors such
+that the only changes in test evaluation are caused by changes in the code that
+is being tested.  `unitizer` provides functionality that sets session state to
+known "clean" values ahead of the evaluation of each test.  Currently `unitizer`
+is capable of managing the first six aspects of state listed above.
 
-This vignette focuses on the rationale, implementation, and limitations of state tracking and modification within `unitizer`.  For a more pragmatic guide on actually using state tracking with `unitizer` see `?unitizerState`.
+**In order to comply with CRAN policies state management is turned off by
+default.**
 
-## Implications of Batch Evaluation
+### Batch Evaluation and Deferred Review
 
-`unitizer` batch processes all the tests when it is first run before it breaks into interactive mode.  It does this for two reasons:
+`unitizer` batch processes all the tests when it is first run before it breaks
+into interactive mode.  It does this to:
 
-1. this allows it to display useful summary data (how many tests passed/failed in which sections), and more importantly,
-2. it means a potentially time consuming process can be left to run unattended, and then the interactive portion of the test review is not interrupted by lengthy evaluations each time a user moves on to the next test.
+1. display useful summary data (how many tests passed/failed in which
+   sections), which is often helpful to know before beginning to debug
+2. allow time consuming process to run unattended so that the interactive test
+   review process is not interrupted by slow tests
 
-There is a substantial drawback to the batch-evaluate-and-review-later approach: we need some mechanism for recreating the state each test was run in so that when we review the test we review it in the appropriate context.  Imagine trying to figure out why a test failed when all the variables may have been changed by subsequent tests.
+The batch-evaluate-and-review-later creates the need for a mechanism to recreate
+state for when we review the tests.  Imagine trying to figure out why a test
+failed when all the variables may have been changed by subsequent tests.
+`unitizer` will always recreate the state of the variables defined by the test
+scripts, and can optionally recreate other aspects of state provided that is
+enabled.
 
-The other major drawback is that we rule out the simplest way of ensuring tests are run in a consistent environment: run all tests in a new vanilla R session.
+### Enabling State Management
 
-Because of all this `unitizer` implements mechanisms to modify session state, both to ensure a consistent evaluation environment for tests and to allow tests to be reviewed in their evaluation environment.
+You can turn on the "recommended" state management level to manage the first
+four elements of state listed in the previous section.  To do so, 
+use `unitize(..., state='recommended')` or
+`options(unitizer.state='recommended')`.  For more details see `?unitizerState`.
 
 ## Workspace And Evaluation Environments
 
+### Test Environments
+
+In order to allow review of each test in its evaluation environment each test is
+evaluated in its own environment. Each of these environments has for parent the
+environment of the previous test.  This means that a test has access to all the
+objects created/used by earlier tests, but not objects created/used by
+subsequent tests.  When a later test "modifies" an existing object, the existing
+object is not really modified; rather, the test creates a new object of the same
+name in the child environment which masks the object in the earlier test.  This
+is functionally equivalent to overwriting the object as far as the later test is
+concerned.
+
+For the most part this environment trickery should be transparent to the user.
+The `ls` function is specially modified to, among other things, list objects in
+all the parent test environments.  But there are exceptions to this
+"transparency".  The simplest exception is that you can not actually remove an
+object created in an earlier test (well, it is possible, but the how isn't
+documented and you are advised not to attempt it).  Here is a more complex
+exception:
+
+    a <- function() b()
+    b <- function() TRUE
+    a()
+
+In this case, when we evaluate `a()` we must step back two environments to find
+`a`, but that's okay.  The problem is that once inside `a`, we must now evaluate
+`b()`, but `b` is defined in a child environment, not a parent environment so
+R's object lookup fails.
+
+It turns out the above example actually works because as noted in [details on
+tests vignette](unitizer_tests.html), environments are only defined for tests,
+and neither the `a` or `b` assignments are tests, so both `a` and `b` are
+assigned to the environment of the `a()` call.  However, this really breaks:
+
+    a <- function() b()
+    NULL
+    b <- function() TRUE
+    a()
+
+Since NULL is a valid test, `a` is assigned to the environment associated with
+the `NULL` line, and `b` is assigned to the `a()` test environment, the above
+test fails because `b` is not found and the illusion is shattered [DEV NOTE:
+CHECK THIS EXAMPLE].
+
+If you are getting weird "object not found" errors when you run your tests, but
+the same code does not generate those errors when run directly in the command
+line, this illusion could be failing you.  In those situations, make sure that
+you assign all the variables necessary right ahead of the test so they will all
+get stored in the same environment.
+
 ### The Parent Environment
 
-By default `unitize` will run tests in an environment that has the same parent as `.GlobalEnv` (`UnitizerEnv` below):
+In the "recommended" state tracking mode `unitize` will run tests in an
+environment that has the same parent as `.GlobalEnv` (`UnitizerEnv` below):
 ```
              .GlobalEnv
                        \
@@ -65,7 +144,15 @@ TestEnv --> UnitizerEnv
 ```
 This means that objects in the global environment / workspace will not affect your tests.
 
-Unfortunately implementing this structure is not trivial because we need to ensure `UnitizerEnv` stays pointed at the environment just below `.GlobalEnv` even as tests modify the search path by calling `library`/`attach`/`detach`, etc.  To achieve this `unitizer` traces `base::library`, `base::attach`, and `base::detach`.  Any time any of those functions is called, `unitizer` updates the parent of `UnitizerEnv` to be the second environment on the search path (i.e. the parent of `.GlobalEnv`).  So, for example, if a test calls `library(z)`, the new search path would look like so:
+Unfortunately implementing this structure is not trivial because we need to
+ensure `UnitizerEnv` stays pointed at the environment just below `.GlobalEnv`
+even as tests modify the search path by calling `library`/`attach`/`detach`,
+etc.  To achieve this `unitizer` traces `base::library`, `base::attach`, and
+`base::detach` **when state tracking is enabled**.  Any time any of those
+functions is called, `unitizer` updates the parent of `UnitizerEnv` to be the
+second environment on the search path (i.e. the parent of `.GlobalEnv`).  So,
+for example, if a test calls `library(z)`, the new search path would look like
+so:
 ```
              .GlobalEnv
                        \
@@ -73,9 +160,18 @@ Unfortunately implementing this structure is not trivial because we need to ensu
                        /
 TestEnv --> UnitizerEnv
 ```
-Clearly overriding such fundamental functions such as `library` / `attach` / `detach` is not good form.  We recognize this, and try to do the overriding in as lightweight a manner as possible by tracing them only to record the search path in the `unitizer` environment.  This should be completely transparent to the user.  The untracing is registered to the `on.exit` of `unitize` so the functions should get untraced even if `unitize` fails.
+Clearly overriding such fundamental functions such as `library` / `attach` /
+`detach` is not good form.  We recognize this, and try to do the overriding in
+as lightweight a manner as possible by tracing them only to record the search
+path in the `unitizer` environment.  This should be completely transparent to
+the user.  The untracing is registered to the `on.exit` of `unitize` so the
+functions should get untraced even if `unitize` fails.
 
-Aside from the issues raised above, this method is not completely robust.  Any tests that turn tracing off using `tracingState`, or `trace`/`untrace` `library` / `attach` / `detach` will interfere with `unitizer`.  If you must do any of the above you should consider specifying a parent environment for your tests through the `state` parameter to `unitize` (see `?unitize`).
+Aside from the issues raised above, this method is not completely robust.  Any
+tests that turn tracing off using `tracingState`, or `trace`/`untrace` `library`
+/ `attach` / `detach` will interfere with `unitizer`.  If you must do any of the
+above you should consider specifying a parent environment for your tests through
+the `state` parameter to `unitize` (see `?unitize`).
 
 Some functions that expect to find `.GlobalEnv` on the search path may not work
 as expected.  For example, `setClass` uses `topenv` by default to find an
@@ -87,78 +183,142 @@ You can work around this by specifying an environment in calls to `setClass`.
 
 ### Package Namespace as Parent Environment
 
-Sometimes it is convenient to use the namespace of a package as the parent environment.  This allows you to write tests that use internal package functions without having to resort to `:::`.  You can set the parent evaluation environment with the `state` argument to `unitize` / `unitize_dir`.  See `?unitize` and `?unitizeState`.
+Sometimes it is convenient to use the namespace of a package as the parent
+environment.  This allows you to write tests that use internal package functions
+without having to resort to `:::`.  You can set the parent evaluation
+environment with the `state` argument to `unitize` / `unitize_dir`.  See
+`?unitize` and `?unitizeState`.
 
-If you do use this feature keep in mind that your tests will be exposed to the global environment as well since R looks through the search path after looking in the package namespace and imports.
-
-### Test Environments
-
-In order to allow review of each test in its evaluation environment each test is evaluated in its own environment. Each of these environments has for parent the environment of the previous test.  This means that a test has access to all the objects created/used by earlier tests, but not objects created/used by subsequent tests.  When a later test "modifies" an existing object, the existing object is not really modified; rather, the test creates a new object of the same name in the child environment which masks the object in the earlier test.  This is functionally equivalent to overwriting the object as far as the later test is concerned.
-
-For the most part this environment trickery should be transparent to the user.  The `ls` function is specially modified to, among other things, list objects in all the parent test environments.  But there are exceptions to this "transparency".  The simplest exception is that you can not actually remove an object created in an earlier test (well, it is possible, but the how isn't documented and you are advised not to attempt it).  Here is a more complex exception:
-
-    a <- function() b()
-    b <- function() TRUE
-    a()
-
-In this case, when we evaluate `a()` we must step back two environments to find `a`, but that's okay.  The problem is that once inside `a`, we must now evaluate `b()`, but `b` is defined in a child environment, not a parent environment so R's object lookup fails.
-
-It turns out the above example actually works because as noted in [details on tests vignette](unitizer_tests.html), environments are only defined for tests, and neither the `a` or `b` assignments are tests, so both `a` and `b` are assigned to the environment of the `a()` call.  However, this really breaks:
-
-    a <- function() b()
-    NULL
-    b <- function() TRUE
-    a()
-
-Since NULL is a valid test, `a` is assigned to the environment associated with the `NULL` line, and `b` is assigned to the `a()` test environment, the above test fails because `b` is not found and the illusion is shattered [DEV NOTE: CHECK THIS EXAMPLE].
-
-If you are getting weird "object not found" errors when you run your tests, but the same code does not generate those errors when run directly in the command line, this illusion could be failing you.  In those situations, make sure that you assign all the variables necessary right ahead of the test so they will all get stored in the same environment.
+If you do use this feature keep in mind that your tests will be exposed to the
+global environment as well since R looks through the search path after looking
+in the package namespace and imports.
 
 ### Issues With Reference Objects
 
-For the most part R is a copy-on-modify language, which allows us to employ the trickery described above.  There are however "reference" objects that are not copied when they are modified.  Notable examples include environments, reference classes, and `data.table`.  Since our trickery requires us to keep copies of each object in different environments as they are modified, it does not work with reference objects since they are not automatically duplicated.
+For the most part R is a copy-on-modify language, which allows us to employ the
+trickery described above.  There are however "reference" objects that are not
+copied when they are modified.  Notable examples include environments, reference
+classes, and `data.table`.  Since our trickery requires us to keep copies of
+each object in different environments as they are modified, it does not work
+with reference objects since they are not automatically duplicated.
 
-The main consequence of this is that when you are reviewing a test that involves a reference object, the value of that reference object during review will be the value after the last reference modification, which may have been made after the test you are reviewing.  The tests will still work as they should, passing if you did not introduce regressions, and failing otherwise.  However if you review a failed test you may have a hard time making sense of what happened since the objects you review will may not have the values they had when the test was actually run.
+The main consequence of this is that when you are reviewing a test that involves
+a reference object, the value of that reference object during review will be the
+value after the last reference modification, which may have been made after the
+test you are reviewing.  The tests will still work as they should, passing if
+you did not introduce regressions, and failing otherwise.  However if you review
+a failed test you may have a hard time making sense of what happened since the
+objects you review will may not have the values they had when the test was
+actually run.
 
 ### Patchwork Reference Environments
 
-When we review `unitizer` tests, it is possible to end up in a situation where we wish to update our store by keeping a mix of the new tests as well as some of the old ones.  This leads to some complications because in order to faithfully reproduce the environments associated with both the reference and the new tests we would potentially have to store the entire set of environments produced by the test script for both the new and reference tests.  Even worse, if we re-run unitizer again, we run the risk of having to store yet another set of environments (the old reference environments, what were new environments but became reference ones on this additional run, and the new environments created by this third run).  The problem continues to grow with as each incremental run of the `unitizer` script potentially creates the need to store yet another set of environments.
+When we review `unitizer` tests, it is possible to end up in a situation where
+we wish to update our store by keeping a mix of the new tests as well as some of
+the old ones.  This leads to some complications because in order to faithfully
+reproduce the environments associated with both the reference and the new tests
+we would potentially have to store the entire set of environments produced by
+the test script for both the new and reference tests.  Even worse, if we re-run
+unitizer again, we run the risk of having to store yet another set of
+environments (the old reference environments, what were new environments but
+became reference ones on this additional run, and the new environments created
+by this third run).  The problem continues to grow with as each incremental run
+of the `unitizer` script potentially creates the need to store yet another set
+of environments.
 
-As a work-around to this problem `unitizer` only keeps the environment associated with the actual reference tests you chose to keep (e.g. when you type `N` at the `unitizer` prompt when reviewing a failed test).  `unitizer` then grafts that test and its environment to the environment chain from the newly evaluated tests (note that for all tests that pass, we keep the new version of the tests, not the reference one).  This means that in future `unitizer` runs where you examine this same reference test, the other "reference" objects available for inspection may not be from the same evaluation that produced the test.  The `ls` command will highlight which objects are from the same evaluation vs which ones are not (see the [discussion on `ls`](unitizer_interactive_env.html#ls)).
+As a work-around to this problem `unitizer` only keeps the environment
+associated with the actual reference tests you chose to keep (e.g. when you type
+`N` at the `unitizer` prompt when reviewing a failed test).  `unitizer` then
+grafts that test and its environment to the environment chain from the newly
+evaluated tests (note that for all tests that pass, we keep the new version of
+the tests, not the reference one).  This means that in future `unitizer` runs
+where you examine this same reference test, the other "reference" objects
+available for inspection may not be from the same evaluation that produced the
+test.  The `ls` command will highlight which objects are from the same
+evaluation vs which ones are not (see the [discussion on
+`ls`](unitizer_interactive_env.html#ls)).
 
-This is not an ideal outcome, but the compromise was necessary to avoid the possibility of ever increasing `unitizer` stores.  For more details see `?"healEnvs,unitizerItems,unitizer-method"`.
+This is not an ideal outcome, but the compromise was necessary to avoid the
+possibility of ever increasing `unitizer` stores.  For more details see
+`?"healEnvs,unitizerItems,unitizer-method"`.
 
 ## Clean Search Paths
 
 ### Description / Implementation
 
-One other way tests can change behavior unexpectedly is if the packages / objects attached to the search path change.  A simple example is a test script that relies on package "X", and the user attached that package at some point during interactive use, but forgot to add the requisite `library` call to the test script itself.  During testing, the scripts will work fine, but at some future date if the test scripts are run again they are likely to fail due to the dependency on the package that is not explicitly loaded in the test scripts.
+One other way tests can change behavior unexpectedly is if the packages /
+objects attached to the search path change.  A simple example is a test script
+that relies on package "X", and the user attached that package at some point
+during interactive use, but forgot to add the requisite `library` call to the
+test script itself.  During testing, the scripts will work fine, but at some
+future date if the test scripts are run again they are likely to fail due to the
+dependency on the package that is not explicitly loaded in the test scripts.
 
-By default `unitizer` runs on a "trimmed" search path that contains only the packages loaded by in a freshly loaded R session (i.e. the packages between `package:base` and `package:stats`; see `?unitizerState`).  You will need to explicitly load packages that your tests depend on in your test file (e.g. by using `library()`).  `unitize` will restore the search path to its original state once you complete review.
+In the "recommended" state trackign mode `unitizer` runs on a "trimmed" search
+path that contains only the packages loaded by in a freshly loaded R session
+(i.e. the packages between `package:base` and `package:stats`; see
+`?unitizerState`).  You will need to explicitly load packages that your tests
+depend on in your test file (e.g. by using `library()`).  `unitize` will restore
+the search path to its original state once you complete review.
 
-`unitizer` also relies on tracing `library`/`attach`/`detach` to implement this feature, so the caveats described [above](#The-Parent-Environment) apply equally here.  `unitizer` **does not modify the search path itself** other than by using `library`, `attach`, and `detach`.
+`unitizer` also relies on tracing `library`/`attach`/`detach` to implement this
+feature, so the caveats described [above](#The-Parent-Environment) apply equally
+here.  `unitizer` **does not modify the search path itself** other than by using
+`library`, `attach`, and `detach`.
 
-When search path tracking is enabled, `unitizer` tracks the versions of the packages on the search path.  If tests fails and package versions on the search path have changes since the reference test was stored, you will be alerted.
+When search path tracking is enabled, `unitizer` tracks the versions of the
+packages on the search path.  If tests fails and package versions on the search
+path have changes since the reference test was stored, you will be alerted.
 
 ### Potential Issues
 
-When `unitizer` manipulates the search path it restores the original one by using `library/attach` on any previously detached objects or packages.  This generally works fine with the notable exception of environments containing objects that contain environment references to the search path object itself.
+When `unitizer` manipulates the search path it restores the original one by
+using `library/attach` on any previously detached objects or packages.  This
+generally works fine with the notable exception of environments containing
+objects that contain environment references to the search path object itself.
 
-A good example of this is the `tools:rstudio` environment attached to the search path in R sessions run through RStudio.  It contains functions that have for environment the `tools:rstudio` environment.  The problem is that once that environment is detached from the search path, those functions no longer have access to the search path.  Re-attaching the environment to the search path does not solve the problem because `attach` attaches a _copy_ of the environment, not the environment itself.  This new environment will contain the same objects as the original environment, but all the functions therein will have for environment the original detached environment, not the copy that is attached to the search path.
+A good example of this is the `tools:rstudio` environment attached to the search
+path in R sessions run through RStudio.  It contains functions that have for
+environment the `tools:rstudio` environment.  The problem is that once that
+environment is detached from the search path, those functions no longer have
+access to the search path.  Re-attaching the environment to the search path does
+not solve the problem because `attach` attaches a _copy_ of the environment, not
+the environment itself.  This new environment will contain the same objects as
+the original environment, but all the functions therein will have for
+environment the original detached environment, not the copy that is attached to
+the search path.
 
-There are a few possible solutions to this problem.  For now we have adopted the simplest which is to keep the `tools:rstudio` environment on the search path even search path trackign is enabled (you can over-ride this by changing `search.path.keep`, or, if you have environments on your search path with similar properties, add their names to `search.path.keep`).  Other options include re-attaching with `parent.env<-` instead of `attach`, but messing with the search path in that way seems to be exactly what R core warns about in `?parent.env`:
+There are a few possible solutions to this problem.  For now we have adopted the
+simplest which is to keep the `tools:rstudio` environment on the search path
+even search path trackign is enabled (you can over-ride this by changing
+`search.path.keep`, or, if you have environments on your search path with
+similar properties, add their names to `search.path.keep`).  Other options
+include re-attaching with `parent.env<-` instead of `attach`, but messing with
+the search path in that way seems to be exactly what R core warns about in
+`?parent.env`:
 
 > The replacement function parent.env<- is extremely dangerous as it can be used to destructively change environments in ways that violate assumptions made by the internal C code. It may be removed in the near future.
 
-Another possibility would be to re-set the environments of functions inside detached environments that have for parent the detached environment, but we do not do this currently.
+Another possibility would be to re-set the environments of functions inside
+detached environments that have for parent the detached environment, but we do
+not do this currently.
 
 ## Global Options
 
-`unitizer` can track and reset global options.  Because many packages set options when their namespaces are attached, implementation of this feature must be coordinated with a careful management of loaded namespaces.  For example, we can reasonably easily set options to be what you would expect in a freshly loaded vanilla R session, but if some namespaces as otherwise they would be in a compromised set with their options wiped out.
+`unitizer` can track and reset global options.  Because many packages set
+options when their namespaces are attached, implementation of this feature must
+be coordinated with a careful management of loaded namespaces.  For example, we
+can reasonably easily set options to be what you would expect in a freshly
+loaded vanilla R session, but if some namespaces as otherwise they would be in a
+compromised set with their options wiped out.
 
-`unitizer` can manage search paths and namespaces, but unfortunately some package namespaces cannot be unloaded so options management can be problematic when such packages are involved (one example is `data.table`).  Because of this options management is not enabled by default.
+`unitizer` can manage search paths and namespaces, but unfortunately some
+package namespaces cannot be unloaded so options management can be problematic
+when such packages are involved (one example is `data.table`).  Because of this
+options management is not enabled in the "recommended" state management mode.
 
-Note that no matter what tests are always run with `options(warn=1)` and `options(error=NULL)`.
+Note that no matter what tests are always run with `options(warn=1)` and
+`options(error=NULL)`.
 
 See `?unitizer.opts` for more details.
 

@@ -365,6 +365,10 @@ unitizerGlobal <- setRefClass(
           "never happen; contact maintainer"
         )
       } else if(set.global) {
+        # no longer 100% sure, but I believe the .global is used solely so that
+        # we can have access to the special unitizer parent environment from the
+        # traced functions (i.e. so we can change the parent when the search
+        # path changes)
         .global$global <- .self
         locked <<- TRUE
       } else if(.loaded) {
@@ -511,7 +515,9 @@ unitizerGlobal <- setRefClass(
 ) )
 # used purely for traced functions that need access to global object; in most
 # cases should be just our traced functions, note that we just create this
-# object here for test; any time a `unitizer` is instantiated
+# object here for test; any time a `unitizer` is instantiated.  UPDATE: seems
+# this is just used to get access to the special `unitizer` parent env, and to
+# implement the non-interactive prompt responses for testing.
 
 .global <- new.env()
 

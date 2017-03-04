@@ -5,18 +5,17 @@
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
 [![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
 
-**DISCLAIMER**: This package does a lot of things that CRAN would likely not
-approve of.  For example, we trace some `base` functions and manipulate the
-search path, though we only do so while the `unitizer` functions are evaluating
-and restore everything to its original state `on.exit`.  For more details see
-the [things you should know about `unitizer`](https://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/vgn01introduction.html#things-you-should-know-about-unitizer) introduction vignette section.  We will likely turn off these features by default for the final release.
-
 ## TL;DR
 
 `unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
+
 ```
-devtools::install_github("brodieg/unitizer")
+library(devtools)
+install_github("brodieg/unitizer")
 ```
+We are targeting v1.4.0 for CRAN.  Please keep in mind this is an experimental
+framework that has been thoroughly tested by *one* person.
+
 `unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
 ```
 library(unitizer)
@@ -30,19 +29,27 @@ unitize("my_file_name.R")
 
 ## Description and Usage
 
-`unitizer` stores R expressions and the result of evaluating them so that it can detect code regressions.  This is similar to saving test output to a `.Rout.save` file as documented in [Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories), except that:
+`unitizer` stores R expressions and the result of evaluating them so that it can
+detect code regressions.  This is akin to saving test output to a
+`.Rout.save` file as documented in [Writing R
+Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories),
+except that:
 
-* Result objects and signaled conditions are automatically saved
+* Result objects and signaled conditions are automatically saved so they can be
+  examined in detail
 * You can review each test separately before it is stored
-* When a test fails, you can immediately review it interactively with all variables set to the same values they had when the test was run
-* You can easily add, remove, and modify tests
+* When a test fails, you can immediately review it interactively in the
+  environment in which it was evaluated
+* You can easily add, remove, and modify tests with a couple of keystrokes
 
 To use `unitizer`:
 
-* Write test expressions as you would when informally testing code on the command line, and save them to a file (e.g. "my_file_name.R")
+* Write test expressions as you would when informally testing code on the
+  command line, and save them to a file (e.g. "my_file_name.R")
 * Run `unitize("my_file_name.R")` and follow the prompts
 * Continue developing your package
-* Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to review and debug them in an interactive prompt
+* Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to
+  review and debug them in an interactive prompt
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
 

@@ -285,7 +285,6 @@ options_update <- function(tar.opts) {
   unitizer.namespace.keep.base=c(
     .unitizer.namespace.keep
   ),
-  unitizer.state="default",                # default reproducible state mode
   # User default option values when running with options state tracking
   unitizer.opts.init=list(),
   # Default option values when running with options state tracking
@@ -310,7 +309,7 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     is.list(opts.to.validate),
     all(grep("^unitizer\\.", names(opts.to.validate)))
   )
-  # Check all option existence except those that can be NULL
+  # Check all option existence except those that can be NULL; note that we
 
   names.def <- setdiff(
     names(.unitizer.opts.default),
@@ -391,8 +390,6 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
       )
         stop("Option `unitizer.namespace.keep.base` must be character and not NA")
 
-      if(!is(try(as.state(unitizer.state, test.files)), "unitizerState"))
-        stop("Option `unitizer.state` is invalid; see prior errors")
       if(!is.list(unitizer.opts.init))
         stop("Option `unitizer.opts.init` must be a list")
       if(!is.list(unitizer.opts.init.base))
@@ -409,6 +406,16 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     !is.environment(opts.to.validate[["unitizer.par.env"]])
   )
     stop("Option `unitizer.par.env` must be an environment or NULL")
+  if( # needs to be outside b/c var may not be defined in option list
+    !is.null(opts.to.validate[["unitizer.state"]]) &&
+    !is(
+      try(
+        as.state(opts.to.validate[["unitizer.state"]], test.files)
+      ),
+      "unitizerState"
+    )
+  )
+    stop("Option `unitizer.state` is invalid; see prior errors")
   if(
     !is.chr1(opts.to.validate[["unitizer.history.file"]]) &&
     !is.null(opts.to.validate[["unitizer.history.file"]])

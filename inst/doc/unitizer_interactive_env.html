@@ -217,7 +217,7 @@ unitizer&gt;</code></pre>
 <li><code>.NEW$aborted</code> returns whether the test expression invoked an “abort” restart (e.g. called <code>stop</code> at some point)</li>
 </ul>
 <p>You can substitute <code>.REF</code> for <code>.NEW</code> in any of the above, provided that <code>.REF</code> is defined (i.e. that will not work when you are reviewing new tests since there is no corresponding reference test for those by definition).</p>
-<p>If both <code>.NEW</code> and <code>.REF</code> are defined, then <code>.DIFF</code> will be defined too. <code>.DIFF</code> has the same structure as <code>.NEW</code> and it contains the result of evaluating <code>diffobj::diffObj</code> between each component of <code>.NEW</code> and <code>.REF</code>. <code>.diff</code> is shorthand for <code>.DIFF$value</code>.</p>
+<p>If both <code>.NEW</code> and <code>.REF</code> are defined, then <code>.DIFF</code> will be defined too. <code>.DIFF</code> has the same structure as <code>.NEW</code> and it contains the result of evaluating <code>diffobj::diffObj</code> between each component of <code>.NEW</code> and <code>.REF</code>. <code>.diff</code> is shorthand for <code>.DIFF$value</code>. If there are state differences (e.g. search path) you will be able to view those with <code>.DIFF$state</code>.</p>
 </div>
 <div id="ls" class="section level3">
 <h3><code>ls</code></h3>
