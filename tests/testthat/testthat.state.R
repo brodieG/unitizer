@@ -133,17 +133,17 @@ local({
 
     expect_identical(
       unitizer:::as.state(unitizer:::unitizerStateRaw()),
-      unitizer:::unitizerStateDefault()
+      unitizer:::unitizerStateProcessed()
     )
     expect_identical(
       unitizer:::as.state(unitizer:::unitizerStateRaw(par.env="stats")),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("stats"))
     )
     expect_identical(
       unitizer:::as.state(
         unitizer:::unitizerStateRaw(par.env=in_pkg()), test.files=getwd()
       ),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("unitizer"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("unitizer"))
     )
     expect_error(
       capture.output(
@@ -154,7 +154,7 @@ local({
     )
     expect_identical(
       unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg("stats"))),
-      unitizer:::unitizerStateDefault(par.env=getNamespace("stats"))
+      unitizer:::unitizerStateProcessed(par.env=getNamespace("stats"))
     )
     expect_error(
       capture.output(
@@ -176,7 +176,7 @@ local({
     state.obj <- unitizer:::unitizerStateRaw()
     state.obj@options <- 2L
 
-    expect_error(unitizer:::as.state(state.obj), "Options state tracking")
+    expect_error(us.uJKUnitizer:::as.state(state.obj), "Options state tracking")
 
     state.obj@namespaces <- 2L
     state.obj@search.path <- 1L

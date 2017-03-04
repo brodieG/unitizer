@@ -571,11 +571,7 @@ setMethod("as.unitizerStateProcessed", "unitizerStateRaw",
     x.proc <- new("unitizerStateProcessed")
     for(i in slotNames(x))
       slot(x.proc, i) <- slot(x, i)
-    if(!isTRUE(test <- validObject(x.proc)))
-      stop(
-        "Internal Error: failed processing raw state object, contact ",
-        "maintainer. (", test, ")"
-      )
+
     x.proc
 } )
 # Valid State Settings
@@ -585,16 +581,16 @@ setMethod("as.unitizerStateProcessed", "unitizerStateRaw",
 # @return a \code{unitizerState} object
 
 as.state <- function(x, test.files=NULL) {
+  stopifnot(is.character(test.files) || is.null(test.files))
   x.raw <- as.state_raw(x)
 
   x.fin <- if(is(x.raw, "unitizerStateRaw")) {
     par.env <- if(is.character(x.raw@par.env)) {
       try(getNamespace(x.raw@par.env))
     } else if(is(x.raw@par.env, "unitizerInPkg")) {
-      stopifnot(is.character(test.files) || is.null(test.files))
-
       try(in_pkg_to_env(x.raw@par.env, test.files))
-    }
+    } else x.raw@par.env
+
     if(inherits(par.env, "try-error"))
       stop("Unable to convert `par.env` value to a namespace environment")
 
@@ -621,6 +617,14 @@ as.state <- function(x, test.files=NULL) {
           ")."
     ) ) )
   }
+  # Last ditch check
+
+  if(!isTRUE(test <- validObject(x.fin, test=TRUE)))
+    stop(
+      "Internal Error: failed processing raw state object, contact ",
+      "maintainer. (", test, ")"
+    )
+
   return(x.fin)
 }
 char_or_null_as_state <- function(x) {
