@@ -30,6 +30,7 @@ setMethod(
     )
 )
 #' @export
+#' @rdname unitizer_s4method_doc
 
 setMethod("all.equal", c("unitizerStateRaw", "unitizerStateRaw"), 
   function(target, current, ...) {

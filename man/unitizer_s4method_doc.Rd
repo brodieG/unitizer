@@ -46,6 +46,7 @@
 \alias{all.equal,unitizerDummy,unitizerDummy-method}
 \alias{all.equal,unitizerDummy,ANY-method}
 \alias{all.equal,ANY,unitizerDummy-method}
+\alias{all.equal,unitizerStateRaw,unitizerStateRaw-method}
 \alias{+,unitizer,unitizerSection-method}
 \alias{+,unitizer,unitizerTestsOrExpression-method}
 \alias{+,unitizer,unitizerItems-method}
@@ -136,6 +137,8 @@
 
 \S4method{all.equal}{ANY,unitizerDummy}(target, current, ...)
 
+\S4method{all.equal}{unitizerStateRaw,unitizerStateRaw}(target, current, ...)
+
 \S4method{+}{unitizer,unitizerSection}(e1, e2)
 
 \S4method{+}{unitizer,unitizerTestsOrExpression}(e1, e2)
@@ -150,8 +153,6 @@
 R insists these need to be documented as user facing, but they are not really
 so were throwing them all in here.  Actual docs are in non roxygen comments
 by fun definitions.
-
-Concatenate to a \code{\link{unitizerList}}
 }
 \details{
 Put in this file because this file is included by almost every other file

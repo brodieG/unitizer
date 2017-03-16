@@ -240,9 +240,7 @@ setMethod("append", c("unitizerList", "ANY"),
     # validObject(y) # too expensive, commented
     y
 } )
-#' Concatenate to a \code{\link{unitizerList}}
-#'
-#' @keywords internal
+## Concatenate to a \code{\link{unitizerList}}
 
 #' @rdname unitizer_s4method_doc
 
