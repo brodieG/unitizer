@@ -51,11 +51,13 @@ local({
 
   # Ensure same behavior interactive and non-interactive
 
-  .old.err.call.opt <- if(isTRUE(getOption("showErrorCalls")))
+  old.opt.2 <- if(isTRUE(getOption("showErrorCalls")))
      options(showErrorCalls=FALSE) else list()
+  old.opt.2 <- c(old.opt.2, options(unitizer.state='recommended'))
+
   on.exit(
     {
-      options(.old.err.call.opt)
+      options(old.opt.2)
       unitizer_cleanup_demo()
     },
     add=TRUE
