@@ -14,11 +14,12 @@ Authors@R: c(
 Depends:
     R (>= 3.2.2)
 Imports:
-    methods,
     stats,
     utils,
     crayon (>= 1.3.2),
     diffobj (>= 0.1.5.9000)
+Depends:
+    methods
 VignetteBuilder: knitr
 Suggests:
     covr,
