@@ -3,7 +3,6 @@
 # for anything
 
 unitizer_sect("check testthat attachment", {
-  unitizer:::is_testthat_attached()
   library(testthat)
   unitizer:::is_testthat_attached()
 })

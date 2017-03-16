@@ -11,8 +11,8 @@ effects of running test expressions.
 \details{
 The default comparison functions are as follows:
 \itemize{
-  \item value: \code{\link{all.eq}}
-  \item conditions: \code{\link{all.eq}}
+  \item value: \code{\link{all_eq}}
+  \item conditions: \code{\link{all_eq}}
   \item output: \code{function(x, y) TRUE}, i.e. not compared
   \item message: \code{function(x, y) TRUE}, i.e. not compared as conditions
     should be capturing warnings/errors
@@ -25,6 +25,5 @@ The default comparison functions are as follows:
 testFuns(value=identical)
 }
 \seealso{
-\code{\link{unitizer_sect}}, \code{\link{all.eq}}
+\code{\link{unitizer_sect}}, \code{\link{all_eq}}
 }
-

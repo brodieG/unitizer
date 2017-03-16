@@ -28,5 +28,5 @@ by user in interactive environment)
 \item{\code{compare}}{functions to compare the various aspects of a
 \code{unitizerItem-class} @slot length tracks size of the section}
 }}
-\keyword{internal}
 
+\keyword{internal}

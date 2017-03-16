@@ -10,4 +10,3 @@ sizeRDS(object)
 Measure object size as an RDS
 }
 \keyword{internal}
-

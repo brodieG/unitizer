@@ -87,4 +87,3 @@ Could be more robust by ensuring that items in \code{x} actually do
 \seealso{
 \code{updateLs,unitizerItem-method}
 }
-

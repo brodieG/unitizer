@@ -38,6 +38,7 @@ setClass(
 #   # nocov end
 # )
 
+#' @importFrom utils sessionInfo
 
 get_package_versions <- function(x) {
   ns.loaded <- names(x$ns.dat)

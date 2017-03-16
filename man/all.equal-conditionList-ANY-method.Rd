@@ -25,4 +25,3 @@ are not all.equal.  Additionally, we check for the special "printed"
 attribute on each conditions which indicate that the condition occurred
 in the print/show methods as applied to the result of a call.
 }
-

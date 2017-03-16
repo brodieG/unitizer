@@ -14,4 +14,3 @@ to the subsetting functions defined for \code{unitizerBrowse} objects.
 Currently we only define a method for \code{unitizerItems-class} objects
 }
 \keyword{internal}
-

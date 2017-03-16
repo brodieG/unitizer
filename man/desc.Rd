@@ -28,4 +28,3 @@ on object type.
 \examples{
 desc(list(a=iris, b=lm(dist ~ speed, cars), 1:10, matrix(letters, 2)))
 }
-

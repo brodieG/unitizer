@@ -10,4 +10,3 @@ requests the storing of a change (accept new version of failed test,
 add new test, remove old test).
 }
 \keyword{internal}
-

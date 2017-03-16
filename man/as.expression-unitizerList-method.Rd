@@ -13,4 +13,3 @@ slot as an expression, but works for others to the extent
 \code{.items} contents are coercible to expressions
 }
 \keyword{internal}
-
