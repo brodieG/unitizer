@@ -26,4 +26,3 @@ character or environment depending on \code{`store.env`}
 Worker function to actually execute the `ls` work
 }
 \keyword{internal}
-

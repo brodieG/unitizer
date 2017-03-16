@@ -11,4 +11,3 @@ Funny name is just to avoid conflicts with functions with same names in
 other packages.
 }
 \keyword{internal}
-

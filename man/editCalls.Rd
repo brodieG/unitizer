@@ -45,4 +45,3 @@ untz.edited <- editCalls(untz, quote(myFun), quote(my_fun))
 set_unitizer("tests/unitizer/mytests.unitizer", untz.edited)
 }
 }
-

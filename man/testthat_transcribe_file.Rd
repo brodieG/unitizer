@@ -39,4 +39,3 @@ possible parse-deparse issues independent of running \code{unitize}, since
 \code{unitize} cannot be run inside a \code{tryCatch} block.
 }
 \keyword{internal}
-

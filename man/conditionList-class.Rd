@@ -2,8 +2,8 @@
 % Please edit documentation in R/conditions.R
 \docType{class}
 \name{conditionList-class}
-\alias{conditionList}
 \alias{conditionList-class}
+\alias{conditionList}
 \title{Contains A List of Conditions}
 \description{
 Condition lists are S4 classes that contain \code{\link{condition}} objects
@@ -24,6 +24,7 @@ function will need to compare \code{conditionList} objects.
 \describe{
 \item{\code{.items}}{list of conditions}
 }}
+
 \note{
 Implemented as an S4 class to avoid \code{setOldClass} and related
 compatibility issues; the \code{conditionList} class contains
@@ -39,4 +40,3 @@ for(i in seq_along(.NEW$conditions)) .NEW$conditions[[i]]
 \seealso{
 \code{\link{unitizer_sect}}, \code{\link{unitizerList}}
 }
-

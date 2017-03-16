@@ -336,13 +336,13 @@ setMethod("show", "unitizerItemTestsErrors",
 #' we use \code{\link{diffObj}} which would make the text output from
 #' \code{\link{all.equal}} somewhat redundant.
 #'
-#' @export all.eq
+#' @export
 #' @param target R object
 #' @param current other R object to be compared to \code{target}
 #' @param ... arguments to pass to \code{\link{all.equal}}
 #' @return TRUE if \code{all.equal} returns TRUE, "" otherwise
 
-all.eq <- function(target, current, ...)
+all_eq <- function(target, current, ...)
   if(isTRUE(all.equal(target, current, ...))) TRUE else ""
 
 #' Store Functions for New vs. Reference Test Comparisons
@@ -352,15 +352,15 @@ all.eq <- function(target, current, ...)
 #'
 #' The default comparison functions are as follows:
 #' \itemize{
-#'   \item value: \code{\link{all.eq}}
-#'   \item conditions: \code{\link{all.eq}}
+#'   \item value: \code{\link{all_eq}}
+#'   \item conditions: \code{\link{all_eq}}
 #'   \item output: \code{function(x, y) TRUE}, i.e. not compared
 #'   \item message: \code{function(x, y) TRUE}, i.e. not compared as conditions
 #'     should be capturing warnings/errors
 #'   \item aborted: \code{function(x, y) TRUE}, i.e. not compared as conditions
 #'     should also be capturing this implicitly
 #' }
-#' @seealso \code{\link{unitizer_sect}}, \code{\link{all.eq}}
+#' @seealso \code{\link{unitizer_sect}}, \code{\link{all_eq}}
 #' @rdname testFuns
 #' @name testFuns
 #' @export testFuns
@@ -378,9 +378,9 @@ testFuns <- setClass(
     aborted="unitizerItemTestFun"
   ),
   prototype(
-    value=new("unitizerItemTestFun", fun=all.eq),
+    value=new("unitizerItemTestFun", fun=all_eq),
     # note this will dispatch all.equal.condition_list
-    conditions=new("unitizerItemTestFun", fun=all.eq),
+    conditions=new("unitizerItemTestFun", fun=all_eq),
     output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)

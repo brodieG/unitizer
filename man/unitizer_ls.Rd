@@ -21,4 +21,3 @@ and is re-assigned to \code{`ls`} for use in the \code{`unitizer`} prompt
 environment.
 }
 \keyword{internal}
-

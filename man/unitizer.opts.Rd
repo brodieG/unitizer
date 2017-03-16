@@ -148,7 +148,7 @@ results, etc.
     again.
 }
 }
+
 \seealso{
 \code{\link{unitizerState}}
 }
-

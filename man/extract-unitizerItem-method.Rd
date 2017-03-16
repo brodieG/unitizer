@@ -62,4 +62,3 @@ Currently the following elements are available:
 .NEW$conditions
 .NEW$value              # equivalent to `.new`
 }
-

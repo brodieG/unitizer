@@ -17,4 +17,3 @@ character
 Captalizes or Decapitalizes First Letter
 }
 \keyword{internal}
-

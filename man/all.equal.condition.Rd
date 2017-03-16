@@ -20,4 +20,3 @@ TRUE if conditions match, character vector describing differences
 \description{
 Compare Conditions
 }
-

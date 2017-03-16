@@ -23,4 +23,3 @@ Will sink both "output" and "message" streams without checking whether they
 are already sunk, and will unsink them the same way.
 }
 \keyword{internal}
-

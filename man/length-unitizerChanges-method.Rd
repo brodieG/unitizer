@@ -11,4 +11,3 @@
 Return Sum of Total Changes
 }
 \keyword{internal}
-
