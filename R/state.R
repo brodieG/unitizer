@@ -195,11 +195,13 @@ NULL
 #'     \code{\link{unitize}}, and also to reset it to the original value in
 #'     \code{post}.
 #' }
-#' @param search.path one of \code{0:2}, assumes 0 if unspecified
-#' @param options one of \code{0:2}, assumes 0 if unspecified
-#' @param working.directory one of \code{0:2}, assumes 0 if unspecified
-#' @param random.seed one of \code{0:2}, assumes 0 if unspecified
-#' @param namespaces one of \code{0:2}, assumes 0 if unspecified
+#' @param search.path one of \code{0:2}, uses the default value corresponding to
+#'   \code{getOption(unitizer.state)}, which is 0 in the default unitizer state
+#'   of \dQuote{off}.
+#' @param options same as \code{search.path}
+#' @param working.directory same as \code{search.path}
+#' @param random.seed same as \code{search.path}
+#' @param namespaces same as \code{search.path}
 #' @param par.env \code{NULL} to use the special \code{unitizer} parent
 #'   environment, or an environment to use as the parent environment, or
 #'   the name of a package as a character string to use that packages'
@@ -295,7 +297,15 @@ state <- function(
       "Unable to generate state object from `getOption('unitizer.state')`, ",
       "see prior error messages."
     )
-  for(i in supplied.args) slot(state.def, i) <- get(i, inherits=FALSE)
+  for(i in supplied.args) {
+    i.val <- get(i, inherits=FALSE)
+    if(i != 'par.env') {
+      if(!is.int.1L(i.val) || !i.val %in% 0:2)
+        stop("Argument `", i, "` must be integer(1L)  in 0:2")
+      i.val <- as.integer(i.val)
+    }
+    slot(state.def, i) <- i.val
+  }
 
   if(!isTRUE(validObject(state.def, test=TRUE))) {
     stop("Unable to create valid `unitizerStateRaw` object; see prior errors")
