@@ -22,6 +22,9 @@ local({
   txt1 <- unitizer:::capture_output(
     unitize(in.pkg.file, interactive.mode=TRUE)
   )
+  # `sub` needed due to inconsistencies in R 3.4 and 3.3 for top level error
+  # messages
+  txt1$message <- sub("^Error.*:", "", txt1$message)
   unitizer:::read_line_set_vals(c("Q"))
   txt2 <- unitizer:::capture_output(
     unitize(in.pkg.file, state=in_pkg(), interactive.mode=TRUE)
