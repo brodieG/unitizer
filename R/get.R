@@ -73,7 +73,11 @@ set_unitizer <- function(store.id, unitizer) {
 #' @export
 
 set_unitizer.default <- function(store.id, unitizer) {
-  stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
+  stop(
+    "No method defined for object of class \"", class(store.id)[[1]], "\"; ",
+    "make sure that the specified `store.id` is a reference to a valid ",
+    "unitizer store and had defined `get_unitizer` and `set_unitizer` methods."
+  )
 }
 #' @export
 
@@ -151,7 +155,11 @@ get_unitizer.character <- function(store.id) {
 #' @export
 
 get_unitizer.default <- function(store.id) {
-  stop("No method defined for object of class \"", class(store.id)[[1]], "\"")
+  stop(
+    "No method defined for object of class \"", class(store.id)[[1]], "\"; ",
+    "make sure that the specified `store.id` is a reference to a valid ",
+    "unitizer store and had defined `get_unitizer` and `set_unitizer` methods."
+  )
 }
 #' @rdname set_unitizer
 #' @export
