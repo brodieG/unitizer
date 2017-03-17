@@ -281,16 +281,10 @@ unitize_core <- function(
       ) {
         file.path(par.dir, "tests")
       } else {
-        warning(
-          word_wrap(collapse="\n",
-            cc(
-              "Working directory state tracking is in mode 2, but we cannot ",
-              "identify the standard tests directory so we are leaving the ",
-              "working directory unchanged"
-          ) ),
-          immediate.=TRUE
-        )
-        NULL
+        # File doesn't seem to be in package, so set wd to be the same as 
+        # the file
+
+        path
       }
       if(!is.null(test.dir)) setwd(test.dir)
     } else {
