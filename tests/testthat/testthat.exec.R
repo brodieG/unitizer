@@ -187,13 +187,15 @@ local( {
       "Warning:\n  this is a long error message that is supposed to cause R to add a new line after the error: part\n"
     )
     expect_equal(m$message, "Error in \"a\"/3 : non-numeric argument to binary operator\n")
+    # `sub` needed due to inconsistencies in R 3.4 and 3.3 for top level error
+    # messages
     expect_equal(
-      x$message,
-      "boo hay \n there \n\nWarning:\n  this is a fairly long warning wladsfasdfasd that might wrap if we keep typing humpty dumpty sat on a wall and had a big fall\nWarning: ashorter warning blah\nboo hay \n there \n\nWarning: \nWarning in fun() : error in fun\nboo hay \n there \n\nError: could not find function \"error\"\n"
+      sub("\\bError.*: ", "", x$message),
+      "boo hay \n there \n\nWarning:\n  this is a fairly long warning wladsfasdfasd that might wrap if we keep typing humpty dumpty sat on a wall and had a big fall\nWarning: ashorter warning blah\nboo hay \n there \n\nWarning: \nWarning in fun() : error in fun\nboo hay \n there \n\ncould not find function \"error\"\n"
     )
     expect_equal(
-      y$message,
-      "boo hay \n there \n\nWarning:\n  this is a fairly long warning wladsfasdfasd that might wrap if we keep typing humpty dumpty sat on a wall and had a big fall\nWarning: ashorter warning blah\nboo hay \n there \n\nWarning: \nWarning in fun() : error in fun\nboo hay \n there \n\nError: could not find function \"error\"\n"
+      sub("\\bError.*: ", "", y$message),
+      "boo hay \n there \n\nWarning:\n  this is a fairly long warning wladsfasdfasd that might wrap if we keep typing humpty dumpty sat on a wall and had a big fall\nWarning: ashorter warning blah\nboo hay \n there \n\nWarning: \nWarning in fun() : error in fun\nboo hay \n there \n\ncould not find function \"error\"\n"
     )
   })
 } )
