@@ -207,9 +207,9 @@ unitizerGlobal$methods(
           if(
             !identical(
               sprintf(
-                "Tracing function \"%s\" in package \"namespace:base\"\n", name
+                "Tracing function \"%s\" in package \"namespace:base\" ", name
               ),
-              conditionMessage(e)
+              gsub("\n", " ", conditionMessage(e))
             )
           ) {
             signalCondition(e)
@@ -255,9 +255,9 @@ unitizerGlobal$methods(
             if(
               !identical(
                 sprintf(
-                  "Untracing function \"%s\" in package \"namespace:base\"\n", i
+                  "Untracing function \"%s\" in package \"namespace:base\" ", i
                 ),
-                conditionMessage(e)
+                gsub("\n", " ", conditionMessage(e))
               )
             ) {
               signalCondition(e)
