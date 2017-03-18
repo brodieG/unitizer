@@ -29,7 +29,8 @@ NULL
 #' applies equally to \code{unitize_dir}.
 #'
 #' \code{unitizer} provides functionality to insulate test code from variability
-#' in the following:
+#' in the following.  Note the \dQuote{can be set} wording because by default
+#' these elements of state are not managed:
 #'
 #' \itemize{
 #'   \item Workspace / Parent Environment: all tests can be
@@ -43,8 +44,10 @@ NULL
 #'     tests, or add a test that uses a random sampling before the end of
 #'     the file, that will still affect the random seed.
 #'   \item Working Directory: can be set to the tests directory
-#'     inside the package directory provided all test files are in the same
-#'     sub-directory of a package.
+#'     inside the package directory if the test files appear to be inside the
+#'     folder structure of a package.  This mimics R CMD check behavior.  If
+#'     test files are not inside a package directory structure then can be set
+#'     to the test files' directory.
 #'   \item Search Path: can be set to what you would
 #'     typically find in a freshly loaded vanilla R session.  This means any non
 #'     default packages that are loaded when you run your tests are unloaded
@@ -195,11 +198,13 @@ NULL
 #'     \code{\link{unitize}}, and also to reset it to the original value in
 #'     \code{post}.
 #' }
-#' @param search.path one of \code{0:2}, assumes 0 if unspecified
-#' @param options one of \code{0:2}, assumes 0 if unspecified
-#' @param working.directory one of \code{0:2}, assumes 0 if unspecified
-#' @param random.seed one of \code{0:2}, assumes 0 if unspecified
-#' @param namespaces one of \code{0:2}, assumes 0 if unspecified
+#' @param search.path one of \code{0:2}, uses the default value corresponding to
+#'   \code{getOption(unitizer.state)}, which is 0 in the default unitizer state
+#'   of \dQuote{off}.
+#' @param options same as \code{search.path}
+#' @param working.directory same as \code{search.path}
+#' @param random.seed same as \code{search.path}
+#' @param namespaces same as \code{search.path}
 #' @param par.env \code{NULL} to use the special \code{unitizer} parent
 #'   environment, or an environment to use as the parent environment, or
 #'   the name of a package as a character string to use that packages'
@@ -295,7 +300,15 @@ state <- function(
       "Unable to generate state object from `getOption('unitizer.state')`, ",
       "see prior error messages."
     )
-  for(i in supplied.args) slot(state.def, i) <- get(i, inherits=FALSE)
+  for(i in supplied.args) {
+    i.val <- get(i, inherits=FALSE)
+    if(i != 'par.env') {
+      if(!is.int.1L(i.val) || !i.val %in% 0:2)
+        stop("Argument `", i, "` must be integer(1L)  in 0:2")
+      i.val <- as.integer(i.val)
+    }
+    slot(state.def, i) <- i.val
+  }
 
   if(!isTRUE(validObject(state.def, test=TRUE))) {
     stop("Unable to create valid `unitizerStateRaw` object; see prior errors")

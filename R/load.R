@@ -436,7 +436,7 @@ as.store_id_chr <- function(x) {
   if(is.chr1plain(x)){
     return(relativize_path(x))
   }
-  target <- try(as.character(x))
+  target <- try(as.character(x), silent=TRUE)
   if(inherits(target, "try-error"))
     stop(
       "Unable to convert store id to character; if you are using custom ",
