@@ -1,4 +1,4 @@
-source('rcw-code.R')
+source('rcw-code.R', local=TRUE)
 
 mx <- matrix(1:9, 3)
 
