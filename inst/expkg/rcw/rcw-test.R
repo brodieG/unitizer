@@ -1,13 +1,22 @@
+# load function
+
 source('rcw-code.R', local=TRUE)
 
-mx <- matrix(1:9, 3)
+# create matrix to test rotation
+
+mx <- matrix(c(1:3, rep(0, 6)), 3)
 
 rcw(mx)
-rcw(rcw(mx))
-rcw(rcw(rcw(mx)))
-rcw(rcw(rcw(rcw(mx))))
 
-mx2 <- matrix(1:6, 2)
+# full rotation should get us to original
 
+identical(mx, rcw(rcw(rcw(rcw(mx)))))
+
+# non-square matrix
+
+mx2 <- matrix(c(1:3, rep(0, 3)),  ncol=2)
 rcw(mx2)
 
+# Invalid input
+
+rcw(1:10)
