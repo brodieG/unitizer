@@ -2,4 +2,5 @@
 ^\.Rproj\.user$
 ^\DEVNOTES\.md$
 ^\.travis\.yml$
+^extra$
 .Rdata
