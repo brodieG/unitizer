@@ -1,4 +1,4 @@
-# unitizeR - Easy R Unit Tests
+# unitizeR - Interactive R Unit Tests
 
 [![](https://travis-ci.org/brodieG/unitizer.svg?branch=master)](https://travis-ci.org/brodieG/unitizer)
 [![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
@@ -10,11 +10,10 @@
 `unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
 
 ```
-library(devtools)
-install_github("brodieg/unitizer")
+install.packages('unitizer')
 ```
-We are targeting v1.4.0 for CRAN.  Please keep in mind this is an experimental
-framework that has been thoroughly tested by *one* person.
+Please keep in mind this is an experimental framework that has been thoroughly
+tested by *one* person.
 
 `unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
 ```
@@ -23,7 +22,7 @@ demo(unitizer)
 ```
 Or check out the screencast to see `unitizer` in action:
 [![2 Minute Animated Gif
-Example](extra/gif/screencastintro.png)](extra/gif/frames/fin.gif)
+Example](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif)](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif)
 
 ## Description and Usage
 
@@ -61,10 +60,28 @@ To use `unitizer`:
 
 Thank you to:
 
-* Hadley Wickham for devoting so much of his life to making the R universe a better place to live in.  `unitizer` borrows several concepts from `testthat`, and uses `testthat` for internal unit tests.
-* Jim Hester for developing `covr` and nudging me to use it.  Seeing line by line test coverage is an eye opening experience.
-* Gábor Csárdi for `crayon` and for adding a new dimension to the R experience
 * R Core for developing such a wonderfully flexible language
+* Hadley Wickham for devoting so much of his life to making the R universe a
+  better place to live in.  `unitizer` borrows several concepts from `testthat`,
+  and uses `testthat` for internal unit tests.
+* [Jim Hester](https://github.com/jimhester) for developing `covr` and nudging
+  me to use it.  Seeing line by line test coverage is an eye opening experience.
+* [Gábor Csárdi](https://github.com/gaborcsardi) for `crayon` and for adding a
+  new dimension to the R experience
+* @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
+  team](http://ffmpeg.org/about.html) for ffmpeg
+* [Dirk Eddelbuettel](https://github.com/eddelbuettel) and [Carl
+  Boettiger](https://github.com/cboettig) for the
+  [rocker](https://github.com/rocker-org/rocker) project.
+* All open source developers out there that make their work freely available
+  for others to use
+* [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
+  [Codecov](https://codecov.io/), [Vagrant](https://www.vagrantup.com/),
+  [Docker](https://www.docker.com/), [Ubuntu](https://www.ubuntu.com/),
+  [Brew](https://brew.sh/) for providing infrastructure that greatly simplifies
+  open source development
+* [Free Software Foundation](http://fsf.org/) for developing the GPL license and
+  promotion of the free software movement
 
 ## About the Author
 

@@ -1,5 +1,5 @@
 ---
-title: "unitizer - Easy R Unit Tests"
+title: "unitizer - Interactive R Unit Tests"
 author: "Brodie Gaslam"
 output:
     rmarkdown::html_vignette:
@@ -17,13 +17,11 @@ vignette: >
 ### TL;DR
 
 `unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
-
 ```
-library(devtools)
-install_github("brodieg/unitizer")
+install.packages('unitizer')
 ```
-We are targeting v1.4.0 for CRAN.  Please keep in mind this is an experimental
-framework that has been thoroughly tested by *one* person.
+Please keep in mind this is an experimental framework that has been thoroughly
+tested by *one* person.
 
 `unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
 ```
