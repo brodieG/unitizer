@@ -25,7 +25,7 @@ Suggests:
     rmarkdown,
     testthat,
     devtools
-License: GPL-3 + file LICENSE
+License: GPL (>= 2)
 LazyData: true
 URL: https://github.com/brodieG/unitizer
 BugReports: https://github.com/brodieG/unitizer/issues
