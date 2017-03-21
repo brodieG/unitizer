@@ -53,6 +53,11 @@ To use `unitizer`:
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
+You can see `unitizer` in action in this demo screencast:
+
+[![2 Minute Animated Gif
+Example](extra/gif/screencastintro.png)](extra/gif/frames/fin.gif)
+
 ## Documentation
 
 * `help(package="unitizer")`, in particular `?unitize`
