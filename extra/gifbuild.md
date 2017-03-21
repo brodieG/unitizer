@@ -59,27 +59,42 @@ tar -jcvf out.tbz2 out*.gif
 
 cp preproc.gif preproc2.gif
 
-mkdir exploded
+# we're storing our gif frames as the optimized gif, so we need to explode into
+# frames, rebuild an unoptimized animated gif, and then change the delays on
+# that
 
-
-gifsicle --unoptimize preproc.gif --optimize=1 > preproc2.gif
-gifsicle --explode preproc2.gif | gifsicle -d7 "#0-21" \
+gifsicle --unoptimize --explode preproc.gif --output frame && \
+gifsicle frame* > preproc2.gif && \
+rm frame* && \
+gifsicle preproc2.gif -d7 "#0-21" \
   -d100 "#22" -d400 "#23" -d7 "#24-51" -d100 "#52" -d400 "#53" \
   -d7 "#54-91" -d100 "#92" -d7 "#93-132" -d200 "#133" -d7 "#134-135" \
-  -d200 "#136" -d7 "#137-170" -d100 "#171" -d7 "#172-195" -d100 "#196" \
+  -d200 "#136" -d7 "#137-158" -d100 "#159" -d7 "#160-170" -d100 "#171" \
+  -d7 "#172-195" -d100 "#196" \
   -d7 "#197-199" -d200 "#200" -d7 "#201-234" -d100 "#235" -d7 "#236-238" \
-  -d100 "#239" -d200 "#240" -d7 "#241-254" -d100 "#255" -d200 "#256" \
-  -d7 "#257-296" -d100 "#297" -d7 "#298-339" -d200 "#340" -d7 "#341-364" \
+  -d200 "#239" -d200 "#240" -d7 "#241-254" -d200 "#255" -d200 "#256" \
+  -d7 "#257-279" -d200 "#280" -d7 "#281-296" \
+  -d100 "#297" -d7 "#298-325" -d200 "#326" -d7 "#327-339" -d200 "#340" \
+  -d7 "#341-364" \
   -d100 "#365" -d7 "#366-367" -d200 "#368" -d7 "#369-370" -d200 "#371" \
   -d7 "#372" -d200 "#373" -d7 "#374-387" -d200 "#388" -d7 "#389-413" \
   -d200 "#414" -d7 "#415-417" -d200 "#419" -d7 "#419-443" -d100 "#444" \
   -d7 "#445" -d100 "#446" -d7 "#447-476" -d100 "#477" -d7 "#478-504" \
   -d100 "#505" -d7 "#506-525" -d200 "#526" -d7 "#527-531" -d100 "#532" \
   -d7 "#533-535" -d200 "#536" -d7 "#537-573" -d200 "#574" -d7 "#575-590" \
-  -d100 "#591" -d7 "#592" -d200 "#593" -d7 "#594-604" -d100 "#605" \
-  -d7 "#606" -d200 "#607" -d7 "#608-629" -d200 "#630" -d7 "#631" -d100 "#632" \
+  -d100 "#591" -d7 "#592" -d200 "#593" -d7 "#594-604" -d200 "#605" \
+  -d7 "#606" -d200 "#607" -d7 "#608-629" -d300 "#630" -d7 "#631" -d100 "#632" \
   -d7 "#633-647" -d200 "#648" \
-  --no-loopcount --optimize=3 > fin.gif
+  --no-loopcount --optimize=3 > fin.gif &&
+rm preproc2.gif
+
+
+
+mkdir exploded
+
+
+gifsicle --unoptimize preproc.gif --optimize=1 > preproc2.gif
+
 
 
 

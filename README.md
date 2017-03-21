@@ -21,11 +21,9 @@ framework that has been thoroughly tested by *one* person.
 library(unitizer)
 demo(unitizer)
 ```
-Or just save some R expressions to a file and run:
-```
-library(unitizer)
-unitize("my_file_name.R")
-```
+Or check out the screencast to see `unitizer` in action:
+[![2 Minute Animated Gif
+Example](extra/gif/screencastintro.png)](extra/gif/frames/fin.gif)
 
 ## Description and Usage
 
