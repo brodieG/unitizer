@@ -359,14 +359,10 @@ local({
   })
   test_that("test file / store manip", {
     expect_identical(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello")
-    capt.msg <- capture.output(
-      expect_error(
-        unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")),
-        "Unable to convert"
-      ),
-      type="message"
+    expect_error(
+      unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")),
+      "Unable to convert"
     )
-    expect_match(capt.msg, "stochrerr", all=FALSE)
     as.character.custstore <- function(x, ...) x
     expect_match(
       unitizer:::best_store_name(
