@@ -21,11 +21,9 @@ framework that has been thoroughly tested by *one* person.
 library(unitizer)
 demo(unitizer)
 ```
-Or just save some R expressions to a file and run:
-```
-library(unitizer)
-unitize("my_file_name.R")
-```
+Or check out the screencast to see `unitizer` in action:
+[![2 Minute Animated Gif
+Example](extra/gif/screencastintro.png)](extra/gif/frames/fin.gif)
 
 ## Description and Usage
 
@@ -52,11 +50,6 @@ To use `unitizer`:
   review and debug them in an interactive prompt
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
-
-You can see `unitizer` in action in this demo screencast:
-
-[![2 Minute Animated Gif
-Example](extra/gif/screencastintro.png)](extra/gif/frames/fin.gif)
 
 ## Documentation
 
