@@ -19,15 +19,17 @@ the name of a package as a character string to use that packages'
 namespace as the parent environment, or a \code{unitizerInPkg} object
 as produced by \code{\link{in_pkg}}, assumes .GlobalEnv if unspecified}
 
-\item{search.path}{one of \code{0:2}, assumes 0 if unspecified}
+\item{search.path}{one of \code{0:2}, uses the default value corresponding to
+\code{getOption(unitizer.state)}, which is 0 in the default unitizer state
+of \dQuote{off}.}
 
-\item{options}{one of \code{0:2}, assumes 0 if unspecified}
+\item{options}{same as \code{search.path}}
 
-\item{working.directory}{one of \code{0:2}, assumes 0 if unspecified}
+\item{working.directory}{same as \code{search.path}}
 
-\item{random.seed}{one of \code{0:2}, assumes 0 if unspecified}
+\item{random.seed}{same as \code{search.path}}
 
-\item{namespaces}{one of \code{0:2}, assumes 0 if unspecified}
+\item{namespaces}{same as \code{search.path}}
 
 \item{package}{character(1L) or NULL; if NULL will tell \code{unitize}
 to attempt to identify if the test file is inside an R package folder
@@ -67,7 +69,8 @@ to control state management.
 applies equally to \code{unitize_dir}.
 
 \code{unitizer} provides functionality to insulate test code from variability
-in the following:
+in the following.  Note the \dQuote{can be set} wording because by default
+these elements of state are not managed:
 
 \itemize{
   \item Workspace / Parent Environment: all tests can be
@@ -81,8 +84,10 @@ in the following:
     tests, or add a test that uses a random sampling before the end of
     the file, that will still affect the random seed.
   \item Working Directory: can be set to the tests directory
-    inside the package directory provided all test files are in the same
-    sub-directory of a package.
+    inside the package directory if the test files appear to be inside the
+    folder structure of a package.  This mimics R CMD check behavior.  If
+    test files are not inside a package directory structure then can be set
+    to the test files' directory.
   \item Search Path: can be set to what you would
     typically find in a freshly loaded vanilla R session.  This means any non
     default packages that are loaded when you run your tests are unloaded
