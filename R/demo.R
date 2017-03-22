@@ -156,6 +156,7 @@ check_test_dir <- function(dir) {
 
 update_fastlm <- function(dir, version) {
   check_test_dir(dir)
+  detach("package:utzflm", unload=TRUE)
   stopifnot(version %in% c("0.1.0", "0.1.1", "0.1.2"))
   lm.dir <- switch(
     version, "0.1.0"="flm0", "0.1.1"="flm1", "0.1.2"="flm2",
@@ -174,6 +175,7 @@ update_fastlm <- function(dir, version) {
 # an extra file.  This also installs version 0.1.2
 
 update_fastlm_extra <- function(dir) {
+  detach("package:utzflm", unload=TRUE)
   check_test_dir(dir)
   lm.dir <- "flm2"
   untz.dir <- system.file(package="unitizer")

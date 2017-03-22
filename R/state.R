@@ -651,7 +651,7 @@ char_or_null_as_state <- function(x) {
 
 as.state_raw <- function(x) {
   err.msg <- cc(
-    "%s must be character(1L) %in% ",
+    "%s must be character(1L) %%in%% ",
     deparse(.unitizer.valid.state.abbr), ", NULL, an environment, or ",
     "must inherit from S4 classes `unitizerStateRaw`, ",
     "`unitizerStateProcessed` or `unitizerInPkg` ",
@@ -664,7 +664,7 @@ as.state_raw <- function(x) {
     !is(x, "unitizerInPkg") &&
     !is.null(x)
   )
-    stop(word_wrap(collapse="\n", sprintf(err.msg, "Argument")))
+    stop(word_wrap(collapse="\n", sprintf(err.msg, "Argument `x`")))
 
   x.raw <- if(!is(x, "unitizerState")) {
     if(is.null(x) || is.character(x)) {
