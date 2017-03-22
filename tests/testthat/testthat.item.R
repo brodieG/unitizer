@@ -518,6 +518,11 @@ local({
 
       expect_identical(as.character(my.unitizer2@tests.status), rep("Pass", 5))
     } )
-
+    test_that(
+      "Test Fun Captured Properly", {
+      expect_equal(
+        new("unitizerItemTestFun", fun=identical)@fun.name, "identical"
+      )
+    })
   } )
 })

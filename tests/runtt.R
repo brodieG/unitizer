@@ -72,10 +72,10 @@ local({
       # "capture",
       # "change",
       # "demo",
-      "error"
+      # "error",
       # "exec",
       # "get",
-      # "global",
+      "global"
       # "handledruns",
       # "inpkg",
       # "ischecks",

@@ -102,7 +102,7 @@ local({
   })
   test_that("as.state", {
     expect_identical(
-      unitizer:::as.state("recommended"), 
+      unitizer:::as.state("recommended"),
       unitizer:::as.state(unitizer:::unitizerStateRecommended())
     )
     expect_identical(
@@ -204,6 +204,24 @@ local({
       state(in_pkg()),
       unitizer:::unitizerStateRecommended(par.env=in_pkg())
     )
+    expect_equal(
+      state(search.path=1),
+      unitizer:::unitizerStateRecommended(search.path=1L)
+    )
+    # invalid state
+
+    expect_error(state(search.path=3), "must be .* in 0:2")
+    expect_error(state(options=2, namespaces=1), "is set to 2")
+
+    # captured <in: >
+
+    expect_true(any(grepl("<in: .*>", capture.output(show(state(in_pkg()))))))
+    expect_true(
+      any(
+        grepl(
+          "<in: package:stats>",
+          capture.output(show(state(in_pkg("stats"))))
+    ) ) )
   })
   test_that("in_pkg", {
     expect_error(in_pkg(""), "Argument `package` may not be an empty string")
@@ -276,5 +294,7 @@ local({
       ),
       list(items=items.no.new.mod, states=trk.ref.mod)
     )
+  })
+  test_that("invalid states", {
   })
 })
