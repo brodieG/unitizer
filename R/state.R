@@ -310,29 +310,13 @@ state <- function(
     slot(state.def, i) <- i.val
   }
 
-  if(!isTRUE(validObject(state.def, test=TRUE))) {
-    stop("Unable to create valid `unitizerStateRaw` object; see prior errors")
+  if(!isTRUE(val.err <- validObject(state.def, test=TRUE))) {
+    stop(
+      "Unable to create valid `unitizerStateRaw` object: ",
+      val.err
+    )
   }
   state.def
-}
-process_par_env <- function(par.env) {
-  if(
-    !is.null(par.env) && !is.chr1(par.env) && !is.environment(par.env) &&
-    !is(par.env, "unitizerInPkg")
-  )
-    stop(
-      "Argument `par.env` must be NULL, character(1L), an environment, or ",
-      "a `unitizerInPkg` object"
-    )
-  if(is.chr1(par.env)) {
-    par.env <- try(getNamespace(par.env))
-    if(inherits(par.env, "try-error"))
-      stop(
-        "Unable to retrieve namespace for `", par.env, "`; make sure the ",
-        "value actually refers to an installed package."
-      )
-  }
-
 }
 unitizerInPkg <- setClass(
   "unitizerInPkg",
@@ -403,7 +387,7 @@ unitizerState <- setClass(
     )
       return(
         paste0(
-          "Argument `reproducible.state` has an invalid state: 'options' is set ",
+          "Argument `state` is an invalid state: 'options' is set ",
           "to 2, but 'search.path' and 'namespaces' are not"
       ) )
     if(identical(object@random.seed, 2L)) {
