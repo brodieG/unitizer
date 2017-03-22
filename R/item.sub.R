@@ -199,7 +199,7 @@ setClassUnion(
   c("unitizerItemsTestsErrors", "logical")
 )
 
-setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff"))
+setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff")) # nocov
 setMethod("as.Diffs", "unitizerItemTestsErrors",
   function(x, state.ref, state.new, width=getOption("width"), ...) {
     slots <- grep("^[^.]", slotNames(x), value=TRUE)
