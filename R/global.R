@@ -423,7 +423,7 @@ unitizerGlobal <- setRefClass(
         all(which %in% .unitizer.global.settings.names)
       )
       for(i in which) {
-        slot(status, i) <<- FALSE
+        slot(status, i) <<- 0L
         slot(disabled, i) <<- TRUE
       }
       status
