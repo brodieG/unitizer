@@ -360,7 +360,7 @@ unitizerState <- setClass(
       identical(object@options, 2L) &&
       (
         !identical(object@namespaces, 2L) ||
- s       !identical(object@search.path, 2L)
+        !identical(object@search.path, 2L)
       )
     )
       return(
@@ -697,6 +697,7 @@ as.state_raw <- function(x) {
         )
       }
       state.tpl@par.env <- x
+      state.tpl
     }
   } else x
 
