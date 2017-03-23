@@ -628,12 +628,12 @@ char_or_null_as_state <- function(x) {
   )
 }
 setGeneric(
-  "as.unitizerStateRaw", 
+  "as.unitizerStateRaw",
   function(x, ...) standardGeneric("as.unitizerStateRaw")
 )
 # Raw states can contain pretty much everything processed ones can
 
-setMethod("as.unitizerStateRaw", "unitizerStateProcessed",
+setMethod("as.unitizerStateRaw", "unitizerState",
   function(x, ...) {
     state <- new("unitizerStateRaw")
     for(i in slotNames(state)) slot(state, i) <- slot(x, i)

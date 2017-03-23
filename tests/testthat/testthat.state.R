@@ -152,6 +152,14 @@ local({
       ),
       unitizer:::unitizerStateProcessed(par.env=getNamespace("unitizer"))
     )
+    state@options <- 0L
+    state.proc <- unitizer:::as.unitizerStateProcessed(state)
+    state.raw <- unitizer:::as.unitizerStateRaw(state.proc)
+    expect_true(is(state.raw, 'unitizerStateRaw'))
+    expect_equal(
+      lapply(slotNames(state), slot, object=state.proc),
+      lapply(slotNames(state.raw), slot, object=state.raw)
+    )
     expect_error(
       capture.output(
         unitizer:::as.state(unitizer:::unitizerStateRaw(par.env=in_pkg())),
@@ -190,6 +198,33 @@ local({
 
     expect_error(unitizer:::as.state(state.obj), "Namespace state tracking")
   })
+  test_that("as.state_raw", {
+    local({
+      old.opt.loc <- options(unitizer.state=.GlobalEnv)
+      on.exit(options(old.opt.loc))
+
+      expect_error(unitizer:::as.state_raw(.GlobalEnv), "Value for `getOption")
+
+      options(unitizer.state=42L)
+      expect_error(unitizer:::as.state_raw(.GlobalEnv), "`getOption.*` must be")
+
+      state.raw <- unitizer:::as.unitizerStateRaw(unitizer:::unitizerStateOff())
+      state.proc <- unitizer:::as.unitizerStateProcessed(state.raw)
+      my.env <- new.env()
+
+      options(unitizer.state=state.raw)
+      state.raw@par.env <- my.env
+      expect_equal(unitizer:::as.state_raw(my.env), state.raw)
+
+      options(unitizer.state=state.proc)
+      my.env <- new.env()
+      state.proc@par.env <- my.env
+      expect_equal(
+        unitizer:::as.state_raw(my.env),
+        unitizer:::as.unitizerStateRaw(state.proc)
+      )
+    })
+  })
   test_that("state", {
     # all these assume we set the options to be in recommended mode
     expect_equal(
@@ -212,6 +247,14 @@ local({
 
     expect_error(state(search.path=3), "must be .* in 0:2")
     expect_error(state(options=2, namespaces=1), "is set to 2")
+    expect_error(state(namespaces=2, search.path=1), "is set to 2")
+    state.inv <- unitizer:::unitizerStateProcessed()
+
+    state.inv@options <- 2L
+    expect_error(unitizer:::as.state(state.inv), "Options state tracking")
+
+    state.inv@namespaces <- 2L
+    expect_error(unitizer:::as.state(state.inv), "Namespace state tracking")
 
     # captured <in: >
 
@@ -221,6 +264,12 @@ local({
         grepl(
           "<in: package:stats>",
           capture.output(show(state(in_pkg("stats"))))
+    ) ) )
+    expect_true(
+      any(
+        grepl(
+          "namespace:stats",
+          capture.output(show(state(asNamespace("stats"))))
     ) ) )
   })
   test_that("in_pkg", {
