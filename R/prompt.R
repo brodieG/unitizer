@@ -144,7 +144,9 @@ unitizer_prompt <- function(
 
     res <- try(exit.condition(val, browse.env, ...))
     if(inherits(res, "try-error")) {
-      stop("Logic Error: exit condition function failed; contact maintainer.")
+      # nocov start
+      stop("Internal Error: exit condition function failed; contact maintainer.")
+      # nocov end
     } else {
       if(!identical(res, FALSE)) return(res)
     }
@@ -173,10 +175,10 @@ navigate_prompt <- function(
   help=character(), help.opts=character(), valid.opts
 ) {
   if(!is(x, "unitizerBrowse")) {
-    stop(
-      "Logic Error, expected unitizerBrowse object as param `x`; ",
+    stop( # nocov start
+      "Internal Error, expected unitizerBrowse object as param `x`; ",
       "contact maintainer."
-  ) }
+  ) }     # nocov end
   # User input
 
   prompt.val <- unitizer_prompt(
@@ -212,9 +214,10 @@ navigate_prompt <- function(
 
 review_prompt <- function(x, nav.env) {
   if(!is(x, "unitizerBrowse") || !is.environment(nav.env))
-    stop(
-      "Logic Error: unexpected inputs to internal function; contact maintainer."
-    )
+    stop(  # nocov start
+      "Internal Error: unexpected inputs to internal function; contact ",
+      "maintainer."
+    )      # nocov end
   # Navigation Prompt
 
   nav.help <- paste0(
@@ -252,9 +255,10 @@ review_prompt <- function(x, nav.env) {
   } else if (
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
   ) {
-    stop(
+    stop( # nocov start
       "Logic Error: Unexpected user input allowed through in Review mode; ",
-      "contact maintainer")
+      "contact maintainer"
+    )     # nocov end
   } else {
     # Remap our nav.id to the actual review order instead of file order
 
@@ -335,7 +339,9 @@ simple_prompt <- function(
 #' @keywords internal
 #' @rdname unitizer_prompt
 
-exit_fun <- function(y, env, valid.vals) {               # keep re-prompting until user types in valid value
+
+exit_fun <- function(y, env, valid.vals) {
+  # keep re-prompting until user types in valid value
   if(!is.expression(y)) stop("Argument `y` should be an expression.")
   if(
     length(y) != 1L || !is.numeric(y[[1L]]) || length(y[[1L]]) != 1L ||
@@ -343,7 +349,7 @@ exit_fun <- function(y, env, valid.vals) {               # keep re-prompting unt
   ) return(FALSE)
   if(!isTRUE(y[[1L]] %in% valid.vals)) {
     meta_word_msg(
-      "Type a number in `", deparse(valid.vals), "` at the prompt", 
+      "Type a number in `", deparse(valid.vals), "` at the prompt",
       sep="", trail.nl=FALSE
     )
     return(FALSE)
@@ -358,10 +364,10 @@ read_line <- function(prompt="") {
   if(is.null(.global$prompt.vals)) {
     readline(prompt)
   } else if(!is.character(.global$prompt.vals)) {
-    stop(
+    stop( # nocov start
       "Logic Error: internal object `.global$prompt.vals` has unexpected ",
       "value; contact maintainer."
-    )
+    )     # nocov end
   } else if(!length(.global$prompt.vals)) {
     # Need dedicated condition so `unitizer_prompt` can catch it
     cond <- simpleCondition(

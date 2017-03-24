@@ -65,6 +65,12 @@ local({
       unitizer:::word_wrap(c("\nhello\nthere", "\nhow")),
       c("", "hello", "there", "", "how")
     )
+    # too narrow
+    no.wrap <- "hello I won't be wrapped"
+    expect_warning(
+      txt.wrap <- unitizer:::word_wrap(no.wrap, width=12), "too narrow"
+    )
+    expect_equal(txt.wrap, no.wrap)
   })
   test_that("bullets", {
     x <- c("there was once a time when the fantastic unicorns could fly", "bugs bunny ate carrots and drank milk while hunting ducks")
@@ -192,6 +198,9 @@ local({
       structure(
         list(output="hello", message="goodbye"), class="captured_output"
     ) )
+    expect_match(
+      capture.output(print(capt)), "Output"
+    )
   })
   test_that("meta_word_cat", {
     expect_equal(
@@ -224,6 +233,12 @@ local({
       unitizer:::meta_word_msg(txt, width=20),
       "| hello there how \n| are you this wraps\n\n",
       fixed=TRUE
+    )
+    # legacy fun
+
+    expect_equal(
+      capture.output(unitizer:::word_msg("hello"), type="message"),
+      "hello"
     )
   })
   test_that("desc", {

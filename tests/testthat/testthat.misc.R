@@ -336,3 +336,28 @@ test_that("pretty_path", {
     "package:stats/DESCRIPTION"
   )
 })
+test_that("quit", {
+  with_mock(
+    quit=function(...) stop("quit!\n"), {
+      unitizer:::read_line_set_vals("y")
+      expect_error(unitizer_quit(), "quit!")
+      unitizer:::read_line_set_vals("n")
+      expect_equal(unitizer_quit(), NULL)
+      unitizer:::read_line_set_vals("q", "q", "q", "q", "q")
+      expect_error(unitizer_quit(), "quit!")
+    }
+  )
+  unitizer:::read_line_set_vals(NULL)
+})
+test_that("mock_item", {
+  expect_is(mock_item(), "unitizerItem")
+})
+test_that("diff conditionList", {
+  cond1 <- new(
+    "conditionList",
+    .items=list(
+      simpleWarning("hello", call=quote(fun())),
+      simpleWarning("goodbye", call=quote(fun()))
+  ) )
+  expect_is(diffobj::diffObj(cond1, cond1), "Diff")
+})

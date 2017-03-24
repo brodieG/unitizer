@@ -170,7 +170,7 @@ setMethod("reset", "unitizerList", valueClass="unitizerList",
       x@.seek.fwd <- FALSE
       x@.pointer <- length(x) + 1L
     } else {
-      stop("Logic Error; unexpected `position` argument")
+      stop("Internal Error; unexpected `position` argument")  # nocov
     }
     x
 } )
@@ -246,7 +246,7 @@ setMethod("append", c("unitizerList", "ANY"),
 
 setMethod("c", c("unitizerList"),
   function(x, ..., recursive=FALSE) {
-    stop("This method is not implemented yet")
+    stop("This method is not implemented yet")  # nocov
 } )
 # Append Factors
 #

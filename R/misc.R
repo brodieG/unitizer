@@ -71,7 +71,7 @@ unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
   )
   quit.count <- 5
   while(
-    !(res <- head(tolower(readline("Quit R? [y/n]: ")), 1L)) %in% c("y", "n")
+    !(res <- head(tolower(read_line("Quit R? [y/n]: ")), 1L)) %in% c("y", "n")
   ) {
     quit.count <- quit.count - 1L
     if(quit.count < 0) {

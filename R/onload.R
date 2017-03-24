@@ -5,12 +5,14 @@ NULL
 
 .loaded <- FALSE
 .onLoad <- function(libname, pkgname) {
+  # nocov start
   options(
     .unitizer.opts.default[
       setdiff(names(.unitizer.opts.default), names(options()))
     ]
   )
   .loaded <<- TRUE
+  # nocov end
 }
 .onUnload <- function(libpath) {
 }

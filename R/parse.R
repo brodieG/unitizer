@@ -160,7 +160,10 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("token", "col1", "line1"
 
 comments_assign <- function(expr, comment.dat) {
   if(!identical(length(unique(comment.dat$parent)), 1L))
-    stop("Logic Error: there were multiple parent ids in argument `comment.dat`; this should not happen")
+    stop( # nocov start
+      "Internal Error: there were multiple parent ids in argument ",
+      "`comment.dat`; this should not happen"
+    )     # nocov end
   if(!length(expr) || !length(which(comment.dat$token == "COMMENT"))) return(expr)
 
   # Make sure `comment.dat` is in format we understand
@@ -172,25 +175,49 @@ comments_assign <- function(expr, comment.dat) {
   # and should be an infix operator of some sort)
 
   if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", tk.lst$non.exps, tk.lst$brac.close, "';'"))
-    stop("Logic Error: unexpected ending token in parse data; contact maintainer.")
-  if(length(which(comment.dat$token %in% tk.lst$brac.open)) > 1L || length(which(comment.dat$token %in% tk.lst$brac.close)) > 1L)
-    stop("Logic Error: more than one bracket at top level; contact maintainer.")
+    stop( # nocov start
+      "Internal Error: unexpected ending token in parse data; contact ",
+      "maintainer."
+    )     # nocov end
+  if(
+    length(which(comment.dat$token %in% tk.lst$brac.open)) > 1L ||
+    length(which(comment.dat$token %in% tk.lst$brac.close)) > 1L
+  ) {
+    stop( # nocov start
+      "Internal Error: more than one bracket at top level; contact maintainer."
+    )     # nocov end
+  }
   if(length(brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
-    # nocov start
     # shouldn't happen, can't test
     if(
       !identical(comment.dat$token[brac.pos], "')'") ||
       !identical(brac.pos, nrow(comment.dat) - 1L) ||
       !identical(comment.dat$token[[1L]], "FUNCTION")
-    ) stop("Logic Error: closing brackets may only be on last row, unless a paren and part of a functions formal definition; contact maintainer.")
-    # nocov end
+    ) {
+      stop(   # ncov start
+        "Internal Error: closing brackets may only be on last row, unless a ",
+        "paren and part of a functions formal definition; contact maintainer."
+      )       # nocov end
+    }
   }
   if(
-    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) && brac.pos > 1L ||
-    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[3L])) && brac.pos > 2L
-  ) stop("Logic Error: opening brackets may only be on first row, or second if paren; contact maintainer.")
-  if(!identical(which(tk.lst$brac.open %in% comment.dat$token), which(tk.lst$brac.close %in% comment.dat$token)))
-    stop("Logic Error: mismatched brackets; contact maintainer.")
+    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) &&
+    brac.pos > 1L ||
+    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[3L])) &&
+    brac.pos > 2L
+  ) {
+    stop(   # nocov start
+      "Internal Error: opening brackets may only be on first row, or second ",
+      "if paren; contact maintainer."
+    )       # nocov start
+  }
+  if(
+    !identical(
+      which(tk.lst$brac.open %in% comment.dat$token),
+      which(tk.lst$brac.close %in% comment.dat$token)
+    )
+  )
+    stop("Internal Error: mismatched brackets; contact maintainer.") # nocov
   # extra.toks <- if(any(brac.open %in% comment.dat$token)) 2L else 1L
   # Trim our data to just what matters:
 
@@ -250,7 +277,8 @@ comments_assign <- function(expr, comment.dat) {
   for(i in seq_along(comm.comm$match)) {
     if(is.na(comm.comm$match[[i]])) next
     expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
-    if(!identical(length(expr.pos), 1L)) stop("Logic Error; contact maintainer.")
+    if(!identical(length(expr.pos), 1L))
+      stop("Internal Error; contact maintainer.")  # nocov
     if(!is.null(expr[[expr.pos]])) {
       # names are registered in global pool, so you can only attach attributes
       # to as single unique in memory instance, irrespective of where or how
@@ -416,17 +444,20 @@ parse_with_comments <- function(file, text=NULL) {
     )
     if(!is.call(expr) && !is.expression(expr)) {
       if(!length(assignable.elems) %in% c(1L))
-        stop("Logic Error: expression is terminal token yet multiple assignable elems; contact maintainer.")
+        stop(  # nocov start
+          "Internal Error: expression is terminal token yet multiple ",
+          "assignable elems; contact maintainer."
+        )      # nocov end
       if(isTRUE(assignable.elems)) expr <- comments_assign(expr, prsdat.par)
     } else if (!is.null(expr)) {
       expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)
     }
-    # Now do the same for the child expression by recursively calling this function
-    # until there are no children left, but need to be careful here because we only
-    # need to call this for non-terminal leaves of the parse tree.  Simply removing
-    # non terminal leaves from call should leave everything in correct order because
-    # the only time there are order mismatches are with infix operators and those
-    # are terminal leaves anyway.
+    # Now do the same for the child expression by recursively calling this
+    # function until there are no children left, but need to be careful here
+    # because we only need to call this for non-terminal leaves of the parse
+    # tree.  Simply removing non terminal leaves from call should leave
+    # everything in correct order because the only time there are order
+    # mismatches are with infix operators and those are terminal leaves anyway.
 
     if(
       !any(
@@ -739,7 +770,7 @@ prsdat_fix_exprlist <- function(parse.dat, ancestry) {
   parse.dat.mod <-
     dat.ord[order(lev.ord), ][which(!ind.exclude[order(lev.ord)]), ]
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
-    stop("Logic Error: `exprlist` excision did not work!")
+    stop("Internal Error: `exprlist` excision did not work!")  # nocov
   parse.dat.mod
 }
 # Removes Symbol Marker Used To Hold Comments
@@ -747,10 +778,10 @@ prsdat_fix_exprlist <- function(parse.dat, ancestry) {
 symb_mark_rem <- function(x) {
   if(isTRUE(attr(x, "unitizer_parse_symb"))) {
     if(length(x) != 2L || x[[1L]] != as.name("(") || !is.name(x[[2L]])) {
-      stop(
-        "Logic Error: Unexpected structure for object with language with ",
+      stop(  # nocov start
+        "Internal Error: Unexpected structure for object with language with ",
         "'unitizer_parse_symb' attribute attached; contact maintainer"
-    ) }
+    ) }      # ncov end
     x <- x[[2L]]
   }
   x

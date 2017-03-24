@@ -99,6 +99,7 @@ local({
     )
     # At some point should consider having some `diffPrint` tests here, all
     # the prior tests got deprecated so we removed them (used state_compare, etc.)
+
   })
   test_that("as.state", {
     expect_identical(
@@ -243,6 +244,12 @@ local({
       state(search.path=1),
       unitizer:::unitizerStateRecommended(search.path=1L)
     )
+    s1 <- unitizer:::unitizerStateRecommended(par.env=.GlobalEnv)
+    for(i in setdiff(slotNames(s1), 'par.env')) slot(s1, i) <- 0L
+    s2 <- unitizer:::unitizerStateOff()
+
+    expect_equal(s1, s2)
+
     # invalid state
 
     expect_error(state(search.path=3), "must be .* in 0:2")

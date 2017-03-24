@@ -51,13 +51,21 @@ setMethod("all.equal", c("unitizerStateRaw", "unitizerStateRaw"),
 all.equal.unitizerDummy <- function(target, current, ...) {
   all.equal(target, current, ...)
 }
+#' @export
+
+all.equal.unitizerStateRAw <- function(target, current, ...) {
+  all.equal(target, current, ...)
+}
 
 # specifically an all.equal that returns garbage for testing; unfortunately
-# this needs to be exported to be useable (blergh)
+# this needs to be exported to be useable (blergh) (IS THIS STILL USED?)
+# nocov start
 #' @export
 
 all.equal.unitizer_glob_state_test <- function(target, current, ...)
   list(1, 2, list("woohoo"))
+
+# nocov end
 
 ## Merge State Data Between Reference and New Indices
 ##
@@ -103,10 +111,10 @@ setMethod(
       rownames(ref.ind.mx.map) <- rownames(ref.ind.mx)
 
       if(!identical(attributes(ref.ind.mx), attributes(ref.ind.mx.map))) {
-        stop(
-          "Logic Error: global index mapping matrix malformed; contact ",
+        stop(  # nocov start
+          "Internal Error: global index mapping matrix malformed; contact ",
           "maintainer."
-        )
+        )      # nocov end
       }
       ref.ind.mx.map[!ref.ind.mx] <- 0L  # these all map to the starting state
 

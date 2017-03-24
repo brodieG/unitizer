@@ -356,6 +356,13 @@ local({
     )
     expect_equal(sel.loc, file.path(base.dir, "tests", "unitizer", "zzz.R"))
     unitizer:::read_line_set_vals(NULL)
+
+    # Non standard inferences
+
+    expect_warning(
+      unitizer:::infer_unitizer_location(NULL, interactive=FALSE),
+      "too many to unambiguously"
+    )
   })
   test_that("test file / store manip", {
     expect_identical(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello")

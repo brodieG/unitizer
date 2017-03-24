@@ -913,15 +913,6 @@ setMethod("extractItems", "unitizerBrowseSection", valueClass="unitizerItems",
     Reduce(append, item.list)
   }
 )
-# Assemble Title for Display
-#
-# Uses \code{`title`} slot
-
-setGeneric("makeTitle", function(x, ...) standardGeneric("makeTitle"))
-setMethod("makeTitle", "unitizerBrowseSubSection", valueClass="character",
-  function(x, ...) paste0("Review ", length(x), " ", x@title, " Tests")
-)
-
 # Specific Sub-Section defaults
 
 setClass("unitizerBrowseSubSectionFailed", contains="unitizerBrowseSubSection",
