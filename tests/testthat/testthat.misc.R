@@ -340,11 +340,12 @@ test_that("quit", {
   with_mock(
     quit=function(...) stop("quit!\n"), {
       unitizer:::read_line_set_vals("y")
-      expect_error(unitizer_quit(), "quit!")
+      expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
       unitizer:::read_line_set_vals("n")
-      expect_equal(unitizer_quit(), NULL)
-      unitizer:::read_line_set_vals("q", "q", "q", "q", "q")
-      expect_error(unitizer_quit(), "quit!")
+      capture.output(uq2 <- unitizer:::unitizer_quit())
+      expect_equal(uq2, NULL)
+      unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
+      expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
     }
   )
   unitizer:::read_line_set_vals(NULL)

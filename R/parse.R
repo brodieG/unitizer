@@ -209,7 +209,7 @@ comments_assign <- function(expr, comment.dat) {
     stop(   # nocov start
       "Internal Error: opening brackets may only be on first row, or second ",
       "if paren; contact maintainer."
-    )       # nocov start
+    )       # nocov end
   }
   if(
     !identical(

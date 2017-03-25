@@ -68,7 +68,7 @@ local({
     # too narrow
     no.wrap <- "hello I won't be wrapped"
     expect_warning(
-      txt.wrap <- unitizer:::word_wrap(no.wrap, width=12), "too narrow"
+      txt.wrap <- unitizer:::word_wrap(no.wrap, width=3), "too narrow"
     )
     expect_equal(txt.wrap, no.wrap)
   })
@@ -198,8 +198,8 @@ local({
       structure(
         list(output="hello", message="goodbye"), class="captured_output"
     ) )
-    expect_match(
-      capture.output(print(capt)), "Output"
+    expect_equal(
+      sum(grepl("Output|Message", capture.output(print(capt)))), 2L
     )
   })
   test_that("meta_word_cat", {

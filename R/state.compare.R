@@ -53,7 +53,7 @@ all.equal.unitizerDummy <- function(target, current, ...) {
 }
 #' @export
 
-all.equal.unitizerStateRAw <- function(target, current, ...) {
+all.equal.unitizerStateRaw <- function(target, current, ...) {
   all.equal(target, current, ...)
 }
 
