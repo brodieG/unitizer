@@ -20,9 +20,7 @@ tested by *one* person.
 library(unitizer)
 demo(unitizer)
 ```
-Or check out the screencast to see `unitizer` in action:
-[![2 Minute Animated Gif
-Example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/screencastintro.png)](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif)
+Or check out the [screencast](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif) to see `unitizer` in action.
 
 ## Why Another Testing Framework?
 
@@ -39,13 +37,22 @@ tests, all with a single keystroke.
 ### Streamlined Debugging
 
 Do you wish the nature of a test failure was more immediately obvious?
-That you could immediately start debugging your failed tests without additional
-set-up work?
 
 When tests fail, you are shown a proper
 [diff](https://github.com/brodieG/diffobj) so you can clearly identify _how_ the
-test failed, and you are dropped into the test environment so you can
-immediately debug _why_ it failed.
+test failed:
+
+![diff
+example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review1.png)
+
+Do you wish that you could immediately start debugging your failed tests without
+additional set-up work?
+
+`unitizer` immediately drops you in the test environment so you can immediately
+debug _why_ the test failed:
+
+![review
+example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review2.png)
 
 ### Fast Test Updates
 

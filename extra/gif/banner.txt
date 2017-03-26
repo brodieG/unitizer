@@ -5,6 +5,9 @@
    ##  ## ## ### ##   ##   ##  ##    ##     ##  ##
    ###### ##  ## ##   ##   ## ###### ###### ##  ##
 
-   Screencast 1: formalize usage examples into tests.
+   Click on image to start/resume screencast, elsewhere
+   to pause it.
 
-   Click anywhere on image to start screencast.
+   Screencast will loop ~5 seconds after finishing.
+
+   Total duration: ~2 minutes.
