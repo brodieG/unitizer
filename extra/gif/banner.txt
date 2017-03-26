@@ -1,0 +1,10 @@
+
+   ##  ## ##  ## ## ###### ## ###### ###### #####
+   ##  ## ### ## ##   ##   ##    ##  ##     ##   #
+   ##  ## ###### ##   ##   ##   ##   ####   #####
+   ##  ## ## ### ##   ##   ##  ##    ##     ##  ##
+   ###### ##  ## ##   ##   ## ###### ###### ##  ##
+
+   Screencast 1: formalize usage examples into tests.
+
+   Click anywhere on image to start screencast.

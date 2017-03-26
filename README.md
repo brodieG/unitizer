@@ -22,22 +22,47 @@ demo(unitizer)
 ```
 Or check out the screencast to see `unitizer` in action:
 [![2 Minute Animated Gif
-Example](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif)](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif)
+Example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/screencastintro.png)](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif)
 
-## Description and Usage
+## Why Another Testing Framework?
+
+### Automated Test Formalization
+
+Are you tired of the `deparse`/`dput` then copy-paste R objects into test file
+dance, or do you use `testthat::expect_equal_to_reference` a lot?
+
+With `unitizer` you review function output at an interactive prompt as you
+would with informal tests.  You then store the value, conditions (e.g.
+warnings, etc.), and environment for use as the reference values in formal
+tests, all with a single keystroke.
+
+### Streamlined Debugging
+
+Do you wish the nature of a test failure was more immediately obvious?
+That you could immediately start debugging your failed tests without additional
+set-up work?
+
+When tests fail, you are shown a proper
+[diff](https://github.com/brodieG/diffobj) so you can clearly identify _how_ the
+test failed, and you are dropped into the test environment so you can
+immediately debug _why_ it failed.
+
+### Fast Test Updates
+
+Do you avoid improvements to your functions because that would require
+painstakingly updating many tests?
+
+The diffs for the failed tests let you immediately confirm only what you
+intended changed.  Then you can update each test with a single keystroke.
+
+## Usage
 
 `unitizer` stores R expressions and the result of evaluating them so that it can
 detect code regressions.  This is akin to saving test output to a
 `.Rout.save` file as documented in [Writing R
 Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories),
-except that:
-
-* Result objects and signaled conditions are automatically saved so they can be
-  examined in detail
-* You can review each test separately before it is stored
-* When a test fails, you can immediately review it interactively in the
-  environment in which it was evaluated
-* You can easily add, remove, and modify tests with a couple of keystrokes
+except that we're storing the actual R objects and it is much easier to review
+them.
 
 To use `unitizer`:
 
@@ -55,6 +80,11 @@ To use `unitizer`:
 * `help(package="unitizer")`, in particular `?unitize`
 * `demo(package="unitizer")`
 * [`vignette("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
+
+## Related Packages
+
+* [testthat](https://cran.r-project.org/package=testthat)
+* [RUnit](https://cran.r-project.org/package=RUnit)
 
 ## Acknowledgments
 
