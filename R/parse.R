@@ -194,7 +194,7 @@ comments_assign <- function(expr, comment.dat) {
       !identical(brac.pos, nrow(comment.dat) - 1L) ||
       !identical(comment.dat$token[[1L]], "FUNCTION")
     ) {
-      stop(   # ncov start
+      stop(   # nocov start
         "Internal Error: closing brackets may only be on last row, unless a ",
         "paren and part of a functions formal definition; contact maintainer."
       )       # nocov end
