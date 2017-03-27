@@ -20,7 +20,7 @@ tested by *one* person.
 library(unitizer)
 demo(unitizer)
 ```
-Or check out the [screencast](https://github.com/brodieG/unitizer/blob/development/extra/gif/frames/fin.gif) to see `unitizer` in action.
+Or check out the [screencast](http://htmlpreview.github.io/?https://github.com/brodieG/unitizer/blob/rc/extra/gifshow.html) to see `unitizer` in action.
 
 ## Why Another Testing Framework?
 
@@ -45,11 +45,11 @@ test failed:
 ![diff
 example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review1.png)
 
-Do you wish that you could immediately start debugging your failed tests without
+Do you wish that you could start debugging your failed tests without
 additional set-up work?
 
-`unitizer` immediately drops you in the test environment so you can immediately
-debug _why_ the test failed:
+`unitizer` drops you in the test environment so you can debug _why_ the test
+failed without further ado:
 
 ![review
 example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review2.png)
@@ -98,25 +98,33 @@ To use `unitizer`:
 Thank you to:
 
 * R Core for developing such a wonderfully flexible language
-* Hadley Wickham for devoting so much of his life to making the R universe a
-  better place to live in.  `unitizer` borrows several concepts from `testthat`,
-  and uses `testthat` for internal unit tests.
-* [Jim Hester](https://github.com/jimhester) for developing `covr` and nudging
-  me to use it.  Seeing line by line test coverage is an eye opening experience.
-* [Gábor Csárdi](https://github.com/gaborcsardi) for `crayon` and for adding a
-  new dimension to the R experience
-* @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
-  team](http://ffmpeg.org/about.html) for ffmpeg
+* Hadley Wickham for [testthat](https://cran.r-project.org/package=testthat)
+  from which we borrow many concepts and use for internal tests, for
+  [devtools](https://cran.r-project.org/package=devtools), and for many other
+  packages.
+* [Jim Hester](https://github.com/jimhester) for developing
+  [covr](https://cran.r-project.org/package=covr) and nudging me to use it.
+  Seeing line by line test coverage is an eye opening experience.
+* [Gábor Csárdi](https://github.com/gaborcsardi) for
+  [crayon](https://cran.r-project.org/package=crayon) through which we can
+  add a new dimension to the R experience.
 * [Dirk Eddelbuettel](https://github.com/eddelbuettel) and [Carl
   Boettiger](https://github.com/cboettig) for the
-  [rocker](https://github.com/rocker-org/rocker) project.
+  [rocker](https://github.com/rocker-org/rocker) project, without which testing
+  bugs on R-devel would be a nightmare.
+* @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
+  team](http://ffmpeg.org/about.html) for ffmpeg.
+* [Yihui Xie](https://github.com/yihui) for
+  [knitr](https://cran.r-project.org/package=knitr) and  [J.J.
+  Allaire](https://github.com/jjallaire) etal for
+  [rmarkdown](https://cran.r-project.org/package=rmarkdown).
 * All open source developers out there that make their work freely available
-  for others to use
+  for others to use.
 * [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
   [Codecov](https://codecov.io/), [Vagrant](https://www.vagrantup.com/),
   [Docker](https://www.docker.com/), [Ubuntu](https://www.ubuntu.com/),
   [Brew](https://brew.sh/) for providing infrastructure that greatly simplifies
-  open source development
+  open source development.
 * [Free Software Foundation](http://fsf.org/) for developing the GPL license and
   promotion of the free software movement
 
