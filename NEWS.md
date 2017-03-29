@@ -2,11 +2,17 @@
 
 ## v1.4.0
 
+First Release to CRAN.
+
 * [#213](https://github.com/brodieG/unitizer/issues/213): Disable advanced state
   management by default to comply with CRAN
 * [#203](https://github.com/brodieG/unitizer/issues/203): Better reporting of
   search path state differences
-* Assorted bugfixes [#208](https://github.com/brodieG/unitizer/issues/208),
+* Assorted bugfixes and enhancements:
+  [#214](https://github.com/brodieG/unitizer/issues/214),
+  [#215](https://github.com/brodieG/unitizer/issues/215),
+  [#208](https://github.com/brodieG/unitizer/issues/208),
+  [#201](https://github.com/brodieG/unitizer/issues/201),
   [#208](https://github.com/brodieG/unitizer/issues/208),
   [#199](https://github.com/brodieG/unitizer/issues/199),
   [#197](https://github.com/brodieG/unitizer/issues/197)
