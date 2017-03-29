@@ -4,7 +4,7 @@
 
 There is one NOTE:
 
-    Maintainer: ‘Brodie Gaslam <brodie.gaslam@yahoo.com>’
+    Maintainer: <brodie.gaslam@yahoo.com>
 
     New submission
 
