@@ -195,10 +195,10 @@ Once you have created your first `unitizer` with `unitize`, subsequent calls to 
 
 `unitizer` can track and manage many aspects of state to make your tests more
 reproducible.  For example, `unitizer` can reset your search path to what is
-in a fresh R session prior to running tests to avoid conflicts with loaded
+is found in a fresh R session prior to running tests to avoid conflicts with
 whatever libraries you happen to have loaded at the time.  Your session state is
-restored when `unitizer` exits.  The following aspects of state can
-be actively tracked and managed:
+restored when `unitizer` exits.  The following aspects of state can be actively
+tracked and managed:
 
 * Search path (including removing the global environment from search path)
 * Random seed

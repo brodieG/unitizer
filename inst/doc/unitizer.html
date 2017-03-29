@@ -192,7 +192,7 @@ unitize()              # Will prompt for a file to `unitize`</code></pre>
 </div>
 <div id="increase-reproducibility-with-advanced-state-management" class="section level3">
 <h3>Increase Reproducibility with Advanced State Management</h3>
-<p><code>unitizer</code> can track and manage many aspects of state to make your tests more reproducible. For example, <code>unitizer</code> can reset your search path to what is in a fresh R session prior to running tests to avoid conflicts with loaded whatever libraries you happen to have loaded at the time. Your session state is restored when <code>unitizer</code> exits. The following aspects of state can be actively tracked and managed:</p>
+<p><code>unitizer</code> can track and manage many aspects of state to make your tests more reproducible. For example, <code>unitizer</code> can reset your search path to what is is found in a fresh R session prior to running tests to avoid conflicts with whatever libraries you happen to have loaded at the time. Your session state is restored when <code>unitizer</code> exits. The following aspects of state can be actively tracked and managed:</p>
 <ul>
 <li>Search path (including removing the global environment from search path)</li>
 <li>Random seed</li>

@@ -49,6 +49,8 @@ environments:
     * R devel (2016-08-31 r71183)
     * R version 3.3.1 (2016-06-21)
     * R version 3.2.5 (2016-04-14)
+* Windows 7:
+    * R version 3.3.3
 * Winbuilder
     * R devel (2016-08-30 r71176)
     * R version 3.3.1 (2016-06-21)
