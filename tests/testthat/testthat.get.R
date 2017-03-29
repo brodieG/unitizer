@@ -268,13 +268,13 @@ local({
     )
     expect_equal(
       unitizer:::get_package_dir(test.dir.1),
-      normalizePath(dirname(test.dir.1))
+      normalizePath(dirname(test.dir.1), winslash="/")
     )
     # try package dir in R CMD Check structure
     test.dir.2 <- file.path(.unitizer.fastlm, "utzflm.Rcheck")
     expect_equal(
       unitizer:::get_package_dir(file.path(test.dir.2, "tests", "tests.R")),
-      normalizePath(file.path(test.dir.2, "utzflm"))
+      normalizePath(file.path(test.dir.2, "utzflm"), winslash="/")
     )
   } )
   test_that("is_unitizer_dir", {
