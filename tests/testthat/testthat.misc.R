@@ -47,6 +47,7 @@ test_that("Headers", {
     capture.output(print(unitizer:::H2("No margin"), margin="none")), rdsf(600)
   )
 } )
+cat('valid_names\n')
 test_that("Valid Names convert names to valid", {
   expect_equal(unitizer:::valid_names("hello"), "hello")
   expect_equal(unitizer:::valid_names(".hello"), ".hello")
@@ -61,6 +62,7 @@ test_that("strtrunc", {
   expect_equal(unitizer:::strtrunc("hollywood is for starlets", 5), "ho...")
   expect_error(unitizer:::strtrunc(5, "hollywood is for starlets"))
 } )
+cat('env names\n')
 test_that("environment name tools", {
   env1 <- new.env(parent=globalenv())
   env2 <- new.env(parent=env1)
@@ -74,6 +76,7 @@ test_that("environment name tools", {
     identical(envanc[[5L]], "R_GlobalEnv")
   )
 } )
+cat('deparse peek\n')
 test_that("deparse peek", {
   expr1 <- quote(1 + 1 + 3)
   expr2 <- quote(
