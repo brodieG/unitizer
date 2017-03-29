@@ -337,18 +337,27 @@ test_that("pretty_path", {
   )
 })
 test_that("quit", {
-  with_mock(
-    quit=function(...) stop("quit!\n"), {
-      unitizer:::read_line_set_vals("y")
-      expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
-      unitizer:::read_line_set_vals("n")
-      capture.output(uq2 <- unitizer:::unitizer_quit())
-      expect_equal(uq2, NULL)
-      unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
-      expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
-    }
-  )
+  # for some reason cover tests run via travis can't handle the with_mock,
+  # so we just use truly-quit=FALSE
+  # with_mock(
+  #   quit=function(...) stop("quit!\n"), {
+  #     unitizer:::read_line_set_vals("y")
+  #     expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
+  #     unitizer:::read_line_set_vals("n")
+  #     capture.output(uq2 <- unitizer:::unitizer_quit())
+  #     expect_equal(uq2, NULL)
+  #     unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
+  #     expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
+  #   }
+  # )
+  unitizer:::read_line_set_vals("y")
+  expect_true(unitizer:::unitizer_quit(truly.quit=FALSE))
+  unitizer:::read_line_set_vals("n")
+  expect_false(unitizer:::unitizer_quit(truly.quit=FALSE))
+  unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
+  expect_message(q.res <- unitizer:::unitizer_quit(truly.quit=FALSE), "Sorry")
   unitizer:::read_line_set_vals(NULL)
+  expect_true(unitizer:::unitizer_quit(truly.quit=FALSE))
 })
 test_that("mock_item", {
   expect_is(mock_item(), "unitizerItem")

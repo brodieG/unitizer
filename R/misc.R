@@ -63,7 +63,9 @@ identical_fun <- function(x, y) {
 ##
 ## @keywords internal
 
-unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
+unitizer_quit <- function(
+  save = "default", status = 0, runLast = TRUE, truly.quit=FALSE
+) {
   meta_word_msg(
     "You are attempting to quit R from within `unitizer`.  If you do so ",
     "you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` ",
@@ -76,11 +78,13 @@ unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
     quit.count <- quit.count - 1L
     if(quit.count < 0) {
       meta_word_msg("Sorry, could not understand you, quitting then.")
-      quit(save=save, status=status, runLast=runLast)
+      res <- "y"
+      break;
     }
   }
-  if(res == "y") quit(save=save, status=status, runLast=runLast)
-  invisible(NULL)
+  if(res == "y" && truly.quit) {
+    quit(save=save, status=status, runLast=runLast)
+  } else if (res == "y") TRUE else FALSE
 }
 # Cleans a Path to be In Standard Format
 #
