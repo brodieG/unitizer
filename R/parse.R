@@ -781,7 +781,7 @@ symb_mark_rem <- function(x) {
       stop(  # nocov start
         "Internal Error: Unexpected structure for object with language with ",
         "'unitizer_parse_symb' attribute attached; contact maintainer"
-    ) }      # ncov end
+    ) }      # nocov end
     x <- x[[2L]]
   }
   x
