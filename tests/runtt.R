@@ -53,7 +53,9 @@ local({
 
   old.opt.2 <- if(isTRUE(getOption("showErrorCalls")))
      options(showErrorCalls=FALSE) else list()
-  old.opt.2 <- c(old.opt.2, options(unitizer.state='recommended'))
+  old.opt.2 <- c(
+    old.opt.2, options(unitizer.state='recommended', diffobj.pager='off')
+  )
 
   on.exit(
     {

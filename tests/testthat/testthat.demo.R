@@ -51,7 +51,7 @@ local({
   # come in sunk, we won't be able to fully test everything, since for example
   # the display of the captured stdout just won't happen.
 
-  old.opt <- options(width=80, diffobj.pager='off')
+  old.opt <- options(width=80)
   on.exit(options(old.opt), add=TRUE)
 
   # options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
