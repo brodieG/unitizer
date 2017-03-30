@@ -17,6 +17,23 @@ is also on Github:
     Status: 404
     Message: Not Found
 
+## Test Environments
+
+I have tested this package against the following
+environments:
+
+* Travis Ubuntu 12.04.5 LTS
+    * R devel (2017-03-28 r72430)
+    * R version 3.3.2 (2016-10-31)
+    * R version 3.2.5 (2016-04-14)
+* Windows 7:
+    * R version 3.3.3 (2017-03-06)
+* Winbuilder
+    * R devel (2016-08-30 r71176)
+    * R version 3.3.1 (2016-06-21)
+* Locally on Mac OS 10.12.1
+    * R version 3.3.3 (2017-03-06)
+
 ## Additional Comments
 
 This package is an interactive unit testing environment
@@ -39,21 +56,4 @@ Even when advanced features are enabled by the user,
 they are only active for the duration of the `unitizer`
 function evaluation, with everything returned to normal
 state via `on.exit` calls.
-
-## Test Environments
-
-I have tested this package against the following
-environments:
-
-* Travis Ubuntu 12.04.5 LTS
-    * R devel (2016-08-31 r71183)
-    * R version 3.3.1 (2016-06-21)
-    * R version 3.2.5 (2016-04-14)
-* Windows 7:
-    * R version 3.3.3
-* Winbuilder
-    * R devel (2016-08-30 r71176)
-    * R version 3.3.1 (2016-06-21)
-* Locally on Mac OS 10.9.5
-    * R version 3.3.1 (2016-06-21)
 
