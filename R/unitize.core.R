@@ -281,12 +281,23 @@ unitize_core <- function(
       ) {
         file.path(par.dir, "tests")
       } else {
-        # File doesn't seem to be in package, so set wd to be the same as 
+        # File doesn't seem to be in package, so set wd to be the same as
         # the file
 
         path
       }
-      if(!is.null(test.dir)) setwd(test.dir)
+      if(!is.null(test.dir)) {
+        dir.set <- try(setwd(test.dir))
+        if(inherits(dir.set, 'try-error')) {
+          warning(
+            word_wrap(collapse="\n",
+              cc(
+                "Working directory state tracking is in mode 2, but we ",
+                "failed setting director to '", test.dir, "' so we are  ",
+                "leaving the working directory unchanged."
+            ) ),
+            immediate.=TRUE
+      ) } }
     } else {
       # nocov start
       # currently no way to get here since there is no way to specify multiple
