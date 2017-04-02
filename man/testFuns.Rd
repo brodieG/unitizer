@@ -6,7 +6,10 @@
 \title{Store Functions for New vs. Reference Test Comparisons}
 \description{
 \code{testFuns} contains the functions used to compare the results and side
-effects of running test expressions.
+effects of running test expressions.  \dQuote{testFuns} objects can be used
+as the \code{compare} argument for \code{\link{unitizer_sect}}, thereby
+allowing you to specify different comparison functions for different aspects
+of test evaluation.
 }
 \details{
 The default comparison functions are as follows:
@@ -25,5 +28,6 @@ The default comparison functions are as follows:
 testFuns(value=identical)
 }
 \seealso{
-\code{\link{unitizer_sect}}, \code{\link{all_eq}}
+\code{\link{unitizer_sect}} for more relevant usage examples,
+   \code{\link{all_eq}}
 }

@@ -341,6 +341,9 @@ setMethod("show", "unitizerItemTestsErrors",
 #' @param current other R object to be compared to \code{target}
 #' @param ... arguments to pass to \code{\link{all.equal}}
 #' @return TRUE if \code{all.equal} returns TRUE, "" otherwise
+#' all_eq(1, 1L)
+#' all_eq(1, 2)
+#' isTRUE(all_eq(1, 2))
 
 all_eq <- function(target, current, ...)
   if(isTRUE(all.equal(target, current, ...))) TRUE else ""
@@ -348,7 +351,10 @@ all_eq <- function(target, current, ...)
 #' Store Functions for New vs. Reference Test Comparisons
 #'
 #' \code{testFuns} contains the functions used to compare the results and side
-#' effects of running test expressions.
+#' effects of running test expressions.  \dQuote{testFuns} objects can be used
+#' as the \code{compare} argument for \code{\link{unitizer_sect}}, thereby
+#' allowing you to specify different comparison functions for different aspects
+#' of test evaluation.
 #'
 #' The default comparison functions are as follows:
 #' \itemize{
@@ -360,7 +366,8 @@ all_eq <- function(target, current, ...)
 #'   \item aborted: \code{function(x, y) TRUE}, i.e. not compared as conditions
 #'     should also be capturing this implicitly
 #' }
-#' @seealso \code{\link{unitizer_sect}}, \code{\link{all_eq}}
+#' @seealso \code{\link{unitizer_sect}} for more relevant usage examples,
+#'    \code{\link{all_eq}}
 #' @rdname testFuns
 #' @name testFuns
 #' @export testFuns

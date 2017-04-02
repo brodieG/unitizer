@@ -138,3 +138,6 @@ unitizer_sect("Use identical for ALL test data, including stdout, etc.",
   compare=identical
 )
 }
+\seealso{
+\code{\link{testFuns}}, \code{\link{all_eq}}
+}

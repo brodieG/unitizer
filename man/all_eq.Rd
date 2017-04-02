@@ -15,6 +15,9 @@ all_eq(target, current, ...)
 }
 \value{
 TRUE if \code{all.equal} returns TRUE, "" otherwise
+all_eq(1, 1L)
+all_eq(1, 2)
+isTRUE(all_eq(1, 2))
 }
 \description{
 Used as the default value comparison function since when values mismatch
