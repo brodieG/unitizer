@@ -13,7 +13,7 @@ NULL
 
 ## Print a Header
 ##
-## @aliases print.H2, print.H3, print.header
+## @aliases print.H2 print.H3 print.header
 ## @param x a 1 length character vector
 ## @param margin one of "both", "top", "bottom", "none", whether to add newlines
 ##   at top or bottom

@@ -2,7 +2,7 @@
 % Please edit documentation in R/unitize.R
 \name{unitize}
 \alias{unitize}
-\alias{review,}
+\alias{review}
 \alias{unitize_dir}
 \alias{review}
 \alias{unitize_dir}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/item.sub.R
 \name{all_eq}
 \alias{all_eq}
-\title{Like all.equal but Returns FALSE If Not all.equal}
+\title{Like all.equal but Returns Empty String If Not all.equal}
 \usage{
 all_eq(target, current, ...)
 }

@@ -187,6 +187,12 @@ all.equal.condition <- function(target, current, ...) {
 #' @seealso \code{\link{conditionList}}
 #' @param object a \code{\link{conditionList}} object (list of conditions)
 #' @return object, invisibly
+#' @examples
+#' ## Create a test item as you would find normally at the `unitizer` prompt
+#' ## for illustrative purposes:
+#' .NEW <- mock_item()
+#' ## Show the conditions the test generated
+#' show(.NEW$$conditions)
 
 setMethod("show", "conditionList",
   function(object) {

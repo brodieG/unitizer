@@ -3,9 +3,8 @@
 \docType{methods}
 \name{nextItem,unitizerList-method}
 \alias{nextItem,unitizerList-method}
-\alias{nextItem,unitizerList-method,}
-\alias{prevItem,unitizerList-method,}
-\alias{getItem,unitizerList-method,}
+\alias{prevItem,unitizerList-method}
+\alias{getItem,unitizerList-method}
 \alias{reset,unitizerList-method,}
 \alias{done,unitizerList-method}
 \title{Iterate through items of a \code{\link{unitizerList}} ObjectJK}

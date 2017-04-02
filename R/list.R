@@ -13,7 +13,7 @@ NULL
 #' \code{length}, \code{names}, and \code{names<-}.
 #'
 #' The underlying assumption is that the `.items` slot is a list
-#' (or an expression), and that that slot is the only slot for which
+#' (or an expression), and that slot is the only slot for which
 #' it's order and length are meaningful (i.e. there is no other list
 #' or vector of same length as `.items` in a different slot that is
 #' supposed to map to `.items`).  This last assumption allows us
@@ -143,10 +143,10 @@ setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 #' \code{reset} with parameter \code{reverse} set to TRUE, or re-order
 #' the items.
 #'
-#' @aliases nextItem,unitizerList-method, prevItem,unitizerList-method,
-#'   getItem,unitizerList-method, reset,unitizerList-method, done,unitizerList-method
+#' @aliases nextItem,unitizerList-method prevItem,unitizerList-method
+#'   getItem,unitizerList-method reset,unitizerList-method,
+#'   done,unitizerList-method 
 #' @keywords internal
-#'
 #' @param x a \code{\link{unitizerList}} object
 #' @return \code{\link{unitizerList}} for \code{getItem},
 #'   an item from the list, which could be anything

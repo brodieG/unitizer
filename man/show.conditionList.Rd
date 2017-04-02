@@ -16,6 +16,13 @@ object, invisibly
 \description{
 S4 method for \code{\link{conditionList}} objects.
 }
+\examples{
+## Create a test item as you would find normally at the `unitizer` prompt
+## for illustrative purposes:
+.NEW <- mock_item()
+## Show the conditions the test generated
+show(.NEW$$conditions)
+}
 \seealso{
 \code{\link{conditionList}}
 }

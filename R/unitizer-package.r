@@ -11,7 +11,7 @@
 #' @importFrom utils capture.output file_test getParseData installed.packages
 #'   loadhistory modifyList object.size packageVersion remove.packages
 #'   savehistory
-#' @name `unitizer-package`
+#' @name unitizer
 #' @docType package
 
 NULL

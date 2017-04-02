@@ -15,7 +15,7 @@ are implemented to make the object mostly behave like a standard R list:
 }
 \details{
 The underlying assumption is that the `.items` slot is a list
-(or an expression), and that that slot is the only slot for which
+(or an expression), and that slot is the only slot for which
 it's order and length are meaningful (i.e. there is no other list
 or vector of same length as `.items` in a different slot that is
 supposed to map to `.items`).  This last assumption allows us

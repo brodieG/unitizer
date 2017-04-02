@@ -37,7 +37,7 @@
 #' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
 #'   `[Press ENTER to Continue]`
 #' @rdname demo
-#' @name demo
+#' @name unitizer_demo
 #' @param f path to a file
 #' @param dir path to the temporary package
 #' @param width display width in characters

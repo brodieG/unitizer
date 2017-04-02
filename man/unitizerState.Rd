@@ -53,8 +53,27 @@ functionality to increase test reproducibility by controlling session state
 so that it is the same every time a test is run.  This functionality is
 turned off by default to comply with CRAN requirements.  You can
 permanently enable the recommended state tracking level by adding
-\code{options(unitizer.state='recommended')} in your \code{.Rprofile}.
+\code{options(unitizer.state='recommended')} in your \code{.Rprofile},
+although if you intend to do this be sure to read the
+\dQuote{CRAN non-compliant} section.
 }
+\section{CRAN non-compliance}{
+
+
+In the default state management mode, this package fully complies with CRAN
+policies.  In order to implement advanced state management features we must
+lightly trace some \code{base} functions to alert \code{unitizer} each time
+the search path is changed by a test expression.  The traced function
+behavior is completely unchanged other than for the side effect of notifying
+\code{unitizer} each time they are called.  Additionally, the functions are
+only traced during \code{unitize} evaluation and are untraced on exit.
+Unfortunately this tracing is against CRAN policies, which is why it is
+disabled by default.
+
+For more details see the reproducible tests vignette
+(\code{vignette(package='unitizer', 'unitizer_reproducible_tests')}
+}
+
 \section{Overview}{
 
 
@@ -69,7 +88,7 @@ to control state management.
 applies equally to \code{unitize_dir}.
 
 \code{unitizer} provides functionality to insulate test code from variability
-in the following.  Note the \dQuote{can be set} wording because by default
+in the following.  Note the \dQuote{can be} wording because by default
 these elements of state are not managed:
 
 \itemize{
@@ -101,8 +120,10 @@ these elements of state are not managed:
     re-load them to ensure default options are set.
 }
 
-In the \dQuote{recommended} state tracking mode parent environment, random
-seed, working directory, and search path are all managed.  All these settings
+In the \dQuote{recommended} state tracking, mode parent environment, random
+seed, working directory, and search path are all managed.  For example, with
+the search path managed, each test file will start evaluation with the search
+path set to what you would find in a vanilla R session.  All these settings
 are returned to their original values when \code{unitizer} exits.
 
 You can modify what aspects of state are managed by using the \code{state}

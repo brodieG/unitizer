@@ -330,7 +330,7 @@ setMethod("show", "unitizerItemTestsErrors",
     }
     invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
 } )
-#' Like all.equal but Returns FALSE If Not all.equal
+#' Like all.equal but Returns Empty String If Not all.equal
 #'
 #' Used as the default value comparison function since when values mismatch
 #' we use \code{\link{diffObj}} which would make the text output from

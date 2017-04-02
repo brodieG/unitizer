@@ -34,7 +34,7 @@
 #' setting options in their \code{.Rprofile} file.
 #'
 #' @export
-#' @aliases review, unitize_dir
+#' @aliases review unitize_dir
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
 #'   path.  If NULL, will look for a file in the \dQuote{tests/unitizer} package
