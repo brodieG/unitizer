@@ -11,14 +11,15 @@
 
 NULL
 
-#' Print a Header
-#'
-#' @aliases print.H2, print.H3, print.header
-#' @param x a 1 length character vector
-#' @param margin one of "both", "top", "bottom", "none", whether to add newlines
-#'   at top or bottom
-#' @param ... passed on to \code{as.character}
-#' @return 1 length character vector
+## Print a Header
+##
+## @aliases print.H2, print.H3, print.header
+## @param x a 1 length character vector
+## @param margin one of "both", "top", "bottom", "none", whether to add newlines
+##   at top or bottom
+## @param ... passed on to \code{as.character}
+## @return 1 length character vector
+
 #' @export
 
 print.header <- function(x, margin="bottom", ...) {

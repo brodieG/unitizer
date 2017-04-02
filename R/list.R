@@ -4,12 +4,20 @@ NULL
 
 #' S4 Object To Implement Base List Methods
 #'
+#' Internal \code{unitizer} objects used to manage lists of objects.  The only
+#' user facing instance of these objects are \code{\link{conditionList}}
+#' objects.  For the most part these objects behave like normal S3 lists.  The
+#' list contents are kept in the \code{.items} slot, and the following methods
+#' are implemented to make the object mostly behave like a standard R list:
+#' \code{[}, \code{[[}, \code{[<-}, \code{[[<-}, \code{as.list}, \code{append},
+#' \code{length}, \code{names}, and \code{names<-}.
+#'
 #' The underlying assumption is that the `.items` slot is a list
 #' (or an expression), and that that slot is the only slot for which
 #' it's order and length are meaningful (i.e. there is no other list
 #' or vector of same length as `.items` in a different slot that is
 #' supposed to map to `.items`).  This last assumption allows us
-#' to implement the subsetting operators in a meaninful manner.
+#' to implement the subsetting operators in a meaningful manner.
 #'
 #' The validity method will run \code{validObject} on the first, last, and
 #' middle items (if an even number of items, then the middle closer to the
@@ -18,9 +26,12 @@ NULL
 #'
 #' @name unitizerList
 #' @rdname unitizerList
+#' @seealso \code{\link{conditionList}}
 #' @slot .items a list or expression
 #' @slot .pointer integer, used for implementing iterators
 #' @slot .seek.fwd logical used to track what direction iterators are going
+#' @examples
+#' new('unitizerList', .items=list(1, 2, 3))
 
 setClass(
   "unitizerList",
