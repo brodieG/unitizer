@@ -16,7 +16,7 @@ NULL
 #' permanently enable the recommended state tracking level by adding
 #' \code{options(unitizer.state='recommended')} in your \code{.Rprofile},
 #' although if you intend to do this be sure to read the
-#' \dQuote{CRAN non-compliant} section.
+#' \dQuote{CRAN non-compliance} section.
 #'
 #' @section CRAN non-compliance:
 #'
@@ -30,8 +30,8 @@ NULL
 #' Unfortunately this tracing is against CRAN policies, which is why it is
 #' disabled by default.
 #'
-#' For more details see the reproducible tests vignette
-#' (\code{vignette(package='unitizer', 'unitizer_reproducible_tests')}
+#' For more details see the reproducible tests vignette with:
+#' \code{vignette(package='unitizer', 'unitizer_reproducible_tests')}
 #'
 #' @section Overview:
 #'
