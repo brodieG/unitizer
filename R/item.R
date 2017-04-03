@@ -333,6 +333,7 @@ setMethod("+",
 #'     `abort` restart, as `stop` does.
 #' }
 #' @export
+#' @aliases $,unitizerItem-method
 #' @name $.unitizerItem
 #' @rdname extract-unitizerItem-method
 #' @param x a \code{unitizerItem} object, typically \code{.NEW} or \code{.REF}

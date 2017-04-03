@@ -3,6 +3,7 @@
 \docType{methods}
 \name{show.conditionList}
 \alias{show.conditionList}
+\alias{show,conditionList-method}
 \title{Prints A list of Conditions}
 \usage{
 \S4method{show}{conditionList}(object)
@@ -20,8 +21,9 @@ S4 method for \code{\link{conditionList}} objects.
 ## Create a test item as you would find normally at the `unitizer` prompt
 ## for illustrative purposes:
 .NEW <- mock_item()
-## Show the conditions the test generated
-show(.NEW$$conditions)
+## Show the conditions the test generated (typing `show` here is optional
+## since auto-printing should dispatch to `show`)
+show(.NEW$conditions)
 }
 \seealso{
 \code{\link{conditionList}}

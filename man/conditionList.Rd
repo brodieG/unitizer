@@ -3,6 +3,7 @@
 \docType{class}
 \name{conditionList}
 \alias{conditionList}
+\alias{conditionList-class}
 \title{Contains A List of Conditions}
 \description{
 Condition lists are S4 classes that contain \code{\link{condition}} objects

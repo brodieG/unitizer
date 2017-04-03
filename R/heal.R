@@ -71,11 +71,13 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   \code{c("unitizer", "x")} where x is just a data frame with column 1
 #'   the item index, and column 2 whether it originated from "new" or "ref"
 #'
+#' @aliases healEnvs,unitizerItems,unitizer-method
 #' @seealso \code{updateLs,unitizerItem-method}
 #' @param x \code{unitizerItems} object
 #' @param y \code{unitizer} object \code{x} was generated from
 #' @param ... unused, here for inheriting methods
 #' @return \code{unitizerItems}
+#' @export
 #' @name healEnvs
 #' @rdname healEnvs
 

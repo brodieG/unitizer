@@ -3,6 +3,8 @@
 \docType{methods}
 \name{all.equal.condition}
 \alias{all.equal.condition}
+\alias{all.equal,condition,ANY-method}
+\alias{all.equal,conditionList,ANY-method}
 \alias{all.equal.conditionList}
 \alias{all.equal.condition}
 \title{Compare Conditions}

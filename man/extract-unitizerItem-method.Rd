@@ -3,6 +3,7 @@
 \docType{methods}
 \name{$.unitizerItem}
 \alias{$.unitizerItem}
+\alias{$,unitizerItem-method}
 \alias{[[,unitizerItem,ANY-method}
 \title{Retrieve Test Contents From Test Item}
 \usage{

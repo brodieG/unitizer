@@ -37,6 +37,7 @@ mock_item <- function() {
 #'
 #' @rdname conditionList
 #' @name conditionList
+#' @aliases conditionList-class
 #' @slot .items list of conditions
 #' @seealso \code{\link{unitizer_sect}}, \code{\link{unitizerList}},
 #'   \code{\link{all.equal.conditionList}}
@@ -71,6 +72,7 @@ conditionList <- setClass("conditionList", contains="unitizerList")
 #' conditions are pairwise \code{all.equal}.
 #'
 #' @export
+#' @aliases all.equal,condition,ANY-method all.equal,conditionList,ANY-method
 #' @name all.equal.condition
 #' @rdname all.equal.condition
 #' @param target the list of conditions that we are matching against
@@ -183,6 +185,7 @@ all.equal.condition <- function(target, current, ...) {
 #' S4 method for \code{\link{conditionList}} objects.
 #'
 #' @name show.conditionList
+#' @aliases show,conditionList-method
 #' @export
 #' @seealso \code{\link{conditionList}}
 #' @param object a \code{\link{conditionList}} object (list of conditions)
@@ -191,8 +194,9 @@ all.equal.condition <- function(target, current, ...) {
 #' ## Create a test item as you would find normally at the `unitizer` prompt
 #' ## for illustrative purposes:
 #' .NEW <- mock_item()
-#' ## Show the conditions the test generated
-#' show(.NEW$$conditions)
+#' ## Show the conditions the test generated (typing `show` here is optional
+#' ## since auto-printing should dispatch to `show`)
+#' show(.NEW$conditions)
 
 setMethod("show", "conditionList",
   function(object) {

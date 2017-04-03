@@ -3,6 +3,7 @@
 \docType{methods}
 \name{healEnvs}
 \alias{healEnvs}
+\alias{healEnvs,unitizerItems,unitizer-method}
 \title{Fix Environment Ancestries}
 \usage{
 \S4method{healEnvs}{unitizerItems,unitizer}(x, y, ...)
