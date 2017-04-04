@@ -196,7 +196,7 @@ local({
 
   unload.covr <- FALSE
   if(!"covr" %in% loadedNamespaces()) {
-    unload.covr <- requireNamespace('covr')
+    unload.covr <- requireNamespace('covr', quietly=TRUE)
   }
   old.keep.ns <- options(unitizer.namespace.keep=c("testthat"))
   unitizer:::read_line_set_vals("Y")

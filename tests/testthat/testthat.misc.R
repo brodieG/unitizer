@@ -351,12 +351,17 @@ test_that("quit", {
   #   }
   # )
   unitizer:::read_line_set_vals("y")
-  expect_true(unitizer:::unitizer_quit(truly.quit=FALSE))
+  capture.output(q.res.1 <- unitizer:::unitizer_quit(truly.quit=FALSE))
+  expect_true(q.res.1)
   unitizer:::read_line_set_vals("n")
-  expect_false(unitizer:::unitizer_quit(truly.quit=FALSE))
+  capture.output(q.res.2 <- unitizer:::unitizer_quit(truly.quit=FALSE))
+  expect_false(q.res.2)
   unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
-  expect_message(q.res <- unitizer:::unitizer_quit(truly.quit=FALSE), "Sorry")
-  expect_true(q.res)
+  expect_message(
+    capture.output(q.res.3 <- unitizer:::unitizer_quit(truly.quit=FALSE)),
+    "Sorry"
+  )
+  expect_true(q.res.3)
   unitizer:::read_line_set_vals(NULL)
 })
 test_that("mock_item", {
