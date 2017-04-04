@@ -195,10 +195,16 @@ history_write <- function(hist.con, data) {
   } }
   # nocov end
 }
-## Variation on 'normalizePath' with \code{winslash} Pre-Specified
+## Variation on 'normalizePath' with \code{winslash} Pre-Specified, additionally
+## will only return the normalized path if the path actually exists, if not it
+## just returns the input.
 
-normalize_path <- function(path, mustWork=NA)
-  normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
+normalize_path <- function(path, mustWork=NA) {
+  res <- normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
+  res.exists <- file.exists(res)
+  res[!res.exists] <- path[!res.exists]
+  res
+}
 
 # Simplify a Path As Much as Possible to Working Directory
 #
