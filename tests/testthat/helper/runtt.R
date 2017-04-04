@@ -69,6 +69,7 @@ local({
 
   test.res <- test_dir(
     "testthat",
+    reporter="check",
     env=environment(),
     filter=paste(sep="|",
       "browse",
@@ -105,14 +106,13 @@ local({
 
   # Check for failures and throw error if they exist since test_dir does not
   # do so on its own
-  # Check for failures and throw error if they exist since test_dir does not
-  # do so on its own
 
-  with(
-    as.data.frame(test.res), {
-      fail <- sum(failed)
-      err <- sum(error)
-      if(fail != 0 || err) stop("Errors: ", err, " Failures: ", fail)
-  })
+  # # comment out since with "check" reporter this is moot
+  # with(
+  #   as.data.frame(test.res), {
+  #     fail <- sum(failed)
+  #     err <- sum(error)
+  #     if(fail != 0 || err) stop("Errors: ", err, " Failures: ", fail)
+  # })
 })
 

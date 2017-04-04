@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.1
+
+Fixing CRAN submission errors.
+
 ## v1.4.0
 
 First Release to CRAN.

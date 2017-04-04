@@ -26,12 +26,11 @@ environments:
     * R devel (2017-03-28 r72430)
     * R version 3.3.2 (2016-10-31)
     * R version 3.2.5 (2016-04-14)
-* Windows 7:
-    * R version 3.3.3 (2017-03-06)
 * Winbuilder
-    * R devel (2016-08-30 r71176)
-    * R version 3.3.1 (2016-06-21)
+    * R devel (2017-03-31 r72459)
 * Locally on Mac OS 10.12.1
+    * R version 3.3.3 (2017-03-06)
+* Locally on Windows 8.1:
     * R version 3.3.3 (2017-03-06)
 
 ## Additional Comments
@@ -41,11 +40,15 @@ that saves test output to RDS files (similar to
 `.Rout.save`, but with actual R objects).  Users are
 always prompted to agree to file writes.
 
+Because the primary functions in the package launch an
+interactive environment we rely on the demo and
+vignettes rather than examples.
+
 The package also provides optional advanced features
 that are DISABLED by default that are noncompliant
 with CRAN policies.  For example, in order to run tests
 in an environment unaffected by `.GlobalEnv`, we, at
-user's request, _lightly_ trace `library`, `attach`, etc. 
+user's request, _lightly_ trace `library`, `attach`, etc.
 to update the test environment parent environment to always
 be `search(2)`.  This behavior MUST BE EXPLICITLY ENABLED
 BY THE USER.  Absent explicit user action to enable
