@@ -284,8 +284,12 @@ test_that("relativize_path", {
       file.path,
       c(
         as.list(
-          rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)
-        ),
+          rep(
+            "..", 
+            length(
+              unlist(strsplit(getwd(), .Platform$file.sep, fixed=TRUE))
+            ) - 1L
+        ) ),
         list("a/b/c/d/e/x.txt")
   ) ) )
 

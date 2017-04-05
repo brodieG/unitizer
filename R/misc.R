@@ -201,8 +201,10 @@ history_write <- function(hist.con, data) {
 
 normalize_path <- function(path, mustWork=NA) {
   res <- normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
-  res.exists <- file.exists(res)
-  res[!res.exists] <- path[!res.exists]
+  if(!isTRUE(mustWork)) {
+    res.exists <- file.exists(res)
+    res[!res.exists] <- path[!res.exists]
+  }
   res
 }
 
