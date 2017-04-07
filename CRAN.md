@@ -1,4 +1,27 @@
-# CRAN Submission Notes
+## Re-submission Notes:
+
+This is a re-submission of the package to resolve the
+CRAN farm R CMD check failures on windows.
+
+https://cran.r-project.org/web/checks/check_results_unitizer.html
+
+Originally Uwe Ligges suggested the error might go
+away on its own since the tests passed on winbuilder.
+However, the error persists on the CRAN check farm.
+
+I believe I have fixed the one error I could see
+in the "last 13 lines of output", and hope I have
+fixed the other error.  Because I cannot see the
+other error, I have no way knowing for sure that
+it is fixed.  I have also changed the reporter
+output so that if errors persist, I should have
+a much better chance to see all/more of them in
+the "last 13 lines of output".
+
+If this submission does not fix the two test
+failures (out of ~750 tests), I will simply comment
+them out as they are only testing ancillary
+features.
 
 ## R CMD check --as-cran
 
@@ -6,16 +29,10 @@ There is one NOTE:
 
     Maintainer: <brodie.gaslam@yahoo.com>
 
-    New submission
+    Days since last update: 2
 
-and a 404 error for the as-of-yet-non-existent CRAN URL
-for this package that we use in the README since the README
-is also on Github:
-
-    URL: https://cran.r-project.org/package=unitizer
-    From: README.md
-    Status: 404
-    Message: Not Found
+I submitted this tar.gz file to winbuilder and
+the tests passed (links at end).
 
 ## Test Environments
 
@@ -23,40 +40,18 @@ I have tested this package against the following
 environments:
 
 * Travis Ubuntu 12.04.5 LTS
-    * R devel (2017-03-28 r72430)
+    * R devel (2017-04-05 r72488)
     * R version 3.3.2 (2016-10-31)
     * R version 3.2.5 (2016-04-14)
 * Winbuilder
-    * R devel (2017-03-31 r72459)
+    * R devel (2017-04-03 r72475)
+    * R version 3.3.3 (2017-03-06)
 * Locally on Mac OS 10.12.1
     * R version 3.3.3 (2017-03-06)
-* Locally on Windows 8.1:
-    * R version 3.3.3 (2017-03-06)
+* Rhub:
+    * R devel (2017-03-10 r72327
 
-## Additional Comments
+## Links to Winbuilder Builds
 
-This package is an interactive unit testing environment
-that saves test output to RDS files (similar to
-`.Rout.save`, but with actual R objects).  Users are
-always prompted to agree to file writes.
-
-Because the primary functions in the package launch an
-interactive environment we rely on the demo and
-vignettes rather than examples.
-
-The package also provides optional advanced features
-that are DISABLED by default that are noncompliant
-with CRAN policies.  For example, in order to run tests
-in an environment unaffected by `.GlobalEnv`, we, at
-user's request, _lightly_ trace `library`, `attach`, etc.
-to update the test environment parent environment to always
-be `search(2)`.  This behavior MUST BE EXPLICITLY ENABLED
-BY THE USER.  Absent explicit user action to enable
-this behavior, this package complies with all CRAN
-policies.
-
-Even when advanced features are enabled by the user,
-they are only active for the duration of the `unitizer`
-function evaluation, with everything returned to normal
-state via `on.exit` calls.
-
+* Devel: https://win-builder.r-project.org/7a29iSip2YkP/00check.log
+* Release:  https://win-builder.r-project.org/As13BL0sFZy2/00check.log
