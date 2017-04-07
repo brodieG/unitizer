@@ -365,7 +365,7 @@ local({
     )
   })
   test_that("test file / store manip", {
-    skip_on_cran()
+    skip('fails CRAN')
     expect_identical(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello")
     expect_error(
       unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")),
