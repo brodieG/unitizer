@@ -331,6 +331,7 @@ test_that("filename to storeid", {
 test_that("pretty_path", {
   # not supposed to exist
   expect_warning(res <- unitizer:::pretty_path('xadfasdfxcfasdfasd'), NA)
+  skip_on_cran()
   expect_identical(res, 'xadfasdfxcfasdfasd')
   expect_identical(unitizer:::pretty_path(normalizePath('.')), '.')
   expect_identical(
