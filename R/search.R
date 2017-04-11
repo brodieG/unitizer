@@ -38,6 +38,7 @@ setClass(
 #   # nocov end
 # )
 
+#' @importFrom utils sessionInfo
 
 get_package_versions <- function(x) {
   ns.loaded <- names(x$ns.dat)
@@ -46,9 +47,15 @@ get_package_versions <- function(x) {
   pkg.names <- names(x$search.path)
   are.pkg <- grepl("^package:.+", pkg.names)
   pkg.names <- sub("^package:(.*)", "\\1", pkg.names)
+
+  # base packages should not show version (issue203)
+
+  base.pkg <- sessionInfo()$basePkgs
+
   pkg.sub <- match(pkg.names, ns.loaded)
   pkg.ver <- ns.version[pkg.sub]
-  pkg.ver[!are.pkg] <- NA_character_
+  pkg.ver[!are.pkg | pkg.names %in% base.pkg] <- NA_character_
+  pkg.ver[pkg.names == "base"] <- as.character(getRversion())
   pkg.ver
 }
 # Used to be an S4 method for the search data objects
@@ -87,7 +94,7 @@ compress_search_data <- function(x) {
   res <- names(x$search.path)
   res.pkg <- grepl("^package:.+", res)
   ver <- get_package_versions(x)
-  res[res.pkg] <- paste0(res[res.pkg],  " (v", ver[res.pkg], ")")
+  res[!is.na(ver)] <- paste0(res[!is.na(ver)],  " (v", ver[!is.na(ver)], ")")
   res
 }
 compress_ns_data <- function(x) {
@@ -128,9 +135,10 @@ compress_ns_data <- function(x) {
 search_path_update <- function(id, global) {
   stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
   if(!id %in% seq_along(global$tracking@search.path)) {
-    stop(
-      "Logic Error: attempt to reset state to unknown index; contact maintainer"
-    )
+    stop( # nocov start
+      "Internal Error: attempt to reset state to unknown index; contact ",
+      "maintainer"
+    )     # nocov end
   }
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
@@ -140,7 +148,9 @@ search_path_update <- function(id, global) {
   if(!isTRUE(search_dat_equal(curr.env.check, search.curr))) {
     # not entirely sure this check is needed, or might be too stringent
     # new version of comparing entire object not tested
-    stop("Logic Error: mismatch between actual search path and tracked path")
+    # nocov start
+    stop("Internal Error: mismatch between actual search path and tracked path")
+    # nocov end
   }
   # If we exit pre-maturely we'll be in a weird state so we need to mark this
   # state so that next time we get here during the overall `on.exit` we can

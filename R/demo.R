@@ -37,7 +37,7 @@
 #' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
 #'   `[Press ENTER to Continue]`
 #' @rdname demo
-#' @name demo
+#' @name unitizer_demo
 #' @param f path to a file
 #' @param dir path to the temporary package
 #' @param width display width in characters
@@ -156,6 +156,7 @@ check_test_dir <- function(dir) {
 
 update_fastlm <- function(dir, version) {
   check_test_dir(dir)
+  try(detach("package:utzflm", unload=TRUE), silent=TRUE)
   stopifnot(version %in% c("0.1.0", "0.1.1", "0.1.2"))
   lm.dir <- switch(
     version, "0.1.0"="flm0", "0.1.1"="flm1", "0.1.2"="flm2",
@@ -174,6 +175,7 @@ update_fastlm <- function(dir, version) {
 # an extra file.  This also installs version 0.1.2
 
 update_fastlm_extra <- function(dir) {
+  try(detach("package:utzflm", unload=TRUE), silent=TRUE)
   check_test_dir(dir)
   lm.dir <- "flm2"
   untz.dir <- system.file(package="unitizer")

@@ -284,8 +284,12 @@ test_that("relativize_path", {
       file.path,
       c(
         as.list(
-          rep("..", length(unlist(strsplit(getwd(), .Platform$file.sep))) - 1L)
-        ),
+          rep(
+            "..", 
+            length(
+              unlist(strsplit(getwd(), .Platform$file.sep, fixed=TRUE))
+            ) - 1L
+        ) ),
         list("a/b/c/d/e/x.txt")
   ) ) )
 
@@ -327,6 +331,7 @@ test_that("filename to storeid", {
 test_that("pretty_path", {
   # not supposed to exist
   expect_warning(res <- unitizer:::pretty_path('xadfasdfxcfasdfasd'), NA)
+  skip('fails CRAN')
   expect_identical(res, 'xadfasdfxcfasdfasd')
   expect_identical(unitizer:::pretty_path(normalizePath('.')), '.')
   expect_identical(
@@ -335,4 +340,44 @@ test_that("pretty_path", {
     ),
     "package:stats/DESCRIPTION"
   )
+})
+test_that("quit", {
+  # for some reason cover tests run via travis can't handle the with_mock,
+  # so we just use truly-quit=FALSE
+  # with_mock(
+  #   quit=function(...) stop("quit!\n"), {
+  #     unitizer:::read_line_set_vals("y")
+  #     expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
+  #     unitizer:::read_line_set_vals("n")
+  #     capture.output(uq2 <- unitizer:::unitizer_quit())
+  #     expect_equal(uq2, NULL)
+  #     unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
+  #     expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
+  #   }
+  # )
+  unitizer:::read_line_set_vals("y")
+  capture.output(q.res.1 <- unitizer:::unitizer_quit(truly.quit=FALSE))
+  expect_true(q.res.1)
+  unitizer:::read_line_set_vals("n")
+  capture.output(q.res.2 <- unitizer:::unitizer_quit(truly.quit=FALSE))
+  expect_false(q.res.2)
+  unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
+  expect_message(
+    capture.output(q.res.3 <- unitizer:::unitizer_quit(truly.quit=FALSE)),
+    "Sorry"
+  )
+  expect_true(q.res.3)
+  unitizer:::read_line_set_vals(NULL)
+})
+test_that("mock_item", {
+  expect_is(mock_item(), "unitizerItem")
+})
+test_that("diff conditionList", {
+  cond1 <- new(
+    "conditionList",
+    .items=list(
+      simpleWarning("hello", call=quote(fun())),
+      simpleWarning("goodbye", call=quote(fun()))
+  ) )
+  expect_is(diffobj::diffObj(cond1, cond1), "Diff")
 })

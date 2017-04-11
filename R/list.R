@@ -4,12 +4,20 @@ NULL
 
 #' S4 Object To Implement Base List Methods
 #'
+#' Internal \code{unitizer} objects used to manage lists of objects.  The only
+#' user facing instance of these objects are \code{\link{conditionList}}
+#' objects.  For the most part these objects behave like normal S3 lists.  The
+#' list contents are kept in the \code{.items} slot, and the following methods
+#' are implemented to make the object mostly behave like a standard R list:
+#' \code{[}, \code{[[}, \code{[<-}, \code{[[<-}, \code{as.list}, \code{append},
+#' \code{length}, \code{names}, and \code{names<-}.
+#'
 #' The underlying assumption is that the `.items` slot is a list
-#' (or an expression), and that that slot is the only slot for which
+#' (or an expression), and that slot is the only slot for which
 #' it's order and length are meaningful (i.e. there is no other list
 #' or vector of same length as `.items` in a different slot that is
 #' supposed to map to `.items`).  This last assumption allows us
-#' to implement the subsetting operators in a meaninful manner.
+#' to implement the subsetting operators in a meaningful manner.
 #'
 #' The validity method will run \code{validObject} on the first, last, and
 #' middle items (if an even number of items, then the middle closer to the
@@ -18,9 +26,12 @@ NULL
 #'
 #' @name unitizerList
 #' @rdname unitizerList
+#' @seealso \code{\link{conditionList}}
 #' @slot .items a list or expression
 #' @slot .pointer integer, used for implementing iterators
 #' @slot .seek.fwd logical used to track what direction iterators are going
+#' @examples
+#' new('unitizerList', .items=list(1, 2, 3))
 
 setClass(
   "unitizerList",
@@ -132,10 +143,10 @@ setGeneric("nextItem", function(x, ...) standardGeneric("nextItem"))
 #' \code{reset} with parameter \code{reverse} set to TRUE, or re-order
 #' the items.
 #'
-#' @aliases nextItem,unitizerList-method, prevItem,unitizerList-method,
-#'   getItem,unitizerList-method, reset,unitizerList-method, done,unitizerList-method
+#' @aliases nextItem,unitizerList-method prevItem,unitizerList-method
+#'   getItem,unitizerList-method reset,unitizerList-method,
+#'   done,unitizerList-method 
 #' @keywords internal
-#'
 #' @param x a \code{\link{unitizerList}} object
 #' @return \code{\link{unitizerList}} for \code{getItem},
 #'   an item from the list, which could be anything
@@ -170,7 +181,7 @@ setMethod("reset", "unitizerList", valueClass="unitizerList",
       x@.seek.fwd <- FALSE
       x@.pointer <- length(x) + 1L
     } else {
-      stop("Logic Error; unexpected `position` argument")
+      stop("Internal Error; unexpected `position` argument")  # nocov
     }
     x
 } )
@@ -240,15 +251,13 @@ setMethod("append", c("unitizerList", "ANY"),
     # validObject(y) # too expensive, commented
     y
 } )
-#' Concatenate to a \code{\link{unitizerList}}
-#'
-#' @keywords internal
+## Concatenate to a \code{\link{unitizerList}}
 
 #' @rdname unitizer_s4method_doc
 
 setMethod("c", c("unitizerList"),
   function(x, ..., recursive=FALSE) {
-    stop("This method is not implemented yet")
+    stop("This method is not implemented yet")  # nocov
 } )
 # Append Factors
 #

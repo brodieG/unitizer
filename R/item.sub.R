@@ -199,7 +199,7 @@ setClassUnion(
   c("unitizerItemsTestsErrors", "logical")
 )
 
-setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff"))
+setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff")) # nocov
 setMethod("as.Diffs", "unitizerItemTestsErrors",
   function(x, state.ref, state.new, width=getOption("width"), ...) {
     slots <- grep("^[^.]", slotNames(x), value=TRUE)
@@ -330,37 +330,44 @@ setMethod("show", "unitizerItemTestsErrors",
     }
     invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
 } )
-#' Like all.equal but Returns FALSE If Not all.equal
+#' Like all.equal but Returns Empty String If Not all.equal
 #'
 #' Used as the default value comparison function since when values mismatch
 #' we use \code{\link{diffObj}} which would make the text output from
 #' \code{\link{all.equal}} somewhat redundant.
 #'
-#' @export all.eq
+#' @export
 #' @param target R object
 #' @param current other R object to be compared to \code{target}
 #' @param ... arguments to pass to \code{\link{all.equal}}
 #' @return TRUE if \code{all.equal} returns TRUE, "" otherwise
+#' all_eq(1, 1L)
+#' all_eq(1, 2)
+#' isTRUE(all_eq(1, 2))
 
-all.eq <- function(target, current, ...)
+all_eq <- function(target, current, ...)
   if(isTRUE(all.equal(target, current, ...))) TRUE else ""
 
 #' Store Functions for New vs. Reference Test Comparisons
 #'
 #' \code{testFuns} contains the functions used to compare the results and side
-#' effects of running test expressions.
+#' effects of running test expressions.  \dQuote{testFuns} objects can be used
+#' as the \code{compare} argument for \code{\link{unitizer_sect}}, thereby
+#' allowing you to specify different comparison functions for different aspects
+#' of test evaluation.
 #'
 #' The default comparison functions are as follows:
 #' \itemize{
-#'   \item value: \code{\link{all.eq}}
-#'   \item conditions: \code{\link{all.eq}}
+#'   \item value: \code{\link{all_eq}}
+#'   \item conditions: \code{\link{all_eq}}
 #'   \item output: \code{function(x, y) TRUE}, i.e. not compared
 #'   \item message: \code{function(x, y) TRUE}, i.e. not compared as conditions
 #'     should be capturing warnings/errors
 #'   \item aborted: \code{function(x, y) TRUE}, i.e. not compared as conditions
 #'     should also be capturing this implicitly
 #' }
-#' @seealso \code{\link{unitizer_sect}}, \code{\link{all.eq}}
+#' @seealso \code{\link{unitizer_sect}} for more relevant usage examples,
+#'    \code{\link{all_eq}}
 #' @rdname testFuns
 #' @name testFuns
 #' @export testFuns
@@ -378,9 +385,9 @@ testFuns <- setClass(
     aborted="unitizerItemTestFun"
   ),
   prototype(
-    value=new("unitizerItemTestFun", fun=all.eq),
+    value=new("unitizerItemTestFun", fun=all_eq),
     # note this will dispatch all.equal.condition_list
-    conditions=new("unitizerItemTestFun", fun=all.eq),
+    conditions=new("unitizerItemTestFun", fun=all_eq),
     output=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     message=new("unitizerItemTestFun", fun=function(target, current) TRUE),
     aborted=new("unitizerItemTestFun", fun=function(target, current) TRUE)

@@ -95,7 +95,7 @@ is.lgl.1L <- function(x) is.logical(x) && length(x) == 1L
 
 is.int.pos.2L <- function(x)
   is.numeric(x) && length(x) == 2L && !any(is.na(x)) &&
-  all.equal(x, round(x)) && all(x) > 0L
+  all.equal(x, round(x)) && all(x > 0L)
 
 is.int.pos.1L <- function(x)
   is.numeric(x) && length(x) == 1L && !any(is.na(x)) &&
@@ -123,7 +123,7 @@ is.valid_capt_setting <- function(x) {
     !is.logical(x) || length(x) != 2L || any(is.na(x)) ||
     !identical(names(x), c("output", "message"))
   ) {
-    word_msg(
+    meta_word_msg(
       "value must be logical(2L) containing TRUE ",
       "/ FALSE and with names `c(\"output\", \"message\")"
     )

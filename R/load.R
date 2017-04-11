@@ -182,6 +182,48 @@ load_unitizers <- function(
     unitizers[[i]]@global <- global
     # awkward, shouldn't be done this way
     unitizers[[i]]@eval <- identical(mode, "unitize")
+
+    # # check for and normalize state issues; this came up as a result of #197
+    # # where our state objects were corrupted; really this should be handled
+    # # in a more systematic way like we do for broader validation; if this
+    # # happens more often we can look into that;
+    # # NOTE: figured out what was going on here so commenting this out for now
+
+    # ref.indices <- do.call(
+    #   cbind,
+    #   lapply(
+    #     unitizers[[i]]@items.ref,
+    #     function(z) as.integer(slot(z, "glob.indices"))
+    #   )
+    # )
+    # ref.state <- lapply(
+    #   slotNames(unitizers[[i]]@state.ref),
+    #   function(z) length(slot(unitizers[[i]]@state.ref, z))
+    # )
+    # if(!identical(names(ref.state), names(ref.indices)))
+    #   stop(
+    #     "Internal error: incompatible global index structure; ",
+    #     "contact maintainer"
+    #   )
+
+    # if(
+    #   any(
+    #     unlist(
+    #       Map(
+    #         function(v, w) any(v > w),
+    #         split(ref.indices, row(ref.indices), ref.state), ref.state
+    #   ) ) )
+    # ) {
+    #   meta_word_msg(
+    #     "Unitizer ", i, " has corrupted state indices, we are resetting ",
+    #     "them to NULL, which means review of reference tests will not ",
+    #     "correctly reflect the reference states.  This is not expected ",
+    #     "behavior and you should contact maintainer if it persists.", sep=""
+    #   )
+    #   glob.ind.def <- new("unitizerGlobalIndices")
+    #   for(j in seq_along(unitizers[[i]]@items.ref))
+    #     unitizers[[i]]@items.ref[[j]]@glob.indices <- glob.ind.def
+    # }
   }
   # Issue errors as required
 
@@ -394,7 +436,7 @@ as.store_id_chr <- function(x) {
   if(is.chr1plain(x)){
     return(relativize_path(x))
   }
-  target <- try(as.character(x))
+  target <- try(as.character(x), silent=TRUE)
   if(inherits(target, "try-error"))
     stop(
       "Unable to convert store id to character; if you are using custom ",

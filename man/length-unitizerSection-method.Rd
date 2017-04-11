@@ -14,4 +14,3 @@
 Compute Length of a \code{unitizerSection-class}
 }
 \keyword{internal}
-

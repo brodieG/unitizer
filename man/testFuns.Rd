@@ -6,13 +6,16 @@
 \title{Store Functions for New vs. Reference Test Comparisons}
 \description{
 \code{testFuns} contains the functions used to compare the results and side
-effects of running test expressions.
+effects of running test expressions.  \dQuote{testFuns} objects can be used
+as the \code{compare} argument for \code{\link{unitizer_sect}}, thereby
+allowing you to specify different comparison functions for different aspects
+of test evaluation.
 }
 \details{
 The default comparison functions are as follows:
 \itemize{
-  \item value: \code{\link{all.eq}}
-  \item conditions: \code{\link{all.eq}}
+  \item value: \code{\link{all_eq}}
+  \item conditions: \code{\link{all_eq}}
   \item output: \code{function(x, y) TRUE}, i.e. not compared
   \item message: \code{function(x, y) TRUE}, i.e. not compared as conditions
     should be capturing warnings/errors
@@ -25,6 +28,6 @@ The default comparison functions are as follows:
 testFuns(value=identical)
 }
 \seealso{
-\code{\link{unitizer_sect}}, \code{\link{all.eq}}
+\code{\link{unitizer_sect}} for more relevant usage examples,
+   \code{\link{all_eq}}
 }
-

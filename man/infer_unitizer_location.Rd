@@ -2,8 +2,8 @@
 % Please edit documentation in R/get.R
 \name{infer_unitizer_location}
 \alias{infer_unitizer_location}
-\alias{infer_unitizer_location.character}
 \alias{infer_unitizer_location.default}
+\alias{infer_unitizer_location.character}
 \title{Infers Possible Unitizer Path From Context}
 \usage{
 infer_unitizer_location(store.id, ...)
@@ -70,4 +70,3 @@ the current directory as the argument.
 \code{\link{get_unitizer}} for discussion of alternate
   \code{store.id} objects
 }
-

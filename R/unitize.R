@@ -34,7 +34,7 @@
 #' setting options in their \code{.Rprofile} file.
 #'
 #' @export
-#' @aliases unitize review unitize_dir
+#' @aliases review unitize_dir
 #' @param test.file path to the file containing tests, if supplied path does not
 #'   match an actual system path, \code{unitizer} will try to infer a possible
 #'   path.  If NULL, will look for a file in the \dQuote{tests/unitizer} package
@@ -93,9 +93,10 @@
 #'   you wish to undo in \code{post}. Keep in mind that \code{unitizer} can
 #'   manage most aspects of global state, so you should not need to use this
 #'   parameter to unload packages, remove objects, etc.  See details.
-#' @param history character path to file to use to store history generated
+#' @param history character(1L) path to file to use to store history generated
 #'   during interactive unitizer session; the default is an empty string, which
-#'   leads to \code{unitizer} using a temporary file
+#'   leads to \code{unitizer} using a temporary file, set to NULL to disable
+#'   history capture.
 #' @param interactive.mode logical(1L) whether to run in interactive mode (
 #'   request user input when needed) or not (error if user input is required,
 #'   e.g. if all tests do not pass).

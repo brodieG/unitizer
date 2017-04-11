@@ -24,4 +24,3 @@ the location specified by the store id.
 \seealso{
 \code{\link{unitize}}
 }
-

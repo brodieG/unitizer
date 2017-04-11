@@ -10,4 +10,3 @@ getFun(name)
 Utility Function
 }
 \keyword{internal}
-

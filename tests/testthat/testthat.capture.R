@@ -42,8 +42,8 @@ test_that("get_capture", {
   ## for some reason this test stopped working; not sure why, need to look into
   ## it; seemingly it messes up the pointer for the next read
 
-  # writeChar("xxxxxx", con)
-  # cpt2 <- unitizer:::get_text_capture(con, f, "output", TRUE)
+  # writeChar("xxxxxx", cons@out.c)
+  # cpt2 <- unitizer:::get_text_capture(cons, "output", TRUE)
   # expect_equal("xxxxxx", cpt2)
   writeChar(paste0(rep("yyyyyyy", 20L), collapse=""), cons@out.c)
   expect_warning(

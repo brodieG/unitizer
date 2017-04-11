@@ -2,16 +2,16 @@
 % Please edit documentation in R/global.R
 \docType{class}
 \name{unitizerGlobalBase-class}
-\alias{unitizerDummy-class}
 \alias{unitizerGlobalBase-class}
-\alias{unitizerGlobalDisabled-class}
-\alias{unitizerGlobalIndices-class}
-\alias{unitizerGlobalNsOptConflict-class}
-\alias{unitizerGlobalState-class}
-\alias{unitizerGlobalStateFuns-class}
 \alias{unitizerGlobalStatus-class}
+\alias{unitizerGlobalDisabled-class}
 \alias{unitizerGlobalTracking-class}
+\alias{unitizerDummy-class}
 \alias{unitizerGlobalTrackingStore-class}
+\alias{unitizerGlobalState-class}
+\alias{unitizerGlobalIndices-class}
+\alias{unitizerGlobalStateFuns-class}
+\alias{unitizerGlobalNsOptConflict-class}
 \title{Structures For Tracking Global Options}
 \description{
 Immplemented as S4 classes just so we can ensure everything is guaranteed
@@ -39,4 +39,3 @@ items are compared (though any extra or missing items may be brought up as
 possible mismatches).
 }
 \keyword{internal}
-

@@ -13,4 +13,3 @@ unitizerItem object
 The only purpose of this function is to create a \code{unitizerItem} for use
 by examples.
 }
-

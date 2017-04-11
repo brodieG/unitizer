@@ -19,4 +19,3 @@ invisibly a character vector with one element per line printed
 Print Methods for \code{UL} and \code{OL} objects
 }
 \keyword{internal}
-

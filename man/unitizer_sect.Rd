@@ -89,7 +89,7 @@ Any output to \code{stdout} or \code{stderr} is captured and only checked at
 the end of the \code{unitizer} process with the expectation that there will
 be no such output.
 
-\code{value} and \code{conditions} are compared with \code{\link{all.eq}},
+\code{value} and \code{conditions} are compared with \code{\link{all_eq}},
 which is a wrapper to \code{\link{all.equal}} except that it returns FALSE
 instead of a descriptive string on failure.  This is because \code{unitizer}
 will run \code{\link[diffobj]{diffObj}} on the test data components that do
@@ -121,8 +121,9 @@ It is possible to have nested sections, but titles, etc. are ignored.  The
 only effect of nested sections is to allow you to change the comparison
 functions for a portion of the outermost \code{unitizer_sect}.
 }
+
 \examples{
-unitizer_sect("Switch to `all.equal` instead of `all.eq`",
+unitizer_sect("Switch to `all.equal` instead of `all_eq`",
   {
     fun(6L)
     fun("hello")
@@ -137,4 +138,6 @@ unitizer_sect("Use identical for ALL test data, including stdout, etc.",
   compare=identical
 )
 }
-
+\seealso{
+\code{\link{testFuns}}, \code{\link{all_eq}}
+}

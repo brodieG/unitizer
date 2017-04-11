@@ -103,17 +103,24 @@ unitize_core <- function(
 
   # Make sure history is kosher
 
-  if(nchar(history)) {
-    test.con <- try(file(history, "at"))
-    if(inherits(test.con, "try-error"))
-      stop(
-        "Argument `history` must be the name of a file that can be opened in ",
-        "\"at\" mode"
-      )
-    close(test.con)
-  } else {
-    history <- tempfile()
-    attr(history, "hist.tmp") <- TRUE
+  if(is.character(history)) {
+    if(nchar(history)) {
+      test.con <- try(file(history, "at"))
+      if(inherits(test.con, "try-error"))
+        stop(
+          "Argument `history` must be the name of a file that can be opened in ",
+          "\"at\" mode"
+        )
+      close(test.con)
+    } else {
+      history <- tempfile()
+      attr(history, "hist.tmp") <- TRUE
+    }
+  } else if (!is.null(history)) {
+    stop(
+      "Argument `history` must be the name of a file that can be opened in ",
+      "\"at\" mode, or \"\", or NULL"
+    )
   }
   # Make sure nothing untoward will happen if a test triggers an error
 
@@ -274,18 +281,23 @@ unitize_core <- function(
       ) {
         file.path(par.dir, "tests")
       } else {
-        warning(
-          word_wrap(collapse="\n",
-            cc(
-              "Working directory state tracking is in mode 2, but we cannot ",
-              "identify the standard tests directory so we are leaving the ",
-              "working directory unchanged"
-          ) ),
-          immediate.=TRUE
-        )
-        NULL
+        # File doesn't seem to be in package, so set wd to be the same as
+        # the file
+
+        path
       }
-      if(!is.null(test.dir)) setwd(test.dir)
+      if(!is.null(test.dir)) {
+        dir.set <- try(setwd(test.dir))
+        if(inherits(dir.set, 'try-error')) {
+          warning(
+            word_wrap(collapse="\n",
+              cc(
+                "Working directory state tracking is in mode 2, but we ",
+                "failed setting director to '", test.dir, "' so we are  ",
+                "leaving the working directory unchanged."
+            ) ),
+            immediate.=TRUE
+      ) } }
     } else {
       # nocov start
       # currently no way to get here since there is no way to specify multiple
@@ -317,9 +329,11 @@ unitize_core <- function(
 
   global$state("init")  # mark post pre-load state
 
-  # Used to put q/quit here before we switched to tracing them
+  # Maked base functions
 
   util.frame <- new.env(parent=pre.load.frame)
+  assign("quit", unitizer_quit, envir=util.frame)
+  assign("q", unitizer_quit, envir=util.frame)
 
   over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
@@ -364,7 +378,7 @@ unitize_core <- function(
         if(is(utz, "unitizer") && is(utz@bookmark, "unitizerBrowseBookmark")) {
           # compare expressions without attributes
           if(
-            !identical(
+            !all.equal(
               `attributes<-`(tests.parsed.prev[[i]], NULL),
               `attributes<-`(tests.parsed[[i]], NULL)
           ) ) {
@@ -563,7 +577,7 @@ unitize_browse <- function(
   # but user may still pick it to review); we got lazy and tried to leverage
   # the review mechanism for passed tests, but this is not ideal because then
   # we're using reference items instead of the newly evaluated versions.  Will
-  # switch this, but still have to deal with situations where a new state 
+  # switch this, but still have to deal with situations where a new state
   # doesn't exist (in particular, deleted tests)
 
   untz.browsers <- mapply(

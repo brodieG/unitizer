@@ -20,4 +20,14 @@ test_that("Singleton Implementation Working", {
   )
   glob.first$release()
 })
+test_that("Dummy Display", {
+  expect_equal(
+    capture.output(show(new('unitizerDummy'))), "<object not recorded>"
+  )
+})
+test_that("Disable / Enable", {
+  suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
+  glob$disable()
+  expect_warning(glob$enable(c(search.path=2L)), "State setting")
+})
 

@@ -8,4 +8,3 @@
 Should probably add an \code{as.unitizerTests} function...
 }
 \keyword{internal}
-

@@ -206,7 +206,8 @@ You can substitute `.REF` for `.NEW` in any of the above, provided that `.REF` i
 If both `.NEW` and `.REF` are defined, then `.DIFF` will be defined too.
 `.DIFF` has the same structure as `.NEW` and it contains the result of
 evaluating `diffobj::diffObj` between each component of `.NEW` and `.REF`.
-`.diff` is shorthand for `.DIFF$value`.
+`.diff` is shorthand for `.DIFF$value`.  If there are state differences
+(e.g. search path) you will be able to view those with `.DIFF$state`.
 
 ### `ls`
 

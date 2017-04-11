@@ -637,7 +637,9 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           e1@tests.fail <- append(e1@tests.fail, FALSE)
           e1@tests.error <- append(e1@tests.error, TRUE)
         } else {
+          # nocov start
           stop("Logic Error: impossible test status; contact maintainer.")
+          # nocov end
         }
       } else {
         e1@tests.fail <- append(e1@tests.fail, FALSE)

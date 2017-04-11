@@ -1,5 +1,26 @@
 # `unitizer` NEWS
 
+## v1.4.1
+
+Fixing CRAN submission errors.
+
+## v1.4.0
+
+First Release to CRAN.
+
+* [#213](https://github.com/brodieG/unitizer/issues/213): Disable advanced state
+  management by default to comply with CRAN
+* [#203](https://github.com/brodieG/unitizer/issues/203): Better reporting of
+  search path state differences
+* Assorted bugfixes and enhancements:
+  [#214](https://github.com/brodieG/unitizer/issues/214),
+  [#215](https://github.com/brodieG/unitizer/issues/215),
+  [#208](https://github.com/brodieG/unitizer/issues/208),
+  [#201](https://github.com/brodieG/unitizer/issues/201),
+  [#208](https://github.com/brodieG/unitizer/issues/208),
+  [#199](https://github.com/brodieG/unitizer/issues/199),
+  [#197](https://github.com/brodieG/unitizer/issues/197)
+
 ## v1.2.0 - v1.3.0
 
 Interim release to get changes over past year out on the master branch.
@@ -28,10 +49,10 @@ Interim release to get changes over past year out on the master branch.
 
 ### Bugfixes:
 
-* [#184](https://github.com/brodieG/unitizer/issues/184): Search path issues
-  in r-devel
- * Fix unintended detaching of `tools:rstudio`, and [many](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.2.0%20label%3Abug%20) [others](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.3.0%20label%3Abug%20)
- * `base.env` now unique for each `unitizer`
+* [#188](https://github.com/brodieG/unitizer/issues/188): Search path issues
+  in r-devel @[richierocks](https://github.com/richierocks)
+* Fix unintended detaching of `tools:rstudio`, and [many](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.2.0%20label%3Abug%20) [others](https://github.com/brodieG/unitizer/issues?utf8=%E2%9C%93&q=is%3Aissue%20milestone%3A1.3.0%20label%3Abug%20)
+* `base.env` now unique for each `unitizer`
 
 ## v1.1.0
 

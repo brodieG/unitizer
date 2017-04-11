@@ -2,12 +2,11 @@
 % Please edit documentation in R/list.R
 \docType{methods}
 \name{nextItem,unitizerList-method}
-\alias{done,unitizerList-method}
-\alias{getItem,unitizerList-method,}
 \alias{nextItem,unitizerList-method}
-\alias{nextItem,unitizerList-method,}
-\alias{prevItem,unitizerList-method,}
+\alias{prevItem,unitizerList-method}
+\alias{getItem,unitizerList-method}
 \alias{reset,unitizerList-method,}
+\alias{done,unitizerList-method}
 \title{Iterate through items of a \code{\link{unitizerList}} ObjectJK}
 \usage{
 \S4method{nextItem}{unitizerList}(x)
@@ -33,4 +32,3 @@ If you wish to iterate from the last item forward, you should either
 the items.
 }
 \keyword{internal}
-

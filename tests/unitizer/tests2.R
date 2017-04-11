@@ -1,4 +1,4 @@
-set.seed(1)
+set.seed(1, kind="Wichmann-Hill")
 1 + 1
 print("heya")
 stop("wow")

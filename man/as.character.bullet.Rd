@@ -23,4 +23,3 @@ character vector containing rendered object, where each element
 Produce Character Vector Representation of Bullet Lists
 }
 \keyword{internal}
-
