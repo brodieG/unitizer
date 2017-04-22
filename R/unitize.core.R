@@ -380,7 +380,7 @@ unitize_core <- function(
           if(
             !isTRUE(
               all.equal(
-                tests.parsed.prev[[i]], tests.parsed[[i]],
+                as.list(tests.parsed.prev[[i]]), as.list(tests.parsed[[i]]),
                 check.attributes=FALSE
             ) )
           ) {
