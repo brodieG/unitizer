@@ -1,6 +1,11 @@
 # `unitizer` NEWS
 
-## v1.4.1
+## v1.4.3
+
+* [#221](https://github.com/brodieG/unitizer/issues/221) Crash on Re-Run due to
+  poor comparison of parsed test file sources
+
+## v1.4.1-2
 
 Fixing CRAN submission errors.
 

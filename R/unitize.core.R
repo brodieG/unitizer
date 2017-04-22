@@ -378,10 +378,12 @@ unitize_core <- function(
         if(is(utz, "unitizer") && is(utz@bookmark, "unitizerBrowseBookmark")) {
           # compare expressions without attributes
           if(
-            !all.equal(
-              `attributes<-`(tests.parsed.prev[[i]], NULL),
-              `attributes<-`(tests.parsed[[i]], NULL)
-          ) ) {
+            !isTRUE(
+              all.equal(
+                as.list(tests.parsed.prev[[i]]), as.list(tests.parsed[[i]]),
+                check.attributes=FALSE
+            ) )
+          ) {
             utz@bookmark@parse.mod <- TRUE
           }
           utz@bookmark
