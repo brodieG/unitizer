@@ -63,7 +63,9 @@ identical_fun <- function(x, y) {
 ##
 ## @keywords internal
 
-unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
+unitizer_quit <- function(
+  save = "default", status = 0, runLast = TRUE, truly.quit=FALSE
+) {
   meta_word_msg(
     "You are attempting to quit R from within `unitizer`.  If you do so ",
     "you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` ",
@@ -71,16 +73,18 @@ unitizer_quit <- function(save = "default", status = 0, runLast = TRUE) {
   )
   quit.count <- 5
   while(
-    !(res <- head(tolower(readline("Quit R? [y/n]: ")), 1L)) %in% c("y", "n")
+    !(res <- head(tolower(read_line("Quit R? [y/n]: ")), 1L)) %in% c("y", "n")
   ) {
     quit.count <- quit.count - 1L
     if(quit.count < 0) {
       meta_word_msg("Sorry, could not understand you, quitting then.")
-      quit(save=save, status=status, runLast=runLast)
+      res <- "y"
+      break;
     }
   }
-  if(res == "y") quit(save=save, status=status, runLast=runLast)
-  invisible(NULL)
+  if(res == "y" && truly.quit) {
+    quit(save=save, status=status, runLast=runLast)
+  } else if (res == "y") TRUE else FALSE
 }
 # Cleans a Path to be In Standard Format
 #
@@ -191,10 +195,18 @@ history_write <- function(hist.con, data) {
   } }
   # nocov end
 }
-## Variation on 'normalizePath' with \code{winslash} Pre-Specified
+## Variation on 'normalizePath' with \code{winslash} Pre-Specified, additionally
+## will only return the normalized path if the path actually exists, if not it
+## just returns the input.
 
-normalize_path <- function(path, mustWork=NA)
-  normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
+normalize_path <- function(path, mustWork=NA) {
+  res <- normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
+  if(isTRUE(mustWork)) {
+    res.exists <- file.exists(res)
+    res[!res.exists] <- path[!res.exists]
+  }
+  res
+}
 
 # Simplify a Path As Much as Possible to Working Directory
 #

@@ -1,0 +1,13 @@
+
+   ##  ## ##  ## ## ###### ## ###### ###### #####
+   ##  ## ### ## ##   ##   ##    ##  ##     ##   #
+   ##  ## ###### ##   ##   ##   ##   ####   #####
+   ##  ## ## ### ##   ##   ##  ##    ##     ##  ##
+   ###### ##  ## ##   ##   ## ###### ###### ##  ##
+
+   Click on image to start/resume screencast, elsewhere
+   to pause it.
+
+   Screencast will loop ~5 seconds after finishing.
+
+   Total duration: ~2 minutes.

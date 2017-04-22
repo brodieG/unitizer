@@ -101,7 +101,7 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
         paste0(res$message, "\n")
       )
     if(!is(res$state, "unitizerGlobalIndices")) {
-      stop("Logic Error: failed recording state; contact maintainer.")
+      stop("Internal Error: failed recording state; contact maintainer.")# nocov
     }
     new(
       "unitizerItem", call=x.to.eval, value=res$value,
@@ -248,15 +248,16 @@ user_exp_display <- function(value, env, expr, default=FALSE) {
   user_exp_handle(disp.expr, env, print.mode=print.type, expr.raw=expr)
 }
 # Like `user_exp_display` except that is uses `str` instead of print/show
+# UNUSED?
 
-user_exp_str <- function(value, env, expr, max.level=NA) {
-  disp.expr <- call(
-    "str",
-    if(is.language(value)) enquote(value) else value,
-    max.level=max.level
-  )
-  user_exp_handle(disp.expr, env, print.mode="str", expr.raw=expr)
-}
+# user_exp_str <- function(value, env, expr, max.level=NA) {
+#   disp.expr <- call(
+#     "str",
+#     if(is.language(value)) enquote(value) else value,
+#     max.level=max.level
+#   )
+#   user_exp_handle(disp.expr, env, print.mode="str", expr.raw=expr)
+# }
 # It used to matter what precise value `print.mode`, but now the only thing
 # that matters is whether it is zero char or not
 
@@ -358,12 +359,12 @@ get_trace <- function(trace.base, trace.new, printed, exp) {
         trace.drop <- if(is.stop) -2L else if (is.stop.cond) -1L else 0L
         trace.trim <- trace.new.clean[1L:(length(trace.new.clean) + trace.drop)]
       } else {
-        stop("Logic Error: unexpected trace length")
+        stop("Internal Error: unexpected trace length")  # nocov
       }
       attr(trace.trim, "set.trace") <- is.stop || is.stop.cond  # only actually set trace on `stop` calls
       return(trace.trim)
   } }
-  stop("Logic Error: couldn't extract trace; contact maintainer.")
+  stop("Internal Error: couldn't extract trace; contact maintainer.") # nocov
 }
 clean_message <- function(res) {
   # Deal with top level warnings and errors that show up weird in the message

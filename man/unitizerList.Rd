@@ -5,14 +5,22 @@
 \alias{unitizerList}
 \title{S4 Object To Implement Base List Methods}
 \description{
+Internal \code{unitizer} objects used to manage lists of objects.  The only
+user facing instance of these objects are \code{\link{conditionList}}
+objects.  For the most part these objects behave like normal S3 lists.  The
+list contents are kept in the \code{.items} slot, and the following methods
+are implemented to make the object mostly behave like a standard R list:
+\code{[}, \code{[[}, \code{[<-}, \code{[[<-}, \code{as.list}, \code{append},
+\code{length}, \code{names}, and \code{names<-}.
+}
+\details{
 The underlying assumption is that the `.items` slot is a list
-(or an expression), and that that slot is the only slot for which
+(or an expression), and that slot is the only slot for which
 it's order and length are meaningful (i.e. there is no other list
 or vector of same length as `.items` in a different slot that is
 supposed to map to `.items`).  This last assumption allows us
-to implement the subsetting operators in a meaninful manner.
-}
-\details{
+to implement the subsetting operators in a meaningful manner.
+
 The validity method will run \code{validObject} on the first, last, and
 middle items (if an even number of items, then the middle closer to the
 first) assuming they are S4 objects.  We don't run on every object to avoid
@@ -28,3 +36,9 @@ potentially expensive computation on all objects.
 \item{\code{.seek.fwd}}{logical used to track what direction iterators are going}
 }}
 
+\examples{
+new('unitizerList', .items=list(1, 2, 3))
+}
+\seealso{
+\code{\link{conditionList}}
+}

@@ -45,12 +45,15 @@ setGeneric(
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
   function(x, y, force.update, ...) {
 
-    if(identical(y@mode, "review") && (!isTRUE(y@interactive) || force.update))
+    if(identical(y@mode, "review") && (!isTRUE(y@interactive) || force.update)) {
+      # nocov start
       stop(
-        "Logic Error: attempt to enter unitizer in review mode in ",
+        "Internal Error: attempt to enter unitizer in review mode in ",
         "non-interactive state or in force.update mode,  which should not be ",
         "possible, contact maintainer."
       )
+      # nocov end
+    }
     browse.res <- browseUnitizerInternal(x, y, force.update=force.update)
     x@global$resetInit()  # reset state
 
@@ -125,12 +128,14 @@ setMethod(
           match.id <- cand.match[x@bookmark@id]
           id.map <-
             which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
-          # nocov start
-          if(!length(id.map) == 1L)
+          if(!length(id.map) == 1L) {
+            # nocov start
             stop(
-              "Logic Error: unable to find bookmarked test; contact maintainer."
+              "Internal Error: unable to find bookmarked test; contact ",
+              "maintainer."
             )
-          # nocov end
+            # nocov end
+          }
           y@last.id <- y@mapping@item.id[id.map] - 1L
           y@jumping.to <- TRUE
         }
@@ -177,7 +182,7 @@ setMethod(
                   } else if(!is(y.tmp, "unitizerBrowse")) {
                     # nocov start
                     stop(
-                      "Logic Error: review should return `unitizerBrowse`; ",
+                      "Internal Error: review should return `unitizerBrowse`; ",
                       "contact maintainer."
                     )
                     # nocov end
@@ -199,10 +204,10 @@ setMethod(
                 user.quit <<- TRUE
                 if(is(extra, "unitizerBrowse"))
                   y <<- extra
-              } else stop(
-                "Logic Error: unexpected early exit restart value; contact ",
+              } else stop(  # nocov start
+                "Internal Error: unexpected early exit restart value; contact ",
                 "maintainer"
-              )
+              )             # nocov end
         } ) }
         # Get summary of changes
 
@@ -229,10 +234,10 @@ setMethod(
         } else if(!y@human && !user.quit && y@auto.accept) {
           # quitting user doesn't allow us to register humanity...
           if(y@navigating || y@re.eval)
-            stop(
-              "Logic Error: should only get here in `auto.accept` mode, ",
+            stop(   # nocov start
+              "Internal Error: should only get here in `auto.accept` mode, ",
               "contact maintainer"
-            )
+            )       # nocov end
           meta_word_msg("Auto-accepting changes...", trail.nl=FALSE)
           update <- TRUE
           break
@@ -341,7 +346,7 @@ setMethod(
                 actions <- c(actions, "re-run unitizer")
               } else if(identical(y@re.eval, 2L)) {
                 actions <- c(actions, "re-run all loaded unitizers")
-              } else stop("Logic Error: unexpected re-run value")
+              } else stop("Logic Error: unexpected re-run value") # nocov
               nav.hlp <- paste0(
                 nav.hlp,
                 "\n\nAdditionally, pressing Y will cause re-running of ",
@@ -389,11 +394,11 @@ setMethod(
               loop.status <- "b"
               break
             }
-            stop("Logic Error: unhandled user action")
+            stop("Logic Error: unhandled user action") # nocov
           }
           switch(  # needed to handle multi level break
             loop.status, b=break, n=next,
-            stop("Logic Error: invalid loop status, contact maintainer.")
+            stop("Logic Error: invalid loop status, contact maintainer.")# nocov
           )
         } else {
           meta_word_msg("No changes recorded.", trail.nl=FALSE)

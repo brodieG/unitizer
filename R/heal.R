@@ -71,11 +71,14 @@ setGeneric("healEnvs", function(x, y,...) standardGeneric("healEnvs"))
 #'   \code{c("unitizer", "x")} where x is just a data frame with column 1
 #'   the item index, and column 2 whether it originated from "new" or "ref"
 #'
+#' @aliases healEnvs,unitizerItems,unitizer-method
 #' @seealso \code{updateLs,unitizerItem-method}
 #' @param x \code{unitizerItems} object
 #' @param y \code{unitizer} object \code{x} was generated from
 #' @param ... unused, here for inheriting methods
 #' @return \code{unitizerItems}
+#' @export
+#' @name healEnvs
 #' @rdname healEnvs
 
 setMethod("healEnvs", c("unitizerItems", "unitizer"),
@@ -124,9 +127,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         } else {
           item.env <- y@items.new[[items.new.idx[[i.org]] + gaps[[i]]]]@env
         }
-        # Any objects defined in gaps should be assigned to the new parent env, though
-        # in theory there should be none unless user specifically assigned objects
-        # during a test, which is not default behavior
+        # Any objects defined in gaps should be assigned to the new parent env,
+        # though in theory there should be none unless user specifically
+        # assigned objects during a test, which is not default behavior
 
         for(j in (gaps[[i]] + 1L):-1L) {
           # assumes continuous ids in items.new
@@ -141,10 +144,11 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         if(identical(x[items.new.select][[i.org]]@env, item.env)) {
           # This should only happen when an ignored test just before an actual
           # and just after another ignored test is removed from the item list;
-          # since both the ignored tests where assigned to the environment of the
-          # subsequent test, the normal logic here would cause the test to have
-          # it's parent env assigned to itself.  Here we had a unit test that
-          # relied on this so we don't want to outright forbid it out of lazyness...
+          # since both the ignored tests where assigned to the environment of
+          # the subsequent test, the normal logic here would cause the test to
+          # have it's parent env assigned to itself.  Here we had a unit test
+          # that relied on this so we don't want to outright forbid it out of
+          # lazyness...
 
           # nocov start
           warning(
@@ -177,7 +181,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
       y@items.new[[max(items.new.idx)]]@env
     } else x@base.env
     env.list <- list()
-    slot.in <- integer(length(items.ref.idx))  # Note that `slot.in` values can be repeated
+    # Note that `slot.in` values can be repeated
+    slot.in <- integer(length(items.ref.idx))
     repair <- FALSE
     for(i in ref.order) {
       # First find the youngest new test that is verifiably older than
@@ -199,8 +204,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
         !length(
           matching.new.older <- (
             m.n.older.tmp <- sort(
-              Filter(Negate(is.na), head(y@items.ref.map, items.ref.idx[[i]] - 1L))
-          ) )[m.n.older.tmp %in% items.new.idx]
+              Filter(
+                Negate(is.na), head(y@items.ref.map, items.ref.idx[[i]] - 1L)
+          ) ) )[m.n.older.tmp %in% items.new.idx]
       ) ) {
         # also, in this case must look at kept envs only since parent has to be
         # a kept env
@@ -231,7 +237,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
           "using `repair_envs`."
         )
         # nocov end
-      } else if (identical(item.ref.updated, FALSE)) {  # Corrupted env history, will have to repair
+      } else if (identical(item.ref.updated, FALSE)) {
+        # Corrupted env history, will have to repair
         repair <- TRUE
         item.ref.updated <- x[items.ref.select][[i]]
       }
@@ -243,9 +250,11 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
     # Now re-assign the environments; this has to be done after we run all the
     # lses as otherwise the ls diffs won't work since the whole point is they
     # compare the environment from before the re-assignment to the one after
+    #
+    # Remember, this modifies parent envs for y@items.ref as well!
 
     for(i in ref.order)
-      parent.env(x[items.ref.select][[i]]@env) <- env.list[[i]]  # Remember, this modifies parent envs for y@items.ref as well!
+      parent.env(x[items.ref.select][[i]]@env) <- env.list[[i]]
 
     # Now re-introduce ignored tests; first figure out what actual test the
     # ignored tests map to.  Note that the logic below means that any ignored
@@ -276,14 +285,15 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
     # nocov end
 
     # For each selected test, add back the ignored ones; for new ones this is
-    # easy because we know they are all in the right order already in y@items.new
+    # easy because we know they are all in the right order already in
+    # y@items.new
 
     items.new.final <- y@items.new[new.ig.assign %in% items.new.idx]
 
     # For reference items, need to assign the ignored tests to the correct
-    # section since the ignored ones are not pulled from the processed item list,
-    # but rather from the original unitizer that hasn't had reference items with
-    # meaningless section ids quashed in `processInput`
+    # section since the ignored ones are not pulled from the processed item
+    # list, but rather from the original unitizer that hasn't had reference
+    # items with meaningless section ids quashed in `processInput`
 
     ref.sects <- vapply(
       as.list(y@items.ref[ref.ig.assign]), slot, 1L, "section.id"
@@ -291,9 +301,9 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
     for(i in seq_along(ref.ig.assign))
       y@items.ref[[i]]@section.id <- ref.sects[[i]]
 
-    # Refs a bit more complicated since we need to find the correct slot-in spot;
-    # slot.in has the correct slot for each item in items.ref.idx, in the order
-    # of items.ref.idx
+    # Refs a bit more complicated since we need to find the correct slot-in
+    # spot; slot.in has the correct slot for each item in items.ref.idx, in the
+    # order of items.ref.idx
 
     items.ref.final <- y@items.ref[ref.ig.assign %in% items.ref.idx]
 

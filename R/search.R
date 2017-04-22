@@ -135,9 +135,10 @@ compress_ns_data <- function(x) {
 search_path_update <- function(id, global) {
   stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
   if(!id %in% seq_along(global$tracking@search.path)) {
-    stop(
-      "Logic Error: attempt to reset state to unknown index; contact maintainer"
-    )
+    stop( # nocov start
+      "Internal Error: attempt to reset state to unknown index; contact ",
+      "maintainer"
+    )     # nocov end
   }
   search.target <- global$tracking@search.path[[id]]
   search.curr <- global$tracking@search.path[[global$indices.last@search.path]]
@@ -147,7 +148,9 @@ search_path_update <- function(id, global) {
   if(!isTRUE(search_dat_equal(curr.env.check, search.curr))) {
     # not entirely sure this check is needed, or might be too stringent
     # new version of comparing entire object not tested
-    stop("Logic Error: mismatch between actual search path and tracked path")
+    # nocov start
+    stop("Internal Error: mismatch between actual search path and tracked path")
+    # nocov end
   }
   # If we exit pre-maturely we'll be in a weird state so we need to mark this
   # state so that next time we get here during the overall `on.exit` we can

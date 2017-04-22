@@ -188,9 +188,16 @@ local({
     )
     expect_equal(untz3b.get.all, c("unitizer", "unitizer", "unitizer"))
   })
-  # Namespace conflicts; unfortunately if either `covr` or `data.table` are loaded
-  # this may not work quite right
+  # Namespace conflicts; unfortunately if either `covr` or `data.table` are
+  # loaded this may not work quite right.  Also as of `covr` 2.2.2 it seems that
+  # the R session `covr` launches now seems to load the covr namespace.  The
+  # logic here ensures covr namespace is always loaded for this tests, if
+  # possible
 
+  unload.covr <- FALSE
+  if(!"covr" %in% loadedNamespaces()) {
+    unload.covr <- requireNamespace('covr', quietly=TRUE)
+  }
   old.keep.ns <- options(unitizer.namespace.keep=c("testthat"))
   unitizer:::read_line_set_vals("Y")
   txt4 <- unitizer:::capture_output(
@@ -214,6 +221,8 @@ local({
         interactive.mode=FALSE
   ) ) )
   options(old.keep.ns)
+  if(unload.covr) unloadNamespace('covr')
+
   # Note that if `data.table` namespace is loaded these tests are likely to fail
   # because they include un-unloadable namespaces in the error list
 

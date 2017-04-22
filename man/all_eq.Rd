@@ -2,7 +2,7 @@
 % Please edit documentation in R/item.sub.R
 \name{all_eq}
 \alias{all_eq}
-\title{Like all.equal but Returns FALSE If Not all.equal}
+\title{Like all.equal but Returns Empty String If Not all.equal}
 \usage{
 all_eq(target, current, ...)
 }
@@ -15,6 +15,9 @@ all_eq(target, current, ...)
 }
 \value{
 TRUE if \code{all.equal} returns TRUE, "" otherwise
+all_eq(1, 1L)
+all_eq(1, 2)
+isTRUE(all_eq(1, 2))
 }
 \description{
 Used as the default value comparison function since when values mismatch

@@ -14,7 +14,24 @@ NULL
 #' so that it is the same every time a test is run.  This functionality is
 #' turned off by default to comply with CRAN requirements.  You can
 #' permanently enable the recommended state tracking level by adding
-#' \code{options(unitizer.state='recommended')} in your \code{.Rprofile}.
+#' \code{options(unitizer.state='recommended')} in your \code{.Rprofile},
+#' although if you intend to do this be sure to read the
+#' \dQuote{CRAN non-compliance} section.
+#'
+#' @section CRAN non-compliance:
+#'
+#' In the default state management mode, this package fully complies with CRAN
+#' policies.  In order to implement advanced state management features we must
+#' lightly trace some \code{base} functions to alert \code{unitizer} each time
+#' the search path is changed by a test expression.  The traced function
+#' behavior is completely unchanged other than for the side effect of notifying
+#' \code{unitizer} each time they are called.  Additionally, the functions are
+#' only traced during \code{unitize} evaluation and are untraced on exit.
+#' Unfortunately this tracing is against CRAN policies, which is why it is
+#' disabled by default.
+#'
+#' For more details see the reproducible tests vignette with:
+#' \code{vignette(package='unitizer', 'unitizer_reproducible_tests')}
 #'
 #' @section Overview:
 #'
@@ -29,7 +46,7 @@ NULL
 #' applies equally to \code{unitize_dir}.
 #'
 #' \code{unitizer} provides functionality to insulate test code from variability
-#' in the following.  Note the \dQuote{can be set} wording because by default
+#' in the following.  Note the \dQuote{can be} wording because by default
 #' these elements of state are not managed:
 #'
 #' \itemize{
@@ -61,8 +78,10 @@ NULL
 #'     re-load them to ensure default options are set.
 #' }
 #'
-#' In the \dQuote{recommended} state tracking mode parent environment, random
-#' seed, working directory, and search path are all managed.  All these settings
+#' In the \dQuote{recommended} state tracking, mode parent environment, random
+#' seed, working directory, and search path are all managed.  For example, with
+#' the search path managed, each test file will start evaluation with the search
+#' path set to what you would find in a vanilla R session.  All these settings
 #' are returned to their original values when \code{unitizer} exits.
 #'
 #' You can modify what aspects of state are managed by using the \code{state}
@@ -257,36 +276,6 @@ NULL
 state <- function(
   par.env, search.path, options, working.directory, random.seed, namespaces
 ) {
-  ## NEED TO FIGURE OUT HOW WE CAN PRE-POPULATE THIS FUNCTION WITH THE DEFAULT
-  ## WHAT WE REALLY WANT IS TO BE ABLE TO USE as.state TO INSTANTIATE A DEFAULT
-  ## FROM THE `getOption('unitizer.state')` VALUE, AND THEN UPDATE IT WITH
-  ## WHATEVER ARGUMENTS ARE PROVIDED HERE.  THE CHALLENGE IS THAT THE `par.env`
-  ## ARGUMENT IS MORE FLEXIBLE HERE THAT WHAT CAN BE PUT IN THE OUTPUT OF
-  ## `as.state`, SO THAT HAS TO BE MANAGED.  MAY END UP MAKING unitizerStateRaw
-  ## SOMEWHAT MOOT (AND RIGHT NOW, NOT 100% SURE WHAT THE REAL NEED FOR IT IS,
-  ## WHY DIDN'T WE JUST CONVERT THE `par.env` ARGUMENT DIRECTLY TO LEGAL VALUE
-  ## FROM THE GET GO?).
-  ##
-  ## WE ALSO DON'T WANT TO SPECIFY ANY DEFAULT VALUES HERE.  SEEM TO BE TWO
-  ## CHOICES: EITHER USE ..., OR USE ARGS WITHOUT DEFAULTS AND CHECK WHICH ONES
-  ## ARE MISSING TO FIGURE OUT WHICH ONES SHOULD BE POPULATED.
-  ##
-  ## PROBABLY BEST STRATEGY IS TO:
-  ## - use non-default arguments
-  ## - match-call
-  ## - if `par.env` is specified, use special `par.env` to environmentOrNULL
-  ##   function
-  ## - Use `as.state` from the `getOption('unitizer.state')` value to generate a
-  ##   default state object
-  ## - For each arg that is not missing, update the output of `as.state`
-  ## - return
-  ##
-  ## The main purpose of unitizerStateRaw seems to be to allow us to submit
-  ## in_pkg objects that can only be computed when we have the test files, which
-  ## we don't necessarily get when we create the state object, but we would when
-  ## we run the unitizer (this is the case when we're unitizing from the project
-  ## directory so you can figure out the package from that).
-
   if(!identical(c("par.env", .unitizer.global.settings.names), names(formals())))
     stop(
       "Internal error: state element mismatch; this should not happen, ",
@@ -310,29 +299,13 @@ state <- function(
     slot(state.def, i) <- i.val
   }
 
-  if(!isTRUE(validObject(state.def, test=TRUE))) {
-    stop("Unable to create valid `unitizerStateRaw` object; see prior errors")
+  if(!isTRUE(val.err <- validObject(state.def, test=TRUE))) {
+    stop(
+      "Unable to create valid `unitizerStateRaw` object: ",
+      val.err
+    )
   }
   state.def
-}
-process_par_env <- function(par.env) {
-  if(
-    !is.null(par.env) && !is.chr1(par.env) && !is.environment(par.env) &&
-    !is(par.env, "unitizerInPkg")
-  )
-    stop(
-      "Argument `par.env` must be NULL, character(1L), an environment, or ",
-      "a `unitizerInPkg` object"
-    )
-  if(is.chr1(par.env)) {
-    par.env <- try(getNamespace(par.env))
-    if(inherits(par.env, "try-error"))
-      stop(
-        "Unable to retrieve namespace for `", par.env, "`; make sure the ",
-        "value actually refers to an installed package."
-      )
-  }
-
 }
 unitizerInPkg <- setClass(
   "unitizerInPkg",
@@ -383,11 +356,17 @@ unitizerState <- setClass(
   validity=function(object) {
     # seemingly superflous used to make sure this object is in concordance with
     # the various others that are similar
-    if(!identical(slotNames(object), .unitizer.global.settings.names))
-      paste0(
-        "Invalid state object, slots must be ",
-        deparse(.unitizer.global.settings.names, width=500)
+    if(
+      !identical(
+        setdiff(slotNames(object), 'par.env'), .unitizer.global.settings.names
       )
+    ) {
+      return(
+        paste0(
+          "Invalid state object, slots must be ",
+          deparse(.unitizer.global.settings.names, width=500)
+      ) )
+    }
     for(i in .unitizer.global.settings.names) {
       slot.val <- slot(object, i)
       if(
@@ -398,13 +377,23 @@ unitizerState <- setClass(
     }
     if(
       identical(object@options, 2L) &&
-      !identical(object@namespaces, 2L)  &&
-      !identical(object@search.path, 2L)
+      (
+        !identical(object@namespaces, 2L) ||
+        !identical(object@search.path, 2L)
+      )
     )
       return(
         paste0(
-          "Argument `reproducible.state` has an invalid state: 'options' is set ",
+          "Argument `state` is an invalid state: 'options' is set ",
           "to 2, but 'search.path' and 'namespaces' are not"
+      ) )
+    if(
+      identical(object@namespaces, 2L) && !identical(object@search.path, 2L)
+    )
+      return(
+        paste0(
+          "Argument `state` is an invalid state: 'namespaces' is set ",
+          "to 2, but 'search.path' is not"
       ) )
     if(identical(object@random.seed, 2L)) {
       prev.seed <- mget(
@@ -657,6 +646,20 @@ char_or_null_as_state <- function(x) {
     safe=new("unitizerStateSafe")
   )
 }
+setGeneric(
+  "as.unitizerStateRaw",
+  function(x, ...) standardGeneric("as.unitizerStateRaw")
+)
+# Raw states can contain pretty much everything processed ones can
+
+setMethod("as.unitizerStateRaw", "unitizerState",
+  function(x, ...) {
+    state <- new("unitizerStateRaw")
+    for(i in slotNames(state)) slot(state, i) <- slot(x, i)
+    validObject(state)
+    state
+  }
+)
 ## Generate a state raw object
 ##
 ## "unitizerStateProcessed" objects are returned as is.  The `x` argument is one
@@ -667,7 +670,7 @@ char_or_null_as_state <- function(x) {
 
 as.state_raw <- function(x) {
   err.msg <- cc(
-    "%s must be character(1L) %in% ",
+    "%s must be character(1L) %%in%% ",
     deparse(.unitizer.valid.state.abbr), ", NULL, an environment, or ",
     "must inherit from S4 classes `unitizerStateRaw`, ",
     "`unitizerStateProcessed` or `unitizerInPkg` ",
@@ -680,28 +683,40 @@ as.state_raw <- function(x) {
     !is(x, "unitizerInPkg") &&
     !is.null(x)
   )
-    stop(word_wrap(collapse="\n", sprintf(err.msg, "Argument")))
+    stop(word_wrap(collapse="\n", sprintf(err.msg, "Argument `x`")))
 
   x.raw <- if(!is(x, "unitizerState")) {
     if(is.null(x) || is.character(x)) {
       char_or_null_as_state(x)
     } else {
+      # x is either an environment or inPkg, so need to create a state object to
+      # inject that in
+
       state.opt <- getOption("unitizer.state")
-      if(is.null(state.opt) || is.character(state.opt)) {
-        state.tmp <- char_or_null_as_state(state.opt)
-        state.tmp@par.env <- x
-        state.tmp
-      } else if(is.environment(state.opt) || is(state.opt, "unitizerInPkg")) {
-        new("unitizerStateRaw", par.env=state.opt)
-      } else if(is(state.opt, "unitizerState")) {
+      state.tpl <- if(is(state.opt, "unitizerState")) {
+        as.unitizerStateRaw(state.opt)
+      } else if (is(state.opt, "unitizerStateRaw")) {
         state.opt
-      } else
+      } else if (is.null(state.opt) || is.character(state.opt)) {
+        char_or_null_as_state(state.opt)
+      } else if (is.environment(state.opt) || is(state.opt, "unitizerInPkg")) {
+        stop(
+          "Value for `getOption('unitizer.state')` is incompatible with ",
+          "using an environment or an 'unitizerInPkg' object as the value ",
+          "for the `state` argument because it also is an environment ",
+          "or a 'unitizerInPkg' object; you must change the option ",
+          "or the `state` argument to be compatible."
+        )
+      } else {
         stop(
           word_wrap(
             collapse="\n",
             sprintf(err.msg, "`getOption('unitizer.state')`")
           )
         )
+      }
+      state.tpl@par.env <- x
+      state.tpl
     }
   } else x
 

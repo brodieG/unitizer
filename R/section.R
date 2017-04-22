@@ -169,6 +169,7 @@ setMethod("length", "unitizerSection", function(x) x@length)
 #' work.
 #'
 #' @export
+#' @seealso \code{\link{testFuns}}, \code{\link{all_eq}}
 #' @param title character 1 length title for the section, can be omitted
 #'   though if you do omit it you will have to refer to the subsequent
 #'   arguments by name (i.e. \code{unitizer_sect(expr=...)})

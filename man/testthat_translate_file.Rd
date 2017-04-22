@@ -2,7 +2,7 @@
 % Please edit documentation in R/translate.R
 \name{testthat_translate_file}
 \alias{testthat_translate_file}
-\alias{testthat_translate_name,}
+\alias{testthat_translate_name}
 \alias{testthat_translate_dir}
 \alias{testthat_translate_dir}
 \alias{testthat_translate_name}

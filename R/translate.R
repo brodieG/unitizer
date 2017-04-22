@@ -129,7 +129,7 @@
 #'
 #' @export
 #' @seealso \code{\link{unitize}}, \code{\link{unitizerState}}
-#' @aliases testthat_translate_name, testthat_translate_dir
+#' @aliases testthat_translate_name testthat_translate_dir
 #' @param file.name a path to the \code{testthat} test file to convert
 #' @param dir.name a path to the \code{testthat} directory to convert
 #' @param target.dir the directory to create the \code{unitizer} test file and
