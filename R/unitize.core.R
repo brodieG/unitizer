@@ -6,8 +6,8 @@
 # Right now we distinguish in what mode we're running based on whether
 # \code{test.file} is NULL (review mode) vs. not (unitize mode), which isn't
 # very elegant, but whatevs.  This has implications for the parsing / evaluation
-# step, as well as how the \code{unitizerBrowse} object is constructed.  Otherwise
-# stuff is mostly the same.
+# step, as well as how the \code{unitizerBrowse} object is constructed.
+# Otherwise stuff is mostly the same.
 #
 # Cleary there is a trade-off in increased code complexity to handle both types
 # of code, vs duplication.  Not ideal, but tasks are so closely related and
@@ -514,36 +514,45 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
         global$ns.opt.conflict@conflict && !length(global$ns.opt.conflict@file)
       )
         global$ns.opt.conflict@file <- basename(unitizer@test.file.loc)
+
+      unitizers[[i]]@eval <- FALSE
+
+      ## Attach the compressed state for reference; previously we used to do
+      ## this outside of the state, doing it for every test file irrespective of
+      ## whether it was re-evaled or not, but that was expensive.  Now only
+      ## doing it for re-evaled ones (hopefully not introducing bugs in process)
+
+      glob.opts <-
+        Filter(Negate(is.null), lapply(global$tracking@options, names))
+      glob.opts <-
+        if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
+
+      no.track <- c(
+        unlist(
+          lapply(
+            union(
+              global$unitizer.opts[["unitizer.opts.asis.base"]],
+              global$unitizer.opts[["unitizer.opts.asis"]]
+            ),
+            grep, glob.opts
+          )
+        ),
+        match(
+          names(
+            merge_lists(
+              global$unitizer.opts[["unitizer.opts.init.base"]],
+              global$unitizer.opts[["unitizer.opts.init"]],
+          ) ),
+          glob.opts,
+          nomatch=0L,
+      ) )
+      unitizers[[i]]@state.new <- unitizerCompressTracking(
+        global$tracking, glob.opts[no.track]
+      )
     } else {
       unitizers[[i]] <- unitizer
     }
-    unitizers[[i]]@eval <- FALSE
-    glob.opts <- Filter(Negate(is.null), lapply(global$tracking@options, names))
-    glob.opts <-
-      if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
 
-    no.track <- c(
-      unlist(
-        lapply(
-          union(
-            global$unitizer.opts[["unitizer.opts.asis.base"]],
-            global$unitizer.opts[["unitizer.opts.asis"]]
-          ),
-          grep, glob.opts
-        )
-      ),
-      match(
-        names(
-          merge_lists(
-            global$unitizer.opts[["unitizer.opts.init.base"]],
-            global$unitizer.opts[["unitizer.opts.init"]],
-        ) ),
-        glob.opts,
-        nomatch=0L,
-    ) )
-    unitizers[[i]]@state.new <- unitizerCompressTracking(
-      global$tracking, glob.opts[no.track]
-    )
   }
   unitizers
 }
@@ -573,7 +582,10 @@ unitize_browse <- function(
   test.len <- length(unitizers)
   summaries <- summary(unitizers, silent=TRUE)
   totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
-  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
+
+  # First row will be passed
+
+  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L
 
   # Determine implied review mode (all tests passed in a particular unitizer,
   # but user may still pick it to review); we got lazy and tried to leverage
