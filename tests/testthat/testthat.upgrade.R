@@ -33,7 +33,7 @@ test_that("Later but valid version", {
   dir.create(tmpdir)
   test.file <- file.path(tmpdir, "tests.R")
   cat("1 + 1", file=test.file)
-  unitize(test.file, auto.accept="new")
+  unitizer:::capture_output(unitize(test.file, auto.accept="new"))
 
   version <-
     unlist(strsplit(as.character(packageVersion('unitizer')), ".", fixed=TRUE))
