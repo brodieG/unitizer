@@ -297,8 +297,11 @@ pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     return(rel.path)
 
   pkg.name <- try(get_package_name(pkg.dir))
-  if(inherits(pkg.name, "try-error"))
-    stop("Logic Error: failed getting package name; contact maintainer")
+  if(inherits(pkg.name, "try-error")) {
+    # nocov start
+    stop("Internal Error: failed getting package name; contact maintainer")
+    # nocov end
+  }
   pkg.path <- file.path(
     paste0("package:", pkg.name),
     substr(path.norm, nchar(pkg.dir) + 2L, nchar(path.norm))

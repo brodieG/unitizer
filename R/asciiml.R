@@ -166,8 +166,11 @@ bullet_obj <- function(x, type, style, offset) {
 
   bulleter <- if(identical(type, "ordered")) {
     f <- .bullet.funs[[style]]
-    if(!is.function(f))
-      stop("Logic Error; could not find ordered function; contact maintainer")
+    if(!is.function(f)) {
+      # nocov start
+      stop("Internal Error; could not find ordered function; contact maintainer")
+      # nocov end
+    }
     f
   } else function(x) rep(style, x)
   structure(

@@ -523,7 +523,9 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       test.status <- "Pass"
       test.result <- test.result.tpl
       if(nrow(test.result) != 1L)
-        stop("Logic Error: tpl matrix should be one row; contact maintainer.")
+        # nocov start
+        stop("Internal Error: tpl matrix should be one row; contact maintainer.")
+        # nocov end
 
       get_dat <- function(x, i) {
         dat <- if(identical(i, "value")) slot(x, i)[[1L]] else slot(x, i)
@@ -638,7 +640,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           e1@tests.error <- append(e1@tests.error, TRUE)
         } else {
           # nocov start
-          stop("Logic Error: impossible test status; contact maintainer.")
+          stop("Internal Error: impossible test status; contact maintainer.")
           # nocov end
         }
       } else {

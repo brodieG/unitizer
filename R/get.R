@@ -145,7 +145,7 @@ get_unitizer.character <- function(store.id) {
   #     # )
   #   } else {
   #     stop(
-  #       "Logic Error: ID in retrieved unitizer is not a 1 length character vector as expected ",
+  #       "Internal Error: ID in retrieved unitizer is not a 1 length character vector as expected ",
   #       "(typeof: ", typeof(unitizer@id), ", length: ", length(unitizer@id),"); contact maintainer."
   #   )
   # } }
@@ -393,11 +393,14 @@ infer_unitizer_location.character <- function(
   if(!selection && interactive.mode) {
     warning("Invalid user selection", immediate.=TRUE)
     return(store.id)
-  } else if(!selection)
+  } else if(!selection) {
+    # nocov start
     stop(
-      "Logic Error: should never have non.interactive zero selection; ", "
+      "Internal Error: should never have non.interactive zero selection; ", "
       contact maintainer."
     )
+    # nocov end
+  }
   # Return
 
   file.final <- file.path(dir.store.id.proc, candidate.files[[selection]])
@@ -512,7 +515,7 @@ get_rcmdcheck_dir <- function(name, has.tests=FALSE) {
   if(isTRUE(chk.dir <- is_rcmdcheck_dir(name, has.tests))) {
     pkg.name <- sub("(.*)\\.Rcheck", "\\1", basename(name))
     return(file.path(name, pkg.name))
-  } else stop("Logic Error: not an R CMD check dir")
+  } else stop("Internal Error: not an R CMD check dir") # nocov
 }
 # Extracts the Source Directory from an testInstalledPackage directory
 

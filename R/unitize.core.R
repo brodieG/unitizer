@@ -28,37 +28,49 @@ unitize_core <- function(
   # - Validation / Setup -------------------------------------------------------
 
   if(!is.chr1(mode) || !mode %in% c("unitize", "review"))
-    stop("Logic Error: incorrect value for `mode`; contact maintainer")
+    # nocov start
+    stop("Internal Error: incorrect value for `mode`; contact maintainer")
+    # nocov end
   if(mode == "review") {
     if(!all(is.na(test.files)))
+      # nocov start
       stop(
-        "Logic Error: `test.files` must be NA in review; contact maintainer"
+        "Internal Error: `test.files` must be NA in review; contact maintainer"
       )
+      # nocov end
     if(length(auto.accept))
-      stop("Logic Error: auto-accepts not allowed in review mode")
+      stop("Internal Error: auto-accepts not allowed in review mode")  # nocov
     if(!identical(state, "off")
     )
-      stop("Logic Error: state must be disabled in review mode")
+      stop("Internal Error: state must be disabled in review mode")   # nocov
   }
   if(mode == "unitize") {
     if(
       !is.character(test.files) || any(is.na(test.files)) ||
       !all(file_test("-f", test.files))
     )
+      # nocov start
       stop(
-        "Logic Error: `test.files` must all point to valid files in unitize ",
+        "Internal Error: `test.files` must all point to valid files in unitize ",
         "mode; contact maintainer"
       )
+      # nocov end
     test.files <- try(normalize_path(test.files, mustWork=TRUE))
     if(inherits(test.files, "try-error"))
-      stop("Logic Error: unable to normalize test files; contact maintainer")
+      # nocov start
+      stop("Internal Error: unable to normalize test files; contact maintainer")
+      # nocov end
   }
   if(length(test.files) != length(store.ids))
+    # nocov start
     stop(
-      "Logic Error: mismatch in test file an store lengths; contact maintainer"
+      "Internal Error: mismatch in test file an store lengths; contact maintainer"
     )
+    # nocov end
   if(!length(test.files))
-    stop("Logic Error: expected at least one test file; contact maintainer.")
+    # nocov start
+    stop("Internal Error: expected at least one test file; contact maintainer.")
+    # nocov end
   if(!is.TF(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
@@ -214,10 +226,12 @@ unitize_core <- function(
         } else x
   } ) )
   if(inherits(norm.attempt, "try-error"))
+    # nocov start
     stop(
-      "Logic Error: some `store.ids` could not be normalized; contact ",
+      "Internal Error: some `store.ids` could not be normalized; contact ",
       "maintainer."
     )
+    # nocov end
   # - Set Global State ---------------------------------------------------------
 
   on.exit(
@@ -313,7 +327,7 @@ unitize_core <- function(
         immediate.=TRUE
       )
       stop(
-        "Logic Error: shouldn't be able to evaluate this code; ",
+        "Internal Error: shouldn't be able to evaluate this code; ",
         "contact maintainer"
       )
       # nocov end
@@ -483,10 +497,12 @@ unitize_core <- function(
 unitize_eval <- function(tests.parsed, unitizers, global) {
   test.len <- length(tests.parsed)
   if(!identical(test.len, length(unitizers)))
+    # nocov start
     stop(
-      "Logic Error: parse data and unitizer length mismatch; contact ",
+      "Internal Error: parse data and unitizer length mismatch; contact ",
       "maintainer."
     )
+    # nocov end
   # Set up display stuff
 
   num.digits <- as.integer(ceiling(log10(test.len + 1L)))
@@ -725,10 +741,12 @@ unitize_browse <- function(
 
         if(!first.time && !any(bookmarked)) {
           if(!interactive.mode)
+            # nocov start
             stop(
-              "Logic Error: looping for user input in non-interactive mode, ",
+              "Internal Error: looping for user input in non-interactive mode, ",
               "contact maintainer."
             )
+            # nocov end
           show(summaries)
         }
         first.time <- FALSE
@@ -828,10 +846,12 @@ unitize_browse <- function(
         # - Non-interactive Issues ---------------------------------------------
         if(any(int.error)) {
           if(interactive.mode)
+            # nocov start
             stop(
-              "Logic Error: should not get here in interactive mode; contact ",
-              " maintainer"
+              "Internal Error: should not get here in interactive mode; ",
+              "contact maintainer"
             )
+            # nocov end
           # Problems during non-interactive review; we only allow this as a
           # mechanism for allowing auto-accepts in non-interactive mode
 

@@ -60,10 +60,12 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     start.time <- proc.time()
 
     if(length(e1@sections))
+      # nocov start
       stop(
-        "Logic Error: you are attempting to add more than one set ",
+        "Internal Error: you are attempting to add more than one set ",
         "of tests or expressions to this `unitizer`"
       )
+      # nocov end
     if(is.expression(e2)) e2 <- new("unitizerTests") + e2
     e1 <- e1 + new("unitizerSection", length=length(e2))
     matched.calls <- rep(NA_integer_, length(e2))
@@ -201,10 +203,13 @@ setMethod("refSections", c("unitizer", "unitizer"), valueClass="unitizer",
     sections.unique <- Filter(Negate(is.na), sort(unique(sections.ref.ids)))
     if(!length(sections.unique)) return(x)
     if(!all(sections.unique %in% seq_along(y@sections))) {
+      # nocov start
       stop(
-        "Logic Error: reference tests referencing non-existing sections in ", "
-        original; contact maintainer"
-    ) }
+        "Internal Error: reference tests referencing non-existing sections in ",
+        "original; contact maintainer"
+      )
+      # nocov end
+    }
     sects <- y@sections[sections.unique]
     sects.ranks <- rank(sections.unique, ties.method="first")
     sections.ref.mapped <- sects.ranks[match(sections.ref.ids, sections.unique)]
@@ -241,7 +246,11 @@ setMethod("+", c("unitizer", "unitizerItem"),
   function(e1, e2) {
     e2 <- try(updateLs(e2, e1@items.new@base.env))
     if(inherits(e2, "try-error"))
-      stop("Logic Error: unable to update LS for new item; contact maintainer.")
+      # nocov start
+      stop(
+        "Internal Error: unable to update LS for new item; contact maintainer."
+      )
+      # nocov end
     e1 <- registerItem(e1, e2)
     e1 <- testItem(e1, e2)
     e1
