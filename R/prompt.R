@@ -374,13 +374,11 @@ read_line <- function(prompt="") {
     )     # nocov end
   } else if(!length(.global$prompt.vals)) {
     # Need dedicated condition so `unitizer_prompt` can catch it
-    # nocov start
     cond <- simpleCondition(
       "Internal Error: ran out of predefined readline input; contact maintainer."
     )
     class(cond) <- c("readError", "error", class(cond))
     stop(cond)
-    # nocov end
   } else {
     res <- .global$prompt.vals[[1L]]
     .global$prompt.vals <- tail(.global$prompt.vals, -1L)
