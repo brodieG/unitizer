@@ -51,8 +51,8 @@ unitize_core <- function(
     )
       # nocov start
       stop(
-        "Internal Error: `test.files` must all point to valid files in unitize ",
-        "mode; contact maintainer"
+        "Internal Error: `test.files` must all point to valid files in ",
+        "unitize mode; contact maintainer"
       )
       # nocov end
     test.files <- try(normalize_path(test.files, mustWork=TRUE))
@@ -64,7 +64,8 @@ unitize_core <- function(
   if(length(test.files) != length(store.ids))
     # nocov start
     stop(
-      "Internal Error: mismatch in test file an store lengths; contact maintainer"
+      "Internal Error: mismatch in test file an store lengths; contact  ",
+      "maintainer"
     )
     # nocov end
   if(!length(test.files))
@@ -276,13 +277,18 @@ unitize_core <- function(
   if(identical(global$status@options, 2L)) options_zero()
   if(identical(global$status@random.seed, 2L)) {
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
+      # nocov start shouldn'at ctually be able to get here because
+      # the option should be validated
       stop(
         word_wrap(collapse="\n",
           cc(
-            "Unable to set random seed; make sure ",
-            "`getOption('unitizer.seed')` ",
-            "is a list of possible arguments to `set.seed`."
-  ) ) ) } }
+            "Internal Error: Unable to set random seed; somehow ",
+            "`getOption('unitizer.seed')` does not a apper to be valid, ",
+            "which should not happen; contact maintainer."
+
+      ) ) )
+      # nocov end
+  } }
   if(identical(global$status@working.directory, 2L)) {
     if(length(unique(dirname(test.files)) == 1L)) {
       path <- dirname(test.files[[1L]])
@@ -303,15 +309,20 @@ unitize_core <- function(
       if(!is.null(test.dir)) {
         dir.set <- try(setwd(test.dir))
         if(inherits(dir.set, 'try-error')) {
+          # nocov start there really shouldn't be a way to trigger this warning
+          test.dir.err <-
+            if(!is.chr1(test.dir)) "<not character(1L)>" else test.dir
           warning(
             word_wrap(collapse="\n",
               cc(
                 "Working directory state tracking is in mode 2, but we ",
-                "failed setting director to '", test.dir, "' so we are  ",
+                "failed setting director to '", test.dir.err, "' so we are  ",
                 "leaving the working directory unchanged."
             ) ),
             immediate.=TRUE
-      ) } }
+          )
+          # nocov end
+      } }
     } else {
       # nocov start
       # currently no way to get here since there is no way to specify multiple
@@ -585,8 +596,13 @@ unitize_browse <- function(
   # - Prep ---------------------------------------------------------------------
 
   if(!length(unitizers)) {
-    message("No tests to review")
-    return(unitizers)
+    # nocov start shouldn't happen
+    stop(
+      "Internal Error: asked to browse empty unitizer list; contact ",
+      "maintainer."
+    )
+    # return(unitizers)  # used to do this b4 it was declared internal error
+    # nocov end
   }
   over_print("Prepping Unitizers...")
 
@@ -788,11 +804,15 @@ unitize_browse <- function(
           } else {
             pick.num <- as.integer(pick)
             if(!pick.num %in% seq.int(test.len)) {
-              meta_word_msg(
-                "Input not a valid unitizer; choose in ",
-                deparse(seq.int(test.len))
+              # nocov start enforced by valid.vals in `unitizer_prompt`
+              stop(
+                "Internal Error: should not be able to pick a number that ",
+                "does not correspond to a `unitizer`, contact maintainer."
               )
+              # we used to do next before we added error here; should still work
+              # if we need to revert
               next
+              # nocov end
           } }
         } else pick.num <- 1L
 
