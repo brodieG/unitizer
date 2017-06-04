@@ -106,11 +106,18 @@ setMethod(
       )
     )
     if(!length(y)) {
-      meta_word_cat("No tests to review.", trail.nl=FALSE)
+      meta_word_cat("Empty unitizer; no tests to review.", trail.nl=FALSE)
     } else if(!something.happened && !force.update) {
-      meta_word_cat(
-        "All tests passed, unitizer store unchanged.", trail.nl=FALSE
+      # nocov start shouldn't be possible to get here as this gets filtered out
+      # by the review requirement in `unitize_browse`
+      stop(
+        "Internal error: All tests passed, unitizer store unchanged, you ",
+        "should not be able to reach this point; contact maintainer."
       )
+      # note we could just issue a message here and continue and everything
+      # would be fine, which is what we did before we made this an internal
+      # error
+      # nocov end
     } else {
       # Check we if we requested a re-eval and if so set the id where we were
       # before re-eval

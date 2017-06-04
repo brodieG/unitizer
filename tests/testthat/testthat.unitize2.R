@@ -113,4 +113,61 @@ local({
       "Test comparison functions appear to have produced output"
     )
   })
+  # Corner case files
+
+  local(
+    {
+      # empty
+
+      temp.empty <- paste0(tempfile(), "-empty.R")
+      on.exit(unlink(temp.empty))
+      cat("\n", file=temp.empty)
+      empty.capt <- unitizer:::capture_output(unitize(temp.empty, force=TRUE))
+
+      # File, but does not end in .R
+
+      temp.bad <- paste0(tempfile())
+      on.exit(unlink(temp.bad), add=TRUE)
+      cat("\n", file=temp.bad)
+
+      badname.capt <-
+        suppressWarnings(unitizer:::capture_output(unitize(temp.bad)))
+    },
+    envir=environment()
+  )
+  test_that("Corner Case Files", {
+    expect_true(any(grepl("Empty unitizer", empty.capt$output)))
+    expect_true(
+      any(grepl("No valid unitizers available", badname.capt$message))
+    )
+  })
+  # re-eval reeval with a modified file
+
+  local(
+    {
+      temp.reeval.base <- paste0(tempfile(), "-reeval")
+      temp.reeval <- paste0(temp.reeval.base, ".R")
+      temp.reeval.utz <- paste0(temp.reeval.base, ".unitizer")
+      on.exit(unlink(c(temp.reeval, temp.reeval.utz), recursive=TRUE))
+
+      cat("1 + 1\n2 + 2\n", file=temp.reeval)
+
+      unitizer:::read_line_set_vals(
+        c(
+          'Y',
+          'P',  # force re-review
+          'Y',
+          'cat("1 + 1\n2 + 3\n", file=temp.reeval)', 'R', 'Y',
+          'Q'
+        )
+      )
+      reeval.capt <- unitizer:::capture_output(
+        unitize(temp.reeval, state=environment(), interactive.mode=TRUE)
+      )
+    },
+    envir=environment()
+  )
+  test_that("Re-eval change", {
+    expect_true(sum(grepl("Unable to find test", reeval.capt$message)) == 1L)
+  })
 })

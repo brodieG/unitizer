@@ -114,10 +114,13 @@ path_clean <- function(path) {
 
 filename_to_storeid <- function(x) {
   if(is.character(x) && length(x) == 1L){
-    if((y <- sub("\\.[rR]$", ".unitizer", x)) != x) return(y)
+    r.regex <- "\\.[rR]$"
+    if((y <- sub(r.regex, ".unitizer", x)) != x) return(y)
     warning(
-      "Unable to translate file name '", x, "' to store id; please provide ",
-      "explicit store id"
+      "Unable to translate file name '", x, "' to `store.id` because ",
+      "it does not match regex '", r.regex, "', please provide explicit ",
+      "`store.id` or rename to end in '.R'.  Returning in NULL for ",
+      "`store.id`."
     )
   } else
     warning(

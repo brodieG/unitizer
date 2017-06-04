@@ -596,13 +596,9 @@ unitize_browse <- function(
   # - Prep ---------------------------------------------------------------------
 
   if(!length(unitizers)) {
-    # nocov start shouldn't happen
-    stop(
-      "Internal Error: asked to browse empty unitizer list; contact ",
-      "maintainer."
-    )
-    # return(unitizers)  # used to do this b4 it was declared internal error
-    # nocov end
+    # happens when all unitizers fail to load
+    meta_word_msg("No valid unitizers available to review.")
+    return(unitizers)
   }
   over_print("Prepping Unitizers...")
 
