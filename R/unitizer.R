@@ -580,8 +580,10 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         sink(file=e1@global$cons@dump.c, append=TRUE)
         sink(type="message", file=e1@global$cons@dump.c, append=TRUE)
         on.exit({
+          # nocov start emergency only
           sink(type="message")
           sink()
+          # nocov end
         })
         res.tmp <- eval_user_exp(
           test.call, e2@env, global=NULL, with.display=FALSE

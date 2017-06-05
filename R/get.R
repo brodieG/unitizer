@@ -387,7 +387,7 @@ infer_unitizer_location.character <- function(
   } else if (cand.len == 1L) {
     1L
   } else if (cand.len == 0L) {
-    warning("No possible matching files for ", store.id, immediate.=TRUE)
+    warning("No possible matching files for '", store.id, "'", immediate.=TRUE)
     return(store.id)
   }
   if(!selection && interactive.mode) {
@@ -517,14 +517,16 @@ get_rcmdcheck_dir <- function(name, has.tests=FALSE) {
     return(file.path(name, pkg.name))
   } else stop("Internal Error: not an R CMD check dir") # nocov
 }
-# Extracts the Source Directory from an testInstalledPackage directory
+# Extracts the Source Directory from an testInstalledPackage directory, looks
+# like this will be a bit of a bear to test, see the code in covr that uses
+# tools::testInstalledPackage for some potential things to worry about
 
 get_testinstpkg_dir <- function(name, has.tests=FALSE) {
   stopifnot(is.chr1(name), is.TF(has.tests))
   if(isTRUE(chk.dir <- is_testinstpkg_dir(name, has.tests))) {
     pkg.name <- sub("(.*)-tests$", "\\1", basename(name))
     return(file.path(dirname(name), pkg.name))
-  } else stop("Internal Error: not an testInstalledPackage dir")
+  } else stop("Internal Error: not an testInstalledPackage dir") # nocov
 }
 # Pulls Out Package Name from DESCRIPTION File
 #

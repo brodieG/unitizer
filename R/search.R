@@ -451,11 +451,15 @@ unload_namespaces <- function(
     unload.net,
     function(x) {
       if(inherits(loc <- try(find.package(x), silent=TRUE), "try-error")) {
+        # nocov start
         warning(
-          "Unloading namespace \"", x, "\", but it does not appear to have a ",
-          "corresponding installed package.", immediate.=TRUE
+          "Internal Warning: Unloading namespace \"", x, "\", but it does ",
+          "not appear to have a corresponding installed package; if this",
+          "warning persists please contact maintainer about it.",
+          immediate.=TRUE
         )
         ""
+        # nocov end
       } else loc
     },
     character(1L)
@@ -577,11 +581,14 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
         lib.loc=extra, warn.conflicts=FALSE
     ) ) )
     if(inherits(lib.try, "try-error")) {
+      # nocov start
       warning(
-        "Unable to fully restore search path; see prior error.",
+        "Internal Warning: unable to fully restore search path; see prior ",
+        "error. Contact maintainer if this warning persists.",
         immediate.=TRUE
       )
       global$state()
+      # nocov end
     }
   } else {
     base::attach(data, pos=pos, name=name, warn.conflicts=FALSE)

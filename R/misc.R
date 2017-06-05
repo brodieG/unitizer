@@ -83,7 +83,7 @@ unitizer_quit <- function(
     }
   }
   if(res == "y" && truly.quit) {
-    quit(save=save, status=status, runLast=runLast)
+    quit(save=save, status=status, runLast=runLast)  # nocov
   } else if (res == "y") TRUE else FALSE
 }
 # Cleans a Path to be In Standard Format

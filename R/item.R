@@ -93,14 +93,14 @@ setMethod("isValid", "unitizerItem",
       return("Slot `@id` must be length 1 and greater than zero.")
     if(!identical(names(object@ls), c("names", "status")) ||
       !identical(unname(vapply(object@ls, class, "")), rep("character", 2L))) {
-      return("Slot `@ls` has incorrect data structure")
+      return("Slot `@ls` has incorrect data structure")  # nocov
     }
     if(
       length(object@section.id) != 1L || (
         !is.na(object@section.id) && object@section.id < 1L # not 100% about allowing NA section ids, seems required for sectionless reference tests
       )
     ) {
-      return("Slot `@section.id` must be integer(1L) >= 1L")
+      return("Slot `@section.id` must be integer(1L) >= 1L") # nocov
     }
     if(!identical(length(object@section.name), 1L))
       return("Slot `@section.name` must be character(1L)")

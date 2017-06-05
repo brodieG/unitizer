@@ -135,6 +135,9 @@ unitize <- function(
   cat("\n")
 
   test.file.inf <- infer_unitizer_location(test.file)
+  if(!file_test("-f", test.file.inf))
+    stop("Argument `test.file` must resolve to a file")
+
   store.id.inf <- store.id
   if(is.null(store.id)) store.id.inf <- filename_to_storeid(test.file.inf)
   invisible(

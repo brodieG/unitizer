@@ -55,7 +55,10 @@
 # @return integer the top level parent ids for \code{`ids`}
 
 top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
-  if(!is.integer(ids) || !is.integer(par.ids) || !identical(length(ids), length(par.ids)))
+  if(
+    !is.integer(ids) || !is.integer(par.ids) ||
+    !identical(length(ids), length(par.ids))
+  )
     stop("Arguments `ids` and `par.ids` must be equal length integer vectors")
   if(!identical(length(setdiff(abs(par.ids), c(ids, top.level))), 0L))
     stop("Argument `par.ids` contains ids not in `ids`.")
@@ -64,7 +67,12 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   if(identical(top.level, 0L)) {
     par.ids <- pmax(0L, par.ids)
   } else if (any(par.ids) < 0) {
-    stop("Argument `par.ids` contains values less than zero, but that is only allowed when `top.level` == 0L")
+    # nocov start
+    stop(
+      "Internal Error: Argument `par.ids` contains values less than zero, ",
+      "but that is only allowed when `top.level` == 0L; contact maintainer."
+    )
+    # nocov end
   }
   # Create lookup matrix so we can look up ids directly.  This will be a slightly
   # sparse matrix to the extend `ids` doesn't contain every number between
@@ -164,7 +172,8 @@ comments_assign <- function(expr, comment.dat) {
       "Internal Error: there were multiple parent ids in argument ",
       "`comment.dat`; this should not happen"
     )     # nocov end
-  if(!length(expr) || !length(which(comment.dat$token == "COMMENT"))) return(expr)
+  if(!length(expr) || !length(which(comment.dat$token == "COMMENT")))
+    return(expr)
 
   # Make sure `comment.dat` is in format we understand
   # Theory: everything not "COMMENT" should be included, except:
@@ -174,11 +183,16 @@ comments_assign <- function(expr, comment.dat) {
   # "expr" needs to be moved to the front (in theory, should be at most one thing
   # and should be an infix operator of some sort)
 
-  if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", tk.lst$non.exps, tk.lst$brac.close, "';'"))
-    stop( # nocov start
+  if(
+    !tail(comment.dat$token, 1L) %in%
+    c("COMMENT", "expr", tk.lst$non.exps, tk.lst$brac.close, "';'")
+  )
+    # nocov start
+    stop(
       "Internal Error: unexpected ending token in parse data; contact ",
       "maintainer."
-    )     # nocov end
+    )
+    # nocov end
   if(
     length(which(comment.dat$token %in% tk.lst$brac.open)) > 1L ||
     length(which(comment.dat$token %in% tk.lst$brac.close)) > 1L
@@ -187,18 +201,24 @@ comments_assign <- function(expr, comment.dat) {
       "Internal Error: more than one bracket at top level; contact maintainer."
     )     # nocov end
   }
-  if(length(brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
+  if(
+    length(
+      brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) &&
+      !identical(brac.pos, nrow(comment.dat))
+  ) {
+    # nocov start
     # shouldn't happen, can't test
     if(
       !identical(comment.dat$token[brac.pos], "')'") ||
       !identical(brac.pos, nrow(comment.dat) - 1L) ||
       !identical(comment.dat$token[[1L]], "FUNCTION")
     ) {
-      stop(   # nocov start
+      stop(
         "Internal Error: closing brackets may only be on last row, unless a ",
         "paren and part of a functions formal definition; contact maintainer."
-      )       # nocov end
+      )
     }
+    # nocov end
   }
   if(
     !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) &&
@@ -223,15 +243,24 @@ comments_assign <- function(expr, comment.dat) {
 
   comm.notcomm <- prsdat_reduce(comment.dat)
   if(!identical(nrow(comm.notcomm), length(expr))) {
-    stop("Argument `expr` length cannot be matched with values in `comment.dat`")
+    # nocov start
+    stop(
+      "Internal Error: Argument `expr` length cannot be matched with values ",
+      "in `comment.dat`"
+    )
+    # nocov end
   }
-  # for the purposes of this process, constants and symbols are basically expressions
+  # for the purposes of this process, constants and symbols are basically
+  # expressions
 
   comm.notcomm <- transform(
     comm.notcomm,
     token=ifelse(
-      token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$ops), "expr", token)
-  )
+      token %in% c(
+        tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$ops
+      ),
+      "expr", token
+  ) )
   # what comments are on same line as something else
 
   comm.comm <- subset(comment.dat, token=="COMMENT")
@@ -511,7 +540,10 @@ parse_dat_get <- function(file, text) {
   parse.dat.raw <- NULL
   for(i in 1:2) {
     if(!is.null(text)) {
-      if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
+      if(!missing(file))
+        # nocov start
+        stop("Internal Error: cannot specify both `file` and `text` arguments.")
+        # nocov end
       expr <- try(parse(text=text, keep.source=TRUE))
     } else {
       expr <- try(parse(file, keep.source=TRUE))
@@ -522,10 +554,14 @@ parse_dat_get <- function(file, text) {
     if(is.null(parse.dat.raw)) break
 
     if(!nrow(parse.dat.raw))
-      stop("Internal Error: parse data mismatch; contact maintainer.")
+      stop("Internal Error: parse data mismatch; contact maintainer.") # nocov
     parse.dat.check <- cbind(
-      parse.dat.raw[match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")],
-      setNames(parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child"))
+      parse.dat.raw[
+        match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")
+      ],
+      setNames(
+        parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child")
+      )
     )
     if(
       length(
@@ -539,7 +575,7 @@ parse_dat_get <- function(file, text) {
       # that are lexically posterior
       if(identical(i, 1L))  # Try again once to see if that fixes it
         next
-      stop("Cannot retrieve self consistent parse data")
+      stop("Internal Error: cannot retrieve self consistent parse data") # nocov
     }
     break  # Parsing worked as expected
   }
