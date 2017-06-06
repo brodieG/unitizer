@@ -276,7 +276,7 @@ local({
   test_that("bad map", {
     expect_error(
       unitize_dir(test.dir, store.ids=function(x) stop("Bad store map fun")),
-      "attempting to convert test file"
+      "attempting to use it to convert test file"
     )
   })
 })

@@ -106,7 +106,11 @@ header_help <- function(x, width, ..., pad.char="-") {
 header <- function(x, level) {
   if(!is.character(x) || length(x) != 1L) stop("Argument `x` must be a one length character vector")
   levels.valid <- 1:3
-  if(!identical(round(level), as.numeric(level)) || !isTRUE(level %in% levels.valid)) {
+  if(
+    !is.numeric(level) ||
+    !identical(round(level), as.numeric(level)) || 
+    !isTRUE(level %in% levels.valid)
+  ) {
     stop("Argument `level` must be 1 length integer-like and in ", deparse(levels.valid))
   }
   structure(x, class=c(paste0("H", level), "header"))
