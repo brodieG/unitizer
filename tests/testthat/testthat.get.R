@@ -48,7 +48,10 @@ local({
     fake.utz <- file.path(tmp.fake.utz, "data.rds")
     cat("# this is not an RDS\n", file=fake.utz)
 
-    expect_error(get_unitizer(fake.utz), "Failed loading unitizer")
+    expect_error(
+      capture.output(get_unitizer(tmp.fake.utz), type="message"),
+      "Failed loading unitizer"
+    )
   } )
   tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
   tmp.sub.dir2 <- paste0(tmp.dir, "/get.test.dir2")
@@ -59,14 +62,17 @@ local({
     expect_true(set_unitizer(tmp.sub.dir, toy.stor))
     expect_equal(readRDS(paste0(tmp.sub.dir, "/data.rds")), toy.stor)
 
+    just.a.file <- tempfile()
+    on.exit(unlink(just.a.file))
+    cat("just a file\n", file=just.a.file)
     expect_error(
-      set_unitizer(tempfile(), toy.stor), "is not a directory"
+      set_unitizer(just.a.file, toy.stor), "is not a directory"
     )
     if(identical(.Platform$OS.type, "unix")) {
       # try to write to read only
       ro.dir <- tempfile()
       on.exit(unlink(ro.dir))
-      dir.create(ro.dir, mode="0700")
+      dir.create(ro.dir, mode="0500")
       expect_error(
         set_unitizer(ro.dir, toy.stor), "Failed setting unitizer"
       )
@@ -387,7 +393,7 @@ local({
       "too many to unambiguously"
     )
     fake.class <- structure(list(), class="thisclassdoesn'texist")
-    expect_identicak(infer(fake.class), fake.class)
+    expect_identical(infer(fake.class), fake.class)
   })
   test_that("test file / store manip", {
     skip('fails CRAN')
