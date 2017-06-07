@@ -74,7 +74,8 @@ local({
       on.exit(unlink(ro.dir))
       dir.create(ro.dir, mode="0500")
       expect_error(
-        set_unitizer(ro.dir, toy.stor), "Failed setting unitizer"
+        capture.output(set_unitizer(ro.dir, toy.stor), type="message"),
+        "Failed setting unitizer"
       )
     }
   } )
