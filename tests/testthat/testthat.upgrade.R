@@ -40,7 +40,7 @@ test_that("Later but valid version", {
   version[1] <- as.character(as.numeric(version[1]) + 1)
   version.new <- paste0(version, collapse=".")
 
-  unitizer.rds <- readRDS(file.path(tmpdir, "tests.unitizer", "data.RDS"))
+  unitizer.rds <- readRDS(file.path(tmpdir, "tests.unitizer", "data.rds"))
   unitizer.rds@version <- version.new
 
   # this should work
