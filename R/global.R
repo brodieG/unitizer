@@ -166,11 +166,14 @@ setMethod(
   function(x, ...) {
     s.n <- slotNames(x)
     res <- setNames(unlist(lapply(s.n, slot, object=x)), s.n)
-    if(!is.integer(res))
+    if(!is.integer(res)) {
+      # nocov start
       stop(
-        "Logic Error: unable to convert `unitizerGlobalIndices` object to ",
+        "Internal Error: unable to convert `unitizerGlobalIndices` object to ",
         "integer; contact maintainer."
       )
+      # nocov end
+    }
     res
 } )
 # Create a `unitizerGlobalIndices` object that points to the last stored states;
@@ -360,10 +363,12 @@ unitizerGlobal <- setRefClass(
       # top level copy for access from other namespaces
 
       if(isTRUE(.global$global$locked)) {
+        # nocov start
         stop(
-          "Logic Error: global tracking object already exists; this should ",
+          "Internal Error: global tracking object already exists; this should ",
           "never happen; contact maintainer"
         )
+        # nocov end
       } else if(set.global) {
         # no longer 100% sure, but I believe the .global is used solely so that
         # we can have access to the special unitizer parent environment from the

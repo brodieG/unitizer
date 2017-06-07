@@ -27,6 +27,15 @@ test_that("Rename Works", {
     ),
     "experimental"
   )
+  unitizer:::read_line_set_vals("N")
+  expect_message(
+    capture.output(
+      x.edit3 <- editCalls(x, quote(x), quote(y), interactive.only=TRUE)
+    ),
+    "Exiting without edits"
+  )
+  expect_identical(x.edit3, x)
+
   unitizer:::read_line_set_vals(NULL)
   expect_identical(
     x.edit@items.ref.calls.deparse, x.edit2@items.ref.calls.deparse

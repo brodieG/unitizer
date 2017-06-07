@@ -106,11 +106,18 @@ setMethod(
       )
     )
     if(!length(y)) {
-      meta_word_cat("No tests to review.", trail.nl=FALSE)
+      meta_word_cat("Empty unitizer; no tests to review.", trail.nl=FALSE)
     } else if(!something.happened && !force.update) {
-      meta_word_cat(
-        "All tests passed, unitizer store unchanged.", trail.nl=FALSE
+      # nocov start shouldn't be possible to get here as this gets filtered out
+      # by the review requirement in `unitize_browse`
+      stop(
+        "Internal error: All tests passed, unitizer store unchanged, you ",
+        "should not be able to reach this point; contact maintainer."
       )
+      # note we could just issue a message here and continue and everything
+      # would be fine, which is what we did before we made this an internal
+      # error
+      # nocov end
     } else {
       # Check we if we requested a re-eval and if so set the id where we were
       # before re-eval
@@ -346,7 +353,7 @@ setMethod(
                 actions <- c(actions, "re-run unitizer")
               } else if(identical(y@re.eval, 2L)) {
                 actions <- c(actions, "re-run all loaded unitizers")
-              } else stop("Logic Error: unexpected re-run value") # nocov
+              } else stop("Internal Error: unexpected re-run value") # nocov
               nav.hlp <- paste0(
                 nav.hlp,
                 "\n\nAdditionally, pressing Y will cause re-running of ",
@@ -394,11 +401,11 @@ setMethod(
               loop.status <- "b"
               break
             }
-            stop("Logic Error: unhandled user action") # nocov
+            stop("Internal Error: unhandled user action") # nocov
           }
           switch(  # needed to handle multi level break
             loop.status, b=break, n=next,
-            stop("Logic Error: invalid loop status, contact maintainer.")# nocov
+            stop("Internal Error: invalid loop status, contact maintainer.")# nocov
           )
         } else {
           meta_word_msg("No changes recorded.", trail.nl=FALSE)
@@ -430,7 +437,7 @@ setMethod(
 
     if(!length(x@sections)) {
       if(!identical(y@mode, "review"))
-        stop("Logic Error: should only get here in review mode")
+        stop("Internal Error: should only get here in review mode") # nocov
       # Need to re-use our reference sections so `refSections` works since we
       # will not have created any sections by parsing/evaluating tests.  This
       # is super hacky as we're partly using the stuff related to `items.new`,
@@ -654,8 +661,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
         cat("\n")
       }
       parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
-      if(inherits(parsed.call, "try-error"))
-        stop("Logic Error: malformed call stored; contact maintainer.")
+      if(inherits(parsed.call, "try-error")) {
+        # nocov start
+        stop("Internal Error: malformed call stored; contact maintainer.")
+        # nocov end
+      }
       cat(deparse_prompt(parsed.call), sep="\n")
       history_write(x@hist.con, item.main@call.dep)
 
@@ -811,10 +821,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
       } else if(length(fail.name) == 1L) {
         sprintf("mismatch in test %s", fail.name)
       } else {
+        # nocov start
         stop(
-          "Logic Error: test failures must have populated @tests.results ",
+          "Internal Error: test failures must have populated @tests.results ",
           "values; contact maintainer."
         )
+        # nocov end
       }
       if("conditions" %in% fail.name) {
         help.extra.2 <- cc(
@@ -910,8 +922,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
             x@mapping@sec.id == curr.sec     # all items in sub-section
           } else if (act.times == 4L) {
             TRUE                             # all items
-          } else
-            stop("Logic Error: unexpected number of Y/N; contact maintainer.")
+          } else {
+            # nocov start
+            stop("Internal Error: unexpected number of Y/N; contact maintainer.")
+            # nocov end
+          }
 
           # exclude already reviewed items as well as ignored items as well as
           # passed items (unless in review mode for last one)
@@ -956,7 +971,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
           }
           indices
         }
-        if(!any(rev.ind)) stop("Logic Error: no tests to accept/reject")
+        if(!any(rev.ind)) {
+          stop("Internal Error: no tests to accept/reject") # nocov
+        }
 
         x@mapping@reviewed[rev.ind] <- TRUE
         x@mapping@review.val[rev.ind] <- act
@@ -967,10 +984,12 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@multi.quit <- TRUE
         invokeRestart("earlyExit", extra=x)
       } else {
+        # nocov start
         stop(
-          "Logic Error: `unitizer_prompt` returned unexpected value; ",
+          "Internal Error: `unitizer_prompt` returned unexpected value; ",
           "contact maintainer"
         )
+        # nocov end
       }
       break
     }

@@ -106,7 +106,11 @@ header_help <- function(x, width, ..., pad.char="-") {
 header <- function(x, level) {
   if(!is.character(x) || length(x) != 1L) stop("Argument `x` must be a one length character vector")
   levels.valid <- 1:3
-  if(!identical(round(level), as.numeric(level)) || !isTRUE(level %in% levels.valid)) {
+  if(
+    !is.numeric(level) ||
+    !identical(round(level), as.numeric(level)) || 
+    !isTRUE(level %in% levels.valid)
+  ) {
     stop("Argument `level` must be 1 length integer-like and in ", deparse(levels.valid))
   }
   structure(x, class=c(paste0("H", level), "header"))
@@ -166,8 +170,11 @@ bullet_obj <- function(x, type, style, offset) {
 
   bulleter <- if(identical(type, "ordered")) {
     f <- .bullet.funs[[style]]
-    if(!is.function(f))
-      stop("Logic Error; could not find ordered function; contact maintainer")
+    if(!is.function(f)) {
+      # nocov start
+      stop("Internal Error; could not find ordered function; contact maintainer")
+      # nocov end
+    }
     f
   } else function(x) rep(style, x)
   structure(

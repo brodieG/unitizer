@@ -405,7 +405,8 @@ setMethod("initialize", "testFuns", function(.Object, ...) {
   if(!all(err.slots <- names(dots) %in% slotNames(getClass(.Object))))
     stop("Can't initialize invalid slots ", deparse(names(dots)[!err.slots]))
   fun.names <- vapply(substitute(list(...))[-1L], deparse_fun, character(1L))
-  if(!all(names(fun.names) %in% names(dots))) stop("Logic Error: contact package maintainer.")
+  if(!all(names(fun.names) %in% names(dots)))
+    stop("Internal Error: contact package maintainer.") # nocov
   for(i in names(dots)) {
     slot(.Object, i) <- if(is(dots[[i]], "unitizerItemTestFun")) {
       dots[[i]]

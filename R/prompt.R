@@ -89,10 +89,12 @@ unitizer_prompt <- function(
   global, ...
 ) {
   if(!interactive_mode())
+    # nocov start
     stop(
-      "Logic Error: attempting to use interactive unitizer environment in ",
+      "Internal Error: attempting to use interactive unitizer environment in ",
       "non-interactive session."
     )
+    # nocov end
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
   if(!is.environment(browse.env)) {
@@ -256,7 +258,7 @@ review_prompt <- function(x, nav.env) {
     !is.numeric(nav.id) || length(nav.id) != 1L || as.integer(nav.id) != nav.id
   ) {
     stop( # nocov start
-      "Logic Error: Unexpected user input allowed through in Review mode; ",
+      "Internal Error: Unexpected user input allowed through in Review mode; ",
       "contact maintainer"
     )     # nocov end
   } else {
@@ -264,9 +266,11 @@ review_prompt <- function(x, nav.env) {
 
     nav.id <- x@mapping@item.id[match(nav.id, x@mapping@item.id.ord)]
     if(is.na(nav.id))
+      # nocov start
       stop(
-        "Logic Error: failed retrieving internal item id; contact maintainer."
+        "Internal Error: failed retrieving internal item id; contact maintainer."
       )
+      # nocov end
   }
   # Determine whether test we selected is a test we would normally not review
   # note nav.id can be greater than length if we select Unreviewed and there are
@@ -365,13 +369,13 @@ read_line <- function(prompt="") {
     readline(prompt)
   } else if(!is.character(.global$prompt.vals)) {
     stop( # nocov start
-      "Logic Error: internal object `.global$prompt.vals` has unexpected ",
+      "Internal Error: internal object `.global$prompt.vals` has unexpected ",
       "value; contact maintainer."
     )     # nocov end
   } else if(!length(.global$prompt.vals)) {
     # Need dedicated condition so `unitizer_prompt` can catch it
     cond <- simpleCondition(
-      "Logic Error: ran out of predefined readline input; contact maintainer."
+      "Internal Error: ran out of predefined readline input; contact maintainer."
     )
     class(cond) <- c("readError", "error", class(cond))
     stop(cond)

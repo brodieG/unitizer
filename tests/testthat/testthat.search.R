@@ -330,5 +330,12 @@ local({
     expect_equal(glb$ns.opt.conflict@namespaces, "unitizerdummypkg1")
     unloadNamespace("unitizerdummypkg1")
   })
-
+  test_that("Generate unique names", {
+    expect_equal(
+      unitizer:::unitizerUniqueNames(
+        list(search.path=c(goodbye="0", hello="1", goodbye="2", goodbye="3"))
+      ),
+      c("goodbye", "hello", "goodbye.1", "goodbye.2")
+    )
+  })
 })

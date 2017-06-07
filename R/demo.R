@@ -160,7 +160,7 @@ update_fastlm <- function(dir, version) {
   stopifnot(version %in% c("0.1.0", "0.1.1", "0.1.2"))
   lm.dir <- switch(
     version, "0.1.0"="flm0", "0.1.1"="flm1", "0.1.2"="flm2",
-    stop("Logic Error; unknown version")
+    stop("Internal Error; unknown version") # nocov
   )
   untz.dir <- system.file(package="unitizer")
   lm.dir.full <- file.path(untz.dir, "expkg", lm.dir)

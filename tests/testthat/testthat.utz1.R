@@ -42,14 +42,29 @@ local({
       expect_identical(hist.dat, character())
     }
   })
+  # Bad history
+
+  bad.hist <- try(
+    unitize("helper/trivial.R", history=list()), silent=TRUE
+  )
+  test_that("bad history", {
+    expect_is(bad.hist, "try-error")
+    expect_match(
+      conditionMessage(attr(bad.hist, "condition")), "must be the name"
+    )
+  })
   # Bad seed
 
-  old.opt <- options(unitizer.seed="bad.seed")
-  txtopt1 <- unitizer:::capture_output(try(unitize(.unitizer.test.file)))
-  options(unitizer.seed=list("bad.seed"))
-  txtopt2 <- unitizer:::capture_output(try(unitize(.unitizer.test.file)))
-  options(old.opt)
-
+  local(
+    {
+      old.opt <- options(unitizer.seed="bad.seed")
+      on.exit(options(old.opt))
+      txtopt1 <- unitizer:::capture_output(try(unitize(.unitizer.test.file)))
+      options(unitizer.seed=list("bad.seed"))
+      txtopt2 <- unitizer:::capture_output(try(unitize(.unitizer.test.file)))
+    },
+    envir=environment()
+  )
   # gsub needed b/c of inconsistent error calls in 3.3.2 and 3.4
 
   test_that("bad seed", {
