@@ -197,7 +197,7 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
         unitizer.browse <- unitizer.browse + browse.sect
         NULL # SO above isn't last step in loop used for debugging
       }
-    } else stop("Logic Error: unexpected `mode`")
+    } else stop("Internal Error: unexpected `mode`")  # nocov
 
     unitizer.browse
   }
@@ -210,11 +210,14 @@ setMethod("bookmarked", "unitizerObjectList", function(x, ...) {
       is(y, "unitizer") && is(y@bookmark, "unitizerBrowseBookmark"),
     logical(1L)
   )
-  if(!length(which(bookmarked)) %in% 0:1)
+  if(!length(which(bookmarked)) %in% 0:1) {
+    # nocov start
     stop(
-      "Logic Error: no more than one unitizer may be bookmarked at any ",
+      "Internal Error: no more than one unitizer may be bookmarked at any ",
       "given time; contact maintainer"
     )
+    # nocov end
+  }
   bookmarked
 } )
 # Keeps track of All Test Review Data

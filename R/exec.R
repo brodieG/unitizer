@@ -114,10 +114,14 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     )
 } )
 eval_user_exp <- function(unitizerUSEREXP, env, global, with.display=TRUE) {
-  if(!is(global, "unitizerGlobal") && !is.null(global))
+  if(!is(global, "unitizerGlobal") && !is.null(global)) {
+    # nocov start
     stop(
-      "Logic Error: `global` argument must be a 'unitizerGlobal' object or NULL"
+      "Internal Error: `global` argument must be a 'unitizerGlobal' object ",
+      "or NULL, contact maintainer."
     )
+    # nocov end
+  }
   old.opt <- options(warn=1L)
   on.exit(options(old.opt))
 

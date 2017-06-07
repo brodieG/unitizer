@@ -97,8 +97,8 @@ local({
       "state",
       "text",
       "translate",
-      "unitize",
-      "unitize2",
+      "utz1",
+      "utz2",
       "upgrade",
       "zzrunlast"
     )

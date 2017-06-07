@@ -122,7 +122,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
           item.env <- x@base.env
         } else if (items.new.idx[[i.org]] + gaps[[i]] < 0) {
           # nocov start
-          stop("Logic Error, gap too low, contact maintainer.")
+          stop("Internal Error, gap too low, contact maintainer.")
           # nocov end
         } else {
           item.env <- y@items.new[[items.new.idx[[i.org]] + gaps[[i]]]]@env
@@ -232,7 +232,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
       if(inherits(item.ref.updated, "try-error")) {
         # nocov start
         stop(
-          "Logic Error: item environment history corrupted in unknown way; ",
+          "Internal Error: item environment history corrupted in unknown way; ",
           "contact maintainer.  You can attempt to recover your `unitizer` by ",
           "using `repair_envs`."
         )
@@ -279,7 +279,7 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
       any(!items.ref.idx %in% ref.ig.assign)
     )
       stop(
-        "Logic Error: error re-assigning ignored items to actual tests; ",
+        "Internal Error: error re-assigning ignored items to actual tests; ",
         "contact maintainer"
       )
     # nocov end
@@ -329,8 +329,8 @@ setMethod("healEnvs", c("unitizerItems", "unitizer"),
       # nocov start
       if(inherits(x, "try-error")) {
         stop(
-          "Logic Error: unable to repair reference test environments; contact ",
-          "maintainer."
+          "Internal Error: unable to repair reference test environments; ",
+          "contact maintainer."
       ) }
       # nocov end
     }

@@ -20,7 +20,11 @@ setMethod("upgrade", "unitizer", valueClass="unitizer",
       ) )
     }
     if(inherits(try(validObject(object, complete=TRUE)), "try-error")){
-      return("Upgrade produced invalid object; contact maintainer.")
+      # nocov start
+      return(
+        "Internal Error: Upgrade produced invalid object; contact maintainer."
+      )
+      # nocov end
     }
     object
 } )
@@ -34,7 +38,8 @@ upgrade_internal <- function(object) {
   } else {
     object@version <- as.character(ver)
   }
-  if(!is.package_version(ver)) stop("Cannot determine unitizer version.")
+  if(!is.package_version(ver))
+    stop("Cannot determine unitizer version.") # nocov
 
   # - 0.4.3 --------------------------------------------------------------------
 
@@ -192,7 +197,7 @@ upgrade_internal <- function(object) {
 
 addSlot <- function(object, slot.name, slot.value) {
   if(!isS4(object))
-    stop("Argument `object` must be an S4 object")
+    stop("Internal Error: Argument `object` must be an S4 object") # nocov
   slot.names <- slotNames(getClassDef(class(object)))
   if(!slot.name %in% slot.names) {
     warning(

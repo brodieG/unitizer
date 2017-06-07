@@ -83,7 +83,7 @@ unitizer_quit <- function(
     }
   }
   if(res == "y" && truly.quit) {
-    quit(save=save, status=status, runLast=runLast)
+    quit(save=save, status=status, runLast=runLast)  # nocov
   } else if (res == "y") TRUE else FALSE
 }
 # Cleans a Path to be In Standard Format
@@ -114,10 +114,13 @@ path_clean <- function(path) {
 
 filename_to_storeid <- function(x) {
   if(is.character(x) && length(x) == 1L){
-    if((y <- sub("\\.[rR]$", ".unitizer", x)) != x) return(y)
+    r.regex <- "\\.[rR]$"
+    if((y <- sub(r.regex, ".unitizer", x)) != x) return(y)
     warning(
-      "Unable to translate file name '", x, "' to store id; please provide ",
-      "explicit store id"
+      "Unable to translate file name '", x, "' to `store.id` because ",
+      "it does not match regex '", r.regex, "', please provide explicit ",
+      "`store.id` or rename to end in '.R'.  Returning in NULL for ",
+      "`store.id`."
     )
   } else
     warning(
@@ -297,8 +300,11 @@ pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
     return(rel.path)
 
   pkg.name <- try(get_package_name(pkg.dir))
-  if(inherits(pkg.name, "try-error"))
-    stop("Logic Error: failed getting package name; contact maintainer")
+  if(inherits(pkg.name, "try-error")) {
+    # nocov start
+    stop("Internal Error: failed getting package name; contact maintainer")
+    # nocov end
+  }
   pkg.path <- file.path(
     paste0("package:", pkg.name),
     substr(path.norm, nchar(pkg.dir) + 2L, nchar(path.norm))

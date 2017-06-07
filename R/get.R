@@ -145,7 +145,7 @@ get_unitizer.character <- function(store.id) {
   #     # )
   #   } else {
   #     stop(
-  #       "Logic Error: ID in retrieved unitizer is not a 1 length character vector as expected ",
+  #       "Internal Error: ID in retrieved unitizer is not a 1 length character vector as expected ",
   #       "(typeof: ", typeof(unitizer@id), ", length: ", length(unitizer@id),"); contact maintainer."
   #   )
   # } }
@@ -387,17 +387,20 @@ infer_unitizer_location.character <- function(
   } else if (cand.len == 1L) {
     1L
   } else if (cand.len == 0L) {
-    warning("No possible matching files for ", store.id, immediate.=TRUE)
+    warning("No possible matching files for '", store.id, "'", immediate.=TRUE)
     return(store.id)
   }
   if(!selection && interactive.mode) {
     warning("Invalid user selection", immediate.=TRUE)
     return(store.id)
-  } else if(!selection)
+  } else if(!selection) {
+    # nocov start
     stop(
-      "Logic Error: should never have non.interactive zero selection; ", "
+      "Internal Error: should never have non.interactive zero selection; ", "
       contact maintainer."
     )
+    # nocov end
+  }
   # Return
 
   file.final <- file.path(dir.store.id.proc, candidate.files[[selection]])
@@ -512,16 +515,18 @@ get_rcmdcheck_dir <- function(name, has.tests=FALSE) {
   if(isTRUE(chk.dir <- is_rcmdcheck_dir(name, has.tests))) {
     pkg.name <- sub("(.*)\\.Rcheck", "\\1", basename(name))
     return(file.path(name, pkg.name))
-  } else stop("Logic Error: not an R CMD check dir")
+  } else stop("Internal Error: not an R CMD check dir") # nocov
 }
-# Extracts the Source Directory from an testInstalledPackage directory
+# Extracts the Source Directory from an testInstalledPackage directory, looks
+# like this will be a bit of a bear to test, see the code in covr that uses
+# tools::testInstalledPackage for some potential things to worry about
 
 get_testinstpkg_dir <- function(name, has.tests=FALSE) {
   stopifnot(is.chr1(name), is.TF(has.tests))
   if(isTRUE(chk.dir <- is_testinstpkg_dir(name, has.tests))) {
     pkg.name <- sub("(.*)-tests$", "\\1", basename(name))
     return(file.path(dirname(name), pkg.name))
-  } else stop("Internal Error: not an testInstalledPackage dir")
+  } else stop("Internal Error: not an testInstalledPackage dir") # nocov
 }
 # Pulls Out Package Name from DESCRIPTION File
 #

@@ -239,8 +239,11 @@ setMethod("show", "conditionList",
     } )
     out.w <- word_wrap(paste0(out, cond.detail), width=desc.chars, unlist=FALSE)
     out.lens <- vapply(out.w, length, integer(1L))
-    if(!all(out.lens))
-      stop("Logic Error: empty condition data; contact maintainer.")
+    if(!all(out.lens)) {
+      # nocov start
+      stop("Internal Error: empty condition data; contact maintainer.")
+      # nocov end
+    }
 
     nums.pad <- Map(
       function(x, y) c(x, rep(paste0(rep(" ", nchar(x)), collapse=""), y - 1L)),

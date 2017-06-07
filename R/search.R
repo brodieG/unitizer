@@ -200,24 +200,30 @@ search_path_update <- function(id, global) {
   repeat {
     reord <- match(sc.id.tmp, st.id)
     if(any(is.na(reord)) || !identical(length(reord), length(st.id)))
-      stop("Logic Error: incorrect path remapping; contact maintainer.")
+      # nocov start
+      stop("Internal Error: incorrect path remapping; contact maintainer.")
+      # nocov end
 
     if(!any(mismatch <- reord != seq_along(reord))) break
 
     if((j <- j + 1) > length(st.id) || length(which(mismatch)) < 2L)
-      stop("Logic Error: unable to reorder search path; contact maintainer.")
+      # nocov start
+      stop("Internal Error: unable to reorder search path; contact maintainer.")
+      # nocov end
 
     swap.valid <- mismatch & (
       grepl("package:.+", sc.id.tmp) | !sc.id.tmp %in% search.keep
     )
     if(!any(swap.valid))
+      # nocov start
       stop(
-        "Logic Error: unable to reorder search path because of ",
+        "Internal Error: unable to reorder search path because of ",
         "'unitizer.search.path.keep' limitations. If you added objects ",
         "to that option, make sure you're not also attaching/detaching ",
         "them in your tests.  If you are not doing those things, contact ",
         "maintainer."
       )
+      # nocov end
     swap.id <- min(reord[swap.valid])
     swap.pos <- which(reord == swap.id)
     move_on_path(new.pos=swap.id, old.pos=swap.pos, global=global)
@@ -226,7 +232,9 @@ search_path_update <- function(id, global) {
   search.new <- search()
   sp.check <- match(search.new, names(search.target$search.path))
   if(any(is.na(sp.check)) || any(diff(sp.check) < 1L))
-    stop("Logic Error: path reorder failed; contact maintainer.")
+    # nocov start
+    stop("Internal Error: path reorder failed; contact maintainer.")
+    # nocov end
   search.target$search.path <- search.target$search.path[search.new]
 
   # Replace all non packages with those in the target list since those may have
@@ -238,7 +246,9 @@ search_path_update <- function(id, global) {
     names(search_as_envs()$search.path), is.loaded_package, logical(1L)
   )
   if(!identical(tar.objs, cur.objs))
-    stop("Logic Error: search path object type mismatch; contact maintainer.")
+    # nocov start
+    stop("Internal Error: search path object type mismatch; contact maintainer.")
+    # nocov end
 
   if(!all(tar.objs)) {
     for(
@@ -259,7 +269,9 @@ search_path_update <- function(id, global) {
   # Updated comparison method (might be too stringent)
 
   if(!isTRUE(search_dat_equal(search_as_envs(), search.target)))
-    stop("Logic Error: path reorder failed at last step; contact maintainer.")
+    # nocov start
+    stop("Internal Error: path reorder failed at last step; contact maintainer.")
+    # nocov end
 
   on.exit(NULL)
   invisible(TRUE)
@@ -278,10 +290,12 @@ search_path_update <- function(id, global) {
 namespace_update <- function(id, global) {
   stopifnot(is(global, "unitizerGlobal"), is.int.pos.1L(id))
   if(!id %in% seq_along(global$tracking@namespaces))
+    # nocov start
     stop(
-      "Logic Error: attempt to reset namespaces to unknown index; contact ",
+      "Internal Error: attempt to reset namespaces to unknown index; contact ",
       "maintainer"
     )
+    # nocov end
   ns.target <- global$tracking@namespaces[[id]]
   # should this be get_namespace_data()?
   ns.curr <- global$tracking@namespaces[[global$indices.last@namespaces]]
@@ -341,7 +355,9 @@ search_path_trim <- function(
 
   for(pack in to.detach) {
     if(!is.chr1(pack))
-      stop("Logic Error: invalid search path token; contact maintainer.")
+      # nocov start
+      stop("Internal Error: invalid search path token; contact maintainer.")
+      # nocov end
     detach(pack, character.only=TRUE)
   }
   invisible(TRUE)
@@ -405,10 +421,12 @@ unload_namespaces <- function(
   # that all namespaces we got are actually loaded, which they really should be
 
   if(!all(union(sp.depends, to.keep.depends) %in% loadedNamespaces()))
+    # nocov start
     stop(
-      "Logic Error: loaded namespace dependency calculation produced ",
+      "Internal Error: loaded namespace dependency calculation produced ",
       "non-loaded namespaces; this should not happen; contact maintainer."
     )
+    # nocov end
   # Stuff left to unload
 
   unload.net <- setdiff(unload, c(keep.ns, to.keep.depends))
@@ -417,10 +435,12 @@ unload_namespaces <- function(
 
   lns.raw <- loadedNamespaces()
   if(!all(unload.net %in% lns.raw))
+    # nocov start
     stop(
-      "Logic Error: attempting to unload namespaces that are not loaded; ",
+      "Internal Error: attempting to unload namespaces that are not loaded; ",
       "contact maintainer."
     )
+    # nocov end
   lns.tmp <- sapply(
     unload.net, function(x) unique(names(getNamespaceImports(x))),
     simplify=FALSE
@@ -431,11 +451,15 @@ unload_namespaces <- function(
     unload.net,
     function(x) {
       if(inherits(loc <- try(find.package(x), silent=TRUE), "try-error")) {
+        # nocov start
         warning(
-          "Unloading namespace \"", x, "\", but it does not appear to have a ",
-          "corresponding installed package.", immediate.=TRUE
+          "Internal Warning: Unloading namespace \"", x, "\", but it does ",
+          "not appear to have a corresponding installed package; if this",
+          "warning persists please contact maintainer about it.",
+          immediate.=TRUE
         )
         ""
+        # nocov end
       } else loc
     },
     character(1L)
@@ -451,9 +475,11 @@ unload_namespaces <- function(
   unloaded.success <- character(0L)
   repeat {
     if(safety <- safety + 1L > 1000)
+      # nocov start
       stop(
-        "Logic Error: namespace unloading not complete after 1000 iterations"
+        "Internal Error: namespace unloading not complete after 1000 iterations"
       )
+      # nocov end
     lns.names <- names(lns)
     unloaded.try <- integer(0L)
     for(i in seq_along(lns)) {
@@ -555,11 +581,14 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
         lib.loc=extra, warn.conflicts=FALSE
     ) ) )
     if(inherits(lib.try, "try-error")) {
+      # nocov start
       warning(
-        "Unable to fully restore search path; see prior error.",
+        "Internal Warning: unable to fully restore search path; see prior ",
+        "error. Contact maintainer if this warning persists.",
         immediate.=TRUE
       )
       global$state()
+      # nocov end
     }
   } else {
     base::attach(data, pos=pos, name=name, warn.conflicts=FALSE)

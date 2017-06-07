@@ -88,7 +88,7 @@ get_text_capture <- function(
     if(!no.unsink) sink()
   } else {
     # nocov start
-    stop("Logic Error: unexpected connection type; contact maintainer.")
+    stop("Internal Error: unexpected connection type; contact maintainer.")
     # nocov end
   }
   return(get_text(slot(cons, if(type=="message") "err.c" else "out.c")))

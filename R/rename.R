@@ -69,10 +69,12 @@ setMethod("editCalls", c("unitizer", "language", "language"),
       if(is.null(x@items.ref[[i]]@call)) {
         call.parsed <- parse(text=x@items.ref[[i]]@call.dep)
         if(!is.expression(call.parsed) || length(call.parsed) != 1L)
+          # nocov start
           stop(
-            "Logic Error: call `", x@items.ref[[i]]@call.dep,
+            "Internal Error: call `", x@items.ref[[i]]@call.dep,
             "` did not produce a length one expression when parsed"
           )
+          # nocov end
         x@items.ref[[i]]@call <- call.parsed[[1L]]
         call.is.null <- TRUE
       }

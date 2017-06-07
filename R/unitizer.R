@@ -340,10 +340,11 @@ setMethod("summary", "unitizer",
     sec.ids <- object@section.parent[
       c(object@section.map[!ignore], object@section.ref.map[deleted])
     ]
+    sec.unk <- "<unknown>"
     sections <- vapply(
       sec.ids,
       function(idx)
-        if(is.na(idx)) "<unknown>" else object@sections[[idx]]@title,
+        if(is.na(idx)) sec.unk else object@sections[[idx]]@title,
       character(1L)
     )
     sections.levels <- unique(sections[order(sec.ids)])
@@ -355,6 +356,22 @@ setMethod("summary", "unitizer",
     sum.mx[is.na(sum.mx)] <- 0L
     total <- apply(sum.mx, 2, sum)
 
+    # truly empty test file corner case
+
+    if(!nrow(sum.mx)) {
+      if(!length(status)) {
+        cols <- length(levels(status))
+        sum.mx <- matrix(
+          integer(cols), nrow=1L, dimnames=list(sec.unk, colnames(sum.mx))
+        )
+      } else {
+        # nocov start
+        stop(
+          "Internal Error: should not have statuses reported with no ",
+          "sections; contact maintainer."
+        )
+        # nocov end
+    } }
     obj <-
       new("unitizerSummary", data=sum.mx, dels=length(deleted), totals=total)
     if(!silent) show(obj)
@@ -523,7 +540,9 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
       test.status <- "Pass"
       test.result <- test.result.tpl
       if(nrow(test.result) != 1L)
-        stop("Logic Error: tpl matrix should be one row; contact maintainer.")
+        # nocov start
+        stop("Internal Error: tpl matrix should be one row; contact maintainer.")
+        # nocov end
 
       get_dat <- function(x, i) {
         dat <- if(identical(i, "value")) slot(x, i)[[1L]] else slot(x, i)
@@ -561,8 +580,10 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
         sink(file=e1@global$cons@dump.c, append=TRUE)
         sink(type="message", file=e1@global$cons@dump.c, append=TRUE)
         on.exit({
+          # nocov start emergency only
           sink(type="message")
           sink()
+          # nocov end
         })
         res.tmp <- eval_user_exp(
           test.call, e2@env, global=NULL, with.display=FALSE
@@ -638,7 +659,7 @@ setMethod("testItem", c("unitizer", "unitizerItem"),
           e1@tests.error <- append(e1@tests.error, TRUE)
         } else {
           # nocov start
-          stop("Logic Error: impossible test status; contact maintainer.")
+          stop("Internal Error: impossible test status; contact maintainer.")
           # nocov end
         }
       } else {

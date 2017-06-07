@@ -32,10 +32,12 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
   new.inv <- ref.inv <- FALSE
 
   if(inherits(new.item, "try-error") && inherits(ref.item, "try-error")) {
+    # nocov start
     stop(
-      "Logic error: could not find `unitizerItem` objects to list contents ",
+      "Internal error: could not find `unitizerItem` objects to list contents ",
       "of; contact Maintainer"
     )
+    # nocov end
   }
   if(!inherits(new.item, "try-error")) {
     if(nrow(new.item@ls))

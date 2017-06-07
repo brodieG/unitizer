@@ -26,9 +26,12 @@ deparse_prompt <- function(expr) {
   prompt <- getOption("prompt")
   continue <- getOption("continue")
   pad.len <- max(nchar(c(prompt, continue)))
-  expr.deparsed <- deparse(expr, width.cutoff=min(60L, (getOption("width") - pad.len)))
+  expr.deparsed <-
+    deparse(expr, width.cutoff=min(60L, (getOption("width") - pad.len)))
   if(length(expr.deparsed) < 1L) {
-    stop("Logic Error: don't know what to do with zero length expr")
+    # nocov start
+    stop("Internal Error: don't know what to do with zero length expr")
+    # nocov end
   }
   prompt.vec <- c(prompt, rep(continue, length(expr.deparsed) - 1L))
   paste0(prompt.vec, expr.deparsed)
@@ -41,8 +44,12 @@ deparse_prompt <- function(expr) {
 # srcref style environment attributes.
 
 uncomment <- function(lang) {
-  if(is.expression(lang))
-    stop("Logic Error: unexpected expression; contact maintainer") # should be a call or symbol or constant, not an expression
+  if(is.expression(lang)) {
+    # should be a call or symbol or constant, not an expression
+    # nocov start
+    stop("Internal Error: unexpected expression; contact maintainer")
+    # nocov end
+  }
   lang.new <- if(!(missing(lang) || is.null(lang)))
    `attr<-`(lang, "comment", NULL) else lang
   if(is.call(lang.new) && length(lang.new) > 1)
@@ -92,7 +99,8 @@ deparse_call <- function(expr) paste0(deparse(uncomment(expr)), collapse="\n")
 deparse_mixed <- function(expr, width.cutoff = 500L, control = "all", ...) {
 
   rec_lang <- function(expr) {
-    if(!is.language(expr)) stop("Logic Error: expecting language object")
+    if(!is.language(expr))
+      stop("Internal Error: expecting language object")  # nocov
     if(length(expr) > 1L) {
       for(i in seq_along(expr)) {
         if(!is.language(expr[[i]])) {

@@ -8,7 +8,7 @@ NULL
 #' other packages.
 #' @keywords internal
 
-setGeneric("sizeUntz", function(x, ...) StandardGeneric("sizeUntz"))
+setGeneric("sizeUntz", function(x, ...) StandardGeneric("sizeUntz")) # nocov
 setMethod(
   "sizeUntz", "ANY", function(x, ...) c(size=object.size(x), rds=sizeRDS(x))
 )

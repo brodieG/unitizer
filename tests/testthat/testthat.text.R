@@ -14,6 +14,15 @@ local({
       unitizer:::decap_first(c("", letters[1:2], letters[25:26], words, WORDS))
     )
   })
+  test_that("header", {
+    expect_error(
+      unitizer:::header("hello world", letters), 
+      "must be 1 length integer-like"
+    )
+    expect_error(
+      unitizer:::header(letters, 1), "must be a one length character"
+    )
+  })
   test_that("word_wrap", {
     lorem1 <- "Today, with Kiernan on the stand offering confirmation, Howard walked the jury through the enormous amount of data pulled from Ulbricht's computer. Defense lawyers haven't had a chance yet to respond to this evidence—that will likely come tomorrow. The mountain they have to climb looks higher than ever, though. Last week, Ulbricht's lawyer outlined a defense in which Ulbricht walked away from the marketplace he created and was \"lured back.\" But what will explain the dozens of folders of data on this laptop, with data from the upper echelons of Silk Road management—mixed with the most intimate details of Ulbricht's personal life?"
     lorem2 <- "/Volumes/FIXED/folder1/folder2/folder.2345/folderabac/file.text.batch"
