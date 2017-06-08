@@ -1,11 +1,6 @@
-## Re-submission Notes:
+## Submission Notes:
 
-This is a re-submission of the package to resolve the
-CRAN farm R CMD check failures on windows.  I cannot
-reproduce the test failures on either winbuilder,
-Rhub windows, or my own windows machines.  Since
-only 2 out of ~750 tests are failing, and they
-are for ancillary features, I am now skipping them.
+This is a minor feature/bugfix release.
 
 ## R CMD check --as-cran
 
