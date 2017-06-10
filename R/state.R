@@ -551,7 +551,9 @@ setMethod(
     } else if (is.environment(sv.env)) {
       env_name(sv.env)
     } else
-      stop("Logic Error: unexpected `par.env` slot type; contact maintainer")
+      # nocov start
+      stop("Internal Error: unexpected `par.env` slot type; contact maintainer")
+      # nocov end
     res <- data.frame(Settings=sn, Values=unlist(sv))
     rownames(res) <- NULL
     print(res)

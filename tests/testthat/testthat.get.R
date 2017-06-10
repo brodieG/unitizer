@@ -32,24 +32,52 @@ local({
         set_unitizer("tests/# ;!./# \\/", toy.stor), "Could not create")
       )
   } )
+  tmp.dir <- tempfile()
+  on.exit(unlink(tmp.dir, recursive=TRUE))
+  dir.create(tmp.dir)
+  tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
+  tmp.fake.utz <- paste0(tmp.dir, "/fake.unitizer")
+
   test_that("Get works as expected", {
     expect_false(get_unitizer("asldkfjskfa"))
     expect_equal(
       get_unitizer("../interactive/unitizer/misc.unitizer"), toy.stor
     )
     expect_true(is(toy.stor, "unitizer"))
+    dir.create(tmp.fake.utz)
+    fake.utz <- file.path(tmp.fake.utz, "data.rds")
+    cat("# this is not an RDS\n", file=fake.utz)
+
+    expect_error(
+      capture.output(get_unitizer(tmp.fake.utz), type="message"),
+      "Failed loading unitizer"
+    )
   } )
-  tmp.dir <- tempdir()
   tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
   tmp.sub.dir2 <- paste0(tmp.dir, "/get.test.dir2")
   tmp.sub.dir3 <- paste0(tmp.dir, "/load.dirs")
-  on.exit(unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE))
-  dir.create(tmp.dir)
 
   test_that("Set works as expected", {
     dir.create(tmp.sub.dir)
     expect_true(set_unitizer(tmp.sub.dir, toy.stor))
     expect_equal(readRDS(paste0(tmp.sub.dir, "/data.rds")), toy.stor)
+
+    just.a.file <- tempfile()
+    on.exit(unlink(just.a.file))
+    cat("just a file\n", file=just.a.file)
+    expect_error(
+      set_unitizer(just.a.file, toy.stor), "is not a directory"
+    )
+    if(identical(.Platform$OS.type, "unix")) {
+      # try to write to read only
+      ro.dir <- tempfile()
+      on.exit(unlink(ro.dir))
+      dir.create(ro.dir, mode="0500")
+      expect_error(
+        capture.output(set_unitizer(ro.dir, toy.stor), type="message"),
+        "Failed setting unitizer"
+      )
+    }
   } )
   test_that("load/store_unitizer", {
 
@@ -188,20 +216,22 @@ local({
 
     # Purposefully increase version to something ridiculously large to test that
     # we can't load a newer store with an older package
+    #
+    # NOTE: this is now allowed as per #222 and tested in upgrade.R
 
-    untz.tmp <- readRDS(file.path(tmp.sub.dir2, "data.rds"))
-    untz.tmp@version <- "9999.0.0"
-    saveRDS(untz.tmp, file.path(tmp.sub.dir2, "data.rds"))
+    # untz.tmp <- readRDS(file.path(tmp.sub.dir2, "data.rds"))
+    # untz.tmp@version <- "9999.0.0"
+    # saveRDS(untz.tmp, file.path(tmp.sub.dir2, "data.rds"))
 
-    expect_message(
-      expect_is(
-        unitizer:::load_unitizers(
-          list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
-          mode="unitize", force.upgrade=FALSE
-        )[[1L]],
-        "unitizerLoadFail"
-      ), "No valid "
-    )
+    # expect_message(
+    #   expect_is(
+    #     unitizer:::load_unitizers(
+    #       list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode=FALSE,
+    #       mode="unitize", force.upgrade=FALSE
+    #     )[[1L]],
+    #     "unitizerLoadFail"
+    #   ), "No valid "
+    # )
   } )
   unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive=TRUE)
 
@@ -363,10 +393,14 @@ local({
       unitizer:::infer_unitizer_location(NULL, interactive=FALSE),
       "too many to unambiguously"
     )
+    fake.class <- structure(list(), class="thisclassdoesn'texist")
+    expect_identical(infer(fake.class), fake.class)
   })
   test_that("test file / store manip", {
     skip('fails CRAN')
-    expect_identical(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello")
+    expect_identical(
+      unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello"
+    )
     expect_error(
       unitizer:::as.store_id_chr(structure("hello", class="untz_stochrerr")),
       "Unable to convert"

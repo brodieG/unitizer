@@ -55,7 +55,10 @@
 # @return integer the top level parent ids for \code{`ids`}
 
 top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
-  if(!is.integer(ids) || !is.integer(par.ids) || !identical(length(ids), length(par.ids)))
+  if(
+    !is.integer(ids) || !is.integer(par.ids) ||
+    !identical(length(ids), length(par.ids))
+  )
     stop("Arguments `ids` and `par.ids` must be equal length integer vectors")
   if(!identical(length(setdiff(abs(par.ids), c(ids, top.level))), 0L))
     stop("Argument `par.ids` contains ids not in `ids`.")
@@ -64,7 +67,12 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   if(identical(top.level, 0L)) {
     par.ids <- pmax(0L, par.ids)
   } else if (any(par.ids) < 0) {
-    stop("Argument `par.ids` contains values less than zero, but that is only allowed when `top.level` == 0L")
+    # nocov start
+    stop(
+      "Internal Error: Argument `par.ids` contains values less than zero, ",
+      "but that is only allowed when `top.level` == 0L; contact maintainer."
+    )
+    # nocov end
   }
   # Create lookup matrix so we can look up ids directly.  This will be a slightly
   # sparse matrix to the extend `ids` doesn't contain every number between
@@ -120,7 +128,7 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
     if(child.len) {
       ind.end <- ind.start + child.len - 1L
       # if(ind.end > max.size)
-      #   stop("Logic Error: exceeded allocated size when finding children; contact maintainer.")
+      #   stop("Internal Error: exceeded allocated size when finding children; contact maintainer.")
       inds <- ind.start:ind.end
       res[inds, 1L] <- children
       res[inds, 2L] <- level
@@ -164,7 +172,8 @@ comments_assign <- function(expr, comment.dat) {
       "Internal Error: there were multiple parent ids in argument ",
       "`comment.dat`; this should not happen"
     )     # nocov end
-  if(!length(expr) || !length(which(comment.dat$token == "COMMENT"))) return(expr)
+  if(!length(expr) || !length(which(comment.dat$token == "COMMENT")))
+    return(expr)
 
   # Make sure `comment.dat` is in format we understand
   # Theory: everything not "COMMENT" should be included, except:
@@ -174,11 +183,16 @@ comments_assign <- function(expr, comment.dat) {
   # "expr" needs to be moved to the front (in theory, should be at most one thing
   # and should be an infix operator of some sort)
 
-  if(!tail(comment.dat$token, 1L) %in% c("COMMENT", "expr", tk.lst$non.exps, tk.lst$brac.close, "';'"))
-    stop( # nocov start
+  if(
+    !tail(comment.dat$token, 1L) %in%
+    c("COMMENT", "expr", tk.lst$non.exps, tk.lst$brac.close, "';'")
+  )
+    # nocov start
+    stop(
       "Internal Error: unexpected ending token in parse data; contact ",
       "maintainer."
-    )     # nocov end
+    )
+    # nocov end
   if(
     length(which(comment.dat$token %in% tk.lst$brac.open)) > 1L ||
     length(which(comment.dat$token %in% tk.lst$brac.close)) > 1L
@@ -187,18 +201,24 @@ comments_assign <- function(expr, comment.dat) {
       "Internal Error: more than one bracket at top level; contact maintainer."
     )     # nocov end
   }
-  if(length(brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) && !identical(brac.pos, nrow(comment.dat))) {
+  if(
+    length(
+      brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) &&
+      !identical(brac.pos, nrow(comment.dat))
+  ) {
+    # nocov start
     # shouldn't happen, can't test
     if(
       !identical(comment.dat$token[brac.pos], "')'") ||
       !identical(brac.pos, nrow(comment.dat) - 1L) ||
       !identical(comment.dat$token[[1L]], "FUNCTION")
     ) {
-      stop(   # nocov start
+      stop(
         "Internal Error: closing brackets may only be on last row, unless a ",
         "paren and part of a functions formal definition; contact maintainer."
-      )       # nocov end
+      )
     }
+    # nocov end
   }
   if(
     !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) &&
@@ -223,15 +243,24 @@ comments_assign <- function(expr, comment.dat) {
 
   comm.notcomm <- prsdat_reduce(comment.dat)
   if(!identical(nrow(comm.notcomm), length(expr))) {
-    stop("Argument `expr` length cannot be matched with values in `comment.dat`")
+    # nocov start
+    stop(
+      "Internal Error: Argument `expr` length cannot be matched with values ",
+      "in `comment.dat`"
+    )
+    # nocov end
   }
-  # for the purposes of this process, constants and symbols are basically expressions
+  # for the purposes of this process, constants and symbols are basically
+  # expressions
 
   comm.notcomm <- transform(
     comm.notcomm,
     token=ifelse(
-      token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$ops), "expr", token)
-  )
+      token %in% c(
+        tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$ops
+      ),
+      "expr", token
+  ) )
   # what comments are on same line as something else
 
   comm.comm <- subset(comment.dat, token=="COMMENT")
@@ -380,7 +409,7 @@ parse_with_comments <- function(file, text=NULL) {
     # nocov start
     # shouldn't happen, can't test
     stop(
-      "Logic Error: unexpected tokens in parse data (",
+      "Internal Error: unexpected tokens in parse data (",
         paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
         "); contact maintainer."
     )
@@ -427,7 +456,7 @@ parse_with_comments <- function(file, text=NULL) {
       # nocov start
       # shouldn't happen, can't test
 
-      stop("Logic Error: expression parse data overlapping; contact maintainer")
+      stop("Internal Error: expression parse data overlapping; contact maintainer")
       # nocov end
     }
     # For each parent expression, assign comments; parent expressions that include
@@ -467,9 +496,15 @@ parse_with_comments <- function(file, text=NULL) {
           logical(1L)
     ) ) ) return(expr)
 
-    prsdat.par.red <- prsdat_reduce(prsdat.par)    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
+    # stuff that corresponds to elements in `expr`, will re-order to match `expr`
+    prsdat.par.red <- prsdat_reduce(prsdat.par)
     if(!identical(nrow(prsdat.par.red), length(which(assignable.elems)))) {
-      stop("Logic Error: mismatch between expression and parse data; contact maintainer.")
+      # nocov start
+      stop(
+        "Internal Error: mismatch between expression and parse data; ",
+        "contact maintainer."
+      )
+      # nocov end
     }
     j <- 1
     if(!is.expression(expr) && !is.call(expr)) {
@@ -477,9 +512,14 @@ parse_with_comments <- function(file, text=NULL) {
       # shouldn't happen, can't test
 
       if(term.len <- length(which(!prsdat.par.red$terminal)) > 1L) {
-        stop("Logic Error: terminal expression has more than one token, contact maintainer.")
+        stop(
+          "Internal Error: terminal expression has more than one token, ",
+          "contact maintainer."
+        )
       } else if (term.len) {
-        expr <- Recall(expr, prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
+        expr <- Recall(
+          expr, prsdat.children[[j]], as.integer(names(prsdat.children)[[j]])
+        )
       }
       # nocov end
     } else {
@@ -500,7 +540,10 @@ parse_dat_get <- function(file, text) {
   parse.dat.raw <- NULL
   for(i in 1:2) {
     if(!is.null(text)) {
-      if(!missing(file)) stop("Cannot specify both `file` and `text` arguments.")
+      if(!missing(file))
+        # nocov start
+        stop("Internal Error: cannot specify both `file` and `text` arguments.")
+        # nocov end
       expr <- try(parse(text=text, keep.source=TRUE))
     } else {
       expr <- try(parse(file, keep.source=TRUE))
@@ -511,10 +554,14 @@ parse_dat_get <- function(file, text) {
     if(is.null(parse.dat.raw)) break
 
     if(!nrow(parse.dat.raw))
-      stop("Logic Error: parse data mismatch; contact maintainer.")
+      stop("Internal Error: parse data mismatch; contact maintainer.") # nocov
     parse.dat.check <- cbind(
-      parse.dat.raw[match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")],
-      setNames(parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child"))
+      parse.dat.raw[
+        match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")
+      ],
+      setNames(
+        parse.dat.raw[, c("line1", "col1")], c("line1.child", "col1.child")
+      )
     )
     if(
       length(
@@ -528,7 +575,7 @@ parse_dat_get <- function(file, text) {
       # that are lexically posterior
       if(identical(i, 1L))  # Try again once to see if that fixes it
         next
-      stop("Cannot retrieve self consistent parse data")
+      stop("Internal Error: cannot retrieve self consistent parse data") # nocov
     }
     break  # Parsing worked as expected
   }
@@ -592,29 +639,66 @@ prsdat_reduce <- function(parse.dat) {
   # sort, and iff the operator is @ or $, or if there is only one item in the data frame
   # then it can be NUM_CONST or STR_CONST or symbol for the second one
   if(any(c("'$'", "'@'") %in% parse.dat.red$token)) {
-    if(!identical(nrow(parse.dat.red), 3L))
-      stop("Logic Error: top level statement with `@` or `$` must be three elements long")
-    if(!identical(parse.dat.red$token[[1L]], "expr"))
-      stop("Logic Error: left argument to `@` or `$` must be an expression")
-    if(identical(parse.dat.red$token, "'@'") && !identical(parse.dat.red$token[[3L]], "SLOT"))
-      stop("Logic Error: right argument to `@` must be SLOT")
-    if(identical(parse.dat.red$token, "'$'") && !identical(parse.dat.red$token[[3L]], "SYMBOL"))
-      stop("Logic Error: right argument to `$` must be SYMBOL")
-  } else if (nrow(parse.dat.red) == 1L) {
-    if(!parse.dat.red$token[[1L]] %in% c("expr", tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$brac.open)) {
+    if(!identical(nrow(parse.dat.red), 3L)) {
       # nocov start
-      stop("Logic Error: single element parent levels must be symbol or constant or expr")
+      stop(
+        "Internal Error: top level statement with `@` or `$` must be three ",
+        "elements long"
+      )
+      # nocov end
+    }
+    if(!identical(parse.dat.red$token[[1L]], "expr")) {
+      # nocov start
+      stop("Internal Error: left argument to `@` or `$` must be an expression")
+      # nocov end
+    }
+    if(
+      identical(parse.dat.red$token, "'@'") &&
+      !identical(parse.dat.red$token[[3L]], "SLOT")
+    ) {
+      # nocov start
+      stop("Internal Error: right argument to `@` must be SLOT")
+      # nocov end
+    }
+    if(
+      identical(parse.dat.red$token, "'$'") &&
+      !identical(parse.dat.red$token[[3L]], "SYMBOL")
+    ) {
+      # nocov start
+      stop("Internal Error: right argument to `$` must be SYMBOL")
+      # nocov end
+    }
+  } else if (nrow(parse.dat.red) == 1L) {
+    if(
+      !parse.dat.red$token[[1L]] %in%
+      c("expr", tk.lst$non.exps, tk.lst$non.exps.extra, tk.lst$brac.open)
+    ) {
+      # nocov start
+      stop(
+        "Internal Error: single element parent levels must be symbol or ",
+        "constant or expr"
+      )
       # nocov end
     }
   } else if (
-    length(which(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra))) <
-      nrow(parse.dat.red) - 1L
+    length(
+      which(
+        parse.dat.red$token %in%
+        c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra)
+    ) ) < nrow(parse.dat.red) - 1L
   ) {
     # nocov start
-    stop("Logic Error: in most cases all but at most one token must be of type `expr` or `exprlist`; contact maintainer.")
+    stop(
+      "Internal Error: in most cases all but at most one token must be of ",
+      "type `expr` or `exprlist`; contact maintainer."
+    )
     # nocov end
   }
-  parse.dat.red[order(parse.dat.red$token %in% c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra)), ]
+  parse.dat.red[
+    order(
+      parse.dat.red$token %in%
+      c(tk.lst$exps, tk.lst$non.exps, tk.lst$non.exps.extra)
+  ), ]
 }
 # Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
@@ -683,19 +767,42 @@ prsdat_fix_for <- function(parse.dat) {
 if(getRversion() >= "2.15.1")  utils::globalVariables(c("id", "parent", "token"))
 
 prsdat_fix_simple <- function(parse.dat, tok) {
-  if(! tok %in% c("IF", "WHILE")) stop("Logic Error, this function only supports 'IF' and 'WHILE' tokens")
+  if(! tok %in% c("IF", "WHILE"))
+    # nocov start
+    stop(
+      "Internal Error, this function only supports 'IF' and 'WHILE' tokens"
+    )
+    # nocov end
   if(!identical(parse.dat$token[[1L]], tok))
     stop("Argument `parse.dat` must start with an '", tok, "' token.")
   par.id <- parse.dat$parent[[1L]]
   par.range <- prsdat_find_paren(parse.dat)
   early.tokens <- parse.dat$token[1L:(which(parse.dat$id == par.range[[1L]]) - 1L)]
-  if(any(! early.tokens %in% c(tok, "COMMENT")) || !identical(length(which(early.tokens == tok)), 1L))
-    stop("Logic Error: could not parse ", tok, " statement; contact maintainer.")
-  parse.delete <- subset(parse.dat, parent == par.id & token %in% c("'('", "')'", "ELSE"))
-  if(! nrow(parse.delete) %in% c(2L, 3L))
-    stop("Logic Error: unexpected number of ", tok, " statement sub-components; contact maintainer.")
+  if(
+    any(! early.tokens %in% c(tok, "COMMENT")) ||
+    !identical(length(which(early.tokens == tok)), 1L)
+  )
+    # nocov start
+    stop(
+      "Internal Error: could not parse ", tok, " statement; contact maintainer."
+    )
+    # nocov end
+  parse.delete <-
+    subset(parse.dat, parent == par.id & token %in% c("'('", "')'", "ELSE"))
+  if(!nrow(parse.delete) %in% c(2L, 3L))
+    # nocov start
+    stop(
+      "Internal Error: unexpected number of ", tok,
+      " statement sub-components; contact maintainer."
+    )
+    # nocov end
   if(any(parse.dat$parent %in% parse.delete$id))
-    stop("Logic Error: unexpected parent relationships in ", tok, " statement; contact maintainer.")
+    # nocov start
+    stop(
+      "Internal Error: unexpected parent relationships in ", tok,
+      " statement; contact maintainer."
+    )
+    # nocov end
   subset(parse.dat, ! id %in% parse.delete$id)
 }
 prsdat_fix_if <- function(parse.dat) prsdat_fix_simple(parse.dat, "IF")
@@ -703,21 +810,37 @@ prsdat_fix_while <- function(parse.dat) prsdat_fix_simple(parse.dat, "WHILE")
 
 prsdat_find_paren <- function(parse.dat) {
   par.clos.pos <- match("')'", parse.dat$token)
-  if(is.na(par.clos.pos)) stop("Logic Error; failed attempting to parse function block; contact maintainer")
+  if(is.na(par.clos.pos))
+    # nocov start
+    stop(
+      "Internal Error; failed attempting to parse function block; contact  ",
+      "maintainer"
+    )
+    # nocov end
   par.op.pos <- match("'('", parse.dat$token[1:par.clos.pos])
   if(is.na(par.op.pos))
-  if(!identical(par.op.pos, 2L) && !identical(unique(parse.dat$token[2L:(par.op.pos - 1L)]), "COMMENT"))
-    stop("Logic Error; failed attempting to `for` function block; contact maintainer")
+  if(
+    !identical(par.op.pos, 2L) &&
+    !identical(unique(parse.dat$token[2L:(par.op.pos - 1L)]), "COMMENT")
+  )
+    # nocov start
+    stop(
+      "Internal Error; failed attempting to `for` function block; contact ",
+      "maintainer"
+    )
+    # nocov end
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
 }
 prsdat_fix_exprlist <- function(parse.dat, ancestry) {
 
   z <- ancestry
   z[, "level"] <- z[match(parse.dat$id, z[, "children"]), "level"]
-  lev.ord <- order(z[, "level"])  # order by level to make sure we remove exprlists in correct order
+  # order by level to make sure we remove exprlists in correct order
+  lev.ord <- order(z[, "level"])
   dat.ord <- parse.dat[lev.ord, ]
   ind.all <- seq.int(nrow(dat.ord))
-  par.map <- list2env(split(ind.all, dat.ord[["parent"]]))  # map parents vs. position in ordered list
+  # map parents vs. position in ordered list
+  par.map <- list2env(split(ind.all, dat.ord[["parent"]]))
 
   dat.exprlist <- which(dat.ord[["token"]] == "exprlist")
   ind.exp <- seq_along(dat.exprlist)

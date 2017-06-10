@@ -191,7 +191,7 @@ unitizerGlobal$methods(
     # Now shim
 
     if(!is(.unitizer.shim.dat[[name]], "unitizerShimDat"))
-      stop("Logic Error: missing shim data")
+      stop("Internal Error: missing shim data") # nocov
 
     shimmed <- try(
       # Use to have the option to use the @at portion of the shim data so

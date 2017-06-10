@@ -6,8 +6,8 @@
 # Right now we distinguish in what mode we're running based on whether
 # \code{test.file} is NULL (review mode) vs. not (unitize mode), which isn't
 # very elegant, but whatevs.  This has implications for the parsing / evaluation
-# step, as well as how the \code{unitizerBrowse} object is constructed.  Otherwise
-# stuff is mostly the same.
+# step, as well as how the \code{unitizerBrowse} object is constructed.
+# Otherwise stuff is mostly the same.
 #
 # Cleary there is a trade-off in increased code complexity to handle both types
 # of code, vs duplication.  Not ideal, but tasks are so closely related and
@@ -28,37 +28,50 @@ unitize_core <- function(
   # - Validation / Setup -------------------------------------------------------
 
   if(!is.chr1(mode) || !mode %in% c("unitize", "review"))
-    stop("Logic Error: incorrect value for `mode`; contact maintainer")
+    # nocov start
+    stop("Internal Error: incorrect value for `mode`; contact maintainer")
+    # nocov end
   if(mode == "review") {
     if(!all(is.na(test.files)))
+      # nocov start
       stop(
-        "Logic Error: `test.files` must be NA in review; contact maintainer"
+        "Internal Error: `test.files` must be NA in review; contact maintainer"
       )
+      # nocov end
     if(length(auto.accept))
-      stop("Logic Error: auto-accepts not allowed in review mode")
+      stop("Internal Error: auto-accepts not allowed in review mode")  # nocov
     if(!identical(state, "off")
     )
-      stop("Logic Error: state must be disabled in review mode")
+      stop("Internal Error: state must be disabled in review mode")   # nocov
   }
   if(mode == "unitize") {
     if(
       !is.character(test.files) || any(is.na(test.files)) ||
       !all(file_test("-f", test.files))
     )
+      # nocov start
       stop(
-        "Logic Error: `test.files` must all point to valid files in unitize ",
-        "mode; contact maintainer"
+        "Internal Error: `test.files` must all point to valid files in ",
+        "unitize mode; contact maintainer"
       )
+      # nocov end
     test.files <- try(normalize_path(test.files, mustWork=TRUE))
     if(inherits(test.files, "try-error"))
-      stop("Logic Error: unable to normalize test files; contact maintainer")
+      # nocov start
+      stop("Internal Error: unable to normalize test files; contact maintainer")
+      # nocov end
   }
   if(length(test.files) != length(store.ids))
+    # nocov start
     stop(
-      "Logic Error: mismatch in test file an store lengths; contact maintainer"
+      "Internal Error: mismatch in test file an store lengths; contact  ",
+      "maintainer"
     )
+    # nocov end
   if(!length(test.files))
-    stop("Logic Error: expected at least one test file; contact maintainer.")
+    # nocov start
+    stop("Internal Error: expected at least one test file; contact maintainer.")
+    # nocov end
   if(!is.TF(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
@@ -214,10 +227,12 @@ unitize_core <- function(
         } else x
   } ) )
   if(inherits(norm.attempt, "try-error"))
+    # nocov start
     stop(
-      "Logic Error: some `store.ids` could not be normalized; contact ",
+      "Internal Error: some `store.ids` could not be normalized; contact ",
       "maintainer."
     )
+    # nocov end
   # - Set Global State ---------------------------------------------------------
 
   on.exit(
@@ -262,13 +277,18 @@ unitize_core <- function(
   if(identical(global$status@options, 2L)) options_zero()
   if(identical(global$status@random.seed, 2L)) {
     if(inherits(try(do.call(set.seed, seed.dat)), "try-error")) {
+      # nocov start shouldn'at ctually be able to get here because
+      # the option should be validated
       stop(
         word_wrap(collapse="\n",
           cc(
-            "Unable to set random seed; make sure ",
-            "`getOption('unitizer.seed')` ",
-            "is a list of possible arguments to `set.seed`."
-  ) ) ) } }
+            "Internal Error: Unable to set random seed; somehow ",
+            "`getOption('unitizer.seed')` does not a apper to be valid, ",
+            "which should not happen; contact maintainer."
+
+      ) ) )
+      # nocov end
+  } }
   if(identical(global$status@working.directory, 2L)) {
     if(length(unique(dirname(test.files)) == 1L)) {
       path <- dirname(test.files[[1L]])
@@ -289,15 +309,20 @@ unitize_core <- function(
       if(!is.null(test.dir)) {
         dir.set <- try(setwd(test.dir))
         if(inherits(dir.set, 'try-error')) {
+          # nocov start there really shouldn't be a way to trigger this warning
+          test.dir.err <-
+            if(!is.chr1(test.dir)) "<not character(1L)>" else test.dir
           warning(
             word_wrap(collapse="\n",
               cc(
                 "Working directory state tracking is in mode 2, but we ",
-                "failed setting director to '", test.dir, "' so we are  ",
+                "failed setting director to '", test.dir.err, "' so we are  ",
                 "leaving the working directory unchanged."
             ) ),
             immediate.=TRUE
-      ) } }
+          )
+          # nocov end
+      } }
     } else {
       # nocov start
       # currently no way to get here since there is no way to specify multiple
@@ -313,7 +338,7 @@ unitize_core <- function(
         immediate.=TRUE
       )
       stop(
-        "Logic Error: shouldn't be able to evaluate this code; ",
+        "Internal Error: shouldn't be able to evaluate this code; ",
         "contact maintainer"
       )
       # nocov end
@@ -378,10 +403,12 @@ unitize_core <- function(
         if(is(utz, "unitizer") && is(utz@bookmark, "unitizerBrowseBookmark")) {
           # compare expressions without attributes
           if(
-            !all.equal(
-              `attributes<-`(tests.parsed.prev[[i]], NULL),
-              `attributes<-`(tests.parsed[[i]], NULL)
-          ) ) {
+            !isTRUE(
+              all.equal(
+                as.list(tests.parsed.prev[[i]]), as.list(tests.parsed[[i]]),
+                check.attributes=FALSE
+            ) )
+          ) {
             utz@bookmark@parse.mod <- TRUE
           }
           utz@bookmark
@@ -481,10 +508,12 @@ unitize_core <- function(
 unitize_eval <- function(tests.parsed, unitizers, global) {
   test.len <- length(tests.parsed)
   if(!identical(test.len, length(unitizers)))
+    # nocov start
     stop(
-      "Logic Error: parse data and unitizer length mismatch; contact ",
+      "Internal Error: parse data and unitizer length mismatch; contact ",
       "maintainer."
     )
+    # nocov end
   # Set up display stuff
 
   num.digits <- as.integer(ceiling(log10(test.len + 1L)))
@@ -512,36 +541,45 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
         global$ns.opt.conflict@conflict && !length(global$ns.opt.conflict@file)
       )
         global$ns.opt.conflict@file <- basename(unitizer@test.file.loc)
+
+      unitizers[[i]]@eval <- FALSE
+
+      ## Attach the compressed state for reference; previously we used to do
+      ## this outside of the state, doing it for every test file irrespective of
+      ## whether it was re-evaled or not, but that was expensive.  Now only
+      ## doing it for re-evaled ones (hopefully not introducing bugs in process)
+
+      glob.opts <-
+        Filter(Negate(is.null), lapply(global$tracking@options, names))
+      glob.opts <-
+        if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
+
+      no.track <- c(
+        unlist(
+          lapply(
+            union(
+              global$unitizer.opts[["unitizer.opts.asis.base"]],
+              global$unitizer.opts[["unitizer.opts.asis"]]
+            ),
+            grep, glob.opts
+          )
+        ),
+        match(
+          names(
+            merge_lists(
+              global$unitizer.opts[["unitizer.opts.init.base"]],
+              global$unitizer.opts[["unitizer.opts.init"]],
+          ) ),
+          glob.opts,
+          nomatch=0L,
+      ) )
+      unitizers[[i]]@state.new <- unitizerCompressTracking(
+        global$tracking, glob.opts[no.track]
+      )
     } else {
       unitizers[[i]] <- unitizer
     }
-    unitizers[[i]]@eval <- FALSE
-    glob.opts <- Filter(Negate(is.null), lapply(global$tracking@options, names))
-    glob.opts <-
-      if(!length(glob.opts)) character(0L) else unique(unlist(glob.opts))
 
-    no.track <- c(
-      unlist(
-        lapply(
-          union(
-            global$unitizer.opts[["unitizer.opts.asis.base"]],
-            global$unitizer.opts[["unitizer.opts.asis"]]
-          ),
-          grep, glob.opts
-        )
-      ),
-      match(
-        names(
-          merge_lists(
-            global$unitizer.opts[["unitizer.opts.init.base"]],
-            global$unitizer.opts[["unitizer.opts.init"]],
-        ) ),
-        glob.opts,
-        nomatch=0L,
-    ) )
-    unitizers[[i]]@state.new <- unitizerCompressTracking(
-      global$tracking, glob.opts[no.track]
-    )
   }
   unitizers
 }
@@ -558,7 +596,8 @@ unitize_browse <- function(
   # - Prep ---------------------------------------------------------------------
 
   if(!length(unitizers)) {
-    message("No tests to review")
+    # happens when all unitizers fail to load
+    meta_word_msg("No valid unitizers available to review.")
     return(unitizers)
   }
   over_print("Prepping Unitizers...")
@@ -571,7 +610,10 @@ unitize_browse <- function(
   test.len <- length(unitizers)
   summaries <- summary(unitizers, silent=TRUE)
   totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
-  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L  # First row will be passed
+
+  # First row will be passed
+
+  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L
 
   # Determine implied review mode (all tests passed in a particular unitizer,
   # but user may still pick it to review); we got lazy and tried to leverage
@@ -711,10 +753,12 @@ unitize_browse <- function(
 
         if(!first.time && !any(bookmarked)) {
           if(!interactive.mode)
+            # nocov start
             stop(
-              "Logic Error: looping for user input in non-interactive mode, ",
+              "Internal Error: looping for user input in non-interactive mode, ",
               "contact maintainer."
             )
+            # nocov end
           show(summaries)
         }
         first.time <- FALSE
@@ -756,11 +800,15 @@ unitize_browse <- function(
           } else {
             pick.num <- as.integer(pick)
             if(!pick.num %in% seq.int(test.len)) {
-              meta_word_msg(
-                "Input not a valid unitizer; choose in ",
-                deparse(seq.int(test.len))
+              # nocov start enforced by valid.vals in `unitizer_prompt`
+              stop(
+                "Internal Error: should not be able to pick a number that ",
+                "does not correspond to a `unitizer`, contact maintainer."
               )
+              # we used to do next before we added error here; should still work
+              # if we need to revert
               next
+              # nocov end
           } }
         } else pick.num <- 1L
 
@@ -814,10 +862,12 @@ unitize_browse <- function(
         # - Non-interactive Issues ---------------------------------------------
         if(any(int.error)) {
           if(interactive.mode)
+            # nocov start
             stop(
-              "Logic Error: should not get here in interactive mode; contact ",
-              " maintainer"
+              "Internal Error: should not get here in interactive mode; ",
+              "contact maintainer"
             )
+            # nocov end
           # Problems during non-interactive review; we only allow this as a
           # mechanism for allowing auto-accepts in non-interactive mode
 

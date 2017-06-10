@@ -264,13 +264,20 @@ local( {
       "Unable to parse test file"
     )
     f <- tempfile()
+    on.exit(unlink(f))
     cat(txt, "\n", sep="", file=f)
     expect_error(
       capture.output(unitizer:::parse_tests(f), type="message"),
       "Unable to parse test file"
     )
-    unlink(f)
+    # try in normal mode (just fall back to normal parse)
+
     expect_error(
-      unitizer:::parse_tests(text=txt, comment=FALSE), "unexpected symbol")
+      unitizer:::parse_tests(text=txt, comment=FALSE),
+      "unexpected symbol"
+    )
+    expect_error(
+      unitizer:::parse_tests(f, comment=FALSE), "unexpected symbol"
+    )
   })
 } )

@@ -113,7 +113,7 @@ local({
       unitizer:::unitizer_prompt(
         "hello", valid.opts=c(Y="[Y]es", N="[N]o"), global=glob
       ),
-      "Logic Error: ran out of predefined readline input"
+      "Internal Error: ran out of predefined readline input"
     )
     unitizer:::read_line_set_vals("1L")
     expect_error(
@@ -122,7 +122,7 @@ local({
           "hello", valid.opts=c(Y="[Y]es", N="[N]o"),
           exit.condition=unitizer:::exit_fun, valid.vals=2:3, global=glob
       ) ),
-      "Logic Error: ran out of predefined readline input"
+      "Internal Error: ran out of predefined readline input"
     )
     unitizer:::read_line_set_vals("2L")
     capture.output(
