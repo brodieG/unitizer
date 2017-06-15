@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.4
+
+* README typos (@eddelbuettel)
+
 ## v1.4.3
 
 * [#221](https://github.com/brodieG/unitizer/issues/221) Crash on Re-Run due to
