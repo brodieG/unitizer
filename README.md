@@ -97,27 +97,37 @@ To use `unitizer`:
 
 Thank you to:
 
-* R Core for developing such a wonderfully flexible language
+* R Core for developing and maintaining such a wonderfully language.
+* CRAN maintainers, for patiently shepherding packages onto CRAN and maintaining
+  the repository, and Uwe Ligges in particular for maintaining
+  [Winbuilder](http://win-builder.r-project.org/).
 * Hadley Wickham for [testthat](https://cran.r-project.org/package=testthat)
   from which we borrow many concepts and use for internal tests, for
-  [devtools](https://cran.r-project.org/package=devtools), and for many other
-  packages.
-* [Jim Hester](https://github.com/jimhester) for developing
-  [covr](https://cran.r-project.org/package=covr) and nudging me to use it.
-  Seeing line by line test coverage is an eye opening experience.
+  [devtools](https://cran.r-project.org/package=devtools), and for his
+  outstanding contributions to the R universe.
 * [Gábor Csárdi](https://github.com/gaborcsardi) for
   [crayon](https://cran.r-project.org/package=crayon) through which we can
   add a new dimension to the R experience.
+* [Jim Hester](https://github.com/jimhester) because
+  [covr](https://cran.r-project.org/package=covr) rocks.
 * [Dirk Eddelbuettel](https://github.com/eddelbuettel) and [Carl
   Boettiger](https://github.com/cboettig) for the
-  [rocker](https://github.com/rocker-org/rocker) project, without which testing
-  bugs on R-devel would be a nightmare.
-* @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
-  team](http://ffmpeg.org/about.html) for ffmpeg.
+  [rocker](https://github.com/rocker-org/rocker) project, and [Gábor
+  Csárdi](https://github.com/gaborcsardi) and the R-consortium for
+  [Rhub](https://github.com/r-hub/rhub), without which testing bugs on R-devel
+  and other platforms would be a nightmare.
 * [Yihui Xie](https://github.com/yihui) for
   [knitr](https://cran.r-project.org/package=knitr) and  [J.J.
   Allaire](https://github.com/jjallaire) etal for
-  [rmarkdown](https://cran.r-project.org/package=rmarkdown).
+  [rmarkdown](https://cran.r-project.org/package=rmarkdown), and by extension
+  John MacFarlane for [pandoc](http://pandoc.org/).
+* Stefan M. Bache for the idea of having a function for testing objects directly
+  (originally `vetr` only worked with function arguments), which I took from
+  ensurer.
+* Hadley Wickham for [devtools](https://cran.r-project.org/package=devtools),
+  and for pointing me to Stefan M. Bache's ensurer package.
+* @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
+  team](http://ffmpeg.org/about.html) for ffmpeg.
 * All open source developers out there that make their work freely available
   for others to use.
 * [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
@@ -126,7 +136,7 @@ Thank you to:
   [Brew](https://brew.sh/) for providing infrastructure that greatly simplifies
   open source development.
 * [Free Software Foundation](http://fsf.org/) for developing the GPL license and
-  promotion of the free software movement
+  promotion of the free software movement.
 
 ## About the Author
 
