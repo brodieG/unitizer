@@ -104,7 +104,7 @@ Thank you to:
 * Hadley Wickham for [testthat](https://cran.r-project.org/package=testthat)
   from which we borrow many concepts and use for internal tests, for
   [devtools](https://cran.r-project.org/package=devtools), and for his
-  outstanding contributions to the R universe.
+  many other packages.
 * [Gábor Csárdi](https://github.com/gaborcsardi) for
   [crayon](https://cran.r-project.org/package=crayon) through which we can
   add a new dimension to the R experience.
@@ -124,8 +124,6 @@ Thank you to:
 * Stefan M. Bache for the idea of having a function for testing objects directly
   (originally `vetr` only worked with function arguments), which I took from
   ensurer.
-* Hadley Wickham for [devtools](https://cran.r-project.org/package=devtools),
-  and for pointing me to Stefan M. Bache's ensurer package.
 * @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
   team](http://ffmpeg.org/about.html) for ffmpeg.
 * All open source developers out there that make their work freely available
