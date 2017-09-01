@@ -113,7 +113,17 @@ local( {
     expect_identical(trace6, list("stop(simpleError(\"Error in function 2\", sys.call()))", "fun_error_cond()"))
     expect_identical(trace7, list("stop(simpleError(\"Error in function 2\", sys.call()))", "fun_error_cond()", "fun_error_cond_call()"))
     expect_identical(trace3a, list("stop(\"Error in Print\")", "print.test_obj(\"hello\")", "print(\"hello\")"))
-    expect_identical(trace4a, list("stop(\"Error in Show\")", "show(<S4 object of class \"testObj\">)", "show(<S4 object of class \"testObj\">)"))
+    # needed to tweak this one so it would pass in R-devel 3.4.1
+    expect_true(
+      all(
+        mapply(
+          function(x, y) grepl(y, x),
+          trace4a,
+          list(
+            "stop\\(\"Error in Show\"\\)",
+            "show\\(.*\"testObj\".*\\)",
+            "show\\(.*\"testObj\".*\\)"
+    ) ) ) )
   } )
   old.width <- options(width=80L)
   a <- unitizer:::eval_with_capture(expression(stop("short stop message")), global=glob)
