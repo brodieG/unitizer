@@ -7,7 +7,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{Miscellaneous Topics}
+  %\VignetteIndexEntry{5 - Miscellaneous Topics}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
