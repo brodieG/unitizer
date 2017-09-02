@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -118,7 +118,7 @@ demo(unitizer)</code></pre>
 <ul>
 <li><code>help(package=&quot;unitizer&quot;)</code>, in particular <code>?unitize</code></li>
 <li><code>demo(package=&quot;unitizer&quot;)</code></li>
-<li><a href="http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html"><code>vignette(&quot;unitizer&quot;)</code></a> for a list of vignettes, or skip straight to the <a href="http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html">Introduction vignette</a></li>
+<li><a href="http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html"><code>browseVignettes(&quot;unitizer&quot;)</code></a> for a list of vignettes, or skip straight to the <a href="http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html">Introduction vignette</a></li>
 </ul>
 </div>
 <div id="how-does-unitizer-differ-from-testthat" class="section level2">
@@ -217,6 +217,7 @@ unitize()              # Will prompt for a file to `unitize`</code></pre>
 <li>Each tests is evaluated in its own environment, a child of the previous test’s environment; because R looks up objects in parent environments it appears that all tests are evaluated in one environment (see <a href="unitizer_interactive_env.html">interactive environment vignette</a>)</li>
 <li>We provide modified versions of <code>quit</code>/<code>q</code> and <code>ls</code> (see <a href="unitizer_miscellaneous.html">esoteric topics vignette</a>) at the <code>unitizer</code> prompt</li>
 <li><code>traceback</code> should work when reviewing tests that produce errors, but only because we capture the trace with <code>sys.calls</code> and write it to <code>base::.Traceback</code> during review</li>
+<li><code>.Last.value</code> will not work</li>
 <li>We sink <code>stdout</code> and <code>stderr</code> during test evaluation to capture those streams (see <a href="unitizer_tests.html">details on tests vignette</a>), though we take care to do so responsibly</li>
 <li>We parse the test file and extract comments so that they can be attached to the correct test for review</li>
 <li>The history file is temporary replaced so that your <code>unitizer</code> interactions do not pollute it</li>
@@ -246,7 +247,7 @@ unitize()              # Will prompt for a file to `unitize`</code></pre>
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

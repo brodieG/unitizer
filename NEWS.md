@@ -2,7 +2,13 @@
 
 ## v1.4.4
 
+* Fix tests broken by R-devel 3.4.1 improvements to S4 deparsing
+* [#232](https://github.com/brodieG/unitizer/issues/232) document that
+  `.Last.value` does not work
+* [#228](https://github.com/brodieG/unitizer/issues/228) more docs on handling
+  RDS files
 * README typos (@eddelbuettel)
+* Improve vignette index
 
 ## v1.4.3
 

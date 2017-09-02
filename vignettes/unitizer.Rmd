@@ -7,7 +7,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{Introduction}
+  %\VignetteIndexEntry{1 - Introduction}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
@@ -95,7 +95,7 @@ To use `unitizer`:
 
 * `help(package="unitizer")`, in particular `?unitize`
 * `demo(package="unitizer")`
-* [`vignette("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
+* [`browseVignettes("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
 
 ## How Does `unitizer` Differ from `testthat`?
 
@@ -238,6 +238,7 @@ In order to re-create the feel of the R prompt within `unitizer` we resorted to 
 * `traceback` should work when reviewing tests that produce errors, but only
   because we capture the trace with `sys.calls` and write it to
   `base::.Traceback` during review
+* `.Last.value` will not work
 * We sink `stdout` and `stderr` during test evaluation to capture those streams
   (see [details on tests vignette](unitizer_tests.html)), though we take care to
   do so responsibly

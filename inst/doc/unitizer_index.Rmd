@@ -1,5 +1,5 @@
 ---
-title: "unitizeR - Vignette Index"
+title: "unitizeR - Summary of Vignettes"
 author: "Brodie Gaslam"
 output:
     rmarkdown::html_vignette:
@@ -7,7 +7,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{Index}
+  %\VignetteIndexEntry{0 - Contents}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
@@ -27,7 +27,8 @@ vignette: >
     * A guide to test objects
     * `unitize_dir`
 * [Reproducible Tests](unitizer_reproducible_tests.html)
-    * Reviews how `unitizer` tracks and manages different aspects of session state to insulate tests from variability in a user session
+    * Reviews how `unitizer` tracks and manages different aspects of session
+      state to insulate tests from variability in a user session
     * Details on evaluation environments, and potential pitfalls
 * [Miscellaneous](unitizer_miscellaneous.html)
     * How unitizers are stored, and possible alternatives
