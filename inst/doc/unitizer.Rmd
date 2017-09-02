@@ -238,6 +238,7 @@ In order to re-create the feel of the R prompt within `unitizer` we resorted to 
 * `traceback` should work when reviewing tests that produce errors, but only
   because we capture the trace with `sys.calls` and write it to
   `base::.Traceback` during review
+* `.Last.value` will not work
 * We sink `stdout` and `stderr` during test evaluation to capture those streams
   (see [details on tests vignette](unitizer_tests.html)), though we take care to
   do so responsibly
