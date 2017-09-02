@@ -7,7 +7,7 @@ output:
         css: styles.css
 
 vignette: >
-  %\VignetteIndexEntry{Miscellaneous Topics}
+  %\VignetteIndexEntry{5 - Miscellaneous Topics}
   %\VignetteEngine{knitr::rmarkdown}
   %\usepackage[utf8]{inputenc}
 ---
@@ -46,7 +46,11 @@ If you only wish to save your `unitizer` to a different location in your filesys
 
 ## Version Control and Unitizer
 
-The main issue with using `unitizer` with a version controlled package is that you have to decide whether you want to include the binary `rds` files in the version control history.  Some options:
+### Committing Binary Files
+
+The main issue with using `unitizer` with a version controlled package is that
+you have to decide whether you want to include the binary `rds` files in the
+version control history.  Some options:
 
 * do not track the binary files at all (but they are valuable and now not backed
   up)
@@ -60,6 +64,28 @@ This should mitigate the number of rds files that change with any given source
 code update, and is good practice anyway.  Additionally, we typically only
 commit the rds files when a feature branch or issue resolution is fully
 complete.
+
+Additionally a useful `git` shortcut to add to your `.gitconfig` file that
+mitigates how often you commit rds files is:
+
+```
+[alias]
+        ad = !git add -u && git reset -- *.rds
+```
+
+This makes it easy to add all the files you are working on except for the rdses.
+Once you have stabilized a set of tests you can commit the rds.
+
+All this aside, remember that the rdses are ultimately just as important as the
+test files, and you **should** commit them occasionally to ensure you do not use
+valuable test information.
+
+### Collaborating with Unitizer
+
+If you merge in a pull request from a third party you do not fully trust, we
+recommend you checkout your most recent version of the rdses that are part of
+the pull request.  You can then re-run the tests and review what each of them
+does.
 
 ## Modifying an Existing Unitizer
 
