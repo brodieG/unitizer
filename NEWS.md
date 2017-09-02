@@ -8,6 +8,7 @@
 * [#228](https://github.com/brodieG/unitizer/issues/228) more docs on handling
   RDS files
 * README typos (@eddelbuettel)
+* Improve vignette index
 
 ## v1.4.3
 
