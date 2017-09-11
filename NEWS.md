@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.5
+
+* Wrap `diffObj` call in `try`
+
 ## v1.4.4
 
 * Fix tests broken by R-devel 3.4.1 improvements to S4 deparsing
