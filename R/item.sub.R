@@ -227,14 +227,25 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
         } else call("$", as.name(toupper(x)), as.name(i))
         call("quote", res)
       }
-      diff <- diffObj(
-        curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
-        cur.banner=make_cont(".new")
+      diff <- try(
+        diffObj(
+          curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
+          cur.banner=make_cont(".new")
+        )
       )
-      diffs[[i]] <- new(
-        "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
-        err=curr.err@compare.err
-      )
+      if(inherits(diff, "try-error")) {
+        diffs[[i]] <- new(
+          "unitizerItemTestsErrorsDiff", diff=NULL,
+          txt="<diff failed>",
+          txt.alt="<diff failed>",
+          err=curr.err@compare.err
+        )
+      } else {
+        diffs[[i]] <- new(
+          "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
+          err=curr.err@compare.err
+        )
+      }
     }
     invisible(do.call("new", c(list("unitizerItemTestsErrorsDiffs"), diffs)))
   }
