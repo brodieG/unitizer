@@ -104,10 +104,7 @@ local({
       wrap=FALSE
     )
   } else {
-    test_dir(
-      "testthat", reporter="check", env=environment(), filter=test.filt,
-      wrap=FALSE
-    )
+    test_dir("testthat", reporter="check", env=environment(), filter=test.filt)
   }
   # Check for failures and throw error if they exist since test_dir does not
   # do so on its own
