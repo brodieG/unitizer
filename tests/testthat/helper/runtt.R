@@ -67,43 +67,48 @@ local({
   )
   # Run tests
 
-  test.res <- test_dir(
-    "testthat",
-    reporter="check",
-    env=environment(),
-    filter=paste(sep="|",
-      "browse",
-      "capture",
-      "change",
-      "demo",
-      "error",
-      "exec",
-      "get",
-      "global",
-      "handledruns",
-      "inpkg",
-      "ischecks",
-      "item",
-      "list",
-      "misc",
-      "options",
-      "parse",
-      "prompt",
-      "rename",
-      "repairenvs",
-      "search",
-      "section",
-      "shim",
-      "state",
-      "text",
-      "translate",
-      "utz1",
-      "utz2",
-      "upgrade",
-      "zzrunlast"
-    )
+  test.filt <- paste(sep="|",
+    "browse",
+    "capture",
+    "change",
+    "demo",
+    "error",
+    "exec",
+    "get",
+    "global",
+    "handledruns",
+    "inpkg",
+    "ischecks",
+    "item",
+    "list",
+    "misc",
+    "options",
+    "parse",
+    "prompt",
+    "rename",
+    "repairenvs",
+    "search",
+    "section",
+    "shim",
+    "state",
+    "text",
+    "translate",
+    "utz1",
+    "utz2",
+    "upgrade",
+    "zzrunlast"
   )
-
+  test.res <- if(packageVersion('testthat') > "1.0.2") {
+    test_dir(
+      "testthat", reporter="check", env=environment(), filter=test.filt,
+      wrap=FALSE
+    )
+  } else {
+    test_dir(
+      "testthat", reporter="check", env=environment(), filter=test.filt,
+      wrap=FALSE
+    )
+  }
   # Check for failures and throw error if they exist since test_dir does not
   # do so on its own
 
