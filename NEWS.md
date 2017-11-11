@@ -2,10 +2,12 @@
 
 ## v1.4.5
 
+* [#241](https://github.com/brodieG/unitizer/issues/241) `q()` actually works
+  now.
 * Wrap `diffObj` call in `try` to avoid killing `unitizer` section when
   `diffObj` errors.
 * Modify `test_dir` calls to use `wrap` on `testthat` versions greater than
-  0.1.2
+  0.1.2.
 
 ## v1.4.4
 
