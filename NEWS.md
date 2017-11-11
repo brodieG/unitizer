@@ -2,6 +2,8 @@
 
 ## v1.4.5
 
+* [#242](https://github.com/brodieG/unitizer/issues/242) Correctly parse
+  newlines in prompt input.
 * [#241](https://github.com/brodieG/unitizer/issues/241) `q()` actually works
   now.
 * Wrap `diffObj` call in `try` to avoid killing `unitizer` section when
