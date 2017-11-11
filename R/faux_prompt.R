@@ -10,7 +10,7 @@ faux_prompt <- function(
 ) {
   res <- character()
   repeat {
-    res <- paste0(res, read_line(prompt))
+    res <- paste0(res, read_line(prompt), '\n')
     res.parse <- tryCatch(
       parsed <- parse(text=res),
       error=function(e) {
