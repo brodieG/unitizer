@@ -23,7 +23,7 @@
 
 unitize_core <- function(
   test.files, store.ids, state, pre, post, history, interactive.mode,
-  force.update, auto.accept, mode
+  force.update, auto.accept, mode, show.diff
 ) {
   # - Validation / Setup -------------------------------------------------------
 
@@ -75,6 +75,8 @@ unitize_core <- function(
   if(!is.TF(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
+  if(!is.TF(show.diff))
+    stop("Argument `show.diff` must be TRUE or FALSE")
 
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components
@@ -449,7 +451,8 @@ unitize_core <- function(
         force.update=force.update,
         auto.accept=auto.accept,
         history=history,
-        global=global
+        global=global,
+        show.diff=show.diff
       ),
       unitizerInteractiveFail=function(e) interactive.fail <<- TRUE
     )

@@ -43,7 +43,7 @@ setGeneric(
 ## @return a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
-  function(x, y, force.update, ...) {
+  function(x, y, force.update, show.diff, ...) {
 
     if(identical(y@mode, "review") && (!isTRUE(y@interactive) || force.update)) {
       # nocov start
@@ -54,7 +54,9 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
       )
       # nocov end
     }
-    browse.res <- browseUnitizerInternal(x, y, force.update=force.update)
+    browse.res <- browseUnitizerInternal(
+      x, y, force.update=force.update, show.diff=show.diff
+    )
     x@global$resetInit()  # reset state
 
     # Need to store our `unitizer`
