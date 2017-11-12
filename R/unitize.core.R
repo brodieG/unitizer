@@ -594,7 +594,8 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
 # @param force.update whether to store unitizer
 
 unitize_browse <- function(
-  unitizers, mode, interactive.mode, force.update, auto.accept, history, global
+  unitizers, mode, interactive.mode, force.update, auto.accept, history, global,
+  show.diff
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -628,7 +629,9 @@ unitize_browse <- function(
   untz.browsers <- mapply(
     browsePrep, as.list(unitizers), mode=mode,
     start.at.browser=(identical(mode, "review") | !to.review) & !force.update,
-    MoreArgs=list(hist.con=hist.obj$con, interactive=interactive.mode),
+    MoreArgs=list(
+      hist.con=hist.obj$con, interactive=interactive.mode, show.diff=show.diff
+    ),
     SIMPLIFY=FALSE
   )
   # Decide what to keep / override / etc.
@@ -835,7 +838,8 @@ unitize_browse <- function(
           # unreviewed unitizers
 
           browse.res <- browseUnitizer(
-            unitizers[[i]], untz.browsers[[i]], force.update=force.update
+            unitizers[[i]], untz.browsers[[i]], force.update=force.update,
+            show.diff=show.diff
           )
           summaries@updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer

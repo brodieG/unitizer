@@ -227,7 +227,7 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
         } else call("$", as.name(toupper(x)), as.name(i))
         call("quote", res)
       }
-      diff <- try(
+      diff <- if(show.diff) try(
         diffObj(
           curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
           cur.banner=make_cont(".new")
@@ -327,7 +327,7 @@ setMethod("show", "unitizerItemTestsErrors",
           } else call("$", as.name(toupper(x)), as.name(i))
           call("quote", res)
         }
-        diff <- diffObj(
+        diff <- if(show.diff) diffObj(
           curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
           cur.banner=make_cont(".new")
         )

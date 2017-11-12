@@ -732,7 +732,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             txt="State mismatch:",
             txt.alt="State mismatch; see `.DIFF$state` for details.",
             show.diff=FALSE,
-            diff=diffPrint(
+            diff=if(show.diff) diffPrint(
               item.ref@state, item.new@state,
               tar.banner=quote(.REF$state),
               cur.banner=quote(.NEW$state)
