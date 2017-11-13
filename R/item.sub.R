@@ -83,8 +83,11 @@ setClass("unitizerItemTestsErrors",
     output="unitizerItemTestError",
     message="unitizerItemTestError",
     aborted="unitizerItemTestError",
-    .fail.context="numericOrNULL" # for passing around options for
-) )
+    .fail.context="numericOrNULL", # for passing around options for
+    .show.diff="logical"
+  ),
+  prototype(.show.diff=TRUE)
+)
 unitizerItemTestsErrorsSlots <-
   grep("^[^.]", slotNames("unitizerItemTestsErrors"), value=TRUE)
 
@@ -204,7 +207,7 @@ setClassUnion(
 
 setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff")) # nocov
 setMethod("as.Diffs", "unitizerItemTestsErrors",
-  function(x, show.diff, width=getOption("width"), ...) {
+  function(x, width=getOption("width"), ...) {
     slots <- grep("^[^.]", slotNames(x), value=TRUE)
     slot.errs <- vapply(
       slots, function(y) !is.null(slot(x, y)@value), logical(1L)
@@ -230,7 +233,7 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
         } else call("$", as.name(toupper(x)), as.name(i))
         call("quote", res)
       }
-      diff <- if(show.diff) try(
+      diff <- if(x@.show.diff) try(
         diffObj(
           curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
           cur.banner=make_cont(".new")
@@ -252,7 +255,7 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
           txt.alt=out,
           err=curr.err@compare.err,
           diff.alt=capture.output(all.equal(curr.err@.ref, curr.err@.new)),
-          show.diff=show.diff
+          show.diff=x@.show.diff
         )
       } else {
         new(
@@ -342,7 +345,7 @@ setMethod("show", "unitizerItemTestsErrors",
           } else call("$", as.name(toupper(x)), as.name(i))
           call("quote", res)
         }
-        diff <- if(show.diff) diffObj(
+        diff <- if(object@.show.diff) diffObj(
           curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
           cur.banner=make_cont(".new")
         )
@@ -350,7 +353,7 @@ setMethod("show", "unitizerItemTestsErrors",
           "unitizerItemTestsErrorsDiff", diff=diff, txt=out, txt.alt=out,
           err=curr.err@compare.err
         )
-        show(diff)
+        show(diffs[[i]])
         cat("\n")
       }
     }

@@ -26,6 +26,12 @@ setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
       "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive,
       global=x@global, start.at.browser=start.at.browser, show.diff=show.diff
     )
+    # Assign the `show.diff` status to the errors, this isn't done when the
+    # tests are evaluated.
+
+    for(i in seq_along(x@tests.errorDetails))
+      x@tests.errorDetails[[i]]@.show.diff <- show.diff
+
     # - Unitize ----------------------------------------------------------------
 
     # At some point need to rationalize this to a simpler instantiator for the

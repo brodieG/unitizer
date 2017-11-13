@@ -170,7 +170,8 @@ review <- function(store.id=NULL) {
       interactive.mode=TRUE,
       force.update=FALSE,
       auto.accept=character(0L),
-      mode="review"
+      mode="review",
+      show.diff=TRUE
     )[[1L]]
   )
 }
