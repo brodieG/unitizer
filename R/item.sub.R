@@ -73,7 +73,8 @@ setClass("unitizerItemTestError",
   ),
   prototype(value=NULL, compare.err=FALSE, .new=NULL, .ref=NULL),
   validity=function(object) {
-    if(!identical(length(object@compare.err), 1L)) return("slot `@compare.err` must be a 1 length logical")
+    if(!identical(length(object@compare.err), 1L))
+      return("slot `@compare.err` must be a 1 length logical")
 } )
 setClass("unitizerItemTestsErrors",
   representation(
@@ -109,17 +110,19 @@ setMethod("initialize", "unitizerItemTestsErrors",
 ## Track Diff And Comparison Error Text
 ##
 ## Store whether to show the diff or not in `show.diff`, and the alternate
-## text to show in that circumstances in `txt.alt`.
+## text to show in that circumstances in `diff.alt`.  `txt` and `txt.alt` are
+## the "headers" shown ahead of `diff` or `diff.alt`
 
 setClass("unitizerItemTestsErrorsDiff",
   slots=c(
     diff="DiffOrNULL",
+    diff.alt="character",
     txt="character",
     txt.alt="character",
     err="logical",
     show.diff="logical"
   ),
-  prototype=list(show.diff=TRUE)
+  prototype=list(show.diff=TRUE, diff.alt=character())
 )
 setClassUnion(
   "unitizerItemTestsErrorsDiffOrNULL", c("unitizerItemTestsErrorsDiff", "NULL")
@@ -201,7 +204,7 @@ setClassUnion(
 
 setGeneric("as.Diffs", function(x, ...) StandardGeneric("as.Diff")) # nocov
 setMethod("as.Diffs", "unitizerItemTestsErrors",
-  function(x, state.ref, state.new, width=getOption("width"), ...) {
+  function(x, show.diff, width=getOption("width"), ...) {
     slots <- grep("^[^.]", slotNames(x), value=TRUE)
     slot.errs <- vapply(
       slots, function(y) !is.null(slot(x, y)@value), logical(1L)
@@ -233,17 +236,28 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
           cur.banner=make_cont(".new")
         )
       )
-      if(inherits(diff, "try-error")) {
-        diffs[[i]] <- new(
-          "unitizerItemTestsErrorsDiff", diff=NULL,
-          txt="<diff failed>",
-          txt.alt="<diff failed>",
-          err=curr.err@compare.err
+      diffs[[i]] <- if(inherits(diff, "try-error")) {
+        new(
+          "unitizerItemTestsErrorsDiff",
+          diff=NULL,
+          txt=sprintf("%s: <diff failed>", cap_first(i)),
+          txt.alt=sprintf("%s: <diff failed>", cap_first(i)),
+          err=curr.err@compare.err,
+          show.diff=FALSE
+        )
+      } else if(is.null(diff)) {
+        new(
+          "unitizerItemTestsErrorsDiff", diff=diff, 
+          txt=out,
+          txt.alt=out,
+          err=curr.err@compare.err,
+          diff.alt=capture.output(all.equal(curr.err@.ref, curr.err@.new)),
+          show.diff=show.diff
         )
       } else {
-        diffs[[i]] <- new(
+        new(
           "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
-          err=curr.err@compare.err
+          err=curr.err@compare.err, show.diff=show.diff
         )
       }
     }
@@ -259,7 +273,7 @@ setMethod("show", "unitizerItemTestsErrorsDiffs",
   function(object) {
     sn <- slotNames(object)
     null.slots <- vapply(sn, function(x) is.null(slot(object, x)), logical(1L))
-    if(any(null.slots)) {
+    if(!all(null.slots)) {
       for(i in sn[!null.slots]) show(slot(object, i))
     }
     invisible(object)
@@ -273,10 +287,11 @@ setMethod("show", "unitizerItemTestsErrorsDiff",
   function(object) {
     cat_fun <- if(object@err) meta_word_msg else meta_word_cat
     cat_fun(if(object@show.diff) object@txt else object@txt.alt)
-    if(object@show.diff) {
-      res <- show(object@diff)
-      cat("\n")
+    if(object@show.diff) show(object@diff)
+    else if(length(object@diff.alt)) {
+      cat(object@diff.alt, sep="\n")
     }
+    cat("\n")
     invisible(NULL)
 } )
 
@@ -332,7 +347,7 @@ setMethod("show", "unitizerItemTestsErrors",
           cur.banner=make_cont(".new")
         )
         diffs[[i]] <- new(
-          "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
+          "unitizerItemTestsErrorsDiff", diff=diff, txt=out, txt.alt=out,
           err=curr.err@compare.err
         )
         show(diff)

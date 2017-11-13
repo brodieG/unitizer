@@ -43,7 +43,7 @@ setGeneric(
 ## @return a unitizer if the unitizer was modified, FALSE otherwise
 
 setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
-  function(x, y, force.update, show.diff, ...) {
+  function(x, y, force.update, ...) {
 
     if(identical(y@mode, "review") && (!isTRUE(y@interactive) || force.update)) {
       # nocov start
@@ -54,9 +54,7 @@ setMethod("browseUnitizer", c("unitizer", "unitizerBrowse"),
       )
       # nocov end
     }
-    browse.res <- browseUnitizerInternal(
-      x, y, force.update=force.update, show.diff=show.diff
-    )
+    browse.res <- browseUnitizerInternal(x, y, force.update=force.update)
     x@global$resetInit()  # reset state
 
     # Need to store our `unitizer`
@@ -713,7 +711,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         err.obj@.fail.context <-
           unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]
 
-        diffs <- as.Diffs(err.obj)
+        diffs <- as.Diffs(err.obj, x@show.diff)
 
         # Extract specific state based on indices and attach the to the objects;
         # these objects will be discarded so we don't need to worry about
@@ -732,7 +730,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             txt="State mismatch:",
             txt.alt="State mismatch; see `.DIFF$state` for details.",
             show.diff=FALSE,
-            diff=if(show.diff) diffPrint(
+            diff=if(x@show.diff) diffPrint(
               item.ref@state, item.new@state,
               tar.banner=quote(.REF$state),
               cur.banner=quote(.NEW$state)
