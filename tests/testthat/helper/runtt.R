@@ -101,8 +101,9 @@ local({
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
       "testthat",
-      # reporter="check",
-      env=environment(), filter=test.filt,
+      reporter="check",
+      env=environment(),
+      filter=test.filt,
       wrap=FALSE
     )
   } else {
