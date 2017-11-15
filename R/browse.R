@@ -711,7 +711,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         err.obj@.fail.context <-
           unitizer@global$unitizer.opts[["unitizer.test.fail.context.lines"]]
 
-        diffs <- as.Diffs(err.obj, x@show.diff)
+        diffs <- as.Diffs(err.obj)
 
         # Extract specific state based on indices and attach the to the objects;
         # these objects will be discarded so we don't need to worry about

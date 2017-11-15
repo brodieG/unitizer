@@ -290,11 +290,12 @@ setMethod("show", "unitizerItemTestsErrorsDiff",
   function(object) {
     cat_fun <- if(object@err) meta_word_msg else meta_word_cat
     cat_fun(if(object@show.diff) object@txt else object@txt.alt)
-    if(object@show.diff) show(object@diff)
-    else if(length(object@diff.alt)) {
-      cat(object@diff.alt, sep="\n")
+    if(object@show.diff){
+      show(object@diff)
+      cat("\n")
+    } else if(length(object@diff.alt)) {
+      cat(object@diff.alt, "", sep="\n")
     }
-    cat("\n")
     invisible(NULL)
 } )
 
