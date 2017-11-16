@@ -125,8 +125,21 @@ local({
       "| No changes recorded.", fixed=TRUE
     )
   })
-  unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
+  # Use this opportunity to make sure `show.diff=FALSE` works as intended
 
+  unitizer:::read_line_set_vals("Q")
+
+  txt5a <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE, show.diff=FALSE)
+  )
+  test_that("show.diff", {
+    expect_equal_to_reference(
+      txt5a, file.path("helper", "refobjs", "unitize_showdiff.rds")
+    )
+  })
+  # Now actually accept the changes
+
+  unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
   txt5 <- unitizer:::capture_output(
     untz5 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
   )
