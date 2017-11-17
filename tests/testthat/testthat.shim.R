@@ -1,5 +1,4 @@
 library(unitizer)
-library(devtools)
 library(testthat)
 context("Shim")
 

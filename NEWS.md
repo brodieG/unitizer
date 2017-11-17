@@ -2,6 +2,8 @@
 
 ## v1.4.5
 
+* [#237](https://github.com/brodieG/unitizer/issues/237) Option to turn off
+  diffs.
 * [#239](https://github.com/brodieG/unitizer/issues/239) Document issues with
   deparsing doubles in tests.
 * [#242](https://github.com/brodieG/unitizer/issues/242) Correctly parse

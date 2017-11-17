@@ -111,6 +111,8 @@
 #'   specify which type(s) of test you wish to auto accept (i.e. same as typing
 #'   \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
 #'   off (default)
+#' @param use.diff TRUE or FALSE, whether to use diffs when there is an error,
+#'   if FALSE uses \code{\link{all.equal}} instead.
 #' @return \code{unitize} and company are intended to be used primarily for
 #'   the interactive environment and side effects.  The functions do return
 #'   summary data about test outcomes and user input as
@@ -128,7 +130,8 @@ unitize <- function(
   history=getOption("unitizer.history.file"),
   interactive.mode=interactive(),
   force.update=FALSE,
-  auto.accept=character(0L)
+  auto.accept=character(0L),
+  use.diff=getOption("unitizer.use.diff")
 ) {
   # Initial spacer, must be done in each top level call
 
@@ -145,7 +148,7 @@ unitize <- function(
       test.file.inf, list(store.id.inf), state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode,  force.update=force.update,
-      auto.accept=auto.accept, mode="unitize"
+      auto.accept=auto.accept, mode="unitize", use.diff=use.diff
     )[[1L]]
   )
 }
@@ -168,7 +171,8 @@ review <- function(store.id=NULL) {
       interactive.mode=TRUE,
       force.update=FALSE,
       auto.accept=character(0L),
-      mode="review"
+      mode="review",
+      use.diff=TRUE
     )[[1L]]
   )
 }
@@ -184,7 +188,8 @@ unitize_dir <- function(
   history=getOption("unitizer.history.file"),
   interactive.mode=interactive(),
   force.update=FALSE,
-  auto.accept=character(0L)
+  auto.accept=character(0L),
+  use.diff=getOption("unitizer.use.diff")
 ) {
   # Validations
   if(
@@ -233,6 +238,6 @@ unitize_dir <- function(
       state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode, force.update=force.update,
-      auto.accept=auto.accept, mode="unitize"
+      auto.accept=auto.accept, mode="unitize", use.diff=use.diff
   ) )
 }

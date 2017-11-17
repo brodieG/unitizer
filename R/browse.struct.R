@@ -17,14 +17,21 @@ NULL
 setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
 setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
   function(
-    x, mode, hist.con=NULL, interactive=FALSE, start.at.browser=FALSE, ...
+    x, mode, hist.con=NULL, interactive=FALSE, start.at.browser=FALSE,
+    use.diff=TRUE, ...
   ) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
     unitizer.browse <- new(
       "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive,
-      global=x@global, start.at.browser=start.at.browser
+      global=x@global, start.at.browser=start.at.browser, use.diff=use.diff
     )
+    # Assign the `show.diff` status to the errors, this isn't done when the
+    # tests are evaluated.
+
+    for(i in seq_along(x@tests.errorDetails))
+      x@tests.errorDetails[[i]]@.use.diff <- use.diff
+
     # - Unitize ----------------------------------------------------------------
 
     # At some point need to rationalize this to a simpler instantiator for the
@@ -288,26 +295,33 @@ setClass("unitizerBrowse", contains="unitizerList",
   slots=c(
     mapping="unitizerBrowseMapping",
     last.id="integer",          # so that `reviewNext` knows what to show next
-    last.reviewed="integer",    # so that `reviewNext` knows what headers to display
+    # so that `reviewNext` knows what headers to display
+    last.reviewed="integer",
     jumping.to="logical",       # indicate there was a re-eval jump
     hist.con="ANY",             # should be 'fileOrNULL', but setOldClass` issues
     mode="character",
     review="integer",           # counter to figure out when browse/review menu
     inspect.all="logical",      # force inspection of all elements
-    navigating="logical",       # user has triggered at least one navigation command
+    # user has triggered at least one navigation command
+    navigating="logical",
     browsing="logical",         # current test selected via browse
     human="logical",            # whether user has had any interaction at all
-    re.eval="integer",          # so navprompt can communicate back re-eval status
+    # so navprompt can communicate back re-eval status
+    re.eval="integer",
     force.up="logical",         # force update even if no changes
     interactive="logical",      # whether to browse in interactive mode
-    interactive.error="logical",# whether in non-interactive mode but required input
+    # whether in non-interactive mode but required input
+    interactive.error="logical",
     global="unitizerGlobal",    # object for global settings
-    auto.accept="logical",      # indicate whether any auto-accepts were triggered
+    # indicate whether any auto-accepts were triggered
+    auto.accept="logical",
     multi="logical",            # whether many unitizers are being browsed
     multi.quit="logical",       # whether many unitizers are being browsed
     # whether to show browser first, also disables warnings about reviewing
     # tests that are not usually reviewed
-    start.at.browser="logical"
+    start.at.browser="logical",
+    use.diff="logical"          # Whether to use a diff in failure comparisons
+
   ),
   prototype=list(
     mapping=new("unitizerBrowseMapping"),
