@@ -77,6 +77,7 @@ local({
   update_fastlm(.unitizer.fastlm, version="0.1.1")
   devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
   unitizer:::read_line_set_vals(c("N", "N", "Y"))
+
   txt3 <- unitizer:::capture_output(
     untz3 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
   )
@@ -125,16 +126,23 @@ local({
       "| No changes recorded.", fixed=TRUE
     )
   })
-  # Use this opportunity to make sure `show.diff=FALSE` works as intended
+  # Use this opportunity to make sure `use.diff=FALSE` works as intended
 
   unitizer:::read_line_set_vals("Q")
 
   txt5a <- unitizer:::capture_output(
-    unitize(.unitizer.test.file, interactive.mode=TRUE, show.diff=FALSE)
+    unitize(.unitizer.test.file, interactive.mode=TRUE, use.diff=FALSE)
   )
-  test_that("show.diff", {
+  unitizer:::read_line_set_vals(c(".DIFF$state", "Q"))
+  txt5b <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE, use.diff=FALSE)
+  )
+  test_that("use.diff", {
     expect_equal_to_reference(
       txt5a, file.path("helper", "refobjs", "unitize_showdiff.rds")
+    )
+    expect_equal_to_reference(
+      txt5b, file.path("helper", "refobjs", "unitize_usediff_no.rds")
     )
   })
   # Now actually accept the changes

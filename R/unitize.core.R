@@ -23,7 +23,7 @@
 
 unitize_core <- function(
   test.files, store.ids, state, pre, post, history, interactive.mode,
-  force.update, auto.accept, mode, show.diff
+  force.update, auto.accept, mode, use.diff
 ) {
   # - Validation / Setup -------------------------------------------------------
 
@@ -75,8 +75,8 @@ unitize_core <- function(
   if(!is.TF(interactive.mode))
     stop("Argument `interactive.mode` must be TRUE or FALSE")
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
-  if(!is.TF(show.diff))
-    stop("Argument `show.diff` must be TRUE or FALSE")
+  if(!is.TF(use.diff))
+    stop("Argument `use.diff` must be TRUE or FALSE")
 
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components
@@ -452,7 +452,7 @@ unitize_core <- function(
         auto.accept=auto.accept,
         history=history,
         global=global,
-        show.diff=show.diff
+        use.diff=use.diff
       ),
       unitizerInteractiveFail=function(e) interactive.fail <<- TRUE
     )
@@ -595,7 +595,7 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
 
 unitize_browse <- function(
   unitizers, mode, interactive.mode, force.update, auto.accept, history, global,
-  show.diff
+  use.diff
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -630,7 +630,7 @@ unitize_browse <- function(
     browsePrep, as.list(unitizers), mode=mode,
     start.at.browser=(identical(mode, "review") | !to.review) & !force.update,
     MoreArgs=list(
-      hist.con=hist.obj$con, interactive=interactive.mode, show.diff=show.diff
+      hist.con=hist.obj$con, interactive=interactive.mode, use.diff=use.diff
     ),
     SIMPLIFY=FALSE
   )
@@ -839,7 +839,7 @@ unitize_browse <- function(
 
           browse.res <- browseUnitizer(
             unitizers[[i]], untz.browsers[[i]], force.update=force.update,
-            show.diff=show.diff
+            use.diff=use.diff
           )
           summaries@updated[[i]] <- browse.res@updated
           unitizers[[i]] <- browse.res@unitizer

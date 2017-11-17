@@ -18,19 +18,19 @@ setGeneric("browsePrep", function(x, mode, ...) standardGeneric("browsePrep"))
 setMethod("browsePrep", c("unitizer", "character"), valueClass="unitizerBrowse",
   function(
     x, mode, hist.con=NULL, interactive=FALSE, start.at.browser=FALSE,
-    show.diff=TRUE, ...
+    use.diff=TRUE, ...
   ) {
     if(length(mode) != 1L || !mode %in% c("review", "unitize"))
       stop("Argument `mode` must be one of \"review\" or \"unitize\"")
     unitizer.browse <- new(
       "unitizerBrowse", mode=mode, hist.con=hist.con, interactive=interactive,
-      global=x@global, start.at.browser=start.at.browser, show.diff=show.diff
+      global=x@global, start.at.browser=start.at.browser, use.diff=use.diff
     )
     # Assign the `show.diff` status to the errors, this isn't done when the
     # tests are evaluated.
 
     for(i in seq_along(x@tests.errorDetails))
-      x@tests.errorDetails[[i]]@.show.diff <- show.diff
+      x@tests.errorDetails[[i]]@.use.diff <- use.diff
 
     # - Unitize ----------------------------------------------------------------
 
@@ -320,7 +320,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     # whether to show browser first, also disables warnings about reviewing
     # tests that are not usually reviewed
     start.at.browser="logical",
-    show.diff="logical"         # Whether to show diffs or not
+    use.diff="logical"          # Whether to use a diff in failure comparisons
 
   ),
   prototype=list(

@@ -84,9 +84,9 @@ setClass("unitizerItemTestsErrors",
     message="unitizerItemTestError",
     aborted="unitizerItemTestError",
     .fail.context="numericOrNULL", # for passing around options for
-    .show.diff="logical"
+    .use.diff="logical"
   ),
-  prototype(.show.diff=TRUE)
+  prototype(.use.diff=TRUE)
 )
 unitizerItemTestsErrorsSlots <-
   grep("^[^.]", slotNames("unitizerItemTestsErrors"), value=TRUE)
@@ -123,9 +123,10 @@ setClass("unitizerItemTestsErrorsDiff",
     txt="character",
     txt.alt="character",
     err="logical",
-    show.diff="logical"
+    show.diff="logical",  # whether to display the diff
+    use.diff="logical"    # whether to use diff or all.equal
   ),
-  prototype=list(show.diff=TRUE, diff.alt=character())
+  prototype=list(show.diff=TRUE, use.diff=TRUE, diff.alt=character())
 )
 setClassUnion(
   "unitizerItemTestsErrorsDiffOrNULL", c("unitizerItemTestsErrorsDiff", "NULL")
@@ -167,7 +168,7 @@ setMethod("$", "unitizerItemTestsErrorsDiffs",
   function(x, name) {
     what <- substitute(name)
     what <- if(is.symbol(what)) as.character(what) else name
-    x[[what]]@diff
+    x[[what]]
 } )
 #' @rdname extract-unitizerItemTestsErrorsDiffs-method
 #' @keywords internal
@@ -233,7 +234,7 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
         } else call("$", as.name(toupper(x)), as.name(i))
         call("quote", res)
       }
-      diff <- if(x@.show.diff) try(
+      diff <- if(x@.use.diff) try(
         diffObj(
           curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
           cur.banner=make_cont(".new")
@@ -246,7 +247,8 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
           txt=sprintf("%s: <diff failed>", cap_first(i)),
           txt.alt=sprintf("%s: <diff failed>", cap_first(i)),
           err=curr.err@compare.err,
-          show.diff=FALSE
+          show.diff=FALSE,
+          use.diff=FALSE
         )
       } else if(is.null(diff)) {
         new(
@@ -255,12 +257,12 @@ setMethod("as.Diffs", "unitizerItemTestsErrors",
           txt.alt=out,
           err=curr.err@compare.err,
           diff.alt=capture.output(all.equal(curr.err@.ref, curr.err@.new)),
-          show.diff=x@.show.diff
+          use.diff=FALSE, show.diff=TRUE
         )
       } else {
         new(
           "unitizerItemTestsErrorsDiff", diff=diff, txt=out,
-          err=curr.err@compare.err, show.diff=x@.show.diff
+          err=curr.err@compare.err, use.diff=x@.use.diff, show.diff=TRUE
         )
       }
     }
@@ -290,11 +292,10 @@ setMethod("show", "unitizerItemTestsErrorsDiff",
   function(object) {
     cat_fun <- if(object@err) meta_word_msg else meta_word_cat
     cat_fun(if(object@show.diff) object@txt else object@txt.alt)
-    if(object@show.diff){
-      show(object@diff)
+    if(object@show.diff) {
+      if(object@use.diff) show(object@diff)
+      else cat(object@diff.alt, sep='\n')
       cat("\n")
-    } else if(length(object@diff.alt)) {
-      cat(object@diff.alt, "", sep="\n")
     }
     invisible(NULL)
 } )
@@ -345,7 +346,7 @@ setMethod("show", "unitizerItemTestsErrors",
         } else call("$", as.name(toupper(x)), as.name(i))
         call("quote", res)
       }
-      diff <- if(object@.show.diff) diffObj(
+      diff <- if(object@.use.diff) diffObj(
         curr.err@.ref, curr.err@.new, tar.banner=make_cont(".ref"),
         cur.banner=make_cont(".new")
       )
