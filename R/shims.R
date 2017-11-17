@@ -102,6 +102,12 @@ trace_at_end <- function(fun, tracer, print, where) {
   trace(fun, edit=TRUE, where=where)
   invisible(fun)
 }
+## Internal wrapper around untrace so that we can test unexpected behavior
+
+untrace_utz <- function(
+  what, signature = NULL, where = topenv(parent.frame())
+)  base::untrace(what=what, signature=signature, where=where)
+
 # Function for testing tracing stuff
 
 trace_test_fun <- function(x=0) {
@@ -150,10 +156,7 @@ unitizerGlobal$methods(
       "Unable to shim required functions to run with `par.env=NULL` because",
       "%s. Setting `par.env=.GlobalEnv`."
     )
-    stopifnot(
-      is.character(funs), all(!is.na(funs)),
-      all(vapply(.unitizer.base.funs[funs], is.function, logical(1L)))
-    )
+    stopifnot(is.character(funs), all(!is.na(funs)))
     funs.to.shim <- mget(
       funs, ifnotfound=vector("list", length(funs)), mode="function",
       envir=.BaseNamespaceEnv
@@ -191,7 +194,7 @@ unitizerGlobal$methods(
     # Now shim
 
     if(!is(.unitizer.shim.dat[[name]], "unitizerShimDat"))
-      stop("Internal Error: missing shim data") # nocov
+      stop("Internal Error: missing shim data")
 
     shimmed <- try(
       # Use to have the option to use the @at portion of the shim data so
@@ -223,11 +226,14 @@ unitizerGlobal$methods(
       return(FALSE)
     }
     if(!is(getFun(name), "functionWithTrace")) {
+      # Shouldn't be possible to get to this branch so can't test
+      # nocov start
       warning(
         "Function `", name, "` was not traced even though tracing attempt did ",
         "not produce errors."
       )
       return(FALSE)
+      # nocov end
     }
     # Store shimmed functions so we can check whether they have been
     # un/reshimmed
@@ -249,7 +255,7 @@ unitizerGlobal$methods(
       # if not identical, then someone else shimmed / unshimmed
       if(identical(getFun(i), shim.funs[[i]])) {
         withCallingHandlers(
-          base::untrace(i, where=.BaseNamespaceEnv),
+          untrace_utz(i, where=.BaseNamespaceEnv),
           # suppress the expected unshimming message, but not others
           message=function(e) {
             if(
