@@ -112,7 +112,7 @@
 #'   \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
 #'   off (default)
 #' @param use.diff TRUE or FALSE, whether to use diffs when there is an error,
-#'   if FALSE uses [all.equal] instead.
+#'   if FALSE uses \code{\link{all.equal}} instead.
 #' @return \code{unitize} and company are intended to be used primarily for
 #'   the interactive environment and side effects.  The functions do return
 #'   summary data about test outcomes and user input as
