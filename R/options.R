@@ -429,5 +429,11 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
       "Option `unitizer.history.file` must be character(1L) and not NA, ",
       " or NULL"
     )
-  TRUE
+  # NULL options that should be changed
+
+  if(is.null(opts.to.validate[["unitizer.color"]])) {
+    opts.to.validate[["unitizer.color"]] <-
+      isTRUE(try(crayon::has_color(), silent))
+  }
+  opts.to.validate
 }

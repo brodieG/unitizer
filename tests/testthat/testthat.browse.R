@@ -3,6 +3,9 @@ library(testthat)
 context("Browse")
 
 local( {
+  old.opt.outer <- options(unitizer.color=FALSE)
+  on.exit(options(old.opt.outer))
+
   zero.env <- parent.env(.GlobalEnv)
   obj.item <- new("unitizerItem", call=quote(1 + 1), env=new.env())
   obj.item@data@value <- list(2)
@@ -78,13 +81,13 @@ local( {
       file.path("helper", "refobjs", "browse_df1.rds")
     )
   })
-
   test_that("unitizerBrowse correctly processes unitizer for display", {
     # force all tests to be reviewed so they will be shown
     unitizer.prepped@mapping@reviewed <-
       rep(TRUE, length(unitizer.prepped@mapping@reviewed))
     unitizer.prepped@mapping@review.val <-
       rep("Y", length(unitizer.prepped@mapping@reviewed))
+
     expect_equal_to_reference(
       as.character(unitizer.prepped, 60),
       file.path("helper", "refobjs", "browse_aschar1.rds")
@@ -106,6 +109,15 @@ local( {
     expect_equal_to_reference(
       prep.narrow, file.path("helper", "refobjs", "browse_ascharnarrow.rds")
     )
+
+    # Colors work (should be last in this section) since the reference @global
+
+    unitizer.prepped@global$unitizer.opts[["unitizer.color"]] <- TRUE
+    prep.color <- as.character(unitizer.prepped, 60)
+    expect_equal_to_reference(
+      prep.color, file.path("helper", "refobjs", "browse_aschar3.rds")
+    )
+    unitizer.prepped@global$unitizer.opts[["unitizer.color"]] <- FALSE
   } )
   test_that("processInput generates Correct Item Structure", {
     # Here we just test that the calls of each item are what we expect, making

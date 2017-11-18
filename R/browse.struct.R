@@ -441,8 +441,9 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     num.pad <- ". "
     front.pad <- "  "
     rev.type <- format(as.character(x@mapping@review.type), justify="right")
-    rev.fail.corr <- rev.type %in% c("Failed", "Corrupted")
-    rev.new <- rev.type == "New"
+    rev.fail.corr <- x@mapping@review.type %in% c("Failed", "Corrupted")
+    rev.new <- x@mapping@review.type == "New"
+
     if(isTRUE(x@global$unitizer.opts[["unitizer.color"]])) {
       rev.type[rev.fail.corr] <- crayon::yellow(rev.type[rev.fail.corr])
       rev.type[rev.new] <- crayon::blue(rev.type[rev.new])
