@@ -1,6 +1,10 @@
 library(unitizer)
 context("Demo")
 
+# Mostly makes sure the demo steps work, but since it is a convenient way of
+# generating a unitizer with actual errors and so forth, we use it to test a few
+# other things as well in the context of those unitizers
+
 local({
 
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
@@ -145,6 +149,21 @@ local({
       txt5b, file.path("helper", "refobjs", "unitize_usediff_no.rds")
     )
   })
+  # See what happens if `diffobj` fails
+
+  unitizer:::read_line_set_vals("Q")
+  with_mock(
+    `diffobj::diffObj`=function(...) stop("A failing diff."),
+    txt5c <- unitizer:::capture_output(
+      unitize(.unitizer.test.file, interactive.mode=TRUE)
+    )
+  )
+  test_that("failing diff", {
+    expect_equal_to_reference(
+      txt5c, file.path("helper", "refobjs", "unitize_faildiff.rds")
+    )
+  })
+
   # Now actually accept the changes
 
   unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
