@@ -97,6 +97,15 @@ local( {
       as.character(unitizer.prepped, 60),
       file.path("helper", "refobjs", "browse_aschar2.rds")
     )
+    # Errors / warnings
+
+    expect_error(as.character(unitizer.prepped, -1), 'positive')
+    expect_warning(
+      prep.narrow <- as.character(unitizer.prepped, 5), 'width too small'
+    )
+    expect_equal_to_reference(
+      prep.narrow, file.path("helper", "refobjs", "browse_ascharnarrow.rds")
+    )
   } )
   test_that("processInput generates Correct Item Structure", {
     # Here we just test that the calls of each item are what we expect, making
@@ -112,12 +121,31 @@ local( {
     #     function(x) call("quote", slot(x, "call")))
     # ) )
 
-    unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
-    unitizer.prepped@mapping@review.val <- rep("Y", length(unitizer.prepped@mapping@reviewed))
+    unitizer.prepped@mapping@reviewed <-
+      rep(TRUE, length(unitizer.prepped@mapping@reviewed))
+    unitizer.prepped@mapping@review.val <-
+      rep("Y", length(unitizer.prepped@mapping@reviewed))
+      #
     # Assume user accepted all tests
     expect_equal(
-      lapply(unitizer:::as.list(unitizer:::processInput(unitizer.prepped)), slot, "call"),
-      list(quote(library(stats)), quote(runif(20)), quote(var <- 200), quote(matrix(1:9, 3)), quote(1 + 1), quote(stop("woohoo")), quote(var1 <- list(1, 2, 3)), quote(sample(20)), quote(1 + 20), quote(matrix(1:9, ncol = 3)), quote(lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))))
+      lapply(
+        unitizer:::as.list(unitizer:::processInput(unitizer.prepped)),
+        slot, "call"
+      ),
+      list(
+        quote(library(stats)),
+        quote(runif(20)),
+        quote(var <- 200),
+        quote(matrix(1:9, 3)),
+        quote(1 + 1),
+        quote(stop("woohoo")),
+        quote(var1 <- list(1, 2, 3)),
+        quote(sample(20)),
+        quote(1 + 20),
+        quote(matrix(1:9, ncol = 3)),
+        quote(
+          lm(x ~ y,
+            data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2, 1, 4, 1.5)))))
     )
     # Assume user accepted all but 1, 4, 6 and 11, note it isn't completely
     # obvious what should be kept since an N for anything but a new and passed
@@ -151,15 +179,20 @@ local( {
     my.unitizer3 <-
       new("unitizer", id=3, zero.env=zero.env) +
       my.unitizer2@items.new[-(2:6)]  # Exclude section two tests
-    my.unitizer3 <- unitizer:::refSections(my.unitizer3, my.unitizer2)  # sections should copy over
 
-    expect_identical(my.unitizer3@sections.ref, my.unitizer2@sections[-2])  # just copy over 1st and 3rd sections
+    # sections should copy over
+    my.unitizer3 <- unitizer:::refSections(my.unitizer3, my.unitizer2)
+
+    # just copy over 1st and 3rd sections
+    expect_identical(my.unitizer3@sections.ref, my.unitizer2@sections[-2])
     expect_identical(my.unitizer3@section.ref.map, c(1L, rep(2L, 5L)))
 
     # Make sure "removed" sections are NA when kept
-
-    unitizer.prepped@mapping@reviewed <- rep(TRUE, length(unitizer.prepped@mapping@reviewed))
-    unitizer.prepped@mapping@review.val <- ifelse(unitizer.prepped@mapping@review.type %in% c("Removed"), "N", "Y")  # don't delete removed
+    unitizer.prepped@mapping@reviewed <-
+      rep(TRUE, length(unitizer.prepped@mapping@reviewed))
+    # don't delete removed
+    unitizer.prepped@mapping@review.val <-
+      ifelse(unitizer.prepped@mapping@review.type %in% c("Removed"), "N", "Y")
     items.processed <- unitizer:::processInput(unitizer.prepped)
 
     expect_identical(
@@ -169,7 +202,9 @@ local( {
     # Now try to re-establish sections with removed tests
 
     my.unitizer4 <- new("unitizer", id=4, zero.env=zero.env) + items.processed
-    my.unitizer4 <- unitizer:::refSections(my.unitizer4, my.unitizer2)  # sections should copy over
+
+    # sections should copy over
+    my.unitizer4 <- unitizer:::refSections(my.unitizer4, my.unitizer2)
 
     expect_true(is(my.unitizer4@sections.ref[[4L]], "unitizerSectionNA"))
     expect_identical(
