@@ -419,7 +419,7 @@ setMethod(
 setMethod("as.character", "unitizerBrowse", valueClass="character",
   function(x, width=0L, ...) {
     if(!is.numeric(width) || width < 0 || length(width) != 1L) {
-      stop("Argument `width` must be a one length numeric.")
+      stop("Argument `width` must be a positive scalar numeric.")
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
