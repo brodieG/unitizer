@@ -57,6 +57,9 @@ local({
   old.opt.2 <- c(
     old.opt.2, options(unitizer.state='recommended', diffobj.pager='off')
   )
+  # A dummy class we use to test coercion errors
+
+  setClass("uhtsdfoqiuerhzb", slots=c(a='integer'))
 
   on.exit(
     {
@@ -68,35 +71,35 @@ local({
   # Run tests
 
   test.filt <- paste(sep="|",
-    "browse",
-    "capture",
-    "change",
-    "demo",
-    "error",
-    "exec",
-    "get",
-    "global",
-    "handledruns",
-    "inpkg",
-    "ischecks",
-    "item",
-    "list",
-    "misc",
-    "options",
-    "parse",
-    "prompt",
-    "rename",
-    "repairenvs",
-    "search",
-    "section",
-    "shim",
-    "state",
-    "text",
-    "translate",
-    "utz1",
-    "utz2",
-    "upgrade",
-    "zzrunlast"
+    # "browse",
+    # "capture",
+    # "change",
+    # "demo",
+    # "error",
+    # "exec",
+    # "get",
+    # "global",
+    # "handledruns",
+    # "inpkg",
+    # "ischecks",
+    # "item",
+    # "list",
+    # "misc",
+    # "options",
+    # "parse",
+    # "prompt",
+    # "rename",
+    # "repairenvs",
+    # "search",
+    # "section",
+    # "shim",
+    # "state",
+    # "text",
+    # "translate",
+    "utz1"
+    # "utz2",
+    # "upgrade",
+    # "zzrunlast"
   )
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
