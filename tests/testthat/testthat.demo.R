@@ -55,8 +55,11 @@ local({
   # come in sunk, we won't be able to fully test everything, since for example
   # the display of the captured stdout just won't happen.
 
-  old.opt <- options(width=80)
-  on.exit(options(old.opt), add=TRUE)
+  old.opt <- options(
+    unitizer.color=FALSE, width=80L, crayon.enabled=TRUE,
+    diffobj.term.colors=8
+  )
+  on.exit(options(old.opt))
 
   # options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
 

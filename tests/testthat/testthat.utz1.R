@@ -204,7 +204,7 @@ local({
     )
     # Print failures
 
-    expect_match(untz3a.empty.pr, "No unitizers")
+    expect_match(untz3a.empty.pr[1], "No unitizers")
     expect_match(untz3a.first.bad.pr[2], "untranslateable")
   })
   test_that("unitize_dir", {
