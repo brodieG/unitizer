@@ -211,7 +211,7 @@ unitizer_sect <- function(
       expr <- eval(expr, parent.frame())
     }
   }
-  if (!is.expression(expr)) {
+  if(!is.expression(expr)) {
     stop(
       "Argument `expr` must be an expression, or an unevaluated call that ",
       "evaluates to an expression or `{`."
@@ -225,17 +225,10 @@ unitizer_sect <- function(
         "require no more than two (", err.fun, ")"
       )
     }
-    compare <- try(
-      new(
+    compare <- new(
         "testFuns",
         value=new("unitizerItemTestFun", fun=compare, fun.name=fun.name)
-    ) )
-    if(inherits(compare, "try-error")) {
-      stop(
-        "Problem with provided function for argument `compare`; see ",
-        "previous errors for details"
-      )
-    }
+    )
   }
   if(length(expr) < 1L) {
     warning("`unitizer_sect` \"", strtrunc(title, 15), "\" is empty.")

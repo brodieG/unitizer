@@ -98,7 +98,7 @@ local({
 
   temp.loc <- tempfile()
   dir.create(temp.loc)
-  on.exit(unlink(temp.loc, recursive=TRUE))
+  on.exit(unlink(temp.loc, recursive=TRUE), add=TRUE)
   file.copy(file.path("helper", "sects.R"), temp.loc)
   unitizer:::capture_output(
     unitize(

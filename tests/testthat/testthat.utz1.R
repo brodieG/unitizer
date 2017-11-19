@@ -119,6 +119,12 @@ local({
       txt2, file.path("helper", "refobjs", "unitize_txtcd2.rds")
     )
   })
+  # quit from all at once
+
+  unitizer:::read_line_set_vals(c("A", "QQ", "Q"))
+  txt3aa <-
+    unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
   # Now test `unitize_dir`; we are testing all different combination of whether
   # a unitizer is accepted and updated
 
@@ -147,8 +153,20 @@ local({
     attr(untz3a.cpy[[i]], "store.id") <-
       basename(attr(untz3a.cpy[[i]], "store.id"))
   }
-  untz3a.all <- capture.output(print(untz3a))
-  untz3a.first <- capture.output(print(untz3a[[1L]]))
+  untz3a.all.pr <- capture.output(print(untz3a))
+  untz3a.first <- untz3a[[1L]]
+  untz3a.first.pr <- capture.output(print(untz3a.first))
+  untz3a.first.bad <- untz3a.first
+  attr(untz3a.first.bad, 'store.id') <- new("uhtsdfoqiuerhzb")
+
+  untz3a.first.bad.pr <- capture.output(print(untz3a.first.bad))
+
+  # this is a bit contrived as it isn't possible to directly create an empty
+  # unitize dir result
+
+  untz3a.empty <- untz3a[0]
+  class(untz3a.empty) <- class(untz3a)
+  untz3a.empty.pr <- capture.output(print(untz3a.empty))
 
   # Now accept the last remaining tests
   # unlink(list.files(test.dir, pattern="\\.unitizer$", full.names=TRUE),
@@ -166,7 +184,7 @@ local({
   txt3b <- unitizer:::capture_output(
     untz3b <- unitize_dir(test.dir, interactive.mode=TRUE)
   )
-  untz3b.all <- capture.output(print(untz3b))
+  untz3b.all.pr <- capture.output(print(untz3b))
   untz3b.get.all <- vapply(get_unitizer(untz3b), class, character(1L))
 
   # x <- untz3b.all
@@ -174,7 +192,25 @@ local({
   # cat(capture.output(print(x)), sep="\n", file=(f1 <- tempfile())); cat(capture.output(print(y)), sep="\n", file=(f2 <- tempfile())); tools::Rdiff(f1, f2);
   # unlink(paste0("f", 1:2))
 
+  test_that("print untizer result", {
+    expect_equal_to_reference(
+      untz3a.all.pr, file.path("helper", "refobjs", "unitize_resprint1.rds")
+    )
+    expect_equal_to_reference(
+      untz3a.first.pr, file.path("helper", "refobjs", "unitize_resprint2.rds")
+    )
+    expect_equal_to_reference(
+      untz3b.all.pr, file.path("helper", "refobjs", "unitize_resprint3.rds")
+    )
+    # Print failures
+
+    expect_match(untz3a.empty.pr[1], "No unitizers")
+    expect_match(untz3a.first.bad.pr[2], "untranslateable")
+  })
   test_that("unitize_dir", {
+    expect_equal_to_reference(
+      txt3aa, file.path("helper", "refobjs", "unitize_txtdir_quitall.rds")
+    )
     expect_equal_to_reference(
       txt3a, file.path("helper", "refobjs", "unitize_txtdir.rds")
     )
@@ -189,18 +225,9 @@ local({
       replicate(3L, c("unitizer_result", "data.frame"), simplify=FALSE)
     )
     expect_equal_to_reference(
-      untz3a.all, file.path("helper", "refobjs", "unitize_resprint1.rds")
-    )
-    expect_equal_to_reference(
-      untz3a.first, file.path("helper", "refobjs", "unitize_resprint2.rds")
-    )
-    expect_equal_to_reference(
       untz3a.cpy, file.path("helper", "refobjs", "unitize_res1.rds")
     )
     expect_equal(untz3a.get.all, c("unitizer", "unitizer", "logical"))
-    expect_equal_to_reference(
-      untz3b.all, file.path("helper", "refobjs", "unitize_resprint3.rds")
-    )
     expect_equal(untz3b.get.all, c("unitizer", "unitizer", "unitizer"))
   })
   # Namespace conflicts; unfortunately if either `covr` or `data.table` are

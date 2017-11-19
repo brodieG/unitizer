@@ -57,6 +57,9 @@ local({
   old.opt.2 <- c(
     old.opt.2, options(unitizer.state='recommended', diffobj.pager='off')
   )
+  # A dummy class we use to test coercion errors
+
+  setClass("uhtsdfoqiuerhzb", slots=c(a='integer'))
 
   on.exit(
     {

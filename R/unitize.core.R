@@ -150,7 +150,7 @@ unitize_core <- function(
 
   opts <- options()
   opts.untz <- opts[grep("^unitizer\\.", names(opts))]
-  validate_options(opts.untz, test.files)
+  opts.untz <- validate_options(opts.untz, test.files)
 
   # Initialize new tracking object; this will also record starting state and
   # store unitizer options; open question of how exposed we want to be to

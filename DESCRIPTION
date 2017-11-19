@@ -29,7 +29,7 @@ License: GPL (>= 2)
 LazyData: true
 URL: https://github.com/brodieG/unitizer
 BugReports: https://github.com/brodieG/unitizer/issues
-Collate:
+Collate: 
     'asciiml.R'
     'capture.R'
     'is.R'
@@ -68,7 +68,6 @@ Collate:
     'size.R'
     'state.R'
     'state.compare.R'
-    'testfuns.R'
     'translate.R'
     'unitize.R'
     'unitize.core.R'

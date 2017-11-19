@@ -1,6 +1,10 @@
 library(unitizer)
 context("Demo")
 
+# Mostly makes sure the demo steps work, but since it is a convenient way of
+# generating a unitizer with actual errors and so forth, we use it to test a few
+# other things as well in the context of those unitizers
+
 local({
 
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
@@ -51,8 +55,11 @@ local({
   # come in sunk, we won't be able to fully test everything, since for example
   # the display of the captured stdout just won't happen.
 
-  old.opt <- options(width=80)
-  on.exit(options(old.opt), add=TRUE)
+  old.opt <- options(
+    unitizer.color=FALSE, width=80L, crayon.enabled=TRUE,
+    diffobj.term.colors=8
+  )
+  on.exit(options(old.opt))
 
   # options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
 
@@ -143,6 +150,42 @@ local({
     )
     expect_equal_to_reference(
       txt5b, file.path("helper", "refobjs", "unitize_usediff_no.rds")
+    )
+  })
+  # See what happens if `diffobj` fails
+
+  unitizer:::read_line_set_vals("Q")
+  with_mock(
+    `diffobj::diffObj`=function(...) stop("A failing diff."),
+    txt5c <- unitizer:::capture_output(
+      unitize(.unitizer.test.file, interactive.mode=TRUE)
+    )
+  )
+  test_that("failing diff", {
+    expect_equal_to_reference(
+      txt5c, file.path("helper", "refobjs", "unitize_faildiff.rds")
+    )
+  })
+  # Test what happens if we back out of a multi-accept
+
+  unitizer:::read_line_set_vals(c("YY", "N", "Q"))
+  txt6 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  test_that("multi-input", {
+    expect_equal_to_reference(
+      txt6, file.path("helper", "refobjs", "unitize_multinput.rds")
+    )
+  })
+  # Or if we request to go to unreviewed when there are none
+
+  unitizer:::read_line_set_vals(c("YY", "Y", "B", "U", "Q"))
+  txt7 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  test_that("multi-input", {
+    expect_equal_to_reference(
+      txt7, file.path("helper", "refobjs", "unitize_invalid_unrev.rds")
     )
   })
   # Now actually accept the changes

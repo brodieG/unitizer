@@ -100,6 +100,26 @@ local( {
     ulist <- new("unitizerList", .items=list("a", 1, 2, "b"))
     expect_identical(lapply(ulist, identity), ulist@.items)
   })
+  test_that("Errors", {
+    setClass("uhtsdfoqiuerhzb", slots=c(a='integer'))
+    dummy <- new("uhtsdfoqiuerhzb", a=1L)
 
+    lst2 <- new('unitizerList', .items=list(1, 2, 3))
+    expect_error(append(lst2, 5, after = -1), "greater than zero")
+    expect_error(
+      capture.output(append(lst2, dummy), type='message'), "Unable to coerce"
+    )
 
+    lst3 <- new('unitizerList', .items=expression(1, 2, 3))
+    expect_error(
+      capture.output(append(lst3, dummy), type='message'),
+      "Unable to coerce"
+    )
+  })
+
+  test_that("Set Names", {
+    nlst <- new("unitizerList", .items=list(a="a", b="b"))
+    names(nlst) <- toupper(names(nlst))
+    expect_equal(as.list(nlst), list(A="a", B="b"))
+  })
 } )

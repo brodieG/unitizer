@@ -54,6 +54,7 @@ local({
       sect.1 <- unitizer_sect("mytest", expr.1, compare=identical),
       "unitizerSectionExpression"
     )
+    expect_warning(unitizer_sect('hello'), 'is empty')
   })
   # Run expressions with different comparison functions
 

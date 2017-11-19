@@ -419,7 +419,7 @@ setMethod(
 setMethod("as.character", "unitizerBrowse", valueClass="character",
   function(x, width=0L, ...) {
     if(!is.numeric(width) || width < 0 || length(width) != 1L) {
-      stop("Argument `width` must be a one length numeric.")
+      stop("Argument `width` must be a positive scalar numeric.")
     }
     width <- as.integer(width)
     width.max <- if(width) width else getOption("width")
@@ -441,8 +441,9 @@ setMethod("as.character", "unitizerBrowse", valueClass="character",
     num.pad <- ". "
     front.pad <- "  "
     rev.type <- format(as.character(x@mapping@review.type), justify="right")
-    rev.fail.corr <- rev.type %in% c("Failed", "Corrupted")
-    rev.new <- rev.type == "New"
+    rev.fail.corr <- x@mapping@review.type %in% c("Failed", "Corrupted")
+    rev.new <- x@mapping@review.type == "New"
+
     if(isTRUE(x@global$unitizer.opts[["unitizer.color"]])) {
       rev.type[rev.fail.corr] <- crayon::yellow(rev.type[rev.fail.corr])
       rev.type[rev.new] <- crayon::blue(rev.type[rev.new])
