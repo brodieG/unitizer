@@ -163,7 +163,18 @@ local({
       txt5c, file.path("helper", "refobjs", "unitize_faildiff.rds")
     )
   })
+  # Test what happens if we back out of a multi-accept
 
+  unitizer:::read_line_set_vals(c("YY", "N", "Q"))
+  txt6 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  browser()
+  test_that("multi-input", {
+    expect_equal_to_reference(
+      txt6, file.path("helper", "refobjs", "unitize_multinput.rds")
+    )
+  })
   # Now actually accept the changes
 
   unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
