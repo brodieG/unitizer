@@ -119,6 +119,12 @@ local({
       txt2, file.path("helper", "refobjs", "unitize_txtcd2.rds")
     )
   })
+  # quit from all at once
+
+  unitizer:::read_line_set_vals(c("A", "QQ", "Q"))
+  txt3aa <-
+    unitizer:::capture_output(unitize_dir(test.dir, interactive.mode=TRUE))
+
   # Now test `unitize_dir`; we are testing all different combination of whether
   # a unitizer is accepted and updated
 
@@ -202,6 +208,9 @@ local({
     expect_match(untz3a.first.bad.pr[2], "untranslateable")
   })
   test_that("unitize_dir", {
+    expect_equal_to_reference(
+      txt3aa, file.path("helper", "refobjs", "unitize_txtdir_quitall.rds")
+    )
     expect_equal_to_reference(
       txt3a, file.path("helper", "refobjs", "unitize_txtdir.rds")
     )
