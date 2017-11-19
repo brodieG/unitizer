@@ -188,6 +188,15 @@ local({
       txt7, file.path("helper", "refobjs", "unitize_invalid_unrev.rds")
     )
   })
+  # Make sure parse warnings are issued
+
+  unitizer:::read_line_set_vals(c("-2147483648L", "Q"))
+  txt8 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  test_that("warn in parse", {
+    expect_true(any(grepl("qualified with L", txt8$message)))
+  })
   # Now actually accept the changes
 
   unitizer:::read_line_set_vals(c("Y", "Y", "Y"))

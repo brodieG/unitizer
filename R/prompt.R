@@ -111,7 +111,11 @@ unitizer_prompt <- function(
   )
   repeat {
     prompt.txt <- sprintf("%s> ", "unitizer")
+
+    old.opt <- options(warn=1)
     val <- tryCatch(faux_prompt(prompt.txt), simpleError=function(e) e)
+    options(old.opt)
+
     if(inherits(val, "simpleError")) {
       cond.chr <- as.character(val)
       cat(cond.chr, file=stderr())
@@ -366,7 +370,7 @@ exit_fun <- function(y, env, valid.vals) {
 read_line <- function(prompt="") {
   stopifnot(is.chr1(prompt))
   if(is.null(.global$prompt.vals)) {
-    readline(prompt)
+    readline(prompt)  # nocov can't test this in non-interactive
   } else if(!is.character(.global$prompt.vals)) {
     stop( # nocov start
       "Internal Error: internal object `.global$prompt.vals` has unexpected ",
