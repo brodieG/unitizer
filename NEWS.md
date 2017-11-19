@@ -11,6 +11,8 @@
   newlines in prompt input.
 * [#241](https://github.com/brodieG/unitizer/issues/241) `q()` actually works
   now.
+* [#245](https://github.com/brodieG/unitizer/issues/245) Report parse warnings
+  at prompt.
 * Wrap `diffObj` call in `try` to avoid killing `unitizer` section when
   `diffObj` errors.
 * Modify `test_dir` calls to use `wrap` on `testthat` versions greater than
