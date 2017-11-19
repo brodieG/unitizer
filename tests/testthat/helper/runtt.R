@@ -74,7 +74,7 @@ local({
     # "browse",
     # "capture",
     # "change",
-    # "demo",
+    "demo"
     # "error",
     # "exec",
     # "get",
@@ -96,7 +96,7 @@ local({
     # "state",
     # "text",
     # "translate",
-    "utz1"
+    # "utz1",
     # "utz2",
     # "upgrade",
     # "zzrunlast"

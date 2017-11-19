@@ -169,10 +169,20 @@ local({
   txt6 <- unitizer:::capture_output(
     unitize(.unitizer.test.file, interactive.mode=TRUE)
   )
-  browser()
   test_that("multi-input", {
     expect_equal_to_reference(
       txt6, file.path("helper", "refobjs", "unitize_multinput.rds")
+    )
+  })
+  # Or if we request to go to unreviewed when there are none
+
+  unitizer:::read_line_set_vals(c("YY", "Y", "B", "U", "Q"))
+  txt7 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  test_that("multi-input", {
+    expect_equal_to_reference(
+      txt7, file.path("helper", "refobjs", "unitize_invalid_unrev.rds")
     )
   })
   # Now actually accept the changes
