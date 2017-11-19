@@ -113,11 +113,15 @@ local( {
     # Colors work (should be last in this section) since the reference @global
 
     unitizer.prepped@global$unitizer.opts[["unitizer.color"]] <- TRUE
+    old.opt <- options(crayon.enabled=TRUE)
+    on.exit({
+      options(old.opt)
+      unitizer.prepped@global$unitizer.opts[["unitizer.color"]] <- FALSE
+    })
     prep.color <- as.character(unitizer.prepped, 60)
     expect_equal_to_reference(
       prep.color, file.path("helper", "refobjs", "browse_aschar3.rds")
     )
-    unitizer.prepped@global$unitizer.opts[["unitizer.color"]] <- FALSE
   } )
   test_that("processInput generates Correct Item Structure", {
     # Here we just test that the calls of each item are what we expect, making
