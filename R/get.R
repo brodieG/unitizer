@@ -309,6 +309,13 @@ infer_unitizer_location.character <- function(
   if(!(identical(type, "d") && at.package.dir) && test.fun(store.id))
     return(store.id)
 
+  # If we're not at the package directory, check to see if we are in a package
+  # directory and change directory to that
+
+  if(!at.package.dir && length(pkg.dir.tmp <- get_package_dir(dir.store.id))) {
+    at.package.dir <- TRUE
+    dir.store.id <- pkg.dir.tmp
+  }
   if(at.package.dir) {
     test.base <- file.path(dir.store.id, "tests", "unitizer")
     if(!file_test("-d", test.base))
