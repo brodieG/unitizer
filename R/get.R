@@ -310,9 +310,13 @@ infer_unitizer_location.character <- function(
     return(store.id)
 
   # If we're not at the package directory, check to see if we are in a package
-  # directory and change directory to that
+  # directory and change directory to that, but only do that if we're not
+  # already matching an actual directory
 
-  if(!at.package.dir && length(pkg.dir.tmp <- get_package_dir(dir.store.id))) {
+  if(
+    !at.package.dir && !is.null(file.store.id) &&
+    length(pkg.dir.tmp <- get_package_dir(dir.store.id))
+  ) {
     at.package.dir <- TRUE
     dir.store.id <- pkg.dir.tmp
   }
