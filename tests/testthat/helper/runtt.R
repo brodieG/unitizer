@@ -90,6 +90,7 @@ local({
     "prompt",
     "rename",
     "repairenvs",
+    "random",
     "search",
     "section",
     "shim",
