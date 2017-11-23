@@ -113,7 +113,12 @@ unitizer_prompt <- function(
     prompt.txt <- sprintf("%s> ", "unitizer")
 
     old.opt <- options(warn=1)
-    val <- tryCatch(faux_prompt(prompt.txt), simpleError=function(e) e)
+    on.exit(options(old.opt))
+    val <- tryCatch(
+      faux_prompt(prompt.txt),
+      simpleError=function(e) e
+    )
+    on.exit(NULL)
     options(old.opt)
 
     if(inherits(val, "simpleError")) {
