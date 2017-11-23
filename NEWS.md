@@ -16,6 +16,7 @@
 * [#245](https://github.com/brodieG/unitizer/issues/245) Report parse warnings
   at prompt.
 * [#234](https://github.com/brodieG/unitizer/issues/234) Random seed issues.
+* [#220](https://github.com/brodieG/unitizer/issues/220) Re-order vignettes.
 * Wrap `diffObj` call in `try` to avoid killing `unitizer` section when
   `diffObj` errors.
 * Modify `test_dir` calls to use `wrap` on `testthat` versions greater than
