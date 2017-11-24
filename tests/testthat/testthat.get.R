@@ -387,9 +387,10 @@ local({
     )
     # Random file without setting working dir first
 
-    f.test2 <- infer('tests2')
-    expect_match(f.test2, "unitizer/tests2.R$")
-
+    if(interactive()) {
+      f.test2 <- infer('tests2')
+      expect_match(f.test2, "unitizer/tests2.R$")
+    }
     # Interactive mode
 
     unitizer:::read_line_set_vals(c("26", "Q"))
