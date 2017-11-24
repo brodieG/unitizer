@@ -401,9 +401,13 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
         stop("Option `unitizer.opts.init.base` must be a list")
       if(!is.character(unitizer.opts.asis) || any(is.na(unitizer.opts.asis)))
         stop("Option `unitizer.opts.asis` must be character and not NA")
-      if(!is.character(unitizer.opts.asis.base) || any(is.na(unitizer.opts.asis.base)))
+      if(
+        !is.character(unitizer.opts.asis.base) ||
+        any(is.na(unitizer.opts.asis.base))
+      )
         stop("Option `unitizer.opts.asis.base` must be character and not NA")
-      if(!is.list(unitizer.seed))  # note, more specific validation done in is.valid_rep_state
+      # note, more specific validation done in is.valid_rep_state
+      if(!is.list(unitizer.seed))
         stop("Option `unitizer.seed` must be a list")
   } )
   if( # needs to be outside b/c var may not be defined in option list
@@ -433,7 +437,7 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
 
   if(is.null(opts.to.validate[["unitizer.color"]])) {
     opts.to.validate[["unitizer.color"]] <-
-      isTRUE(try(crayon::has_color(), silent))
+      isTRUE(try(crayon::has_color(), silent=TRUE))
   }
   opts.to.validate
 }
