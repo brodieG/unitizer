@@ -385,7 +385,9 @@ local({
       infer(file.path(base.dir2, "z"), type="u"),
       "tests/unitizer/zzz\\.unitizer$"
     )
-    # Random file without setting working dir first
+    # Random file without setting working dir first, in order for this to work
+    # non-interactivel we need it to work with the R CMD check dir structure,
+    # and possibly with the covr dir structure
 
     if(interactive()) {
       f.test2 <- infer('tests2')
