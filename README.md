@@ -86,7 +86,7 @@ To use `unitizer`:
 
 * `help(package="unitizer")`, in particular `?unitize`
 * `demo(package="unitizer")`
-* [`vignette("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
+* [`browseVignettes("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
 
 ## Related Packages
 
@@ -104,7 +104,7 @@ Thank you to:
 * Hadley Wickham for [testthat](https://cran.r-project.org/package=testthat)
   from which we borrow many concepts and use for internal tests, for
   [devtools](https://cran.r-project.org/package=devtools), and for his
-  outstanding contributions to the R universe.
+  many other packages.
 * [Gábor Csárdi](https://github.com/gaborcsardi) for
   [crayon](https://cran.r-project.org/package=crayon) through which we can
   add a new dimension to the R experience.
@@ -118,14 +118,9 @@ Thank you to:
   and other platforms would be a nightmare.
 * [Yihui Xie](https://github.com/yihui) for
   [knitr](https://cran.r-project.org/package=knitr) and  [J.J.
-  Allaire](https://github.com/jjallaire) etal for
+  Allaire](https://github.com/jjallaire) et al. for
   [rmarkdown](https://cran.r-project.org/package=rmarkdown), and by extension
   John MacFarlane for [pandoc](http://pandoc.org/).
-* Stefan M. Bache for the idea of having a function for testing objects directly
-  (originally `vetr` only worked with function arguments), which I took from
-  ensurer.
-* Hadley Wickham for [devtools](https://cran.r-project.org/package=devtools),
-  and for pointing me to Stefan M. Bache's ensurer package.
 * @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
   team](http://ffmpeg.org/about.html) for ffmpeg.
 * All open source developers out there that make their work freely available

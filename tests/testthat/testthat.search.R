@@ -1,5 +1,4 @@
 library(testthat)
-library(devtools)
 context("Search")
 
 local({

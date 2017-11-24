@@ -1,6 +1,10 @@
 library(unitizer)
 context("Demo")
 
+# Mostly makes sure the demo steps work, but since it is a convenient way of
+# generating a unitizer with actual errors and so forth, we use it to test a few
+# other things as well in the context of those unitizers
+
 local({
 
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
@@ -51,8 +55,11 @@ local({
   # come in sunk, we won't be able to fully test everything, since for example
   # the display of the captured stdout just won't happen.
 
-  old.opt <- options(width=80)
-  on.exit(options(old.opt), add=TRUE)
+  old.opt <- options(
+    unitizer.color=FALSE, width=80L, crayon.enabled=TRUE,
+    diffobj.term.colors=8
+  )
+  on.exit(options(old.opt))
 
   # options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
 
@@ -77,6 +84,7 @@ local({
   update_fastlm(.unitizer.fastlm, version="0.1.1")
   devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
   unitizer:::read_line_set_vals(c("N", "N", "Y"))
+
   txt3 <- unitizer:::capture_output(
     untz3 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
   )
@@ -125,8 +133,73 @@ local({
       "| No changes recorded.", fixed=TRUE
     )
   })
-  unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
+  # Use this opportunity to make sure `use.diff=FALSE` works as intended
 
+  unitizer:::read_line_set_vals("Q")
+
+  txt5a <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE, use.diff=FALSE)
+  )
+  unitizer:::read_line_set_vals(c(".DIFF$state", "Q"))
+  txt5b <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE, use.diff=FALSE)
+  )
+  test_that("use.diff", {
+    expect_equal_to_reference(
+      txt5a, file.path("helper", "refobjs", "unitize_showdiff.rds")
+    )
+    expect_equal_to_reference(
+      txt5b, file.path("helper", "refobjs", "unitize_usediff_no.rds")
+    )
+  })
+  # See what happens if `diffobj` fails
+
+  unitizer:::read_line_set_vals("Q")
+  with_mock(
+    `diffobj::diffObj`=function(...) stop("A failing diff."),
+    txt5c <- unitizer:::capture_output(
+      unitize(.unitizer.test.file, interactive.mode=TRUE)
+    )
+  )
+  test_that("failing diff", {
+    expect_equal_to_reference(
+      txt5c, file.path("helper", "refobjs", "unitize_faildiff.rds")
+    )
+  })
+  # Test what happens if we back out of a multi-accept
+
+  unitizer:::read_line_set_vals(c("YY", "N", "Q"))
+  txt6 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  test_that("multi-input", {
+    expect_equal_to_reference(
+      txt6, file.path("helper", "refobjs", "unitize_multinput.rds")
+    )
+  })
+  # Or if we request to go to unreviewed when there are none
+
+  unitizer:::read_line_set_vals(c("YY", "Y", "B", "U", "Q"))
+  txt7 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  test_that("multi-input", {
+    expect_equal_to_reference(
+      txt7, file.path("helper", "refobjs", "unitize_invalid_unrev.rds")
+    )
+  })
+  # Make sure parse warnings are issued
+
+  unitizer:::read_line_set_vals(c("-2147483648L", "Q"))
+  txt8 <- unitizer:::capture_output(
+    unitize(.unitizer.test.file, interactive.mode=TRUE)
+  )
+  test_that("warn in parse", {
+    expect_true(any(grepl("qualified with L", txt8$message)))
+  })
+  # Now actually accept the changes
+
+  unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
   txt5 <- unitizer:::capture_output(
     untz5 <- unitize(.unitizer.test.file, interactive.mode=TRUE)
   )

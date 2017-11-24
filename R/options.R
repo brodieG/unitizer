@@ -120,6 +120,8 @@ NULL
 #'   \item \code{unitizer.color} whether to use ANSI color escape sequences,
 #'     set to TRUE to force, FALSE to force off, or NULL to attempt to auto
 #'     detect (based on code from package:crayon, thanks Gabor Csardi)
+#'   \item \code{unitizer.use.diff} TRUE or FALSE, whether to use a diff of
+#'     test errors (defaults to TRUE)
 #' }
 #' @section Misc Options:
 #'
@@ -297,7 +299,8 @@ options_update <- function(tar.opts) {
   unitizer.opts.asis.base=.unitizer.opts.asis,
   # random seed to use by default, "Wichman-Hill" because default seed is large
   unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
-  unitizer.max.env.depth=20000L
+  unitizer.max.env.depth=20000L,
+  unitizer.use.diff=TRUE
 )
 
 #' Checks that options meet expectations before anything gets run
@@ -327,6 +330,8 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
     {
       if(!is.TF(unitizer.show.output))
         stop("Option `unitizer.show.output` must be TRUE or FALSE")
+      if(!is.TF(unitizer.use.diff))
+        stop("Option `unitizer.use.diff` must be TRUE or FALSE")
       if(
         exists("unitizer.color", inherits=FALSE) &&
         !is.TF(unitizer.color) && !is.null(unitizer.color)
@@ -424,5 +429,11 @@ validate_options <- function(opts.to.validate, test.files=NULL) {
       "Option `unitizer.history.file` must be character(1L) and not NA, ",
       " or NULL"
     )
-  TRUE
+  # NULL options that should be changed
+
+  if(is.null(opts.to.validate[["unitizer.color"]])) {
+    opts.to.validate[["unitizer.color"]] <-
+      isTRUE(try(crayon::has_color(), silent))
+  }
+  opts.to.validate
 }

@@ -725,16 +725,27 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
         state.comp <- all.equal(item.ref@state, item.new@state, verbose=FALSE)
         if(!isTRUE(state.comp)) {
+          txt.alt <- sprintf(
+            "State mismatch; see %s.",
+            if(x@use.diff) "`.DIFF$state` for details"
+            else "`.NEW$state` and `.REF`$state"
+          )
           diffs@state <- new(
             "unitizerItemTestsErrorsDiff", err=FALSE,
             txt="State mismatch:",
-            txt.alt="State mismatch; see `.DIFF$state` for details.",
+            txt.alt=txt.alt,
             show.diff=FALSE,
-            diff=diffPrint(
+            use.diff=x@use.diff,
+            diff=if(x@use.diff) diffPrint(
               item.ref@state, item.new@state,
               tar.banner=quote(.REF$state),
               cur.banner=quote(.NEW$state)
-        ) ) }
+            ),
+            diff.alt=if(!x@use.diff)
+              as.character(all.equal(item.ref@state, item.new@state)) else
+              character()
+          )
+        }
         # must eval to make sure that correct methods are available when
         # outputing failures to screen
 

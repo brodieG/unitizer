@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -41,7 +41,10 @@
 <li><a href="#backup-your-unitizer-stores">Backup Your <code>unitizer</code> Stores</a></li>
 <li><a href="#alternate-store-locations">Alternate Store Locations</a></li>
 </ul></li>
-<li><a href="#version-control-and-unitizer">Version Control and Unitizer</a></li>
+<li><a href="#version-control-and-unitizer">Version Control and Unitizer</a><ul>
+<li><a href="#committing-binary-files">Committing Binary Files</a></li>
+<li><a href="#collaborating-with-unitizer">Collaborating with Unitizer</a></li>
+</ul></li>
 <li><a href="#modifying-an-existing-unitizer">Modifying an Existing Unitizer</a><ul>
 <li><a href="#review"><code>review</code></a></li>
 <li><a href="#editcalls"><code>editCalls</code></a></li>
@@ -91,6 +94,8 @@
 </div>
 <div id="version-control-and-unitizer" class="section level2">
 <h2>Version Control and Unitizer</h2>
+<div id="committing-binary-files" class="section level3">
+<h3>Committing Binary Files</h3>
 <p>The main issue with using <code>unitizer</code> with a version controlled package is that you have to decide whether you want to include the binary <code>rds</code> files in the version control history. Some options:</p>
 <ul>
 <li>do not track the binary files at all (but they are valuable and now not backed up)</li>
@@ -99,6 +104,16 @@
 <li>Track the binary files, but manage how often they are committed.</li>
 </ul>
 <p>We recommend splitting tests for different functionality into different files. This should mitigate the number of rds files that change with any given source code update, and is good practice anyway. Additionally, we typically only commit the rds files when a feature branch or issue resolution is fully complete.</p>
+<p>Additionally a useful <code>git</code> shortcut to add to your <code>.gitconfig</code> file that mitigates how often you commit rds files is:</p>
+<pre><code>[alias]
+        ad = !git add -u &amp;&amp; git reset -- *.rds</code></pre>
+<p>This makes it easy to add all the files you are working on except for the rdses. Once you have stabilized a set of tests you can commit the rds.</p>
+<p>All this aside, remember that the rdses are ultimately just as important as the test files, and you <strong>should</strong> commit them occasionally to ensure you do not use valuable test information.</p>
+</div>
+<div id="collaborating-with-unitizer" class="section level3">
+<h3>Collaborating with Unitizer</h3>
+<p>If you merge in a pull request from a third party you do not fully trust, we recommend you checkout your most recent version of the rdses that are part of the pull request. You can then re-run the tests and review what each of them does.</p>
+</div>
 </div>
 <div id="modifying-an-existing-unitizer" class="section level2">
 <h2>Modifying an Existing Unitizer</h2>
@@ -195,7 +210,7 @@ Possible actions:
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

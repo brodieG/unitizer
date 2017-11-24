@@ -285,7 +285,7 @@ test_that("relativize_path", {
       c(
         as.list(
           rep(
-            "..", 
+            "..",
             length(
               unlist(strsplit(getwd(), .Platform$file.sep, fixed=TRUE))
             ) - 1L
@@ -380,4 +380,15 @@ test_that("diff conditionList", {
       simpleWarning("goodbye", call=quote(fun()))
   ) )
   expect_is(diffobj::diffObj(cond1, cond1), "Diff")
+})
+
+test_that("Condition object structure", {
+  # We're assuming a particular structure for the condition object in
+  # `faux_prompt` and `unitizer_prompt` so we put in a test here to make sure it
+  # doesn't change
+
+  cond <- simpleError('hello')
+  expect_true(is.list(cond))
+  expect_true(identical(names(cond), c('message', 'call')))
+  expect_true(identical(class(cond), c('simpleError', 'error', 'condition')))
 })

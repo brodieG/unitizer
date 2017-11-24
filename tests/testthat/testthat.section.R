@@ -10,7 +10,7 @@ local({
 
   test_that("simple tests", {
     expect_error(unitizer_sect(1:3), "must be a 1 length character vector")
-    expect_error(unitizer_sect(letters), , "must be a 1 length character vector")
+    expect_error(unitizer_sect(letters), "must be a 1 length character vector")
     expect_error(unitizer_sect("mytest", expr.1, 1:3), "`details` must be character")
     # note the following two produce error messages, but it's not actually an error,
     # it's just that there are multiple errors and `expect_error` only suppresses
@@ -54,6 +54,7 @@ local({
       sect.1 <- unitizer_sect("mytest", expr.1, compare=identical),
       "unitizerSectionExpression"
     )
+    expect_warning(unitizer_sect('hello'), 'is empty')
   })
   # Run expressions with different comparison functions
 

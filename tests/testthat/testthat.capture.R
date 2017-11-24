@@ -28,8 +28,10 @@ test_that("get_capture", {
   old.max <- options(unitizer.max.capture.chars=100L)
   on.exit(options(old.max))
   cons <- new("unitizerCaptCons")
+
   base.char <- paste(rep(letters, 10), collapse=" ")
   writeChar(base.char, cons@out.c)
+
   expect_error(
     cpt0 <- unitizer:::get_text_capture(cons, "output", TRUE, chrs.max="howdy"),
     "Argument `chrs.max`"
@@ -39,6 +41,20 @@ test_that("get_capture", {
     "Reached maximum text capture"
   )
   expect_equal(cpt0, substr(base.char, 1, 100))
+
+  base.char.2 <- paste(rev(rep(letters, 10)), collapse=" ")
+  writeChar(base.char.2, cons@err.c)
+
+  sink(cons@err.c, type='message')
+  on.exit(sink(type='message'), add=TRUE)
+
+  expect_warning(
+    cpt0.err <- unitizer:::get_text_capture(cons, "message", FALSE),
+    "Reached maximum text capture"
+  )
+  sink(type='message')
+  expect_equal(cpt0.err, substr(base.char.2, 1, 100))
+
   ## for some reason this test stopped working; not sure why, need to look into
   ## it; seemingly it messes up the pointer for the next read
 
@@ -53,7 +69,27 @@ test_that("get_capture", {
   expect_equal(paste0(rep("y", 100), collapse=""), cpt1)
   unitizer:::close_and_clear(cons)
 } )
+test_that("get_text", {
+  old.max <- options(unitizer.max.capture.chars=100L)
+  on.exit(options(old.max))
 
+  f <- tempfile()
+  on.exit(unlink(f), add=TRUE)
+  con <- file(f, "w+b")
+  base.char <- paste(rep(letters, 10), collapse=" ")
+
+  sink(con, type='message')
+  on.exit(sink(type='message'), add=TRUE)
+  cat(base.char, file=stderr())
+
+  # this needs to temporarily switch the sink to be able to issue the warning
+  expect_warning(unitizer:::get_text(con, 10), "Reached maximum")
+  # should still be to our file
+  cat("boogiewoogie", file=stderr())
+  sink(type='message')
+
+  expect_match(readLines(f), 'boogiewoogie')
+})
 test_that("connection capture works", {
   out.num <- as.integer(stdout())
   err.num <- as.integer(stderr())
@@ -211,6 +247,24 @@ test_that("connection capture works", {
 #     structure(c(FALSE, TRUE), .Names = c("output", "message"))
 #   )
 # })
+test_that("close_and_clear", {
+  # need some careful handling to make sure we don't mess up the testtthat's
+  # sinking
+
+  cons <- new("unitizerCaptCons")
+  err.con <- cons@stderr.con
+  on.exit(sink(err.con, type='message'))
+  cons@stderr.con <- list()  # intended to cause an error
+  expect_message(
+    cons.txt <- capture.output(
+      status <- unitizer:::close_and_clear(cons), type='message'
+    ),
+    "Unable to restore original "
+  )
+  expect_true(any(grepl("connection", cons.txt)))
+  sink(err.con, type='message')
+  expect_false(status["message"])
+})
 test_that("eval with capt", {
   suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
   expect_equal_to_reference(

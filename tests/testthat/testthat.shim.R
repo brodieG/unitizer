@@ -1,5 +1,4 @@
 library(unitizer)
-library(devtools)
 library(testthat)
 context("Shim")
 
@@ -181,8 +180,54 @@ local({
     expect_false(inherits(detach, "functionWithTrace"))
     expect_false(inherits(library, "functionWithTrace"))
     expect_false(inherits(attach, "functionWithTrace"))
+
+    # try tracing some stuff that shouldn't be
+
+    expect_warning(
+      untz.glob$shimFuns('baljevzxhjLsdc'), "some cannot be found"
+    )
+    # test unexpected message or behavior from `trace_at_end`
+
+    expect_error(untz.glob$shimFun('sum'), "missing shim data")
+    with_mock(
+      `unitizer:::trace_at_end`=function(...) stop("trace_at_end fail"),
+      expect_true(
+        any(
+          grepl(
+            "trace_at_end fail",
+            capture.output(
+              trace.fail <-  untz.glob$shimFun('library'), type='message'
+            ),
+            fixed=TRUE
+      ) ) )
+    )
+    expect_false(trace.fail)
+    with_mock(
+      `unitizer:::trace_at_end`=function(...) message("random message"),
+      expect_message(untz.glob$shimFun('library'), 'random')
+    )
+    with_mock(
+      `unitizer:::trace_at_end`=function(...) TRUE,
+      expect_warning(dont.trace <- untz.glob$shimFun('library'), 'not traced')
+    )
+    expect_false(dont.trace)
     untz.glob$release()
-  } )
+
+    # untrace condition
+
+    untz.glob <- unitizer:::unitizerGlobal$new(par.env=my.env, set.global=TRUE)
+    untz.glob$shimFuns()
+    with_mock(
+      `unitizer:::untrace_utz`=function(
+        what, signature = NULL, where = topenv(parent.frame())
+      ) {
+        message('untrace dummy')
+        base::untrace(what=what, signature=signature, where=where)
+      },
+      expect_message(untz.glob$unshimFuns(), 'untrace dummy')
+    )
+    untz.glob$release()
+  })
   try(detach("package:unitizerdummypkg1", unload=TRUE), silent=TRUE)
   while("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
 

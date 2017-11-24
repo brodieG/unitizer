@@ -5,7 +5,7 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-Version: 1.4.3
+Version: 1.4.4.9003
 Authors@R: c(
     person(
     "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
@@ -29,7 +29,7 @@ License: GPL (>= 2)
 LazyData: true
 URL: https://github.com/brodieG/unitizer
 BugReports: https://github.com/brodieG/unitizer/issues
-Collate:
+Collate: 
     'asciiml.R'
     'capture.R'
     'is.R'
@@ -68,7 +68,6 @@ Collate:
     'size.R'
     'state.R'
     'state.compare.R'
-    'testfuns.R'
     'translate.R'
     'unitize.R'
     'unitize.core.R'

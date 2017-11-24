@@ -64,7 +64,7 @@ identical_fun <- function(x, y) {
 ## @keywords internal
 
 unitizer_quit <- function(
-  save = "default", status = 0, runLast = TRUE, truly.quit=FALSE
+  save = "default", status = 0, runLast = TRUE, truly.quit=TRUE
 ) {
   meta_word_msg(
     "You are attempting to quit R from within `unitizer`.  If you do so ",

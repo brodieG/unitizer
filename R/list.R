@@ -291,6 +291,9 @@ setMethod("names", "unitizerList", function(x) names(x@.items))
 
 #' @rdname unitizer_s4method_doc
 
-setMethod("names<-", "unitizerList",
-  function(x, value) names(x@.items) <- value
+setReplaceMethod("names", "unitizerList",
+  function(x, value) {
+    names(x@.items) <- value
+    x
+  }
 )

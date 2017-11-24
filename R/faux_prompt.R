@@ -10,16 +10,19 @@ faux_prompt <- function(
 ) {
   res <- character()
   repeat {
-    res <- paste0(res, read_line(prompt))
-    res.parse <- tryCatch(
-      parsed <- parse(text=res),
+    res.parse <- tryCatch({
+        res <- paste0(res, read_line(prompt), if(length(res)) '\n' else "")
+        parsed <- parse(text=res)
+      },
       error=function(e) {
         if(!isTRUE(grepl(" unexpected end of input\n", conditionMessage(e)))) {
-          stop(simpleError(conditionMessage(e), res))
+          e$call <- if(length(res)) res else NULL
+          stop(e)
         }
     } )
     prompt <- `continue`
     if(is.expression(res.parse)) {
       return(res.parse)
   } }
+  NULL
 }
