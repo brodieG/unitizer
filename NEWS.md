@@ -15,7 +15,7 @@
   newlines in prompt input.
 * [#241](https://github.com/brodieG/unitizer/issues/241) `q()` actually works
   now.
-* [#245](https://github.com/brodieG/unitizer/issues/245) Report parse warnings
+* [#231](https://github.com/brodieG/unitizer/issues/231) Report parse warnings
   at prompt.
 * [#234](https://github.com/brodieG/unitizer/issues/234) Random seed issues.
 * [#220](https://github.com/brodieG/unitizer/issues/220) Re-order vignettes.
