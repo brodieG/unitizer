@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Brodie Gaslam" />
+
+
+<title>unitizeR - The Interactive Environment</title>
+
+
+
+
+
+
+<link href="data:text/css;charset=utf-8,%0Abody%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E5%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0A%0Apadding%3A%204px%3B%0Awidth%3A%20100%25%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%201em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23eee%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0A%7D%0Apre%20%7B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%3B%0Apadding%3A%2010px%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23eee%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%2C%20h1%20%3E%20code%2C%20h2%20%3E%20code%2C%20h3%20%3E%20code%2C%0Ah4%20%3E%20code%2C%20h5%20%3E%20code%2C%20h6%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0Aline%2Dheight%3A%201%3B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Apadding%2Dbottom%3A%203px%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0Aborder%2Dbottom%3A%201px%20solid%20%23999%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23999%3B%0Apadding%2Dtop%3A%205px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Apadding%2Dtop%3A%205px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0A%0Acolor%3A%20%23777%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah4%2Eauthor%2C%20h4%2Edate%20%7Bdisplay%3A%20none%3B%7D%0Ah5%2C%20h6%20%7B%0A%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%232255dd%3B%0Afont%2Dweight%3A%20bold%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">unitizeR - The Interactive Environment</h1>
+<h4 class="author"><em>Brodie Gaslam</em></h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#overview">Overview</a><ul>
+<li><a href="#unitize-vs-review"><code>unitize</code> vs <code>review</code></a></li>
+<li><a href="#example-set-up">Example Set-up</a></li>
+</ul></li>
+<li><a href="#unitizer-commands"><code>unitizer</code> Commands</a></li>
+<li><a href="#test-navigation">Test Navigation</a><ul>
+<li><a href="#selecting-a-test-to-review">Selecting A Test to Review</a></li>
+<li><a href="#finalizing-unitizer">Finalizing <code>unitizer</code></a></li>
+<li><a href="#quitting-unitizer">Quitting <code>unitizer</code></a></li>
+<li><a href="#differences-in-review-mode">Differences in <code>review</code> Mode</a></li>
+</ul></li>
+<li><a href="#evaluating-expressions-at-the-unitizer-prompt">Evaluating Expressions at the <code>unitizer</code> Prompt</a><ul>
+<li><a href="#as-compared-to-the-standard-r-prompt">As Compared To The Standard R Prompt</a></li>
+<li><a href="#new-and-.ref"><code>.new</code> and <code>.ref</code></a></li>
+<li><a href="#ls"><code>ls</code></a></li>
+</ul></li>
+<li><a href="#unitize_dir"><code>unitize_dir</code></a></li>
+</ul>
+</div>
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<div id="unitize-vs-review" class="section level3">
+<h3><code>unitize</code> vs <code>review</code></h3>
+<p><code>unitizer</code> offers three functions to access the interactive review environment: <code>unitize</code>, <code>unitize_dir</code>, and <code>review</code>. <code>unitize</code> is used when you either want to generate a <code>unitizer</code> from a test file, or when you want to compare the re-evaluation of a test file to an existing <code>unitizer</code>. <code>untize_dir</code> does what <code>unitize</code> does, except for a whole directory at a time.</p>
+<p><code>review</code> is a helper function used when you want to review the contents of an existing <code>unitizer</code>. This is useful if you grow uncertain about tests that you previously approved and want to ensure they actually do what you want them to. You can review and potentially remove items from a <code>unitizer</code> with <code>review</code>.</p>
+<p>Both these functions use the same interactive environment, though rules therein are slightly different. For example, in <code>review</code>, all the tests are considered passed since there is nothing to compare them to, and the interactive environment will step you through all the passed tests. <code>unitize</code> will normally omit passed tests from the review process.</p>
+<p>We will focus on <code>unitize</code> for the rest of this vignette since most of the commentary about it applies equally to <code>unitize_dir</code> and <code>review</code>.</p>
+</div>
+<div id="example-set-up" class="section level3">
+<h3>Example Set-up</h3>
+<p>To examine the interactive environment more thoroughly we will go back to the demo (you can run it with <code>demo(unitizer)</code>). This is the <code>unitizer</code> prompt right after our first failed test when our <code>unitizer.fastlm</code> implementation was returning the wrong values:</p>
+<pre><code>&gt; get_slope(res)
+unitizer test fails on value mismatch:
+*value* mismatch: Mean relative difference: 6943055624
+@@ .ref @@
+-    [1] 101
+@@ .new @@
++    [1] 701248618125</code></pre>
+</div>
+</div>
+<div id="unitizer-commands" class="section level2">
+<h2><code>unitizer</code> Commands</h2>
+<p>Much like the <code>browser()</code> prompt, the <code>unitizer</code> prompt accepts several special expressions that allow you to control <code>unitizer</code> behavior. What the expressions are and what they do depends on context. We will review them in the context of the failed test described above. Look at what the <code>unitizer</code> prompt stated before we started reviewing our failed tests:</p>
+<pre><code>- Failed -----------------------------------------------------------------------
+
+The 2 tests in this section failed because the new evaluations do not match the
+reference values from the store. Overwrite with new results ([Y]es, [N]o,
+[P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?</code></pre>
+<p>This clearly lays out all the special commands available to us:</p>
+<ul>
+<li><code>Y</code> will accept the new value as the correct reference value to use for a test</li>
+<li><code>N</code> will keep the previous reference value as the reference value for future tests</li>
+<li><code>P</code> takes us back to the previously reviewed test (see “Test Navigation” next)</li>
+<li><code>B</code> allows us to navigate to any previously reviewed test (see “Test Navigation” next)</li>
+<li><code>R</code> toggles re-run mode; when you complete review or exit, <code>unitizer</code> will re-run the tests, which is useful if you made changes to your source code and re-installed your package from the <code>unitizer</code> prompt</li>
+<li><code>Q</code> quits <code>unitizer</code> (see “Quitting <code>unitizer</code>”)</li>
+<li><code>H</code> provides contextual help</li>
+</ul>
+<p>If you type any of those letters into the <code>unitizer</code> prompt you will cause <code>unitizer</code> to respond as described above instead of evaluating the expression as it would be at the normal R console prompt. If you have a variable assigned to one of those letters and you wish to access it, you can do so with any of <code>get</code>, <code>(</code>, <code>print</code>, etc. For example, suppose we stored something in <code>Y</code>, then to access it all these commands would work:</p>
+<ul>
+<li><code>(Y)</code></li>
+<li><code>get(&quot;Y&quot;)</code></li>
+<li><code>print(Y)</code></li>
+</ul>
+<p><code>unitizer</code> checks for an exact match of a user expression to the special command letters, so something like <code>(Y)</code> does not match <code>Y</code> which allows you to reach the value stored in <code>Y</code>.</p>
+<p>If at any time you forget what <code>unitizer</code> options are available to you you can just hit the “ENTER” key and <code>unitizer</code> will re-print the options to screen.</p>
+<p>You can accept all unreviewed tests in a sub-section, section, or unitizer with <code>YY</code>, <code>YYY</code>, and <code>YYYY</code> respectively. You can also reject them with <code>NN</code>, <code>NNN</code>, and <code>NNNN</code>. Please note that accepting multiple tests without reviewing them is <strong>a really bad idea</strong>, and you should only resort to these shortcuts when you are absolutely certain of what you are doing. The most common use case for these shortcuts is to drop multiple removed tests from a <code>unitizer</code>.</p>
+</div>
+<div id="test-navigation" class="section level2">
+<h2>Test Navigation</h2>
+<div id="selecting-a-test-to-review" class="section level3">
+<h3>Selecting A Test to Review</h3>
+<p><code>unitize</code> will present to you all the tests that require review, but if you wish to review a specific test you can use the <code>P</code> (for Previous) and <code>B</code> (for Browse) commands. These commands can come in handy if you realize that you incorrectly accepted or rejected an earlier test, but do not wish to quit <code>unitizer</code> completely and lose all the other properly reviewed tests. <code>P</code> just steps you back to the previous test. <code>B</code> gives you the option to go back to any previously reviewed test.</p>
+<p><code>P</code> is trivially straightforward, so we will not discuss it further. We will type <code>B</code> at the prompt of our second failed test to examine what it does:</p>
+<pre><code>unitizer&gt; B
+    *1. library(unitizer.fastlm)   .  .  .  .  .  .  .  .  .  .  .  .        -:-
+    *2. dat &lt;- data.frame(x = 1:100, y = (1:100)^2)  .  .  .  .  .  .        -:-
+    *3. res &lt;- fastlm(dat$x, dat$y)   .  .  .  .  .  .  .  .  .  .  .        -:-
+     4. res   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:N
+     5. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:-
+     6. get_rsq(res)   .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+     7. fastlm(1:100, 1:10)  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+
+What test do you wish to review (input a test number, [U]nreviewed)?
+unitizer&gt;</code></pre>
+<p>The <code>[B]rowse</code> option produces a list of all the tests in the order in which they appear in the test file. You can type the number of a test to review it, or U to go to the first test that hasn’t been reviewed (more on this in a minute). We will examine the line for test #5 in more detail:</p>
+<pre><code>     5. get_slope(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:-
+     ^   ^                                                                ^    ^
+     |   |                                                                |    |
+     |   +--  Deparsed test expression                    Test status ----+    |
+     |                                                                         |
+     +- Test ID                                                    User Input -+</code></pre>
+<p>The value and order of the test IDs shouldn’t mean anything to you other than being the number to type in if you wish to review that test. Tests that have a <code>*</code> to the left of the test id are expessions that are not reviewed or checked by <code>unitizer</code> (we call these <a href="unitizer_tests.html#what-constitutes-a-test">ignored tests</a>).</p>
+<p>The test status (see <a href="unitizer_tests.html#test-outcomes">tests outcomes</a>) indicates the outcome of comparison of the reference test in the <code>unitizer</code> store to the newly evaluated ones. The first four tests are ignored tests, so they do not have a status. The User Input column marks which tests have been reviewed and what the user decision was. In this case we had reviewed test #2 and decided not to keep it (hence the “N”). Typically neither ignored tests nor passed tests require user input so they will typically have a “-” as the user input, as will tests that would be reviewed, but haven’t been yet.</p>
+<p>Typing <code>U</code> at the review prompt will take you to the first unreviewed test. Since ignored tests and passed tests are not typically reviewed, <code>U</code> will take you to the first unreviewed test that is neither passed nor ignored.</p>
+<p>If we type 4 at the prompt, we get:</p>
+<pre><code>You are re-reviewing a test; previous selection was: &quot;N&quot;
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+&gt; res
+unitizer test fails on value mismatch:
+*value* mismatch: mean relative difference: 19854602162
+@@ .ref @@
+-     intercept        slope          rsq
+-  -1717.000000   101.000000     0.938679
+   attr(,&quot;class&quot;)
+   [1] &quot;fastlm&quot;
+@@ .new @@
++      intercept         slope           rsq
++  -3.541306e+13  7.012486e+11  9.386790e-01
+   attr(,&quot;class&quot;)
+   [1] &quot;fastlm&quot;
+unitizer&gt;</code></pre>
+<p><code>unitizer</code> tells us we are re-reviewing this test and that previously we had chosen not to keep the new version. At this point we could re-examine the test, and potentially change our previous selection. <code>unitizer</code> also re-displays any comments that were in the source file either ahead of the test or on the same line as the test. We used this feature to document the demo.</p>
+<p>You can jump ahead to any test from the review menu, even tests that are typically not reviewed (i.e. ignored or passed, though if you go to those you will be brought back to the review menu once you complete the review because those tests are not part of the normal review flow).</p>
+<p>If you skip ahead some tests and then get to the end of the review cycle <code>unitizer</code> will warn you about unreviewed tests.</p>
+</div>
+<div id="finalizing-unitizer" class="section level3">
+<h3>Finalizing <code>unitizer</code></h3>
+<p>Let’s accept the 5th test, which brings us to this prompt:</p>
+<pre><code>unitizer&gt; Y
+
+= Finalize Unitizer ============================================================
+
+You will IRREVERSIBLY modify 'tests/unitizer/fastlm1.unitizer' by:
+- Replacing 1 out of 2 failed tests
+
+Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+unitizer&gt;</code></pre>
+<p>In this case we were reviewing a <code>unitizer</code> with two failed tests, one of which we chose to update with the newer value. <code>unitizer</code> will summarize for you all the changes that it is about to make to the <code>unitizer</code> store. If you type <code>Y</code> at the prompt, the existing <code>unitizer</code> store will be overwritten with the new version you just reviewed.</p>
+<p>If you are unsure about the changes you just approved for the <code>unitizer</code>, you can re-review them with <code>R</code> or <code>B</code>. You can also quit without saving your changes by typing <code>N</code>, but once you do so you will no longer be able to recover your changes.</p>
+</div>
+<div id="quitting-unitizer" class="section level3">
+<h3>Quitting <code>unitizer</code></h3>
+<p>At any point you may quit <code>unitizer</code> by typing <code>Q</code> at the <code>unitizer</code> prompt. If you have already reviewed tests, you will be given the opportunity to save what you have done so far as you would when finalizing the <code>unitizer</code>. Note that if you chose to quit <code>unitizer</code> may exit without giving you the opportunity to review the tests. This will happen if:</p>
+<ul>
+<li>You did not make any changes to the <code>unitizer</code> (e.g. if you chose <code>N</code> at failed tests, you are keeping the reference value, so the <code>unitizer</code> is not actually changing)</li>
+<li>And test evaluation took less than <code>getOption(&quot;unitizer.prompt.b4.quit.time&quot;)</code> seconds (currently 10 seconds)</li>
+</ul>
+<p>Note that if you quit using <code>quit()</code> or <code>q()</code> you will lose any unsaved changes. The same will happen if you interrupt evaluation with CTRL+C (or ESC in RStudio), or if you are in a debugged function and quit the browser with ‘Q’.</p>
+</div>
+<div id="differences-in-review-mode" class="section level3">
+<h3>Differences in <code>review</code> Mode</h3>
+<p><code>review</code> works exactly like <code>unitize</code>, except that passed tests are automatically queued up for review, and that the only test statuses you should see are “Passed” or “-”, the latter for ignored tests.</p>
+</div>
+</div>
+<div id="evaluating-expressions-at-the-unitizer-prompt" class="section level2">
+<h2>Evaluating Expressions at the <code>unitizer</code> Prompt</h2>
+<div id="as-compared-to-the-standard-r-prompt" class="section level3">
+<h3>As Compared To The Standard R Prompt</h3>
+<p>The <code>unitizer</code> prompt is designed to emulate the standard R prompt. For the most part you can type any expression that you would type at the R prompt and get the same result as you would there. This means you can examine the objects created by your test script, run R computations, etc.</p>
+<p>There are, however, some suble differences created by the structure of the evaluation environments <code>unitizer</code> uses:</p>
+<ul>
+<li>Even though you can see objects produced by tests, you can not actually remove them with <code>rm</code></li>
+<li>Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts</li>
+<li>Other subtle issues discussed at length in the (<a href="unitizer_reproducible_tests.html#test-environments">reproducible tests vignette</a>)</li>
+<li>There are special <code>unitizer</code> objects <code>.new</code>, <code>.NEW</code>, <code>.ref</code>, and <code>.REF</code> that let you review the results of tests (we will discuss these next)</li>
+<li><code>ls</code> is over-ridden by a special <code>unitizer</code> version (we will also dicuss this next)</li>
+<li>You will have access to any objects created through the <code>pre</code> argument to <code>unitize</code>, though they will not show up in a call to <code>ls</code></li>
+</ul>
+</div>
+<div id="new-and-.ref" class="section level3">
+<h3><code>.new</code> and <code>.ref</code></h3>
+<p>As we saw in the demo there are special objects available at the prompt: <code>.new</code> (except for removed/deleted tests), and for all but new tests, <code>.ref</code>. These objects contain the values produced by the newly evaluated test (<code>.new</code>) and by the test when it was previously run and accepted (<code>.ref</code>). <code>.new</code> might seem a bit superfluous since the user can always re-evaluate the test expression at the <code>unitizer</code> prompt to review the value, but if that evaluation is slow you can save a little time by using <code>.new</code>. <code>.ref</code> is the only option you have to see what the test used to produce back when it was first accepted into the <code>unitizer</code> store.</p>
+<p><code>.new</code> and <code>.ref</code> contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation. To do so you can use <code>.NEW</code> and <code>.REF</code>:</p>
+<ul>
+<li><code>.NEW</code> prints general information about the test</li>
+<li><code>.NEW$value</code> returns the test value; equivalent to typing <code>.new</code> at the prompt</li>
+<li><code>.NEW$conditions</code> returns the list of conditions produced by the test</li>
+<li><code>.NEW$messsage</code> returns the stderr captured during test evaluation</li>
+<li><code>.NEW$output</code> returns the screen output captured during test evaluation (note often this will be similar to what you get from <code>.new</code> or <code>.NEW$value</code> since typing those expressions at the prompt leads to the value being printed)</li>
+<li><code>.NEW$call</code> returns the test expression</li>
+<li><code>.NEW$aborted</code> returns whether the test expression invoked an “abort” restart (e.g. called <code>stop</code> at some point)</li>
+</ul>
+<p>You can substitute <code>.REF</code> for <code>.NEW</code> in any of the above, provided that <code>.REF</code> is defined (i.e. that will not work when you are reviewing new tests since there is no corresponding reference test for those by definition).</p>
+<p>If both <code>.NEW</code> and <code>.REF</code> are defined, then <code>.DIFF</code> will be defined too. <code>.DIFF</code> has the same structure as <code>.NEW</code> and it contains the result of evaluating <code>diffobj::diffObj</code> between each component of <code>.NEW</code> and <code>.REF</code>. <code>.diff</code> is shorthand for <code>.DIFF$value</code>. If there are state differences (e.g. search path) you will be able to view those with <code>.DIFF$state</code>.</p>
+</div>
+<div id="ls" class="section level3">
+<h3><code>ls</code></h3>
+<p>Using <code>ls</code> at the <code>unitizer</code> prompt calls an <code>unitizer</code> version of the function. This is what happens when we type <code>ls()</code> at the first failed test in the <code>unitizer</code> we’ve been reviewing in this vignette:</p>
+<pre><code>$`objects in new test env:`
+[1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;
+
+$`objects in ref test env:`
+[1] &quot;res&quot; &quot;x&quot;   &quot;y&quot;
+
+$`unitizer objects:`
+[1] &quot;.new&quot; &quot;.NEW&quot; &quot;.ref&quot; &quot;.REF&quot;
+
+Use `ref(.)` to access objects in ref test env
+`.new` / `.ref` for test value, `.NEW` / `.REF` for details.
+unitizer&gt;</code></pre>
+<p>This special version of <code>ls</code> highlights that our environment is more complex than that at the typical R prompt. This is necessary to allow us to review both the newly evaluated objects as well as the objects from the reference <code>unitizer</code> store to compare them for differences. For instance, in this example, we can see that there are both new and reference copies of the <code>res</code>, <code>x</code>, and <code>y</code> objects. The reference copies are from the previous time we ran <code>unitizer</code>. <code>ls</code> also notes what <code>unitizer</code> special objects are available.</p>
+<p>When you type at the prompt the name of one of the objects <code>ls</code> lists, you will see the newly evaluated version of that variable. If you wish to see the reference value, then use the <code>ref</code> function:</p>
+<pre><code>unitizer&gt; res
+    intercept         slope           rsq
+-3.541306e+13  7.012486e+11  9.386790e-01
+attr(,&quot;class&quot;)
+[1] &quot;fastlm&quot;
+unitizer&gt; ref(res)
+   intercept        slope          rsq
+-1717.000000   101.000000     0.938679
+attr(,&quot;class&quot;)
+[1] &quot;fastlm&quot;</code></pre>
+<p>Note that at times when you use <code>ls</code> at the <code>unitizer</code> promopt you may see something along the lines of:</p>
+<pre><code>$`objects in ref test env:`
+[1] &quot;res&quot; &quot;x*&quot;   &quot;y'&quot;</code></pre>
+<p>where object names have symbols such as <code>*</code> or <code>'</code> appended to them. This happens because <code>unitizer</code> does not store the entire environment structure of the reference tests. Here is a description of the possible situations you can run into:</p>
+<ul>
+<li><code>*</code> Object existed during reference test evaluation, but is no longer available</li>
+<li><code>'</code> Object existed during reference test evaluation, and still does, but it has a different value than it did during reference test evaluation</li>
+<li><code>**</code> Object exists now, but did not exist during reference test evaluation</li>
+</ul>
+<p>For more discussion see <code>?&quot;healEnvs,unitizerItems,unitizer-method&quot;</code> and the discussion of <a href="vgn06nittygritty.html#patchwork-reference-environments">patchwork reference environments</a>.</p>
+<p>Objects assigned right before a test are part of that test’s environment so will always be available.</p>
+</div>
+</div>
+<div id="unitize_dir" class="section level2">
+<h2><code>unitize_dir</code></h2>
+<p><code>unitize_dir</code> adds a layer of navigation. Here is what you see after running it on the demo package directory test directory:</p>
+<pre><code>&gt; (.unitizer.fastlm &lt;- copy_fastlm_to_tmpdir())    # package directory
+&gt; unitize_dir(.unitizer.fastlm)
+Inferred test directory location: private/var/folders/56/qcx6p6f94695mh7yw-
+q9m6z_80000gq/T/RtmpJO7kjd/file43ac57df6164/unitizer.fastlm/tests/unitizer
+
+Summary of files in common directory 'tests/unitizer':
+                       Pass Fail  New
+*1.         fastlm1.R     -    -    4
+*2.         fastlm2.R     -    -    1
+*3. unitizer.fastlm.R     -    -    3
+.....................................
+                          -    -    8
+Legend:
+* `unitizer` requires review
+
+Type number of unitizer to review, 'A' to review all that require review
+unitizer&gt;</code></pre>
+<p>Each listing corresponds to a test file. If you were to type <code>1</code> at the prompt then you would see the equivalent of the <code>unitize</code> process in the demo, since “fastlm1.R” is the file we <code>unitize</code> in the demo. The <code>*</code> ahead of each file indicates that the file has tests that require review. In this case, all the files have new tests. After we type <code>1</code> and go through the <code>unitize</code> process for “fastlm1.R” we are returned to the <code>unitize_dir</code> prompt:</p>
+<pre><code>unitizer updated
+
+Summary of files in common directory 'tests/unitizer':
+                       Pass Fail  New
+$1.         fastlm1.R     ?    ?    ?
+*2.         fastlm2.R     -    -    1
+*3. unitizer.fastlm.R     -    -    3
+.....................................
+                          ?    ?    ?
+Legend:
+* `unitizer` requires review
+$ `unitizer` has been updated and needs to be re-evaluted to recompute summary
+
+Type number of unitizer to review, 'A' to review all that require review, 'R' to
+re-run all updated
+unitizer&gt;</code></pre>
+<p>Because we updated “fastlm.R”, the statistics <code>unitize_dir</code> collected when it first ran all the tests are out of date, which is why they show up as question marks. The <code>$</code> also indicates that “fastlm1.R” stats are out of date. There is nothing wrong with this, and you do not need to do anything about it, but if you want you can re-run any unitizers that need to be updated by typing “R” at the prompt. This is what happens if we do so:</p>
+<pre><code>unitizer&gt; R
+
+Summary of files in common directory 'tests/unitizer':
+                       Pass Fail  New
+ 1.         fastlm1.R     4    -    -
+*2.         fastlm2.R     -    -    1
+*3. unitizer.fastlm.R     -    -    3
+.....................................
+                          4    -    4
+* `unitizer` requires review
+
+Type number of unitizer to review, 'A' to review all that require review
+unitizer&gt;</code></pre>
+<p>You can now see that we added all the tests, and upon re-running, they all passed since the source code for <code>unitizer.fastlm</code> has not changed. Notice how there is no <code>*</code> ahead of the first test anymore.</p>
+<p>Another option for reviewing tests is to type “A” at the prompt, which would cause <code>unitize_dir</code> to put you through each test file that requires review in sequence.</p>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
