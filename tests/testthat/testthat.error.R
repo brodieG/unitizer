@@ -8,8 +8,8 @@ local({
         'unitizerItemTestsErrorsDiff', txt='value', err=TRUE,
         diff=diffobj::diffChr(1, 2)
     ) )
-    expect_equal(diffs$value@target, 1)
-    expect_equal(diffs$value@current, 2)
+    expect_equal(diffs$value@diff@target, 1)
+    expect_equal(diffs$value@diff@current, 2)
     expect_error(diffs$values, "must be one of")
     expect_error(diffs[[NA]], "must be character")
   })

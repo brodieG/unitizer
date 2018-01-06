@@ -43,7 +43,9 @@ setMethod("sizeUntz", "unitizer",
 #' Currently we only define a method for \code{unitizerItems-class} objects
 #' @keywords internal
 
-setGeneric("flattenUntz", function(x, ...) StandardGeneric("flattenUntz"))
+setGeneric(  # nocov start
+  "flattenUntz", function(x, ...) StandardGeneric("flattenUntz")
+)            # nocov end
 setMethod(
   "flattenUntz", "unitizerItems",
   function(x, ...) {

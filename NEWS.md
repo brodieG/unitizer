@@ -1,5 +1,29 @@
 # `unitizer` NEWS
 
+## v1.4.5
+
+* Colors in test browser working again.
+* [#220](https://github.com/brodieG/unitizer/issues/220) Fix vignette ordering
+  on CRAN.
+* [#225](https://github.com/brodieG/unitizer/issues/225) Inferring file
+  locations when not in pkg top level.
+* [#237](https://github.com/brodieG/unitizer/issues/237) Option to turn off
+  diffs.
+* [#239](https://github.com/brodieG/unitizer/issues/239) Document issues with
+  deparsing doubles in tests.
+* [#242](https://github.com/brodieG/unitizer/issues/242) Correctly parse
+  newlines in prompt input.
+* [#241](https://github.com/brodieG/unitizer/issues/241) `q()` actually works
+  now.
+* [#231](https://github.com/brodieG/unitizer/issues/231) Report parse warnings
+  at prompt.
+* [#234](https://github.com/brodieG/unitizer/issues/234) Random seed issues.
+* [#220](https://github.com/brodieG/unitizer/issues/220) Re-order vignettes.
+* Wrap `diffObj` call in `try` to avoid killing `unitizer` section when
+  `diffObj` errors.
+* Modify `test_dir` calls to use `wrap` on `testthat` versions greater than
+  0.1.2.
+
 ## v1.4.4
 
 * Fix tests broken by R-devel 3.4.1 improvements to S4 deparsing

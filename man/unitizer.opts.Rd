@@ -131,6 +131,8 @@ results, etc.
   \item \code{unitizer.color} whether to use ANSI color escape sequences,
     set to TRUE to force, FALSE to force off, or NULL to attempt to auto
     detect (based on code from package:crayon, thanks Gabor Csardi)
+  \item \code{unitizer.use.diff} TRUE or FALSE, whether to use a diff of
+    test errors (defaults to TRUE)
 }
 }
 

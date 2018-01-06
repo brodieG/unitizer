@@ -17,6 +17,44 @@
 
 
 
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
 
 
 
@@ -49,6 +87,7 @@
 <li><a href="#things-you-should-know-about-unitizer">Things You Should Know About <code>unitizer</code></a><ul>
 <li><a href="#unitizer-writes-to-your-filesystem"><code>unitizer</code> Writes To Your Filesystem</a></li>
 <li><a href="#tests-pass-if-they-all.equal-stored-reference-values">Tests Pass If They <code>all.equal</code> Stored Reference Values</a></li>
+<li><a href="#test-expressions-are-stored-deparsed">Test Expressions Are Stored Deparsed</a></li>
 <li><a href="#increase-reproducibility-with-advanced-state-management">Increase Reproducibility with Advanced State Management</a></li>
 <li><a href="#beware-of-force-quitting-from-unitizer">Beware of Force Quitting from <code>unitizer</code></a></li>
 <li><a href="#reference-objects">Reference Objects</a></li>
@@ -189,6 +228,14 @@ unitize()              # Will prompt for a file to `unitize`</code></pre>
 <div id="tests-pass-if-they-all.equal-stored-reference-values" class="section level3">
 <h3>Tests Pass If They <code>all.equal</code> Stored Reference Values</h3>
 <p>Once you have created your first <code>unitizer</code> with <code>unitize</code>, subsequent calls to <code>unitize</code> will compare the old stored value to the new one using <code>all.equal</code>. You can change the comparison function by using <code>unitizer_sect</code> (see <a href="unitizer_tests.html">tests vignette</a>).</p>
+</div>
+<div id="test-expressions-are-stored-deparsed" class="section level3">
+<h3>Test Expressions Are Stored Deparsed</h3>
+<p>This means you need to be careful with expressions that may deparse differently on different machines. For example, in order to avoid round issues with numerics, it is better to use:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">num.var &lt;-<span class="st"> </span><span class="fl">14523.2342520</span>  <span class="co"># assignments are not considered tests</span>
+<span class="kw">test_me</span>(num.var)          <span class="co"># safe</span></code></pre></div>
+<p>Instead of:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">test_me</span>(<span class="fl">14523.2342520</span>)    <span class="co"># could be deparsed differently</span></code></pre></div>
 </div>
 <div id="increase-reproducibility-with-advanced-state-management" class="section level3">
 <h3>Increase Reproducibility with Advanced State Management</h3>

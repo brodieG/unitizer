@@ -86,6 +86,14 @@ local({
       "hello", valid.opts=c(Y="[Y]es", N="[N]o"), global=glob
     )
   )
+  # and multiline stuff (#242)
+
+  unitizer:::read_line_set_vals(c("{\n  1 + 1\n  2 + 1\n}", 'N'))
+  txt4 <- capture.output(
+    res <- unitizer:::unitizer_prompt(
+      "hello", valid.opts=c(Y="[Y]es", N="[N]o"), global=glob
+    )
+  )
   test_that("unitizer prompt", {
     expect_equal(
       txt,
@@ -99,6 +107,10 @@ local({
     expect_equal(
       txt3$message,
       c("Error in \"hell())\": <text>:1:7: unexpected ')'", "1: hell())", "          ^")
+    )
+    expect_equal(
+      txt4,
+      c("unitizer> {", "  1 + 1", "  2 + 1", "}", "[1] 3", "unitizer> N", "")
     )
     expect_error(
       unitizer:::unitizer_prompt(

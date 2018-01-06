@@ -12,7 +12,7 @@ unitize(test.file = NULL, store.id = NULL,
   state = getOption("unitizer.state"), pre = NULL, post = NULL,
   history = getOption("unitizer.history.file"),
   interactive.mode = interactive(), force.update = FALSE,
-  auto.accept = character(0L))
+  auto.accept = character(0L), use.diff = getOption("unitizer.use.diff"))
 
 review(store.id = NULL)
 
@@ -20,7 +20,7 @@ unitize_dir(test.dir = NULL, store.ids = filename_to_storeid,
   pattern = "^[^.].*\\\\.[Rr]$", state = getOption("unitizer.state"),
   pre = NULL, post = NULL, history = getOption("unitizer.history.file"),
   interactive.mode = interactive(), force.update = FALSE,
-  auto.accept = character(0L))
+  auto.accept = character(0L), use.diff = getOption("unitizer.use.diff"))
 }
 \arguments{
 \item{test.file}{path to the file containing tests, if supplied path does not
@@ -93,6 +93,9 @@ prompting, use values in \code{c("new", "failed", "deleted", "error")} to
 specify which type(s) of test you wish to auto accept (i.e. same as typing
 \code{"Y"} at the \code{unitizer} prompt) or empty character vector to turn
 off (default)}
+
+\item{use.diff}{TRUE or FALSE, whether to use diffs when there is an error,
+if FALSE uses \code{\link{all.equal}} instead.}
 
 \item{test.dir}{the directory to run the tests on; if NULL will use the
 \dQuote{tests/unitizer} package folder if it exists, or \dQuote{.} if it

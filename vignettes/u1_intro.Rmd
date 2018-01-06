@@ -189,7 +189,27 @@ The `unitize`d tests need to be saved someplace, and the default action is to sa
 
 ### Tests Pass If They `all.equal` Stored Reference Values
 
-Once you have created your first `unitizer` with `unitize`, subsequent calls to `unitize` will compare the old stored value to the new one using `all.equal`.  You can change the comparison function by using `unitizer_sect` (see [tests vignette](unitizer_tests.html)).
+Once you have created your first `unitizer` with `unitize`, subsequent calls to
+`unitize` will compare the old stored value to the new one using `all.equal`.
+You can change the comparison function by using `unitizer_sect` (see [tests
+vignette](unitizer_tests.html)).
+
+### Test Expressions Are Stored Deparsed
+
+This means you need to be careful with expressions that may deparse differently
+on different machines.  For example, in order to avoid round issues with
+numerics, it is better to use:
+
+```{r, eval=FALSE}
+num.var <- 14523.2342520  # assignments are not considered tests
+test_me(num.var)          # safe
+```
+
+Instead of:
+
+```{r, eval=FALSE}
+test_me(14523.2342520)    # could be deparsed differently
+```
 
 ### Increase Reproducibility with Advanced State Management
 

@@ -105,6 +105,20 @@ local({
       ),
       "Cannot upgrade .* in non-interactive"
     )
+    # handle failure in store_unitizer, we just try this on one of the store ids
+
+    with_mock(
+      `unitizer:::store_unitizer`=function(...) stop('store failure'),
+      capture.output(
+        try.upgrade <- unitizer:::load_unitizers(
+          store.ids[4], rep(NA_character_, length(store.ids))[4],
+          par.frame=par.frame,
+          interactive.mode=FALSE, mode="unitize", force.upgrade=TRUE
+      ) )
+    )
+    expect_is(try.upgrade[[1]], 'unitizerLoadFail')
+    expect_match(try.upgrade[[1]]@reason, 'Unable to store')
+
     # try weird store ids
 
     expect_message(
@@ -177,6 +191,13 @@ local({
       txt2, "| Failed Loading Unitizer:;| - Test file.*;| - Store.*;| - Reason: Upgrade failed: no slot of name \"items.ref\" for this object"
     )
     options(old.width)
+    # Test failure of storage of a loaded and upgraded unitizers
+
+    with_mock(
+      `unitizer:::set_unitizer`=function(...) stop('set fail'),
+      expect_error(
+        store_unitizer(untzs[[4]], "Error attempting to save")
+    ) )
     # Try reloading already loaded unitisers
 
     reload <- unitizer:::as.list(untzs)[untzs.classes == "unitizer"]
@@ -364,6 +385,14 @@ local({
       infer(file.path(base.dir2, "z"), type="u"),
       "tests/unitizer/zzz\\.unitizer$"
     )
+    # Random file without setting working dir first, in order for this to work
+    # non-interactivel we need it to work with the R CMD check dir structure,
+    # and possibly with the covr dir structure
+
+    if(interactive()) {
+      f.test2 <- infer('tests2')
+      expect_match(f.test2, "unitizer/tests2.R$")
+    }
     # Interactive mode
 
     unitizer:::read_line_set_vals(c("26", "Q"))
@@ -395,6 +424,14 @@ local({
     )
     fake.class <- structure(list(), class="thisclassdoesn'texist")
     expect_identical(infer(fake.class), fake.class)
+
+    # no match since file can't exist
+
+    f <- tempfile()
+    expect_warning(
+      infer.fail <- unitizer:::infer_unitizer_location(f),
+      "No possible matching"
+    )
   })
   test_that("test file / store manip", {
     skip('fails CRAN')
