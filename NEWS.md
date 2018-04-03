@@ -3,6 +3,8 @@
 ## v1.4.5
 
 * Colors in test browser working again.
+* [#220](https://github.com/brodieG/unitizer/issues/220) Fix vignette ordering
+  on CRAN.
 * [#225](https://github.com/brodieG/unitizer/issues/225) Inferring file
   locations when not in pkg top level.
 * [#237](https://github.com/brodieG/unitizer/issues/237) Option to turn off
@@ -13,7 +15,7 @@
   newlines in prompt input.
 * [#241](https://github.com/brodieG/unitizer/issues/241) `q()` actually works
   now.
-* [#245](https://github.com/brodieG/unitizer/issues/245) Report parse warnings
+* [#231](https://github.com/brodieG/unitizer/issues/231) Report parse warnings
   at prompt.
 * [#234](https://github.com/brodieG/unitizer/issues/234) Random seed issues.
 * [#220](https://github.com/brodieG/unitizer/issues/220) Re-order vignettes.
