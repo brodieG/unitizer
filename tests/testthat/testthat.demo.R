@@ -68,7 +68,7 @@ local({
   # Note the initial install happens in the test running script
 
   unitizer:::update_fastlm(.unitizer.fastlm, version="0.1.0")
-  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
+  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
 
   unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
   txt1 <- unitizer:::capture_output(
@@ -82,7 +82,7 @@ local({
   # Rejecting failed tests does not change unitizer
 
   update_fastlm(.unitizer.fastlm, version="0.1.1")
-  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
+  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
   unitizer:::read_line_set_vals(c("N", "N", "Y"))
 
   txt3 <- unitizer:::capture_output(

@@ -37,8 +37,7 @@ local({
   pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
 
   pkg.inst <- try(
-    for(pkg in pkg.dirs)
-      devtools::install(pkg, quiet=TRUE, quick=TRUE, local=FALSE)
+    install.packages(pkg.dirs, repos=NULL, type='src', quiet=TRUE)
   )
   if(inherits(pkg.inst, "try-error")) stop("install error")
   cat("setup demos\n")
