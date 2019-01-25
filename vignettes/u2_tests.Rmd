@@ -82,7 +82,7 @@ Now re-running `unitizer` segments everything by section (note, first few lines 
 ```
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())
 update_fastlm(.unitizer.fastlm, version="0.1.2")
-devtools::install(.unitizer.fastlm, quiet=TRUE)
+install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
 unitize(file.path(.unitizer.fastlm, "tests", "unitizer", "unitizer.fastlm.R"))
 
 +------------------------------------------------------------------------------+

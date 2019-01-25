@@ -38,7 +38,7 @@ if(interactive()) {
     dir.create(pre.file, recursive=TRUE)
     cat("library(testpkg1)\n", file=file.path(pre.file, "lib.R"))
     tp.0 <- file.path(old.dir, "test_pkgs", "testpkg1", "testpkg1.0")
-    devtools::install(tp.0)
+    install.packages(tp.0, repos=NULL, type='src')
     unitize_dir(file.path(test.tmp, "unitizer"), auto.accept="new")
 
     # Upgrade the package, note we test against same store
@@ -47,7 +47,7 @@ if(interactive()) {
     try(unloadNamespace("testpkg1"))
     try(remove.packages("testpkg1"))
     tp.1 <- file.path(old.dir, "test_pkgs", "testpkg1", "testpkg1.1")
-    devtools::install(tp.1)
+    install.packages(tp.1, repos=NULL, type='src')
     unitize_dir(file.path(test.tmp, "unitizer"))
   })
 }
