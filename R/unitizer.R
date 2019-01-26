@@ -449,7 +449,7 @@ setMethod("show", "unitizerObjectListSummary",
 
     # Legends
 
-    if(any(review.req || object@updated))
+    if(any(review.req | object@updated))
       meta_word_cat("Legend:", trail.nl=FALSE)
     if(any(review.req & !object@updated))
       meta_word_cat("* `unitizer` requires review", trail.nl=FALSE)
