@@ -36,9 +36,12 @@ local({
   unitizer.dir <- system.file(package="unitizer")
   pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
 
+  old.val <- Sys.setenv(R_TESTS="")
+  Sys.setenv(R_TESTS="")
   pkg.inst <- try(
-    install.packages(pkg.dirs, repos=NULL, type='src', quiet=TRUE)
+    for(pkg in pkg.dirs) install.packages(pkg, repos=NULL, type='src')
   )
+  Sys.setenv(R_TESTS=old.val)
   if(inherits(pkg.inst, "try-error")) stop("install error")
   cat("setup demos\n")
 
@@ -104,7 +107,7 @@ local({
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
       "testthat",
-      reporter="check",
+      # reporter="check",
       env=environment(),
       filter=test.filt,
       wrap=FALSE
