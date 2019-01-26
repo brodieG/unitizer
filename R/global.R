@@ -285,7 +285,7 @@ setClass(
   "unitizerGlobalStateFuns", contains="unitizerGlobalBase",
   slots=c(
     search.path="function", options="function", working.directory="function",
-    random.seed="function"
+    random.seed="function", namespaces="function"
   ),
   prototype=list(
     search.path=search_as_envs,
