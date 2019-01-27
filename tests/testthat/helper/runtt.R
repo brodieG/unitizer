@@ -36,10 +36,12 @@ local({
   unitizer.dir <- system.file(package="unitizer")
   pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
 
+  old.val <- Sys.setenv(R_TESTS="")
+  Sys.setenv(R_TESTS="")
   pkg.inst <- try(
-    for(pkg in pkg.dirs)
-      devtools::install(pkg, quiet=TRUE, quick=TRUE, local=FALSE)
+    for(pkg in pkg.dirs) install.packages(pkg, repos=NULL, type='src')
   )
+  Sys.setenv(R_TESTS=old.val)
   if(inherits(pkg.inst, "try-error")) stop("install error")
   cat("setup demos\n")
 
@@ -102,10 +104,11 @@ local({
     "upgrade",
     "zzrunlast"
   )
+  # test.filt <- 'utz1'
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
       "testthat",
-      reporter="check",
+      #reporter="check",
       env=environment(),
       filter=test.filt,
       wrap=FALSE

@@ -14,7 +14,7 @@ local({
   context("Unitize 2")
 
   update_fastlm(.unitizer.fastlm, "0.1.0")
-  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
+  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
 
   # Test unreviewed
@@ -72,7 +72,7 @@ local({
 
   unlink(list.dirs(test.dir, recursive=FALSE), recursive=TRUE)
   unitizer:::update_fastlm_extra(.unitizer.fastlm)
-  devtools::install(.unitizer.fastlm, quick=TRUE, quiet=TRUE, local=FALSE)
+  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
   test.file.1 <- file.path(test.dir, "unitizer.fastlm.R")
   test.file.2 <- file.path(test.dir, "unitizer.fastlm2.R")
   test.store <- file.path(test.dir, "store2.unitizer")

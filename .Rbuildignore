@@ -1,8 +1,8 @@
-^.*\.Rproj$
+^\.*\.Rproj$
 ^\.Rproj\.user$
-^\DEVNOTES\.md$
-^\CRAN\.md$
+^DEVNOTES\.md$
+^CRAN\.md$
 ^\.travis\.yml$
 ^extra$
-.Rdata
-^\scratch\.R$
+\.Rdata
+^scratch\.R$
