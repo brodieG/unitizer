@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.7
+
+* Set `RNGversion()` due to changes to sampling mechanism.
+
 ## v1.4.6
 
 * [#258](https://github.com/brodieG/unitizer/issues/258) Remove `devtools` as a
