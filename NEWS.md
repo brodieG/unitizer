@@ -1,5 +1,12 @@
 # `unitizer` NEWS
 
+## v1.4.6
+
+* [#258](https://github.com/brodieG/unitizer/issues/258) Remove `devtools` as a
+  suggests dependency (reported by @jimhester).
+* [#257](https://github.com/brodieG/unitizer/issues/257) Ensure all slots in
+  S4 prototypes exist in the class definition (reported by B. Ripley).
+
 ## v1.4.5
 
 * Colors in test browser working again.

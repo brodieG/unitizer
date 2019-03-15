@@ -124,7 +124,8 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
 
   repeat {
     if(!length(par.list)) break
-    child.len <- length(children <- id.split[[as.character(par.list[[par.idx]])]])
+    child.len <-
+      length(children <- id.split[[as.character(par.list[[par.idx]])]])
     if(child.len) {
       ind.end <- ind.start + child.len - 1L
       # if(ind.end > max.size)
@@ -202,9 +203,8 @@ comments_assign <- function(expr, comment.dat) {
     )     # nocov end
   }
   if(
-    length(
-      brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) &&
-      !identical(brac.pos, nrow(comment.dat))
+    length(brac.pos <- which(comment.dat$token %in% tk.lst$brac.close)) &&
+    !identical(brac.pos, nrow(comment.dat))
   ) {
     # nocov start
     # shouldn't happen, can't test
@@ -221,10 +221,8 @@ comments_assign <- function(expr, comment.dat) {
     # nocov end
   }
   if(
-    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[-3L])) &&
-    brac.pos > 1L ||
-    !is.na(brac.pos <- match(comment.dat$token, tk.lst$brac.open[3L])) &&
-    brac.pos > 2L
+    !all(match(comment.dat$token, tk.lst$brac.open[-3L], 0L) <= 1L) ||
+    !all(match(comment.dat$token, tk.lst$brac.open[3L], 0L) <= 2L)
   ) {
     stop(   # nocov start
       "Internal Error: opening brackets may only be on first row, or second ",
