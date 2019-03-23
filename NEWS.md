@@ -2,7 +2,7 @@
 
 ## v1.4.7
 
-* Set `RNGversion()` due to changes to sampling mechanism.
+* Set `RNGversion()` in internal tests due to changes to R sampling mechanism.
 
 ## v1.4.6
 
