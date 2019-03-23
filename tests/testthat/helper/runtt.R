@@ -24,13 +24,20 @@ local({
       ),
       "\nalready installed; cannot proceed with tests"
   ) }
-  old.opt.1 <- options(useFancyQuotes=FALSE)
+  tmp.lib <- file.path(tempfile(), 'utz-tmp-lib')
+  if(!isTRUE(dir.create(tmp.lib, recursive=TRUE))) {
+    stop("Unable to create temp library directory")
+  }
+  old.opt.1 <- options(
+    useFancyQuotes=FALSE, unitizer.tmp.lib.loc=tmp.lib
+  )
   on.exit({
     for(i in names(tmp.pkgs)) {
       try(detach(sprintf("package:%s", i)), silent=TRUE)
       try(unloadNamespace(i), silent=TRUE)
     }
     suppressWarnings(remove.packages(names(tmp.pkgs)))
+    unlink(tmp.lib, recursive=TRUE)
     options(old.opt.1)
   })
   unitizer.dir <- system.file(package="unitizer")
@@ -39,7 +46,8 @@ local({
   old.val <- Sys.setenv(R_TESTS="")
   Sys.setenv(R_TESTS="")
   pkg.inst <- try(
-    for(pkg in pkg.dirs) install.packages(pkg, repos=NULL, type='src')
+    for(pkg in pkg.dirs)
+      install.packages(pkg, repos=NULL, type='src', lib=tmp.lib)
   )
   Sys.setenv(R_TESTS=old.val)
   if(inherits(pkg.inst, "try-error")) stop("install error")

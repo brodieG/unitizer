@@ -19,8 +19,12 @@ unitizer_check_demo_state()
 
 (.unitizer.fastlm <- copy_fastlm_to_tmpdir())    # package directory
 list.files(.unitizer.fastlm)                     # contains our sources
+dir.create((lib.dir <- tempfile()))
+options(unitizer.tmp.lib.loc=lib.dir)
 
-install.packages(.unitizer.fastlm, repos=NULL, type="src", quiet=TRUE)
+install.packages(
+  .unitizer.fastlm, repos=NULL, type="src", quiet=TRUE, lib=lib.dir
+)
 
 # And in our sources is the test file, which we will `unitize`:
 
@@ -48,7 +52,9 @@ unitize(.unitizer.test.file)
 `[Press ENTER to Continue]`()
 
 update_fastlm(.unitizer.fastlm, version="0.1.1")
-install.packages(.unitizer.fastlm, repos=NULL, type="src", quiet=TRUE)
+install.packages(
+  .unitizer.fastlm, repos=NULL, type="src", quiet=TRUE, lib=lib.dir
+)
 
 unitize(.unitizer.test.file)
 
@@ -57,7 +63,9 @@ unitize(.unitizer.test.file)
 `[Press ENTER to Continue]`()
 
 update_fastlm(.unitizer.fastlm, version="0.1.2")
-install.packages(.unitizer.fastlm, repos=NULL, type="src", quiet=TRUE)
+install.packages(
+  .unitizer.fastlm, repos=NULL, type="src", quiet=TRUE, lib=lib.dir
+)
 
 unitize(.unitizer.test.file)
 

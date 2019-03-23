@@ -237,5 +237,7 @@ unitizer_cleanup_demo <- function() {
     file_test("-d", pkg.dir) && grepl("unitizer\\.fastlm$", pkg.dir)
   )
   unlink(pkg.dir, recursive=TRUE)
+  unlink(getOption('unitizer.tmp.lib.loc'), recursive=TRUE)
+  options(unitizer.tmp.lib.loc=NULL)
   rm(list=vars, envir=parent.frame())
 }
