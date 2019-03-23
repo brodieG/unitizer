@@ -3,6 +3,7 @@
 [![](https://travis-ci.org/brodieG/unitizer.svg?branch=master)](https://travis-ci.org/brodieG/unitizer)
 [![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
+[![Dependencies direct/recursive](https://tinyverse.netlify.com/badge/unitizer)](https://tinyverse.netlify.com/)
 [![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
 
 ## TL;DR
