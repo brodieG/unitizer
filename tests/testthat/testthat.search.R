@@ -26,8 +26,8 @@ local({
     unitizer:::.unitizer.global.settings.names
   )
   library(unitizer)
-  library(unitizerdummypkg1)
-  library(unitizerdummypkg2)
+  library(unitizerdummypkg1, lib.loc=getOption('unitizer.tmp.lib.loc'))
+  library(unitizerdummypkg2, lib.loc=getOption('unitizer.tmp.lib.loc'))
 
   test_that("Detecting packages", {
     expect_true(unitizer:::is.loaded_package("package:unitizer"))
