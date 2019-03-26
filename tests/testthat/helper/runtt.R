@@ -36,7 +36,7 @@ local({
       try(detach(sprintf("package:%s", i)), silent=TRUE)
       try(unloadNamespace(i), silent=TRUE)
     }
-    suppressWarnings(remove.packages(names(tmp.pkgs)))
+    suppressWarnings(remove.packages(names(tmp.pkgs), lib=tmp.lib))
     unlink(tmp.lib, recursive=TRUE)
     options(old.opt.1)
   })
