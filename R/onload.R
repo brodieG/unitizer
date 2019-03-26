@@ -22,7 +22,8 @@ NULL
       "State tracking is disabled by default to comply with CRAN policies. ",
       "Add `options(unitizer.state='recommended')` to your 'Rprofile' file ",
       "to enable, or `options(unitizer.state='off')` to quash this message ",
-      "without enabling.  See `?unitizerState` for details."
+      "without enabling.  Prior to enabling, be sure to read `?unitizerState`,",
+      "in particular the 'CRAN non-compliance' section."
     )
   }
 }

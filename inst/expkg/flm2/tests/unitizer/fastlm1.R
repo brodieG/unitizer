@@ -1,7 +1,7 @@
 # Assignments and calls to `library` are not considered tests by
 # `unitizer` so you will not need to review them
 
-library(utzflm)
+library(utzflm, lib.loc=getOption('unitizer.tmp.lib.loc'))
 res <- fastlm(1:100, (1:100) ^ 2)
 
 # Our new implementation of slope and intercept calculations is not correct,
