@@ -43,7 +43,9 @@ local({
   unitizer.dir <- system.file(package="unitizer")
   pkg.dirs <- file.path(unitizer.dir, "expkg", tmp.pkgs)
 
-  old.val <- Sys.setenv(R_TESTS="")
+  # install.packages does not work within R CMD check, and it does not
+  # appear to be by design?
+  old.val <- Sys.getenv("R_TESTS")
   Sys.setenv(R_TESTS="")
   pkg.inst <- try(
     for(pkg in pkg.dirs)
