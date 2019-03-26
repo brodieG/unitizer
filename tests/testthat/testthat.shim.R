@@ -80,7 +80,7 @@ local({
 
       expect_identical(environmentName(parent.env(my.env)), curr2)
 
-      library("unitizerdummypkg1")
+      library("unitizerdummypkg1", lib.loc=tmp.lib)
       expect_identical(
         environmentName(parent.env(my.env)), "package:unitizerdummypkg1"
       )

@@ -17,7 +17,9 @@ local({
   context("Unitize")
 
   update_fastlm(.unitizer.fastlm, "0.1.0")
-  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
+  install.packages(
+    .unitizer.fastlm, repos=NULL, type='src', quiet=TRUE, lib=tmp.lib
+  )
   test.dir <- file.path(.unitizer.fastlm, "tests", "unitizer")
   unlink(.unitizer.test.store, recursive=TRUE)
 
@@ -36,7 +38,7 @@ local({
     if(interactive()) {
       expect_identical(
         hist.dat,
-        c("## <unitizer> (original history will be restored on exit)", "library(utzflm)", "dat <- data.frame(x = 1:100, y = (1:100)^2)", "res <- fastlm(dat$x, dat$y)", "res", "1 + 1", "get_slope(res)", "get_rsq(res)", "fastlm(1:100, 1:10)")
+        c("## <unitizer> (original history will be restored on exit)","library(utzflm, lib.loc = getOption(\"unitizer.tmp.lib.loc\"))", "dat <- data.frame(x = 1:100, y = (1:100)^2)", "res <- fastlm(dat$x, dat$y)", "res", "1 + 1", "get_slope(res)", "get_rsq(res)", "fastlm(1:100, 1:10)")
       )
     } else {
       expect_identical(hist.dat, character())
@@ -308,7 +310,9 @@ local({
   # Update `fastlm` to cause unitizers to fail, and go through the errors
 
   update_fastlm(.unitizer.fastlm, version="0.1.1")
-  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
+  install.packages(
+    .unitizer.fastlm, repos=NULL, type='src', quiet=TRUE, lib=tmp.lib
+  )
 
   # Try navigating through the unitizer
 
@@ -440,7 +444,9 @@ local({
   # Upgrade again, and try with deleted tests and other things
 
   update_fastlm(.unitizer.fastlm, version="0.1.2")
-  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
+  install.packages(
+    .unitizer.fastlm, repos=NULL, type='src', quiet=TRUE, lib=tmp.lib
+  )
   unitizer:::read_line_set_vals(
     c("3", "ref(res)", "Y", "Y", "B", "1", "B", "U", "Y", "RR", "Y", "Q")
   )

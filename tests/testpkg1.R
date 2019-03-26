@@ -32,13 +32,19 @@ if(interactive()) {
 
     dir.create(lib.tmp)
     dir.create(test.tmp)
+    options(unitizer.tmp.lib.loc=lib.tmp)
+    on.exit(options(unitizer.tmp.lib.loc=NULL), add=TRUE)
+
     file.copy(
       list.files(source.tests, full.names=TRUE), test.tmp, recursive=TRUE
     )
     dir.create(pre.file, recursive=TRUE)
-    cat("library(testpkg1)\n", file=file.path(pre.file, "lib.R"))
+    cat(
+      sprintf("library(testpkg1, lib.loc=%s)\n", lib.tmp),
+      file=file.path(pre.file, "lib.R")
+    )
     tp.0 <- file.path(old.dir, "test_pkgs", "testpkg1", "testpkg1.0")
-    install.packages(tp.0, repos=NULL, type='src')
+    install.packages(tp.0, repos=NULL, type='src', lib=lib.tmp)
     unitize_dir(file.path(test.tmp, "unitizer"), auto.accept="new")
 
     # Upgrade the package, note we test against same store
@@ -47,7 +53,7 @@ if(interactive()) {
     try(unloadNamespace("testpkg1"))
     try(remove.packages("testpkg1"))
     tp.1 <- file.path(old.dir, "test_pkgs", "testpkg1", "testpkg1.1")
-    install.packages(tp.1, repos=NULL, type='src')
+    install.packages(tp.1, repos=NULL, type='src', lib=lib.tmp)
     unitize_dir(file.path(test.tmp, "unitizer"))
   })
 }

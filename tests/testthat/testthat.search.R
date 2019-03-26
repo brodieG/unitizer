@@ -26,8 +26,8 @@ local({
     unitizer:::.unitizer.global.settings.names
   )
   library(unitizer)
-  library(unitizerdummypkg1)
-  library(unitizerdummypkg2)
+  library(unitizerdummypkg1, lib.loc=tmp.lib)
+  library(unitizerdummypkg2, lib.loc=tmp.lib)
 
   test_that("Detecting packages", {
     expect_true(unitizer:::is.loaded_package("package:unitizer"))
@@ -124,7 +124,7 @@ local({
 
     # Add a package
 
-    library("unitizerdummypkg1")
+    library("unitizerdummypkg1", lib.loc=tmp.lib)
     st.2 <- untz.glob$state()
     expect_equal(st.2@search.path, 2L) # have two recorded states
     # should have one more item
@@ -148,7 +148,7 @@ local({
     )
     # Add another package at a different position
 
-    library("unitizerdummypkg2", pos=4L)
+    library("unitizerdummypkg2", pos=4L, lib.loc=tmp.lib)
     st.3 <- untz.glob$state()
 
     expect_equal(
@@ -275,8 +275,8 @@ local({
     untz.glob <- unitizer:::unitizerGlobal$new(
       enable.which=state.set, set.global=TRUE
     )
-    library(unitizerdummypkg1)
-    library(unitizerdummypkg2)
+    library(unitizerdummypkg1, lib.loc=tmp.lib)
+    library(unitizerdummypkg2, lib.loc=tmp.lib)
 
     unitizer:::search_path_trim(global=untz.glob)
     untz.glob$state()
@@ -298,14 +298,14 @@ local({
 
   test_that("Loaded Namespaces don't cause issues", {
     # had a problem earlier trying to re-attach namespaces
-    loadNamespace("unitizerdummypkg1")
+    loadNamespace("unitizerdummypkg1", lib.loc=tmp.lib)
     untz.glob <- unitizer:::unitizerGlobal$new(
       enable.which=state.set, set.global=TRUE
     )
     unitizer:::search_path_trim(global=untz.glob)
     unitizer:::namespace_trim(global=untz.glob)
     untz.glob$state()
-    loadNamespace("unitizerdummypkg2")
+    loadNamespace("unitizerdummypkg2", lib.loc=tmp.lib)
     untz.glob$state()
     expect_false("unitizerdummypkg1" %in% loadedNamespaces())
     expect_true("unitizerdummypkg2" %in% loadedNamespaces())
@@ -317,7 +317,7 @@ local({
   })
   test_that("Prevent Namespace Unload Works", {
     old.opt <- options(unitizer.namespace.keep="unitizerdummypkg1")
-    loadNamespace("unitizerdummypkg1")
+    loadNamespace("unitizerdummypkg1", lib.loc=tmp.lib)
     glb <- unitizer:::unitizerGlobal$new(set.global=TRUE)
     on.exit({
       options(old.opt)

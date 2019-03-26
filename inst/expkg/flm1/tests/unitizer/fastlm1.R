@@ -1,4 +1,4 @@
-library(utzflm)
+library(utzflm, lib.loc=getOption('unitizer.tmp.lib.loc'))
 dat <- data.frame(x=1:100, y=(1:100) ^ 2)
 res <- fastlm(dat$x, dat$y)
 

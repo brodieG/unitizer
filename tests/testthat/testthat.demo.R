@@ -59,8 +59,7 @@ local({
     unitizer.color=FALSE, width=80L, crayon.enabled=TRUE,
     diffobj.term.colors=8
   )
-  on.exit(options(old.opt))
-
+  on.exit({options(old.opt)})
   # options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
 
   # In tests, initial version of package should be 0.1.0; the test store
@@ -68,8 +67,9 @@ local({
   # Note the initial install happens in the test running script
 
   unitizer:::update_fastlm(.unitizer.fastlm, version="0.1.0")
-  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
-
+  install.packages(
+    .unitizer.fastlm, repos=NULL, type='src', quiet=TRUE, lib=tmp.lib
+  )
   unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
   txt1 <- unitizer:::capture_output(
     untz <- unitize(.unitizer.test.file, interactive.mode=TRUE)
@@ -82,7 +82,9 @@ local({
   # Rejecting failed tests does not change unitizer
 
   update_fastlm(.unitizer.fastlm, version="0.1.1")
-  install.packages(.unitizer.fastlm, repos=NULL, type='src', quiet=TRUE)
+  install.packages(
+    .unitizer.fastlm, repos=NULL, type='src', quiet=TRUE, lib=tmp.lib
+  )
   unitizer:::read_line_set_vals(c("N", "N", "Y"))
 
   txt3 <- unitizer:::capture_output(

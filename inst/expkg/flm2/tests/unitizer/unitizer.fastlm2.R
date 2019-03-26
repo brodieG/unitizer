@@ -3,7 +3,7 @@
 # sections
 
 unitizer_sect("Basic Tests", {
-  library(utzflm)
+  library(utzflm, lib.loc=getOption('unitizer.tmp.lib.loc'))
   x <- 1:10
   y <- x ^ 2  # modified
   res <- fastlm(x, y)
