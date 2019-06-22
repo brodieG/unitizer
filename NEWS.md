@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.8
+
+* `install.packages` calls in tests now use a temporary folder for library.
+
 ## v1.4.7
 
 * Set `RNGversion()` in internal tests due to changes to R sampling mechanism.
