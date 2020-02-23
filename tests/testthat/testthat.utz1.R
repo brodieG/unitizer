@@ -64,6 +64,10 @@ local({
       txtopt1 <- unitizer:::capture_output(try(unitize(.unitizer.test.file)))
       options(unitizer.seed=list("bad.seed"))
       txtopt2 <- unitizer:::capture_output(try(unitize(.unitizer.test.file)))
+      # set.seed gained an argument c.a. R3.6 that caused error mismatch
+      txtopt2$message[
+        grepl("\\(function \\(seed", txtopt2$message, ignore.case=TRUE)
+      ] <- ""
     },
     envir=environment()
   )
