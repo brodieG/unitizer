@@ -300,7 +300,10 @@ options_update <- function(tar.opts) {
   # random seed to use by default, "Wichman-Hill" because default seed is large
   unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
   unitizer.max.env.depth=20000L,
-  unitizer.use.diff=TRUE
+  unitizer.use.diff=TRUE,
+  # whether to warn if `unitizer` is run in `withRestarts` context, added b/c
+  # testthat added a restart in 80a81fd
+  unitizer.restarts.ok=NULL
 )
 
 #' Checks that options meet expectations before anything gets run

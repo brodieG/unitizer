@@ -29,7 +29,8 @@ local({
     stop("Unable to create temp library directory")
   }
   old.opt.1 <- options(
-    useFancyQuotes=FALSE, unitizer.tmp.lib.loc=tmp.lib
+    useFancyQuotes=FALSE, unitizer.tmp.lib.loc=tmp.lib,
+    stringsAsFactors=TRUE, unitizer.restarts.ok=TRUE
   )
   on.exit({
     for(i in names(tmp.pkgs)) {
