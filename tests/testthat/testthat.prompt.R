@@ -14,7 +14,10 @@ local({
     capture.output(expect_identical(u.ns$.global$prompt.vals, letters[3]))
     capture.output(expect_identical(unitizer:::read_line(), "c"))
     capture.output(expect_identical(u.ns$.global$prompt.vals, character()))
-    expect_error(unitizer:::read_line(), "ran out of predefined readline input")
+    expect_error(
+      unitizer:::read_line(), "ran out of predefined readline input",
+      class='readError'
+    )
   })
 
   test_that("simple prompts", {
@@ -117,7 +120,8 @@ local({
         "hello", valid.opts=c(Y="[Y]es", N="[N]o"), browse.env="not an env",
         global=glob
       ),
-      "Argument `browse.env` must be an environment"
+      "Argument `browse.env` must be an environment",
+      class='readError'
     )
     expect_identical(res2, "Q")
     unitizer:::read_line_set_vals(character())
@@ -125,7 +129,8 @@ local({
       unitizer:::unitizer_prompt(
         "hello", valid.opts=c(Y="[Y]es", N="[N]o"), global=glob
       ),
-      "Internal Error: ran out of predefined readline input"
+      "Internal Error: ran out of predefined readline input",
+      class='readError'
     )
     unitizer:::read_line_set_vals("1L")
     expect_error(
