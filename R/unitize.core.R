@@ -946,7 +946,13 @@ check_call_stack <- function() {
         function(x)
           is.symbol(x[[1]]) &&
           as.character(x[[1]]) %in%
-          c("withCallingHandlers", "withRestarts", "tryCatch")
+          c(
+            "withCallingHandlers",
+            # testthat added a restart in 80a81fd (2.3.1 or 2.3.0), so need
+            # a way of ignoring this for tests unitizer tests.
+            if(!isTRUE(getOption('unitizer.restarts.ok'))) "withRestarts",
+            "tryCatch"
+          )
     ) )
   )
     warning(

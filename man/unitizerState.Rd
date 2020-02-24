@@ -5,10 +5,10 @@
 \alias{state}
 \alias{state,}
 \alias{in_pkg}
-\alias{in_pkg}
 \title{Tests and Session State}
 \usage{
-state(par.env, search.path, options, working.directory, random.seed, namespaces)
+state(par.env, search.path, options, working.directory, random.seed,
+  namespaces)
 
 in_pkg(package = NULL)
 }

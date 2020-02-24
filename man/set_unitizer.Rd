@@ -3,7 +3,6 @@
 \name{set_unitizer}
 \alias{set_unitizer}
 \alias{get_unitizer}
-\alias{get_unitizer}
 \alias{get_unitizer.character}
 \alias{get_unitizer.default}
 \alias{get_unitizer.unitizer_result}

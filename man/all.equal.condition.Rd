@@ -6,7 +6,6 @@
 \alias{all.equal,condition,ANY-method}
 \alias{all.equal,conditionList,ANY-method}
 \alias{all.equal.conditionList}
-\alias{all.equal.condition}
 \title{Compare Conditions}
 \usage{
 \S4method{all.equal}{conditionList,ANY}(target, current, ...)
