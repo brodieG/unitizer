@@ -98,7 +98,13 @@ set_unitizer.character <- function(store.id, unitizer) {
   } else if (!file_test("-d", store.id)) {
     stop("'", store.id, "' is not a directory.")
   }
-  if(inherits(try(saveRDS(unitizer, paste0(store.id, "/data.rds"))), "try-error")) {
+  if(
+    inherits(
+      try(
+        saveRDS(unitizer, paste0(store.id, "/data.rds"), version=2)), 
+        "try-error"
+      )
+    ) {
     stop("Failed setting unitizer; see prior error messages for details.")
   }
   TRUE
