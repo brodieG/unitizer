@@ -16,8 +16,8 @@ unitizer_prompt(text, browse.env = baseenv(), help = character(),
   exit.condition = function(exp, env) FALSE, global, ...)
 
 navigate_prompt(x, curr.id, text, browse.env1 = globalenv(),
-  browse.env2 = globalenv(), help = character(), help.opts = character(),
-  valid.opts)
+  browse.env2 = globalenv(), help = character(),
+  help.opts = character(), valid.opts)
 
 review_prompt(x, nav.env)
 

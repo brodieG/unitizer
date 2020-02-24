@@ -8,7 +8,8 @@
 \usage{
 \S4method{$}{unitizerItemTestsErrorsDiffs}(x, name)
 
-\S4method{[[}{unitizerItemTestsErrorsDiffs,ANY}(x, i, j, ..., exact = TRUE)
+\S4method{[[}{unitizerItemTestsErrorsDiffs,ANY}(x, i, j, ...,
+  exact = TRUE)
 }
 \description{
 Subsetting Methods for unitizerItemTestsErrorsDiffs objects

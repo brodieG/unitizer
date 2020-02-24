@@ -137,7 +137,8 @@
 
 \S4method{all.equal}{ANY,unitizerDummy}(target, current, ...)
 
-\S4method{all.equal}{unitizerStateRaw,unitizerStateRaw}(target, current, ...)
+\S4method{all.equal}{unitizerStateRaw,unitizerStateRaw}(target, current,
+  ...)
 
 \S4method{+}{unitizer,unitizerSection}(e1, e2)
 
