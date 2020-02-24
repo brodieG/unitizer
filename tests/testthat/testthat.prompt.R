@@ -120,8 +120,7 @@ local({
         "hello", valid.opts=c(Y="[Y]es", N="[N]o"), browse.env="not an env",
         global=glob
       ),
-      "Argument `browse.env` must be an environment",
-      class='readError'
+      "Argument `browse.env` must be an environment"
     )
     expect_identical(res2, "Q")
     unitizer:::read_line_set_vals(character())
