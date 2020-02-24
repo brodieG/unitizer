@@ -168,8 +168,10 @@ unitizer_prompt <- function(
 
     # store / record history
 
-    if(!is.null(hist.con) && length(val) == 1L)
-      history_write(hist.con, deparse(val[[1L]]))
+    if(!is.null(hist.con) && length(val) == 1L) {
+      dval <- deparse(val[[1L]])
+      history_write(hist.con, dval)
+    }
     # error or no user input, re-prompt user
     if(res$aborted || !length(val)) {
       cat("\n")
