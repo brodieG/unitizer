@@ -30,7 +30,8 @@
 #' name and location, but you can specify your own location as an id, or even
 #' use a completely different mechanism to store the \code{unitizer} data by
 #' implementing S3 methods for \code{\link{get_unitizer}} and
-#' \code{\link{set_unitizer}}.
+#' \code{\link{set_unitizer}}.  For more details about storage see those
+#' functions.
 #'
 #' \code{review} allows you to review existing \code{unitizer}s and modify them
 #' by dropping tests from them.  Tests are not evaluated in this mode; you are

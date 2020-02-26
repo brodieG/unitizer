@@ -44,7 +44,12 @@ objects.
 }
 \details{
 By default, only a character method is defined, which will interpret
-its inputs as a filesystem path.
+its inputs as a filesystem path to the \code{unitizer} folder.  RDSes of
+serialization type 2 will be stored and retrieved from there.  The
+serialization format may change in the future, but if R maintains
+facilities to read/write type 2, we will provide the option to use
+that format.  At this time there is no API to change the serialization
+format.
 
 You may write your own methods for special storage situations (
 e.g SQL database, ftp server, etc) with the understanding that the
@@ -90,4 +95,7 @@ Expectations for the functions are as follows.  \code{get_unitizer} must:
   \item return TRUE on success
   \item \code{\link{stop}} on error
 }
+}
+\seealso{
+\code{\link{saveRDS}}
 }

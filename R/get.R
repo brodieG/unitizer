@@ -23,7 +23,12 @@
 #' objects.
 #'
 #' By default, only a character method is defined, which will interpret
-#' its inputs as a filesystem path.
+#' its inputs as a filesystem path to the \code{unitizer} folder.  RDSes of
+#' serialization type 2 will be stored and retrieved from there.  The
+#' serialization format may change in the future, but if R maintains
+#' facilities to read/write type 2, we will provide the option to use
+#' that format.  At this time there is no API to change the serialization
+#' format.
 #'
 #' You may write your own methods for special storage situations (
 #' e.g SQL database, ftp server, etc) with the understanding that the
@@ -71,6 +76,7 @@
 #' }
 #'
 #' @aliases get_unitizer
+#' @seealso \code{\link{saveRDS}}
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
 #' @param unitizer a \code{unitizer-class} object containing the store
