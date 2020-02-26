@@ -111,7 +111,7 @@ In this case, when we evaluate `a()` we must step back two environments to find
 R's object lookup fails.
 
 It turns out the above example actually works because as noted in [details on
-tests vignette](unitizer_tests.html), environments are only defined for tests,
+tests vignette](u2_tests.html), environments are only defined for tests,
 and neither the `a` or `b` assignments are tests, so both `a` and `b` are
 assigned to the environment of the `a()` call.  However, this really breaks:
 
@@ -236,7 +236,7 @@ where you examine this same reference test, the other "reference" objects
 available for inspection may not be from the same evaluation that produced the
 test.  The `ls` command will highlight which objects are from the same
 evaluation vs which ones are not (see the [discussion on
-`ls`](unitizer_interactive_env.html#ls)).
+`ls`](u3_interactive-env.html#ls)).
 
 This is not an ideal outcome, but the compromise was necessary to avoid the
 possibility of ever increasing `unitizer` stores.  For more details see
