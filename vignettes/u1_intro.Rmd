@@ -296,6 +296,6 @@ quit from `unitizer`, as you would from `browser`.
 In both cases you can still access the original functions by preceding them
 with `base::`
 
-See [miscellanous topics
+See [miscellaneous topics
 vignette](u5_miscellaneous.html#overriden-functions).
 
