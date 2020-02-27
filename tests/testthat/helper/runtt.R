@@ -115,7 +115,7 @@ local({
     "upgrade",
     "zzrunlast"
   )
-  # test.filt <- 'text'
+  # test.filt <- 'search'
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
       "testthat",

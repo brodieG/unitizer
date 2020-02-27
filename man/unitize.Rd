@@ -40,12 +40,12 @@ you to specify non-standard \code{unitizer} storage mechanisms (see
 for \code{unitize_dir}}
 
 \item{state}{character(1L) one of
-\code{c("prisitine", "default", "basic", "off", "safe")}, an environment,
-or a state object produced by \code{\link{state}} or \code{\link{in_pkg}};
-modifies how \code{unitizer} manages aspects of session state that could
-affect test evaluation, including the parent evaluation environment.  For
-more details see \code{\link{unitizerState}} documentation and
-\code{vignette("unitizer_reproducible_tests")}}
+\code{c("prisitine", "recommended", "basic", "off", "safe")}, an
+environment, or a state object produced by \code{\link{state}} or
+\code{\link{in_pkg}}; modifies how \code{unitizer} manages aspects of
+session state that could affect test evaluation, including the parent
+evaluation environment.  For more details see \code{\link{unitizerState}}
+documentation and \code{vignette("unitizer_reproducible_tests")}}
 
 \item{pre}{NULL, or a character vector pointing to files and/or directories.
 If a character vector, then any files referenced therein will be sourced,
