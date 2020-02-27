@@ -5,7 +5,8 @@
 \alias{as.character,unitizerChanges-method}
 \title{Print Out A Summary Of the Changes}
 \usage{
-\S4method{as.character}{unitizerChanges}(x, width = getOption("width"), ...)
+\S4method{as.character}{unitizerChanges}(x, width = getOption("width"),
+  ...)
 }
 \description{
 Print Out A Summary Of the Changes

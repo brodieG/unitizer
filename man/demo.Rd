@@ -11,11 +11,8 @@
 \alias{to}
 \alias{Continue]`}
 \alias{[Press ENTER to Continue]}
-\alias{show_file}
 \alias{copy_fastlm_to_tmpdir}
 \alias{update_fastlm}
-\alias{unitizer_check_demo_state}
-\alias{unitizer_cleanup_demo}
 \title{Demo Details and Helper Functions}
 \usage{
 "[Press ENTER to Continue]"()

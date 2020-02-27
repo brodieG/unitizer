@@ -54,7 +54,10 @@ local({
     # now `a + b` could try to re-assign to `a <- 54`, but that is same env as
     # `a + b` b/c it is ignored
     items.picked <- my.unitizer@items.new[-3L]
-    items.heal <- unitizer:::healEnvs(items.picked, my.unitizer)
+    expect_error(
+      items.heal <- unitizer:::healEnvs(items.picked, my.unitizer),
+      NA
+    )
   } )
 
   test_that("full repair process works", {

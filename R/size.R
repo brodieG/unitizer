@@ -72,7 +72,7 @@ setMethod(
 
 sizeRDS <- function(object) {
   f <- tempfile()
-  if(inherits(try(saveRDS(object, f)), "try-error")) return(NA)
+  if(inherits(try(saveRDS(object, f, version=2)), "try-error")) return(NA)
   size <- file.info(f)$size
   unlink(f)
   size

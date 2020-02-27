@@ -4,9 +4,9 @@
 \alias{testthat_transcribe_file}
 \title{Transcribes a \code{testtaht} File Into \code{unitizer} Format}
 \usage{
-testthat_transcribe_file(file.name, target.dir = file.path(dirname(file.name),
-  "..", "unitizer"), keep.testthat.call = TRUE, prompt = "always",
-  interactive.mode, ...)
+testthat_transcribe_file(file.name,
+  target.dir = file.path(dirname(file.name), "..", "unitizer"),
+  keep.testthat.call = TRUE, prompt = "always", interactive.mode, ...)
 }
 \arguments{
 \item{file.name}{a path to the \code{testthat} test file to convert}

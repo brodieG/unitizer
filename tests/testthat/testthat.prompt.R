@@ -14,7 +14,10 @@ local({
     capture.output(expect_identical(u.ns$.global$prompt.vals, letters[3]))
     capture.output(expect_identical(unitizer:::read_line(), "c"))
     capture.output(expect_identical(u.ns$.global$prompt.vals, character()))
-    expect_error(unitizer:::read_line(), "ran out of predefined readline input")
+    expect_error(
+      unitizer:::read_line(), "ran out of predefined readline input",
+      class='readError'
+    )
   })
 
   test_that("simple prompts", {
@@ -125,7 +128,8 @@ local({
       unitizer:::unitizer_prompt(
         "hello", valid.opts=c(Y="[Y]es", N="[N]o"), global=glob
       ),
-      "Internal Error: ran out of predefined readline input"
+      "Internal Error: ran out of predefined readline input",
+      class='readError'
     )
     unitizer:::read_line_set_vals("1L")
     expect_error(

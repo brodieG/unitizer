@@ -184,15 +184,11 @@ history_release <- function(hist.obj) {
 history_write <- function(hist.con, data) {
   if(is.null(hist.con)) return(invisible(NULL)) # probably in non-interactive
   # nocov start
-  stopifnot(is.open_con(hist.con), is.character(data))
-  if(is.open_con(hist.con)) {
+  stopifnot(inherits(hist.con, 'connection'), is.character(data))
+  if(isOpen(hist.con)) {
     cat(data, file=hist.con, sep="\n")
     if(!isTRUE(attr(hist.con, "no.hist"))) {
-      hist.save <-
-        try(
-          loadhistory(showConnections()[as.character(hist.con), "description"]),
-          silent=TRUE
-        )
+      hist.save <- try(loadhistory(summary(hist.con)$description), silent=TRUE)
       if(inherits(hist.save, "try-error"))
         warning(attr(hist.save, "condition"), immediate.=TRUE)
   } }
