@@ -8,6 +8,8 @@
   explicitly saved in serialization version 2 for backwards compatibility.
 * Tests explicitly set `stringsAsFactors=TRUE` so they don't fail with the
   anticipated changed for R4.0.
+* Adds the 'unitizer.restarts.ok' option to suppress warnings about being run
+  within `withRestart` blocks.
 
 ## v1.4.8
 
