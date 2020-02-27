@@ -1,5 +1,14 @@
 # `unitizer` NEWS
 
+## v1.4.9
+
+* [#262](https://github.com/brodieG/unitizer/issues/262) Interactive prompt
+  slowness caused by recent R changes to `showConnections()`.
+* [#261](https://github.com/brodieG/unitizer/issues/261) RDS files are
+  explicitly saved in serialization version 2 for backwards compatibility.
+* Tests explicitly set `stringsAsFactors=TRUE` so they don't fail with the
+  anticipated changed for R4.0.
+
 ## v1.4.8
 
 * `install.packages` calls in tests now use a temporary folder for library.
