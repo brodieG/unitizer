@@ -58,7 +58,7 @@ setClass(
     if(!identical(slotNames(object), .unitizer.global.settings.names)) {
       paste0(
         "Invalid global object, slots must be ",
-        deparse(.unitizer.global.settings.names, width=500)
+        deparse(.unitizer.global.settings.names, width.cutoff=500L)
       )
     TRUE
 } )
@@ -289,7 +289,7 @@ get_namespace_data <- function() {
       ver <- ns[[".__NAMESPACE__."]][["spec"]]["version"]
       if(is.null(ver)) ver <- ""
       if(is.null(loc)) loc <- ""
-      list(name=x, lib.loc=loc, version=ver)
+      list(names=x, lib.loc=loc, version=ver)
     },
     simplify=FALSE
   )

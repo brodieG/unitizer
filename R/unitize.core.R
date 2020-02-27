@@ -541,7 +541,7 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
   # Loop through all unitizers, evaluating the ones that have been marked with
   # the `eval` slot for evaluation, and resetting that slot to FALSE
 
-  for(i in seq(length=test.len)) {
+  for(i in seq(length.out=test.len)) {
     test.dat <- tests.parsed[[i]]
     unitizer <- unitizers[[i]]
 

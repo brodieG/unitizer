@@ -114,7 +114,7 @@ compress_search_data <- function(x) {
   res
 }
 compress_ns_data <- function(x) {
-  vapply(x, function(y) sprintf("%s (v%s", y$name, y$version), character(1L))
+  vapply(x, function(y) sprintf("%s (v%s", y$names, y$version), character(1L))
 }
 # Search Path Management Functions
 #
@@ -682,7 +682,7 @@ get_package_data <- function() {
         try(path.package(sub("^package:(.*)", "\\1", x))) else ""
       ver <- try(getNamespaceVersion(x), silent=TRUE)
       list(
-        name=x,
+        names=x,
         lib.loc=if(!inherits(loc, "try-error")) loc else "",
         version=if(!inherits(ver, "try-error")) ver else ""
       )

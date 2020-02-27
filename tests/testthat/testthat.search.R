@@ -43,7 +43,7 @@ local({
           pkg.dat,
           function(x)
             is.list(x) &&
-            identical(names(x), c("name", "lib.loc", "version")),
+            identical(names(x), c("names", "lib.loc", "version")),
           logical(1L)
     ) ) )
   } )

@@ -335,7 +335,7 @@ local({
       "search.path", "options", "working.directory", "random.seed", "namespaces"
     )
     expect_equal(
-      sapply(s.n.to.check, slot, object=res$state),
+      sapply(s.n.to.check, slot, object=res$states),
       structure(list(search.path = list(1, 2, 3, 4, 6), options = list("a", "b", "c", "d"), working.directory = list(), random.seed = list(), namespaces = list()), .Names = c("search.path", "options", "working.directory", "random.seed", "namespaces"))
     )
     # No reference items

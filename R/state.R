@@ -380,7 +380,7 @@ unitizerState <- setClass(
       return(
         paste0(
           "Invalid state object, slots must be ",
-          deparse(.unitizer.global.settings.names, width=500)
+          deparse(.unitizer.global.settings.names, width.cutoff=500L)
       ) )
     }
     for(i in .unitizer.global.settings.names) {

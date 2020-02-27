@@ -665,8 +665,9 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
 
     mapping.new <- new("unitizerBrowseMapping",
       # This id tracks the order of tests as we intend to review them
+      # is it possible for sum(item.count) to be zero?
       item.id=(max.item + 1L):(max.item + sum(item.count)),
-      item.id.rel=unlist(lapply(item.count, function(x) seq(len=x))),
+      item.id.rel=unlist(lapply(item.count, function(x) seq(length.out=x))),
       item.id.orig=vapply(sec.item.list, slot, 1L, "id"),
       item.ref=vapply(sec.item.list, slot, FALSE, "reference"),
       sec.id=rep(length(e1), sum(item.count)),

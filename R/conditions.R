@@ -127,7 +127,7 @@ setMethod("all.equal", "conditionList",
     cond.len <- min(length(target), length(current))
 
     res <- lapply(
-      seq(len=cond.len), function(x) all.equal(target[[x]], current[[x]])
+      seq(length.out=cond.len), function(x) all.equal(target[[x]], current[[x]])
     )
     errs <- which(vapply(res, Negate(isTRUE), logical(1L)))
     if(!(err.len <- length(errs))) {
