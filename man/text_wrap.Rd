@@ -12,8 +12,8 @@
 \usage{
 text_wrap(x, width)
 
-word_wrap(x, width = getOption("width"), tolerance = 8L, hyphens = TRUE,
-  unlist = TRUE, collapse = NULL)
+word_wrap(x, width = getOption("width"), tolerance = 8L,
+  hyphens = TRUE, unlist = TRUE, collapse = NULL)
 
 meta_word_cat(..., sep = "\\n", width = getOption("width"),
   tolerance = 8L, file = stdout(), trail.nl = TRUE)

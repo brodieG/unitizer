@@ -1,62 +1,19 @@
-# Check Whether File Connection Are Valid
-#
-# Use \code{`is.open_con`} to verify that a connection is open in addition to being
-# valid
-#
-# @keywords internal
-# @aliases is.open_con
-# @param x object to test
-# @param file.name 1 length character the name of the file that \code{`x`}
-#   must point to
-# @param readable/writeable whether file must be readable or writeable NA if
-#   you don't care
-# @return TRUE if valid, 1 length character vector if not explaining why it's not
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
-is.valid_con <- function(x, file.name=NULL, readable=NA, writeable=NA) {
-  if(!is.null(file.name) && !is.chr1(file.name))
-      stop("Argument `file.name` must be NULL or a one length character vector.")
-  if(!is.lgl.1L(readable) || !is.lgl.1L(writeable))
-    stop("Arguments `readable` and `writeable` must be logical(1L)")
-
-  # Basic checks
-
-  if(!inherits(x, c("file", "connection")))
-    return("must inherit from \"file\" and \"connection\"")
-  if(!is.integer(x)) return("must be an integer")
-  if(inherits(try(x.chr <- as.character(x)), "try-error"))
-    return("cannot retrieve connection name to test")
-  cons <- showConnections(all=TRUE)
-  if(!isTRUE(x.chr %in% rownames(cons)))
-    return("connection does not exist in `showConnections`")
-
-  # Check r/w status
-
-  rw <- list(writeable=writeable, readable=readable)
-  rw.s <- list(writeable="write", readable="read")
-  for(i in names(rw))
-    if(!is.na(rw[[i]]))
-      if(
-        (cons[x.chr, sprintf("can %s", rw.s[[i]])] == "yes") != rw[[i]]
-      )
-        return(
-          cc(
-            "connection is ", if(rw[[i]]) "not ", i, " but should ",
-            if(!rw[[i]]) "not ", "be ", i
-        ) )
-
-  # Match file name
-
-  if(!is.null(file.name)) {
-    if(!identical(file.name, cons[x.chr, "description"]))
-      return("file name does not match connection description")
-  }
-  return(TRUE)
-}
-is.open_con <- function(x, file=NULL, readable=NA, writeable=NA) {
-  if(!isTRUE(msg <- is.valid_con(x, file, readable, writeable))) return(msg)
-  if(!isOpen(x)) return("must be an open connection")
-  return(TRUE)
-}
 # Confirm Object is In \code{package_version} form
 # @keywords internal
 

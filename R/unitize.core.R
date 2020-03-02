@@ -1,3 +1,19 @@
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
+
 # Runs The Basic Stuff
 #
 # Used by both \code{\link{unitize}} and \code{\link{review}}
@@ -525,7 +541,7 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
   # Loop through all unitizers, evaluating the ones that have been marked with
   # the `eval` slot for evaluation, and resetting that slot to FALSE
 
-  for(i in seq(length=test.len)) {
+  for(i in seq(length.out=test.len)) {
     test.dat <- tests.parsed[[i]]
     unitizer <- unitizers[[i]]
 
@@ -946,7 +962,13 @@ check_call_stack <- function() {
         function(x)
           is.symbol(x[[1]]) &&
           as.character(x[[1]]) %in%
-          c("withCallingHandlers", "withRestarts", "tryCatch")
+          c(
+            "withCallingHandlers",
+            # testthat added a restart in 80a81fd (2.3.1 or 2.3.0), so need
+            # a way of ignoring this for tests unitizer tests.
+            if(!isTRUE(getOption('unitizer.restarts.ok'))) "withRestarts",
+            "tryCatch"
+          )
     ) )
   )
     warning(

@@ -1,3 +1,19 @@
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
+
 #' @include global.R
 
 NULL
@@ -57,9 +73,13 @@ NULL
 #'      tests.
 #'   \item Random Seed: can be set to a specific value at the
 #'     beginning of each test file so that tests using random values get the
-#'     same value at every test iteration. If you change the order of  your
-#'     tests, or add a test that uses a random sampling before the end of
-#'     the file, that will still affect the random seed.
+#'     same value at every test iteration. This only sets the seed at the
+#'     beginning of each test file, so changes in order or number of functions
+#'     that generate random numbers in your test file will affect subsequent
+#'     tests.  The advantage of doing this over just setting the seed directly
+#'     in the test files is that \code{unitizer} tracks the value of the seed
+#'     and will tell you the seed changed for any given test (e.g. because you
+#'     added a test in the middle of the file that uses the random seed).
 #'   \item Working Directory: can be set to the tests directory
 #'     inside the package directory if the test files appear to be inside the
 #'     folder structure of a package.  This mimics R CMD check behavior.  If
@@ -71,18 +91,21 @@ NULL
 #'     prior to running your tests.  If you want to use the same libraries
 #'     across multiple tests you can load them with the \code{pre} argument to
 #'     \code{\link{unitize}} or \code{\link{unitize_dir}}.
-#'   \item Options: same as search path
+#'   \item Options: same as search path, but see "Namespaces" next.
 #'   \item Namespaces: same as search path; this
 #'     option is only made available to support options since many namespaces
 #'     set options \code{onLoad}, and as such it is necessary to unload and
-#'     re-load them to ensure default options are set.
+#'     re-load them to ensure default options are set.  See the "Namespaces and
+#'     Options" section.
 #' }
 #'
-#' In the \dQuote{recommended} state tracking, mode parent environment, random
-#' seed, working directory, and search path are all managed.  For example, with
-#' the search path managed, each test file will start evaluation with the search
-#' path set to what you would find in a vanilla R session.  All these settings
-#' are returned to their original values when \code{unitizer} exits.
+#' In the \dQuote{recommended} state tracking mode, parent environment, random
+#' seed, working directory, and search path are all managed to level 2, which
+#' approximates what you would find in a fresh session (see "Custom Control"
+#' section below).  For example, with the search path managed, each test file
+#' will start evaluation with the search path set to the tests folder of your
+#' package.  All these settings are returned to their original values when
+#' \code{unitizer} exits.
 #'
 #' You can modify what aspects of state are managed by using the \code{state}
 #' parameter to \code{\link{unitize}}.  If you are satisfied with basic default
@@ -105,7 +128,8 @@ NULL
 #'   \item "recommended": \itemize{
 #'       \item Use special (non \code{.GlobalEnv}) parent environemnt
 #'       \item Manage search path
-#'       \item Manage random seed
+#'       \item Manage random seed (and set it to be of type "Wichmann-Hill"
+#'         for space considerations).
 #'       \item Manage workign directory
 #'       \item Leave namespace and options untouched
 #'     }
@@ -156,12 +180,17 @@ NULL
 #'     \itemize{
 #'       \item 0 turn off state tracking
 #'       \item 1 track, but start with state as it was when \code{unitize} was
-#'         called
+#'         called.
 #'       \item 2 track and set state to what you would typically find in a clean
 #'         R session, with the exception of \code{random.seed}, which is
 #'         set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
 #'         as that seed is substantially smaller than the R default seed).
 #' } }
+#'
+#' If you chose to use level \code{1} for the random seed you should consider
+#' picking a random seed type before you start unitizer that is small like
+#' "Wichman-Hill" as the seed will be recorded each time it changes.
+#'
 #' @section Permanently Setting State Tracking:
 #'
 #' You can permanently change the default state by setting the
@@ -219,7 +248,7 @@ NULL
 #' }
 #' @param search.path one of \code{0:2}, uses the default value corresponding to
 #'   \code{getOption(unitizer.state)}, which is 0 in the default unitizer state
-#'   of \dQuote{off}.
+#'   of \dQuote{off}.  See "Custom Control" section for details.
 #' @param options same as \code{search.path}
 #' @param working.directory same as \code{search.path}
 #' @param random.seed same as \code{search.path}
@@ -364,7 +393,7 @@ unitizerState <- setClass(
       return(
         paste0(
           "Invalid state object, slots must be ",
-          deparse(.unitizer.global.settings.names, width=500)
+          deparse(.unitizer.global.settings.names, width.cutoff=500L)
       ) )
     }
     for(i in .unitizer.global.settings.names) {

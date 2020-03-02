@@ -1,3 +1,19 @@
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
+
 #' @include search.R
 
 NULL
@@ -134,6 +150,9 @@ NULL
 #'     before quitting; this is to avoid accidentally quitting after running a
 #'     \code{unitizer} with many slow running tests and having to re-run them
 #'     again.
+#'   \item \code{unitizer.restarts.ok} TRUE or FALSE, suppresses warnings when
+#'     running inside a `withRestarts` block, which is normally a warning.
+#'     Needed due to `test_that` adding a `withRestart`
 #' }
 #'
 #' @name unitizer.opts
@@ -300,7 +319,10 @@ options_update <- function(tar.opts) {
   # random seed to use by default, "Wichman-Hill" because default seed is large
   unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
   unitizer.max.env.depth=20000L,
-  unitizer.use.diff=TRUE
+  unitizer.use.diff=TRUE,
+  # whether to warn if `unitizer` is run in `withRestarts` context, added b/c
+  # testthat added a restart in 80a81fd
+  unitizer.restarts.ok=FALSE
 )
 
 #' Checks that options meet expectations before anything gets run

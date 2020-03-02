@@ -1,3 +1,19 @@
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
+
 #' @include item.R
 #' @include unitizer.R
 #' @include class_unions.R
@@ -649,8 +665,9 @@ setMethod("+", c("unitizerBrowse", "unitizerBrowseSection"), valueClass="unitize
 
     mapping.new <- new("unitizerBrowseMapping",
       # This id tracks the order of tests as we intend to review them
+      # is it possible for sum(item.count) to be zero?
       item.id=(max.item + 1L):(max.item + sum(item.count)),
-      item.id.rel=unlist(lapply(item.count, function(x) seq(len=x))),
+      item.id.rel=unlist(lapply(item.count, function(x) seq(length.out=x))),
       item.id.orig=vapply(sec.item.list, slot, 1L, "id"),
       item.ref=vapply(sec.item.list, slot, FALSE, "reference"),
       sec.id=rep(length(e1), sum(item.count)),

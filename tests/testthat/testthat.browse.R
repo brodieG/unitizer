@@ -230,7 +230,11 @@ local( {
   } )
   test_that("Item Extraction", {
     items <- unitizer:::extractItems(unitizer.prepped)
-    item.calls <- vapply(unitizer:::as.list(items), function(x) paste0(deparse(x@call, width=500), collapse=""), character(1L))
+    item.calls <- vapply(
+      unitizer:::as.list(items),
+      function(x) paste0(deparse(x@call, width.cutoff=500), collapse=""),
+      character(1L)
+    )
     item.types <- vapply(unitizer:::as.list(items), slot, FALSE, "reference")
     item.ids <- vapply(unitizer:::as.list(items), slot, 1L, "id")
     item.df <- data.frame(item.calls, item.types, item.ids, stringsAsFactors=FALSE)

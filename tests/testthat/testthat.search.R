@@ -43,7 +43,7 @@ local({
           pkg.dat,
           function(x)
             is.list(x) &&
-            identical(names(x), c("name", "lib.loc", "version")),
+            identical(names(x), c("names", "lib.loc", "version")),
           logical(1L)
     ) ) )
   } )
@@ -99,20 +99,22 @@ local({
     enable.which=state.set, set.global=TRUE
   )
   on.exit(untz.glob$release(), add=TRUE)
+  stat.tpl <- new(
+    "unitizerGlobalStatus", search.path=2L, working.directory=2L,
+    options=2L, random.seed=2L, namespaces=2L
+  )
+  # these need to be done outside of `test_that` b/c `test_that` sets the
+  # rlang_trace_top_env option
+
+  st.0 <- untz.glob$indices.last
+  st.1 <- untz.glob$state()
+
   test_that("Search Path Journaling Works", {
     # Note, these are intended to be run without the shimming in place
 
-    expect_identical(
-      untz.glob$status,
-      new(
-        "unitizerGlobalStatus", search.path=2L, working.directory=2L,
-        options=2L, random.seed=2L, namespaces=2L
-      )
-    )
+    expect_identical(untz.glob$status, stat.tpl)
     # state should only be recorded if it changes
 
-    st.0 <- untz.glob$indices.last
-    st.1 <- untz.glob$state()
     expect_identical(
       st.0,
       new(

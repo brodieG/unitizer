@@ -100,9 +100,9 @@ The `[B]rowse` option produces a list of all the tests in the order in which the
      |                                                                         |
      +- Test ID                                                    User Input -+
 ```
-The value and order of the test IDs shouldn't mean anything to you other than being the number to type in if you wish to review that test.  Tests that have a `*` to the left of the test id are expessions that are not reviewed or checked by `unitizer` (we call these [ignored tests](unitizer_tests.html#what-constitutes-a-test)).
+The value and order of the test IDs shouldn't mean anything to you other than being the number to type in if you wish to review that test.  Tests that have a `*` to the left of the test id are expessions that are not reviewed or checked by `unitizer` (we call these [ignored tests](u2_tests.html#what-constitutes-a-test)).
 
-The test status (see [tests outcomes](unitizer_tests.html#test-outcomes)) indicates the outcome of comparison of the reference test in the `unitizer` store to the newly evaluated ones.  The first four tests are ignored tests, so they do not have a status.  The User Input column marks which tests have been reviewed and what the user decision was.  In this case we had reviewed test #2 and decided not to keep it (hence the "N").  Typically neither ignored tests nor passed tests require user input so they will typically have a "-" as the user input, as will tests that would be reviewed, but haven't been yet.
+The test status (see [tests outcomes](u2_tests.html#test-outcomes)) indicates the outcome of comparison of the reference test in the `unitizer` store to the newly evaluated ones.  The first four tests are ignored tests, so they do not have a status.  The User Input column marks which tests have been reviewed and what the user decision was.  In this case we had reviewed test #2 and decided not to keep it (hence the "N").  Typically neither ignored tests nor passed tests require user input so they will typically have a "-" as the user input, as will tests that would be reviewed, but haven't been yet.
 
 Typing `U` at the review prompt will take you to the first unreviewed test.  Since ignored tests and passed tests are not typically reviewed, `U` will take you to the first unreviewed test that is neither passed nor ignored.
 
@@ -182,7 +182,7 @@ There are, however, some suble differences created by the structure of the evalu
 
 * Even though you can see objects produced by tests, you can not actually remove them with `rm`
 * Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts
-* Other subtle issues discussed at length in the ([reproducible tests vignette](unitizer_reproducible_tests.html#test-environments))
+* Other subtle issues discussed at length in the ([reproducible tests vignette](u4_reproducible-tests.html#test-environments))
 * There are special `unitizer` objects `.new`, `.NEW`, `.ref`, and `.REF` that let you review the results of tests (we will discuss these next)
 * `ls` is over-ridden by a special `unitizer` version (we will also dicuss this next)
 * You will have access to any objects created through the `pre` argument to `unitize`, though they will not show up in a call to `ls`
@@ -253,7 +253,7 @@ where object names have symbols such as `*` or `'` appended to them.  This happe
 * `'` Object existed during reference test evaluation, and still does, but it has a different value than it did during reference test evaluation
 * `**` Object exists now, but did not exist during reference test evaluation
 
-For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [patchwork reference environments](vgn06nittygritty.html#patchwork-reference-environments).
+For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [patchwork reference environments](u4_reproducible-tests.html#patchwork-reference-environments).
 
 Objects assigned right before a test are part of that test's environment so will always be available.
 

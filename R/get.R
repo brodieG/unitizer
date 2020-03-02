@@ -1,3 +1,19 @@
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
+
 #' Set and Retrieve Store Contents
 #'
 #' These functions are not used directly; rather, they are used by
@@ -7,7 +23,12 @@
 #' objects.
 #'
 #' By default, only a character method is defined, which will interpret
-#' its inputs as a filesystem path.
+#' its inputs as a filesystem path to the \code{unitizer} folder.  RDSes of
+#' serialization type 2 will be stored and retrieved from there.  The
+#' serialization format may change in the future, but if R maintains
+#' facilities to read/write type 2, we will provide the option to use
+#' that format.  At this time there is no API to change the serialization
+#' format.
 #'
 #' You may write your own methods for special storage situations (
 #' e.g SQL database, ftp server, etc) with the understanding that the
@@ -55,6 +76,7 @@
 #' }
 #'
 #' @aliases get_unitizer
+#' @seealso \code{\link{saveRDS}}
 #' @export
 #' @param store.id a filesystem path to the store (an .rds file)
 #' @param unitizer a \code{unitizer-class} object containing the store
@@ -98,7 +120,13 @@ set_unitizer.character <- function(store.id, unitizer) {
   } else if (!file_test("-d", store.id)) {
     stop("'", store.id, "' is not a directory.")
   }
-  if(inherits(try(saveRDS(unitizer, paste0(store.id, "/data.rds"))), "try-error")) {
+  if(
+    inherits(
+      try(
+        saveRDS(unitizer, paste0(store.id, "/data.rds"), version=2)), 
+        "try-error"
+      )
+    ) {
     stop("Failed setting unitizer; see prior error messages for details.")
   }
   TRUE

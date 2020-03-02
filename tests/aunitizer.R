@@ -3,8 +3,11 @@
 library(unitizer)
 if(!require(testthat)) stop("testthat required for tests")
 
-RNGversion("3.5.2");
-unitize("unitizer/tests2.R")
-unitize("unitizer/sectionsRCMDCHECK.R")
-unitize("unitizer/translate.R")
-RNGversion(as.character(getRversion()))
+local({
+  suppressWarnings(RNGversion("3.5.2"))
+  old.opt <- options(stringsAsFactors=TRUE)
+  on.exit({options(old.opt); RNGversion(as.character(getRversion()))})
+  unitize("unitizer/tests2.R")
+  unitize("unitizer/sectionsRCMDCHECK.R")
+  unitize("unitizer/translate.R")
+})

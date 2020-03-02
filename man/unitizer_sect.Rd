@@ -4,8 +4,8 @@
 \alias{unitizer_sect}
 \title{Define a \code{unitizer} Section}
 \usage{
-unitizer_sect(title = NULL, expr = expression(), details = character(),
-  compare = new("testFuns"))
+unitizer_sect(title = NULL, expr = expression(),
+  details = character(), compare = new("testFuns"))
 }
 \arguments{
 \item{title}{character 1 length title for the section, can be omitted

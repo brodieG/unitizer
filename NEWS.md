@@ -1,5 +1,18 @@
 # `unitizer` NEWS
 
+## v1.4.9
+
+* [#262](https://github.com/brodieG/unitizer/issues/262) Interactive prompt
+  slowness caused by recent R changes to `showConnections()`.
+* [#261](https://github.com/brodieG/unitizer/issues/261) RDS files are
+  explicitly saved in serialization version 2 for backwards compatibility.
+* [#244](https://github.com/brodieG/unitizer/issues/244) Squash all partial
+  match warnings that `unitizer` emitted under `options(warnPartialMatch*)`.
+* Tests explicitly set `stringsAsFactors=TRUE` so they don't fail with the
+  anticipated changed for R4.0.
+* Adds the 'unitizer.restarts.ok' option to suppress warnings about being run
+  within `withRestart` blocks.
+
 ## v1.4.8
 
 * `install.packages` calls in tests now use a temporary folder for library.

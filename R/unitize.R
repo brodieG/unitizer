@@ -1,3 +1,19 @@
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
+
 #' Unitize an R Test Script
 #'
 #' Turn standard R scripts into unit tests by storing the expressions therein
@@ -14,7 +30,8 @@
 #' name and location, but you can specify your own location as an id, or even
 #' use a completely different mechanism to store the \code{unitizer} data by
 #' implementing S3 methods for \code{\link{get_unitizer}} and
-#' \code{\link{set_unitizer}}.
+#' \code{\link{set_unitizer}}.  For more details about storage see those
+#' functions.
 #'
 #' \code{review} allows you to review existing \code{unitizer}s and modify them
 #' by dropping tests from them.  Tests are not evaluated in this mode; you are
@@ -63,12 +80,12 @@
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
 #' @param state character(1L) one of
-#'   \code{c("prisitine", "default", "basic", "off", "safe")}, an environment,
-#'   or a state object produced by \code{\link{state}} or \code{\link{in_pkg}};
-#'   modifies how \code{unitizer} manages aspects of session state that could
-#'   affect test evaluation, including the parent evaluation environment.  For
-#'   more details see \code{\link{unitizerState}} documentation and
-#'   \code{vignette("unitizer_reproducible_tests")}
+#'   \code{c("prisitine", "recommended", "basic", "off", "safe")}, an
+#'   environment, or a state object produced by \code{\link{state}} or
+#'   \code{\link{in_pkg}}; modifies how \code{unitizer} manages aspects of
+#'   session state that could affect test evaluation, including the parent
+#'   evaluation environment.  For more details see \code{\link{unitizerState}}
+#'   documentation and \code{vignette("unitizer_reproducible_tests")}
 #' @param pre NULL, or a character vector pointing to files and/or directories.
 #'   If a character vector, then any files referenced therein will be sourced,
 #'   and any directories referenced therein will be scanned non-recursively for

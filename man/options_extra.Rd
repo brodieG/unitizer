@@ -16,10 +16,6 @@ options_update(tar.opts)
 validate_options(opts.to.validate, test.files = NULL)
 }
 \description{
-Set Options to Initial Zero State
-
 This makes sure to unset options not present in target.
-
-Checks that options meet expectations before anything gets run
 }
 \keyword{internal}

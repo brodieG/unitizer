@@ -29,7 +29,8 @@ local({
     stop("Unable to create temp library directory")
   }
   old.opt.1 <- options(
-    useFancyQuotes=FALSE, unitizer.tmp.lib.loc=tmp.lib
+    useFancyQuotes=FALSE, unitizer.tmp.lib.loc=tmp.lib,
+    stringsAsFactors=TRUE, unitizer.restarts.ok=TRUE
   )
   on.exit({
     for(i in names(tmp.pkgs)) {
@@ -114,7 +115,7 @@ local({
     "upgrade",
     "zzrunlast"
   )
-  # test.filt <- 'utz1'
+  # test.filt <- 'search'
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
       "testthat",

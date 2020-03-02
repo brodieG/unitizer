@@ -1,3 +1,19 @@
+# Copyright (C) 2020  Brodie Gaslam
+# 
+# This file is part of "unitizer"
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
+
 # Retrieves Environment Ancestry
 #
 # @keywords internal
@@ -184,15 +200,11 @@ history_release <- function(hist.obj) {
 history_write <- function(hist.con, data) {
   if(is.null(hist.con)) return(invisible(NULL)) # probably in non-interactive
   # nocov start
-  stopifnot(is.open_con(hist.con), is.character(data))
-  if(is.open_con(hist.con)) {
+  stopifnot(inherits(hist.con, 'connection'), is.character(data))
+  if(isOpen(hist.con)) {
     cat(data, file=hist.con, sep="\n")
     if(!isTRUE(attr(hist.con, "no.hist"))) {
-      hist.save <-
-        try(
-          loadhistory(showConnections()[as.character(hist.con), "description"]),
-          silent=TRUE
-        )
+      hist.save <- try(loadhistory(summary(hist.con)$description), silent=TRUE)
       if(inherits(hist.save, "try-error"))
         warning(attr(hist.save, "condition"), immediate.=TRUE)
   } }

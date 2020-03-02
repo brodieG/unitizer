@@ -148,6 +148,9 @@ results, etc.
     before quitting; this is to avoid accidentally quitting after running a
     \code{unitizer} with many slow running tests and having to re-run them
     again.
+  \item \code{unitizer.restarts.ok} TRUE or FALSE, suppresses warnings when
+    running inside a `withRestarts` block, which is normally a warning.
+    Needed due to `test_that` adding a `withRestart`
 }
 }
 

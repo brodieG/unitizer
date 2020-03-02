@@ -5,10 +5,10 @@
 \alias{state}
 \alias{state,}
 \alias{in_pkg}
-\alias{in_pkg}
 \title{Tests and Session State}
 \usage{
-state(par.env, search.path, options, working.directory, random.seed, namespaces)
+state(par.env, search.path, options, working.directory, random.seed,
+  namespaces)
 
 in_pkg(package = NULL)
 }
@@ -99,9 +99,13 @@ these elements of state are not managed:
      tests.
   \item Random Seed: can be set to a specific value at the
     beginning of each test file so that tests using random values get the
-    same value at every test iteration. If you change the order of  your
-    tests, or add a test that uses a random sampling before the end of
-    the file, that will still affect the random seed.
+    same value at every test iteration. This only sets the seed at the
+    beginning of each test file, so changes in order or number of functions
+    that generate random numbers in your test file will affect subsequent
+    tests.  The advantage of doing this over just setting the seed directly
+    in the test files is that \code{unitizer} tracks the value of the seed
+    and will tell you the seed changed for any given test (e.g. because you
+    added a test in the middle of the file that uses the random seed).
   \item Working Directory: can be set to the tests directory
     inside the package directory if the test files appear to be inside the
     folder structure of a package.  This mimics R CMD check behavior.  If
@@ -120,11 +124,13 @@ these elements of state are not managed:
     re-load them to ensure default options are set.
 }
 
-In the \dQuote{recommended} state tracking, mode parent environment, random
-seed, working directory, and search path are all managed.  For example, with
-the search path managed, each test file will start evaluation with the search
-path set to what you would find in a vanilla R session.  All these settings
-are returned to their original values when \code{unitizer} exits.
+In the \dQuote{recommended} state tracking mode, parent environment, random
+seed, working directory, and search path are all managed to level 2, which
+approximates what you would find in a fresh session (see "Custom Control"
+section below).  For example, with the search path managed, each test file
+will start evaluation with the search path set to the tests folder of your
+package.  All these settings are returned to their original values when
+\code{unitizer} exits.
 
 You can modify what aspects of state are managed by using the \code{state}
 parameter to \code{\link{unitize}}.  If you are satisfied with basic default
@@ -149,7 +155,8 @@ The simplest method is to specify the preset name as a character value:
   \item "recommended": \itemize{
       \item Use special (non \code{.GlobalEnv}) parent environemnt
       \item Manage search path
-      \item Manage random seed
+      \item Manage random seed (and set it to be of type "Wichmann-Hill"
+        for space considerations).
       \item Manage workign directory
       \item Leave namespace and options untouched
     }
@@ -202,12 +209,16 @@ to what the various parameter values for \code{state} do:
     \itemize{
       \item 0 turn off state tracking
       \item 1 track, but start with state as it was when \code{unitize} was
-        called
+        called.
       \item 2 track and set state to what you would typically find in a clean
         R session, with the exception of \code{random.seed}, which is
         set to \code{getOption("unitizer.seed")} (of kind "Wichmann-Hill"
         as that seed is substantially smaller than the R default seed).
 } }
+
+If you chose to use level \code{1} for the random seed you should consider
+picking a random seed type before you start unitizer that is small like
+"Wichman-Hill" as the seed will be recorded each time it changes.
 }
 
 \section{Permanently Setting State Tracking}{
