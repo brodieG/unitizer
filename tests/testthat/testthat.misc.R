@@ -312,18 +312,6 @@ test_that("unitizer:::merge_lists", {
     list(a=NULL, b=2, c=5, d=5)
   )
 })
-test_that("is", {
-  f <- tempfile()
-  cat("hello\n", file=f)
-  fc <- file(f, "r")
-  expect_true(unitizer:::is.valid_con(fc))
-  expect_true(unitizer:::is.valid_con(fc, f))
-  expect_error(unitizer:::is.valid_con(fc, 1:5))
-  expect_match(unitizer:::is.valid_con(fc, "tada"), "file name does not match")
-  expect_true(unitizer:::is.open_con(fc))
-  close(fc)
-  unlink(f)
-})
 test_that("filename to storeid", {
   expect_equal(filename_to_storeid("tests.R"), "tests.unitizer")
   expect_warning(filename_to_storeid("tests.rock"), "Unable to translate")

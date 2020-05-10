@@ -95,7 +95,9 @@ To use `unitizer`:
 
 * `help(package="unitizer")`, in particular `?unitize`
 * `demo(package="unitizer")`
-* [`browseVignettes("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
+* [`browseVignettes("unitizer")`](u0_unitizer_index.html) for a list of
+  vignettes, or skip straight to the [Introduction
+  vignette](u1_intro.html)
 
 ## How Does `unitizer` Differ from `testthat`?
 
@@ -185,14 +187,18 @@ Remember to include `unitizer` as a "suggests" package in your DESCRIPTION file.
 
 ### `unitizer` Writes To Your Filesystem
 
-The `unitize`d tests need to be saved someplace, and the default action is to save to the same directory as the test file.  You will always be prompted by `unitizer` before it writes to your file system.  See [storing `unitized` tests](unitizer_miscellaneous.html#storing-unitized-tests) for implications and alternatives.
+The `unitize`d tests need to be saved someplace, and the default action is to
+save to the same directory as the test file.  You will always be prompted by
+`unitizer` before it writes to your file system.  See [storing `unitized`
+tests](u5_miscellaneous.html#storing-unitized-tests) for implications
+and alternatives.
 
 ### Tests Pass If They `all.equal` Stored Reference Values
 
 Once you have created your first `unitizer` with `unitize`, subsequent calls to
 `unitize` will compare the old stored value to the new one using `all.equal`.
 You can change the comparison function by using `unitizer_sect` (see [tests
-vignette](unitizer_tests.html)).
+vignette](u2_tests.html)).
 
 ### Test Expressions Are Stored Deparsed
 
@@ -230,7 +236,7 @@ State management is turned off by default because it requires tracing some base
 functions which is against CRAN policy.  If you wish to enable this feature use
 `unitize(..., state='recommended')` or `options(unitizer.state='recommended')`.
 For more details see `?unitizerState` and the [reproducible tests
-vignette](unitizer_reproducible_tests.html).
+vignette](u4_reproducible-tests.html).
 
 ### Beware of Force Quitting from `unitizer`
 
@@ -252,15 +258,15 @@ In order to re-create the feel of the R prompt within `unitizer` we resorted to 
 * Each tests is evaluated in its own environment, a child of the previous test's
   environment; because R looks up objects in parent environments it appears that
   all tests are evaluated in one environment (see [interactive environment
-  vignette](unitizer_interactive_env.html))
+  vignette](u3_interactive-env.html))
 * We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics
-  vignette](unitizer_miscellaneous.html)) at the `unitizer` prompt
+  vignette](u5_miscellaneous.html)) at the `unitizer` prompt
 * `traceback` should work when reviewing tests that produce errors, but only
   because we capture the trace with `sys.calls` and write it to
   `base::.Traceback` during review
 * `.Last.value` will not work
 * We sink `stdout` and `stderr` during test evaluation to capture those streams
-  (see [details on tests vignette](unitizer_tests.html)), though we take care to
+  (see [details on tests vignette](u2_tests.html)), though we take care to
   do so responsibly
 * We parse the test file and extract comments so that they can be attached to
   the correct test for review
@@ -277,7 +283,7 @@ interaction will be challenging because you will have to do it with `stderr` and
 
 ### Avoid running `unitize` within `try` / `tryCatch` Blocks
 
-Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](unitizer_miscellaneous.html#running-unitize-within-error-handling-blocks).
+Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](u5_miscellaneous.html#running-unitize-within-error-handling-blocks).
 
 ### Some Base Functions are Masked at the `unitizer` Prompt
 
@@ -290,6 +296,6 @@ quit from `unitizer`, as you would from `browser`.
 In both cases you can still access the original functions by preceding them
 with `base::`
 
-See [miscellanous topics
-vignette](unitizer_miscellaneous.html#overriden-functions).
+See [miscellaneous topics
+vignette](u5_miscellaneous.html#overriden-functions).
 

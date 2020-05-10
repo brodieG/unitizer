@@ -12,25 +12,25 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-* [Introduction](unitizer.html)
+* [Introduction](u1_intro.html)
     * Quickstart
     * Comparison to `testthat`
     * Things to know about `unitizer`
-* [Test details](unitizer_tests.html)
+* [Test details](u2_tests.html)
     * What expressions are considered tests
     * Modify how new tests are compared (default: `all.equal`)
     * Organize your tests into sections
     * Track other aspects of test evaluation beyond just value
-* [Interactive Environment](unitizer_interactive_env.html)
+* [Interactive Environment](u3_interactive-env.html)
     * `unitizer` commands
     * Navigating `unitizer`s
     * A guide to test objects
     * `unitize_dir`
-* [Reproducible Tests](unitizer_reproducible_tests.html)
+* [Reproducible Tests](u4_reproducible-tests.html)
     * Reviews how `unitizer` tracks and manages different aspects of session
       state to insulate tests from variability in a user session
     * Details on evaluation environments, and potential pitfalls
-* [Miscellaneous](unitizer_miscellaneous.html)
+* [Miscellaneous](u5_miscellaneous.html)
     * How unitizers are stored, and possible alternatives
     * Version control and `unitizer`
     * How to modify an existing `unitizer`

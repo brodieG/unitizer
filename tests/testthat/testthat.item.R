@@ -23,8 +23,8 @@ local({
 
     # Helper funs
 
-    callDep <- function(x) paste0(deparse(x@call, width=500), collapse="")
-    lsObjs <- function(x) paste0(x@ls$name, x@ls$status, collapse=", ")
+    callDep <- function(x) paste0(deparse(x@call, width.cutoff=500), collapse="")
+    lsObjs <- function(x) paste0(x@ls$names, x@ls$status, collapse=", ")
     lsStat <- function(x) x@ls$status
     lsInv <- function(x) isTRUE(attr(x@ls, "invalid"))
 

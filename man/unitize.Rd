@@ -40,12 +40,12 @@ you to specify non-standard \code{unitizer} storage mechanisms (see
 for \code{unitize_dir}}
 
 \item{state}{character(1L) one of
-\code{c("prisitine", "default", "basic", "off", "safe")}, an environment,
-or a state object produced by \code{\link{state}} or \code{\link{in_pkg}};
-modifies how \code{unitizer} manages aspects of session state that could
-affect test evaluation, including the parent evaluation environment.  For
-more details see \code{\link{unitizerState}} documentation and
-\code{vignette("unitizer_reproducible_tests")}}
+\code{c("prisitine", "recommended", "basic", "off", "safe")}, an
+environment, or a state object produced by \code{\link{state}} or
+\code{\link{in_pkg}}; modifies how \code{unitizer} manages aspects of
+session state that could affect test evaluation, including the parent
+evaluation environment.  For more details see \code{\link{unitizerState}}
+documentation and \code{vignette("unitizer_reproducible_tests")}}
 
 \item{pre}{NULL, or a character vector pointing to files and/or directories.
 If a character vector, then any files referenced therein will be sourced,
@@ -139,7 +139,8 @@ friends will create a \code{unitizer} id for you based on the test file
 name and location, but you can specify your own location as an id, or even
 use a completely different mechanism to store the \code{unitizer} data by
 implementing S3 methods for \code{\link{get_unitizer}} and
-\code{\link{set_unitizer}}.
+\code{\link{set_unitizer}}.  For more details about storage see those
+functions.
 
 \code{review} allows you to review existing \code{unitizer}s and modify them
 by dropping tests from them.  Tests are not evaluated in this mode; you are

@@ -4,7 +4,7 @@ library(unitizer)
 if(!require(testthat)) stop("testthat required for tests")
 
 local({
-  RNGversion("3.5.2")
+  suppressWarnings(RNGversion("3.5.2"))
   old.opt <- options(stringsAsFactors=TRUE)
   on.exit({options(old.opt); RNGversion(as.character(getRversion()))})
   unitize("unitizer/tests2.R")
