@@ -34,23 +34,44 @@ local( {
   prs <- all$expr
   dat <- all$dat
   dat$parent <- pmax(0L, dat$parent)
+  # With R4.0 some of the ids started changing
+  normalize_id <- function(dat) {
+    idu <- sort(unique(dat[['id']]))
+    id <- with(dat, match(id, idu))
+    parent <- with(dat, ifelse(parent == 0L, 0L, match(parent, idu)))
+    dat[['id']] <- id
+    dat[['parent']] <- parent
+    dat
+  }
+  dat <- normalize_id(dat)
   dat.split <- dat.split.2 <- par.ids.3 <- NULL
   if.text <- "if # IFFY\n(x > 3 # ifcond\n){ hello\n #whome to attach?\n} else #final\ngoodbye"
 
   test_that("Top Level Parents Identified Correctly", {
     expect_equal(info="Identified top level parents?",
       par.ids <- with(dat, unitizer:::top_level_parse_parents(id, parent)),
-      c(0L, 0L, 12L, 12L, 12L, 12L, 12L, 0L, 0L, 0L, 0L, 45L, 45L,  45L, 45L, 45L, 45L, 45L, 45L, 45L, 45L, 45L, 45L, 45L, 0L, 0L,  112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L,  112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L,  112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L, 112L,  112L, 112L, 112L, 112L, 112L, 0L, 128L, 128L, 128L, 128L, 128L,  128L, 128L, 128L, 128L, 128L, 0L, 0L, 147L, 147L, 147L, 147L,  147L, 147L, 0L, 159L, 159L, 159L, 159L, 159L, 159L, 0L)
+      c(0L, 0L, 7L, 7L, 7L, 7L, 7L, 0L, 0L, 0L, 0L, 24L, 24L, 24L, 
+24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 0L, 0L, 64L, 
+64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 
+64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 
+64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 0L, 75L, 
+75L, 75L, 75L, 75L, 75L, 75L, 75L, 75L, 75L, 0L, 0L, 83L, 83L, 
+83L, 83L, 83L, 83L, 0L, 90L, 90L, 90L, 90L, 90L, 90L, 0L)
     )
     dat.split <<- split(dat, par.ids)
     expect_equal(info="Identified sub-level top level parents correctly",
-      par.ids.2 <- with(dat.split$`112`, unitizer:::top_level_parse_parents(id, parent, 112L)),
-      c(54L, 112L, 112L, 57L, 112L, 112L, 112L, 108L, 108L, 108L, 108L,  108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L,  108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L, 108L,  108L, 108L, 108L, 108L, 112L)
+      par.ids.2 <- with(dat.split$`64`, unitizer:::top_level_parse_parents(id, parent, 64L)),
+      c(28L, 64L, 64L, 31L, 64L, 64L, 64L, 62L, 62L, 62L, 62L, 62L, 
+62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 
+62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 64L
+)
     )
-    dat.split.2 <<- split(dat.split$`112`, par.ids.2)
+    dat.split.2 <<- split(dat.split$`64`, par.ids.2)
     expect_equal(info="Parent relationships in `unitizer_sect` piece.",
-      par.ids.3 <<- with(dat.split.2$`108`, unitizer:::top_level_parse_parents(id, parent, 108L)),
-      c(108L, 108L, 108L, 76L, 76L, 76L, 76L, 76L, 76L, 76L, 76L, 76L,  108L, 108L, 108L, 100L, 100L, 100L, 100L, 100L, 100L, 100L, 100L,  100L, 100L, 100L, 100L, 100L, 108L, 108L)
+      par.ids.3 <<- with(dat.split.2$`62`, unitizer:::top_level_parse_parents(id, parent, 62L)),
+      c(62L, 62L, 62L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 
+62L, 62L, 62L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 
+59L, 59L, 59L, 62L, 62L)
     )
   } )
   test_that("Comments Are Assigned", {
@@ -59,27 +80,36 @@ local( {
       list("# This is an early comment", c("# multi", "# line", "# comment",  "# and another!"), NULL, NULL, "# and this comment belongs to whom?",      "# and I?")
     )
     expect_equal(info="No comments here so no changes should occur",
-      unitizer:::comments_assign(prs[[3]], dat.split.2$`112`),
+      unitizer:::comments_assign(prs[[3]], dat.split.2$`64`),
       prs[[3]]
     )
     expect_equal(info="Comments in `unitizer_sect` body assigned correctly",
-      lapply(unitizer:::comments_assign(prs[[3]][[3]], split(dat.split.2$`108`, par.ids.3)$`108`), attr, "comment"),
+      lapply(unitizer:::comments_assign(prs[[3]][[3]], split(dat.split.2$`62`, par.ids.3)$`62`), attr, "comment"),
       list(NULL, c("# test that were not crazy", "# TRUE hopefully" ), "# Still not crazy")
     )
   } )
   test_that("Ancestry Descend", {
     x <- unitizer:::parse_dat_get(text="1 + 1; fun(x, fun(y + z))")$dat
+    x <- normalize_id(x)
     expect_equal(
-      structure(c(7L, 6L, 34L, 2L, 3L, 5L, 12L, 11L, 15L, 14L, 30L, 31L, 1L, 4L, 10L, 13L, 20L, 19L, 27L, 25L, 18L, 23L, 22L, 26L, 21L, 24L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L), .Dim = c(26L, 2L), .Dimnames = list(NULL, c("children", "level"))),
+      structure(c(7L, 6L, 26L, 2L, 3L, 5L, 10L, 9L, 13L, 12L, 24L, 
+25L, 1L, 4L, 8L, 11L, 16L, 15L, 23L, 21L, 14L, 19L, 18L, 22L, 
+17L, 20L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 
+2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L), .Dim = c(26L, 
+2L), .Dimnames = list(NULL, c("children", "level"))),
       unitizer:::ancestry_descend(x$id, x$parent, 0)
     )
   })
   test_that("Clean up Parse Data", {
     dat <- unitizer:::parse_dat_get(text="{function(x) NULL;; #comment\n}")$dat
     dat <- transform(dat, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+    dat <- normalize_id(dat)
 
     expect_equal(info="Ancestry Descend",
-      structure(c(21L, 1L, 18L, 16L, 19L, 15L, 14L, 11L, 9L, 2L, 3L,  4L, 5L, 8L, 7L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L,  4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children",  "level"))),
+      structure(c(15L, 1L, 13L, 12L, 14L, 11L, 10L, 9L, 8L, 2L, 3L, 
+4L, 5L, 7L, 6L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L, 
+4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children", 
+"level"))),
       dat.anc <- unitizer:::ancestry_descend(dat$id, dat$parent, 0L)
     )
     expect_equal(info="Excise `exprlist`",
@@ -88,25 +118,41 @@ local( {
     )
     dat.1 <- unitizer:::parse_dat_get(text="{1 ; ; ;2;}")$dat
     dat.1 <- transform(dat.1, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+    dat.1 <- normalize_id(dat.1)
 
     expect_equal(info="Another `exprlist` test",
-      list(c(0L, 18L, 3L, 18L, 12L, 18L, 18L), c("expr", "'{'", "NUM_CONST",  "expr", "NUM_CONST", "expr", "'}'")),
+      list(c(0L, 14L, 3L, 14L, 10L, 14L, 14L), c("expr", "'{'", "NUM_CONST", 
+"expr", "NUM_CONST", "expr", "'}'")),
       unname(as.list(unitizer:::prsdat_fix_exprlist(dat.1, unitizer:::ancestry_descend(dat.1$id, dat.1$parent, 0L))[c("parent", "token")]))
     )
     dat.2 <- unitizer:::parse_dat_get(text="{NULL; yowza; #comment\nhello\n}")$dat
     dat.2 <- transform(dat.2, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+    dat.2 <- normalize_id(dat.2)
 
     expect_equal(info="Yet another `exprlist`",
-      list(c(0L, 22L, 3L, 22L, 9L, 22L, 22L, 17L, 22L, 22L), c("expr",  "'{'", "NULL_CONST", "expr", "SYMBOL", "expr", "COMMENT", "SYMBOL",  "expr", "'}'")),
+      list(c(0L, 13L, 3L, 13L, 7L, 13L, 13L, 11L, 13L, 13L), c("expr", 
+"'{'", "NULL_CONST", "expr", "SYMBOL", "expr", "COMMENT", "SYMBOL", 
+"expr", "'}'")),
       unname(as.list(unitizer:::prsdat_fix_exprlist(dat.2, unitizer:::ancestry_descend(dat.2$id, dat.2$parent, 0L))[c("parent", "token")]))
     )
     expect_equal(info="`for` cleanup",
-      structure(list(id = c(1L, 3L, 5L, 7L, 27L, 9L, 24L, 10L, 11L, 12L, 14L, 13L, 16L, 17L, 18L, 20L, 21L, 22L), parent = c(30L, 30L, 7L, 30L, 30L, 27L, 27L, 24L, 24L, 14L, 24L, 24L, 17L, 24L, 24L, 21L, 24L, 27L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", "expr", "ELSE", "NEXT", "expr", "'}'")), .Names = c("id", "parent", "token")),
+      list(id = c(1L, 3L, 5L, 7L, 29L, 10L, 26L, 11L, 12L, 13L, 15L, 
+14L, 18L, 19L, 20L, 22L, 23L, 24L), parent = c(32L, 32L, 7L, 
+32L, 32L, 29L, 29L, 26L, 26L, 15L, 26L, 26L, 19L, 26L, 26L, 23L, 
+26L, 29L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", 
+"'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", 
+"expr", "ELSE", "NEXT", "expr", "'}'")),
       as.list(unitizer:::prsdat_fix_for(unitizer:::parse_dat_get(text="for(i in x) {if(x) break else next}")$dat[-1L, ]))[c("id", "parent", "token")]
     )
+    dat.3 <- normalize_id(unitizer:::parse_dat_get(text=if.text)$dat)
+
     expect_equal(info="`if` cleanup",
-      list(c(1L, 2L, 13L, 5L, 7L, 6L, 8L, 9L, 10L, 26L, 15L, 16L, 18L, 21L, 24L, 29L, 31L, 33L), c("IF", "COMMENT", "expr", "SYMBOL", "expr", "GT", "NUM_CONST", "expr", "COMMENT", "expr", "'{'", "SYMBOL", "expr", "COMMENT", "'}'", "COMMENT", "SYMBOL", "expr")),
-      unname(as.list(unitizer:::prsdat_fix_if(unitizer:::parse_dat_get(text=if.text)$dat[-1,])[c("id", "token")]))
+      list(c(1L, 2L, 11L, 4L, 6L, 5L, 7L, 8L, 9L, 17L, 12L, 13L, 14L, 
+15L, 16L, 19L, 20L, 21L), c("IF", "COMMENT", "expr", "SYMBOL", 
+"expr", "GT", "NUM_CONST", "expr", "COMMENT", "expr", "'{'", 
+"SYMBOL", "expr", "COMMENT", "'}'", "COMMENT", "SYMBOL", "expr"
+)),
+      unname(as.list(unitizer:::prsdat_fix_if(dat.3[-1,])[c("id", "token")]))
     )
   } )
   test_that("Full Parse Works Properly", {
@@ -217,12 +263,16 @@ local( {
     prs.dat <- unitizer:::parse_dat_get(text=txt)$dat
 
     prs.dat <- transform(prs.dat, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+    prs.dat <- normalize_id(prs.dat)
     ancestry <- with(prs.dat, unitizer:::ancestry_descend(id, parent, 0L))
 
     x <- unitizer:::prsdat_fix_exprlist(prs.dat, ancestry)
 
     expect_identical(
-      structure(c(1L, 36L, 6L, 8L, 7L, 9L, 11L, 10L, 32L, 14L, 24L, 16L, 18L, 17L, 19L, 20L, 21L, 30L, 33L, 0L, 0L, 8L, 36L, 36L, 11L, 36L, 36L, 36L, 32L, 32L, 18L, 24L, 24L, 20L, 24L, 24L, 32L, 36L), .Dim = c(19L, 2L)),
+      structure(c(1L, 21L, 2L, 4L, 3L, 5L, 7L, 6L, 19L, 8L, 15L, 9L, 
+11L, 10L, 12L, 13L, 14L, 18L, 20L, 0L, 0L, 4L, 21L, 21L, 7L, 
+21L, 21L, 21L, 19L, 19L, 11L, 15L, 15L, 13L, 15L, 15L, 19L, 21L
+), .Dim = c(19L, 2L)),
       unname(as.matrix(x[, 5:6]))
     )
   } )
