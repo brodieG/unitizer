@@ -2,7 +2,7 @@
 
 ## v1.4.10
 
-* Banish `stringsAsFactors`.
+* Banish ghosts of `stringsAsFactors`.
 
 ## v1.4.9
 
