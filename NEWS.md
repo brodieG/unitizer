@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.10
+
+* Banish ghosts of `stringsAsFactors`.
+
 ## v1.4.9
 
 * [#262](https://github.com/brodieG/unitizer/issues/262) Interactive prompt
