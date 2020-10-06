@@ -87,11 +87,14 @@ To use `unitizer`:
 
 * `help(package="unitizer")`, in particular `?unitize`
 * `demo(package="unitizer")`
-* [`browseVignettes("unitizer")`](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer_index.html) for a list of vignettes, or skip straight to the [Introduction vignette](http://htmlpreview.github.io/?https://raw.githubusercontent.com/brodieG/unitizer/master/inst/doc/unitizer.html)
+* [`browseVignettes("unitizer")`](https://cran.r-project.org/package=unitizer/vignettes/u0_unitizer_index.html)
+  for a list of vignettes, or skip straight to the [Introduction
+  vignette](https://cran.r-project.org/package=unitizer/vignettes/u1_intro.html)
 
 ## Related Packages
 
 * [testthat](https://cran.r-project.org/package=testthat)
+* [tinytest](https://cran.r-project.org/package=tinytest)
 * [RUnit](https://cran.r-project.org/package=RUnit)
 
 ## Acknowledgments
