@@ -994,7 +994,7 @@ setClass("unitizerBrowseSubSectionNew", contains="unitizerBrowseSubSection",
     help=paste0(
       "A new test will be used as the reference value for future tests, so ",
       "make sure you review the value carefully before you add it to the ",
-      "store by selecting 'Y' at the prompt."
+      "store by selecting 'Y' at the prompt.%s%s"
     ),
     actions=c(Y="A", N="C"), show.out=TRUE
 ) )
@@ -1020,7 +1020,7 @@ setClass("unitizerBrowseSubSectionCorrupted",
       "because the comparison function itself caused an error.  You can ",
       "change the unitizer function with `unitizer_sect`.  You can also ",
       "manually compare `.NEW` and `.REF` and decide whether to replace the ",
-      "old value with the new one by selecting 'Y' at the prompt."
+      "old value with the new one by selecting 'Y' at the prompt.%s%s"
     ),
     actions=c(Y="A", N="B")
 ) )
@@ -1038,7 +1038,7 @@ setClass("unitizerBrowseSubSectionRemoved", contains="unitizerBrowseSubSection",
     ),
     help=paste0(
       "A previously stored test no longer exists in the test file; you can ",
-      "remove the stored value by selecting 'Y' at the prompt."
+      "remove the stored value by selecting 'Y' at the prompt.%s%s"
     ),
     actions=c(Y="C", N="B")
 ) )
