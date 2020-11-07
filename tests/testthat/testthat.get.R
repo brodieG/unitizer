@@ -73,10 +73,13 @@ local({
       ro.dir <- tempfile()
       on.exit(unlink(ro.dir))
       dir.create(ro.dir, mode="0500")
-      expect_error(
-        capture.output(set_unitizer(ro.dir, toy.stor), type="message"),
-        "Failed setting unitizer"
-      )
+      if(!identical(try(system('whoami', intern=TRUE), silent=TRUE), "root")) {
+        # seems to be case that root can always write so defeats this test
+        expect_error(
+          capture.output(set_unitizer(ro.dir, toy.stor), type="message"),
+          "Failed setting unitizer"
+        )
+      }
     }
   } )
   test_that("load/store_unitizer", {
