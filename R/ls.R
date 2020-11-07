@@ -40,8 +40,8 @@ unitizer_ls <- function(name, pos = -1L, envir = parent.frame(),
       "using the `name`, `pos`, or `envir` arguments to `ls`; you can use ",
       "standard `ls` with `base::ls`."
     )
-  new.item <- try(get(".NEW", parent.env(envir)), silent=T)
-  ref.item <- try(get(".REF", parent.env(envir)), silent=T)
+  new.item <- try(get(".NEW", parent.env(envir)), silent=TRUE)
+  ref.item <- try(get(".REF", parent.env(envir)), silent=TRUE)
 
   ls.lst <- list()
   ls.test <- mods <- character()
