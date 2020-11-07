@@ -5,4 +5,4 @@
 ^\.travis\.yml$
 ^extra$
 \.Rdata
-^scratch\.R$
+^scratch
