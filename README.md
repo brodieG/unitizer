@@ -94,9 +94,9 @@ To use `unitizer`:
 ## Related Packages
 
 * [`testthat`](https://cran.r-project.org/package=testthat)
-* [`tinytest`](https://cran.r-project.org/package=tinytest), or
-  [ttdo](https://cran.r-project.org/package=ttdo) which extends `tinytests`
-  with [`diffobj`](https://cran.r-project.org/package=diffobj) diffs.
+* [`tinytest`](https://cran.r-project.org/package=tinytest), which is extended
+  by [`ttdo`](https://cran.r-project.org/package=ttdo) for
+  [`diffobj`](https://cran.r-project.org/package=diffobj) diffs.
 * [`RUnit`](https://cran.r-project.org/package=RUnit)
 
 ## Acknowledgments
