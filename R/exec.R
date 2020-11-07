@@ -138,9 +138,9 @@ eval_user_exp <- function(unitizerUSEREXP, env, global, with.display=TRUE) {
     )
     # nocov end
   }
-  old.opt <- options(warn=1L)
-  on.exit(options(old.opt))
-
+  if(getOption('warn') < 1L) {
+    options(warn=1L)  # this is reset on exit by unitize_core
+  }
   exp <- if(is.expression(unitizerUSEREXP)) {
      call("withVisible", call("eval", unitizerUSEREXP))
   } else call("withVisible", unitizerUSEREXP)
@@ -397,7 +397,7 @@ clean_message <- function(res) {
   stopifnot(
     is.list(res), is.character(res$message), identical(length(res$message), 1L)
   )
-  # this all assumes options(warn=1)
+  # this all assumes options(warn>=1)
 
   reg.base <- "(%s in .*? :)((?:\\n|\\s)*%%s)\\n.*"
   if(nchar(res$message)) {

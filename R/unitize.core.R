@@ -165,6 +165,7 @@ unitize_core <- function(
   # get nuked by `options_zero` but we still need some of the unitizer ones
 
   opts <- options()
+
   opts.untz <- opts[grep("^unitizer\\.", names(opts))]
   opts.untz <- validate_options(opts.untz, test.files)
 
@@ -253,8 +254,10 @@ unitize_core <- function(
     # nocov end
   # - Set Global State ---------------------------------------------------------
 
+  old.warn <- getOption('warn') # because we force this to >= 1 in browse/eval
   on.exit(
     {
+      options(warn=old.warn)
       reset_and_unshim(global)
       meta_word_msg(
         "Unexpectedly exited before storing unitizer; ",
@@ -474,6 +477,7 @@ unitize_core <- function(
     )
     if(interactive.fail) { # blergh, cop out
       on.exit(NULL)
+      options(warn=old.warn)
       reset_and_unshim(global)
       stop("Cannot proceed in non-interactive mode.")
     }
@@ -497,6 +501,7 @@ unitize_core <- function(
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
+  options(warn=old.warn)
   reset_and_unshim(global)
 
   # return env on success, char on error
