@@ -90,6 +90,10 @@ NULL
 #'   user input
 #' @param global unitizerGlobal or NULL, if the global state tracking object;
 #'   will be used to record state after evaluating user expressions
+#' @param warn.sticky TRUE or FALSE (default) whether any changes to the "warn"
+#'   global option made by the evaluation of an R expression under the prompt
+#'   should be allowed to stick after the evaluation.  Normally that option value
+#'   is reset after each evaluation.
 #' @return \itemize{
 #'   \item \code{unitizer_prompt}: mixed allowable user input
 #'   \item \code{navigate_prompt}: a \code{unitizerBrowse} object, or allowable
@@ -102,7 +106,7 @@ NULL
 unitizer_prompt <- function(
   text, browse.env=baseenv(), help=character(), help.opts=character(),
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
-  global, ...
+  global, warn.sticky=FALSE, ...
 ) {
   if(!interactive_mode())
     # nocov start
@@ -177,7 +181,8 @@ unitizer_prompt <- function(
     # Note `val` here is the expression the user inputted, not the result of the
     # evaluation.  The latter will be in res$value
 
-    res <- eval_user_exp(val, browse.env, global=global)
+    res <-
+      eval_user_exp(val, browse.env, global=global, warn.sticky=warn.sticky)
 
     # store / record history
 
