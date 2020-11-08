@@ -2,9 +2,11 @@ library(unitizer)
 context("Prompt")
 
 local({
-  on.exit(
+  old.warn <- getOption('warn')
+  on.exit({
     unitizer:::read_line_set_vals(NULL)  # Clear out for normal use
-  )
+    options(warn=old.warn)
+  })
   test_that("read_line works", {
     unitizer:::read_line_set_vals(letters[1:3])
     u.ns <- asNamespace("unitizer")

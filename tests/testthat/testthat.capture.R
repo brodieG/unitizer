@@ -266,6 +266,8 @@ test_that("close_and_clear", {
   expect_false(status["message"])
 })
 test_that("eval with capt", {
+  old.warn <- getOption('warn')
+  on.exit(options(warn=old.warn))
   suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
   expect_equal_to_reference(
     (capt <- unitizer:::eval_with_capture(quote(1+1), global=glob))[1:8],

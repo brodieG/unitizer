@@ -4,7 +4,8 @@ context("Browse")
 
 local( {
   old.opt.outer <- options(unitizer.color=FALSE)
-  on.exit(options(old.opt.outer))
+  old.warn <- getOption('warn')
+  on.exit(options(c(old.opt.outer, list(warn=old.warn))))
 
   zero.env <- parent.env(.GlobalEnv)
   obj.item <- new("unitizerItem", call=quote(1 + 1), env=new.env())

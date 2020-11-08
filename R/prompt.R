@@ -128,9 +128,6 @@ unitizer_prompt <- function(
   repeat {
     prompt.txt <- sprintf("%s> ", "unitizer")
 
-    if(getOption('warn') < 1L) {
-      options(warn=1L)  # this is reset on exit by unitize_core
-    }
     val <- tryCatch(
       faux_prompt(prompt.txt),
       simpleError=function(e) e

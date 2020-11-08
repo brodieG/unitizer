@@ -3,6 +3,9 @@ library(testthat)
 context("Section")
 
 local({
+  old.warn <- getOption('warn')
+  on.exit(options(warn=old.warn))
+
   expr.1 <- expression(1 + 1, b <- 5, matrix(integer(), nrow=b, ncol=b))
   expr.2 <- {1 + 1; b <- 5; matrix(integer(), nrow=b, ncol=b)}
   expr.3 <- quote(expression(1 + 1, b <- 5, matrix(integer(), nrow=b, ncol=b)))

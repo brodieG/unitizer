@@ -3,6 +3,8 @@ library(testthat)
 context("Get")
 
 local({
+  old.warn <- getOption('warn')
+  on.exit(options(warn=old.warn))
   toy.stor <- readRDS("../interactive/unitizer/misc.unitizer/data.rds")
   test_that("Error Cases", {
     expect_error(get_unitizer(1), "No method defined")
@@ -33,7 +35,7 @@ local({
       )
   } )
   tmp.dir <- tempfile()
-  on.exit(unlink(tmp.dir, recursive=TRUE))
+  on.exit(unlink(tmp.dir, recursive=TRUE), add=TRUE)
   dir.create(tmp.dir)
   tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
   tmp.fake.utz <- paste0(tmp.dir, "/fake.unitizer")

@@ -3,6 +3,9 @@ library(testthat)
 context("Repair Envs")
 
 local({
+  old.warn <- getOption('warn')
+  on.exit(options(warn=old.warn))
+
   exps <- expression(
     1 + 1,
     a <- 54,

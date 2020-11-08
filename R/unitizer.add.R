@@ -95,7 +95,12 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     chr.width <- getOption("width")
 
     e1@global$cons <- new("unitizerCaptCons")
-    on.exit(close_and_clear(e1@global$cons))
+    old.warn <- getOption('warn')
+    on.exit({
+      # have to do this here because some test call this diretly
+      options(warn=old.warn)
+      close_and_clear(e1@global$cons)
+    })
 
     repeat {
       if(done(e2 <- nextItem(e2))) break
