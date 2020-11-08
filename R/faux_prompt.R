@@ -28,6 +28,8 @@ faux_prompt <- function(
   repeat {
     res.parse <- tryCatch({
         res <- paste0(res, read_line(prompt), if(length(res)) '\n' else "")
+        old.opt <- options(warn=1L)
+        on.exit(options(old.opt))
         parsed <- parse(text=res)
       },
       error=function(e) {
