@@ -203,7 +203,7 @@ unitizer_prompt <- function(
 
 navigate_prompt <- function(
   x, curr.id, text, browse.env1=globalenv(), browse.env2=globalenv(),
-  help=character(), help.opts=character(), valid.opts
+  help=character(), help.opts=character(), valid.opts, warn.sticky=FALSE
 ) {
   if(!is(x, "unitizerBrowse")) {
     stop( # nocov start
@@ -214,7 +214,8 @@ navigate_prompt <- function(
 
   prompt.val <- unitizer_prompt(
     text, browse.env=browse.env1, help=help, help.opts=help.opts,
-    valid.opts=valid.opts, hist.con=x@hist.con, global=x@global
+    valid.opts=valid.opts, hist.con=x@hist.con, global=x@global,
+    warn.sticky=warn.sticky
   )
   if(identical(prompt.val, "P")) {
     # Go back to previous
