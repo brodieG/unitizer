@@ -304,12 +304,16 @@ comments_assign <- function(expr, comment.dat) {
   first.or.only <- comm.expr$first.last.on.line %in% c(1L, 3L)
   comm.comm$assign.to.next <- vapply(
     comm.comm$line1,
-    function(x) if(any(idx <- (comm.expr$line1 > x))) min(comm.expr$line1[idx]) else NA_integer_,
+    function(x)
+      if(any(idx <- (comm.expr$line1 > x))) min(comm.expr$line1[idx])
+      else NA_integer_,
     integer(1L)
   )
   comm.comm$match <- ifelse(
     is.na(comm.comm$match),
-    comm.expr$id[first.or.only][match(comm.comm$assign.to.next, comm.expr$line1[first.or.only])],
+    comm.expr$id[first.or.only][
+      match(comm.comm$assign.to.next, comm.expr$line1[first.or.only])
+    ],
     comm.comm$match
   )
   # Assign comments to matching expression in attributes
@@ -326,8 +330,10 @@ comments_assign <- function(expr, comment.dat) {
       # turn names that we want to attach comments to into simple language by
       # adding parens.  Note this changes structure of expression but hopefully
       # doesn't mess anything up later on...
+      #
+      # Also, constants, NULL, etc.
 
-      if(is.name(expr[[expr.pos]])) {
+      if(length(expr[[expr.pos]]) < 2) {
         expr[[expr.pos]] <- call("(", expr[[expr.pos]])
         attr(expr[[expr.pos]], "unitizer_parse_symb") <- TRUE
       }
@@ -403,7 +409,10 @@ parse_with_comments <- function(file, text=NULL) {
 
   # Now proceed with actual parsing
 
-  expr <- comm_reset(expr)  # hack to deal with issues with expressions retaining previous assigned comments (need to examine this further)
+  # hack to deal with issues with expressions retaining previous assigned
+  # comments (need to examine this further)
+
+  expr <- comm_reset(expr)
 
   # set negative ids to be top level parents
   parse.dat.raw.1 <- transform(
@@ -412,17 +421,24 @@ parse_with_comments <- function(file, text=NULL) {
   ancestry <- with(parse.dat.raw.1, ancestry_descend(id, parent, 0L))
   parse.dat <- prsdat_fix_exprlist(parse.dat.raw.1, ancestry)
 
-  if(is.null(parse.dat)) stop("Argument `expr` did not contain any parse data")
-  if(!is.data.frame(parse.dat)) stop("Argument `expr` produced parse data that is not a data frame")
+  if(is.null(parse.dat))
+    stop("Argument `expr` did not contain any parse data")
+  if(!is.data.frame(parse.dat))
+    stop("Argument `expr` produced parse data that is not a data frame")
   if(!nrow(parse.dat)) return(expr)
-  if(!identical(names(parse.dat), c("line1", "col1", "line2", "col2", "id", "parent", "token",  "terminal", "text")))
+  if(!
+    identical(
+      names(parse.dat),
+      c(
+        "line1", "col1", "line2", "col2", "id", "parent", "token",  "terminal",
+        "text"
+  ) ) )
     stop("Argument `expr` produced parse data with unexpected column names")
   if(!identical(unname(vapply(parse.dat, class, "")), c("integer", "integer", "integer", "integer", "integer", "integer",  "character", "logical", "character")))
     stop("Argument `expr` produced data with unexpected column data types")
   if(!all(parse.dat$token %in% unlist(tk.lst))) {
     # nocov start
     # shouldn't happen, can't test
-    browser()
     stop(
       "Advanced Parse Error: unexpected tokens in parse data (",
       paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
@@ -479,27 +495,30 @@ parse_with_comments <- function(file, text=NULL) {
       stop("Advanced Parse Error: expression parse data overlapping.")
       # nocov end
     }
-    # For each parent expression, assign comments; parent expressions that include
-    # a function definition have to exclude the formals part (which is a pairlist)
-    # because the `getParseData` output does not produce a parent element for the
-    # formals; in practice this shouldn't have any impact because test items will
-    # never be at such a low level (i.e. any comments at this level would never
-    # be shown anyway).
+    # For each parent expression, assign comments; parent expressions that
+    # include a function definition have to exclude the formals part (which is a
+    # pairlist) because the `getParseData` output does not produce a parent
+    # element for the formals; in practice this shouldn't have any impact
+    # because test items will never be at such a low level (i.e. any comments at
+    # this level would never be shown anyway).
 
     assignable.elems <- vapply(
       expr,
-      function(x) !identical(typeof(x), "pairlist") && !any("srcref" == class(x)),
+      function(x)
+        !identical(typeof(x), "pairlist") && !any("srcref" == class(x)),
       logical(1L)
     )
-    if(!is.call(expr) && !is.expression(expr)) {
-      if(!length(assignable.elems) %in% c(1L))
+    if(!is.call(expr) && !is.expression(expr) && !is.null(expr)) {
+      if(!length(assignable.elems) %in% c(1L)) {
         stop(  # nocov start
           "Advanced Parse Error: expression is terminal token yet multiple ",
           "assignable elems."
         )      # nocov end
+      }
       if(isTRUE(assignable.elems)) expr <- comments_assign(expr, prsdat.par)
     } else if (!is.null(expr)) {
-      expr[assignable.elems] <- comments_assign(expr[assignable.elems], prsdat.par)
+      expr[assignable.elems] <-
+        comments_assign(expr[assignable.elems], prsdat.par)
     }
     # Now do the same for the child expression by recursively calling this
     # function until there are no children left, but need to be careful here
@@ -543,8 +562,11 @@ parse_with_comments <- function(file, text=NULL) {
     } else {
       for(i in 1:nrow(prsdat.par.red)) {
         if(prsdat.par.red$terminal[[i]]) next
-        expr[assignable.elems][[i]] <-
-          Recall(expr[assignable.elems][[i]], prsdat.children[[j]], as.integer(names(prsdat.children)[[j]]))
+        new.val <- Recall(
+          expr[assignable.elems][[i]], prsdat.children[[j]],
+          as.integer(names(prsdat.children)[[j]])
+        )
+        if(!is.null(new.val)) expr[assignable.elems][[i]] <- new.val
         j <- j + 1
     } }
     expr
@@ -611,29 +633,30 @@ parse_tests <- function(file, comments=TRUE, text=NULL) {
 
   parsed <- NULL
   if(comments) {
-    parsed <- try(parse_with_comments(file, text))
-    if(inherits(parsed, "try-error")) {
-      if(
-        identical(
-          conditionMessage(attr(parsed, "condition")),
-          "parsing failed"
+    parsed <- tryCatch(
+      parse_with_comments(file, text),
+      error=function(e) {
+        if(identical(conditionMessage(e), "parsing failed"))
+          stop("Unable to parse test file; see previous messages")
+        warning(
+          "Unable to recover comments in advanced parse because:\n\n",
+          paste0(
+            "    ",
+            strwrap(conditionMessage(e), getOption('width') - 10),
+            "\n"
+          ),
+          "\nFalling back to simple parse.",
+          immediate.=TRUE, call.=FALSE
         )
-      )
-        stop("Unable to parse test file; see previous messages")
-    } else {
-      return(parsed)
-  } }
+        NULL
+  } ) }
   # Either no comment mode, or couldn't extract in comment mode
 
-  if(inherits(parsed, "try-error"))
-    warning(
-      "Unable to recover comments in advanced parse; ",
-      "falling back to simple parse.",
-      immediate.=TRUE
-    )
-  if(is.null(text)) {
-    parse(file, keep.source=FALSE)
-  } else parse(text=text, keep.source=FALSE)
+  if(is.null(parsed)) {
+    if(is.null(text)) {
+      parse(file, keep.source=FALSE)
+    } else parse(text=text, keep.source=FALSE)
+  } else parsed
 }
 # Need this to pass R CMD check; problems likely caused by `transform` and
 # `subset`.
@@ -1011,20 +1034,30 @@ comm_reset <- function(x) {
 # that contain them.  It may not be possible to do so for all of them.  For
 # example, \code{`INCOMPLETE_STRING`} shows up during a parse error, so could
 # never be part of a fully parsed expression.
+#
+# Updates 11/2020: We've now seen "expr_or_assign_or_help", and according to
+# Kalibera "equal_assign" is now in use, although the example he gave `a = 1`
+# produces "expr_or_assign_or_help".
 
 tk.lst <- list(
   comment="COMMENT",
   brac.close=c("'}'", "']'", "')'"),
   brac.open=c("'{'", "'['", "'('", "LBB"),
   exps=c("expr", "exprlist", "expr_or_assign_or_help"),
-  seps=c("','", "';'"),                                          # no comments on these as they are just removed
-  non.exps=c(                                                    # in addition to `expr`, these are the ones that can get comments attached
+  # no comments on these as they are just removed
+  seps=c("','", "';'"),
+  # in addition to `expr`, these are the ones that can get comments attached
+  non.exps=c(
     "SYMBOL", "STR_CONST", "NUM_CONST", "NULL_CONST",
     "SLOT", "NEXT", "BREAK", "SYMBOL_FUNCTION_CALL"
   ),
-  non.exps.extra=c(                                              # these can also get comments attached, but shouldn't be at the end of a parse data block
+  # these can also get comments attached, but shouldn't be at the end of a
+  # parse data block
+  non.exps.extra=c(
     "FUNCTION", "FOR",
-    "IF", "REPEAT", "WHILE", "SYMBOL_PACKAGE"                    # not 100% sure SYMBOL_PACKAGE belongs here; it can't possibly have comments right after it on the same line
+    # not 100% sure SYMBOL_PACKAGE belongs here; it can't possibly have
+    # comments right after it on the same line
+    "IF", "REPEAT", "WHILE", "SYMBOL_PACKAGE"
   ),
   ops=c(
     paste0(
@@ -1035,8 +1068,10 @@ tk.lst <- list(
     "SPECIAL", "GT", "GE", "LT", "LE", "EQ", "NE", "AND", "AND2",
     "OR", "OR2", "LEFT_ASSIGN", "RIGHT_ASSIGN", "EQ_ASSIGN"
   ),
-  ops.other=c("NS_GET", "NS_GET_INT"),                           # note these should never show up at top level
-  unassign=c(                                                    # these cannot have comments attached to them
+  # note these should never show up at top level
+  ops.other=c("NS_GET", "NS_GET_INT"),
+  # these cannot have comments attached to them
+  unassign=c(
     "EQ_SUB", "SYMBOL_SUB", "EQ_FORMALS", "SYMBOL_FORMALS",
     "IN", "forcond", "ELSE"
   )
