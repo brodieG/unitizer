@@ -33,7 +33,7 @@ local({
       )
   } )
   tmp.dir <- tempfile()
-  on.exit(unlink(tmp.dir, recursive=TRUE))
+  on.exit(unlink(tmp.dir, recursive=TRUE), add=TRUE)
   dir.create(tmp.dir)
   tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
   tmp.fake.utz <- paste0(tmp.dir, "/fake.unitizer")

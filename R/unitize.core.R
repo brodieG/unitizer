@@ -164,9 +164,7 @@ unitize_core <- function(
   # params would have been pulled from options); we store the opts because they
   # get nuked by `options_zero` but we still need some of the unitizer ones
 
-  old.warn <- getOption('warn') # because we force this to >= 1 in browse/eval
   opts <- options()
-
   opts.untz <- opts[grep("^unitizer\\.", names(opts))]
   opts.untz <- validate_options(opts.untz, test.files)
 
@@ -223,7 +221,6 @@ unitize_core <- function(
       browse.env=new.env(parent=par.env)
     )
     if(!identical(pick, "Y")) {
-      options(warn=old.warn)
       on.exit(NULL)
       reset_and_unshim(global)
       stop("Cannot proceed without creating directories.")
@@ -258,7 +255,6 @@ unitize_core <- function(
 
   on.exit(
     {
-      options(warn=old.warn)
       reset_and_unshim(global)
       meta_word_msg(
         "Unexpectedly exited before storing unitizer; ",
@@ -478,7 +474,6 @@ unitize_core <- function(
     )
     if(interactive.fail) { # blergh, cop out
       on.exit(NULL)
-      options(warn=old.warn)
       reset_and_unshim(global)
       stop("Cannot proceed in non-interactive mode.")
     }
@@ -502,7 +497,6 @@ unitize_core <- function(
   # - Finalize -----------------------------------------------------------------
 
   on.exit(NULL)
-  options(warn=old.warn)
   reset_and_unshim(global)
 
   # return env on success, char on error
