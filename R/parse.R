@@ -946,7 +946,7 @@ prsdat_fix_exprlist <- function(parse.dat, ancestry) {
 
 symb_mark_rem <- function(x) {
   if(isTRUE(attr(x, "unitizer_parse_symb"))) {
-    if(length(x) != 2L || x[[1L]] != as.name("(") || !is.name(x[[2L]])) {
+    if(length(x) != 2L || x[[1L]] != as.name("(") || length(x[[2L]]) != 1L) {
       stop(  # nocov start
         "Advanced Parse Error: Unexpected structure for object with language ",
         "with 'unitizer_parse_symb' attribute attached."

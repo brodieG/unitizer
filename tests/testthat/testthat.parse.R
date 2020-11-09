@@ -330,7 +330,7 @@ local( {
       unitizer:::parse_tests(f, comment=FALSE), "unexpected symbol"
     )
   })
-  test_that("NULL and new tokens", {
+  test_that("NULL, constants, and new tokens", {
     txt <- c(
       "a = 2", "# ho how", "b = 3", "", "b + a  # oh here", "",
       "b + # oh there", "a   # bear", "", "NULL"
@@ -343,6 +343,9 @@ local( {
         list(NULL), list(NULL), list(NULL)), list(NULL, list("# oh there"),
         list(NULL), list(NULL)), list(NULL))
     )
+
+    with.const <- unitizer:::parse_with_comments(text="3 # comment on const")
+    expect_identical(unitizer:::symb_mark_rem(with.const[[1]], 3))
   })
 
 } )
