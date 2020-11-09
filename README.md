@@ -13,8 +13,9 @@
 ```
 install.packages('unitizer')
 ```
-Please keep in mind this is an experimental framework that has been thoroughly
-tested by *one* person.
+
+I have been using `unitizer` for my own CRAN packages and find working with it a
+delight compared to other unit testing frameworks.
 
 `unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
 ```
