@@ -85,8 +85,8 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
   } else if (any(par.ids) < 0) {
     # nocov start
     stop(
-      "Internal Error: Argument `par.ids` contains values less than zero, ",
-      "but that is only allowed when `top.level` == 0L; contact maintainer."
+      "Advanced Parse Error: Argument `par.ids` contains values less than ",
+      "zero, but that is only allowed when `top.level` == 0L."
     )
     # nocov end
   }
@@ -98,7 +98,7 @@ top_level_parse_parents <- function(ids, par.ids, top.level=0L) {
 
   id.range <- range(ids)
   if(id.range[[1L]] < 1L)
-    stop("Expected only strictly positive unique ids")
+    stop("Advanced Parse Error: Expected only strictly positive unique ids")
   par.full <- rep(NA_integer_, id.range[[2L]])
   par.full[ids] <- par.ids
   res <- rep(NA_integer_, length(ids))
@@ -144,8 +144,6 @@ ancestry_descend <- function(ids, par.ids, id, level=0L) {
       length(children <- id.split[[as.character(par.list[[par.idx]])]])
     if(child.len) {
       ind.end <- ind.start + child.len - 1L
-      # if(ind.end > max.size)
-      #   stop("Internal Error: exceeded allocated size when finding children; contact maintainer.")
       inds <- ind.start:ind.end
       res[inds, 1L] <- children
       res[inds, 2L] <- level
@@ -186,8 +184,8 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("token", "col1", "line1"
 comments_assign <- function(expr, comment.dat) {
   if(!identical(length(unique(comment.dat$parent)), 1L))
     stop( # nocov start
-      "Internal Error: there were multiple parent ids in argument ",
-      "`comment.dat`; this should not happen"
+      "Advanced Parse Error: there were multiple parent ids in argument ",
+      "`comment.dat`; this should not happen."
     )     # nocov end
   if(!length(expr) || !length(which(comment.dat$token == "COMMENT")))
     return(expr)
@@ -206,8 +204,7 @@ comments_assign <- function(expr, comment.dat) {
   )
     # nocov start
     stop(
-      "Internal Error: unexpected ending token in parse data; contact ",
-      "maintainer."
+      "Advanced Parse Error: unexpected ending token in parse data."
     )
     # nocov end
   if(
@@ -215,7 +212,7 @@ comments_assign <- function(expr, comment.dat) {
     length(which(comment.dat$token %in% tk.lst$brac.close)) > 1L
   ) {
     stop( # nocov start
-      "Internal Error: more than one bracket at top level; contact maintainer."
+      "Advanced Parse Error: more than one bracket at top level."
     )     # nocov end
   }
   if(
@@ -230,8 +227,8 @@ comments_assign <- function(expr, comment.dat) {
       !identical(comment.dat$token[[1L]], "FUNCTION")
     ) {
       stop(
-        "Internal Error: closing brackets may only be on last row, unless a ",
-        "paren and part of a functions formal definition; contact maintainer."
+        "Advanced Parse Error: closing brackets may only be on last row, ",
+        "unless a paren and part of a functions formal definition."
       )
     }
     # nocov end
@@ -241,8 +238,8 @@ comments_assign <- function(expr, comment.dat) {
     !all(match(comment.dat$token, tk.lst$brac.open[3L], 0L) <= 2L)
   ) {
     stop(   # nocov start
-      "Internal Error: opening brackets may only be on first row, or second ",
-      "if paren; contact maintainer."
+      "Advanced Parse Error: opening brackets may only be on first row, ",
+      "or second if paren."
     )       # nocov end
   }
   if(
@@ -251,7 +248,7 @@ comments_assign <- function(expr, comment.dat) {
       which(tk.lst$brac.close %in% comment.dat$token)
     )
   )
-    stop("Internal Error: mismatched brackets; contact maintainer.") # nocov
+    stop("Advanced Parse Error: mismatched brackets.") # nocov
   # extra.toks <- if(any(brac.open %in% comment.dat$token)) 2L else 1L
   # Trim our data to just what matters:
 
@@ -259,8 +256,8 @@ comments_assign <- function(expr, comment.dat) {
   if(!identical(nrow(comm.notcomm), length(expr))) {
     # nocov start
     stop(
-      "Internal Error: Argument `expr` length cannot be matched with values ",
-      "in `comment.dat`"
+      "Advanced Parse Error: Argument `expr` length cannot be matched with  ",
+      "values in `comment.dat`"
     )
     # nocov end
   }
@@ -321,7 +318,7 @@ comments_assign <- function(expr, comment.dat) {
     if(is.na(comm.comm$match[[i]])) next
     expr.pos <- which(comm.notcomm$id == comm.comm$match[[i]])
     if(!identical(length(expr.pos), 1L))
-      stop("Internal Error; contact maintainer.")  # nocov
+      stop("Advanced Parse Error.")  # nocov
     if(!is.null(expr[[expr.pos]])) {
       # names are registered in global pool, so you can only attach attributes
       # to as single unique in memory instance, irrespective of where or how
@@ -424,9 +421,9 @@ parse_with_comments <- function(file, text=NULL) {
     # shouldn't happen, can't test
     browser()
     stop(
-      "Internal Error: unexpected tokens in parse data (",
+      "Advanced Parse Error: unexpected tokens in parse data (",
         paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
-        "); contact maintainer."
+        ")."
     )
     # nocov end
   }
@@ -622,7 +619,8 @@ parse_tests <- function(file, comments=TRUE, text=NULL) {
 
   if(inherits(parsed, "try-error"))
     warning(
-      "Unable to recover comments in parse; attempting simple parse",
+      "Unable to recover comments in advanced parse; ",
+      "falling back to simple parse",
       immediate.=TRUE
     )
   if(is.null(text)) {
@@ -657,8 +655,8 @@ prsdat_reduce <- function(parse.dat) {
     if(!identical(nrow(parse.dat.red), 3L)) {
       # nocov start
       stop(
-        "Internal Error: top level statement with `@` or `$` must be three ",
-        "elements long"
+        "Advanced Parse Error: top level statement with `@` or `$` must be ",
+        "three elements long"
       )
       # nocov end
     }
