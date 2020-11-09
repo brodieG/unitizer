@@ -100,6 +100,7 @@ local({
 
     "list",
     "misc",
+
     "options",
     "parse",
     "prompt",
@@ -120,7 +121,7 @@ local({
     "zzrunlast",
     "not_a_real_test_file"
   )
-  # test.filt <- 'demo'
+  # test.filt <- 'utz1'
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
       "testthat",

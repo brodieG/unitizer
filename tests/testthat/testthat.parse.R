@@ -3,8 +3,6 @@ library(unitizer)
 context("Parse")
 
 local( {
-  old.warn <- getOption('warn')
-  on.exit(options(warn=old.warn))
   txt <- "# This is an early comment
 
     hello <- 25

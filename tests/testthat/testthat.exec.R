@@ -9,8 +9,6 @@ library(unitizer)
 context("Exec")
 
 local( {
-  old.warn <- getOption('warn')
-  on.exit(options(warn=old.warn))
   suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
   test_that("Invisible Expression", {
     e <- new.env()

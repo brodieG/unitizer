@@ -3,8 +3,7 @@ library(testthat)
 context("Item")
 local({
   old.opt <- options(unitizer.color=FALSE)
-  old.warn <- getOption('warn')
-  on.exit(options(c(old.opt, list(warn=old.warn))))
+  on.exit(options(old.opt))
 
   if(!identical(basename(getwd()), "testthat"))
     stop("Working dir does not appear to be /testthat, is ", getwd())
