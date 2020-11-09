@@ -422,6 +422,7 @@ parse_with_comments <- function(file, text=NULL) {
   if(!all(parse.dat$token %in% unlist(tk.lst))) {
     # nocov start
     # shouldn't happen, can't test
+    browser()
     stop(
       "Internal Error: unexpected tokens in parse data (",
         paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
@@ -1007,7 +1008,7 @@ tk.lst <- list(
   comment="COMMENT",
   brac.close=c("'}'", "']'", "')'"),
   brac.open=c("'{'", "'['", "'('", "LBB"),
-  exps=c("expr", "exprlist"),
+  exps=c("expr", "exprlist", "expr_or_assign_or_help"),
   seps=c("','", "';'"),                                          # no comments on these as they are just removed
   non.exps=c(                                                    # in addition to `expr`, these are the ones that can get comments attached
     "SYMBOL", "STR_CONST", "NUM_CONST", "NULL_CONST",
