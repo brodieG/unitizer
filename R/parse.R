@@ -1,17 +1,17 @@
 # Copyright (C) 2020  Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 
@@ -405,7 +405,10 @@ parse_with_comments <- function(file, text=NULL) {
 
   expr <- comm_reset(expr)  # hack to deal with issues with expressions retaining previous assigned comments (need to examine this further)
 
-  parse.dat.raw.1 <- transform(parse.dat.raw, parent=ifelse(parent < 0, 0L, parent))  # set negative ids to be top level parents
+  # set negative ids to be top level parents
+  parse.dat.raw.1 <- transform(
+    parse.dat.raw, parent=ifelse(parent < 0, 0L, parent)
+  )
   ancestry <- with(parse.dat.raw.1, ancestry_descend(id, parent, 0L))
   parse.dat <- prsdat_fix_exprlist(parse.dat.raw.1, ancestry)
 
@@ -422,22 +425,27 @@ parse_with_comments <- function(file, text=NULL) {
     browser()
     stop(
       "Advanced Parse Error: unexpected tokens in parse data (",
-        paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
-        ")."
+      paste0(parse.dat$token[!parse.dat$token %in% unlist(tk.lst)]) ,
+      ")."
     )
     # nocov end
   }
 
   prsdat_recurse <- function(expr, parse.dat, top.level) {
-    if(identical(parse.dat$token[[1L]], "FUNCTION")) parse.dat <- prsdat_fix_fun(parse.dat)
-    if(identical(parse.dat$token[[1L]], "FOR")) parse.dat <- prsdat_fix_for(parse.dat)
-    if(identical(parse.dat$token[[1L]], "IF")) parse.dat <- prsdat_fix_if(parse.dat)
-    if(identical(parse.dat$token[[1L]], "WHILE")) parse.dat <- prsdat_fix_while(parse.dat)
+    if(identical(parse.dat$token[[1L]], "FUNCTION"))
+      parse.dat <- prsdat_fix_fun(parse.dat)
+    if(identical(parse.dat$token[[1L]], "FOR"))
+      parse.dat <- prsdat_fix_for(parse.dat)
+    if(identical(parse.dat$token[[1L]], "IF"))
+      parse.dat <- prsdat_fix_if(parse.dat)
+    if(identical(parse.dat$token[[1L]], "WHILE"))
+      parse.dat <- prsdat_fix_while(parse.dat)
 
     par.ids <- with(parse.dat, top_level_parse_parents(id, parent, top.level))
     parse.dat.split <- split(parse.dat, par.ids)
     prsdat.par <- parse.dat.split[[as.character(top.level)]]
-    prsdat.children <- parse.dat.split[names(parse.dat.split) != as.character(top.level)]
+    prsdat.children <-
+      parse.dat.split[names(parse.dat.split) != as.character(top.level)]
 
     # Check that the parse data doesn't break the assumptions we've made,
     # particularly, that for any child section, there are no overlapping
@@ -468,7 +476,7 @@ parse_with_comments <- function(file, text=NULL) {
       # nocov start
       # shouldn't happen, can't test
 
-      stop("Internal Error: expression parse data overlapping; contact maintainer")
+      stop("Advanced Parse Error: expression parse data overlapping.")
       # nocov end
     }
     # For each parent expression, assign comments; parent expressions that include
@@ -486,8 +494,8 @@ parse_with_comments <- function(file, text=NULL) {
     if(!is.call(expr) && !is.expression(expr)) {
       if(!length(assignable.elems) %in% c(1L))
         stop(  # nocov start
-          "Internal Error: expression is terminal token yet multiple ",
-          "assignable elems; contact maintainer."
+          "Advanced Parse Error: expression is terminal token yet multiple ",
+          "assignable elems."
         )      # nocov end
       if(isTRUE(assignable.elems)) expr <- comments_assign(expr, prsdat.par)
     } else if (!is.null(expr)) {
@@ -513,8 +521,7 @@ parse_with_comments <- function(file, text=NULL) {
     if(!identical(nrow(prsdat.par.red), length(which(assignable.elems)))) {
       # nocov start
       stop(
-        "Internal Error: mismatch between expression and parse data; ",
-        "contact maintainer."
+        "Advanced Parse Error: mismatch between expression and parse data."
       )
       # nocov end
     }
@@ -525,8 +532,7 @@ parse_with_comments <- function(file, text=NULL) {
 
       if(term.len <- length(which(!prsdat.par.red$terminal)) > 1L) {
         stop(
-          "Internal Error: terminal expression has more than one token, ",
-          "contact maintainer."
+          "Advanced Parse Error: terminal expression has more than one token."
         )
       } else if (term.len) {
         expr <- Recall(
@@ -566,7 +572,7 @@ parse_dat_get <- function(file, text) {
     if(is.null(parse.dat.raw)) break
 
     if(!nrow(parse.dat.raw))
-      stop("Internal Error: parse data mismatch; contact maintainer.") # nocov
+      stop("Advanced Parse Error: parse data mismatch.") # nocov
     parse.dat.check <- cbind(
       parse.dat.raw[
         match(parse.dat.raw$parent, parse.dat.raw$id), c("line1", "col1")
@@ -587,7 +593,9 @@ parse_dat_get <- function(file, text) {
       # that are lexically posterior
       if(identical(i, 1L))  # Try again once to see if that fixes it
         next
-      stop("Internal Error: cannot retrieve self consistent parse data") # nocov
+      # nocov start
+      stop("Advanced Parse Error: cannot retrieve self consistent parse data")
+      # nocov end
     }
     break  # Parsing worked as expected
   }
@@ -620,7 +628,7 @@ parse_tests <- function(file, comments=TRUE, text=NULL) {
   if(inherits(parsed, "try-error"))
     warning(
       "Unable to recover comments in advanced parse; ",
-      "falling back to simple parse",
+      "falling back to simple parse.",
       immediate.=TRUE
     )
   if(is.null(text)) {
@@ -662,7 +670,10 @@ prsdat_reduce <- function(parse.dat) {
     }
     if(!identical(parse.dat.red$token[[1L]], "expr")) {
       # nocov start
-      stop("Internal Error: left argument to `@` or `$` must be an expression")
+      stop(
+        "Advanced Parse Error: left argument to `@` or `$` must be an  ",
+        " expression"
+      )
       # nocov end
     }
     if(
@@ -670,7 +681,7 @@ prsdat_reduce <- function(parse.dat) {
       !identical(parse.dat.red$token[[3L]], "SLOT")
     ) {
       # nocov start
-      stop("Internal Error: right argument to `@` must be SLOT")
+      stop("Advanced Parse Error: right argument to `@` must be SLOT")
       # nocov end
     }
     if(
@@ -678,7 +689,7 @@ prsdat_reduce <- function(parse.dat) {
       !identical(parse.dat.red$token[[3L]], "SYMBOL")
     ) {
       # nocov start
-      stop("Internal Error: right argument to `$` must be SYMBOL")
+      stop("Advanced Parse Error: right argument to `$` must be SYMBOL")
       # nocov end
     }
   } else if (nrow(parse.dat.red) == 1L) {
@@ -688,7 +699,7 @@ prsdat_reduce <- function(parse.dat) {
     ) {
       # nocov start
       stop(
-        "Internal Error: single element parent levels must be symbol or ",
+        "Advanced Parse Error: single element parent levels must be symbol or ",
         "constant or expr"
       )
       # nocov end
@@ -702,8 +713,8 @@ prsdat_reduce <- function(parse.dat) {
   ) {
     # nocov start
     stop(
-      "Internal Error: in most cases all but at most one token must be of ",
-      "type `expr` or `exprlist`; contact maintainer."
+      "Advanced Parse Error: in most cases all but at most one token must be ",
+      "type `expr` or `exprlist`."
     )
     # nocov end
   }
@@ -783,7 +794,8 @@ prsdat_fix_simple <- function(parse.dat, tok) {
   if(! tok %in% c("IF", "WHILE"))
     # nocov start
     stop(
-      "Internal Error, this function only supports 'IF' and 'WHILE' tokens"
+      "Advanced Parse Error: this function only supports 'IF' and 'WHILE' ",
+      "tokens"
     )
     # nocov end
   if(!identical(parse.dat$token[[1L]], tok))
@@ -797,7 +809,7 @@ prsdat_fix_simple <- function(parse.dat, tok) {
   )
     # nocov start
     stop(
-      "Internal Error: could not parse ", tok, " statement; contact maintainer."
+      "Advanced Parse Error: could not parse ", tok, " statement."
     )
     # nocov end
   parse.delete <-
@@ -805,15 +817,15 @@ prsdat_fix_simple <- function(parse.dat, tok) {
   if(!nrow(parse.delete) %in% c(2L, 3L))
     # nocov start
     stop(
-      "Internal Error: unexpected number of ", tok,
+      "Advanced Parse Error: unexpected number of ", tok,
       " statement sub-components; contact maintainer."
     )
     # nocov end
   if(any(parse.dat$parent %in% parse.delete$id))
     # nocov start
     stop(
-      "Internal Error: unexpected parent relationships in ", tok,
-      " statement; contact maintainer."
+      "Advanced Parse Error: unexpected parent relationships in ", tok,
+      " statement."
     )
     # nocov end
   subset(parse.dat, ! id %in% parse.delete$id)
@@ -826,8 +838,7 @@ prsdat_find_paren <- function(parse.dat) {
   if(is.na(par.clos.pos))
     # nocov start
     stop(
-      "Internal Error; failed attempting to parse function block; contact  ",
-      "maintainer"
+      "Advanced Parse Error: failed attempting to parse function block."
     )
     # nocov end
   par.op.pos <- match("'('", parse.dat$token[1:par.clos.pos])
@@ -838,8 +849,7 @@ prsdat_find_paren <- function(parse.dat) {
   )
     # nocov start
     stop(
-      "Internal Error; failed attempting to `for` function block; contact ",
-      "maintainer"
+      "Advanced Parse Error: failed attempting to `for` function block."
     )
     # nocov end
   c(open=parse.dat$id[[par.op.pos]], close=parse.dat$id[[par.clos.pos]])
@@ -906,7 +916,7 @@ prsdat_fix_exprlist <- function(parse.dat, ancestry) {
   parse.dat.mod <-
     dat.ord[order(lev.ord), ][which(!ind.exclude[order(lev.ord)]), ]
   if(!all(parse.dat.mod$parent %in% c(0, parse.dat.mod$id)))
-    stop("Internal Error: `exprlist` excision did not work!")  # nocov
+    stop("Advanced Parse Error: `exprlist` excision did not work!")  # nocov
   parse.dat.mod
 }
 # Removes Symbol Marker Used To Hold Comments
@@ -915,8 +925,8 @@ symb_mark_rem <- function(x) {
   if(isTRUE(attr(x, "unitizer_parse_symb"))) {
     if(length(x) != 2L || x[[1L]] != as.name("(") || !is.name(x[[2L]])) {
       stop(  # nocov start
-        "Internal Error: Unexpected structure for object with language with ",
-        "'unitizer_parse_symb' attribute attached; contact maintainer"
+        "Advanced Parse Error: Unexpected structure for object with language ",
+        "with 'unitizer_parse_symb' attribute attached."
     ) }      # nocov end
     x <- x[[2L]]
   }
