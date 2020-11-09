@@ -50,27 +50,27 @@ local( {
   test_that("Top Level Parents Identified Correctly", {
     expect_equal(info="Identified top level parents?",
       par.ids <- with(dat, unitizer:::top_level_parse_parents(id, parent)),
-      c(0L, 0L, 7L, 7L, 7L, 7L, 7L, 0L, 0L, 0L, 0L, 24L, 24L, 24L, 
-24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 0L, 0L, 64L, 
-64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 
-64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 
-64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 0L, 75L, 
-75L, 75L, 75L, 75L, 75L, 75L, 75L, 75L, 75L, 0L, 0L, 83L, 83L, 
+      c(0L, 0L, 7L, 7L, 7L, 7L, 7L, 0L, 0L, 0L, 0L, 24L, 24L, 24L,
+24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 24L, 0L, 0L, 64L,
+64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L,
+64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L,
+64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 64L, 0L, 75L,
+75L, 75L, 75L, 75L, 75L, 75L, 75L, 75L, 75L, 0L, 0L, 83L, 83L,
 83L, 83L, 83L, 83L, 0L, 90L, 90L, 90L, 90L, 90L, 90L, 0L)
     )
     dat.split <<- split(dat, par.ids)
     expect_equal(info="Identified sub-level top level parents correctly",
       par.ids.2 <- with(dat.split$`64`, unitizer:::top_level_parse_parents(id, parent, 64L)),
-      c(28L, 64L, 64L, 31L, 64L, 64L, 64L, 62L, 62L, 62L, 62L, 62L, 
-62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 
+      c(28L, 64L, 64L, 31L, 64L, 64L, 64L, 62L, 62L, 62L, 62L, 62L,
+62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L,
 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 62L, 64L
 )
     )
     dat.split.2 <<- split(dat.split$`64`, par.ids.2)
     expect_equal(info="Parent relationships in `unitizer_sect` piece.",
       par.ids.3 <<- with(dat.split.2$`62`, unitizer:::top_level_parse_parents(id, parent, 62L)),
-      c(62L, 62L, 62L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 
-62L, 62L, 62L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 
+      c(62L, 62L, 62L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 44L, 44L,
+62L, 62L, 62L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L, 59L,
 59L, 59L, 59L, 62L, 62L)
     )
   } )
@@ -92,10 +92,10 @@ local( {
     x <- unitizer:::parse_dat_get(text="1 + 1; fun(x, fun(y + z))")$dat
     x <- normalize_id(x)
     expect_equal(
-      structure(c(7L, 6L, 26L, 2L, 3L, 5L, 10L, 9L, 13L, 12L, 24L, 
-25L, 1L, 4L, 8L, 11L, 16L, 15L, 23L, 21L, 14L, 19L, 18L, 22L, 
-17L, 20L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 
-2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L), .Dim = c(26L, 
+      structure(c(7L, 6L, 26L, 2L, 3L, 5L, 10L, 9L, 13L, 12L, 24L,
+25L, 1L, 4L, 8L, 11L, 16L, 15L, 23L, 21L, 14L, 19L, 18L, 22L,
+17L, 20L, 0L, 0L, 0L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L,
+2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 4L, 4L), .Dim = c(26L,
 2L), .Dimnames = list(NULL, c("children", "level"))),
       unitizer:::ancestry_descend(x$id, x$parent, 0)
     )
@@ -106,9 +106,9 @@ local( {
     dat <- normalize_id(dat)
 
     expect_equal(info="Ancestry Descend",
-      structure(c(15L, 1L, 13L, 12L, 14L, 11L, 10L, 9L, 8L, 2L, 3L, 
-4L, 5L, 7L, 6L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L, 
-4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children", 
+      structure(c(15L, 1L, 13L, 12L, 14L, 11L, 10L, 9L, 8L, 2L, 3L,
+4L, 5L, 7L, 6L, 0L, 1L, 1L, 1L, 1L, 2L, 2L, 3L, 3L, 4L, 4L, 4L,
+4L, 4L, 5L), .Dim = c(15L, 2L), .Dimnames = list(NULL, c("children",
 "level"))),
       dat.anc <- unitizer:::ancestry_descend(dat$id, dat$parent, 0L)
     )
@@ -121,7 +121,7 @@ local( {
     dat.1 <- normalize_id(dat.1)
 
     expect_equal(info="Another `exprlist` test",
-      list(c(0L, 14L, 3L, 14L, 10L, 14L, 14L), c("expr", "'{'", "NUM_CONST", 
+      list(c(0L, 14L, 3L, 14L, 10L, 14L, 14L), c("expr", "'{'", "NUM_CONST",
 "expr", "NUM_CONST", "expr", "'}'")),
       unname(as.list(unitizer:::prsdat_fix_exprlist(dat.1, unitizer:::ancestry_descend(dat.1$id, dat.1$parent, 0L))[c("parent", "token")]))
     )
@@ -130,26 +130,26 @@ local( {
     dat.2 <- normalize_id(dat.2)
 
     expect_equal(info="Yet another `exprlist`",
-      list(c(0L, 13L, 3L, 13L, 7L, 13L, 13L, 11L, 13L, 13L), c("expr", 
-"'{'", "NULL_CONST", "expr", "SYMBOL", "expr", "COMMENT", "SYMBOL", 
+      list(c(0L, 13L, 3L, 13L, 7L, 13L, 13L, 11L, 13L, 13L), c("expr",
+"'{'", "NULL_CONST", "expr", "SYMBOL", "expr", "COMMENT", "SYMBOL",
 "expr", "'}'")),
       unname(as.list(unitizer:::prsdat_fix_exprlist(dat.2, unitizer:::ancestry_descend(dat.2$id, dat.2$parent, 0L))[c("parent", "token")]))
     )
     expect_equal(info="`for` cleanup",
-      list(id = c(1L, 3L, 5L, 7L, 29L, 10L, 26L, 11L, 12L, 13L, 15L, 
-14L, 18L, 19L, 20L, 22L, 23L, 24L), parent = c(32L, 32L, 7L, 
-32L, 32L, 29L, 29L, 26L, 26L, 15L, 26L, 26L, 19L, 26L, 26L, 23L, 
-26L, 29L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr", 
-"'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK", 
+      list(id = c(1L, 3L, 5L, 7L, 29L, 10L, 26L, 11L, 12L, 13L, 15L,
+14L, 18L, 19L, 20L, 22L, 23L, 24L), parent = c(32L, 32L, 7L,
+32L, 32L, 29L, 29L, 26L, 26L, 15L, 26L, 26L, 19L, 26L, 26L, 23L,
+26L, 29L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr",
+"'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK",
 "expr", "ELSE", "NEXT", "expr", "'}'")),
       as.list(unitizer:::prsdat_fix_for(unitizer:::parse_dat_get(text="for(i in x) {if(x) break else next}")$dat[-1L, ]))[c("id", "parent", "token")]
     )
     dat.3 <- normalize_id(unitizer:::parse_dat_get(text=if.text)$dat)
 
     expect_equal(info="`if` cleanup",
-      list(c(1L, 2L, 11L, 4L, 6L, 5L, 7L, 8L, 9L, 17L, 12L, 13L, 14L, 
-15L, 16L, 19L, 20L, 21L), c("IF", "COMMENT", "expr", "SYMBOL", 
-"expr", "GT", "NUM_CONST", "expr", "COMMENT", "expr", "'{'", 
+      list(c(1L, 2L, 11L, 4L, 6L, 5L, 7L, 8L, 9L, 17L, 12L, 13L, 14L,
+15L, 16L, 19L, 20L, 21L), c("IF", "COMMENT", "expr", "SYMBOL",
+"expr", "GT", "NUM_CONST", "expr", "COMMENT", "expr", "'{'",
 "SYMBOL", "expr", "COMMENT", "'}'", "COMMENT", "SYMBOL", "expr"
 )),
       unname(as.list(unitizer:::prsdat_fix_if(dat.3[-1,])[c("id", "token")]))
@@ -269,8 +269,8 @@ local( {
     x <- unitizer:::prsdat_fix_exprlist(prs.dat, ancestry)
 
     expect_identical(
-      structure(c(1L, 21L, 2L, 4L, 3L, 5L, 7L, 6L, 19L, 8L, 15L, 9L, 
-11L, 10L, 12L, 13L, 14L, 18L, 20L, 0L, 0L, 4L, 21L, 21L, 7L, 
+      structure(c(1L, 21L, 2L, 4L, 3L, 5L, 7L, 6L, 19L, 8L, 15L, 9L,
+11L, 10L, 12L, 13L, 14L, 18L, 20L, 0L, 0L, 4L, 21L, 21L, 7L,
 21L, 21L, 21L, 19L, 19L, 11L, 15L, 15L, 13L, 15L, 15L, 19L, 21L
 ), .Dim = c(19L, 2L)),
       unname(as.matrix(x[, 5:6]))
@@ -323,11 +323,29 @@ local( {
     # try in normal mode (just fall back to normal parse)
 
     expect_error(
-      unitizer:::parse_tests(text=txt, comment=FALSE),
+      unitizer:::parse_tests(text=txt, comments=FALSE),
       "unexpected symbol"
     )
     expect_error(
-      unitizer:::parse_tests(f, comment=FALSE), "unexpected symbol"
+      unitizer:::parse_tests(f, comments=FALSE), "unexpected symbol"
     )
   })
+  test_that("NULL, constants, and new tokens", {
+    txt <- c(
+      "a = 2", "# ho how", "b = 3", "", "b + a  # oh here", "",
+      "b + # oh there", "a   # bear", "", "NULL"
+    )
+    expect_equal(
+      unitizer:::comm_extract(unitizer:::parse_with_comments(text=txt)),
+      list(
+        NULL, list(NULL, list(NULL), list(NULL), list(NULL)), list(
+        "# ho how", list(NULL), list(NULL), list(NULL)), list("# oh here",
+        list(NULL), list(NULL), list(NULL)), list(NULL, list("# oh there"),
+        list(NULL), list(NULL)), list(NULL))
+    )
+
+    with.const <- unitizer:::parse_with_comments(text="3 # comment on const")
+    expect_identical(unitizer:::symb_mark_rem(with.const[[1]]), 3)
+  })
+
 } )
