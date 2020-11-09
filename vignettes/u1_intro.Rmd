@@ -214,6 +214,19 @@ Instead of:
 test_me(14523.2342520)    # could be deparsed differently
 ```
 
+Similarly issues may arise with non-ASCII characters, so use:
+
+```{r eval=FALSE}
+chr <- "hello\u044F"
+fun_to_test(chr)
+```
+
+Instead of:
+
+```{r eval=FALSE}
+fun_to_test("hello\u044F") # could be deparsed differently
+```
+
 ### Increase Reproducibility with Advanced State Management
 
 `unitizer` can track and manage many aspects of state to make your tests more
