@@ -323,11 +323,11 @@ local( {
     # try in normal mode (just fall back to normal parse)
 
     expect_error(
-      unitizer:::parse_tests(text=txt, comment=FALSE),
+      unitizer:::parse_tests(text=txt, comments=FALSE),
       "unexpected symbol"
     )
     expect_error(
-      unitizer:::parse_tests(f, comment=FALSE), "unexpected symbol"
+      unitizer:::parse_tests(f, comments=FALSE), "unexpected symbol"
     )
   })
   test_that("NULL, constants, and new tokens", {
@@ -336,7 +336,7 @@ local( {
       "b + # oh there", "a   # bear", "", "NULL"
     )
     expect_equal(
-      unitizer:::comm_extract(unitizer:::parse_with_comments(text=xx)),
+      unitizer:::comm_extract(unitizer:::parse_with_comments(text=txt)),
       list(
         NULL, list(NULL, list(NULL), list(NULL), list(NULL)), list(
         "# ho how", list(NULL), list(NULL), list(NULL)), list("# oh here",
@@ -345,7 +345,7 @@ local( {
     )
 
     with.const <- unitizer:::parse_with_comments(text="3 # comment on const")
-    expect_identical(unitizer:::symb_mark_rem(with.const[[1]], 3))
+    expect_identical(unitizer:::symb_mark_rem(with.const[[1]]), 3)
   })
 
 } )
