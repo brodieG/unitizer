@@ -52,7 +52,7 @@ you to specify non-standard \code{unitizer} storage mechanisms (see
 for \code{unitize_dir}}
 
 \item{state}{character(1L) one of
-\code{c("prisitine", "recommended", "basic", "off", "safe")}, an
+\code{c("prisitine", "suggested", "basic", "off", "safe")}, an
 environment, or a state object produced by \code{\link{state}} or
 \code{\link{in_pkg}}; modifies how \code{unitizer} manages aspects of
 session state that could affect test evaluation, including the parent

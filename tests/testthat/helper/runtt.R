@@ -121,7 +121,7 @@ local({
     "zzrunlast",
     "not_a_real_test_file"
   )
-  # test.filt <- 'parse'
+  # test.filt <- 'state'
   test.res <- if(packageVersion('testthat') > "1.0.2") {
     test_dir(
       "testthat",

@@ -55,7 +55,8 @@ This clearly lays out all the special commands available to us:
   test.
 * `N` will keep the previous reference value as the reference value for future
   tests.
-* `P` takes us back to the previously reviewed test (see "Test Navigation" next)
+* `P` takes us back to the previously reviewed test (see "Test Navigation"
+  next).
 * `B` allows us to navigate to any previously reviewed test (see "Test
   Navigation" next).
 * `R` toggles re-run mode; when you complete review or exit, `unitizer` will
@@ -213,7 +214,7 @@ As we saw in the demo there are special objects available at the prompt: `.new` 
 * `.NEW$messsage` returns the stderr captured during test evaluation.
 * `.NEW$output` returns the screen output captured during test evaluation (note
   often this will be similar to what you get from `.new` or `.NEW$value` since
-  typing those expressions at the prompt leads to the value being printed)
+  typing those expressions at the prompt leads to the value being printed).
 * `.NEW$call` returns the test expression.
 * `.NEW$aborted` returns whether the test expression invoked an "abort" restart
   (e.g. called `stop` at some point).

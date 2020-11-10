@@ -35,22 +35,22 @@ affect the result of the command.  Global options could also affect the outcome.
 Here is a non-exhaustive list of aspects of state that might affect test
 outcomes:
 
-1. Workspace / Evaluation Environment
-1. Random seed
-1. Working directory
-1. Search path
-1. Global options
-1. Loaded namespaces
-1. System time
-1. System variables
-1. Locale
+1. Workspace / Evaluation Environment.
+1. Random seed.
+1. Working directory.
+1. Search path.
+1. Global options.
+1. Loaded namespaces.
+1. System time.
+1. System variables.
+1. Locale.
 1. etc.
 
 Ideally a unit testing framework would nullify these environmental factors such
 that the only changes in test evaluation are caused by changes in the code that
 is being tested.  `unitizer` provides functionality that sets session state to
 known "clean" values ahead of the evaluation of each test.  Currently `unitizer`
-is capable of managing the first six aspects of state listed above.
+attempts to manage the first six aspects of state listed above.
 
 **In order to comply with CRAN policies state management is turned off by
 default.**
@@ -60,10 +60,10 @@ default.**
 `unitizer` batch processes all the tests when it is first run before it breaks
 into interactive mode.  It does this to:
 
-1. display useful summary data (how many tests passed/failed in which
-   sections), which is often helpful to know before beginning to debug
-2. allow time consuming process to run unattended so that the interactive test
-   review process is not interrupted by slow tests
+1. Display useful summary data (how many tests passed/failed in which
+   sections), which is often helpful to know before beginning to debug.
+2. Allow time consuming process to run unattended so that the interactive test
+   review process is not interrupted by slow tests.
 
 The batch-evaluate-and-review-later creates the need for a mechanism to recreate
 state for when we review the tests.  Imagine trying to figure out why a test
@@ -74,24 +74,25 @@ enabled.
 
 ### Enabling State Management
 
-You can turn on the "recommended" state management level to manage the first
-four elements of state listed in the previous section.  To do so, 
-use `unitize(..., state='recommended')` or
-`options(unitizer.state='recommended')`.  For more details see `?unitizerState`.
+You can turn on the "suggested" state management level to manage the first
+four elements of state listed in the previous section.  To do so,
+use `unitize(..., state='suggested')` or `options(unitizer.state='suggested')`.
+Be sure to read `?unitizerState` before you enable this setting as there are
+cases when state management may not work.
 
 ## Workspace And Evaluation Environments
 
 ### Test Environments
 
-In order to allow review of each test in its evaluation environment each test is
-evaluated in its own environment. Each of these environments has for parent the
-environment of the previous test.  This means that a test has access to all the
-objects created/used by earlier tests, but not objects created/used by
-subsequent tests.  When a later test "modifies" an existing object, the existing
-object is not really modified; rather, the test creates a new object of the same
-name in the child environment which masks the object in the earlier test.  This
-is functionally equivalent to overwriting the object as far as the later test is
-concerned.
+In order to allow review of each test in its original evaluation environment,
+each test is evaluated in a separate environment. Each of these environments has
+for parent the environment of the previous test.  This means that a test has
+access to all the objects created/used by earlier tests, but not objects
+created/used by subsequent tests.  When a later test "modifies" an existing
+object, the existing object is not really modified; rather, the test creates a
+new object of the same name in the child environment which masks the object in
+the earlier test.  This is functionally equivalent to overwriting the object as
+far as the later test is concerned.
 
 For the most part this environment trickery should be transparent to the user.
 The `ls` function is specially modified to, among other things, list objects in
@@ -133,7 +134,7 @@ get stored in the same environment.
 
 ### The Parent Environment
 
-In the "recommended" state tracking mode `unitize` will run tests in an
+In the "suggested" state tracking mode `unitize` will run tests in an
 environment that has the same parent as `.GlobalEnv` (`UnitizerEnv` below):
 ```
              .GlobalEnv
@@ -148,11 +149,12 @@ Unfortunately implementing this structure is not trivial because we need to
 ensure `UnitizerEnv` stays pointed at the environment just below `.GlobalEnv`
 even as tests modify the search path by calling `library`/`attach`/`detach`,
 etc.  To achieve this `unitizer` traces `base::library`, `base::attach`, and
-`base::detach` **when state tracking is enabled**.  Any time any of those
-functions is called, `unitizer` updates the parent of `UnitizerEnv` to be the
-second environment on the search path (i.e. the parent of `.GlobalEnv`).  So,
-for example, if a test calls `library(z)`, the new search path would look like
-so:
+`base::detach` **when state tracking is enabled** and **only when `unitizer` is
+running**.  Any time any of those functions is called, `unitizer` updates the
+parent of `UnitizerEnv` to be the second environment on the search path (i.e.
+the parent of `.GlobalEnv`).  So, for example, if a test calls `library(z)`, the
+new search path would look like so:
+
 ```
              .GlobalEnv
                        \
@@ -160,18 +162,20 @@ so:
                        /
 TestEnv --> UnitizerEnv
 ```
+
 Clearly overriding such fundamental functions such as `library` / `attach` /
 `detach` is not good form.  We recognize this, and try to do the overriding in
 as lightweight a manner as possible by tracing them only to record the search
-path in the `unitizer` environment.  This should be completely transparent to
+path while `unitizer` is evaluating.  This should be completely transparent to
 the user.  The untracing is registered to the `on.exit` of `unitize` so the
 functions should get untraced even if `unitize` fails.
 
 Aside from the issues raised above, this method is not completely robust.  Any
-tests that turn tracing off using `tracingState`, or `trace`/`untrace` `library`
-/ `attach` / `detach` will interfere with `unitizer`.  If you must do any of the
-above you should consider specifying a parent environment for your tests through
-the `state` parameter to `unitize` (see `?unitize`).
+tests that turn tracing off using `tracingState`, or themselves
+`trace`/`untrace` any of `library` / `attach` / `detach` will interfere with
+`unitizer`.  If you must do any of the above you should consider specifying a
+parent environment for your tests through the `state` parameter to `unitize`
+(see `?unitize`).
 
 Some functions that expect to find `.GlobalEnv` on the search path may not work
 as expected.  For example, `setClass` uses `topenv` by default to find an
@@ -189,9 +193,10 @@ without having to resort to `:::`.  You can set the parent evaluation
 environment with the `state` argument to `unitize` / `unitize_dir`.  See
 `?unitize` and `?unitizeState`.
 
-If you do use this feature keep in mind that your tests will be exposed to the
-global environment as well since R looks through the search path after looking
-in the package namespace and imports.
+If you do use this feature keep in mind that your tests will be directly exposed
+to the global environment as well since R looks through the search path starting
+at the global environment after looking in the package namespace and imports
+(your package code is always exposed to this).
 
 ### Issues With Reference Objects
 
@@ -219,7 +224,7 @@ the old ones.  This leads to some complications because in order to faithfully
 reproduce the environments associated with both the reference and the new tests
 we would potentially have to store the entire set of environments produced by
 the test script for both the new and reference tests.  Even worse, if we re-run
-unitizer again, we run the risk of having to store yet another set of
+`unitizer` again, we run the risk of having to store yet another set of
 environments (the old reference environments, what were new environments but
 became reference ones on this additional run, and the new environments created
 by this third run).  The problem continues to grow with as each incremental run
@@ -254,7 +259,7 @@ test script itself.  During testing, the scripts will work fine, but at some
 future date if the test scripts are run again they are likely to fail due to the
 dependency on the package that is not explicitly loaded in the test scripts.
 
-In the "recommended" state trackign mode `unitizer` runs on a "trimmed" search
+In the "suggested" state tracking mode `unitizer` runs on a "trimmed" search
 path that contains only the packages loaded by in a freshly loaded R session
 (i.e. the packages between `package:base` and `package:stats`; see
 `?unitizerState`).  You will need to explicitly load packages that your tests
@@ -274,23 +279,27 @@ path have changes since the reference test was stored, you will be alerted.
 
 When `unitizer` manipulates the search path it restores the original one by
 using `library/attach` on any previously detached objects or packages.  This
-generally works fine with the notable exception of environments containing
-objects that contain environment references to the search path object itself.
+generally works fine, but detaching and re-attaching packages is not and cannot
+be the same as loading a package or attaching an environment for the first time.
+For example, S3 method registration is not undone when detaching a package, or
+even unloading its namespace.  See discussion in `?detach` and in
+`?unitizerState`.
 
-A good example of this is the `tools:rstudio` environment attached to the search
-path in R sessions run through RStudio.  It contains functions that have for
-environment the `tools:rstudio` environment.  The problem is that once that
-environment is detached from the search path, those functions no longer have
-access to the search path.  Re-attaching the environment to the search path does
-not solve the problem because `attach` attaches a _copy_ of the environment, not
-the environment itself.  This new environment will contain the same objects as
-the original environment, but all the functions therein will have for
-environment the original detached environment, not the copy that is attached to
+Another good example of problematic behavior are attaching environments that
+contain references to themselves, as the `tools:rstudio` environment attached 
+by `Rstudio` does.  It contains functions that have for environment the
+`tools:rstudio` environment.  The problem is that once that environment is
+detached from the search path, those functions no longer have access to the
+search path.  Re-attaching the environment to the search path does not solve the
+problem because `attach` attaches a _copy_ of the environment, not the
+environment itself.  This new environment will contain the same objects as the
+original environment, but all the functions therein will have for environment
+the original detached environment, not the copy that is attached to
 the search path.
 
 There are a few possible solutions to this problem.  For now we have adopted the
 simplest which is to keep the `tools:rstudio` environment on the search path
-even search path trackign is enabled (you can over-ride this by changing
+even search path tracking is enabled (you can over-ride this by changing
 `search.path.keep`, or, if you have environments on your search path with
 similar properties, add their names to `search.path.keep`).  Other options
 include re-attaching with `parent.env<-` instead of `attach`, but messing with
@@ -315,7 +324,7 @@ compromised set with their options wiped out.
 `unitizer` can manage search paths and namespaces, but unfortunately some
 package namespaces cannot be unloaded so options management can be problematic
 when such packages are involved (one example is `data.table`).  Because of this
-options management is not enabled in the "recommended" state management mode.
+options management is not enabled in the "suggested" state management mode.
 
 Note that no matter what tests are always run with `options(warn=1)` and
 `options(error=NULL)`.
