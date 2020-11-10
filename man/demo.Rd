@@ -15,7 +15,7 @@
 \alias{update_fastlm}
 \title{Demo Details and Helper Functions}
 \usage{
-"[Press ENTER to Continue]"()
+`[Press ENTER to Continue]`()
 
 show_file(f, width = getOption("width", 80L))
 

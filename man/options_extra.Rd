@@ -6,10 +6,11 @@
 \alias{validate_options}
 \title{Set Options to Initial Zero State}
 \usage{
-options_zero(base = merge_lists(getOption("unitizer.opts.init.base"),
-  getOption("unitizer.opts.init")),
-  as.is = union(getOption("unitizer.opts.asis.base"),
-  getOption("unitizer.opts.asis")))
+options_zero(
+  base = merge_lists(getOption("unitizer.opts.init.base"),
+    getOption("unitizer.opts.init")),
+  as.is = union(getOption("unitizer.opts.asis.base"), getOption("unitizer.opts.asis"))
+)
 
 options_update(tar.opts)
 
