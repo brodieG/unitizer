@@ -191,8 +191,8 @@ There are, however, some subtle differences created by the structure of the eval
   test you are currently reviewing, so do not expect them to still be there at
   subsequent prompts.
 * All expressions are evaluated with `options(warn=1)` or greater.
-* Other subtle issues discussed at length in the ([reproducible tests
-  vignette](u4_reproducible-tests.html#test-environments))
+* Other subtle issues discussed at length in the [Reproducible Tests
+  Vignette](u4_reproducible-tests.html#test-environments).
 * There are special `unitizer` objects `.new`, `.NEW`, `.ref`, and `.REF` that
   let you review the results of tests (we will discuss these next).
 * `ls` is over-ridden by a special `unitizer` version (we will also discuss this
@@ -274,7 +274,7 @@ where object names have symbols such as `*` or `'` appended to them.  This happe
 * `'` Object existed during reference test evaluation, and still does, but it has a different value than it did during reference test evaluation
 * `**` Object exists now, but did not exist during reference test evaluation
 
-For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [patchwork reference environments](u4_reproducible-tests.html#patchwork-reference-environments).
+For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [Patchwork Reference Environments](u4_reproducible-tests.html#patchwork-reference-environments).
 
 Objects assigned right before a test are part of that test's environment so will always be available.
 

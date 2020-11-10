@@ -219,8 +219,8 @@ to the current one in "Section X".
 
 Some expressions may deparse differently on different systems (e.g. numbers with
 decimal places, non-ASCII characters) so tests containing them may not match
-correctly across systems.  See the [introductory
-vignette](u1_intro.html#test-expressions-are-stored-deparsed) for how to avoid
+correctly across systems.  See the [Introductory
+Vignette](u1_intro.html#test-expressions-are-stored-deparsed) for how to avoid
 problems with this.
 
 ### Commenting Tests
