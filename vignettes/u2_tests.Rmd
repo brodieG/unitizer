@@ -171,7 +171,7 @@ Each test is evaluated in its own environment, which has for enclosure the
 environment of the prior test.  This means that a test has access to all the
 objects created/used by earlier tests, but not objects created/used by
 subsequent tests.  See the [Reproducible Tests
-Vignette](#u4_reproducible-tests.html#workspace-and-evaluation-environments) for
+Vignette](u4_reproducible-tests.html#workspace-and-evaluation-environments) for
 more details.
 
 ### Options and Streams
@@ -204,9 +204,24 @@ To reduce the odds of storing massive and mostly useless `stdout`, `unitize` lim
 
 ### Matching Tests
 
-Whenever you re-run `unitize` on a file that has already been `unitize`d, `unitizer` matches the expressions in that file to those stored in the corresponding `unitizer` store.  `unitizer` matches only on the deparsed expression, and does not care at all where in the file the expression occurs.  If multiple identical expressions exist in a file they will be matched in the order they show up.
+Whenever you re-run `unitize` on a file that has already been `unitize`d,
+`unitizer` matches the expressions in that file to those stored in the
+corresponding `unitizer` store.  `unitizer` matches only on the deparsed
+expression, and does not care at all where in the file the expression occurs.
+If multiple identical expressions exist in a file they will be matched in the
+order they show up.
 
-The `unitizer_sect` in which a test was when it was first `unitize`d has no bearing whatsoever on matching a new test to a reference test.  For example, if a particular test was in "Section A" when it was first `unitize`d, but in the current version of the test file it is in "Section X", that test will be matched to the current one in "Section X".
+The `unitizer_sect` in which a test was when it was first `unitize`d has no
+bearing whatsoever on matching a new test to a reference test.  For example, if
+a particular test was in "Section A" when it was first `unitize`d, but in the
+current version of the test file it is in "Section X", that test will be matched
+to the current one in "Section X".
+
+Some expressions may deparse differently on different systems (e.g. numbers with
+decimal places, non-ASCII characters) so tests containing them may not match
+correctly across systems.  See the [introductory
+vignette](u1_intro.html#test-expressions-are-stored-deparsed) for how to avoid
+problems with this.
 
 ### Commenting Tests
 

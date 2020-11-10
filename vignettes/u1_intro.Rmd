@@ -16,19 +16,24 @@ vignette: >
 
 ### TL;DR
 
-`unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
+`unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To
+install:
 
 ```
 install.packages('unitizer')
 ```
-Please keep in mind this is an experimental framework that has been thoroughly
-tested by *one* person.
 
-`unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
+I have been using `unitizer` for my own CRAN packages and find working with it a
+delight compared to other unit testing frameworks.
+
+`unitizer` bakes in a lot of contextual help so you can get started without
+reading all the documentation.  Try the demo to get an idea:
+
 ```
 library(unitizer)
 demo(unitizer)
 ```
+
 Or check out the [screencast](http://htmlpreview.github.io/?https://github.com/brodieG/unitizer/blob/rc/extra/gifshow.html) to see `unitizer` in action.
 
 ### Why Another Testing Framework?
@@ -73,8 +78,8 @@ intended changed.  Then you can update each test with a single keystroke.
 
 ### Additional Documentation
 
-See the [vignette index](u1_intro.html), and function specific documentation
-such as `?unitize`.
+See the [vignette index](u0_unitizer_index.html), and function specific
+documentation such as `?unitize`.
 
 ## Usage
 

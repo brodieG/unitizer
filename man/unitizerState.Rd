@@ -7,8 +7,14 @@
 \alias{in_pkg}
 \title{Tests and Session State}
 \usage{
-state(par.env, search.path, options, working.directory, random.seed,
-  namespaces)
+state(
+  par.env,
+  search.path,
+  options,
+  working.directory,
+  random.seed,
+  namespaces
+)
 
 in_pkg(package = NULL)
 }
@@ -21,7 +27,7 @@ as produced by \code{\link{in_pkg}}, assumes .GlobalEnv if unspecified}
 
 \item{search.path}{one of \code{0:2}, uses the default value corresponding to
 \code{getOption(unitizer.state)}, which is 0 in the default unitizer state
-of \dQuote{off}.}
+of \dQuote{off}.  See "Custom Control" section for details.}
 
 \item{options}{same as \code{search.path}}
 
@@ -117,11 +123,12 @@ these elements of state are not managed:
     prior to running your tests.  If you want to use the same libraries
     across multiple tests you can load them with the \code{pre} argument to
     \code{\link{unitize}} or \code{\link{unitize_dir}}.
-  \item Options: same as search path
+  \item Options: same as search path, but see "Namespaces" next.
   \item Namespaces: same as search path; this
     option is only made available to support options since many namespaces
     set options \code{onLoad}, and as such it is necessary to unload and
-    re-load them to ensure default options are set.
+    re-load them to ensure default options are set.  See the "Namespaces and
+    Options" section.
 }
 
 In the \dQuote{recommended} state tracking mode, parent environment, random

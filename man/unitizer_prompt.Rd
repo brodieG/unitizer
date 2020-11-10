@@ -11,18 +11,40 @@
 \alias{interactive_mode}
 \title{Interactively Retrieve User Input}
 \usage{
-unitizer_prompt(text, browse.env = baseenv(), help = character(),
-  help.opts = character(), valid.opts, hist.con = NULL,
-  exit.condition = function(exp, env) FALSE, global, ...)
+unitizer_prompt(
+  text,
+  browse.env = baseenv(),
+  help = character(),
+  help.opts = character(),
+  valid.opts,
+  hist.con = NULL,
+  exit.condition = function(exp, env) FALSE,
+  global,
+  warn.sticky = FALSE,
+  ...
+)
 
-navigate_prompt(x, curr.id, text, browse.env1 = globalenv(),
-  browse.env2 = globalenv(), help = character(),
-  help.opts = character(), valid.opts)
+navigate_prompt(
+  x,
+  curr.id,
+  text,
+  browse.env1 = globalenv(),
+  browse.env2 = globalenv(),
+  help = character(),
+  help.opts = character(),
+  valid.opts,
+  warn.sticky = FALSE
+)
 
 review_prompt(x, nav.env)
 
-simple_prompt(message, values = c("Y", "N"), prompt = "unitizer> ",
-  attempts = 5L, case.sensitive = FALSE)
+simple_prompt(
+  message,
+  values = c("Y", "N"),
+  prompt = "unitizer> ",
+  attempts = 5L,
+  case.sensitive = FALSE
+)
 
 exit_fun(y, env, valid.vals)
 
@@ -65,6 +87,11 @@ in which case \code{unitizer_prompt} will continue with normal evaluation.}
 
 \item{global}{unitizerGlobal or NULL, if the global state tracking object;
 will be used to record state after evaluating user expressions}
+
+\item{warn.sticky}{TRUE or FALSE (default) whether any changes to the "warn"
+global option made by the evaluation of an R expression under the prompt
+should be allowed to stick after the evaluation.  Normally that option value
+is reset after each evaluation.}
 
 \item{...}{additional arguments for \code{exit.condition}}
 

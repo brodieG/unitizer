@@ -42,7 +42,7 @@
 #' (see \code{state} parameter).
 #'
 #' You are strongly encouraged to read through the vignettes
-#' for details and examples (\code{browseVignettes('unitizer')}).  The demo
+#' for details and examples (\code{browseVignettes("unitizer")}).  The demo
 #' (\code{demo("unitizer")}) is also a good introduction to these functions.
 #'
 #' @section Note:
@@ -57,7 +57,7 @@
 #'     irrespective of what the user sets that option to.
 #'   \item \code{on.exit(...)} expressions will be evaluated immediately for
 #'     top-level statements (either in the test file or in an
-#'     \code{\link{unitizer_sect}}, thereby defeating their purpose.
+#'     \code{\link{unitizer_sect}}, thereby defeating their purpose).
 #'   \item Each test expression is run in its own environment, which is enclosed
 #'     by that of previous tests.
 #'   \item Output and Message streams are sunk so any attempt to debug directly
@@ -69,10 +69,10 @@
 #' \itemize{
 #'   \item \code{ls()} and \code{q()} are over-ridden by \code{unitizer} utility
 #'     functions.
-#'   \item expressions are evaluated with \code{options(warn=1)} or greater,
+#'   \item Expressions are evaluated with \code{options(warn=1)} or greater,
 #'     although unlike in test running it is possible to set and keep
 #'     \code{options(warn=2)}.
-#'   \item some single upper case letters will be interpreted as \code{unitizer}
+#'   \item Some single upper case letters will be interpreted as \code{unitizer}
 #'     meta-commands.
 #' }
 #'
