@@ -18,10 +18,10 @@ vignette: >
 
 When `unitize` is run with a test file against an existing `unitizer` store, each test in the file is matched and compared to the corresponding test in the store.  Here is a comprehensive list of possible outcomes:
 
-* **New**: a test present in the file is not in the store and needs to be reviewed to confirm it is correct
-* **Passed**: the test matched the reference test in the store and need not be reviewed
-* **Failed**: the evaluation of the test from the file differs from the one produced by same expression in the store
-* **Deleted/Removed**: a test present in the `unitizer` store no longer exists in the test file so you will be prompted to remove it from the store
+* **New**: a test present in the file is not in the store and needs to be reviewed to confirm it is correct.
+* **Passed**: the test matched the reference test in the store and need not be reviewed.
+* **Failed**: the evaluation of the test from the file differs from the one produced by same expression in the store.
+* **Deleted/Removed**: a test present in the `unitizer` store no longer exists in the test file so you will be prompted to remove it from the store.
 * **Corrupted/Error**: an error occurred while attempting to compare the file and store tests; this should occur very rarely and is likely the result of using a custom comparison function to compare the tests (see [`unitizer_sect`](#controlling-test-comparison) for more details on custom comparison functions).  Because the comparison function itself failed, `unitizer` has no way of knowing whether the test passed or failed; you can think of it as an `NA` outcome.
 
 When reviewing tests, `unitizer` will group tests by test type, so you will review all new tests  in one go, then the failed tests, and so on.  As a result, the order that you review tests may not be the same as the order they appear in in the test file.
@@ -41,11 +41,11 @@ The actual rule `unitizer` uses to decide whether an expression is a test or not
 
 The following aspects of a unitizer tests are recorded for future comparison:
 
-* Value
-* Conditions
-* Screen (stdout) output
-* Message (stderr) output
-* Whether the expression issued an "abort" `invokeRestart` (e.g. was `stop` called in the expression)
+* Value.
+* Conditions.
+* Screen (stdout) output.
+* Message (stderr) output.
+* Whether the expression issued an "abort" `invokeRestart` (e.g. was `stop` called in the expression).
 
 Currently only the first two elements are actually compared when determining whether a test passes or fails.  These two should capture almost all you would care about from a unit test perspective.
 
@@ -178,10 +178,10 @@ more details.
 
 In order to properly capture output, `unitizer` will modify streams and options.  In particular, it will do the following:
 
-* temporarily set `options(warn>=1L)` during expression evaluation
-* temporarily set `options(error=NULL)` during expression evaluation
-* use `sink()` to capture any output to `stdout`
-* use `sink(type="message")` to capture output to `stderr`
+* Temporarily set `options(warn>=1L)` during expression evaluation.
+* Temporarily set `options(error=NULL)` during expression evaluation.
+* Use `sink()` to capture any output to `stdout`.
+* Use `sink(type="message")` to capture output to `stderr`.
 
 This should all be transparent to the user, unless the user is also attempting
 to modify these settings in the test expressions.  The problematic interaction

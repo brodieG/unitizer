@@ -84,9 +84,9 @@ valuable test information.
 ### Collaborating with Unitizer
 
 If you merge in a pull request from a third party you do not fully trust, we
-recommend that you do not accept any commits to the rdses.  You can then
-directly review any new tests, ensure they produce the expected outcomes, and
-update the `unitizer` stores.
+recommend that you do not accept any commits to the rdses.  You can accept and
+review changes to test expressions, and then `unitize` against your existing
+rdses and review the corresponding values.
 
 ## Modifying an Existing Unitizer
 

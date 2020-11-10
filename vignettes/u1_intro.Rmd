@@ -40,20 +40,24 @@ log10(vec)                                # succeed with warnings
 ```
 These two unit test implementations are functionally equivalent.  There are benefits to both approaches.  In favor of `unitizer`:
 
-* Tests are easy to write
-* Conditions are captured automatically, with no need for special handling
-* You can immediately review failing tests in an interactive environment
-* Updating tests when function output legitimately changes is easy
+* Tests are easy to write.
+* Tests with non-trivial outputs are easy to write, which encourages more
+  realistic testing of functionality.
+* Conditions are captured automatically, with no need for special handling.
+* You can immediately review failing tests in an interactive environment.
+* Updating tests when function output legitimately changes is easy.
 
 In favor of `testthat`:
 
-* The tests are self documenting; expected results are obvious
+* The tests are self documenting; expected results are obvious.
 * Once you write the test you are done; with `unitizer` you still need to
-  `unitize` and review the tests
+  `unitize` and review the tests.
+* Tests are usually all-plain text, whereas `unitizer` stores reference values
+  in binary RDSes (see [Collaborating with Unitizer](u5_miscellaneous.html#collaborating-with-unitizer)).
 
 `unitizer` is particularly convenient when the tests return complex objects (e.g
-as `lm` does) or produce conditions.  There is no need for complicated
-assertions involving deparsed objects.
+as `lm` does) and/or produce conditions.  There is no need for complicated
+assertions involving deparsed objects, or different workflows for snapshots.
 
 ### Converting `testthat` tests to `unitizer`
 

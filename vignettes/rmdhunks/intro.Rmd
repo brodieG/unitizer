@@ -85,11 +85,11 @@ them.
 To use `unitizer`:
 
 * Write test expressions as you would when informally testing code on the
-  command line, and save them to a file (e.g. "my_file_name.R")
-* Run `unitize("my_file_name.R")` and follow the prompts
-* Continue developing your package
+  command line, and save them to a file (e.g. "my_file_name.R").
+* Run `unitize("my_file_name.R")` and follow the prompts.
+* Continue developing your package.
 * Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to
-  review and debug them in an interactive prompt
+  review and debug them in an interactive prompt.
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
 

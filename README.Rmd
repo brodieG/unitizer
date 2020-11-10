@@ -11,7 +11,7 @@ rmarkdown::render('README.Rmd', output_format=rmarkdown::md_document())
 [![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
 [![Dependencies direct/recursive](https://tinyverse.netlify.com/badge/unitizer)](https://tinyverse.netlify.com/)
-[![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 ```{r child='vignettes/rmdhunks/intro.Rmd'}
 ```
@@ -26,11 +26,11 @@ rmarkdown::render('README.Rmd', output_format=rmarkdown::md_document())
 
 ## Related Packages
 
-* [`testthat`](https://cran.r-project.org/package=testthat)
+* [`testthat`](https://cran.r-project.org/package=testthat).
 * [`tinytest`](https://cran.r-project.org/package=tinytest), which is extended
   by [`ttdo`](https://cran.r-project.org/package=ttdo) for
   [`diffobj`](https://cran.r-project.org/package=diffobj) diffs.
-* [`RUnit`](https://cran.r-project.org/package=RUnit)
+* [`RUnit`](https://cran.r-project.org/package=RUnit).
 
 ## Acknowledgments
 
@@ -40,10 +40,9 @@ Thank you to:
 * CRAN maintainers, for patiently shepherding packages onto CRAN and maintaining
   the repository, and Uwe Ligges in particular for maintaining
   [Winbuilder](http://win-builder.r-project.org/).
-* Hadley Wickham for [testthat](https://cran.r-project.org/package=testthat)
-  from which we borrow many concepts and use for internal tests, for
-  [devtools](https://cran.r-project.org/package=devtools), and for his
-  many other packages.
+* [Hadley Wickham](https://github.com/hadley) for
+  [testthat](https://cran.r-project.org/package=testthat) from which we borrow
+  many concepts and use for internal tests, and for his many other packages.
 * [Gábor Csárdi](https://github.com/gaborcsardi) for
   [crayon](https://cran.r-project.org/package=crayon) through which we can
   add a new dimension to the R experience.

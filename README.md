@@ -12,9 +12,9 @@ unitizeR - Interactive R Unit Tests
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
 [![Dependencies
 direct/recursive](https://tinyverse.netlify.com/badge/unitizer)](https://tinyverse.netlify.com/)
-[![Project Status: WIP - Initial development is in progress, but there
-has not yet been a stable, usable release suitable for the
-public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable
+state and is being actively
+developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 TL;DR
 -----
@@ -103,11 +103,11 @@ review them.
 To use `unitizer`:
 
 -   Write test expressions as you would when informally testing code on
-    the command line, and save them to a file (e.g. “my\_file\_name.R”)
--   Run `unitize("my_file_name.R")` and follow the prompts
--   Continue developing your package
+    the command line, and save them to a file (e.g. “my\_file\_name.R”).
+-   Run `unitize("my_file_name.R")` and follow the prompts.
+-   Continue developing your package.
 -   Re-run `unitize("my_file_name.R")`; if any tests fail you will be
-    able to review and debug them in an interactive prompt
+    able to review and debug them in an interactive prompt.
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
@@ -123,11 +123,11 @@ Documentation
 Related Packages
 ----------------
 
--   [`testthat`](https://cran.r-project.org/package=testthat)
+-   [`testthat`](https://cran.r-project.org/package=testthat).
 -   [`tinytest`](https://cran.r-project.org/package=tinytest), which is
     extended by [`ttdo`](https://cran.r-project.org/package=ttdo) for
     [`diffobj`](https://cran.r-project.org/package=diffobj) diffs.
--   [`RUnit`](https://cran.r-project.org/package=RUnit)
+-   [`RUnit`](https://cran.r-project.org/package=RUnit).
 
 Acknowledgments
 ---------------
@@ -138,11 +138,10 @@ Thank you to:
 -   CRAN maintainers, for patiently shepherding packages onto CRAN and
     maintaining the repository, and Uwe Ligges in particular for
     maintaining [Winbuilder](http://win-builder.r-project.org/).
--   Hadley Wickham for
+-   [Hadley Wickham](https://github.com/hadley) for
     [testthat](https://cran.r-project.org/package=testthat) from which
-    we borrow many concepts and use for internal tests, for
-    [devtools](https://cran.r-project.org/package=devtools), and for his
-    many other packages.
+    we borrow many concepts and use for internal tests, and for his many
+    other packages.
 -   [Gábor Csárdi](https://github.com/gaborcsardi) for
     [crayon](https://cran.r-project.org/package=crayon) through which we
     can add a new dimension to the R experience.
