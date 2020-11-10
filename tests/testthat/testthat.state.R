@@ -104,7 +104,11 @@ local({
   test_that("as.state", {
     expect_identical(
       unitizer:::as.state("recommended"),
-      unitizer:::as.state(unitizer:::unitizerStateRecommended())
+      unitizer:::as.state(unitizer:::unitizerStateSuggested())
+    )
+    expect_identical(
+      unitizer:::as.state("suggested"),
+      unitizer:::as.state(unitizer:::unitizerStateSuggested())
     )
     expect_identical(
       unitizer:::as.state("pristine"),
@@ -116,20 +120,20 @@ local({
     expect_equal(
       unitizer:::as.state(.GlobalEnv),
       unitizer:::as.state(
-        unitizer:::unitizerStateRecommended(par.env=.GlobalEnv)
+        unitizer:::unitizerStateSuggested(par.env=.GlobalEnv)
       )
     )
     expect_equal(
       unitizer:::as.state(in_pkg("stats")),
       unitizer:::as.state(
-        unitizer:::unitizerStateRecommended(par.env=getNamespace("stats"))
+        unitizer:::unitizerStateSuggested(par.env=getNamespace("stats"))
       )
     )
     stats.lib <- file.path(system.file(package="stats"), "R")
     expect_equal(
       unitizer:::as.state(in_pkg(), test.files=stats.lib),
       unitizer:::as.state(
-        unitizer:::unitizerStateRecommended(par.env=getNamespace("stats"))
+        unitizer:::unitizerStateSuggested(par.env=getNamespace("stats"))
       )
     )
     expect_error(unitizer:::as.state(200))
@@ -240,21 +244,21 @@ local({
     # all these assume we set the options to be in recommended mode
     expect_equal(
       state("stats"),
-      unitizer:::unitizerStateRecommended(par.env="stats")
+      unitizer:::unitizerStateSuggested(par.env="stats")
     )
     expect_equal(
       state(in_pkg("stats")),
-      unitizer:::unitizerStateRecommended(par.env=in_pkg("stats"))
+      unitizer:::unitizerStateSuggested(par.env=in_pkg("stats"))
     )
     expect_equal(
       state(in_pkg()),
-      unitizer:::unitizerStateRecommended(par.env=in_pkg())
+      unitizer:::unitizerStateSuggested(par.env=in_pkg())
     )
     expect_equal(
       state(search.path=1),
-      unitizer:::unitizerStateRecommended(search.path=1L)
+      unitizer:::unitizerStateSuggested(search.path=1L)
     )
-    s1 <- unitizer:::unitizerStateRecommended(par.env=.GlobalEnv)
+    s1 <- unitizer:::unitizerStateSuggested(par.env=.GlobalEnv)
     for(i in setdiff(slotNames(s1), 'par.env')) slot(s1, i) <- 0L
     s2 <- unitizer:::unitizerStateOff()
 
