@@ -75,23 +75,25 @@ enabled.
 ### Enabling State Management
 
 You can turn on the "recommended" state management level to manage the first
-four elements of state listed in the previous section.  To do so, 
+four elements of state listed in the previous section.  To do so,
 use `unitize(..., state='recommended')` or
-`options(unitizer.state='recommended')`.  For more details see `?unitizerState`.
+`options(unitizer.state='recommended')`.  Be sure to read `?unitizerState`
+before you enable this setting as there are cases when state management may not
+work.
 
 ## Workspace And Evaluation Environments
 
 ### Test Environments
 
-In order to allow review of each test in its evaluation environment each test is
-evaluated in its own environment. Each of these environments has for parent the
-environment of the previous test.  This means that a test has access to all the
-objects created/used by earlier tests, but not objects created/used by
-subsequent tests.  When a later test "modifies" an existing object, the existing
-object is not really modified; rather, the test creates a new object of the same
-name in the child environment which masks the object in the earlier test.  This
-is functionally equivalent to overwriting the object as far as the later test is
-concerned.
+In order to allow review of each test in its original evaluation environment,
+each test is evaluated in a separate environment. Each of these environments has
+for parent the environment of the previous test.  This means that a test has
+access to all the objects created/used by earlier tests, but not objects
+created/used by subsequent tests.  When a later test "modifies" an existing
+object, the existing object is not really modified; rather, the test creates a
+new object of the same name in the child environment which masks the object in
+the earlier test.  This is functionally equivalent to overwriting the object as
+far as the later test is concerned.
 
 For the most part this environment trickery should be transparent to the user.
 The `ls` function is specially modified to, among other things, list objects in
@@ -219,7 +221,7 @@ the old ones.  This leads to some complications because in order to faithfully
 reproduce the environments associated with both the reference and the new tests
 we would potentially have to store the entire set of environments produced by
 the test script for both the new and reference tests.  Even worse, if we re-run
-unitizer again, we run the risk of having to store yet another set of
+`unitizer` again, we run the risk of having to store yet another set of
 environments (the old reference environments, what were new environments but
 became reference ones on this additional run, and the new environments created
 by this third run).  The problem continues to grow with as each incremental run
@@ -254,7 +256,7 @@ test script itself.  During testing, the scripts will work fine, but at some
 future date if the test scripts are run again they are likely to fail due to the
 dependency on the package that is not explicitly loaded in the test scripts.
 
-In the "recommended" state trackign mode `unitizer` runs on a "trimmed" search
+In the "recommended" state tracking mode `unitizer` runs on a "trimmed" search
 path that contains only the packages loaded by in a freshly loaded R session
 (i.e. the packages between `package:base` and `package:stats`; see
 `?unitizerState`).  You will need to explicitly load packages that your tests

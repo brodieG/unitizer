@@ -105,7 +105,9 @@ NULL
 #' section below).  For example, with the search path managed, each test file
 #' will start evaluation with the search path set to the tests folder of your
 #' package.  All these settings are returned to their original values when
-#' \code{unitizer} exits.
+#' \code{unitizer} exits.  One potential issue is that S3 method registration is
+#' not undone when a package is detached.  See \code{\link{detach}} for
+#' potential pitfalls of enabling this setting.
 #'
 #' You can modify what aspects of state are managed by using the \code{state}
 #' parameter to \code{\link{unitize}}.  If you are satisfied with basic default
