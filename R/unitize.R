@@ -118,7 +118,7 @@
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
 #' @param state character(1L) one of
-#'   \code{c("prisitine", "recommended", "basic", "off", "safe")}, an
+#'   \code{c("prisitine", "suggested", "basic", "off", "safe")}, an
 #'   environment, or a state object produced by \code{\link{state}} or
 #'   \code{\link{in_pkg}}; modifies how \code{unitizer} manages aspects of
 #'   session state that could affect test evaluation, including the parent

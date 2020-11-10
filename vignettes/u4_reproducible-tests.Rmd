@@ -256,7 +256,7 @@ test script itself.  During testing, the scripts will work fine, but at some
 future date if the test scripts are run again they are likely to fail due to the
 dependency on the package that is not explicitly loaded in the test scripts.
 
-In the "recommended" state tracking mode `unitizer` runs on a "trimmed" search
+In the "suggested" state tracking mode `unitizer` runs on a "trimmed" search
 path that contains only the packages loaded by in a freshly loaded R session
 (i.e. the packages between `package:base` and `package:stats`; see
 `?unitizerState`).  You will need to explicitly load packages that your tests
@@ -317,7 +317,7 @@ compromised set with their options wiped out.
 `unitizer` can manage search paths and namespaces, but unfortunately some
 package namespaces cannot be unloaded so options management can be problematic
 when such packages are involved (one example is `data.table`).  Because of this
-options management is not enabled in the "recommended" state management mode.
+options management is not enabled in the "suggested" state management mode.
 
 Note that no matter what tests are always run with `options(warn=1)` and
 `options(error=NULL)`.
