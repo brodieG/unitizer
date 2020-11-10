@@ -1,48 +1,67 @@
-# unitizeR - Interactive R Unit Tests
+<!-- README.md is generated from README.Rmd. Please edit that file 
+
+library(rmarkdown)
+# render('README.Rmd', output_format=html_vignette(css='vignettes/styles.css'))
+render('README.Rmd', output_format=md_document())
+
+-->
+unitizeR - Interactive R Unit Tests
+===================================
 
 [![](https://travis-ci.org/brodieG/unitizer.svg?branch=master)](https://travis-ci.org/brodieG/unitizer)
 [![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
-[![Dependencies direct/recursive](https://tinyverse.netlify.com/badge/unitizer)](https://tinyverse.netlify.com/)
-[![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
+[![Dependencies
+direct/recursive](https://tinyverse.netlify.com/badge/unitizer)](https://tinyverse.netlify.com/)
+[![Project Status: WIP - Initial development is in progress, but there
+has not yet been a stable, usable release suitable for the
+public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
 
-## TL;DR
+TL;DR
+-----
 
-`unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
+`unitizer` simplifies creating, reviewing, and debugging tests in R. It
+automatically stores R expressions and the values they produce, so there
+is no need for explicit expectations. Tests fail when the value
+associated with an expression changes. When run in interactive mode you
+are dropped directly into the failing test environment so you may debug
+it.
 
-```
-install.packages('unitizer')
-```
+`unitizer` is on CRAN:
 
-I have been using `unitizer` for my own CRAN packages and find working with it a
-delight compared to other unit testing frameworks.
+    install.packages('unitizer')
 
-`unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
-```
-library(unitizer)
-demo(unitizer)
-```
-Or check out the [screencast](http://htmlpreview.github.io/?https://github.com/brodieG/unitizer/blob/rc/extra/gifshow.html) to see `unitizer` in action.
+It bakes in a lot of contextual help so you can get started without
+reading all the documentation. Try the demo to get an idea:
 
-## Why Another Testing Framework?
+    library(unitizer)
+    demo(unitizer)
+
+Or check out the
+[screencast](http://htmlpreview.github.io/?https://github.com/brodieG/unitizer/blob/rc/extra/gifshow.html)
+to see `unitizer` in action.
+
+Why Another Testing Framework?
+------------------------------
 
 ### Automated Test Formalization
 
-Are you tired of the `deparse`/`dput` then copy-paste R objects into test file
-dance, or do you use `testthat::expect_equal_to_reference` a lot?
+Are you tired of the `deparse`/`dput` then copy-paste R objects into
+test file dance, or do you use `testthat::expect_equal_to_reference` or
+other snapshot testing a lot?
 
-With `unitizer` you review function output at an interactive prompt as you
-would with informal tests.  You then store the value, conditions (e.g.
-warnings, etc.), and environment for use as the reference values in formal
-tests, all with a single keystroke.
+With `unitizer` you review function output at an interactive prompt as
+you would with informal tests. You then store the value, conditions (
+e.g. warnings, etc.), and environment for use as the reference values in
+formal tests, all with a single keystroke.
 
 ### Streamlined Debugging
 
 Do you wish the nature of a test failure was more immediately obvious?
 
 When tests fail, you are shown a proper
-[diff](https://github.com/brodieG/diffobj) so you can clearly identify _how_ the
-test failed:
+[diff](https://github.com/brodieG/diffobj) so you can clearly identify
+*how* the test failed:
 
 ![diff
 example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review1.png)
@@ -50,8 +69,8 @@ example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review1.png)
 Do you wish that you could start debugging your failed tests without
 additional set-up work?
 
-`unitizer` drops you in the test environment so you can debug _why_ the test
-failed without further ado:
+`unitizer` drops you in the test environment so you can debug *why* the
+test failed without further ado:
 
 ![review
 example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review2.png)
@@ -62,84 +81,97 @@ Do you avoid improvements to your functions because that would require
 painstakingly updating many tests?
 
 The diffs for the failed tests let you immediately confirm only what you
-intended changed.  Then you can update each test with a single keystroke.
+intended changed. Then you can update each test with a single keystroke.
 
-## Usage
+### Additional Documentation
 
-`unitizer` stores R expressions and the result of evaluating them so that it can
-detect code regressions.  This is akin to saving test output to a
-`.Rout.save` file as documented in [Writing R
+See the [vignette index](u0_unitizer_index.html), and function specific
+documentation such as `?unitize`.
+
+Usage
+-----
+
+`unitizer` stores R expressions and the result of evaluating them so
+that it can detect code regressions. This is akin to saving test output
+to a `.Rout.save` file as documented in [Writing R
 Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories),
-except that we're storing the actual R objects and it is much easier to review
-them.
+except that we’re storing the actual R objects and it is much easier to
+review them.
 
 To use `unitizer`:
 
-* Write test expressions as you would when informally testing code on the
-  command line, and save them to a file (e.g. "my_file_name.R")
-* Run `unitize("my_file_name.R")` and follow the prompts
-* Continue developing your package
-* Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to
-  review and debug them in an interactive prompt
+-   Write test expressions as you would when informally testing code on
+    the command line, and save them to a file (e.g. “my\_file\_name.R”)
+-   Run `unitize("my_file_name.R")` and follow the prompts
+-   Continue developing your package
+-   Re-run `unitize("my_file_name.R")`; if any tests fail you will be
+    able to review and debug them in an interactive prompt
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
-## Documentation
+Documentation
+-------------
 
-* `help(package="unitizer")`, in particular `?unitize`
-* `demo(package="unitizer")`
-* [`browseVignettes("unitizer")`](https://cran.r-project.org/package=unitizer/vignettes/u0_unitizer_index.html)
-  for a list of vignettes, or skip straight to the [Introduction
-  vignette](https://cran.r-project.org/package=unitizer/vignettes/u1_intro.html)
+-   `help(package="unitizer")`, in particular `?unitize`
+-   `demo(package="unitizer")`
+-   [`browseVignettes("unitizer")`](https://cran.r-project.org/package=unitizer/vignettes/u0_unitizer_index.html)
+    for a list of vignettes, or skip straight to the [Introduction
+    vignette](https://cran.r-project.org/package=unitizer/vignettes/u1_intro.html)
 
-## Related Packages
+Related Packages
+----------------
 
-* [`testthat`](https://cran.r-project.org/package=testthat)
-* [`tinytest`](https://cran.r-project.org/package=tinytest), which is extended
-  by [`ttdo`](https://cran.r-project.org/package=ttdo) for
-  [`diffobj`](https://cran.r-project.org/package=diffobj) diffs.
-* [`RUnit`](https://cran.r-project.org/package=RUnit)
+-   [`testthat`](https://cran.r-project.org/package=testthat)
+-   [`tinytest`](https://cran.r-project.org/package=tinytest), which is
+    extended by [`ttdo`](https://cran.r-project.org/package=ttdo) for
+    [`diffobj`](https://cran.r-project.org/package=diffobj) diffs.
+-   [`RUnit`](https://cran.r-project.org/package=RUnit)
 
-## Acknowledgments
+Acknowledgments
+---------------
 
 Thank you to:
 
-* R Core for developing and maintaining such a wonderfully language.
-* CRAN maintainers, for patiently shepherding packages onto CRAN and maintaining
-  the repository, and Uwe Ligges in particular for maintaining
-  [Winbuilder](http://win-builder.r-project.org/).
-* Hadley Wickham for [testthat](https://cran.r-project.org/package=testthat)
-  from which we borrow many concepts and use for internal tests, for
-  [devtools](https://cran.r-project.org/package=devtools), and for his
-  many other packages.
-* [Gábor Csárdi](https://github.com/gaborcsardi) for
-  [crayon](https://cran.r-project.org/package=crayon) through which we can
-  add a new dimension to the R experience.
-* [Jim Hester](https://github.com/jimhester) because
-  [covr](https://cran.r-project.org/package=covr) rocks.
-* [Dirk Eddelbuettel](https://github.com/eddelbuettel) and [Carl
-  Boettiger](https://github.com/cboettig) for the
-  [rocker](https://github.com/rocker-org/rocker) project, and [Gábor
-  Csárdi](https://github.com/gaborcsardi) and the R-consortium for
-  [Rhub](https://github.com/r-hub/rhub), without which testing bugs on R-devel
-  and other platforms would be a nightmare.
-* [Yihui Xie](https://github.com/yihui) for
-  [knitr](https://cran.r-project.org/package=knitr) and  [J.J.
-  Allaire](https://github.com/jjallaire) et al. for
-  [rmarkdown](https://cran.r-project.org/package=rmarkdown), and by extension
-  John MacFarlane for [pandoc](http://pandoc.org/).
-* @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the [ffmpeg
-  team](http://ffmpeg.org/about.html) for ffmpeg.
-* All open source developers out there that make their work freely available
-  for others to use.
-* [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
-  [Codecov](https://codecov.io/), [Vagrant](https://www.vagrantup.com/),
-  [Docker](https://www.docker.com/), [Ubuntu](https://www.ubuntu.com/),
-  [Brew](https://brew.sh/) for providing infrastructure that greatly simplifies
-  open source development.
-* [Free Software Foundation](http://fsf.org/) for developing the GPL license and
-  promotion of the free software movement.
+-   R Core for developing and maintaining such a wonderfully language.
+-   CRAN maintainers, for patiently shepherding packages onto CRAN and
+    maintaining the repository, and Uwe Ligges in particular for
+    maintaining [Winbuilder](http://win-builder.r-project.org/).
+-   Hadley Wickham for
+    [testthat](https://cran.r-project.org/package=testthat) from which
+    we borrow many concepts and use for internal tests, for
+    [devtools](https://cran.r-project.org/package=devtools), and for his
+    many other packages.
+-   [Gábor Csárdi](https://github.com/gaborcsardi) for
+    [crayon](https://cran.r-project.org/package=crayon) through which we
+    can add a new dimension to the R experience.
+-   [Jim Hester](https://github.com/jimhester) because
+    [covr](https://cran.r-project.org/package=covr) rocks.
+-   [Dirk Eddelbuettel](https://github.com/eddelbuettel) and [Carl
+    Boettiger](https://github.com/cboettig) for the
+    [rocker](https://github.com/rocker-org/rocker) project, and [Gábor
+    Csárdi](https://github.com/gaborcsardi) and the R-consortium for
+    [Rhub](https://github.com/r-hub/rhub), without which testing bugs on
+    R-devel and other platforms would be a nightmare.
+-   [Yihui Xie](https://github.com/yihui) for
+    [knitr](https://cran.r-project.org/package=knitr) and [J.J.
+    Allaire](https://github.com/jjallaire) et al. for
+    [rmarkdown](https://cran.r-project.org/package=rmarkdown), and by
+    extension John MacFarlane for [pandoc](http://pandoc.org/).
+-   @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the
+    [ffmpeg team](http://ffmpeg.org/about.html) for ffmpeg.
+-   All open source developers out there that make their work freely
+    available for others to use.
+-   [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
+    [Codecov](https://codecov.io/),
+    [Vagrant](https://www.vagrantup.com/),
+    [Docker](https://www.docker.com/),
+    [Ubuntu](https://www.ubuntu.com/), [Brew](https://brew.sh/) for
+    providing infrastructure that greatly simplifies open source
+    development.
+-   [Free Software Foundation](http://fsf.org/) for developing the GPL
+    license and promotion of the free software movement.
 
-## About the Author
+About the Author
+----------------
 
 Brodie Gaslam is a hobbyist programmer based in the US East Coast.

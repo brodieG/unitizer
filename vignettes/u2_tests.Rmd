@@ -98,7 +98,7 @@ unitize(file.path(.unitizer.fastlm, "tests", "unitizer", "unitizer.fastlm.R"))
 ```
 If there are tests that require reviewing, each section will be reviewed in turn.
 
-Note that `unitizer_sect` does not create separate evaluation environments for each section.  Any created object will be available to all lexically subsequent tests, regardless of whether they are in the same section or not.
+Note that `unitizer_sect` does not create separate evaluation environments for each section.  Any created object will be available to all lexically subsequent tests, regardless of whether they are in the same section or not.  Additionally `on.exit` expressions in `unitizer_sect` are evaluated immediately, not on exit.
 
 It is possible to have nested sections, though at this point in time `unitizer` only explicitly reports information at the outermost section level.
 
