@@ -1,5 +1,10 @@
 # `unitizer` NEWS
 
+## v1.4.11
+
+* [#265](https://github.com/brodieG/unitizer/issues/265) Bad vignette links in
+  README (h/t [@moodymudskipper](https://github.com/moodymudskipper).
+
 ## v1.4.10
 
 * Banish ghosts of `stringsAsFactors`.
