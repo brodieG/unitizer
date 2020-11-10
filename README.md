@@ -1,8 +1,7 @@
 <!-- README.md is generated from README.Rmd. Please edit that file 
 
-library(rmarkdown)
 # render('README.Rmd', output_format=html_vignette(css='vignettes/styles.css'))
-render('README.Rmd', output_format=md_document())
+rmarkdown::render('README.Rmd', output_format=rmarkdown::md_document())
 
 -->
 unitizeR - Interactive R Unit Tests
@@ -20,12 +19,15 @@ public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus
 TL;DR
 -----
 
-`unitizer` simplifies creating, reviewing, and debugging tests in R. It
-automatically stores R expressions and the values they produce, so there
-is no need for explicit expectations. Tests fail when the value
-associated with an expression changes. When run in interactive mode you
-are dropped directly into the failing test environment so you may debug
-it.
+`unitizer` simplifies creation, review, and debugging of tests in R. It
+automatically stores R expressions and the values they produce, so
+explicit expectations are unnecessary. Every test is easy to write with
+`unitizer` because testing and using a function are the same. This
+encourages non-trivial tests that better represent actual usage.
+
+Tests fail when the value associated with an expression changes. When
+run in interactive mode you are dropped directly into the failing test
+environment so you may debug it.
 
 `unitizer` is on CRAN:
 
