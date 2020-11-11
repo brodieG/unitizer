@@ -6,3 +6,5 @@
 ^extra$
 \.Rdata
 ^scratch
+^README\.Rmd$
+^README\.html$
