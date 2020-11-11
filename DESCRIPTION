@@ -20,7 +20,6 @@ Imports:
     diffobj (>= 0.1.5.9000)
 VignetteBuilder: knitr
 Suggests:
-    covr,
     knitr,
     rmarkdown,
     testthat
