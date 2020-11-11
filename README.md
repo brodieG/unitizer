@@ -11,7 +11,7 @@ unitizeR - Interactive R Unit Tests
 [![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
 [![Dependencies
-direct/recursive](https://tinyverse.netlify.com/badge/unitizer)](https://tinyverse.netlify.com/)
+direct/recursive](https://tinyverse.netlify.app/badge/unitizer)](https://tinyverse.netlify.app/)
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
@@ -173,7 +173,7 @@ Thank you to:
     [knitr](https://cran.r-project.org/package=knitr) and [J.J.
     Allaire](https://github.com/jjallaire) et al. for
     [rmarkdown](https://cran.r-project.org/package=rmarkdown), and by
-    extension John MacFarlane for [pandoc](http://pandoc.org/).
+    extension John MacFarlane for [pandoc](https://pandoc.org/).
 -   @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the
     [ffmpeg team](http://ffmpeg.org/about.html) for ffmpeg.
 -   All open source developers out there that make their work freely
@@ -181,12 +181,11 @@ Thank you to:
 -   [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
     [Codecov](https://codecov.io/),
     [Vagrant](https://www.vagrantup.com/),
-    [Docker](https://www.docker.com/),
-    [Ubuntu](https://www.ubuntu.com/), [Brew](https://brew.sh/) for
-    providing infrastructure that greatly simplifies open source
-    development.
--   [Free Software Foundation](http://fsf.org/) for developing the GPL
-    license and promotion of the free software movement.
+    [Docker](https://www.docker.com/), [Ubuntu](https://ubuntu.com/),
+    [Brew](https://brew.sh/) for providing infrastructure that greatly
+    simplifies open source development.
+-   [Free Software Foundation](https://www.fsf.org/) for developing the
+    GPL license and promotion of the free software movement.
 
 About the Author
 ----------------
