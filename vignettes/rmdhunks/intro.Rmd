@@ -68,11 +68,6 @@ painstakingly updating many tests?
 The diffs for the failed tests let you immediately confirm only what you
 intended changed.  Then you can update each test with a single keystroke.
 
-### Additional Documentation
-
-See the [vignette index](u0_unitizer_index.html), and function specific
-documentation such as `?unitize`.
-
 ## Usage
 
 `unitizer` stores R expressions and the result of evaluating them so that it can

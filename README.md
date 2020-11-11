@@ -85,10 +85,26 @@ painstakingly updating many tests?
 The diffs for the failed tests let you immediately confirm only what you
 intended changed. Then you can update each test with a single keystroke.
 
-### Additional Documentation
+Usage
+-----
 
-See the [vignette index](u0_unitizer_index.html), and function specific
-documentation such as `?unitize`.
+`unitizer` stores R expressions and the result of evaluating them so
+that it can detect code regressions. This is akin to saving test output
+to a `.Rout.save` file as documented in [Writing R
+Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories),
+except that we’re storing the actual R objects and it is much easier to
+review them.
+
+To use `unitizer`:
+
+-   Write test expressions as you would when informally testing code on
+    the command line, and save them to a file (e.g. “my\_file\_name.R”).
+-   Run `unitize("my_file_name.R")` and follow the prompts.
+-   Continue developing your package.
+-   Re-run `unitize("my_file_name.R")`; if any tests fail you will be
+    able to review and debug them in an interactive prompt.
+
+`unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
 Usage
 -----

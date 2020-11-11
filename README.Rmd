@@ -16,6 +16,9 @@ rmarkdown::render('README.Rmd', output_format=rmarkdown::md_document())
 ```{r child='vignettes/rmdhunks/intro.Rmd'}
 ```
 
+```{r child='vignettes/rmdhunks/usage.Rmd'}
+```
+
 ## Documentation
 
 * `help(package="unitizer")`, in particular `?unitize`
