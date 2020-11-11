@@ -7,8 +7,14 @@
 \alias{in_pkg}
 \title{Tests and Session State}
 \usage{
-state(par.env, search.path, options, working.directory, random.seed,
-  namespaces)
+state(
+  par.env,
+  search.path,
+  options,
+  working.directory,
+  random.seed,
+  namespaces
+)
 
 in_pkg(package = NULL)
 }
@@ -21,7 +27,7 @@ as produced by \code{\link{in_pkg}}, assumes .GlobalEnv if unspecified}
 
 \item{search.path}{one of \code{0:2}, uses the default value corresponding to
 \code{getOption(unitizer.state)}, which is 0 in the default unitizer state
-of \dQuote{off}.}
+of \dQuote{off}.  See "Custom Control" section for details.}
 
 \item{options}{same as \code{search.path}}
 
@@ -51,10 +57,11 @@ several aspects of session state that can affect the results of code
 evaluation (e.g. global environment, search path).  \code{unitizer} provides
 functionality to increase test reproducibility by controlling session state
 so that it is the same every time a test is run.  This functionality is
-turned off by default to comply with CRAN requirements.  You can
-permanently enable the recommended state tracking level by adding
-\code{options(unitizer.state='recommended')} in your \code{.Rprofile},
-although if you intend to do this be sure to read the
+turned off by default to comply with CRAN requirements, and also because
+there are inherent limitations in R that may prevent it from fully working in
+some circumstances.  You can permanently enable the suggested state tracking
+level by adding \code{options(unitizer.state='suggested')} in your
+\code{.Rprofile}, although if you intend to do this be sure to read the
 \dQuote{CRAN non-compliance} section.
 }
 \section{CRAN non-compliance}{
@@ -116,21 +123,30 @@ these elements of state are not managed:
     default packages that are loaded when you run your tests are unloaded
     prior to running your tests.  If you want to use the same libraries
     across multiple tests you can load them with the \code{pre} argument to
-    \code{\link{unitize}} or \code{\link{unitize_dir}}.
-  \item Options: same as search path
+    \code{\link{unitize}} or \code{\link{unitize_dir}}.  Due to limitations
+    of R this is only an approximation to actually restarting R into a fresh
+    session.
+  \item Options: same as search path, but see "Namespaces" next.
   \item Namespaces: same as search path; this
     option is only made available to support options since many namespaces
     set options \code{onLoad}, and as such it is necessary to unload and
-    re-load them to ensure default options are set.
+    re-load them to ensure default options are set.  See the "Namespaces and
+    Options" section.
 }
 
-In the \dQuote{recommended} state tracking mode, parent environment, random
-seed, working directory, and search path are all managed to level 2, which
-approximates what you would find in a fresh session (see "Custom Control"
-section below).  For example, with the search path managed, each test file
-will start evaluation with the search path set to the tests folder of your
-package.  All these settings are returned to their original values when
-\code{unitizer} exits.
+In the \dQuote{suggested} state tracking mode (previously known as
+\dQuote{recommended}), parent environment, random seed, working directory,
+and search path are all managed to level 2, which approximates what you would
+find in a fresh session (see "Custom Control" section below).  For example,
+with the search path managed, each test file will start evaluation with the
+search path set to the tests folder of your package.  All these settings are
+returned to their original values when \code{unitizer} exits.
+
+To manage the search path \code{unitizer} detaches
+and re-attaches packages.  This is not always the same as loading a package
+into a fresh R session as detaching a package does not necessarily undo every
+action that a package takes when it is loaded.  See \code{\link{detach}} for
+potential pitfalls of enabling this setting.
 
 You can modify what aspects of state are managed by using the \code{state}
 parameter to \code{\link{unitize}}.  If you are satisfied with basic default
@@ -152,7 +168,7 @@ that you can specify via the \code{state} parameter to \code{\link{unitize}}.
 The simplest method is to specify the preset name as a character value:
 
 \itemize{
-  \item "recommended": \itemize{
+  \item "suggested": \itemize{
       \item Use special (non \code{.GlobalEnv}) parent environemnt
       \item Manage search path
       \item Manage random seed (and set it to be of type "Wichmann-Hill"
@@ -160,7 +176,7 @@ The simplest method is to specify the preset name as a character value:
       \item Manage workign directory
       \item Leave namespace and options untouched
     }
-  \item "safe" like recommended, but turns off tracking for search path in
+  \item "safe" like suggested, but turns off tracking for search path in
     addition to namespaces and options.  These settings, particularly the
     last two, are the most likely to cause compatibility problems.
   \item "pristine" implements the highest level of state tracking and control
@@ -252,11 +268,12 @@ types of functions you should specify them with an environment directly, e.g.
 Options and namespace state management require the ability to fully unload
 any non-default packages and namespaces, and there are some packages that
 cannot be unloaded, or should not be unloaded (e.g.
-\href{https://github.com/Rdatatable/data.table/issues/990}{data.table}). If
-you know the packages you typically load in your sessions can be unloaded,
-you can turn this functionality on by setting
-\code{options(unitizer.state="pristine")} either in your session, in your
-\code{.Rprofile} file, or using \code{state="prisitine"} in each call to
+\href{https://github.com/Rdatatable/data.table/issues/990}{data.table}).  I
+some systems it may even be impossible to fully unload any compiled code
+packages (see \code{\link{detach}}. If you know the packages you typically
+load in your sessions can be unloaded, you can turn this functionality on by
+setting \code{options(unitizer.state="pristine")} either in your session, in
+your \code{.Rprofile} file, or using \code{state="prisitine"} in each call to
 \code{unitize} or \code{unitize_dir}.  If you have packages that cannot be
 unloaded, but you still want to enable these features, see the "Search Path
 and Namespace State Options" section of \code{\link{unitizer.opts}} docs.
@@ -290,8 +307,8 @@ of what option state tracking level you select.
 ## In this examples we use `...` to denote other arguments to `unitize` that
 ## you should specify.  All examples here apply equally to `unitize_dir`
 
-## Run with recommended state tracking settings
-unitize(..., state="recommended")
+## Run with suggested state tracking settings
+unitize(..., state="suggested")
 ## Manage as much of state as possible
 unitize(..., state="pristine")
 

@@ -6,22 +6,34 @@
 \alias{unitize_dir}
 \title{Unitize an R Test Script}
 \usage{
-unitize(test.file = NULL, store.id = NULL,
-  state = getOption("unitizer.state"), pre = NULL, post = NULL,
+unitize(
+  test.file = NULL,
+  store.id = NULL,
+  state = getOption("unitizer.state"),
+  pre = NULL,
+  post = NULL,
   history = getOption("unitizer.history.file"),
-  interactive.mode = interactive(), force.update = FALSE,
+  interactive.mode = interactive(),
+  force.update = FALSE,
   auto.accept = character(0L),
-  use.diff = getOption("unitizer.use.diff"))
+  use.diff = getOption("unitizer.use.diff")
+)
 
 review(store.id = NULL)
 
-unitize_dir(test.dir = NULL, store.ids = filename_to_storeid,
-  pattern = "^[^.].*\\\\.[Rr]$", state = getOption("unitizer.state"),
-  pre = NULL, post = NULL,
+unitize_dir(
+  test.dir = NULL,
+  store.ids = filename_to_storeid,
+  pattern = "^[^.].*\\\\.[Rr]$",
+  state = getOption("unitizer.state"),
+  pre = NULL,
+  post = NULL,
   history = getOption("unitizer.history.file"),
-  interactive.mode = interactive(), force.update = FALSE,
+  interactive.mode = interactive(),
+  force.update = FALSE,
   auto.accept = character(0L),
-  use.diff = getOption("unitizer.use.diff"))
+  use.diff = getOption("unitizer.use.diff")
+)
 }
 \arguments{
 \item{test.file}{path to the file containing tests, if supplied path does not
@@ -40,7 +52,7 @@ you to specify non-standard \code{unitizer} storage mechanisms (see
 for \code{unitize_dir}}
 
 \item{state}{character(1L) one of
-\code{c("prisitine", "recommended", "basic", "off", "safe")}, an
+\code{c("prisitine", "suggested", "basic", "off", "safe")}, an
 environment, or a state object produced by \code{\link{state}} or
 \code{\link{in_pkg}}; modifies how \code{unitizer} manages aspects of
 session state that could affect test evaluation, including the parent
@@ -125,7 +137,8 @@ does not.  See \code{\link{infer_unitizer_location}}) for details.}
 }
 \description{
 Turn standard R scripts into unit tests by storing the expressions therein
-along with the results of their evaluation.
+along with the results of their evaluation, and provides an interactive
+prompt to review tests.
 }
 \details{
 \code{unitize} creates unit tests from a single R file, and
@@ -149,15 +162,54 @@ Because of this, no effort is made to create reproducible state in the
 browsing environments, unlike with \code{unitize} or \code{unitize_dir}
 (see \code{state} parameter).
 
-You are strongly encouraged to read through \code{vignette("unitizer")}
-for details and examples.  The demo (\code{demo("unitizer")}) is also a
-good introduction to these functions.
+You are strongly encouraged to read through the vignettes
+for details and examples (\code{browseVignettes("unitizer")}).  The demo
+(\code{demo("unitizer")}) is also a good introduction to these functions.
 }
+\section{Note}{
+
+
+\code{unitizer} approximates the semantics of sourcing an R file when running
+tests, and those of the interactive prompt when reviewing them.  The
+semantics are not identical, and in some cases you may notice differences.
+For example, when running tests:
+
+\itemize{
+  \item All expressions are run with \code{options(warn=1)},
+    irrespective of what the user sets that option to.
+  \item \code{on.exit(...)} expressions will be evaluated immediately for
+    top-level statements (either in the test file or in an
+    \code{\link{unitizer_sect}}, thereby defeating their purpose).
+  \item Each test expression is run in its own environment, which is enclosed
+    by that of previous tests.
+  \item Output and Message streams are sunk so any attempt to debug directly
+    will be near-impossible as you won't see anything.
+}
+
+When reviewing them:
+
+\itemize{
+  \item \code{ls()} and \code{q()} are over-ridden by \code{unitizer} utility
+    functions.
+  \item Expressions are evaluated with \code{options(warn=1)} or greater,
+    although unlike in test running it is possible to set and keep
+    \code{options(warn=2)}.
+  \item Some single upper case letters will be interpreted as \code{unitizer}
+    meta-commands.
+}
+
+For a more complete discussion of these differences see the introductory
+vignette (\code{vignette('u1_intro')}), the "Special Semantics" section of
+the tests vignette (\code{vignette('u2_tests')}), and the "Evaluating
+Expressions at the \code{unitizer} Prompt" section of the interactive
+environment vignette (\code{vignette('u3_interactive-env')}).
+}
+
 \section{Default Settings}{
 
 
-Many of the default settings are specfied in the form \code{getOption("...")}
-to allow the user to "permanently" set them to their prefered modes by
+Many of the default settings are specified in the form \code{getOption("...")}
+to allow the user to "permanently" set them to their preferred modes by
 setting options in their \code{.Rprofile} file.
 }
 

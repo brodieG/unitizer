@@ -97,6 +97,7 @@ local({
   txt1 <- unitizer:::capture_output(
     untz1 <- try(unitize_dir(test.dir, get_store_id, interactive.mode=TRUE))
   )
+
   unitizer:::read_line_set_vals(c("Y", "Q"))
   txt2 <- unitizer:::capture_output(
     untz2 <- unitize_dir(test.dir, get_store_id, interactive.mode=TRUE)

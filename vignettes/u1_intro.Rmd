@@ -12,92 +12,8 @@ vignette: >
   %\usepackage[utf8]{inputenc}
 ---
 
-## Introduction
-
-### TL;DR
-
-`unitizer` simplifies creating, reviewing, and debugging unit tests in R.  To install:
-
+```{r child='./rmdhunks/intro.Rmd'}
 ```
-install.packages('unitizer')
-```
-Please keep in mind this is an experimental framework that has been thoroughly
-tested by *one* person.
-
-`unitizer` bakes in a lot of contextual help so you can get started without reading all the documentation.  Try the demo to get an idea:
-```
-library(unitizer)
-demo(unitizer)
-```
-Or check out the [screencast](http://htmlpreview.github.io/?https://github.com/brodieG/unitizer/blob/rc/extra/gifshow.html) to see `unitizer` in action.
-
-### Why Another Testing Framework?
-
-#### Automated Test Formalization
-
-Are you tired of the `deparse`/`dput` then copy-paste R objects into test file
-dance, or do you use `testthat::expect_equal_to_reference` a lot?
-
-With `unitizer` you review function output at an interactive prompt as you
-would with informal tests.  You then store the value, conditions (e.g.
-warnings, etc.), and environment for use as the reference values in formal
-tests, all with a single keystroke.
-
-#### Streamlined Debugging
-
-Do you wish the nature of a test failure was more immediately obvious?
-
-When tests fail, you are shown a proper
-[diff](https://github.com/brodieG/diffobj) so you can clearly identify _how_ the
-test failed:
-
-![diff
-example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review1.png)
-
-Do you wish that you could start debugging your failed tests without
-additional set-up work?
-
-`unitizer` drops you in the test environment so you can debug _why_ the test
-failed without further ado:
-
-![review
-example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review2.png)
-
-#### Fast Test Updates
-
-Do you avoid improvements to your functions because that would require
-painstakingly updating many tests?
-
-The diffs for the failed tests let you immediately confirm only what you
-intended changed.  Then you can update each test with a single keystroke.
-
-## Usage
-
-`unitizer` stores R expressions and the result of evaluating them so that it can
-detect code regressions.  This is akin to saving test output to a
-`.Rout.save` file as documented in [Writing R
-Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories),
-except that we're storing the actual R objects and it is much easier to review
-them.
-
-To use `unitizer`:
-
-* Write test expressions as you would when informally testing code on the
-  command line, and save them to a file (e.g. "my_file_name.R")
-* Run `unitize("my_file_name.R")` and follow the prompts
-* Continue developing your package
-* Re-run `unitize("my_file_name.R")`; if any tests fail you will be able to
-  review and debug them in an interactive prompt
-
-`unitizer` can run in a non-interactive mode for use with `R CMD check`.
-
-## Documentation
-
-* `help(package="unitizer")`, in particular `?unitize`
-* `demo(package="unitizer")`
-* [`browseVignettes("unitizer")`](u0_unitizer_index.html) for a list of
-  vignettes, or skip straight to the [Introduction
-  vignette](u1_intro.html)
 
 ## How Does `unitizer` Differ from `testthat`?
 
@@ -124,20 +40,24 @@ log10(vec)                                # succeed with warnings
 ```
 These two unit test implementations are functionally equivalent.  There are benefits to both approaches.  In favor of `unitizer`:
 
-* Tests are easy to write
-* Conditions are captured automatically, with no need for special handling
-* You can immediately review failing tests in an interactive environment
-* Updating tests when function output legitimately changes is easy
+* Tests are easy to write.
+* Tests with non-trivial outputs are easy to write, which encourages more
+  realistic testing of functionality.
+* Conditions are captured automatically, with no need for special handling.
+* You can immediately review failing tests in an interactive environment.
+* Updating tests when function output legitimately changes is easy.
 
 In favor of `testthat`:
 
-* The tests are self documenting; expected results are obvious
+* The tests are self documenting; expected results are obvious.
 * Once you write the test you are done; with `unitizer` you still need to
-  `unitize` and review the tests
+  `unitize` and review the tests.
+* Tests are usually all-plain text, whereas `unitizer` stores reference values
+  in binary RDSes (see [Collaborating with Unitizer](u5_miscellaneous.html#collaborating-with-unitizer)).
 
 `unitizer` is particularly convenient when the tests return complex objects (e.g
-as `lm` does) or produce conditions.  There is no need for complicated
-assertions involving deparsed objects.
+as `lm` does) and/or produce conditions.  There is no need for complicated
+assertions involving deparsed objects, or different workflows for snapshots.
 
 ### Converting `testthat` tests to `unitizer`
 
@@ -217,6 +137,19 @@ Instead of:
 test_me(14523.2342520)    # could be deparsed differently
 ```
 
+Similarly issues may arise with non-ASCII characters, so use:
+
+```{r eval=FALSE}
+chr <- "hello\u044F"
+fun_to_test(chr)
+```
+
+Instead of:
+
+```{r eval=FALSE}
+fun_to_test("hello\u044F") # could be deparsed differently
+```
+
 ### Increase Reproducibility with Advanced State Management
 
 `unitizer` can track and manage many aspects of state to make your tests more
@@ -234,7 +167,7 @@ tracked and managed:
 
 State management is turned off by default because it requires tracing some base
 functions which is against CRAN policy.  If you wish to enable this feature use
-`unitize(..., state='recommended')` or `options(unitizer.state='recommended')`.
+`unitize(..., state='suggested')` or `options(unitizer.state='suggested')`.
 For more details see `?unitizerState` and the [reproducible tests
 vignette](u4_reproducible-tests.html).
 

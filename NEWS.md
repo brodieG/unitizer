@@ -1,5 +1,13 @@
 # `unitizer` NEWS
 
+## v1.4.11
+
+* The "recommended" state management mode (see `?unitizerState`) is now called
+  "suggested" to avoid overselling it given there are (documented) pitfalls
+  ("recommended" still works).
+* [#265](https://github.com/brodieG/unitizer/issues/265) Bad vignette links in
+  README (h/t [@moodymudskipper](https://github.com/moodymudskipper)).
+
 ## v1.4.10
 
 * Banish ghosts of `stringsAsFactors`.

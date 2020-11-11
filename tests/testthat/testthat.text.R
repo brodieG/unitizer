@@ -280,7 +280,7 @@ local({
       "array[3,3,3]"
     )
     expect_equal(
-      unitizer:::desc(data.frame(a=letters[1:10], b=1:10)),
+      unitizer:::desc(data.frame(a=letters[1:10], b=1:10, stringsAsFactors=TRUE)),
       "data.frame(a=fct[10], b=int[10])"
     )
   } )

@@ -33,7 +33,7 @@ local({
       )
   } )
   tmp.dir <- tempfile()
-  on.exit(unlink(tmp.dir, recursive=TRUE))
+  on.exit(unlink(tmp.dir, recursive=TRUE), add=TRUE)
   dir.create(tmp.dir)
   tmp.sub.dir <- paste0(tmp.dir, "/get.test.dir")
   tmp.fake.utz <- paste0(tmp.dir, "/fake.unitizer")
@@ -73,10 +73,13 @@ local({
       ro.dir <- tempfile()
       on.exit(unlink(ro.dir))
       dir.create(ro.dir, mode="0500")
-      expect_error(
-        capture.output(set_unitizer(ro.dir, toy.stor), type="message"),
-        "Failed setting unitizer"
-      )
+      if(!identical(try(system('whoami', intern=TRUE), silent=TRUE), "root")) {
+        # seems to be case that root can always write so defeats this test
+        expect_error(
+          capture.output(set_unitizer(ro.dir, toy.stor), type="message"),
+          "Failed setting unitizer"
+        )
+      }
     }
   } )
   test_that("load/store_unitizer", {

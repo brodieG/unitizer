@@ -17,7 +17,8 @@
 #' Unitize an R Test Script
 #'
 #' Turn standard R scripts into unit tests by storing the expressions therein
-#' along with the results of their evaluation.
+#' along with the results of their evaluation, and provides an interactive
+#' prompt to review tests.
 #'
 #' \code{unitize} creates unit tests from a single R file, and
 #' \code{unitize_dir} creates tests from all the R files in the specified
@@ -40,14 +41,51 @@
 #' browsing environments, unlike with \code{unitize} or \code{unitize_dir}
 #' (see \code{state} parameter).
 #'
-#' You are strongly encouraged to read through \code{vignette("unitizer")}
-#' for details and examples.  The demo (\code{demo("unitizer")}) is also a
-#' good introduction to these functions.
+#' You are strongly encouraged to read through the vignettes
+#' for details and examples (\code{browseVignettes("unitizer")}).  The demo
+#' (\code{demo("unitizer")}) is also a good introduction to these functions.
+#'
+#' @section Note:
+#'
+#' \code{unitizer} approximates the semantics of sourcing an R file when running
+#' tests, and those of the interactive prompt when reviewing them.  The
+#' semantics are not identical, and in some cases you may notice differences.
+#' For example, when running tests:
+#'
+#' \itemize{
+#'   \item All expressions are run with \code{options(warn=1)},
+#'     irrespective of what the user sets that option to.
+#'   \item \code{on.exit(...)} expressions will be evaluated immediately for
+#'     top-level statements (either in the test file or in an
+#'     \code{\link{unitizer_sect}}, thereby defeating their purpose).
+#'   \item Each test expression is run in its own environment, which is enclosed
+#'     by that of previous tests.
+#'   \item Output and Message streams are sunk so any attempt to debug directly
+#'     will be near-impossible as you won't see anything.
+#' }
+#'
+#' When reviewing them:
+#'
+#' \itemize{
+#'   \item \code{ls()} and \code{q()} are over-ridden by \code{unitizer} utility
+#'     functions.
+#'   \item Expressions are evaluated with \code{options(warn=1)} or greater,
+#'     although unlike in test running it is possible to set and keep
+#'     \code{options(warn=2)}.
+#'   \item Some single upper case letters will be interpreted as \code{unitizer}
+#'     meta-commands.
+#' }
+#'
+#' For a more complete discussion of these differences see the introductory
+#' vignette (\code{vignette('u1_intro')}), the "Special Semantics" section of
+#' the tests vignette (\code{vignette('u2_tests')}), and the "Evaluating
+#' Expressions at the \code{unitizer} Prompt" section of the interactive
+#' environment vignette (\code{vignette('u3_interactive-env')}).
 #'
 #' @section Default Settings:
 #'
-#' Many of the default settings are specfied in the form \code{getOption("...")}
-#' to allow the user to "permanently" set them to their prefered modes by
+#' Many of the default settings are specified in the form \code{getOption("...")}
+#' to allow the user to "permanently" set them to their preferred modes by
 #' setting options in their \code{.Rprofile} file.
 #'
 #' @export
@@ -80,7 +118,7 @@
 #'     mechanisms for the \code{unitizers} (see \code{\link{get_unitizer}})
 #' }
 #' @param state character(1L) one of
-#'   \code{c("prisitine", "recommended", "basic", "off", "safe")}, an
+#'   \code{c("prisitine", "suggested", "basic", "off", "safe")}, an
 #'   environment, or a state object produced by \code{\link{state}} or
 #'   \code{\link{in_pkg}}; modifies how \code{unitizer} manages aspects of
 #'   session state that could affect test evaluation, including the parent

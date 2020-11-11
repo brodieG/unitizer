@@ -129,7 +129,35 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
       ignore=identical(res$visible, FALSE) && !length(res$conditions)
     )
 } )
-eval_user_exp <- function(unitizerUSEREXP, env, global, with.display=TRUE) {
+# ## Three places eval_user_exp is called
+#
+# ## This is used by unitizer_browse, and also all over the place so a real
+# ## problem to isolate!
+#
+# unitizer_prompt
+#   eval_user_exp
+#
+# ## This is used to evaluate the test expression
+# ## and produce unitizerItems
+#
+# unitize_eval
+#   `+`("unitizer", "unitizerTestsOrExpression")
+#      exec
+#        eval_with_capture
+#          eval_user_exp                     <-----
+#      `+`("unitizer", "unitizerItem")
+#         testItem("unitizer", "unitizerItem")
+#           eval_user_exp                    <-----
+
+
+# @param warn.sticky TRUE or FALSE whether to let the warning option state
+#   persist past the call.  If TRUE, then whatever is invoking this function is
+#   responsible for resetting it.  At the moment it is when this is invoked via
+#   the `unitizer_prompt` in browsing test results.
+
+eval_user_exp <- function(
+  unitizerUSEREXP, env, global, with.display=TRUE, warn.sticky=FALSE
+) {
   if(!is(global, "unitizerGlobal") && !is.null(global)) {
     # nocov start
     stop(
@@ -138,9 +166,10 @@ eval_user_exp <- function(unitizerUSEREXP, env, global, with.display=TRUE) {
     )
     # nocov end
   }
-  old.opt <- options(warn=1L)
-  on.exit(options(old.opt))
-
+  if(getOption('warn') < 1L) {
+    old.opt <- options(warn=1L)
+    if(!warn.sticky) on.exit(options(old.opt))
+  }
   exp <- if(is.expression(unitizerUSEREXP)) {
      call("withVisible", call("eval", unitizerUSEREXP))
   } else call("withVisible", unitizerUSEREXP)
@@ -397,7 +426,7 @@ clean_message <- function(res) {
   stopifnot(
     is.list(res), is.character(res$message), identical(length(res$message), 1L)
   )
-  # this all assumes options(warn=1)
+  # this all assumes options(warn>=1)
 
   reg.base <- "(%s in .*? :)((?:\\n|\\s)*%%s)\\n.*"
   if(nchar(res$message)) {

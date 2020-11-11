@@ -51,13 +51,19 @@ reference values from the store. Overwrite with new results ([Y]es, [N]o,
 
 This clearly lays out all the special commands available to us:
 
-* `Y` will accept the new value as the correct reference value to use for a test
-* `N` will keep the previous reference value as the reference value for future tests
-* `P` takes us back to the previously reviewed test (see "Test Navigation" next)
-* `B` allows us to navigate to any previously reviewed test (see "Test Navigation" next)
-* `R` toggles re-run mode; when you complete review or exit, `unitizer` will re-run the tests, which is useful if you made changes to your source code and re-installed your package from the `unitizer` prompt
-* `Q` quits `unitizer` (see "Quitting `unitizer`")
-* `H` provides contextual help
+* `Y` will accept the new value as the correct reference value to use for a
+  test.
+* `N` will keep the previous reference value as the reference value for future
+  tests.
+* `P` takes us back to the previously reviewed test (see "Test Navigation"
+  next).
+* `B` allows us to navigate to any previously reviewed test (see "Test
+  Navigation" next).
+* `R` toggles re-run mode; when you complete review or exit, `unitizer` will
+  re-run the tests, which is useful if you made changes to your source code and
+  re-installed your package from the `unitizer` prompt.
+* `Q` quits `unitizer` (see "Quitting `unitizer`").
+* `H` provides contextual help.
 
 If you type any of those letters into the `unitizer` prompt you will cause `unitizer` to respond as described above instead of evaluating the expression as it would be at the normal R console prompt.  If you have a variable assigned to one of those letters and you wish to access it, you can do so with any of `get`, `(`, `print`, etc.  For example, suppose we stored something in `Y`, then to access it all these commands would work:
 
@@ -161,8 +167,8 @@ If you are unsure about the changes you just approved for the `unitizer`, you ca
 
 At any point you may quit `unitizer` by typing `Q` at the `unitizer` prompt.  If you have already reviewed tests, you will be given the opportunity to save what you have done so far as you would when finalizing the `unitizer`.  Note that if you chose to quit `unitizer` may exit without giving you the opportunity to review the tests.  This will happen if:
 
-* You did not make any changes to the `unitizer` (e.g. if you chose `N` at failed tests, you are keeping the reference value, so the `unitizer` is not actually changing)
-* And test evaluation took less than `getOption("unitizer.prompt.b4.quit.time")` seconds (currently 10 seconds)
+* You did not make any changes to the `unitizer` (e.g. if you chose `N` at failed tests, you are keeping the reference value, so the `unitizer` is not actually changing).
+* And test evaluation took less than `getOption("unitizer.prompt.b4.quit.time")` seconds (currently 10 seconds).
 
 Note that if you quit using `quit()` or `q()` you will lose any unsaved changes.
 The same will happen if you interrupt evaluation with CTRL+C (or ESC in
@@ -178,14 +184,22 @@ RStudio), or if you are in a debugged function and quit the browser with 'Q'.
 
 The `unitizer` prompt is designed to emulate the standard R prompt.  For the most part you can type any expression that you would type at the R prompt and get the same result as you would there.  This means you can examine the objects created by your test script, run R computations, etc.
 
-There are, however, some suble differences created by the structure of the evaluation environments `unitizer` uses:
+There are, however, some subtle differences created by the structure of the evaluation environments `unitizer` uses:
 
-* Even though you can see objects produced by tests, you can not actually remove them with `rm`
-* Any objects you create at the interactive prompt are only available for the test you are currenlty reviewing, so do not expect them to still be there at subsequent prompts
-* Other subtle issues discussed at length in the ([reproducible tests vignette](u4_reproducible-tests.html#test-environments))
-* There are special `unitizer` objects `.new`, `.NEW`, `.ref`, and `.REF` that let you review the results of tests (we will discuss these next)
-* `ls` is over-ridden by a special `unitizer` version (we will also dicuss this next)
-* You will have access to any objects created through the `pre` argument to `unitize`, though they will not show up in a call to `ls`
+* Even though you can see objects produced by tests, you can not actually remove
+  them with `rm`.
+* Any objects you create at the interactive prompt are only available for the
+  test you are currently reviewing, so do not expect them to still be there at
+  subsequent prompts.
+* All expressions are evaluated with `options(warn=1)` or greater.
+* Other subtle issues discussed at length in the [Reproducible Tests
+  Vignette](u4_reproducible-tests.html#test-environments).
+* There are special `unitizer` objects `.new`, `.NEW`, `.ref`, and `.REF` that
+  let you review the results of tests (we will discuss these next).
+* `ls` is over-ridden by a special `unitizer` version (we will also discuss this
+  next); you can use `base::ls` if you need the original.
+* You will have access to any objects created through the `pre` argument to
+  `unitize`, though they will not show up in a call to `ls`.
 
 ### `.new` and `.ref`
 
@@ -193,13 +207,17 @@ As we saw in the demo there are special objects available at the prompt: `.new` 
 
 `.new` and `.ref` contain the values produced by the tests, but sometimes it is useful to access other aspects of the test evaluation.  To do so you can use `.NEW` and `.REF`:
 
-* `.NEW` prints general information about the test
-* `.NEW$value` returns the test value; equivalent to typing `.new` at the prompt
-* `.NEW$conditions` returns the list of conditions produced by the test
-* `.NEW$messsage` returns the stderr captured during test evaluation
-* `.NEW$output` returns the screen output captured during test evaluation (note often this will be similar to what you get from `.new` or `.NEW$value` since typing those expressions at the prompt leads to the value being printed)
-* `.NEW$call` returns the test expression
-* `.NEW$aborted` returns whether the test expression invoked an "abort" restart (e.g. called `stop` at some point)
+* `.NEW` prints general information about the test.
+* `.NEW$value` returns the test value; equivalent to typing `.new` at the
+  prompt.
+* `.NEW$conditions` returns the list of conditions produced by the test.
+* `.NEW$messsage` returns the stderr captured during test evaluation.
+* `.NEW$output` returns the screen output captured during test evaluation (note
+  often this will be similar to what you get from `.new` or `.NEW$value` since
+  typing those expressions at the prompt leads to the value being printed).
+* `.NEW$call` returns the test expression.
+* `.NEW$aborted` returns whether the test expression invoked an "abort" restart
+  (e.g. called `stop` at some point).
 
 You can substitute `.REF` for `.NEW` in any of the above, provided that `.REF` is defined (i.e. that will not work when you are reviewing new tests since there is no corresponding reference test for those by definition).
 
@@ -211,7 +229,11 @@ evaluating `diffobj::diffObj` between each component of `.NEW` and `.REF`.
 
 ### `ls`
 
-Using `ls` at the `unitizer` prompt calls an `unitizer` version of the function.  This is what happens when we type `ls()` at the first failed test in the `unitizer` we've been reviewing in this vignette:
+Using `ls` at the `unitizer` prompt calls an `unitizer` version of the function
+(you can call the original with `base::ls()`).  This is what happens when we
+type `ls()` at the first failed test in the `unitizer` we've been reviewing in
+this vignette:
+
 ```
 $`objects in new test env:`
 [1] "res" "x"   "y"
@@ -253,7 +275,7 @@ where object names have symbols such as `*` or `'` appended to them.  This happe
 * `'` Object existed during reference test evaluation, and still does, but it has a different value than it did during reference test evaluation
 * `**` Object exists now, but did not exist during reference test evaluation
 
-For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [patchwork reference environments](u4_reproducible-tests.html#patchwork-reference-environments).
+For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [Patchwork Reference Environments](u4_reproducible-tests.html#patchwork-reference-environments).
 
 Objects assigned right before a test are part of that test's environment so will always be available.
 

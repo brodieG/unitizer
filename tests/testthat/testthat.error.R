@@ -19,16 +19,7 @@ local({
       "unitizerItemTestError", compare.err=TRUE, value=c('compare', 'error')
     )
   )
-  err.capt <- unitizer:::capture_output(show(err))
-
   test_that("Show Test Error", {
-    # Create an error that triggers non-standard error diff display (comparison
-    # error with more than one line of output)
-
-    expect_equal(
-      err.capt$message,
-      c("| Unable to compare value: ", "| - compare", "| - error",  "")
-    )
     expect_is(unitizer:::as.Diffs(err)@value, "unitizerItemTestsErrorsDiff")
   })
 

@@ -18,10 +18,10 @@ vignette: >
 
 When `unitize` is run with a test file against an existing `unitizer` store, each test in the file is matched and compared to the corresponding test in the store.  Here is a comprehensive list of possible outcomes:
 
-* **New**: a test present in the file is not in the store and needs to be reviewed to confirm it is correct
-* **Passed**: the test matched the reference test in the store and need not be reviewed
-* **Failed**: the evaluation of the test from the file differs from the one produced by same expression in the store
-* **Deleted/Removed**: a test present in the `unitizer` store no longer exists in the test file so you will be prompted to remove it from the store
+* **New**: a test present in the file is not in the store and needs to be reviewed to confirm it is correct.
+* **Passed**: the test matched the reference test in the store and need not be reviewed.
+* **Failed**: the evaluation of the test from the file differs from the one produced by same expression in the store.
+* **Deleted/Removed**: a test present in the `unitizer` store no longer exists in the test file so you will be prompted to remove it from the store.
 * **Corrupted/Error**: an error occurred while attempting to compare the file and store tests; this should occur very rarely and is likely the result of using a custom comparison function to compare the tests (see [`unitizer_sect`](#controlling-test-comparison) for more details on custom comparison functions).  Because the comparison function itself failed, `unitizer` has no way of knowing whether the test passed or failed; you can think of it as an `NA` outcome.
 
 When reviewing tests, `unitizer` will group tests by test type, so you will review all new tests  in one go, then the failed tests, and so on.  As a result, the order that you review tests may not be the same as the order they appear in in the test file.
@@ -41,11 +41,11 @@ The actual rule `unitizer` uses to decide whether an expression is a test or not
 
 The following aspects of a unitizer tests are recorded for future comparison:
 
-* Value
-* Conditions
-* Screen (stdout) output
-* Message (stderr) output
-* Whether the expression issued an "abort" `invokeRestart` (e.g. was `stop` called in the expression)
+* Value.
+* Conditions.
+* Screen (stdout) output.
+* Message (stderr) output.
+* Whether the expression issued an "abort" `invokeRestart` (e.g. was `stop` called in the expression).
 
 Currently only the first two elements are actually compared when determining whether a test passes or fails.  These two should capture almost all you would care about from a unit test perspective.
 
@@ -98,7 +98,7 @@ unitize(file.path(.unitizer.fastlm, "tests", "unitizer", "unitizer.fastlm.R"))
 ```
 If there are tests that require reviewing, each section will be reviewed in turn.
 
-Note that `unitizer_sect` does not create separate evaluation environments for each section.  Any created object will be available to all lexically subsequent tests, regardless of whether they are in the same section or not.
+Note that `unitizer_sect` does not create separate evaluation environments for each section.  Any created object will be available to all lexically subsequent tests, regardless of whether they are in the same section or not.  Additionally `on.exit` expressions in `unitizer_sect` are evaluated immediately, not on exit.
 
 It is possible to have nested sections, though at this point in time `unitizer` only explicitly reports information at the outermost section level.
 
@@ -134,29 +134,96 @@ If you want to change the comparison function for conditions, keep in mind that 
 
 If you need to have different comparison functions within a section, use nested sections.  While `unitizer` will only report the outermost section metrics in top-level summaries, the specified comparison functions will be used for each nested section.
 
-## Other Details
+## Special Semantics
 
-### Matching Tests
+### Almost Like `source`
 
-Whenever you re-run `unitize` on a file that has already been `unitize`d, `unitizer` matches the expressions in that file to those stored in the corresponding `unitizer` store.  `unitizer` matches only on the deparsed expression, and does not care at all where in the file the expression occurs.  If multiple identical expressions exist in a file they will be matched in the order they show up.
+When `unitizer` runs the test expressions in a test file it does more than just
+evaluating each in sequence.  As a result there are some slight differences in
+semantics relative to using `source`.  We discuss the most obvious ones here.
 
-The `unitizer_sect` in which a test was when it was first `unitize`d has no bearing whatsoever on matching a new test to a reference test.  For example, if a particular test was in "Section A" when it was first `unitize`d, but in the current version of the test file it is in "Section X", that test will be matched to the current one in "Section X".
+### `on.exit`
 
-### Commenting Tests
+Each top-level statement statement, or top-level statement within a
+`unitizer_sect` (e.g. anything considered a test), is evaluated directly with
+`eval` in its own environment.  This means any `on.exit` expressions will be
+executed when the top-level expression that defines them is done executing.  For
+example, it is not possible to set an `on.exit(...)` for an entire
+`unitizer_sect()` block, although it is possible to set it for a single
+sub-expression:
 
-`unitizer` parses the comments in the test files and attaches them to the test that they document.  Comments are attached to tests if they are on the same line as the test, or in the lines between a test and the previous test.  Comments are displayed with the test expression during the interactive review mode.
+```
+unitizer_sect('on.exit example', {
+  d <- c <- b <- 1
+  on.exit(b <- 2)
+  b                  # == 2!
+  {
+    on.exit(d <- c <- 3)
+    c                # Still 1
+  }
+  d                  # == 3
+}
+```
+
+### Evaluation Environments
+
+Each test is evaluated in its own environment, which has for enclosure the
+environment of the prior test.  This means that a test has access to all the
+objects created/used by earlier tests, but not objects created/used by
+subsequent tests.  See the [Reproducible Tests
+Vignette](u4_reproducible-tests.html#workspace-and-evaluation-environments) for
+more details.
 
 ### Options and Streams
 
 In order to properly capture output, `unitizer` will modify streams and options.  In particular, it will do the following:
 
-* temporarily set `options(warn=1L)` during expression evaluation
-* temporarily set `options(error=NULL)` during expression evaluation
-* use `sink()` to capture any output to `stdout`
-* use `sink(type="message")` to capture output to `stderr`
+* Temporarily set `options(warn>=1L)` during expression evaluation.
+* Temporarily set `options(error=NULL)` during expression evaluation.
+* Use `sink()` to capture any output to `stdout`.
+* Use `sink(type="message")` to capture output to `stderr`.
 
-This should all be transparent to the user, unless the user is also attempting to modify these settings in the test expressions.  The problematic interaction are around the `options` function.  If the user sets `options(warn=1)` with the hopes that setting will persist beyond the execution of the test scripts, that will not happen.  If the user sets `options(error=recover)` or some such in a test expression, and that expression throws an error, you will be thrown into recovery mode with no visibility of `stderr` or `stdout`, which will make for pretty challenging debugging.  Similarly, `unitize`ing `debug`ged functions, or interactive functions, is unlikely to work well.
+This should all be transparent to the user, unless the user is also attempting
+to modify these settings in the test expressions.  The problematic interaction
+are around the `options` function.  If the user sets `options(warn=1)` with the
+hopes that setting will persist beyond the execution of the test scripts, that
+will not happen.  If the user sets `options(error=recover)` or some such in a
+test expression, and that expression throws an error, you will be thrown into
+recovery mode with no visibility of `stderr` or `stdout`, which will make for
+pretty challenging debugging.  Similarly, `unitize`ing `debug`ged functions, or
+interactive functions, is unlikely to work well.
+
+You should be able to use `options(warn=2)` and `options(error=recover)` from
+the interactive `unitizer` prompt.
 
 If `unitize` is run with `sdtderr` or `stdout` sunk, then it will subvert the sink during test evaluation and reset it to the same sinks on exit.  If a test expression sinks either stream, `unitizer` will stop capturing output from that point on until the end of the test file.  At that point, it will attempt to reset the sinks to what they were when `unitizer` started.  Sometimes this is not actually possible.  If such a situation occurs, `unitizer` will release all sinks to try to avoid a situation where control is returned to the user with output streams still captured.
 
 To reduce the odds of storing massive and mostly useless `stdout`, `unitize` limits how much output is stored by default.  If you exceed the limit you will be warned.  You may modify this setting with `options("unitizer.max.capture.chars")`.
+
+## Other Details
+
+### Matching Tests
+
+Whenever you re-run `unitize` on a file that has already been `unitize`d,
+`unitizer` matches the expressions in that file to those stored in the
+corresponding `unitizer` store.  `unitizer` matches only on the deparsed
+expression, and does not care at all where in the file the expression occurs.
+If multiple identical expressions exist in a file they will be matched in the
+order they show up.
+
+The `unitizer_sect` in which a test was when it was first `unitize`d has no
+bearing whatsoever on matching a new test to a reference test.  For example, if
+a particular test was in "Section A" when it was first `unitize`d, but in the
+current version of the test file it is in "Section X", that test will be matched
+to the current one in "Section X".
+
+Some expressions may deparse differently on different systems (e.g. numbers with
+decimal places, non-ASCII characters) so tests containing them may not match
+correctly across systems.  See the [Introductory
+Vignette](u1_intro.html#test-expressions-are-stored-deparsed) for how to avoid
+problems with this.
+
+### Commenting Tests
+
+`unitizer` parses the comments in the test files and attaches them to the test that they document.  Comments are attached to tests if they are on the same line as the test, or in the lines between a test and the previous test.  Comments are displayed with the test expression during the interactive review mode.  Comment parsing is done on a "best-efforts" basis; it may miss some comments, or even fail to work entirely.
+
