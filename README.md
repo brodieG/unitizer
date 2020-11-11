@@ -25,8 +25,8 @@ explicit expectations are unnecessary. Every test is easy to write with
 `unitizer` because testing and using a function are the same. This
 encourages non-trivial tests that better represent actual usage.
 
-Tests fail when the value associated with an expression changes. When
-run in interactive mode you are dropped directly into the failing test
+Tests fail when the value associated with an expression changes. In
+interactive mode you are dropped directly into the failing test
 environment so you may debug it.
 
 `unitizer` is on CRAN:
@@ -52,10 +52,11 @@ Are you tired of the `deparse`/`dput` then copy-paste R objects into
 test file dance, or do you use `testthat::expect_equal_to_reference` or
 other snapshot testing a lot?
 
-With `unitizer` you review function output at an interactive prompt as
-you would with informal tests. You then store the value, conditions (
-e.g. warnings, etc.), and environment for use as the reference values in
-formal tests, all with a single keystroke.
+With `unitizer` you interactively review your code, as you would when
+informally testing it by typing it at the R prompt. Then, with a single
+keystroke, `unitizer` stores the code, the value and any conditions
+(warnings, errors, etc.) it produced, and turns the lot into a formal
+regression test.
 
 ### Streamlined Debugging
 
@@ -84,27 +85,6 @@ painstakingly updating many tests?
 
 The diffs for the failed tests let you immediately confirm only what you
 intended changed. Then you can update each test with a single keystroke.
-
-Usage
------
-
-`unitizer` stores R expressions and the result of evaluating them so
-that it can detect code regressions. This is akin to saving test output
-to a `.Rout.save` file as documented in [Writing R
-Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Package-subdirectories),
-except that we’re storing the actual R objects and it is much easier to
-review them.
-
-To use `unitizer`:
-
--   Write test expressions as you would when informally testing code on
-    the command line, and save them to a file (e.g. “my\_file\_name.R”).
--   Run `unitize("my_file_name.R")` and follow the prompts.
--   Continue developing your package.
--   Re-run `unitize("my_file_name.R")`; if any tests fail you will be
-    able to review and debug them in an interactive prompt.
-
-`unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
 Usage
 -----
