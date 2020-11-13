@@ -35,10 +35,10 @@ Are you tired of the `deparse`/`dput` then copy-paste R objects into test file
 dance, or do you use `testthat::expect_equal_to_reference` or other snapshot
 testing a lot?
 
-With `unitizer` you interactively review your code, as you would when informally
-testing it by typing it at the R prompt.  Then, with a single keystroke,
-`unitizer` stores the code, the value and any conditions (warnings, errors,
-etc.) it produced, and turns the lot into a formal regression test.
+With `unitizer` you interactively review your code as you would when typing it
+at the R prompt.  Then, with a single keystroke, you tell `unitizer` to store
+the code, and any values, warnings, or errors it produced, thereby creating a
+formal regression test.
 
 ### Streamlined Debugging
 
