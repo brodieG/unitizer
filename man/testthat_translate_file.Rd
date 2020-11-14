@@ -6,20 +6,34 @@
 \alias{testthat_translate_dir}
 \title{Convert a \code{testthat} Test File to a \code{unitizer}}
 \usage{
-testthat_translate_file(file.name,
+testthat_translate_file(
+  file.name,
   target.dir = file.path(dirname(file.name), "..", "unitizer"),
-  state = getOption("unitizer.state"), keep.testthat.call = TRUE,
-  prompt = "always", interactive.mode = interactive(), ...)
+  state = getOption("unitizer.state"),
+  keep.testthat.call = TRUE,
+  prompt = "always",
+  interactive.mode = interactive(),
+  ...
+)
 
-testthat_translate_dir(dir.name, target.dir = file.path(dir.name, "..",
-  "unitizer"), filter = "^test.*\\\\.[rR]",
-  state = getOption("unitizer.state"), keep.testthat.call = TRUE,
-  force = FALSE, interactive.mode = interactive(), ...)
+testthat_translate_dir(
+  dir.name,
+  target.dir = file.path(dir.name, "..", "unitizer"),
+  filter = "^test.*\\\\.[rR]",
+  state = getOption("unitizer.state"),
+  keep.testthat.call = TRUE,
+  force = FALSE,
+  interactive.mode = interactive(),
+  ...
+)
 
-testthat_translate_name(file.name,
+testthat_translate_name(
+  file.name,
   target.dir = file.path(dirname(file.name), "..", "unitizer"),
-  name.new = NULL, name.pattern = "^(?:test\\\\W*)?(.*)(?:\\\\.[rR])$",
-  name.replace = "\\\\1")
+  name.new = NULL,
+  name.pattern = "^(?:test\\\\W*)?(.*)(?:\\\\.[rR])$",
+  name.replace = "\\\\1"
+)
 }
 \arguments{
 \item{file.name}{a path to the \code{testthat} test file to convert}

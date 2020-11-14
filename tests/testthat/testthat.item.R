@@ -409,10 +409,10 @@ local({
       #   paste0(capture.output(show(my.unitizer7@tests.errorDetails[[5L]])), collapse=";"),
       #   "^@@ \\.ref @@;-  \\[1\\] [0-9.]+;@@ \\.new @@", "+  \\[1\\] [0-9.]$"
       # )
-      expect_match(
-        capture.output(show(my.unitizer7@tests.errorDetails[[5L]])),
-        "Value mismatch:", all=FALSE
-      )
+      # expect_match(
+      #   capture.output(show(my.unitizer7@tests.errorDetails[[5L]])),
+      #   "Value mismatch:", all=FALSE
+      # )
     })
     test_that("testFuns", {
       # these two should just work fine

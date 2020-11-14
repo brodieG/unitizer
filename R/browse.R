@@ -108,6 +108,9 @@ setMethod(
     # Browse through tests that require user input, repeat so we give the user
     # an opportunity to adjust decisions before committing
 
+    old.warn <- getOption('warn')
+    on.exit(options(warn=old.warn))
+
     quit.time <- getOption("unitizer.prompt.b4.quit.time")
     if(is.null(quit.time)) quit.time <- 10
     update <- FALSE
@@ -776,8 +779,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
       } else if (out.std || out.err) cat("\n")
     }
     # Need to add ignored tests as default action is N, though note that ignored
-    # tests are treated specially in `healEnvs` and are either included or removed
-    # based on what happens to the subsequent non-ignored test.
+    # tests are treated specially in `healEnvs` and are either included or
+    # removed based on what happens to the subsequent non-ignored test.
 
     if(!x@inspect.all) {
       if(
@@ -924,7 +927,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             browse.env1=browse.eval.env,
             browse.env2=new.env(parent=parent.env(base.env.pri)),
             valid.opts=valid.opts,
-            help=help.prompt, help.opts=help.opts
+            help=help.prompt, help.opts=help.opts, warn.sticky=TRUE
           ),
           "unitizerBrowse"
         )

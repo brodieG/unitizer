@@ -52,11 +52,12 @@ The main issue with using `unitizer` with a version controlled package is that
 you have to decide whether you want to include the binary `rds` files in the
 version control history.  Some options:
 
-* do not track the binary files at all (but they are valuable and now not backed
-  up)
-* do not track the binary files at all, but implement a secondary back-up system
-  (this sounds really annoying)
-* Use a backed-up, non-file system store (see "Alternate Store Locations" above)
+* Do not track the binary files at all (but they are valuable and now not backed
+  up).
+* Do not track the binary files at all, but implement a secondary back-up system
+  (this sounds really annoying).
+* Use a backed-up, non-file system store (see "Alternate Store Locations"
+  above).
 * Track the binary files, but manage how often they are committed.
 
 We recommend splitting tests for different functionality into different files.
@@ -83,9 +84,9 @@ valuable test information.
 ### Collaborating with Unitizer
 
 If you merge in a pull request from a third party you do not fully trust, we
-recommend you checkout your most recent version of the rdses that are part of
-the pull request.  You can then re-run the tests and review what each of them
-does.
+recommend that you do not accept any commits to the rdses.  You can accept and
+review changes to test expressions, and then `unitize` against your existing
+rdses and review the corresponding values.
 
 ## Modifying an Existing Unitizer
 
@@ -95,7 +96,8 @@ does.
 
 ### `editCalls`
 
-*Warning*: this is experimental.
+*Warning*: this is experimental; make sure your test store is backed up before
+you use it.
 
 `editCalls` allows you to modify the calls calls stored in a `unitizer`.  This is useful when you decide to change the call (e.g. a function name), but otherwise leave the behavior of the call unchanged.  You can then upate your test script and the renamed calls will be matched against the correct values in the `unitizer` store.  Without this you would have to re-review and re-store every test since `unitizer` identifies tests by the deparsed call.
 
@@ -103,11 +105,13 @@ does.
 
 There is currently no direct way to split a `unitizer` into pieces (see [issue #44](https://github.com/brodieG/unitizer/issues/44)), but the current work around is to:
 
-1. copy the test file and the corresponding `unitizer` to a new location
-2. edit the original test file to remove the tests we want to split off
-3. run unitizer and agree to drop all removed tests (hint: this is a good time to use `YY`)
-4. edit the new test file and remove the tests that are still in the old test file
-5. run unitizer and agree to drop all removed tests
+1. Copy the test file and the corresponding `unitizer` to a new location.
+2. Edit the original test file to remove the tests we want to split off.
+3. Run unitizer and agree to drop all removed tests (hint: this is a good time
+   to use `YY`).
+4. Edit the new test file and remove the tests that are still in the old test
+   file.
+5. Run unitizer and agree to drop all removed tests.
 
 The net result will be two new `unitizer`, each with a portion of the tests from the original `unitizer`.  Clearly less than ideal, but will work in a pinch.
 
@@ -117,8 +121,10 @@ The net result will be two new `unitizer`, each with a portion of the tests from
 
 `unitizer` sinks `stdout` and `stderr` during test evaluation, so it is possible that in some corner cases `unitizer` exits without releasing sinks.  We have put substantial effort in trying to avoid this eventuality, but should it occur, here are some things you can do:
 
-* run: `while(sink.number()) sink()` and `sink(type="message")` to reset the output stream sinks
-* or, restart the R session (type `q()` followed by ENTER, then "y" or "n" (without quotes) depending on whether you want to save your workspace or not)
+* Run: `while(sink.number()) sink()` and `sink(type="message")` to reset the
+  output stream sinks.
+* Or, restart the R session (type `q()` followed by ENTER, then "y" or "n"
+  (without quotes) depending on whether you want to save your workspace or not).
 
 Either way, please contact the maintainer as this should not happen.
 
@@ -167,7 +173,7 @@ as those options may be different depending on whether you are running whether y
 
 Because `unitize` evaluates test expressions within a call to `withCallingHandlers`, there are some limitations on successfully running `unitize` inside your own error handling calls.  In particular, `unitize` will not work properly if run inside a `tryCatch` or `try` statement. If test expressions throw conditions, the internal `withCallingHandlers` will automatically hand over control to your `tryCatch`/`try` statement without an opportunity to complete `unitize` computations.  Unfortunately there does not seem to be a way around this since we have to use `withCallingHandlers` so that test statements after non-aborting conditions are run.
 
-See this [SO Q/A](http://stackoverflow.com/questions/20572288/capture-arbitrary-conditions-with-withcallinghandlers) for more details on the problem.
+See this [SO Q/A](https://stackoverflow.com/questions/20572288/capture-arbitrary-conditions-with-withcallinghandlers) for more details on the problem.
 
 ### Overridden Functions
 

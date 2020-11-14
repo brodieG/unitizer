@@ -10,8 +10,12 @@ infer_unitizer_location(store.id, ...)
 
 \method{infer_unitizer_location}{default}(store.id, ...)
 
-\method{infer_unitizer_location}{character}(store.id, type = "f",
-  interactive.mode = interactive(), ...)
+\method{infer_unitizer_location}{character}(
+  store.id,
+  type = "f",
+  interactive.mode = interactive(),
+  ...
+)
 }
 \arguments{
 \item{store.id}{character(1L) file or directory name, the file name portion

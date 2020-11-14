@@ -1,5 +1,33 @@
 # `unitizer` NEWS
 
+## v1.4.11
+
+* [#248](https://github.com/brodieG/unitizer/issues/248): Ensure vignettes can
+  be tested with `tools::testInstalledPackage`.
+* [#250](https://github.com/brodieG/unitizer/issues/250),
+  [#251](https://github.com/brodieG/unitizer/issues/251),
+  [#254](https://github.com/brodieG/unitizer/issues/254): Comment parsing
+  improvements (h/t
+  [@blset](https://github.com/brodieG/unitizer/issues/created_by/blset),
+  [@kalibera](https://github.com/kalibera/))
+* [#263](https://github.com/brodieG/unitizer/issues/263): Clarify documentation
+  about potential state management issuess.  This includes renaming
+  "recommended" state management mode (see `?unitizerState`) to "suggested"
+  ("recommended" still works).
+* [#268](https://github.com/brodieG/unitizer/issues/268): `options(warn=2)` now
+  works at the `unitizer` prompt in interactive mode.
+* [#265](https://github.com/brodieG/unitizer/issues/265): Bad vignette links in
+  README (h/t [@moodymudskipper](https://github.com/moodymudskipper)).
+* [#260](https://github.com/brodieG/unitizer/issues/260): Remove old test error
+  display code.
+* [#246](https://github.com/brodieG/unitizer/issues/246),
+  [#243](https://github.com/brodieG/unitizer/issues/243): Assorted documentation
+  updates.
+  [#254](https://github.com/brodieG/unitizer/issues/254): Comment parsing.
+* Fix `sprintf` unused argument errors in new versions of r-devel (h/t
+  [@kalibera](https://github.com/kalibera/)).
+* `stringsAsFactors` rose from the grave; we put it back.
+
 ## v1.4.10
 
 * Banish ghosts of `stringsAsFactors`.

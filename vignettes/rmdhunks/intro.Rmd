@@ -1,0 +1,70 @@
+## TL;DR
+
+`unitizer` simplifies creation, review, and debugging of tests in R.
+It automatically stores R expressions and the values they produce, so
+explicit expectations are unnecessary.  Every test is easy to write with
+`unitizer` because testing and using a function are the same.  This encourages
+non-trivial tests that better represent actual usage.
+
+Tests fail when the value associated with an expression changes.  In
+interactive mode you are dropped directly into the failing test environment so
+you may debug it.
+
+`unitizer` is on CRAN:
+
+```{r eval=FALSE}
+install.packages('unitizer')
+```
+
+It bakes in a lot of contextual help so you can get started without reading all
+the documentation.  Try the demo to get an idea:
+
+```{r eval=FALSE}
+library(unitizer)
+demo(unitizer)
+```
+
+Or check out the
+[screencast](http://htmlpreview.github.io/?https://github.com/brodieG/unitizer/blob/rc/extra/gifshow.html) to see `unitizer` in action.
+
+## Why Another Testing Framework?
+
+### Automated Test Formalization
+
+Are you tired of the `deparse`/`dput` then copy-paste R objects into test file
+dance, or do you use `testthat::expect_equal_to_reference` or other snapshot
+testing a lot?
+
+With `unitizer` you interactively review your code as you would when typing it
+at the R prompt.  Then, with a single keystroke, you tell `unitizer` to store
+the code, and any values, warnings, or errors it produced, thereby creating a
+formal regression test.
+
+### Streamlined Debugging
+
+Do you wish the nature of a test failure was more immediately obvious?
+
+When tests fail, you are shown a proper
+[diff](https://github.com/brodieG/diffobj) so you can clearly identify _how_ the
+test failed:
+
+![diff
+example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review1.png)
+
+Do you wish that you could start debugging your failed tests without
+additional set-up work?
+
+`unitizer` drops you in the test environment so you can debug _why_ the test
+failed without further ado:
+
+![review
+example](https://github.com/brodieG/unitizer/raw/rc/extra/gif/review2.png)
+
+### Fast Test Updates
+
+Do you avoid improvements to your functions because that would require
+painstakingly updating many tests?
+
+The diffs for the failed tests let you immediately confirm only what you
+intended changed.  Then you can update each test with a single keystroke.
+
