@@ -1038,12 +1038,15 @@ comm_reset <- function(x) {
 # Updates 11/2020: We've now seen "expr_or_assign_or_help", and according to
 # Kalibera "equal_assign" is now in use, although the example he gave `a = 1`
 # produces "expr_or_assign_or_help".
+#
+# Updates 11/2020: Turns out these are generated in 3.6.3, but apparently not in
+# 4.0+.
 
 tk.lst <- list(
   comment="COMMENT",
   brac.close=c("'}'", "']'", "')'"),
   brac.open=c("'{'", "'['", "'('", "LBB"),
-  exps=c("expr", "exprlist", "expr_or_assign_or_help"),
+  exps=c("expr", "exprlist", "equal_assign", "expr_or_assign_or_help"),
   # no comments on these as they are just removed
   seps=c("','", "';'"),
   # in addition to `expr`, these are the ones that can get comments attached

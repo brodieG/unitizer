@@ -135,14 +135,19 @@ local( {
 "expr", "'}'")),
       unname(as.list(unitizer:::prsdat_fix_exprlist(dat.2, unitizer:::ancestry_descend(dat.2$id, dat.2$parent, 0L))[c("parent", "token")]))
     )
+    dat.2a <- normalize_id(
+      unitizer:::parse_dat_get(text="for(i in x) {if(x) break else next}")$dat
+    )
     expect_equal(info="`for` cleanup",
-      list(id = c(1L, 3L, 5L, 7L, 29L, 10L, 26L, 11L, 12L, 13L, 15L,
-14L, 18L, 19L, 20L, 22L, 23L, 24L), parent = c(32L, 32L, 7L,
-32L, 32L, 29L, 29L, 26L, 26L, 15L, 26L, 26L, 19L, 26L, 26L, 23L,
-26L, 29L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr",
-"'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK",
-"expr", "ELSE", "NEXT", "expr", "'}'")),
-      as.list(unitizer:::prsdat_fix_for(unitizer:::parse_dat_get(text="for(i in x) {if(x) break else next}")$dat[-1L, ]))[c("id", "parent", "token")]
+      list(id = c(1L, 3L, 5L, 7L, 22L, 9L, 21L, 10L, 11L, 12L, 14L,
+      13L, 15L, 16L, 17L, 18L, 19L, 20L), parent = c(23L, 23L, 7L,
+      23L, 23L, 22L, 22L, 21L, 21L, 14L, 21L, 21L, 16L, 21L, 21L, 19L,
+      21L, 22L), token = c("FOR", "SYMBOL", "SYMBOL", "expr", "expr",
+      "'{'", "expr", "IF", "'('", "SYMBOL", "expr", "')'", "BREAK",
+      "expr", "ELSE", "NEXT", "expr", "'}'")),
+      as.list(unitizer:::prsdat_fix_for(dat.2a[-1L, ]))[
+        c("id", "parent", "token")
+      ]
     )
     dat.3 <- normalize_id(unitizer:::parse_dat_get(text=if.text)$dat)
 
