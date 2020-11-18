@@ -1,6 +1,6 @@
 # `unitizer` NEWS
 
-## v1.4.11
+## v1.4.11-12
 
 * [#248](https://github.com/brodieG/unitizer/issues/248): Ensure vignettes can
   be tested with `tools::testInstalledPackage`.
