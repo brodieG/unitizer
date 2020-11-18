@@ -11,7 +11,7 @@ unitizeR - Interactive R Unit Tests
 [![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
 [![Dependencies
-direct/recursive](https://tinyverse.netlify.com/badge/unitizer)](https://tinyverse.netlify.com/)
+direct/recursive](https://tinyverse.netlify.app/badge/unitizer)](https://tinyverse.netlify.app/)
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
@@ -25,8 +25,8 @@ explicit expectations are unnecessary. Every test is easy to write with
 `unitizer` because testing and using a function are the same. This
 encourages non-trivial tests that better represent actual usage.
 
-Tests fail when the value associated with an expression changes. When
-run in interactive mode you are dropped directly into the failing test
+Tests fail when the value associated with an expression changes. In
+interactive mode you are dropped directly into the failing test
 environment so you may debug it.
 
 `unitizer` is on CRAN:
@@ -52,10 +52,11 @@ Are you tired of the `deparse`/`dput` then copy-paste R objects into
 test file dance, or do you use `testthat::expect_equal_to_reference` or
 other snapshot testing a lot?
 
-With `unitizer` you review function output at an interactive prompt as
-you would with informal tests. You then store the value, conditions (
-e.g. warnings, etc.), and environment for use as the reference values in
-formal tests, all with a single keystroke.
+With `unitizer` you interactively review your code, as you would when
+informally testing it by typing it at the R prompt. Then, with a single
+keystroke, `unitizer` stores the code, the value and any conditions
+(warnings, errors, etc.) it produced, and turns the lot into a formal
+regression test.
 
 ### Streamlined Debugging
 
@@ -84,11 +85,6 @@ painstakingly updating many tests?
 
 The diffs for the failed tests let you immediately confirm only what you
 intended changed. Then you can update each test with a single keystroke.
-
-### Additional Documentation
-
-See the [vignette index](u0_unitizer_index.html), and function specific
-documentation such as `?unitize`.
 
 Usage
 -----
@@ -157,7 +153,7 @@ Thank you to:
     [knitr](https://cran.r-project.org/package=knitr) and [J.J.
     Allaire](https://github.com/jjallaire) et al. for
     [rmarkdown](https://cran.r-project.org/package=rmarkdown), and by
-    extension John MacFarlane for [pandoc](http://pandoc.org/).
+    extension John MacFarlane for [pandoc](https://pandoc.org/).
 -   @kohler for [gifsicle](https://github.com/kohler/gifsicle) and the
     [ffmpeg team](http://ffmpeg.org/about.html) for ffmpeg.
 -   All open source developers out there that make their work freely
@@ -165,12 +161,11 @@ Thank you to:
 -   [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
     [Codecov](https://codecov.io/),
     [Vagrant](https://www.vagrantup.com/),
-    [Docker](https://www.docker.com/),
-    [Ubuntu](https://www.ubuntu.com/), [Brew](https://brew.sh/) for
-    providing infrastructure that greatly simplifies open source
-    development.
--   [Free Software Foundation](http://fsf.org/) for developing the GPL
-    license and promotion of the free software movement.
+    [Docker](https://www.docker.com/), [Ubuntu](https://ubuntu.com/),
+    [Brew](https://brew.sh/) for providing infrastructure that greatly
+    simplifies open source development.
+-   [Free Software Foundation](https://www.fsf.org/) for developing the
+    GPL license and promotion of the free software movement.
 
 About the Author
 ----------------

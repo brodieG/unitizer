@@ -1,1 +1,3 @@
-file here to ensure dir gets copied
+Stand-in file to make sure directory is copied.
+
+Normally would be something else.

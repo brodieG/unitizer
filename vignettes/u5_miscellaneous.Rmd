@@ -173,7 +173,7 @@ as those options may be different depending on whether you are running whether y
 
 Because `unitize` evaluates test expressions within a call to `withCallingHandlers`, there are some limitations on successfully running `unitize` inside your own error handling calls.  In particular, `unitize` will not work properly if run inside a `tryCatch` or `try` statement. If test expressions throw conditions, the internal `withCallingHandlers` will automatically hand over control to your `tryCatch`/`try` statement without an opportunity to complete `unitize` computations.  Unfortunately there does not seem to be a way around this since we have to use `withCallingHandlers` so that test statements after non-aborting conditions are run.
 
-See this [SO Q/A](http://stackoverflow.com/questions/20572288/capture-arbitrary-conditions-with-withcallinghandlers) for more details on the problem.
+See this [SO Q/A](https://stackoverflow.com/questions/20572288/capture-arbitrary-conditions-with-withcallinghandlers) for more details on the problem.
 
 ### Overridden Functions
 

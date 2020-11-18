@@ -545,7 +545,7 @@ is_testinstpkg_dir <- function(name, has.tests=FALSE) {
     ) {
       return(TRUE)
     } else return(is.pd)
-  }
+  } else "No *-tests directories"
 }
 # Extracts the Source Directory from an R CMD check directory
 
