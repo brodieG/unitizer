@@ -353,7 +353,7 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
 set_trace <- function(trace) {
   if(length(trace)) {
     res <- lapply(FUN=deparse, rev(trace), control="keepInteger")
-    assign(".Traceback", res, envir=getNamespace("base"))
+    .global$traceback <- res
   }
   TRUE
 }
