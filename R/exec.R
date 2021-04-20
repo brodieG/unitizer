@@ -350,11 +350,10 @@ user_exp_handle <- function(expr, env, print.mode, expr.raw) {
     trace=tail(trace, -1L)
   )
 }
+## Trace is undeparsed
+
 set_trace <- function(trace) {
-  if(length(trace)) {
-    res <- lapply(FUN=deparse, rev(trace), control="keepInteger")
-    .global$traceback <- res
-  }
+  if(length(trace)) .global$traceback <- rev(trace)
   TRUE
 }
 get_trace <- function(trace.base, trace.new, printed, exp) {
