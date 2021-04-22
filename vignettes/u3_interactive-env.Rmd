@@ -196,8 +196,9 @@ There are, however, some subtle differences created by the structure of the eval
   Vignette](u4_reproducible-tests.html#test-environments).
 * There are special `unitizer` objects `.new`, `.NEW`, `.ref`, and `.REF` that
   let you review the results of tests (we will discuss these next).
-* `ls` is over-ridden by a special `unitizer` version (we will also discuss this
-  next); you can use `base::ls` if you need the original.
+* `ls` and `traceback`/`.traceback` are masked by special `unitizer` versions
+  (we will also discuss this next); you can use `base::ls`/`base::traceback` if
+  you need the originals.
 * You will have access to any objects created through the `pre` argument to
   `unitize`, though they will not show up in a call to `ls`.
 
@@ -278,6 +279,17 @@ where object names have symbols such as `*` or `'` appended to them.  This happe
 For more discussion see `?"healEnvs,unitizerItems,unitizer-method"` and the discussion of [Patchwork Reference Environments](u4_reproducible-tests.html#patchwork-reference-environments).
 
 Objects assigned right before a test are part of that test's environment so will always be available.
+
+## `traceback` / `.traceback`
+
+Errors that occur during test evaluation are handled, so they do not register in
+the normal R traceback mechanism.  `unitizer` stores the traces from the test
+evaluation and makes them available via internal versions of
+`traceback`/`.traceback` that mask the base ones at the interactive `unitizer`
+prompt.  They behave similarly but not identically to the `base` counterparts.
+In particular, parameter `x` must be NULL.  You can access the `base` versions
+with e.g. `base::traceback`, but those will not display any tracebacks generated
+by `unitizer`-evaluated code.
 
 ## `unitize_dir`
 

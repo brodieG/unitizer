@@ -183,8 +183,8 @@ In order to perpetuate the R console prompt illusion, `unitizer` needs to overri
   environments
 * `quit` and `q` are wrappers around the base functions that allow `unitizer` to
   quit gracefully
-* `traceback` while not replaced, is supported by a fair bit of voodoo involving
-  among other things assigning to `base::.Traceback`
+* `traceback` and `.traceback` are replaced to read the internally stored traces
+  of the `unitizer`-handled errors in tests.
 * History is replaced during `unitizer` prompt evaluations with a temporary
   version of the history file containing only commands evaluated at the
   `unitizer` prompt.  The normal history file is restored on exit.
