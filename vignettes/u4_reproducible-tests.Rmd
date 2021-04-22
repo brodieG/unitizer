@@ -95,36 +95,25 @@ the earlier test.  This is functionally equivalent to overwriting the object as
 far as the later test is concerned.
 
 For the most part this environment trickery should be transparent to the user.
-The `ls` function is specially modified to, among other things, list objects in
-all the parent test environments.  But there are exceptions to this
-"transparency".  The simplest exception is that you can not actually remove an
-object created in an earlier test (well, it is possible, but the how isn't
-documented and you are advised not to attempt it).  Here is a more complex
-exception:
+An exception is the masking of `ls` and `traceback` with versions that account
+for the special nature of the `unitizer` REPL.  Another is that you can not
+remove an object created in an earlier test with `rm` (well, it is possible,
+but the how isn't documented and you are advised not to attempt it).  Here is a
+more complex exception:
+
 
     a <- function() b()
+    NULL                 # Prevent `a` and `b` being part of the same test
     b <- function() TRUE
     a()
 
 In this case, when we evaluate `a()` we must step back two environments to find
 `a`, but that's okay.  The problem is that once inside `a`, we must now evaluate
 `b()`, but `b` is defined in a child environment, not a parent environment so
-R's object lookup fails.
-
-It turns out the above example actually works because as noted in [details on
-tests vignette](u2_tests.html), environments are only defined for tests,
-and neither the `a` or `b` assignments are tests, so both `a` and `b` are
-assigned to the environment of the `a()` call.  However, this really breaks:
-
-    a <- function() b()
-    NULL
-    b <- function() TRUE
-    a()
-
-Since NULL is a valid test, `a` is assigned to the environment associated with
-the `NULL` line, and `b` is assigned to the `a()` test environment, the above
-test fails because `b` is not found and the illusion is shattered [DEV NOTE:
-CHECK THIS EXAMPLE].
+R's object lookup fails.  If we remove the NULL this would work, but only
+because neither the `a` or `b` assignments are tests, so both `a` and `b` would
+be assigned to the environment of the `a()` call (see [details on tests
+vignette](u2_tests.html)).
 
 If you are getting weird "object not found" errors when you run your tests, but
 the same code does not generate those errors when run directly in the command
