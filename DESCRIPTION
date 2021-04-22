@@ -70,10 +70,11 @@ Collate:
     'size.R'
     'state.R'
     'state.compare.R'
+    'traceback.R'
     'translate.R'
     'unitize.R'
     'unitize.core.R'
     'unitizer-package.r'
     'unitizer.add.R'
     'upgrade.R'
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

@@ -39,39 +39,39 @@ local( {
 
       ex0 <- unitizer:::eval_user_exp(quote(stop()), eval.env, global=glob)
       unitizer:::set_trace(ex0$trace)
-      trace0 <- traceback()
+      trace0 <- unitizer:::unitizer_traceback()
       ex1 <-
         unitizer:::eval_user_exp(quote(fun_signal()), eval.env, global=glob)
       unitizer:::set_trace(ex1$trace)
-      trace1 <- traceback()
+      trace1 <- unitizer:::unitizer_traceback()
       ex2 <- unitizer:::eval_user_exp(quote(fun_error()), eval.env, global=glob)
       unitizer:::set_trace(ex2$trace)
-      trace2 <- traceback()
+      trace2 <- unitizer:::unitizer_traceback()
       ex2a <-
         unitizer:::eval_user_exp(expression(fun_error()), eval.env, global=glob)
       unitizer:::set_trace(ex2a$trace)
-      trace2a <- traceback()
+      trace2a <- unitizer:::unitizer_traceback()
       ex6 <-
         unitizer:::eval_user_exp(quote(fun_error_cond()), eval.env, global=glob)
       unitizer:::set_trace(ex6$trace)
-      trace6 <- traceback()
+      trace6 <- unitizer:::unitizer_traceback()
       ex7 <- unitizer:::eval_user_exp(
         quote(fun_error_cond_call()), eval.env, global=glob
       )
       unitizer:::set_trace(ex7$trace)
-      trace7 <- traceback()
+      trace7 <- unitizer:::unitizer_traceback()
       ex3 <- unitizer:::eval_user_exp(quote(fun_s3()), eval.env, global=glob)
       unitizer:::set_trace(ex3$trace)
-      trace3 <- traceback()
+      trace3 <- unitizer:::unitizer_traceback()
       ex3a <-
         unitizer:::eval_user_exp(expression(fun_s3()), eval.env, global=glob)
       unitizer:::set_trace(ex3a$trace)
-      trace3a <- traceback()
+      trace3a <- unitizer:::unitizer_traceback()
       ex4 <- unitizer:::eval_user_exp(quote(fun_s4()), eval.env, global=glob)
       ex4a <-
         unitizer:::eval_user_exp(expression(fun_s4()), eval.env, global=glob)
       unitizer:::set_trace(ex4a$trace)
-      trace4a <- traceback()
+      trace4a <- unitizer:::unitizer_traceback()
       ex5 <- unitizer:::eval_user_exp(quote(sum(1:20)), eval.env, global=glob)
       ex9 <- unitizer:::eval_user_exp(quote(fun_warn()), eval.env, global=glob)
       ex10 <- unitizer:::eval_user_exp(quote(fun_msg()), eval.env, global=glob)

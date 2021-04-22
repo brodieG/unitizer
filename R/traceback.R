@@ -87,8 +87,10 @@ unitizer_dottraceback <- function (
       else max.lines
       for (i in seq_along(x)) {
         srcref <- attr(x[[i]], "srcref")
+        # unitizer's own traceback used the "keepInteger" control prior to
+        # change in 1.4.13.
         if (typeof(x[[i]]) == "language") 
-            x[[i]] <- deparse(x[[i]], nlines = nlines)
+            x[[i]] <- deparse(x[[i]], nlines = nlines, control="keepInteger")
         if (valid.max.lines && length(x[[i]]) > max.lines) {
             x[[i]] <- x[[i]][seq_len(max.lines)]
             attr(x[[i]], "truncated") <- TRUE
