@@ -186,6 +186,8 @@
 #'   and \code{unitize_dir} are always called in non-interactive mode by these
 #'   functions, this parameter only controls prompts generated directly by these
 #'   functions.
+#' @param use.sects TRUE or FALSE whether to translate \code{test_that} sections
+#'   to \code{unitizer_sect} or simply to turn them into comment banners.
 #' @return a file path or a character vector (see \code{target.dir})
 #' @examples
 #' \dontrun{
@@ -215,11 +217,11 @@ testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
   state=getOption("unitizer.state"),
   keep.testthat.call=TRUE, prompt="always", interactive.mode=interactive(),
-  ...
+  use.sects=TRUE, ...
 ) {
   untz.file <- testthat_transcribe_file(
     file.name, target.dir, keep.testthat.call, prompt,
-    interactive.mode=interactive.mode, ...
+    interactive.mode=interactive.mode, use.sects=use.sects, ...
   )
   if(!is.null(target.dir)) {
     unitize(
@@ -240,12 +242,15 @@ testthat_translate_file <- function(
 
 testthat_transcribe_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
-  keep.testthat.call=TRUE, prompt="always", interactive.mode, ...
+  keep.testthat.call=TRUE, prompt="always", interactive.mode, use.sects=TRUE,
+  ...
 ) {
   if(!is.character(file.name) || length(file.name) != 1L)
     stop("Argument `file.name` must be character(1L)")
   if(!file_test("-f", file.name))
     stop("Argument `file.name` does not point to a readable file")
+  if(isTRUE(!use.sects %in% c(TRUE, FALSE)))
+    stop("Argument `use.sects` must be TRUE or FALSE.")
   valid.prompt <- c("always", "overwrite", "never")
   if(
     !is.character(prompt) || length(prompt) != 1L || is.na(prompt) ||
@@ -285,7 +290,7 @@ testthat_transcribe_file <- function(
   # convert the calls back to character, done as an in-body function since only
   # ever called here, and a bunch of variables are useful to share
 
-  testthat_extract_all <- function(expr, mode="all") {
+  testthat_extract_all <- function(expr, mode="all", use.sects=TRUE) {
 
     stopifnot(mode %in% c("all", "sub"))
     result.final <- character()
@@ -341,12 +346,12 @@ testthat_transcribe_file <- function(
             code.block <- FALSE
             if(
               code.block <- is.language(code) && length(code) > 1L &&
-              identical(code[[1L]], quote(`{`))
+              identical(code[[1L]], as.name("{"))
             ) {
               sub.expr <- code[-1L]
             } else sub.expr <- code
             sub.res <- Recall(sub.expr, mode="sub")
-            if(code.block) {
+            if(code.block && use.sects) {
               sub.res <- paste0(
                 c("{", paste0("    ", sub.res, collapse="\n"), "}"),
                 collapse="\n"
@@ -354,12 +359,15 @@ testthat_transcribe_file <- function(
             } else sub.res <- paste0(sub.expr, collapse="\n")
             # Put it all together
 
-            result <- c(
-              result,
+            new <- if(use.sects) {
               paste0(
                 "unitizer_sect(", paste0(deparse(res.extract$call$desc), sep=""),
                 ", ", sub.res, ")"
-            ) )
+              )
+            } else {
+              c(H3(paste0(deparse(res.extract$call$desc), sep="")), sub.res)
+            }
+            result <- c(result, new)
           }
         } else if (
           is.symbol(sub.call) && identical(sub.call, cont.symb)
@@ -477,7 +485,7 @@ testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
   filter="^test.*\\.[rR]", state=getOption("unitizer.state"),
   keep.testthat.call=TRUE, force=FALSE, interactive.mode=interactive(),
-  ...
+  use.sects=TRUE, ...
 ) {
   is_testthat_attached()
   # Validate
@@ -542,7 +550,7 @@ testthat_translate_dir <- function(
 
       untz.file <- testthat_transcribe_file(
         files.test[[i]], target.dir, keep.testthat.call, prompt="never",
-        interactive.mode=interactive.mode, ...
+        interactive.mode=interactive.mode, use.sects=use.sects, ...
       )
       res[[i]] <- untz.file
       if(inherits(try(parse(untz.file)), "try-error")) {
