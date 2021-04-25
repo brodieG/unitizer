@@ -1,0 +1,786 @@
+
+R version 4.1.0 alpha (2021-04-26 r80229)
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+State tracking is disabled by default to comply with CRAN policies. Add `options(unitizer.state='suggested')` to your 'Rprofile' file to enable, or `options(unitizer.state='off')` to quash this message without enabling.  Prior to enabling, be sure to read `?unitizerState`,in particular the 'CRAN non-compliance' section.
+> source(file.path("_helper", "pkgs.R"))
+Install Packages
+* installing *source* package ‘unitizerdummypkg1’ ...
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+No man pages found in package  ‘unitizerdummypkg1’ 
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (unitizerdummypkg1)
+* installing *source* package ‘unitizerdummypkg2’ ...
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+No man pages found in package  ‘unitizerdummypkg2’ 
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (unitizerdummypkg2)
+* installing *source* package ‘utzflm’ ...
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (utzflm)
+Setup Demos
+> source(file.path("_helper", "objects.R"))
+> source(file.path("_helper", "mock.R"))
+> list2env(make_file_funs("refobjs"), environment())
+<environment: R_GlobalEnv>
+> 
+> setwd(FLM)   # For whole test file to avoid temp file display
+> 
+> # Mostly makes sure the demo steps work, but since it is a convenient way of
+> # generating a unitizer with actual errors and so forth, we use it to test a few
+> # other things as well in the context of those unitizers
+> 
+> unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
+> #
+> # test_that("copy fastlm dir works", {
+> #     expect_identical(sort(list.files(".")), sort(c("DESCRIPTION",
+> #         "man", "NAMESPACE", "R", "tests", "utzflm.Rcheck")))
+> #     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
+> #         "Version: 0.1.0")
+> #     update_fastlm(".", version = "0.1.1")
+> #     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
+> #         "Version: 0.1.1")
+> #     update_fastlm(".", version = "0.1.2")
+> #     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
+> #         "Version: 0.1.2")
+> # })
+> # - "copy fastlm dir works" ----------------------------------------------------
+> 
+> sort(tolower(list.files(".")))
+[1] "description"   "man"           "namespace"     "r"            
+[5] "tests"         "utzflm.rcheck"
+> readLines(file.path(".", "DESCRIPTION"))[[5L]]  # v0.1.0
+[1] "Version: 0.1.0"
+> update_fastlm(".", version = "0.1.1")
+> readLines(file.path(".", "DESCRIPTION"))[[5L]]
+[1] "Version: 0.1.1"
+> update_fastlm(".", version = "0.1.2")
+> readLines(file.path(".", "DESCRIPTION"))[[5L]]
+[1] "Version: 0.1.2"
+> 
+> # - "show_file" ----------------------------------------------------------------
+> 
+> f <- tempfile()
+> cat("this is a\ntest code\nfile\n", file = f)
+> file.show <- capture.output(show_file(f))
+> file.show[[1L]]
+[1] "+---------------+"
+> start.file <- grep("+---+-----------+", file.show, fixed = TRUE)
+> length(start.file)  # 2
+[1] 2
+> writeLines(file.show[start.file[[1L]]:start.file[[2L]]])
++---+-----------+
+| 1 | this is a |
+| 2 | test code |
+| 3 | file      |
++---+-----------+
+> unlink(f)
+> 
+> # Run actual demo bits; note we want to force `interactive.mode=TRUE` so that
+> # `read_line_vals` values are used as user input; note that until we fix
+> # / rationalize how sinking behaves within unitizer when the standard streams
+> # come in sunk, we won't be able to fully test everything, since for example
+> # the display of the captured stdout just won't happen.
+> 
+> # - "demo create worked" -------------------------------------------------------
+> 
+> # use this options for rest of script
+> 
+> old.opt <- options(
++   unitizer.color = FALSE, width = 80L, crayon.enabled = TRUE,
++   diffobj.term.colors = 8
++ )
+> # options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
+> 
+> # In tests, initial version of package should be 0.1.0; the test store
+> # does not exist so it doesn't get overwritten with subsequent updates
+> # Note the initial install happens in the test running script
+> 
+> unitizer:::update_fastlm(".", version = "0.1.0")
+> install.packages(
++   ".", repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB
++ )
+> unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
+> txt1 <- unitizer:::capture_output(untz <- unitize(FLM.TEST.FILE,
++     interactive.mode = TRUE))
+> # Re-running doesn't change unitizer
+> txt2 <- unitizer:::capture_output(untz2 <- unitize(FLM.TEST.FILE,
++     interactive.mode = TRUE))
+> # Rejecting failed tests does not change unitizer
+> update_fastlm(".", version = "0.1.1")
+> install.packages(
++   ".", repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB
++ )
+> unitizer:::read_line_set_vals(c("N", "N", "Y"))
+> txt3 <- unitizer:::capture_output(untz3 <- unitize(FLM.TEST.FILE,
++     interactive.mode = TRUE))
+> untz.clean <- lapply(list(untz, untz2, untz3), function(x) {
++     attr(x, "test.file") <- basename(attr(x, "test.file"))
++     attr(x, "store.id") <- basename(attr(x, "store.id"))
++     x
++ })
+> 
+> # test_that("demo create worked", {
+> #     expect_is(untz, "unitizer_result")
+> #     expect_equal_to_reference(untz.clean[[3]], file.path("helper",
+> #         "refobjs", "demo_res1.rds"))
+> #     expect_equal_to_reference(untz.clean[[1]], file.path("helper",
+> #         "refobjs", "demo_res2.rds"))
+> #     expect_equal_to_reference(untz.clean[[2]], file.path("helper",
+> #         "refobjs", "demo_res3.rds"))
+> #     expect_match(paste0(txt1$output, collapse = ""), "\\+-+\\+| unitizer for: tests/unitizer/fastlm\\.R.*Pass Fail  New  1\\. <untitled>     -    -    4.*= Finalize Unitizer.*- Adding 4 out of 4 new tests")
+> #     expect_match(paste0(txt1$message, collapse = ""), "Error in fastlm\\(1:100, 1:10\\).*You will IRREVERSIBLY modify.*unitizer updated")
+> #     expect_match(paste0(txt2$message, collapse = ""), "| 4/4 tests passed; nothing to review.",
+> #         fixed = TRUE)
+> # })
+> 
+> 
+> is(untz, "unitizer_result")
+[1] TRUE
+> all.equal(untz.clean[[3]], rds("demo_res1"))
+[1] TRUE
+> all.equal(untz.clean[[1]], rds("demo_res2"))
+[1] TRUE
+> all.equal(untz.clean[[2]], rds("demo_res3"))
+[1] TRUE
+> 
+> writeLines(txt1$output)
+
+
+                                                                                
+Preloads...
+                                                                                
+Loading unitizer data...
+                                                                                
+Parsing tests...
+                                                                                
+Parsing unitizer/fastlm1.R
+                                                                                
+
+                                                                                
+library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+                                                                                
+dat <- data.frame(x = 1:100, y = (1:100)^2)
+                                                                                
+res <- fastlm(dat$x, dat$y)
+                                                                                
+res
+                                                                                
+get_slope(res)
+                                                                                
+get_rsq(res)
+                                                                                
+fastlm(1:100, 1:10)
+                                                                                
+
+                                                                                
+Prepping Unitizers...
+                                                                                
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    4
+...........................
+                -    -    4
+
+- New --------------------------------------------------------------------------
+
+| The 4 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+# Assignments and calls to `library` are not considered tests by
+# `unitizer` so you will not need to review them
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# The `unitizer>` prompt is like the standard R prompt. You may
+# enter expressions such as `lm(y ~ x, dat)$coefficients`, or
+# `str(res)`.
+#
+# Once you are done reviewing, you need to tell `unitizer` you
+# accept the test by typing 'Y' at the prompt.  Enter 'H' for help.
+
+> res
+   intercept        slope          rsq 
+-1717.000000   101.000000     0.938679 
+attr(,"class")
+[1] "fastlm"
+
+unitizer> Y
+
+# There are three more tests to review; accept them with 'Y'
+
+> get_slope(res)
+[1] 101
+
+unitizer> Y
+
+> get_rsq(res)
+[1] 0.938679
+
+unitizer> Y
+
+# This last test is expected to cause an error; press 'Y' to
+# accept it so future checks can confirm the same error persists
+
+> fastlm(1:100, 1:10)
+
+unitizer> Y
+
+= Finalize Unitizer ============================================================
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> Y
+
+> writeLines(txt1$message)
+Error in fastlm(1:100, 1:10) : 
+  Arguments `x` and `y` must be the same length.
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Adding 4 out of 4 new tests
+
+| unitizer updated.
+
+> writeLines(txt2$message)
+| 4/4 tests passed; nothing to review.
+
+> 
+> # - "demo review" --------------------------------------------------------------
+> 
+> # review is always in interactive mode
+> unitizer:::read_line_set_vals(c("5", "Q"))
+> review(FLM.TEST.STORE)
+
+                                                                                Preloads...                                                                                Loading unitizer data...                                                                                                                                                                Prepping Unitizers...                                                                                +------------------------------------------------------------------------------+
+| unitizer for: tests/unitizer/fastlm1.unitizer                                |
++------------------------------------------------------------------------------+
+
+  *1. library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc")) .        -:-
+  *2. dat <- data.frame(x = 1:100, y = (1:100)^2)   .  .  .  .  .  .        -:-
+  *3. res <- fastlm(dat$x, dat$y) .  .  .  .  .  .  .  .  .  .  .  .        -:-
+   4. res .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   5. get_slope(res)  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   6. get_rsq(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   7. fastlm(1:100, 1:10)   .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+
+| What test do you wish to review (input a test number, [U]nreviewed)?
+
+unitizer> 5
+- Passed -----------------------------------------------------------------------
+
+| The 4 tests in this section passed. Keep tests in store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [Q]uit, [H]elp)?
+
+# There are three more tests to review; accept them with 'Y'
+
+> get_slope(res)
+[1] 101
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> # - "use.diff" -----------------------------------------------------------------
+> 
+> # Use this opportunity to make sure `use.diff=FALSE` works as intended
+> unitizer:::read_line_set_vals("Q")
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE, use.diff = FALSE)
+
+                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing unitizer/fastlm1.R                                                                                                                                                                library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))                                                                                dat <- data.frame(x = 1:100, y = (1:100)^2)                                                                                res <- fastlm(dat$x, dat$y)                                                                                res                                                                                get_slope(res)                                                                                get_rsq(res)                                                                                fastlm(1:100, 1:10)                                                                                                                                                                Prepping Unitizers...                                                                                +------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+    intercept         slope           rsq 
+-3.541306e+13  7.012486e+11  9.386790e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[1] "Mean relative difference: 19854602162"
+
+| State mismatch; see `.NEW$state` and `.REF`$state.
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> unitizer:::read_line_set_vals(c(".DIFF$state", "Q"))
+> 
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE, use.diff = FALSE)
+
+                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing unitizer/fastlm1.R                                                                                                                                                                library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))                                                                                dat <- data.frame(x = 1:100, y = (1:100)^2)                                                                                res <- fastlm(dat$x, dat$y)                                                                                res                                                                                get_slope(res)                                                                                get_rsq(res)                                                                                fastlm(1:100, 1:10)                                                                                                                                                                Prepping Unitizers...                                                                                +------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+    intercept         slope           rsq 
+-3.541306e+13  7.012486e+11  9.386790e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[1] "Mean relative difference: 19854602162"
+
+| State mismatch; see `.NEW$state` and `.REF`$state.
+
+unitizer> .DIFF$state
+| State mismatch:
+
+Attributes: < Component "search.path": 1 string mismatch >
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> # - "failing diff" -------------------------------------------------------------
+> 
+> unitizer:::read_line_set_vals("Q")
+> mock(diffobj::diffObj, quote(stop("A failing diff.")))
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
+                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing unitizer/fastlm1.R                                                                                                                                                                library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))                                                                                dat <- data.frame(x = 1:100, y = (1:100)^2)                                                                                res <- fastlm(dat$x, dat$y)                                                                                res                                                                                get_slope(res)                                                                                get_rsq(res)                                                                                fastlm(1:100, 1:10)                                                                                                                                                                Prepping Unitizers...                                                                                +------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+    intercept         slope           rsq 
+-3.541306e+13  7.012486e+11  9.386790e-01 
+attr(,"class")
+[1] "fastlm"
+
+Error in diffObj(curr.err@.ref, curr.err@.new, tar.banner = make_cont(".ref"),  : 
+  A failing diff.
+| Value: <diff failed>
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> unmock(diffobj::diffObj)
+> 
+> # - "multi-accept" -------------------------------------------------------------
+> 
+> # Test what happens if we back out of a multi-accept
+> 
+> unitizer:::read_line_set_vals(c("YY", "N", "Q"))
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
+                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing unitizer/fastlm1.R                                                                                                                                                                library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))                                                                                dat <- data.frame(x = 1:100, y = (1:100)^2)                                                                                res <- fastlm(dat$x, dat$y)                                                                                res                                                                                get_slope(res)                                                                                get_rsq(res)                                                                                fastlm(1:100, 1:10)                                                                                                                                                                Prepping Unitizers...                                                                                +------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+    intercept         slope           rsq 
+-3.541306e+13  7.012486e+11  9.386790e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[33m<[39m [33m.ref[39m                          [34m>[39m [34m.new[39m                        
+[36m@@ 1,6 @@                     [39m  [36m@@ 1,6 @@                     [39m
+  [90m[39m   intercept        slope [90m[39m      [90m[39m    intercept         slope [90m[39m
+[33m<[39m [90m[39m[33m-1717.000000[39m   [33m101.000000[39m [90m[39m    [34m>[39m [90m[39m[34m-3.541306e+13[39m  [34m7.012486e+11[39m [90m[39m
+  [90m[39m         rsq [90m[39m                   [90m[39m          rsq [90m[39m              
+[33m<[39m [90m[39m    [33m0.938679[39m [90m[39m                 [34m>[39m [90m[39m [34m9.386790e-01[39m [90m[39m              
+  [90m[39mattr(,"class")[90m[39m                  [90m[39mattr(,"class")[90m[39m              
+  [90m[39m[1] "fastlm"[90m[39m                    [90m[39m[1] "fastlm"[90m[39m                
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> YY
+
+  4. res .  .  .  .  .  Failed:-
+  5. get_slope(res)  .  Failed:-
+
+Choose 'Y' for the 2 tests shown above ([Y]es, [N]o)?
+unitizer> N
+
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+    intercept         slope           rsq 
+-3.541306e+13  7.012486e+11  9.386790e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[33m<[39m [33m.ref[39m                          [34m>[39m [34m.new[39m                        
+[36m@@ 1,6 @@                     [39m  [36m@@ 1,6 @@                     [39m
+  [90m[39m   intercept        slope [90m[39m      [90m[39m    intercept         slope [90m[39m
+[33m<[39m [90m[39m[33m-1717.000000[39m   [33m101.000000[39m [90m[39m    [34m>[39m [90m[39m[34m-3.541306e+13[39m  [34m7.012486e+11[39m [90m[39m
+  [90m[39m         rsq [90m[39m                   [90m[39m          rsq [90m[39m              
+[33m<[39m [90m[39m    [33m0.938679[39m [90m[39m                 [34m>[39m [90m[39m [34m9.386790e-01[39m [90m[39m              
+  [90m[39mattr(,"class")[90m[39m                  [90m[39mattr(,"class")[90m[39m              
+  [90m[39m[1] "fastlm"[90m[39m                    [90m[39m[1] "fastlm"[90m[39m                
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> # - "multi-input" --------------------------------------------------------------
+> 
+> # Or if we request to go to unreviewed when there are none
+> unitizer:::read_line_set_vals(c("YY", "Y", "B", "U", "Q"))
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
+                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing unitizer/fastlm1.R                                                                                                                                                                library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))                                                                                dat <- data.frame(x = 1:100, y = (1:100)^2)                                                                                res <- fastlm(dat$x, dat$y)                                                                                res                                                                                get_slope(res)                                                                                get_rsq(res)                                                                                fastlm(1:100, 1:10)                                                                                                                                                                Prepping Unitizers...                                                                                +------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+    intercept         slope           rsq 
+-3.541306e+13  7.012486e+11  9.386790e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[33m<[39m [33m.ref[39m                          [34m>[39m [34m.new[39m                        
+[36m@@ 1,6 @@                     [39m  [36m@@ 1,6 @@                     [39m
+  [90m[39m   intercept        slope [90m[39m      [90m[39m    intercept         slope [90m[39m
+[33m<[39m [90m[39m[33m-1717.000000[39m   [33m101.000000[39m [90m[39m    [34m>[39m [90m[39m[34m-3.541306e+13[39m  [34m7.012486e+11[39m [90m[39m
+  [90m[39m         rsq [90m[39m                   [90m[39m          rsq [90m[39m              
+[33m<[39m [90m[39m    [33m0.938679[39m [90m[39m                 [34m>[39m [90m[39m [34m9.386790e-01[39m [90m[39m              
+  [90m[39mattr(,"class")[90m[39m                  [90m[39mattr(,"class")[90m[39m              
+  [90m[39m[1] "fastlm"[90m[39m                    [90m[39m[1] "fastlm"[90m[39m                
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> YY
+
+  4. res .  .  .  .  .  Failed:-
+  5. get_slope(res)  .  Failed:-
+
+Choose 'Y' for the 2 tests shown above ([Y]es, [N]o)?
+unitizer> Y
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Replacing 2 out of 2 failed tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> B
+
+  *1. library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc")) .        -:-
+  *2. dat <- data.frame(x = 1:100, y = (1:100)^2)   .  .  .  .  .  .        -:-
+  *3. res <- fastlm(dat$x, dat$y) .  .  .  .  .  .  .  .  .  .  .  .        -:-
+   4. res .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:Y
+   5. get_slope(res)  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:Y
+   6. get_rsq(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   7. fastlm(1:100, 1:10)   .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+
+| What test do you wish to review (input a test number, [U]nreviewed)?
+
+unitizer> U
+
+| No unreviewed tests.
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Replacing 2 out of 2 failed tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> Q
+
+| Changes discarded.
+| unitizer unchanged.
+
+> 
+> # - "warn in parse" ------------------------------------------------------------
+> 
+> # Make sure parse warnings are issued
+> unitizer:::read_line_set_vals(c("-2147483648L", "Q"))
+> txt8 <- unitizer:::capture_output(unitize(FLM.TEST.FILE,
++     interactive.mode = TRUE))
+> 
+> # expect_true(any(grepl("qualified with L", txt8$message)))
+> any(grepl("qualified with L", txt8$message))
+[1] TRUE
+> # test_that("demo changes", {
+> #     expect_match(paste0(txt5$output, collapse = ""), "Pass Fail <untitled>     2    2")
+> #     expect_match(paste0(txt5$message, collapse = ""), "| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:| - Replacing 2 out of 2 failed tests| unitizer updated.")
+> # })
+> # - "demo changes" -------------------------------------------------------------
+> #
+> # Now actually accept the changes
+> unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
+> untz5 <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
+                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing unitizer/fastlm1.R                                                                                                                                                                library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))                                                                                dat <- data.frame(x = 1:100, y = (1:100)^2)                                                                                res <- fastlm(dat$x, dat$y)                                                                                res                                                                                get_slope(res)                                                                                get_rsq(res)                                                                                fastlm(1:100, 1:10)                                                                                                                                                                Prepping Unitizers...                                                                                +------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+    intercept         slope           rsq 
+-3.541306e+13  7.012486e+11  9.386790e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[33m<[39m [33m.ref[39m                          [34m>[39m [34m.new[39m                        
+[36m@@ 1,6 @@                     [39m  [36m@@ 1,6 @@                     [39m
+  [90m[39m   intercept        slope [90m[39m      [90m[39m    intercept         slope [90m[39m
+[33m<[39m [90m[39m[33m-1717.000000[39m   [33m101.000000[39m [90m[39m    [34m>[39m [90m[39m[34m-3.541306e+13[39m  [34m7.012486e+11[39m [90m[39m
+  [90m[39m         rsq [90m[39m                   [90m[39m          rsq [90m[39m              
+[33m<[39m [90m[39m    [33m0.938679[39m [90m[39m                 [34m>[39m [90m[39m [34m9.386790e-01[39m [90m[39m              
+  [90m[39mattr(,"class")[90m[39m                  [90m[39mattr(,"class")[90m[39m              
+  [90m[39m[1] "fastlm"[90m[39m                    [90m[39m[1] "fastlm"[90m[39m                
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Y
+
+# This one is also incorrect; reject with 'N'
+
+> get_slope(res)
+[1] 701248618125
+
+| Value mismatch: 
+
+[33m<[39m [33m.ref[39m              [34m>[39m [34m.new[39m            
+[36m@@ 1 @@           [39m  [36m@@ 1 @@           [39m
+[33m<[39m [90m[1] [39m[33m101[39m[90m[39m           [34m>[39m [90m[1] [39m[34m701248618125[39m[90m[39m
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Y
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Replacing 2 out of 2 failed tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> Y
+
+| unitizer updated.
+
+> unitizer:::read_line_set_vals(NULL)
+> options(old.opt)
+> 
+> # - "get_package_dir" ----------------------------------------------------------
+> 
+> # These were in t-get but we moved them here to avoid re-loading pkgs.R
+> 
+> unitizer:::get_package_dir(f)  # empty
+character(0)
+> test.dir.1 <- file.path(".", "utzflm.Rcheck", "utzflm", "R")
+> identical(
++   unitizer:::get_package_dir(test.dir.1),
++   normalizePath(dirname(test.dir.1), winslash = "/")
++ )
+[1] TRUE
+> test.dir.2 <- file.path(".", "utzflm.Rcheck")
+> identical(
++   unitizer:::get_package_dir(file.path(test.dir.2, "tests", "tests.R")),
++   normalizePath(file.path(test.dir.2, "utzflm"), winslash = "/")
++ )
+[1] TRUE
+> 
+> proc.time()
+   user  system elapsed 
+ 11.539   2.140  14.143 
+CLEANUP COMPLETE
