@@ -1,21 +1,14 @@
 source(file.path("_helper", "init.R"))
-source(file.path("_helper", "objects.R"))
-list2env(make_file_funs("exec"), environment())
-
-library(unitizer)
+source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("exec")
 
 suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
-# test_that("Invisible Expression", {
-#     e <- new.env()
-#     exp <- quote(x <- 1:30)
-#     expect_equal(1:30, unitizer:::eval_user_exp(exp, e, global = glob)$value)
-# })
+
 # - "Invisible Expression" -----------------------------------------------------
 
 e <- new.env()
 exp <- quote(x <- 1:30)
-# expect_equal(1:30, unitizer:::eval_user_exp(exp, e, global = glob)$value)
-1:30
+all.equal(1:30, unitizer:::eval_user_exp(exp, e, global = glob)$value)
+
 # `eval_user_exp` must be evaluated outside of test_that; also note that by
 # design this will output stuff to stderr and stdout
 out.err <- capture.output(type = "message", out.std <- capture.output({

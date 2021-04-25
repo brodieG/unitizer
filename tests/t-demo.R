@@ -1,8 +1,7 @@
 source(file.path("_helper", "init.R"))
 source(file.path("_helper", "pkgs.R"))
-source(file.path("_helper", "objects.R"))
-source(file.path("_helper", "mock.R"))
-list2env(make_file_funs("refobjs"), environment())
+source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
+source(file.path("aammrtf", "mock.R"))
 
 setwd(FLM)   # For whole test file to avoid temp file display
 
@@ -11,19 +10,33 @@ setwd(FLM)   # For whole test file to avoid temp file display
 # other things as well in the context of those unitizers
 
 unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
-#
-# test_that("copy fastlm dir works", {
-#     expect_identical(sort(list.files(".")), sort(c("DESCRIPTION",
-#         "man", "NAMESPACE", "R", "tests", "utzflm.Rcheck")))
-#     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
-#         "Version: 0.1.0")
-#     update_fastlm(".", version = "0.1.1")
-#     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
-#         "Version: 0.1.1")
-#     update_fastlm(".", version = "0.1.2")
-#     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
-#         "Version: 0.1.2")
-# })
+
+# - "in_pkg" -------------------------------------------------------------------
+
+update_fastlm(FLM, version = "0.1.0")
+install.packages(FLM, repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB)
+base.dir <- file.path(FLM, "tests", "extra")
+in.pkg.file <- file.path(base.dir, "inpkg.R")
+old.opt <- options(width = 80L)
+
+unitizer:::read_line_set_vals(c("Q"))
+txt1 <- unitizer:::capture_output(unitize(in.pkg.file, interactive.mode = TRUE))
+# `sub` needed due to inconsistencies in R 3.4 and 3.3 for top level error
+# messages
+txt1$message <- sub("^Error.*:", "", txt1$message)
+unitizer:::read_line_set_vals(c("Q"))
+txt2 <- unitizer:::capture_output(unitize(in.pkg.file, state = in_pkg(), 
+    interactive.mode = TRUE))
+unitizer:::read_line_set_vals(c("Q"))
+txt3 <- unitizer:::capture_output(
+  try(
+    unitize(in.pkg.file, state = in_pkg("ASDFASDFA"), interactive.mode = TRUE)
+) )
+
+all.equal(txt1, rds("inpkg_txt1"))
+all.equal(txt2, rds("inpkg_txt2"))
+all.equal(txt3, rds("inpkg_txt3"))
+
 # - "copy fastlm dir works" ----------------------------------------------------
 
 sort(tolower(list.files(".")))

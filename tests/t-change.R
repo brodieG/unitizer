@@ -1,4 +1,5 @@
-library(unitizer)
+source(file.path("_helper", "init.R"))
+
 # - "Construction works" -------------------------------------------------------
 
 # invalid slot

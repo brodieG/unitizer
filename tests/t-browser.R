@@ -1,6 +1,5 @@
 source(file.path("_helper", "init.R"))
-source(file.path("_helper", "objects.R"))
-list2env(make_file_funs("refobjs"), environment())
+source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 
 options(unitizer.color = FALSE)
 zero.env <- parent.env(.GlobalEnv)

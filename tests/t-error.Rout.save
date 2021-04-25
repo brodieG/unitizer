@@ -17,11 +17,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-Attempting to load the environment ‘package:stats’
-[Previously saved workspace restored]
-
-> library(unitizer)
-State tracking is disabled by default to comply with CRAN policies. Add `options(unitizer.state='suggested')` to your 'Rprofile' file to enable, or `options(unitizer.state='off')` to quash this message without enabling.  Prior to enabling, be sure to read `?unitizerState`,in particular the 'CRAN non-compliance' section.
+> source(file.path("_helper", "init.R"))
 > 
 > # - "Test Error Diffs" ---------------------------------------------------------
 > 
@@ -52,7 +48,5 @@ Error in .local(x, i, j, ...) :
 > 
 > proc.time()
    user  system elapsed 
-  1.065   0.156   1.436 
-Warning message:
-In save(list = names(.GlobalEnv), file = outfile, version = version,  :
-  'package:stats' may not be available when loading
+  0.894   0.115   1.037 
+CLEANUP COMPLETE

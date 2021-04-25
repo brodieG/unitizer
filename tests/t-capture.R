@@ -1,6 +1,5 @@
 source(file.path("_helper", "init.R"))
-source(file.path("_helper", "objects.R"))
-list2env(make_file_funs("capture"), environment())
+source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("capture")
 
 # # Messing around trying to understand seek...
 # f <- tempfile()

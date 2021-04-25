@@ -1,5 +1,5 @@
 source(file.path("_helper", "init.R"))
-source(file.path("_helper", "mock.R"))
+source(file.path("aammrtf", "mock.R"))
 
 toy.stor <- readRDS("interactive/unitizer/misc.unitizer/data.rds")
 
@@ -65,10 +65,10 @@ if (identical(.Platform$OS.type, "unix")) {
 # Several different stores in different states (i.e. requiring upgrade,
 # not unitizers, etc.)
 dir.create(tmp.sub.dir3)
-make.path <- lapply(file.path(tmp.sub.dir3, dir("_helper/objs/load/")),
+make.path <- lapply(file.path(tmp.sub.dir3, dir("_helper/ref-objs/load/")),
     dir.create)
 if (!all(unlist(make.path))) stop("Failed making paths")
-file.copy(list.files("_helper/objs/load", full.names = TRUE), tmp.sub.dir3,
+file.copy(list.files("_helper/ref-objs/load", full.names = TRUE), tmp.sub.dir3,
     recursive = TRUE)
 par.frame <- new.env()
 store.ids <- as.list(list.files(tmp.sub.dir3, full.names = TRUE))

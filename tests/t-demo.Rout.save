@@ -18,7 +18,6 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > source(file.path("_helper", "init.R"))
-State tracking is disabled by default to comply with CRAN policies. Add `options(unitizer.state='suggested')` to your 'Rprofile' file to enable, or `options(unitizer.state='off')` to quash this message without enabling.  Prior to enabling, be sure to read `?unitizerState`,in particular the 'CRAN non-compliance' section.
 > source(file.path("_helper", "pkgs.R"))
 Install Packages
 * installing *source* package ‘unitizerdummypkg1’ ...
@@ -57,10 +56,8 @@ No man pages found in package  ‘unitizerdummypkg2’
 ** testing if installed package keeps a record of temporary installation path
 * DONE (utzflm)
 Setup Demos
-> source(file.path("_helper", "objects.R"))
-> source(file.path("_helper", "mock.R"))
-> list2env(make_file_funs("refobjs"), environment())
-<environment: R_GlobalEnv>
+> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
+> source(file.path("aammrtf", "mock.R"))
 > 
 > setwd(FLM)   # For whole test file to avoid temp file display
 > 
@@ -69,19 +66,36 @@ Setup Demos
 > # other things as well in the context of those unitizers
 > 
 > unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
-> #
-> # test_that("copy fastlm dir works", {
-> #     expect_identical(sort(list.files(".")), sort(c("DESCRIPTION",
-> #         "man", "NAMESPACE", "R", "tests", "utzflm.Rcheck")))
-> #     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
-> #         "Version: 0.1.0")
-> #     update_fastlm(".", version = "0.1.1")
-> #     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
-> #         "Version: 0.1.1")
-> #     update_fastlm(".", version = "0.1.2")
-> #     expect_identical(readLines(file.path(".", "DESCRIPTION"))[[5L]],
-> #         "Version: 0.1.2")
-> # })
+> 
+> # - "in_pkg" -------------------------------------------------------------------
+> 
+> update_fastlm(FLM, version = "0.1.0")
+> install.packages(FLM, repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB)
+> base.dir <- file.path(FLM, "tests", "extra")
+> in.pkg.file <- file.path(base.dir, "inpkg.R")
+> old.opt <- options(width = 80L)
+> 
+> unitizer:::read_line_set_vals(c("Q"))
+> txt1 <- unitizer:::capture_output(unitize(in.pkg.file, interactive.mode = TRUE))
+> # `sub` needed due to inconsistencies in R 3.4 and 3.3 for top level error
+> # messages
+> txt1$message <- sub("^Error.*:", "", txt1$message)
+> unitizer:::read_line_set_vals(c("Q"))
+> txt2 <- unitizer:::capture_output(unitize(in.pkg.file, state = in_pkg(), 
++     interactive.mode = TRUE))
+> unitizer:::read_line_set_vals(c("Q"))
+> txt3 <- unitizer:::capture_output(
++   try(
++     unitize(in.pkg.file, state = in_pkg("ASDFASDFA"), interactive.mode = TRUE)
++ ) )
+> 
+> all.equal(txt1, rds("inpkg_txt1"))
+[1] TRUE
+> all.equal(txt2, rds("inpkg_txt2"))
+[1] TRUE
+> all.equal(txt3, rds("inpkg_txt3"))
+[1] TRUE
+> 
 > # - "copy fastlm dir works" ----------------------------------------------------
 > 
 > sort(tolower(list.files(".")))
@@ -782,5 +796,5 @@ character(0)
 > 
 > proc.time()
    user  system elapsed 
- 11.539   2.140  14.143 
+ 12.096   2.324  14.934 
 CLEANUP COMPLETE

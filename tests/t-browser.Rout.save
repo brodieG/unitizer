@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2021-03-31 r80136) -- "Unsuffered Consequences"
+R version 4.1.0 alpha (2021-04-26 r80229)
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
@@ -18,10 +18,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > source(file.path("_helper", "init.R"))
-State tracking is disabled by default to comply with CRAN policies. Add `options(unitizer.state='suggested')` to your 'Rprofile' file to enable, or `options(unitizer.state='off')` to quash this message without enabling.  Prior to enabling, be sure to read `?unitizerState`,in particular the 'CRAN non-compliance' section.
-> source(file.path("_helper", "objects.R"))
-> list2env(make_file_funs("refobjs"), environment())
-<environment: R_GlobalEnv>
+> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > 
 > options(unitizer.color = FALSE)
 > zero.env <- parent.env(.GlobalEnv)
@@ -281,5 +278,5 @@ matrix(1:9, ncol = 3)
 > 
 > proc.time()
    user  system elapsed 
-  1.275   0.157   1.789 
+  1.278   0.114   1.447 
 CLEANUP COMPLETE
