@@ -186,8 +186,11 @@
 #'   and \code{unitize_dir} are always called in non-interactive mode by these
 #'   functions, this parameter only controls prompts generated directly by these
 #'   functions.
-#' @param use.sects TRUE or FALSE whether to translate \code{test_that} sections
-#'   to \code{unitizer_sect} or simply to turn them into comment banners.
+#' @param use.sects TRUE (default) or FALSE whether to translate
+#'   \code{test_that} sections to \code{unitizer_sect} or simply to turn them
+#'   into comment banners.
+#' @param unitize TRUE (default) or FALSE whether to run \code{unitize} after
+#'   the files are translated.
 #' @return a file path or a character vector (see \code{target.dir})
 #' @examples
 #' \dontrun{
@@ -217,13 +220,13 @@ testthat_translate_file <- function(
   file.name, target.dir=file.path(dirname(file.name), "..", "unitizer"),
   state=getOption("unitizer.state"),
   keep.testthat.call=TRUE, prompt="always", interactive.mode=interactive(),
-  use.sects=TRUE, ...
+  use.sects=TRUE, unitize=TRUE, ...
 ) {
   untz.file <- testthat_transcribe_file(
     file.name, target.dir, keep.testthat.call, prompt,
     interactive.mode=interactive.mode, use.sects=use.sects, ...
   )
-  if(!is.null(target.dir)) {
+  if(!is.null(target.dir) && unitize) {
     unitize(
       test.file=untz.file, auto.accept="new", state=state,
       interactive.mode=FALSE
@@ -356,7 +359,7 @@ testthat_transcribe_file <- function(
                 c("{", paste0("    ", sub.res, collapse="\n"), "}"),
                 collapse="\n"
               )
-            } else sub.res <- paste0(sub.expr, collapse="\n")
+            } else sub.res <- paste0(sub.res, collapse="\n")
             # Put it all together
 
             new <- if(use.sects) {
@@ -365,7 +368,16 @@ testthat_transcribe_file <- function(
                 ", ", sub.res, ")"
               )
             } else {
-              c(H3(paste0(deparse(res.extract$call$desc), sep="")), sub.res)
+              c(
+                paste0(
+                  "# ",
+                  as.character(
+                    H3(paste0(deparse(res.extract$call$desc), sep="")),
+                    width=getOption('width') - 2
+                  )
+                ),
+                sub.res
+              )
             }
             result <- c(result, new)
           }
@@ -421,7 +433,7 @@ testthat_transcribe_file <- function(
   # Parse and translate
 
   parsed <- parse_tests(file.name)
-  translated <- testthat_extract_all(parsed)
+  translated <- testthat_extract_all(parsed, use.sects=use.sects)
 
   if(!is.null(target.dir)) {
     # Create unitizer
@@ -485,7 +497,7 @@ testthat_translate_dir <- function(
   dir.name, target.dir=file.path(dir.name, "..", "unitizer"),
   filter="^test.*\\.[rR]", state=getOption("unitizer.state"),
   keep.testthat.call=TRUE, force=FALSE, interactive.mode=interactive(),
-  use.sects=TRUE, ...
+  use.sects=TRUE, unitize=TRUE, ...
 ) {
   is_testthat_attached()
   # Validate
@@ -563,10 +575,12 @@ testthat_translate_dir <- function(
 
     # Unitize all files in directory
 
-    unitize_dir(
-      test.dir=target.dir, auto.accept="new", state=state,
-      interactive.mode=FALSE
-    )
+    if(unitize) {
+      unitize_dir(
+        test.dir=target.dir, auto.accept="new", state=state,
+        interactive.mode=FALSE
+      )
+    }
   }
   if(length(unparseable))
     warning(
