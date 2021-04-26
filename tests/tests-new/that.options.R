@@ -1,17 +1,13 @@
-library(unitizer)
-# context("Options")
+source(file.path("_helper", "init.R"))
+
 old.opts <- options()
 new.opts <- unitizer:::options_zero()
 options(old.opts)
-# not great tests...
-# test_that("options", {
-#     expect_true(all(names(new.opts) %in% names(old.opts)))
-#     expect_true(length(new.opts) <= length(old.opts))
-# })
+
 # - "options" ------------------------------------------------------------------
 
+# not great tests...
 
-# expect_true(all(names(new.opts) %in% names(old.opts)))
 all(names(new.opts) %in% names(old.opts))
-# expect_true(length(new.opts) <= length(old.opts))
 length(new.opts) <= length(old.opts)
+
