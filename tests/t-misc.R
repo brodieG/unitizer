@@ -388,3 +388,14 @@ is.list(cond)
 identical(names(cond), c("message", "call"))
 identical(class(cond), c("simpleError", "error", "condition"))
 
+# - "options" ------------------------------------------------------------------
+
+# not great tests...
+
+old.opts <- options()
+new.opts <- unitizer:::options_zero()
+
+all(names(new.opts) %in% names(old.opts))
+length(new.opts) <= length(old.opts)
+options(old.opts)
+

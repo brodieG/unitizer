@@ -658,8 +658,21 @@ In filename_to_storeid("tests.rock") :
 > identical(class(cond), c("simpleError", "error", "condition"))
 [1] TRUE
 > 
+> # - "options" ------------------------------------------------------------------
+> 
+> # not great tests...
+> 
+> old.opts <- options()
+> new.opts <- unitizer:::options_zero()
+> 
+> all(names(new.opts) %in% names(old.opts))
+[1] TRUE
+> length(new.opts) <= length(old.opts)
+[1] TRUE
+> options(old.opts)
+> 
 > 
 > proc.time()
    user  system elapsed 
-  1.021   0.123   1.164 
+  1.120   0.167   1.699 
 CLEANUP COMPLETE
