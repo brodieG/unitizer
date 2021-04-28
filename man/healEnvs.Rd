@@ -64,7 +64,7 @@ The main takeaway from all this is that reference tests don't really
 keep their evaluation environment.  Often this environment is similar
 to the new environment.  When there are difference between the two,
 the output of \code{ls} is customized to highlight
-which objects were actually available/unmodifed at the time of the
+which objects were actually available/unmodified at the time of the
 reference test evaluation.  Object names will have the following
 symbols appended to explain the object status:
 \itemize{
