@@ -28,7 +28,6 @@ Suggests:
     rmarkdown,
     testthat
 License: GPL (>= 2)
-LazyData: true
 URL: https://github.com/brodieG/unitizer
 BugReports: https://github.com/brodieG/unitizer/issues
 Collate: 
