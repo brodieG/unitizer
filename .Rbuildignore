@@ -5,6 +5,7 @@
 ^\.travis\.yml$
 ^extra$
 \.Rdata
+^.github
 ^scratch
 ^README\.Rmd$
 ^README\.html$
