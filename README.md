@@ -158,7 +158,7 @@ Thank you to:
     [ffmpeg team](http://ffmpeg.org/about.html) for ffmpeg.
 -   All open source developers out there that make their work freely
     available for others to use.
--   [Github](https://github.com/), [Codecov](https://codecov.io/),
+-   [Github](https://github.com/), [Codecov](https://about.codecov.io/),
     [Vagrant](https://www.vagrantup.com/),
     [Docker](https://www.docker.com/), [Ubuntu](https://ubuntu.com/),
     [Brew](https://brew.sh/) for providing infrastructure that greatly
