@@ -1,64 +1,32 @@
-library(unitizer)
-# context("Prompt")
-# test_that("read_line works", {
-#     unitizer:::read_line_set_vals(letters[1:3])
-#     u.ns <- asNamespace("unitizer")
-#     capture.output(expect_identical(unitizer:::read_line(), "a"))
-#     capture.output(expect_identical(u.ns$.global$prompt.vals, 
-#         letters[2:3]))
-#     capture.output(expect_identical(unitizer:::read_line(), "b"))
-#     capture.output(expect_identical(u.ns$.global$prompt.vals, 
-#         letters[3]))
-#     capture.output(expect_identical(unitizer:::read_line(), "c"))
-#     capture.output(expect_identical(u.ns$.global$prompt.vals, 
-#         character()))
-#     expect_error(unitizer:::read_line(), "ran out of predefined readline input", 
-#         class = "readError")
-# })
+source(file.path("_helper", "init.R"))
+
 # - "read_line works" ----------------------------------------------------------
 
+# read through prompt vals
 
 unitizer:::read_line_set_vals(letters[1:3])
 u.ns <- asNamespace("unitizer")
-capture.output(expect_identical(unitizer:::read_line(), "a"))
-capture.output(expect_identical(u.ns$.global$prompt.vals, letters[2:3]))
-capture.output(expect_identical(unitizer:::read_line(), "b"))
-capture.output(expect_identical(u.ns$.global$prompt.vals, letters[3]))
-capture.output(expect_identical(unitizer:::read_line(), "c"))
-capture.output(expect_identical(u.ns$.global$prompt.vals, character()))
-# expect_error(unitizer:::read_line(), "ran out of predefined readline input", 
-#     class = "readError")
 unitizer:::read_line()
-# test_that("simple prompts", {
-#     unitizer:::read_line_set_vals(c("y", "Y", "n", "N"))
-#     expect_error(unitizer:::simple_prompt(1:5))
-#     expect_error(unitizer:::simple_prompt("hello", attempts = 1:5))
-#     expect_error(unitizer:::simple_prompt("hello", values = NA_character_))
-#     expect_error(unitizer:::simple_prompt("hello", case.sensitive = 1))
-#     capture.output(expect_identical("Y", unitizer:::simple_prompt("hello")))
-#     capture.output(expect_identical("Y", unitizer:::simple_prompt("hello")))
-#     capture.output(expect_identical("N", unitizer:::simple_prompt("hello")))
-#     capture.output(expect_identical("N", unitizer:::simple_prompt("hello")))
-#     unitizer:::read_line_set_vals(c("y", "y", "n"))
-#     expect_error(capture.output(unitizer:::simple_prompt("hello", 
-#         attempts = 1L, case.sensitive = TRUE)), "Gave up trying to collect")
-#     expect_output(try(unitizer:::simple_prompt("hello", attempts = 1L, 
-#         case.sensitive = TRUE), silent = TRUE), "hello\n.*Invalid input, please select one of: Y, N")
-#     expect_error(capture.output(unitizer:::simple_prompt("hello", 
-#         attempts = 1L, case.sensitive = TRUE)), "Gave up trying to collect")
-# })
-# - "simple prompts" -----------------------------------------------------------
+identical(u.ns$.global$prompt.vals, letters[2:3])
+unitizer:::read_line()
+u.ns$.global$prompt.vals
+unitizer:::read_line()
+u.ns$.global$prompt.vals
 
+try(unitizer:::read_line())
+
+# - "simple prompts" -----------------------------------------------------------
 
 unitizer:::read_line_set_vals(c("y", "Y", "n", "N"))
 # expect_error(unitizer:::simple_prompt(1:5))
-unitizer:::simple_prompt(1:5)
+try(unitizer:::simple_prompt(1:5))
 # expect_error(unitizer:::simple_prompt("hello", attempts = 1:5))
-unitizer:::simple_prompt("hello", attempts = 1:5)
+try(unitizer:::simple_prompt("hello", attempts = 1:5))
 # expect_error(unitizer:::simple_prompt("hello", values = NA_character_))
-unitizer:::simple_prompt("hello", values = NA_character_)
+try(unitizer:::simple_prompt("hello", values = NA_character_))
 # expect_error(unitizer:::simple_prompt("hello", case.sensitive = 1))
 unitizer:::simple_prompt("hello", case.sensitive = 1)
+
 capture.output(expect_identical("Y", unitizer:::simple_prompt("hello")))
 capture.output(expect_identical("Y", unitizer:::simple_prompt("hello")))
 capture.output(expect_identical("N", unitizer:::simple_prompt("hello")))
