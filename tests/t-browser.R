@@ -50,14 +50,13 @@ exps2 <- expression(
     lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2,
         1, 4, 1.5)))
 }))
-no_out <- function(x) invisible(capture.output(x))
 my.unitizer <- new("unitizer", id = 1, zero.env = zero.env)
-no_out(my.unitizer <- my.unitizer + exps1)
+coi(my.unitizer <- my.unitizer + exps1)
 my.unitizer2 <- new("unitizer", id = 2, zero.env = zero.env)
 # make previous items into reference items
 my.unitizer2 <- my.unitizer2 + my.unitizer@items.new
 # now add back items to compare
-no_out(my.unitizer2 <- my.unitizer2 + exps2)
+coi(my.unitizer2 <- my.unitizer2 + exps2)
 unitizer.prepped <- unitizer:::browsePrep(my.unitizer2, mode = "unitize")
 
 # NOTE: for some reason, changes in between revisions d9619db and a46e941

@@ -47,4 +47,8 @@ reg.finalizer(
   },
   onexit=TRUE
 )
+# misc helper funs
+
+coi <- function(x) invisible(capture.output(x))
+
 

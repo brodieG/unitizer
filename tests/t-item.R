@@ -1,8 +1,6 @@
 source(file.path("_helper", "init.R"))
 source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("item")
 
-coi <- function(x) invisible(capture.output(x))
-
 options(unitizer.color = FALSE)
 
 # These tests are intended to cover all the functions/classes/methods in:
