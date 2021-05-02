@@ -1,4 +1,4 @@
-# Copyright (C) 2020  Brodie Gaslam
+# Copyright (C) 2021 Brodie Gaslam
 # 
 # This file is part of "unitizer"
 # 
@@ -826,6 +826,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
     env.sec <- if(!is.null(item.new) && !is.null(item.ref))
       item.ref@env else NULL
     assign("ls", unitizer_ls, base.env.pri)
+    assign(".traceback", unitizer_dottraceback, base.env.pri)
+    assign("traceback", unitizer_traceback, base.env.pri)
     if(!is.null(env.sec)) {
       assign("ref", function(x) eval(substitute(x), env.sec), base.env.pri)
     } else {

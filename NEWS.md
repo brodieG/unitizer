@@ -1,5 +1,11 @@
 # `unitizer` NEWS
 
+## v1.4.13
+
+* `unitizer` no longer directly accesses `.Traceback` to set traces in
+  interactive sessions.  Instead, `traceback()` and `.traceback()` are masked
+  at the interactive prompt.
+
 ## v1.4.11-12
 
 * [#248](https://github.com/brodieG/unitizer/issues/248): Ensure vignettes can
