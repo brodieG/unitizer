@@ -1,17 +1,17 @@
 # Copyright (C) 2021 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 #' Convert a \code{testthat} Test File to a \code{unitizer}
@@ -63,21 +63,20 @@
 #'
 #' @section How the Conversion Works:
 #'
-#' We start by identifying calls to exported \code{testthat} functions
-#' that have an \code{object} argument.  Generally speaking this includes
-#' functions of the form \code{expect_*} (e.g. \code{expect_equal}).  We then
-#' extract the \code{object} parameter and replace the original \code{expect_*}
-#' statement with just the \code{object} parameter.  For example
-#' \preformatted{expect_equal(my_fun(25), 1:10)}
-#' becomes
-#' \preformatted{my_fun(25)}
+#' For a subset of the \code{expect_*} functions we extract the \code{object}
+#' parameter and discard the rest of the expectation.  For example
+#' \preformatted{expect_equal(my_fun(25), 1:10)} becomes
+#' \preformatted{my_fun(25)}.  The idea is that on unitizing the expression the
+#' result will be output to screen and can be reviewed and accepted.
 #' Not all \code{expect_*} functions are substituted.  For example,
 #' \code{expect_is} and \code{expect_that} are left unchanged because the tests
 #' for those functions do not or might not actually test the values of
-#' \code{object}.  For example, \code{expect_is} tests the \bold{class} of
-#' \code{object}.  It is perfectly fine to \code{unitize} an \code{expect_*}
-#' call unsubstituted.  \code{unitizer} captures conditions, values, etc., so if
-#' an \code{expect_*} test starts failing, it will be detected.
+#' \code{object}.  \code{expect_gt} and similar are also left unchanged as that
+#' would require more work than simply extracting the \code{object} parameter.
+#'
+#' It is perfectly fine to \code{unitize} an \code{expect_*} call unsubstituted.
+#' \code{unitizer} captures conditions, values, etc., so if an \code{expect_*}
+#' test starts failing, it will be detected.
 #'
 #' \code{unitizer} will then evaluate and store the results of such expressions.
 #' Since in theory we just checked our \code{testthat} tests were working,
@@ -128,20 +127,11 @@
 #' its default value, you will have to use the same value for that parameter in
 #' future \code{unitize} or \code{unitize_dir} runs.
 #'
-#' @note In order for the conversion to succeed \code{testthat} must be
-#' installed on your system.  We do not rely on \code{NAMESPACE} imports to
-#' avoid an import dependency on \code{testthat} that is only required for these
-#' ancillary functions, especially since none of the \code{testthat} functions
-#' are called.  We use the functions as the \code{definition} argument of
-#' \code{match.call} to find the \code{object} argument.
+#' @section Alternate Use Cases
 #'
-#' @note Translation of \code{testthat} is not strictly necessary; you can just
-#' copy them to a new location and \code{unitize} them.  \code{unitizer} will
-#' just capture the results of the \code{expect_*} functions and will alert
-#' you if those change.  You can then just review the tests that change.
-#' While this may seem pointless, one benefit is that you are dropped into
-#' the environment of the test that failed, so you can inspect variables, etc.
-#' without further ado.
+#' If you wish to process \code{testthat} files for use with the standard R
+#' \dQuote{.Rout} / \dQuote{.Rout.save process} you can set the \code{unitize}
+#' and \code{use.sects} parameters to FALSE.
 #'
 #' @export
 #' @seealso \code{\link{unitize}}, \code{\link{unitizerState}}
@@ -263,24 +253,7 @@ testthat_transcribe_file <- function(
       "Argument prompt must be character(1L), not NA, and in ",
       deparse(valid.prompt)
     )
-  is_testthat_attached()
-
-  # Get function list to extract
-
-  tt.env <- as.environment("package:testthat")
-  # functions that shouldn't be simply replaced
-  funs.special <- c("test_that", "context")
-  obj.names <- ls(tt.env)
-  obj.list <- mget(obj.names, tt.env)
-  obj.funs <- vapply(
-    obj.list, function(x) is.function(x) && ! isS4(x), logical(1L)
-  )
-  fun.list <- obj.list[obj.funs]
-  fun.names <- obj.names[obj.funs]
-
-  funs.to.extract <- vapply(
-    fun.list, testthat_translatable_fun, FALSE
-  ) & ! fun.names %in% funs.special
+  funs.to.extract <- tt_trans_funs
 
   # These should probably be defined at top level in package...
 
@@ -330,8 +303,7 @@ testthat_transcribe_file <- function(
             # First extract params
 
             res.extract <- testthat_match_call(
-              expr[[i]], fun.list[[which(fun.names == "test_that")]],
-              c("code", "desc")
+              expr[[i]], tt_fun, c("code", "desc")
             )
             if(any(nchar(res.extract$msg))) { # failed
               result <- c(result, res.extract$msg)
@@ -401,11 +373,11 @@ testthat_transcribe_file <- function(
             is.symbol(sub.call) && (
               fun.id <- match(
                 as.character(sub.call),
-                fun.names[funs.to.extract], nomatch=0L
+                names(tt_trans_funs), nomatch=0L
             ) )
           ) {
             res.extract <- testthat_match_call(
-              res.pre$call, fun.list[funs.to.extract][[fun.id]],
+              res.pre$call, tt_trans_funs[[fun.id]],
               c("object") # should probably also check for `expected` or `regexp`, but current logic doesn't allow...
             )
             result <- c(
@@ -499,7 +471,6 @@ testthat_translate_dir <- function(
   keep.testthat.call=TRUE, force=FALSE, interactive.mode=interactive(),
   use.sects=TRUE, unitize=TRUE, ...
 ) {
-  is_testthat_attached()
   # Validate
 
   chr.1.args <- list(
@@ -712,3 +683,42 @@ is_testthat_attached <- function() {
   TRUE
 }
 
+# Signature of translatable funs
+
+tt_trans_funs <- list(
+  expect_condition = function (object, regexp = NULL, class = NULL,
+    ..., info = NULL, label = NULL)
+NULL,
+  expect_equal = function (object, expected, ..., tolerance = if (edition_get() >=
+      3) testthat_tolerance(), info = NULL, label = NULL, expected.label = NULL)
+  NULL,
+  expect_equivalent = function (object, expected, ..., info = NULL,
+      label = NULL, expected.label = NULL)
+  NULL,
+  expect_error = function (object, regexp = NULL, class = NULL,
+      ..., info = NULL, label = NULL)
+  NULL,
+  expect_false = function (object, info = NULL, label = NULL)
+  NULL,
+  expect_identical = function (object, expected, info = NULL,
+      label = NULL, expected.label = NULL, ...)
+  NULL,
+  expect_message = function (object, regexp = NULL, class = NULL,
+      ..., all = FALSE, info = NULL, label = NULL)
+  NULL,
+  expect_null = function (object, info = NULL, label = NULL)
+  NULL,
+  expect_output = function (object, regexp = NULL, ..., info = NULL,
+      label = NULL, width = 80)
+  NULL,
+  expect_silent = function (object)
+  NULL,
+  expect_true = function (object, info = NULL, label = NULL)
+  NULL,
+  expect_warning = function (object, regexp = NULL, class = NULL,
+      ..., all = FALSE, info = NULL, label = NULL)
+  NULL
+)
+# test_that signature
+
+tt_fun <- function (desc, code) NULL
