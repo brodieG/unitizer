@@ -29,6 +29,8 @@ options(
 if(isTRUE(getOption("showErrorCalls"))) options(showErrorCalls=FALSE)
 library(unitizer)
 
+suppressWarnings(RNGversion("3.5.2"));
+
 # Cleanup on exit
 
 FIN.ENV <- new.env()
