@@ -320,6 +320,7 @@ options_update <- function(tar.opts) {
   unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
   unitizer.max.env.depth=20000L,
   unitizer.use.diff=TRUE,
+  # unitizer.show.progress=TRUE,  # can't be install time if we want interactive()
   # whether to warn if `unitizer` is run in `withRestarts` context, added b/c
   # testthat added a restart in 80a81fd
   unitizer.restarts.ok=FALSE

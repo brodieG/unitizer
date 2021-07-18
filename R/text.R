@@ -267,6 +267,16 @@ word_wrap <- function(
 # Helper function to concatenate strings together
 cc <- function(..., c="") paste0(c(...), collapse=c)
 
+meta_word_help <- function(..., sep, width, tolerance, trail.nl) {
+  paste0(
+    c(
+      word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| "),
+      if(trail.nl) ""
+    ),
+    collapse="\n"
+  )
+}
+
 #' @rdname text_wrap
 
 meta_word_cat <- function(
@@ -276,10 +286,10 @@ meta_word_cat <- function(
   # NOTE: if we change `pre` nchar width there are several calls to
   # meta_word_wrap involving `UL` that will need to be udpated as well
 
-  out <-
-    word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| ")
-  if(!is.null(out)) cat(out, sep="\n", file=file)
-  if(trail.nl) cat("\n")
+  out <- meta_word_help(
+    ..., sep=sep, width=width, tolerance=tolerance, trail.nl=trail.nl
+  )
+  if(nzchar(out)) cat(out, file=file)
   invisible(out)
 }
 #' @rdname text_wrap
@@ -287,14 +297,10 @@ meta_word_cat <- function(
 meta_word_msg <- function(
   ..., sep="\n", width=getOption("width"), tolerance=8L, trail.nl=TRUE
 ) {
-  out <- paste0(
-    c(
-      word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| "),
-      if(trail.nl) ""
-    ),
-    collapse="\n"
+  out <- meta_word_help(
+    ..., sep=sep, width=width, tolerance=tolerance, trail.nl=trail.nl
   )
-  if(length(out)) message(paste0(out))
+  if(nzchar(out)) message(out)
   invisible(out)
 }
 ## Like word_wrap, but handles some additional duties needed for word_cat

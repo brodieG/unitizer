@@ -34,7 +34,7 @@
 
 load_unitizers <- function(
   store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE,
-  global=unitizerGlobal$new()
+  global=unitizerGlobal$new(), show.progress=show.progress
 ) {
   if(!is.character(test.files))
     stop("Argument `test.files` must be character")
@@ -119,127 +119,41 @@ load_unitizers <- function(
   # Attempt to resolve failures by upgrading if relevant
 
   if(length(toup.idx)) {
-    many <- length(toup.idx) > 1L
-    meta_word_cat(
-      paste0(
-        "\nThe following unitizer", if(many) "s",
-        if(force.upgrade) " will" else " must", " be upgraded to version '",
-        as.character(curr.version), "':\n"
-      ),
-      as.character(
-        UL(
-          paste0(
-            chr.ids[toup.idx], " (at '",
-            vapply(versions[toup.idx], as.character, character(1L))
-            , "')"
-        ) ) ,
-        width=getOption("width") - 2L
+    upgraded <- lapply(unitizers[toup.idx], upgrade)
+    upgrade.success <- vapply(upgraded, is, logical(1L), "unitizer")
+
+    for(i in which(upgrade.success)) {
+      # Actually same unitizer may be run against multiple test files
+      # so this check is useless
+      if(
+        !identical(
+          basename(upgraded[[i]]@test.file.loc),
+          basename(test.files[toup.idx][[i]])
+        )
       )
-    )
-    if(!interactive.mode && !force.upgrade)
-      stop("Cannot upgrade unitizers in non-interactive mode")
-
-    pick <- if(interactive.mode) {
-      meta_word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
-      unitizer_prompt(
-        "Upgrade unitizer stores?", hist.con=NULL,
-        valid.opts=c(Y="[Y]es", N="[N]o"), global=global,
-        browse.env=
-      )
-    } else "Y"
-
-    if(identical(pick, "Y")) {
-      upgraded <- lapply(unitizers[toup.idx], upgrade)
-      upgrade.success <- vapply(upgraded, is, logical(1L), "unitizer")
-
-      for(i in which(upgrade.success)) {
-        # Actually same unitizer may be run against multiple test files
-        # so this check is useless
-        if(
-          !identical(
-            basename(upgraded[[i]]@test.file.loc),
-            basename(test.files[toup.idx][[i]])
-          )
-        ) warning(
+        warning(
           "Upgraded test file does not match original test file ",
           "('", basename(upgraded[[i]]@test.file.loc), "' vs '",
           basename(test.files[toup.idx][[i]]), "').", immediate.=TRUE
         )
-        upgraded[[i]]@id <- norm_store_id(store.ids[toup.idx][[i]])
-        upgraded[[i]]@test.file.loc <- norm_file(test.files[toup.idx][[i]])
-
-        store.attempt <- try(store_unitizer(upgraded[[i]]), silent=TRUE)
-        if(inherits(store.attempt, "try-error")) {
-          upgraded[[i]] <- paste0(
-            "Unable to store upgraded unitizer: ",
-            conditionMessage(attr(store.attempt, "condition"))
-          )
-          upgrade.success[[i]] <- FALSE
-        }
-      }
-      unitizers[toup.idx[upgrade.success]] <- upgraded[upgrade.success]
-      valid.idx <- c(valid.idx, toup.idx[upgrade.success])
-      toup.fail.idx <- toup.idx[!upgrade.success]
-      valid[toup.fail.idx] <- upgraded[!upgrade.success]
-    } else {
-      meta_word_msg("unitizer(s) listed above will not be tested")
-      toup.fail.idx <- toup.idx
-      valid[toup.fail.idx] <- "User elected not to upgrade unitizers"
-      valid.idx <- which(!nchar(valid))
     }
+    unitizers[toup.idx[upgrade.success]] <- upgraded[upgrade.success]
+    valid.idx <- c(valid.idx, toup.idx[upgrade.success])
+    toup.fail.idx <- toup.idx[!upgrade.success]
+    valid[toup.fail.idx] <- upgraded[!upgrade.success]
   }
   # Cleanup the unitizers
 
   for(i in valid.idx) {
     unitizers[[i]]@id <- norm_store_id(store.ids[[i]])
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
+    unitizers[[i]]@best.name <- chr.ids[valid.idx]
+    unitizers[[i]]@show.progress <- show.progress
 
     parent.env(unitizers[[i]]@zero.env) <- par.frame
     unitizers[[i]]@global <- global
     # awkward, shouldn't be done this way
     unitizers[[i]]@eval <- identical(mode, "unitize")
-
-    # # check for and normalize state issues; this came up as a result of #197
-    # # where our state objects were corrupted; really this should be handled
-    # # in a more systematic way like we do for broader validation; if this
-    # # happens more often we can look into that;
-    # # NOTE: figured out what was going on here so commenting this out for now
-
-    # ref.indices <- do.call(
-    #   cbind,
-    #   lapply(
-    #     unitizers[[i]]@items.ref,
-    #     function(z) as.integer(slot(z, "glob.indices"))
-    #   )
-    # )
-    # ref.state <- lapply(
-    #   slotNames(unitizers[[i]]@state.ref),
-    #   function(z) length(slot(unitizers[[i]]@state.ref, z))
-    # )
-    # if(!identical(names(ref.state), names(ref.indices)))
-    #   stop(
-    #     "Internal error: incompatible global index structure; ",
-    #     "contact maintainer"
-    #   )
-
-    # if(
-    #   any(
-    #     unlist(
-    #       Map(
-    #         function(v, w) any(v > w),
-    #         split(ref.indices, row(ref.indices), ref.state), ref.state
-    #   ) ) )
-    # ) {
-    #   meta_word_msg(
-    #     "Unitizer ", i, " has corrupted state indices, we are resetting ",
-    #     "them to NULL, which means review of reference tests will not ",
-    #     "correctly reflect the reference states.  This is not expected ",
-    #     "behavior and you should contact maintainer if it persists.", sep=""
-    #   )
-    #   glob.ind.def <- new("unitizerGlobalIndices")
-    #   for(j in seq_along(unitizers[[i]]@items.ref))
-    #     unitizers[[i]]@items.ref[[j]]@glob.indices <- glob.ind.def
-    # }
   }
   # Issue errors as required
 
@@ -273,23 +187,59 @@ load_unitizers <- function(
       )
     )
   }
-  if(!length(valid.idx) && (length(invalid.idx) || length(toup.fail.idx)))
-    meta_word_msg(
-      "No valid unitizer", if(length(store.ids) > 1L) "s", " to load", sep=""
-    )
-  # Create fail load objects for all failures
+  # Cannot proceed with invalid unitizers
 
-  invalid.idx <- which(!seq_along(unitizers) %in% valid.idx)
-  unitizers[invalid.idx] <- lapply(
-    invalid.idx,
-    function(x)
-      new(
-        "unitizerLoadFail", test.file=test.files[[x]],
-        store.id=list(store.ids[[x]]), # this is a list b/c could be S3
-        reason=valid[[x]]
-  ) )
+  if(!all(valid)) {
+    stop(
+      "Cannot proceed with invalid or out of date unitizers.  You must either ",
+      "fix or remove them."
+    )
+  }
   new("unitizerObjectList", .items=unitizers)
 }
+# Warn if Unitizers Were Upgraded
+#
+# We used to warn/prompt for upgrade at load time, but now we auto-upgrade and
+# only warn prior to review.  This allow us to silently upgrade unitizers that
+# will not be stored.  One possible issue is this means once a unitizer is out
+# of date it will get upgraded every time its tests are run, but the upgrade is
+# thrown away (e.g. on CRAN).  We should measure how expensive this is.
+#
+# @param x unitizerList
+
+warn_upgrades <- function(x) {
+  toup.v <- vapply(x, slot, 'upgraded.from', '')
+  toup.idx <- which(nzchar(toup.v))
+  chr.ids <- vapply(x, slot, 'id', '')
+
+  many <- length(toup.idx) > 1L
+  meta_word_cat(
+    paste0(
+      "\nThe following unitizer", if(many) "s",
+      " will be upgraded to version '",
+      as.character(packageVersion("unitizer")), "':\n"
+    ),
+    as.character(
+      UL(
+        paste0(
+          chr.ids[toup.idx], " (at '", toup.v[toup.idx] , "')"
+      ) ) ,
+      width=getOption("width") - 2L
+    )
+  )
+  if(!interactive.mode && !force.upgrade)
+    stop("Cannot upgrade unitizers in non-interactive mode")
+
+  pick <- if(interactive.mode) {
+    meta_word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
+    unitizer_prompt(
+      "Upgrade unitizer stores?", hist.con=NULL,
+      valid.opts=c(Y="[Y]es", N="[N]o"), global=global,
+      browse.env=
+    )
+  } else "Y"
+}
+
 
 # Need to make sure we do not unintentionally store a bunch of references to
 # objects or namespaces we do not want:
@@ -317,11 +267,13 @@ store_unitizer <- function(unitizer) {
 
   rm(list=ls(unitizer@base.env, all.names=TRUE), envir=unitizer@base.env)
 
-  # Reset other fields
+  # Reset other fields that are only meaningful during a unitizer run.
 
   unitizer@res.data <- NULL
   unitizer@updated.at.least.once <- FALSE
   unitizer@bookmark <- NULL
+  unitizer@best.name <- ""
+  unitizer@show.progress <- 0L
 
   # blow away calls; these should be memorialized as deparsed versions and the
   # original ones take up a lot of room to store

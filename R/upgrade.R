@@ -269,4 +269,39 @@ removeSlots <- function(object, slots.to.remove) {
   )
   do.call("new", c(class(object), slot.vals))
 }
+# Intended for use only within unitize_core loop
+
+upgrade_warn <- function(unitizers, interactive.mode) {
+  review <- to_review(summary(unitizers, quiet=TRUE))
+  upgraded <- vapply(as.list(unitizers), slot, 'upgraded.from', "")
+  up.rev <- which(review & nzchar(upgraded))
+
+  if(length(up.rev)) {
+    many <- length(up.rev) > 1L
+    to.up.ids <- vapply(as.list(unitizers)[up.rev], slot, 'best.name', "")
+    meta_word_cat(
+      paste0(
+        "\nThe following unitizer", if(many) "s", " will be upgrade to ",
+        "version '", as.character(getPackageVersion('unitizer')), "':\n"
+      ),
+      as.character(UL(paste0(to.up.ids, " (at '", upgraded[up.rev], "'"))),
+      width=getOption("width") - 2L
+    )
+    if(!interactive.mode) invokeRestart("unitizerInteractiveFail")
+    else {
+      meta_word_msg(
+        "unitizer upgrades are IRREVERSIBLE and not backwards compatible. ",
+        "Proceed?"
+      )
+      pick <- unitizer_prompt(
+        "Upgrade unitizer stores?", hist.con=NULL,
+        valid.opts=c(Y="[Y]es", N="[N]o"), global=global,
+        browse.env=  # missing?
+      )
+      if(!identical(pick, 'Y'))
+        invokeRestart("unitizerUserNoUpgrade")
+    }
+  }
+  invisble(NULL)
+}
 
