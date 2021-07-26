@@ -455,7 +455,7 @@ unitize_core <- function(
       if(identical(mode, "unitize"))
         unitizers[valid] <- unitize_eval(
           tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
-          global=global
+          global=global, show.progress=show.progress
         )
       # Check whether any unitizers were upgraded and require review.  We used
       # to ask before upgrade, but now we just upgrade and check before we
@@ -538,7 +538,7 @@ unitize_core <- function(
 # @return a list of unitizers
 # @keywords internal
 
-unitize_eval <- function(tests.parsed, unitizers, global) {
+unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
   test.len <- length(tests.parsed)
   if(!identical(test.len, length(unitizers)))
     # nocov start
