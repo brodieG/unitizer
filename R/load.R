@@ -189,7 +189,7 @@ load_unitizers <- function(
   }
   # Cannot proceed with invalid unitizers
 
-  if(!all(valid)) {
+  if(length(invalid.idx)) {
     stop(
       "Cannot proceed with invalid or out of date unitizers.  You must either ",
       "fix or remove them."
