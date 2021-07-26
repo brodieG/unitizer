@@ -272,8 +272,8 @@ removeSlots <- function(object, slots.to.remove) {
 # Intended for use only within unitize_core loop
 
 upgrade_warn <- function(unitizers, interactive.mode) {
-  review <- to_review(summary(unitizers, quiet=TRUE))
-  upgraded <- vapply(as.list(unitizers), slot, 'upgraded.from', "")
+  review <- to_review(summary(unitizers, silent=TRUE))
+  upgraded <- vapply(as.list(unitizers), slot, '', 'upgraded.from')
   up.rev <- which(review & nzchar(upgraded))
 
   if(length(up.rev)) {
@@ -302,6 +302,6 @@ upgrade_warn <- function(unitizers, interactive.mode) {
         invokeRestart("unitizerUserNoUpgrade")
     }
   }
-  invisble(NULL)
+  invisible(NULL)
 }
 

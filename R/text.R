@@ -273,7 +273,7 @@ meta_word_help <- function(..., sep, width, tolerance, trail.nl) {
       word_wrap_split(..., sep=sep, width=width, tolerance=tolerance, pre="| "),
       if(trail.nl) ""
     ),
-    collapse="\n"
+    collapse=sep
   )
 }
 
@@ -289,7 +289,7 @@ meta_word_cat <- function(
   out <- meta_word_help(
     ..., sep=sep, width=width, tolerance=tolerance, trail.nl=trail.nl
   )
-  if(nzchar(out)) cat(out, file=file)
+  if(nzchar(out)) cat(out, sep=sep, file=file)
   invisible(out)
 }
 #' @rdname text_wrap
