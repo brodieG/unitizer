@@ -196,6 +196,13 @@ upgrade_internal <- function(object) {
     object <- addSlot(object, "bookmark", NULL)
     object <- removeSlots(object, "jump.to.test")
   }
+  # - 1.4.15 --------------------------------------------------------------------
+
+  if(ver < "1.4.15") {
+    object <- addSlot(object, "upgraded.from", "")
+    object <- addSlot(object, "best.name", "")
+    object <- addSlot(object, "show.progress", PROGRESS.MAX)
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
