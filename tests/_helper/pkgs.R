@@ -20,7 +20,7 @@ old.val <- Sys.getenv("R_TESTS")
 Sys.setenv(R_TESTS="")
 pkg.inst <- try(
   for(pkg in PKG.DIRS)
-    install.packages(pkg, repos=NULL, type='src', lib=TMP.LIB)
+    install.packages(pkg, repos=NULL, type='src', lib=TMP.LIB, quiet=TRUE)
 )
 Sys.setenv(R_TESTS=old.val)
 if(inherits(pkg.inst, "try-error")) stop("install error")
@@ -32,7 +32,7 @@ writeLines("Setup Demos")
 # will avoid the temp file of the directory showing up in the files.
 
 FLM <- copy_fastlm_to_tmpdir()
-FLM.TEST.DIR <- file.path("tests", "unitizer")
+FLM.TEST.DIR <- file.path(FLM, "tests", "unitizer")
 FLM.TEST.FILE <- file.path(FLM.TEST.DIR, "fastlm1.R")
 FLM.TEST.STORE <- file.path(FLM.TEST.DIR, "fastlm1.unitizer")
 
