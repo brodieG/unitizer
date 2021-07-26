@@ -959,7 +959,7 @@ unitize_browse <- function(
 #   review.
 
 to_review <- function(x) {
-  summaries <- summary(unitizers, silent=TRUE)
+  summaries <- summary(x, silent=TRUE)
   totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
 
   # First row will be passed
