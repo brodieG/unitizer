@@ -190,7 +190,7 @@ unitize <- function(
   force.update=FALSE,
   auto.accept=character(0L),
   use.diff=getOption("unitizer.use.diff"),
-  show.progress=getOption("unitizer.show.progress", interactive())
+  show.progress=getOption("unitizer.show.progress", TRUE)
 ) {
   # Initial spacer, must be done in each top level call
 
@@ -207,7 +207,8 @@ unitize <- function(
       test.file.inf, list(store.id.inf), state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode,  force.update=force.update,
-      auto.accept=auto.accept, mode="unitize", use.diff=use.diff
+      auto.accept=auto.accept, mode="unitize", use.diff=use.diff,
+      show.progress=show.progress
     )[[1L]]
   )
 }
@@ -216,7 +217,7 @@ unitize <- function(
 
 review <- function(
   store.id=NULL, use.diff=getOption("unitizer.use.diff"),
-  show.progress=getOption("unitizer.show.progress", interactive())
+  show.progress=getOption("unitizer.show.progress", TRUE)
 ) {
   if(!interactive_mode()) stop("`review` only available in interactive mode")
   # Initial spacer, must be done in each top level call
@@ -253,7 +254,7 @@ unitize_dir <- function(
   force.update=FALSE,
   auto.accept=character(0L),
   use.diff=getOption("unitizer.use.diff"),
-  show.progress=getOption("unitizer.show.progress", interactive())
+  show.progress=getOption("unitizer.show.progress", TRUE)
 ) {
   # Validations
   if(

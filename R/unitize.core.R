@@ -498,7 +498,7 @@ unitize_core <- function(
     unitizerInteractiveFail=function(e)
       expected.exit.reason <<- "in non-interactive mode",
     unitizerUserNoUpgrade=function(e)
-      expected.exit.reason <<- "without upgrading unitizers",
+      expected.exit.reason <<- "without upgrading unitizers"
   )
   on.exit(NULL)              # maybe to avoid inf loop if err in reset?
   reset_and_unshim(global)
