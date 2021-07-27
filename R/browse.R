@@ -747,7 +747,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           txt.alt <- sprintf(
             "State mismatch; see %s.",
             if(x@use.diff) "`.DIFF$state` for details"
-            else "`.NEW$state` and `.REF`$state"
+            else "`.NEW$state` and `.REF$state`"
           )
           diffs@state <- new(
             "unitizerItemTestsErrorsDiff", err=FALSE,
