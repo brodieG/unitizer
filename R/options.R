@@ -181,10 +181,12 @@ NULL
   show.coef.Pvalues = TRUE, show.error.messages = TRUE,
   show.signif.stars = TRUE,
   str = list(strict.width = "no", digits.d = 3, vec.len = 4),
-  str.dendrogram.last = "`", stringsAsFactors = TRUE, timeout = 60,
-  ts.eps = 1e-05, ts.S.compat = FALSE, useFancyQuotes = TRUE, verbose = FALSE,
-  warn = 0, warning.length = 1000L, width = 80L
+  str.dendrogram.last = "`", timeout = 60,
+  ts.eps = 1e-05, ts.S.compat = FALSE, useFancyQuotes = TRUE,
+  verbose = FALSE, warn = 0, warning.length = 1000L, width = 80L
 )
+if(getRversion() < '4.0')
+  .unitizer.opts.base <- c(.unitizer.opts.base, list(stringsAsFactors=TRUE))
 
 .unitizer.opts.asis <- c(
   "^browser$", "^device$", "^dvipscmd$", "^mailer$", "^pager$",  "^pdfviewer$",
@@ -192,7 +194,7 @@ NULL
   "^editor$", "^papersize$", "^bitmapType$",  "^menu\\.graphics$",
   "^unitizer\\."
 )
-.unitizer.namespace.keep <- c("data.table", "covr", "crayon", "tools")
+.unitizer.namespace.keep <- c("data.table", "crayon", "tools")
 
 .unitizer.base.packages <- c(
   "package:stats", "package:graphics", "package:grDevices", "package:utils",
