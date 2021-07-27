@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -27,25 +25,10 @@ Type 'q()' to quit R.
 > my.unitizer2 <- new("unitizer", id = 2, zero.env = new.env())
 > # now convert them to reference items
 > coi(my.unitizer2 <- my.unitizer2 + my.unitizer@items.new)
-> # test_that("messed up env ancestry repair works", {
-> #     parent.env(my.unitizer2@items.ref[[2]]@env) <- baseenv()
-> #     expect_warning(capture.output(x <- unitizer:::healEnvs(my.unitizer2@items.ref,
-> #         my.unitizer2), type = "message"), "Detected corrupted environment history")
-> #     old.opt <- options(unitizer.max.env.depth = 20)
-> #     on.exit(old.opt)
-> #     expect_warning(capture.output(res <- unitizer:::healEnvs(my.unitizer2@items.ref,
-> #         my.unitizer2), type = "message"), "Detected corrupted environment history")
-> #     expect_true(is(res, "unitizerItems"))
-> #     ref.anc <- unitizer:::env_ancestry(x@base.env)
-> #     itm.anc <- unitizer:::env_ancestry(x[[1L]]@env)
-> #     expect_identical(rev(ref.anc), head(rev(itm.anc), length(ref.anc)))
-> # })
 > # - "messed up env ancestry repair works" --------------------------------------
 > 
 > # Purposefully mess up the environments
 > parent.env(my.unitizer2@items.ref[[2]]@env) <- baseenv()
-> # expect_warning(capture.output(x <- unitizer:::healEnvs(my.unitizer2@items.ref,
-> #     my.unitizer2), type = "message"), "Detected corrupted environment history")
 > x <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
 Error in parent.env(env) : the empty environment has no parent
 Error in run_ls(env = x@env, stop.env = base.env, all.names = TRUE, store.env = ref.env.store) : 
@@ -53,8 +36,6 @@ Error in run_ls(env = x@env, stop.env = base.env, all.names = TRUE, store.env = 
 Warning in repairEnvs(items.final) :
   Detected corrupted environment history; we will attempt to repair, but keep in mind that even when repaired the test environments may be missleading.  For example, the objects other than `.new` or `.ref` when reviewing tests at the `unitzer` prompt may not be those you expect or those reported by `ls`.  To fully restore environments re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist after an attempt to repair, please contact maintainer.
 > old.opt <- options(unitizer.max.env.depth = 20)
-> # expect_warning(capture.output(res <- unitizer:::healEnvs(my.unitizer2@items.ref,
-> #     my.unitizer2), type = "message"), "Detected corrupted environment history")
 > res <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
 Error in try(while (!identical(env, stop.env)) { : 
   Logic error: not finding `stop.env` after 20 iterations; contact package maintainer if this is an error.
@@ -62,7 +43,6 @@ Error in run_ls(env = x@env, stop.env = base.env, all.names = TRUE, store.env = 
   Specified `stop.env` does not appear to be in parent environments.
 Warning in repairEnvs(items.final) :
   Detected corrupted environment history; we will attempt to repair, but keep in mind that even when repaired the test environments may be missleading.  For example, the objects other than `.new` or `.ref` when reviewing tests at the `unitzer` prompt may not be those you expect or those reported by `ls`.  To fully restore environments re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist after an attempt to repair, please contact maintainer.
-> # expect_true(is(res, "unitizerItems"))
 > is(res, "unitizerItems")
 [1] TRUE
 > ref.anc <- unitizer:::env_ancestry(x@base.env)
@@ -85,7 +65,6 @@ Warning in repairEnvs(items.final) :
 > # - "full repair process works" ------------------------------------------------
 > 
 > # copy files and then try messing up environment for the object
-> # expect_true(file_test("-d", file.path("helper")))
 > file_test("-d", file.path("_helper"))
 [1] TRUE
 > store <- file.path("_helper", "trivial.unitizer")
@@ -96,16 +75,16 @@ Warning in repairEnvs(items.final) :
 > file.copy(cpy.files, file.path(TMP.DIR, cpy.files), overwrite = TRUE)
 [1]  TRUE FALSE
 > 
-> # expect_warning(untz <- unitizer:::load_unitizers(list(store.new),
-> #     NA_character_, par.frame = .GlobalEnv, interactive.mode = TRUE,
-> #     mode = "unitize"), "Instantiated global object")
-> # Warning
-> untz <- unitizer:::load_unitizers(list(store.new), NA_character_,
-+     par.frame = .GlobalEnv, interactive.mode = TRUE, mode = "unitize")
+> untz <- unitizer:::load_unitizers(
++   list(store.new), NA_character_,
++   par.frame = .GlobalEnv, interactive.mode = TRUE, mode = "unitize",
++   show.progress=0L
++ )
+Warning in unitizer:::load_unitizers(list(store.new), NA_character_, par.frame = .GlobalEnv,  :
+  Upgraded test file does not match original test file ('trivial.R' vs 'NA').
 Warning in .Object$initialize(...) :
   Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
 > # Break env chain, store, and reload
-> # expect_identical(untz[[1L]]@items.ref.calls.deparse[[5L]], "y * x")
 > untz[[1L]]@items.ref.calls.deparse[[5L]]
 [1] "y * x"
 > parent.env(untz[[1L]]@items.ref[[5L]]@env) <- baseenv()
@@ -113,7 +92,6 @@ Warning in .Object$initialize(...) :
 > unitizer:::store_unitizer(untz[[1L]])
 | unitizer updated.
 
-> # expect_warning(untz.rep <- repair_environments(store.new), "Instantiated global object without|Detected corrupted environment")
 > untz.rep <- repair_environments(store.new)
 Warning in .Object$initialize(...) :
   Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
@@ -122,12 +100,10 @@ Warning in repairEnvs(x@items.ref) :
 | unitizer updated.
 
 > # this should not give warnings
-> # expect_warning(unitizer:::healEnvs(untz.rep@items.ref, untz.rep),
-> #     NA)
 > unitizer:::healEnvs(untz.rep@items.ref, untz.rep)
 An object of class "unitizerItems"
 Slot "base.env":
-<environment: 0x7fc825643740>
+<environment: 0x7fcabae82e00>
 
 Slot ".items":
 [[1]]
@@ -187,5 +163,4 @@ Slot ".seek.fwd":
 > 
 > proc.time()
    user  system elapsed 
-  1.015   0.096   1.119 
-CLEANUP COMPLETE
+  1.224   0.138   1.520 

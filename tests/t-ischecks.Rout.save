@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -69,5 +67,4 @@ Type 'q()' to quit R.
 > 
 > proc.time()
    user  system elapsed 
-  0.616   0.072   0.676 
-CLEANUP COMPLETE
+  0.650   0.088   0.724 

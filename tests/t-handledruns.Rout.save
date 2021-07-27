@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -29,9 +27,9 @@ Warning in check_call_stack() :
 couraged as it may cause unpredictable behavior from unitizer in the event tests
 produce conditions / errors.  We strongly recommend you re-run your tests 
 outside of such handling functions.
-                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing _helper/trivial.R                                                                                                                                                                TRUE                                                                                x <- 1 + 1                                                                                x + 2                                                                                y <- x                                                                                y * x                                                                                y/x + 2                                                                                                                                                                Prepping Unitizers...Warning in history_capt(history) :
+Warning in history_capt(history) :
   Unable to capture history in non-interactive mode.
-                                                                                | 4/4 tests passed; nothing to review.
+| 4/4 tests passed; nothing to review.
 
 > tryCatch(unitize("_helper/trivial.R"))
 
@@ -41,15 +39,15 @@ Warning in check_call_stack() :
 couraged as it may cause unpredictable behavior from unitizer in the event tests
 produce conditions / errors.  We strongly recommend you re-run your tests 
 outside of such handling functions.
-                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing _helper/trivial.R                                                                                                                                                                TRUE                                                                                x <- 1 + 1                                                                                x + 2                                                                                y <- x                                                                                y * x                                                                                y/x + 2                                                                                                                                                                Prepping Unitizers...Warning in history_capt(history) :
+Warning in history_capt(history) :
   Unable to capture history in non-interactive mode.
-                                                                                | 4/4 tests passed; nothing to review.
+| 4/4 tests passed; nothing to review.
 
 > withRestarts(unitize("_helper/trivial.R"))
 
-                                                                                Preloads...                                                                                Loading unitizer data...                                                                                Parsing tests...                                                                                Parsing _helper/trivial.R                                                                                                                                                                TRUE                                                                                x <- 1 + 1                                                                                x + 2                                                                                y <- x                                                                                y * x                                                                                y/x + 2                                                                                                                                                                Prepping Unitizers...Warning in history_capt(history) :
+Warning in history_capt(history) :
   Unable to capture history in non-interactive mode.
-                                                                                | 4/4 tests passed; nothing to review.
+| 4/4 tests passed; nothing to review.
 
 > 
 > # need to figure out why running this without `try` in covr causes cover to
@@ -80,5 +78,4 @@ of `unitize`.  If you did not define this restart contact maintainer.
 > 
 > proc.time()
    user  system elapsed 
-  1.496   0.108   1.637 
-CLEANUP COMPLETE
+  1.850   0.163   2.065 

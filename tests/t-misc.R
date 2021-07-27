@@ -18,8 +18,6 @@ all(nchar(wrp <- unlist(unitizer:::text_wrap(var2, c(20, 15)))) <=
 # - "Headers" ------------------------------------------------------------------
 
 # these basically require visual inspection
-old.opt <- options(width = 80L)
-on.exit(old.opt)
 
 unitizer:::H1("hello world")
 unitizer:::H2("hello world")

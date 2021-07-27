@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -58,8 +56,6 @@ mp
 > # - "Headers" ------------------------------------------------------------------
 > 
 > # these basically require visual inspection
-> old.opt <- options(width = 80L)
-> on.exit(old.opt)
 > 
 > unitizer:::H1("hello world")
 +------------------------------------------------------------------------------+
@@ -569,10 +565,9 @@ $d
 > filename_to_storeid("tests.R")
 [1] "tests.unitizer"
 > filename_to_storeid("tests.rock")
-NULL
-Warning message:
-In filename_to_storeid("tests.rock") :
+Warning in filename_to_storeid("tests.rock") :
   Unable to translate file name 'tests.rock' to `store.id` because it does not match regex '\.[rR]$', please provide explicit `store.id` or rename to end in '.R'.  Returning in NULL for `store.id`.
+NULL
 > 
 > # - "pretty_path" --------------------------------------------------------------
 > # not supposed to exist
@@ -674,5 +669,4 @@ In filename_to_storeid("tests.rock") :
 > 
 > proc.time()
    user  system elapsed 
-  1.120   0.167   1.699 
-CLEANUP COMPLETE
+  1.014   0.127   1.142 

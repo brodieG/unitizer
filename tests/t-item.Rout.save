@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -19,8 +17,6 @@ Type 'q()' to quit R.
 
 > source(file.path("_helper", "init.R"))
 > source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("item")
-> 
-> coi <- function(x) invisible(capture.output(x))
 > 
 > options(unitizer.color = FALSE)
 > 
@@ -347,8 +343,7 @@ character(0)
 > assign(".ref", my.unitizer5@items.ref[[my.unitizer5@items.new.map[[3]]]]@data@value[[1L]],
 +     env.val)
 > ls.res <- evalq(unitizer:::unitizer_ls(), env.eval)  # warn
-Warning message:
-In unitizer:::unitizer_ls() :
+Warning in unitizer:::unitizer_ls() :
   The ls output for `.ref` is invalid.  This may be because you had corrupted environment chains that had to be repaired. Re-generating the `unitizer` with `unitize(..., force.update=TRUE)` should fix the problem.  If it persists, please contact maintainer.
 > # Reference tests won't show up since they were nuked by `healEnvs`
 > all.equal(ls.res, rds(500))
@@ -538,8 +533,7 @@ Error in initialize(value, ...) :
 +     my.unitizer@items.new)
 > # warn: not gonna work
 > coi(my.unitizer2 <- my.unitizer2 + exps)
-Warning message:
-In close_and_clear(e1@global$cons) :
+Warning in close_and_clear(e1@global$cons) :
   Test comparison functions appear to have produced output, which should not happen (see `?unitizer_sect` for more details).  If you did not provide custom testing functions, contact maintainer.  First 50 lines follow:
 Warning in fun(2, 2) : not gonna work
 
@@ -571,5 +565,4 @@ Warning in fun(2, 2) : not gonna work
 > 
 > proc.time()
    user  system elapsed 
-  1.585   0.167   2.077 
-CLEANUP COMPLETE
+  1.731   0.204   2.182 

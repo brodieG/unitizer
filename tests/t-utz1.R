@@ -2,17 +2,6 @@ source(file.path("_helper", "init.R"))
 source(file.path("_helper", "pkgs.R"))
 source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 
-options(
-  unitizer.color = FALSE,
-  width = 80L,
-  crayon.enabled = FALSE,
-  diffobj.term.colors = 1,
-  digits=3
-)
-
-update_fastlm(FLM, "0.1.0")
-install.packages(FLM, repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB)
-
 # - "custom history file" ------------------------------------------------------
 
 # Random history file
@@ -52,11 +41,12 @@ txtopt2$message[grepl("\\(function \\(seed", txtopt2$message,
     ignore.case = TRUE)] <- ""
 options(old.opt)
 
-all.equal(unitizer:::clean_eval_exp(txtopt1), rds("unitize_txtop1"))
+
+unitizer:::clean_eval_exp(txtopt1)
 # supplied seed not valid int
 # unexpectedly exited; not clear why all stderr is not being captured by
 # capture_output...
-all.equal(txtopt2, rds("unitize_txtop2"))
+txtopt2
 
 # - "create dir" ---------------------------------------------------------------
 
@@ -215,8 +205,7 @@ unitize(
 
 # Update `fastlm` to cause unitizers to fail, and go through the errors
 update_fastlm(FLM, version = "0.1.1")
-install.packages(FLM, repos = NULL, type = "src",
-    quiet = TRUE, lib = TMP.LIB)
+inst_pak(FLM)
 # Try navigating through the unitizer
 unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N",
     "N", "B", "U", "Q"))
@@ -276,8 +265,7 @@ unitize_dir(FLM.TEST.DIR, interactive.mode = TRUE)
 
 # Upgrade again, and try with deleted tests and other things
 update_fastlm(FLM, version = "0.1.2")
-install.packages(FLM, repos = NULL, type = "src",
-    quiet = TRUE, lib = TMP.LIB)
+inst_pak(FLM)
 unitizer:::read_line_set_vals(c("3", "ref(res)", "Y", "Y", "B",
     "1", "B", "U", "Y", "RR", "Y", "Q"))
 txt20 <- unitizer:::capture_output(unitize_dir(FLM.TEST.DIR, interactive.mode = TRUE))

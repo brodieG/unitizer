@@ -1,6 +1,5 @@
 source(file.path("_helper", "init.R"))
 source(file.path("_helper", "pkgs.R"))
-source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 source(file.path("aammrtf", "mock.R"))
 
 setwd(FLM)   # For whole test file to avoid temp file display
@@ -9,12 +8,8 @@ setwd(FLM)   # For whole test file to avoid temp file display
 # generating a unitizer with actual errors and so forth, we use it to test a few
 # other things as well in the context of those unitizers
 
-unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
-
 # - "in_pkg" -------------------------------------------------------------------
 
-update_fastlm(FLM, version = "0.1.0")
-install.packages(FLM, repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB)
 base.dir <- file.path(FLM, "tests", "extra")
 in.pkg.file <- file.path(base.dir, "inpkg.R")
 old.opt <- options(width = 80L)
@@ -24,18 +19,11 @@ txt1 <- unitizer:::capture_output(unitize(in.pkg.file, interactive.mode = TRUE))
 # `sub` needed due to inconsistencies in R 3.4 and 3.3 for top level error
 # messages
 txt1$message <- sub("^Error.*:", "", txt1$message)
+txt1
 unitizer:::read_line_set_vals(c("Q"))
-txt2 <- unitizer:::capture_output(unitize(in.pkg.file, state = in_pkg(), 
-    interactive.mode = TRUE))
+unitize(in.pkg.file, state = in_pkg(), interactive.mode = TRUE)
 unitizer:::read_line_set_vals(c("Q"))
-txt3 <- unitizer:::capture_output(
-  try(
-    unitize(in.pkg.file, state = in_pkg("ASDFASDFA"), interactive.mode = TRUE)
-) )
-
-all.equal(txt1, rds("inpkg_txt1"))
-all.equal(txt2, rds("inpkg_txt2"))
-all.equal(txt3, rds("inpkg_txt3"))
+try(unitize(in.pkg.file, state = in_pkg("ASDFASDFA"), interactive.mode = TRUE))
 
 # - "copy fastlm dir works" ----------------------------------------------------
 
@@ -65,65 +53,28 @@ unlink(f)
 
 # - "demo create worked" -------------------------------------------------------
 
-# use this options for rest of script
-
-old.opt <- options(
-  unitizer.color = FALSE, width = 80L, crayon.enabled = TRUE,
-  diffobj.term.colors = 8
-)
-# options(unitizer.disable.capt=c(output=TRUE, message=FALSE))
-
 # In tests, initial version of package should be 0.1.0; the test store
 # does not exist so it doesn't get overwritten with subsequent updates
 # Note the initial install happens in the test running script
 
 unitizer:::update_fastlm(".", version = "0.1.0")
-install.packages(
-  ".", repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB
-)
+inst_pak(".")
 unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
-txt1 <- unitizer:::capture_output(untz <- unitize(FLM.TEST.FILE,
-    interactive.mode = TRUE))
+untz <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+is(untz, "unitizer_result")
+print(untz)
 # Re-running doesn't change unitizer
-txt2 <- unitizer:::capture_output(untz2 <- unitize(FLM.TEST.FILE,
-    interactive.mode = TRUE))
+untz2 <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+print(untz2)
 # Rejecting failed tests does not change unitizer
 update_fastlm(".", version = "0.1.1")
-install.packages(
-  ".", repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB
-)
+inst_pak(".")
+
 unitizer:::read_line_set_vals(c("N", "N", "Y"))
-txt3 <- unitizer:::capture_output(untz3 <- unitize(FLM.TEST.FILE,
-    interactive.mode = TRUE))
-untz.clean <- lapply(list(untz, untz2, untz3), function(x) {
-    attr(x, "test.file") <- basename(attr(x, "test.file"))
-    attr(x, "store.id") <- basename(attr(x, "store.id"))
-    x
-})
-
-# test_that("demo create worked", {
-#     expect_is(untz, "unitizer_result")
-#     expect_equal_to_reference(untz.clean[[3]], file.path("helper",
-#         "refobjs", "demo_res1.rds"))
-#     expect_equal_to_reference(untz.clean[[1]], file.path("helper",
-#         "refobjs", "demo_res2.rds"))
-#     expect_equal_to_reference(untz.clean[[2]], file.path("helper",
-#         "refobjs", "demo_res3.rds"))
-#     expect_match(paste0(txt1$output, collapse = ""), "\\+-+\\+| unitizer for: tests/unitizer/fastlm\\.R.*Pass Fail  New  1\\. <untitled>     -    -    4.*= Finalize Unitizer.*- Adding 4 out of 4 new tests")
-#     expect_match(paste0(txt1$message, collapse = ""), "Error in fastlm\\(1:100, 1:10\\).*You will IRREVERSIBLY modify.*unitizer updated")
-#     expect_match(paste0(txt2$message, collapse = ""), "| 4/4 tests passed; nothing to review.",
-#         fixed = TRUE)
-# })
-
-
-is(untz, "unitizer_result")
-all.equal(untz.clean[[3]], rds("demo_res1"))
-all.equal(untz.clean[[1]], rds("demo_res2"))
-all.equal(untz.clean[[2]], rds("demo_res3"))
-
-writeLines(txt1$output)
-writeLines(txt1$message)
-writeLines(txt2$message)
+unitizer:::capture_output(
+  untz3 <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+)
+print(untz3)
 
 # - "demo review" --------------------------------------------------------------
 

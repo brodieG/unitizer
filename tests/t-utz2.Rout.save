@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -25,17 +23,7 @@ Install Packages
 Setup Demos
 > 
 > library(unitizer)
-> old.opt.outer <- options(
-+   unitizer.color = FALSE, width = 80L,
-+   crayon.enabled = FALSE,
-+   diffobj.term.colors = 1,
-+   digits=3,
-+   warn=1
-+ )
 > 
-> update_fastlm(FLM, "0.1.0")
-> install.packages(FLM, repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB)
-> unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
 > # - "unreviewed variations" ----------------------------------------------------
 > 
 > # Test unreviewed
@@ -544,8 +532,7 @@ You chose NOT to save these changes to the unitizer store
 > 
 > unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
 > unitizer:::update_fastlm_extra(FLM)
-> install.packages(FLM, repos = NULL, type = "src",
-+     quiet = TRUE, lib = TMP.LIB)
+> inst_pak(FLM)
 > test.file.1 <- file.path(FLM.TEST.DIR, "unitizer.fastlm.R")
 > test.file.2 <- file.path(FLM.TEST.DIR, "unitizer.fastlm2.R")
 > test.store <- file.path(FLM.TEST.DIR, "store2.unitizer")
@@ -788,5 +775,4 @@ Error in unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map f
 > 
 > proc.time()
    user  system elapsed 
-  11.09    2.24   14.86 
-CLEANUP COMPLETE
+  11.60    2.37   15.94 

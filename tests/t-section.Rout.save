@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -89,9 +87,8 @@ Error in unitizer_sect("mytest", matrix(1:9, nrow = 3)) :
 +     "unitizerSectionExpression")
 [1] TRUE
 > unitizer_sect("hello")  # warn
+Warning in unitizer_sect("hello") : `unitizer_sect` "hello" is empty.
 NULL
-Warning message:
-In unitizer_sect("hello") : `unitizer_sect` "hello" is empty.
 > 
 > # - "Custom Comparison Functions" ----------------------------------------------
 > 
@@ -159,5 +156,4 @@ In unitizer_sect("hello") : `unitizer_sect` "hello" is empty.
 > 
 > proc.time()
    user  system elapsed 
-  0.932   0.096   1.020 
-CLEANUP COMPLETE
+  1.065   0.132   1.231 

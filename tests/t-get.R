@@ -74,94 +74,95 @@ par.frame <- new.env()
 store.ids <- as.list(list.files(tmp.sub.dir3, full.names = TRUE))
 
 # must be upgraded, but cannot
-load.try <- capture.output(
+load.try <- unitizer:::capture_output(
   try(
     unitizer:::load_unitizers(store.ids, rep(NA_character_,
       length(store.ids)), par.frame = par.frame, interactive.mode = FALSE,
-      mode = "unitize", force.upgrade = FALSE
+      mode = "unitize", force.upgrade = FALSE, show.progress=0L
 ) ) )
-any(grepl('must be upgraded', load.try))
+any(grepl('could not be loaded', load.try$message))
+any(grepl('could not be upgraded', load.try$message))
+any(grepl('Cannot proceed', load.try$message))
 
 # handle failure in store_unitizer, we just try this on one of the store ids
 
-mock(unitizer:::store_unitizer, quote(stop("store failure")))
-unitizer:::capture_output(
-  try.upgrade <- unitizer:::load_unitizers(store.ids[4],
-  rep(NA_character_, length(store.ids))[4], par.frame = par.frame,
-  interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE)
+out <- unitizer:::capture_output(
+  unitizer:::load_unitizers(
+    store.ids[4], rep(NA_character_, length(store.ids))[4],
+    par.frame = par.frame, interactive.mode = FALSE, mode = "unitize",
+    force.upgrade = TRUE, show.progress=0L
+  )
 )
-unmock(unitizer:::store_unitizer)
-
-is(try.upgrade[[1]], "unitizerLoadFail")
-try.upgrade[[1]]@reason
+any(grepl('Upgraded test file does not match original', out$message))
 
 # try weird store ids
-unitizer:::capture_output(
-  invalid.store.return <- unitizer:::load_unitizers(list(structure("hello",
-      class = "unitizer_error_store")), NA_character_, par.frame = par.frame,
-      interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE)
+out <- unitizer:::capture_output(
+  invalid.store <- try(
+    unitizer:::load_unitizers(
+      list(structure("hello", class = "unitizer_error_store")),
+      NA_character_, par.frame = par.frame,
+      interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE,
+      show.progress=0L
+  ) )
 )
-is(invalid.store.return[[1L]], "unitizerLoadFail")
-invalid.store.return[[1L]]@reason
-
-# don't agree to upgrade in interactive mode
-unitizer:::read_line_set_vals("N")
-unitizer:::capture_output(
-  untzs0 <- unitizer:::load_unitizers(store.ids, rep(NA_character_,
-      length(store.ids)), par.frame = par.frame, interactive.mode = TRUE,
-      mode = "unitize",
-      global = suppressWarnings(unitizer:::unitizerGlobal$new()))
-)
-unitizer:::read_line_set_vals(NULL)
-all(vapply(unitizer:::as.list(untzs0), is, logical(1L), "unitizerLoadFail"))
-all(vapply(unitizer:::as.list(untzs0[-(1:2)]), slot, character(1L),
-    "reason") == "User elected not to upgrade unitizers")
+inherits(invalid.store, "try-error")
+any(grepl("returned something other than", out$message))
 
 # Load mix of loadable and not loadable objects
 glob <- suppressWarnings(unitizer:::unitizerGlobal$new())
 # with warning: "does not exist|test file does not")
-out <- unitizer:::capture_output(untzs <- unitizer:::load_unitizers(store.ids,
-    rep(NA_character_, length(store.ids)), par.frame = par.frame,
-    interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE,
-    global = glob))
-any(grepl("no slot of name", out$message))
-untzs.classes <- vapply(unitizer:::as.list(untzs), class, character(1L))
-untzs.classes
-
-old.width <- options(width = 80L)
-sum(grepl('Test file:|Store:|Reason:', capture.output(show(untzs[[1L]]))))
-sum(grepl('Test file:|Store:|Reason:', capture.output(show(untzs[[3L]]))))
-options(old.width)
+out <- unitizer:::capture_output(
+  untzs <- try(
+    unitizer:::load_unitizers(
+      store.ids, rep(NA_character_, length(store.ids)), par.frame = par.frame,
+      interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE,
+      global = glob, show.progress=0L
+) ) )
+inherits(untzs, "try-error")
+any(grepl('could not be loaded', out$message))
+any(grepl('could not be upgraded', out$message))
+any(grepl('Cannot proceed', out$message))
 
 # Test failure of storage of a loaded and upgraded unitizers
 
+untzs <- unitizer:::load_unitizers(
+  store.ids[4], NA_character_, par.frame = par.frame,
+  interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE,
+  global = glob, show.progress=0L
+)
 mock(unitizer:::set_unitizer, quote(stop("set fail")))
-try(unitizer:::store_unitizer(untzs[[4]]))
+try(unitizer:::store_unitizer(untzs[[1]]))
 unmock(unitizer:::set_unitizer)
 
 # Try reloading already loaded unitisers
-reload <- unitizer:::as.list(untzs)[untzs.classes == "unitizer"]
+reload <- unitizer:::as.list(untzs)
 # this creates a global object, hence warning
-untzs1a <- unitizer:::load_unitizers(reload, rep(NA_character_,
-    length(reload)), par.frame = par.frame, interactive.mode = FALSE,
-    mode = "unitize", force.upgrade = FALSE)
+untzs1a <- unitizer:::load_unitizers(
+  reload, rep(NA_character_, length(reload)), par.frame = par.frame,
+  interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE,
+  show.progress=0L
+)
 all(vapply(unitizer:::as.list(untzs1a), is, logical(1L), "unitizer"))
 
 # misc tests
 # warning Instantiated global object without
 
-untzs2 <- unitizer:::load_unitizers(list(tmp.sub.dir2), NA_character_,
-    par.frame, interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE)
+untzs2 <- unitizer:::load_unitizers(
+  list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode = FALSE,
+  mode = "unitize", force.upgrade = FALSE, show.progress=0L
+)
 is(untzs2[[1L]], "unitizer")
 identical(parent.env(untzs2[[1L]]@zero.env), par.frame)
 
-# something that won't get rest on load so we can check our re-load
+# something that won't get reset on load so we can check our re-load
 untzs2[[1L]]@eval.time <- 33
 unitizer:::store_unitizer(untzs2[[1L]])
 
 # warning Instantiated global object without
-untzs2.1 <- unitizer:::load_unitizers(list(tmp.sub.dir2), NA_character_,
-    par.frame, interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE)
+untzs2.1 <- unitizer:::load_unitizers(
+  list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode = FALSE,
+  mode = "unitize", force.upgrade = FALSE, show.progress=0L
+)
 untzs2.1[[1L]]@eval.time # 33
 unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive = TRUE)
 
@@ -238,21 +239,21 @@ basename(inf)
 base.dir2 <- file.path(base.dir, "tests", "unitizer")
 # note don't need * to generate warning
 out <- unitizer:::capture_output(inf.dir2 <- infer(base.dir2))  # warn
-grepl("5 possible targets", out$message)
+any(grepl("5 possible targets", out$message))
 identical(base.dir2, inf.dir2)
 out <- unitizer:::capture_output(infer(file.path(base.dir2, "a")))
-grepl("2 possible targets", out$message)
-out <- unitizer:::capture_output(infer(file.path(base.dir2, "a"), type = "u")) 
-grepl("2 possible targets", out$message)
+any(grepl("2 possible targets", out$message))
+out <- unitizer:::capture_output(infer(file.path(base.dir2, "a"), type = "u"))
+any(grepl("2 possible targets", out$message))
 out <-
   unitizer:::capture_output(fname <- basename(infer(file.path(base.dir2, "z"))))
 fname
-grepl('Inferred test file location:', out)
+any(grepl('Inferred test file location:', out))
 out <- unitizer:::capture_output(
   fname <- basename(infer(file.path(base.dir2, "z"), type="u"))
 )
 fname
-grepl('Inferred unitizer location:', out)
+any(grepl('Inferred unitizer location:', out))
 
 # Random file without setting working dir first, in order for this to work
 # non-interactivel we need it to work with the R CMD check dir structure,
@@ -285,32 +286,8 @@ f <- tempfile()
 out <- capture.output(
   invisible(unitizer:::infer_unitizer_location(f)), type='message'
 )
-grepl("No possible matching files", out)
+any(grepl("No possible matching files", out))
 
-# - "test file / store manip" --------------------------------------------------
-
-if(FALSE) {  # fails CRAN, should probably go in not-cran of some sort
-  skip("fails CRAN")
-  # expect_identical(unitizer:::as.store_id_chr(file.path(getwd(),
-  #     "hello")), "hello")
-  unitizer:::as.store_id_chr(file.path(getwd(), "hello"))
-  # expect_error(unitizer:::as.store_id_chr(structure("hello", class = "untz_stochrerr")),
-  #     "Unable to convert")
-  unitizer:::as.store_id_chr(structure("hello", class = "untz_stochrerr"))
-  as.character.custstore <- function(x, ...) x
-  # expect_match(unitizer:::best_store_name(structure(list("hello",
-  #     class = "custstore")), "hello"), "unitizer for .*hello")
-  unitizer:::best_store_name(structure(list("hello", class = "custstore")),
-      "hello")
-  # expect_match(unitizer:::best_store_name(structure(list("hello",
-  #     class = "custstore")), NA_character_), "untranslateable")
-  unitizer:::best_store_name(structure(list("hello", class = "custstore")),
-      NA_character_)
-  # expect_match(unitizer:::best_file_name(structure(list("hello",
-  #     class = "custstore")), NA_character_), "unknown-test-file")
-  unitizer:::best_file_name(structure(list("hello", class = "custstore")),
-      NA_character_)
-}
 
 unlink(tmp.dir, recursive = TRUE)
 

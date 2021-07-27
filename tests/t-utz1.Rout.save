@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -23,29 +21,6 @@ Install Packages
 Setup Demos
 > source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > 
-> options(
-+   unitizer.color = FALSE,
-+   width = 80L,
-+   crayon.enabled = FALSE,
-+   diffobj.term.colors = 1,
-+   digits=3
-+ )
-> 
-> update_fastlm(FLM, "0.1.0")
-> install.packages(FLM, repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB)
-> 
-> # test_that("custom history file", {
-> #     if (interactive()) {
-> #         expect_identical(hist.dat, c("## <unitizer> (original history will be restored on exit)",
-> #             "library(utzflm, lib.loc = getOption(\"unitizer.tmp.lib.loc\"))",
-> #             "dat <- data.frame(x = 1:100, y = (1:100)^2)", "res <- fastlm(dat$x, dat$y)",
-> #             "res", "1 + 1", "get_slope(res)", "get_rsq(res)",
-> #             "fastlm(1:100, 1:10)"))
-> #     }
-> #     else {
-> #         expect_identical(hist.dat, character())
-> #     }
-> # })
 > # - "custom history file" ------------------------------------------------------
 > 
 > # Random history file
@@ -68,12 +43,6 @@ Setup Demos
 +   identical(hist.dat, character())
 + }
 [1] TRUE
-> # Bad history
-> # test_that("bad history", {
-> #     expect_is(bad.hist, "try-error")
-> #     expect_match(conditionMessage(attr(bad.hist, "condition")),
-> #         "must be the name")
-> # })
 > # - "bad history" --------------------------------------------------------------
 > 
 > bad.hist <- try(unitize(FLM.TEST.FILE, history = list()), silent = TRUE)
@@ -83,12 +52,6 @@ Setup Demos
 > conditionMessage(attr(bad.hist, "condition"))
 [1] "Argument `history` must be the name of a file that can be opened in \"at\" mode, or \"\", or NULL"
 > 
-> # test_that("bad seed", {
-> #     expect_equal_to_reference(unitizer:::clean_eval_exp(txtopt1),
-> #         file.path("helper", "refobjs", "unitize_txtop1.rds"))
-> #     expect_equal_to_reference(txtopt2, file.path("helper", "refobjs",
-> #         "unitize_txtop2.rds"))
-> # })
 > # - "bad seed" -----------------------------------------------------------------
 > 
 > # gsub needed b/c of inconsistent error calls in 3.3.2 and 3.4
@@ -101,13 +64,35 @@ Setup Demos
 +     ignore.case = TRUE)] <- ""
 > options(old.opt)
 > 
-> all.equal(unitizer:::clean_eval_exp(txtopt1), rds("unitize_txtop1"))
-[1] TRUE
+> 
+> unitizer:::clean_eval_exp(txtopt1)
+- Output -----------------------------------------------------------------------
+
+
+- Message ----------------------------------------------------------------------
+
+Error in do.call(set.seed, seed.dat) : second argument must be a list
+Error in as.state(state, test.files) : 
+  Internal Error: failed processing raw state object, contact maintainer. (Unable to set random seed; make sure `getOption('unitizer.seed')` is a list of possible arguments to `set.seed`, or set `seed` slot to be less than 2L.)
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  Argument `state` could not be evaluated.
 > # supplied seed not valid int
 > # unexpectedly exited; not clear why all stderr is not being captured by
 > # capture_output...
-> all.equal(txtopt2, rds("unitize_txtop2"))
-[1] TRUE
+> txtopt2
+- Output -----------------------------------------------------------------------
+
+
+- Message ----------------------------------------------------------------------
+
+
+  NAs introduced by coercion
+
+  supplied seed is not a valid integer
+Error in as.state(state, test.files) : 
+  Internal Error: failed processing raw state object, contact maintainer. (Unable to set random seed; make sure `getOption('unitizer.seed')` is a list of possible arguments to `set.seed`, or set `seed` slot to be less than 2L.)
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  Argument `state` could not be evaluated.
 > 
 > # - "create dir" ---------------------------------------------------------------
 > 
@@ -127,14 +112,6 @@ Setup Demos
 > txt2 <- unitizer:::capture_output(untz2 <- unitize_dir(FLM.TEST.DIR,
 +     get_store_id, interactive.mode = TRUE))
 > 
-> # test_that("create dir", {
-> #     expect_is(untz1, "try-error")
-> #     expect_is(untz2, "unitizer_results")
-> #     expect_equal_to_reference(txt1, file.path("helper", "refobjs",
-> #         "unitize_txtcd1.rds"))
-> #     expect_equal_to_reference(txt2, file.path("helper", "refobjs",
-> #         "unitize_txtcd2.rds"))
-> # })
 > inherits(untz1, "try-error")
 [1] TRUE
 > inherits(untz2, "unitizer_results")
@@ -752,37 +729,6 @@ Test files in common directory 'package:utzflm/tests/unitizer'
 +   vapply(get_unitizer(untz3b), class, character(1L)), rep("unitizer", 3L)
 + )
 [1] TRUE
-> 
-> # x <- untz3b.all
-> # y <- readRDS(file.path("helper", "refobjs", "unitize_resprint3.rds"))
-> # cat(capture.output(print(x)), sep="\n", file=(f1 <- tempfile())); cat(capture.output(print(y)), sep="\n", file=(f2 <- tempfile())); tools::Rdiff(f1, f2);
-> # unlink(paste0("f", 1:2))
-> # test_that("print untizer result", {
-> #     expect_equal_to_reference(untz3a.all.pr, file.path("helper",
-> #         "refobjs", "unitize_resprint1.rds"))
-> #     expect_equal_to_reference(untz3a.first.pr, file.path("helper",
-> #         "refobjs", "unitize_resprint2.rds"))
-> #     expect_equal_to_reference(untz3b.all.pr, file.path("helper",
-> #         "refobjs", "unitize_resprint3.rds"))
-> #     expect_match(untz3a.empty.pr[1], "No unitizers")
-> #     expect_match(untz3a.first.bad.pr[2], "untranslateable")
-> # })
-> # test_that("unitize_dir", {
-> #     expect_equal_to_reference(txt3aa, file.path("helper", "refobjs",
-> #         "unitize_txtdir_quitall.rds"))
-> #     expect_equal_to_reference(txt3a, file.path("helper", "refobjs",
-> #         "unitize_txtdir.rds"))
-> #     expect_equal_to_reference(txt3b, file.path("helper", "refobjs",
-> #         "unitize_txtdir1.rds"))
-> #     expect_identical(class(untz3a), "unitizer_results")
-> #     expect_identical(lapply(untz3a, class), replicate(3L, c("unitizer_result",
-> #         "data.frame"), simplify = FALSE))
-> #     expect_equal_to_reference(untz3a.cpy, file.path("helper",
-> #         "refobjs", "unitize_res1.rds"))
-> #     expect_equal(untz3a.get.all, c("unitizer", "unitizer", "logical"))
-> #     expect_equal(untz3b.get.all, c("unitizer", "unitizer", "unitizer"))
-> # })
-> #
 > # - "namespace conflict" -------------------------------------------------------
 > 
 > # Namespace conflicts; unfortunately if either `covr` or `data.table` are
@@ -918,18 +864,6 @@ Error in unitize_browse(unitizers = unitizers[valid], mode = mode, interactive.m
 less than or equal to search path state tracking or see vignette for other 
 workarounds.
 > 
-> # Note that if `data.table` namespace is loaded these tests are likely to fail
-> # because they include un-unloadable namespaces in the error list
-> # test_that("namespace conflict", {
-> #     expect_equal_to_reference(txt4, file.path("helper", "refobjs",
-> #         "unitize_nsconf1.rds"))
-> #     expect_equal_to_reference(txt5, file.path("helper", "refobjs",
-> #         "unitize_nsconf2.rds"))
-> #     expect_equal_to_reference(txt6, file.path("helper", "refobjs",
-> #         "unitize_errintry.rds"))
-> #     expect_equal_to_reference(txt7, file.path("helper", "refobjs",
-> #         "unitize_nsconf3.rds"))
-> # })
 > # - "Removing Tests" -----------------------------------------------------------
 > 
 > # Removing tests; del2 has the same tests as del1, but with some removed
@@ -1010,18 +944,11 @@ unitizer> Y
 
 | unitizer updated.
 
-> # test_that("Removing Tests", {
-> #     expect_equal_to_reference(txt7aa, file.path("helper", "refobjs",
-> #         "unitize_rem1.rds"))
-> #     expect_equal_to_reference(txt7ab, file.path("helper", "refobjs",
-> #         "unitize_rem2.rds"))
-> # })
 > # - "navigate" -----------------------------------------------------------------
 > 
 > # Update `fastlm` to cause unitizers to fail, and go through the errors
 > update_fastlm(FLM, version = "0.1.1")
-> install.packages(FLM, repos = NULL, type = "src",
-+     quiet = TRUE, lib = TMP.LIB)
+> inst_pak(FLM)
 > # Try navigating through the unitizer
 > unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N",
 +     "N", "B", "U", "Q"))
@@ -1239,13 +1166,6 @@ Store ID: fastlm1.unitizer
 7  7            fastlm(1:100, 1:10)         Passed    Y    FALSE
 
 You chose NOT to save these changes to the unitizer store
-> 
-> # test_that("navigate", {
-> #     expect_equal_to_reference(txt7a, file.path("helper", "refobjs",
-> #         "unitize_nav1.rds"))
-> #     expect_equal_to_reference(untz7a, file.path("helper", "refobjs",
-> #         "unitize_res7a.rds"))
-> # })
 > 
 > # - "review dir" ---------------------------------------------------------------
 > 
@@ -2801,41 +2721,12 @@ unitizer> RR
 
 | 8/8 tests passed; nothing to review.
 
-> #
-> # test_that("review dir", {
-> #     expect_equal_to_reference(txt8, file.path("helper", "refobjs",
-> #         "unitize_revdir1.rds"))
-> #     expect_equal_to_reference(txt8a, file.path("helper", "refobjs",
-> #         "unitize_revdir1a.rds"))
-> #     expect_equal_to_reference(txt8b, file.path("helper", "refobjs",
-> #         "unitize_revdir1b.rds"))
-> #     expect_equal_to_reference(txt8c, file.path("helper", "refobjs",
-> #         "unitize_revdir1c.rds"))
-> #     expect_equal_to_reference(txt9, file.path("helper", "refobjs",
-> #         "unitize_revdir2.rds"))
-> #     expect_equal_to_reference(txt10, file.path("helper", "refobjs",
-> #         "unitize_revdir3.rds"))
-> #     expect_equal_to_reference(txt11, file.path("helper", "refobjs",
-> #         "unitize_revdir4.rds"))
-> #     expect_equal_to_reference(txt12, file.path("helper", "refobjs",
-> #         "unitize_reeval1.rds"))
-> #     expect_equal_to_reference(txt12a, file.path("helper", "refobjs",
-> #         "unitize_reeval2.rds"))
-> #     expect_equal_to_reference(txt12b, file.path("helper", "refobjs",
-> #         "unitize_reeval2b.rds"))
-> #     expect_equal_to_reference(txt13, file.path("helper", "refobjs",
-> #         "unitize_multiaccept1.rds"))
-> #     expect_equal_to_reference(txt13a, file.path("helper", "refobjs",
-> #         "unitize_multiaccept2.rds"))
-> #     expect_equal_to_reference(txt13b, file.path("helper", "refobjs",
-> #         "unitize_multiaccept3.rds"))
-> # })
+> 
 > # - "multi-sect" ---------------------------------------------------------------
 > 
 > # Upgrade again, and try with deleted tests and other things
 > update_fastlm(FLM, version = "0.1.2")
-> install.packages(FLM, repos = NULL, type = "src",
-+     quiet = TRUE, lib = TMP.LIB)
+> inst_pak(FLM)
 > unitizer:::read_line_set_vals(c("3", "ref(res)", "Y", "Y", "B",
 +     "1", "B", "U", "Y", "RR", "Y", "Q"))
 > txt20 <- unitizer:::capture_output(unitize_dir(FLM.TEST.DIR, interactive.mode = TRUE))
@@ -3023,11 +2914,6 @@ unitizer> Q
 | unitizer updated.
 
 > 
-> # test_that("multi-sect", {
-> #     expect_equal_to_reference(txt20, file.path("helper", "refobjs",
-> #         "unitize_multisect1.rds"))
-> # })
-> 
 > # - "Load Fail" ----------------------------------------------------------------
 > 
 > # Purposefully mess up one of the unitizers to see if the load fail stuff works
@@ -3052,5 +2938,4 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
 > 
 > proc.time()
    user  system elapsed 
-  25.42    4.16   34.01 
-CLEANUP COMPLETE
+  27.89    4.53   38.48 

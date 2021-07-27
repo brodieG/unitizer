@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -20,41 +18,6 @@ Type 'q()' to quit R.
 > source(file.path("_helper", "init.R"))
 > source(file.path("_helper", "pkgs.R"))
 Install Packages
-* installing *source* package ‘unitizerdummypkg1’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-** help
-No man pages found in package  ‘unitizerdummypkg1’ 
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (unitizerdummypkg1)
-* installing *source* package ‘unitizerdummypkg2’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-** help
-No man pages found in package  ‘unitizerdummypkg2’ 
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (unitizerdummypkg2)
-* installing *source* package ‘utzflm’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-** help
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (utzflm)
 Setup Demos
 > source(file.path("aammrtf", "mock.R"))
 > 
@@ -267,13 +230,12 @@ Tracing function "attach" in package "namespace:base"
 > untz.glob$checkShims()   # warning
 Warning in untz.glob$checkShims() :
   Traced functions unexpectedly changed, disabling clean parent env
-[1] FALSE
-Warning message:
-In unshimFuns() :
+Warning in unshimFuns() :
   `attach` was not untraced because they were modified by something other than unitizer.
 `FALSE`, `TRUE`, and `FALSE` were not untraced for unknown reasons; please report to maintainer.
 
 you should consider manually untracing the function, or restarting your R session to restore function to original value.
+[1] FALSE
 > parent.env(my.env)
 <environment: R_GlobalEnv>
 > inherits(detach, "functionWithTrace")    # FALSE
@@ -327,9 +289,6 @@ Error in untz.glob$shimFun("sum") : Internal Error: missing shim data
 +   )
 + )
 [1] TRUE
-Warning message:
-In untz.glob$shimFun("library") :
-  Failed attempting to trace `library`; see prior errors
 > unmock(unitizer:::trace_at_end)
 > 
 > trace.fail   # FALSE
@@ -337,16 +296,14 @@ In untz.glob$shimFun("library") :
 > mock(unitizer:::trace_at_end, quote(message("random message")))
 > untz.glob$shimFun("library")
 random message
-[1] FALSE
-Warning message:
-In untz.glob$shimFun("library") :
+Warning in untz.glob$shimFun("library") :
   Function `library` was not traced even though tracing attempt did not produce errors.
+[1] FALSE
 > unmock(unitizer:::trace_at_end)
 > 
 > mock(unitizer:::trace_at_end, quote(TRUE))
 > dont.trace <- untz.glob$shimFun("library") # Warning "not traced"
-Warning message:
-In untz.glob$shimFun("library") :
+Warning in untz.glob$shimFun("library") :
   Function `library` was not traced even though tracing attempt did not produce errors.
 > unmock(unitizer:::trace_at_end)
 > 
@@ -438,5 +395,4 @@ untrace dummy
 > 
 > proc.time()
    user  system elapsed 
-  4.934   1.219   6.467 
-CLEANUP COMPLETE
+   5.36    1.49    8.08 

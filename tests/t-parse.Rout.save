@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -1129,7 +1127,7 @@ NULL
 > expr <- unitizer:::parse_with_comments(text = txt3)
 > my.unitizer <- new("unitizer", id = 1, zero.env = new.env())
 > capture.output(my.unitizer <- my.unitizer + expr)
-[1] "\r                                                                                \rlibrary(utzflm)\r                                                                                \rx <- 1:100\r                                                                                \ry <- x^2\r                                                                                \rres <- fastlm(x, y)\r                                                                                \rres\r                                                                                \rget_slope(res)\r                                                                                \rget_rsq(res)\r                                                                                \rfastlm(x, head(y))\r                                                                                \r"
+character(0)
 > 
 > lapply(unitizer:::as.list(my.unitizer@items.new), slot, "comment")
 [[1]]
@@ -1347,5 +1345,4 @@ NULL
 > 
 > proc.time()
    user  system elapsed 
-  1.131   0.129   1.406 
-CLEANUP COMPLETE
+  1.117   0.125   1.273 

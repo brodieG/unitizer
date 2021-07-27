@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -20,41 +18,6 @@ Type 'q()' to quit R.
 > source(file.path("_helper", "init.R"))
 > source(file.path("_helper", "pkgs.R"))
 Install Packages
-* installing *source* package ‘unitizerdummypkg1’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-** help
-No man pages found in package  ‘unitizerdummypkg1’ 
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (unitizerdummypkg1)
-* installing *source* package ‘unitizerdummypkg2’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-** help
-No man pages found in package  ‘unitizerdummypkg2’ 
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (unitizerdummypkg2)
-* installing *source* package ‘utzflm’ ...
-** using staged installation
-** R
-** byte-compile and prepare package for lazy loading
-** help
-*** installing help indices
-** building package indices
-** testing if installed package can be loaded from temporary location
-** testing if installed package can be loaded from final location
-** testing if installed package keeps a record of temporary installation path
-* DONE (utzflm)
 Setup Demos
 > 
 > unitizer.dummy.list <- list(A = 1, B = 2, C = 3)
@@ -72,50 +35,34 @@ Setup Demos
 > 
 > # - "Detecting packages" -------------------------------------------------------
 > 
-> # expect_true(unitizer:::is.loaded_package("package:unitizer"))
 > unitizer:::is.loaded_package("package:unitizer")
 [1] TRUE
-> # expect_false(unitizer:::is.loaded_package("unitizer"))
-> unitizer:::is.loaded_package("unitizer")
+> unitizer:::is.loaded_package("unitizer")   # FALSE
 [1] FALSE
-> # expect_true(unitizer:::is.loaded_package("package:stats"))
 > unitizer:::is.loaded_package("package:stats")
 [1] TRUE
-> # expect_error(unitizer:::is.loaded_package(1))
 > try(unitizer:::is.loaded_package(1))
 Error in unitizer:::is.loaded_package(1) : 
   Argument `pkg.name` must be character 1L
-> # expect_error(unitizer:::is.loaded_package(letters))
 > try(unitizer:::is.loaded_package(letters))
 Error in unitizer:::is.loaded_package(letters) : 
   Argument `pkg.name` must be character 1L
-> # expect_false(unitizer:::is.loaded_package("Autoloads"))
 > unitizer:::is.loaded_package("Autoloads")  # FALSE
 [1] FALSE
-> # expect_true(is.list(pkg.dat <- unitizer:::get_package_data()))
 > is.list(pkg.dat <- unitizer:::get_package_data())
 [1] TRUE
-> # expect_true(all(vapply(pkg.dat, function(x) is.list(x) && identical(names(x),
-> #     c("names", "lib.loc", "version")), logical(1L))))
 > all(
 +   vapply(
 +     pkg.dat, function(x) is.list(x) && identical(names(x),
 +     c("names", "lib.loc", "version")), logical(1L)
 + ) )
 [1] TRUE
-> # test_that("Path Compression", {
-> #     expect_identical(head(unitizer:::compress_search_data(search.init.full),
-> #         3L), c(".GlobalEnv", "package:unitizerdummypkg2 (v0.1)",
-> #         "package:unitizerdummypkg1 (v0.1)"))
-> # })
+> 
 > # - "Path Compression" ---------------------------------------------------------
 > 
 > search.init.full <- unitizer:::search_as_envs()
 > search.init <- search.init.full$search.path
 > 
-> # expect_identical(head(unitizer:::compress_search_data(search.init.full),
-> #     3L), c(".GlobalEnv", "package:unitizerdummypkg2 (v0.1)",
-> #     "package:unitizerdummypkg1 (v0.1)"))
 > head(unitizer:::compress_search_data(search.init.full), 3L)
 [1] ".GlobalEnv"                       "package:unitizerdummypkg2 (v0.1)"
 [3] "package:unitizerdummypkg1 (v0.1)"
@@ -126,19 +73,16 @@ Error in unitizer:::is.loaded_package(letters) :
 > untz.glob <- unitizer:::unitizerGlobal$new(enable.which = state.set,
 +     set.global = TRUE)
 > 
-> # expect_error(unitizer:::move_on_path(5L, 2L, untz.glob))
 > try(unitizer:::move_on_path(5L, 2L, untz.glob))
 Error in unitizer:::move_on_path(5L, 2L, untz.glob) : 
   old.pos > new.pos is not TRUE
-> # expect_error(unitizer:::move_on_path(1L, 2L, untz.glob))
 > try(unitizer:::move_on_path(1L, 2L, untz.glob))
 Error in unitizer:::move_on_path(1L, 2L, untz.glob) : 
   new.pos > 1L is not TRUE
 > unitizer:::move_on_path(2L, 5L, untz.glob)
 > # can't compare actual environments as they change when detached and
 > # re-attached
-> # expect_equal(names(unitizer:::search_as_envs()$search.path),
-> #     names(search.init[c(1L, 5L, 2L:4L, 6L:length(search.init))]))
+> 
 > all.equal(
 +   names(unitizer:::search_as_envs()$search.path),
 +   names(search.init[c(1L, 5L, 2L:4L, 6L:length(search.init))])
@@ -147,69 +91,10 @@ Error in unitizer:::move_on_path(1L, 2L, untz.glob) :
 > # Now let's undo the previous move, by pushing second pack back to
 > # original position
 > for (i in rep(5L, 3L)) unitizer:::move_on_path(2L, 5L, untz.glob)
-> # expect_true(unitizer:::search_dat_equal(unitizer:::search_as_envs(),
-> #     search.init.full))
 > unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init.full)
 [1] TRUE
 > untz.glob$release()
 > 
-> 
-> 
-> # test_that("Search Path Journaling Works", {
-> #     expect_identical(untz.glob$status, stat.tpl)
-> #     expect_identical(st.0, new("unitizerGlobalIndices", search.path = 1L,
-> #         working.directory = 1L, options = 1L, random.seed = 1L,
-> #         namespaces = 1L))
-> #     expect_identical(st.0, st.1)
-> #     library("unitizerdummypkg1", lib.loc = TMP.LIB)
-> #     st.2 <- untz.glob$state()
-> #     expect_equal(st.2@search.path, 2L)
-> #     expect_equal(diff(sapply(untz.glob$tracking@search.path,
-> #         function(x) length(x$search.path))), 1L)
-> #     expect_equal(environmentName(untz.glob$tracking@search.path[[2L]]$search.path[[2L]]),
-> #         "package:unitizerdummypkg1")
-> #     sp.tmp <- untz.glob$tracking@search.path
-> #     expect_identical(sp.tmp[[1L]]$search.path, sp.tmp[[2L]]$search.path[-2L])
-> #     expect_identical(sp.tmp[[1L]]$ns.dat, sp.tmp[[2L]]$ns.dat[names(sp.tmp[[2L]]$ns.dat) !=
-> #         "unitizerdummypkg1"])
-> #     library("unitizerdummypkg2", pos = 4L, lib.loc = TMP.LIB)
-> #     st.3 <- untz.glob$state()
-> #     expect_equal(diff(sapply(untz.glob$tracking@search.path,
-> #         function(x) length(x$search.path))), c(1L, 1L))
-> #     expect_equal(environmentName(untz.glob$tracking@search.path[[st.3@search.path]]$search.path[[4L]]),
-> #         "package:unitizerdummypkg2")
-> #     attach(unitizer.dummy.list)
-> #     search.ref <<- untz.glob$state()
-> #     expect_equal(environmentName(untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]),
-> #         "unitizer.dummy.list")
-> #     expect_identical(as.list(untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]),
-> #         unitizer.dummy.list)
-> #     unitizer.dummy.list.2 <- list(A = 13, B = 24, C = 35)
-> #     attach(unitizer.dummy.list.2, pos = 4L, name = "unitizer.dummy.list")
-> #     st.4 <- untz.glob$state()
-> #     curr.sp.ind <- untz.glob$indices.last@search.path
-> #     expect_equal(environmentName(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]]),
-> #         "unitizer.dummy.list")
-> #     expect_equal(names(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path),
-> #         search())
-> #     expect_identical(as.list(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]]),
-> #         unitizer.dummy.list.2)
-> #     expect_identical(as.list(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[2L]]),
-> #         unitizer.dummy.list)
-> #     expect_identical(untz.glob$tracking@search.path[[curr.sp.ind -
-> #         1L]]$search.path[[2L]], untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[2L]])
-> #     expect_identical(untz.glob$state(), st.4)
-> #     detach(2L)
-> #     untz.glob$state()
-> #     curr.sp.ind <- untz.glob$indices.last@search.path
-> #     expect_identical(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path,
-> #         untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[-2L])
-> #     detach("package:unitizerdummypkg2")
-> #     untz.glob$state()
-> #     curr.sp.ind <- untz.glob$indices.last@search.path
-> #     expect_identical(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path,
-> #         untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[-5L])
-> # })
 > # - "Search Path Journaling Works" ---------------------------------------------
 > 
 > try(detach("package:unitizer"), silent = TRUE)
@@ -233,13 +118,10 @@ Error in unitizer:::move_on_path(1L, 2L, untz.glob) :
 > st.1 <- untz.glob$state()
 > 
 > # Note, these are intended to be run without the shimming in place
-> # expect_identical(untz.glob$status, stat.tpl)
 > identical(untz.glob$status, stat.tpl)
 [1] TRUE
 > 
 > # state should only be recorded if it changes
-> # expect_identical(st.0, new("unitizerGlobalIndices", search.path = 1L,
-> #     working.directory = 1L, options = 1L, random.seed = 1L, namespaces = 1L))
 > st.0
 An object of class "unitizerGlobalIndices"
 Slot "search.path":
@@ -257,33 +139,24 @@ Slot "random.seed":
 Slot "namespaces":
 [1] 1
 
-> # expect_identical(st.0, st.1)
 > identical(st.0, st.1)
 [1] TRUE
 > # Add a package
 > library("unitizerdummypkg1", lib.loc = TMP.LIB)
 > st.2 <- untz.glob$state()
 > # have two recorded states
-> # expect_equal(st.2@search.path, 2L)
 > st.2@search.path
 [1] 2
 > # should have one more item
-> # expect_equal(diff(sapply(untz.glob$tracking@search.path, function(x) length(x$search.path))),
-> #     1L)
 > diff(sapply(untz.glob$tracking@search.path, function(x) length(x$search.path)))
 [1] 1
-> # expect_equal(environmentName(untz.glob$tracking@search.path[[2L]]$search.path[[2L]]),
-> #     "package:unitizerdummypkg1")
 > environmentName(untz.glob$tracking@search.path[[2L]]$search.path[[2L]])
 [1] "package:unitizerdummypkg1"
 > sp.tmp <- untz.glob$tracking@search.path
 > # note we compare attribute separately because subsetting drops them
-> # expect_identical(sp.tmp[[1L]]$search.path, sp.tmp[[2L]]$search.path[-2L])
 > identical(sp.tmp[[1L]]$search.path, sp.tmp[[2L]]$search.path[-2L])
 [1] TRUE
 > 
-> # expect_identical(sp.tmp[[1L]]$ns.dat, sp.tmp[[2L]]$ns.dat[names(sp.tmp[[2L]]$ns.dat) !=
-> #     "unitizerdummypkg1"])
 > identical(
 +   sp.tmp[[1L]]$ns.dat,
 +   sp.tmp[[2L]]$ns.dat[names(sp.tmp[[2L]]$ns.dat) != "unitizerdummypkg1"]
@@ -292,12 +165,8 @@ Slot "namespaces":
 > # Add another package at a different position
 > library("unitizerdummypkg2", pos = 4L, lib.loc = TMP.LIB)
 > st.3 <- untz.glob$state()
-> # expect_equal(diff(sapply(untz.glob$tracking@search.path, function(x) length(x$search.path))),
-> #     c(1L, 1L))
 > diff(sapply(untz.glob$tracking@search.path, function(x) length(x$search.path)))
 [1] 1 1
-> # expect_equal(environmentName(untz.glob$tracking@search.path[[st.3@search.path]]$search.path[[4L]]),
-> #     "package:unitizerdummypkg2")
 > environmentName(
 +   untz.glob$tracking@search.path[[st.3@search.path]]$search.path[[4L]]
 + )
@@ -305,14 +174,10 @@ Slot "namespaces":
 > # Attach a list
 > attach(unitizer.dummy.list)
 > search.ref <- untz.glob$state()
-> # expect_equal(environmentName(untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]),
-> #     "unitizer.dummy.list")
 > environmentName(
 +   untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]
 + )
 [1] "unitizer.dummy.list"
-> # expect_identical(as.list(untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]),
-> #     unitizer.dummy.list)
 > identical(
 +   as.list(
 +     untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]
@@ -329,12 +194,9 @@ The following objects are masked _by_ unitizer.dummy.list (pos = 2):
 
 > st.4 <- untz.glob$state()
 > curr.sp.ind <- untz.glob$indices.last@search.path
-> # expect_equal(environmentName(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]]),
-> #     "unitizer.dummy.list")
 > environmentName(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]])
 [1] "unitizer.dummy.list"
 > # Make sure search path is lining up
-> # expect_
 > all.equal(
 +   names(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path), search()
 + )
@@ -463,8 +325,6 @@ Slot "namespaces":
 
 > untz.glob$release()
 > # compare with all.equal to make sure we use S4 method
-> # expect_true(unitizer:::search_dat_equal(unitizer:::search_as_envs(),
-> #     search.init))
 > unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
 [1] TRUE
 > 
@@ -517,8 +377,6 @@ Slot "namespaces":
 [1] 1
 
 > untz.glob$release()
-> # expect_true(unitizer:::search_dat_equal(unitizer:::search_as_envs(),
-> #     search.init))
 > unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
 [1] TRUE
 > try(detach("package:unitizerdummypkg1", unload = TRUE), silent = TRUE)
@@ -570,10 +428,8 @@ Slot "random.seed":
 Slot "namespaces":
 [1] 3
 
-> # expect_false("unitizerdummypkg1" %in% loadedNamespaces())
 > "unitizerdummypkg1" %in% loadedNamespaces()  # FALSE
 [1] FALSE
-> # expect_true("unitizerdummypkg2" %in% loadedNamespaces())
 > "unitizerdummypkg2" %in% loadedNamespaces()
 [1] TRUE
 > untz.glob$resetFull()
@@ -594,10 +450,8 @@ Slot "namespaces":
 [1] 1
 
 > untz.glob$release()
-> # expect_true("unitizerdummypkg1" %in% loadedNamespaces())
 > "unitizerdummypkg1" %in% loadedNamespaces()
 [1] TRUE
-> # expect_false("unitizerdummypkg2" %in% loadedNamespaces())
 > "unitizerdummypkg2" %in% loadedNamespaces()  # FALSE
 [1] FALSE
 > unloadNamespace("unitizerdummypkg1")
@@ -611,10 +465,8 @@ Slot "namespaces":
 > glb$status@options <- 2L
 > unitizer:::unload_namespaces("unitizerdummypkg1", global = glb)
 NULL
-> # expect_true(glb$ns.opt.conflict@conflict)
 > glb$ns.opt.conflict@conflict
 [1] TRUE
-> # expect_equal(glb$ns.opt.conflict@namespaces, "unitizerdummypkg1")
 > glb$ns.opt.conflict@namespaces
 [1] "unitizerdummypkg1"
 > unloadNamespace("unitizerdummypkg1")
@@ -623,9 +475,6 @@ NULL
 > 
 > # - "Generate unique names" ----------------------------------------------------
 > 
-> # expect_equal(unitizer:::unitizerUniqueNames(list(search.path = c(goodbye = "0",
-> #     hello = "1", goodbye = "2", goodbye = "3"))), c("goodbye",
-> #     "hello", "goodbye.1", "goodbye.2"))
 > unitizer:::unitizerUniqueNames(list(search.path = c(goodbye = "0",
 +     hello = "1", goodbye = "2", goodbye = "3")))
 [1] "goodbye"   "hello"     "goodbye.1" "goodbye.2"
@@ -633,5 +482,4 @@ NULL
 > 
 > proc.time()
    user  system elapsed 
-  4.695   1.169   6.195 
-CLEANUP COMPLETE
+   5.52    1.67    9.49 

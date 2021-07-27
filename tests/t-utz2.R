@@ -4,17 +4,7 @@ source(file.path("_helper", "init.R"))
 source(file.path("_helper", "pkgs.R"))
 
 library(unitizer)
-old.opt.outer <- options(
-  unitizer.color = FALSE, width = 80L,
-  crayon.enabled = FALSE,
-  diffobj.term.colors = 1,
-  digits=3,
-  warn=1
-)
 
-update_fastlm(FLM, "0.1.0")
-install.packages(FLM, repos = NULL, type = "src", quiet = TRUE, lib = TMP.LIB)
-unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
 # - "unreviewed variations" ----------------------------------------------------
 
 # Test unreviewed
@@ -65,8 +55,7 @@ invisible(lapply(untz1, function(x) {print(x); cat('\n')}))
 
 unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
 unitizer:::update_fastlm_extra(FLM)
-install.packages(FLM, repos = NULL, type = "src",
-    quiet = TRUE, lib = TMP.LIB)
+inst_pak(FLM)
 test.file.1 <- file.path(FLM.TEST.DIR, "unitizer.fastlm.R")
 test.file.2 <- file.path(FLM.TEST.DIR, "unitizer.fastlm2.R")
 test.store <- file.path(FLM.TEST.DIR, "store2.unitizer")

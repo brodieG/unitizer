@@ -1,13 +1,11 @@
 
-R version 4.1.0 alpha (2021-04-26 r80229)
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -74,14 +72,13 @@ Condition list with 2 conditions:
 +     lm(x ~ y, data.frame(x = 1:10, y = c(5, 3, 3, 2, 1, 8, 2,
 +         1, 4, 1.5)))
 + }))
-> no_out <- function(x) invisible(capture.output(x))
 > my.unitizer <- new("unitizer", id = 1, zero.env = zero.env)
-> no_out(my.unitizer <- my.unitizer + exps1)
+> coi(my.unitizer <- my.unitizer + exps1)
 > my.unitizer2 <- new("unitizer", id = 2, zero.env = zero.env)
 > # make previous items into reference items
 > my.unitizer2 <- my.unitizer2 + my.unitizer@items.new
 > # now add back items to compare
-> no_out(my.unitizer2 <- my.unitizer2 + exps2)
+> coi(my.unitizer2 <- my.unitizer2 + exps2)
 > unitizer.prepped <- unitizer:::browsePrep(my.unitizer2, mode = "unitize")
 > 
 > # NOTE: for some reason, changes in between revisions d9619db and a46e941
@@ -117,8 +114,8 @@ Condition list with 2 conditions:
 Error in .local(x, ...) : 
   Argument `width` must be a positive scalar numeric.
 > prep.narrow <- as.character(unitizer.prepped, 5)  # too small
-Warning message:
-In .local(x, ...) : Selected display width too small, will be ignored
+Warning in .local(x, ...) :
+  Selected display width too small, will be ignored
 > 
 > all.equal(prep.narrow, rds("browse_ascharnarrow"))
 [1] TRUE
@@ -278,5 +275,4 @@ matrix(1:9, ncol = 3)
 > 
 > proc.time()
    user  system elapsed 
-  1.278   0.114   1.447 
-CLEANUP COMPLETE
+  1.332   0.147   1.672 
