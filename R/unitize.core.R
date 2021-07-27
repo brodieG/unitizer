@@ -1,17 +1,17 @@
 # Copyright (C) 2021 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 # Runs The Basic Stuff
@@ -93,7 +93,10 @@ unitize_core <- function(
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.TF(use.diff))
     stop("Argument `use.diff` must be TRUE or FALSE")
-  if(!is.TF(show.progress) && !show.progress %in% seq_len(PROGRESS.MAX))
+  if(
+    !is.TF(show.progress) &&
+    !isTRUE(show.progress %in% (seq_len(PROGRESS.MAX + 1L) - 1L))
+  )
     stop("Argument `show.progress` must be TRUE or FALSE or in 0:", PROGRESS.MAX)
   if(is.logical(show.progress))
     show.progress <- show.progress * PROGRESS.MAX
