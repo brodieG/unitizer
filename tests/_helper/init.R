@@ -8,13 +8,6 @@ if(!isTRUE(dir.create(TMP.DIR)))
 if(!isTRUE(dir.create(TMP.LIB)))
   stop("Unable to create temp library directory")
 
-TMP.PKGS <- c(
-  unitizerdummypkg1="unitizerdummypkg1",
-  unitizerdummypkg2="unitizerdummypkg2",
-  utzflm="flm0"
-)
-UNITIZER.DIR <- system.file(package="unitizer")
-PKG.DIRS <- file.path(UNITIZER.DIR, "expkg", TMP.PKGS)
 USE.PKGS <- FALSE
 
 # Global options
@@ -25,14 +18,20 @@ options(
   unitizer.restarts.ok=TRUE,
   unitizer.state='recommended',
   diffobj.pager='off',
-  unitizer.show.progress=FALSE
+  unitizer.show.progress=FALSE,
+  unitizer.color = FALSE,
+  width = 80L,
+  crayon.enabled = FALSE,
+  diffobj.term.colors = 1,
+  digits=3,
+  warn=1
 )
 if(isTRUE(getOption("showErrorCalls"))) options(showErrorCalls=FALSE)
 library(unitizer)
 
 suppressWarnings(RNGversion("3.5.2"));
 
-# Cleanup on exit
+# Cleanup on exit; no output here or Rdiff will include timing
 
 FIN.ENV <- new.env()
 reg.finalizer(
@@ -46,7 +45,6 @@ reg.finalizer(
       suppressWarnings(remove.packages(names(TMP.PKGS), lib=TMP.LIB))
     }
     unlink(TMP.DIR, recursive=TRUE)
-    writeLines('CLEANUP COMPLETE')
   },
   onexit=TRUE
 )

@@ -3,6 +3,14 @@
 USE.PKGS <- TRUE
 writeLines("Install Packages")
 
+TMP.PKGS <- c(
+  unitizerdummypkg1="unitizerdummypkg1",
+  unitizerdummypkg2="unitizerdummypkg2",
+  utzflm="flm0"
+)
+UNITIZER.DIR <- system.file(package="unitizer")
+PKG.DIRS <- file.path(UNITIZER.DIR, "expkg", TMP.PKGS)
+
 if(
   any(which.inst <- names(TMP.PKGS) %in% rownames(installed.packages()))
 ) {
@@ -16,14 +24,19 @@ if(
 # install.packages does not work within R CMD check, and it does not
 # appear to be by design?
 
-old.val <- Sys.getenv("R_TESTS")
-Sys.setenv(R_TESTS="")
-pkg.inst <- try(
-  for(pkg in PKG.DIRS)
+inst_pak <- function(pkg) {
+  old.val <- Sys.getenv("R_TESTS", unset=NA)
+  on.exit(
+    if(is.na(old.val)) Sys.unsetenv("R_TESTS")
+    else Sys.setenv(R_TESTS=old.val)
+  )
+  Sys.setenv(R_TESTS="")
+  pkg.inst <- try(
     install.packages(pkg, repos=NULL, type='src', lib=TMP.LIB, quiet=TRUE)
-)
-Sys.setenv(R_TESTS=old.val)
-if(inherits(pkg.inst, "try-error")) stop("install error")
+  )
+  if(inherits(pkg.inst, "try-error")) stop("install error")
+}
+inst_pak(PKG.DIRS)
 
 writeLines("Setup Demos")
 
