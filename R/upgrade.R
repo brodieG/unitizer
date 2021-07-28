@@ -98,7 +98,8 @@ upgrade_internal <- function(object) {
   # Make sure ref item ids are reasonable
 
   if(ver < "0.5.3") {
-    for(i in seq(len=length(object@items.ref))) object@items.ref[[i]]@id <- i
+    for(i in seq(length.out=length(object@items.ref)))
+      object@items.ref[[i]]@id <- i
   }
   # - 0.9.0 --------------------------------------------------------------------
 
@@ -209,6 +210,7 @@ upgrade_internal <- function(object) {
   # set version to current version, not the last version that required upgrades
 
   object@version <- as.character(packageVersion("unitizer"))
+  object@upgraded.from <- as.character(ver)
 
   # - Done ---------------------------------------------------------------------
 
@@ -285,7 +287,7 @@ upgrade_warn <- function(unitizers, interactive.mode, global) {
 
   if(length(up.rev)) {
     many <- length(up.rev) > 1L
-    to.up.ids <- vapply(as.list(unitizers)[up.rev], slot, 'best.name', "")
+    to.up.ids <- vapply(as.list(unitizers)[up.rev], slot, '', 'best.name')
     meta_word_cat(
       paste0(
         "\nThe following unitizer", if(many) "s", " will be upgrade to ",

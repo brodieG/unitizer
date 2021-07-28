@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -37,6 +39,109 @@ Warning in addSlot(object, "jump.to.test", 0L) :
 > identical(unitizer.up@version, as.character(packageVersion("unitizer")))
 [1] TRUE
 > 
+> # - Upgrade Warnings in Unitize ------------------------------------------------
+> 
+> blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
+> tdir <- tempfile()
+> dir.create(tdir)
+> dir.create(file.path(tdir, "trivial.unitizer"))
+> file.copy(file.path("_helper", "trivial.R"), tdir)
+[1] TRUE
+> file.copy(
++   file.path("_helper", "trivial.unitizer.0.4.2", "data.rds"),
++   file.path(tdir, "trivial.unitizer")
++ )
+[1] TRUE
+> unitizer:::read_line_set_vals('N')
+> out <- unitizer:::capture_output(
++   try(unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE))
++ )
+> out[] <- lapply(out, blat_vers)
+> out
+- Output -----------------------------------------------------------------------
+
+
+| 
+| The following unitizer will be upgrade to version '<version>':
+| 
+| - trivial.unitizer (at '<version>'
+
+unitizer> N
+
+- Message ----------------------------------------------------------------------
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Warning in addSlot(object, "cons", NULL) :
+  Slot `cons` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "jump.to.test", 0L) :
+  Slot `jump.to.test` does not exist in current version of `unitizer` so not added to object.
+Warning in load_unitizers(store.ids[active], test.files[active], par.frame = util.frame,  :
+  Upgraded test file does not match original test file ('NA' vs 'trivial.R').
+| unitizer upgrades are IRREVERSIBLE and not backwards compatible. 
+| Proceed?
+
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  Cannot proceed without upgrading unitizers.
+> 
+> unitizer:::read_line_set_vals(c('Y','Q'))
+> out <- unitizer:::capture_output(
++   unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE)
++ )
+> out[] <- lapply(out, blat_vers)
+> out
+- Output -----------------------------------------------------------------------
+
+
+| 
+| The following unitizer will be upgrade to version '<version>':
+| 
+| - trivial.unitizer (at '<version>'
+
+unitizer> Y
+
++------------------------------------------------------------------------------+
+| unitizer for: trivial.R                                                      |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     1    -    3
+...........................
+                1    -    3
+
+- New --------------------------------------------------------------------------
+
+| The 3 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> x <- 1 + 1
+> x + 2
+[1] 4
+
+unitizer> Q
+
+| unitizer unchanged.
+
+- Message ----------------------------------------------------------------------
+
+Warning in addSlot(object, "cons", NULL) :
+  Slot `cons` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "jump.to.test", 0L) :
+  Slot `jump.to.test` does not exist in current version of `unitizer` so not added to object.
+Warning in load_unitizers(store.ids[active], test.files[active], par.frame = util.frame,  :
+  Upgraded test file does not match original test file ('NA' vs 'trivial.R').
+| unitizer upgrades are IRREVERSIBLE and not backwards compatible. 
+| Proceed?
+
+| No changes recorded.
+> 
+> unitizer:::read_line_set_vals(NULL)
+> unlink(tdir, recursive=TRUE)
+> 
 > # - "Rename" -------------------------------------------------------------------
 > 
 > setClass("untzUpgrTest", slots = c(a = "character"))
@@ -58,7 +163,7 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 > test.file <- file.path(TMP.DIR, "tests.R")
 > cat("1 + 1", file = test.file)
 > unitizer:::capture_output(unitize(test.file, auto.accept = "new"))
-> version <- unlist(strsplit(as.character(packageVersion("unitizer")), 
+> version <- unlist(strsplit(as.character(packageVersion("unitizer")),
 +     ".", fixed = TRUE))
 > version[1] <- as.character(as.numeric(version[1]) + 1)
 > version.new <- paste0(version, collapse = ".")
@@ -75,4 +180,4 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 > 
 > proc.time()
    user  system elapsed 
-  1.330   0.128   1.515 
+  2.021   0.127   2.156 

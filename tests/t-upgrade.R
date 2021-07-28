@@ -10,6 +10,34 @@ unitizer.up <- unitizer:::upgrade_internal(unitizer) # warning
 validObject(unitizer.up)
 identical(unitizer.up@version, as.character(packageVersion("unitizer")))
 
+# - Upgrade Warnings in Unitize ------------------------------------------------
+
+blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
+tdir <- tempfile()
+dir.create(tdir)
+dir.create(file.path(tdir, "trivial.unitizer"))
+file.copy(file.path("_helper", "trivial.R"), tdir)
+file.copy(
+  file.path("_helper", "trivial.unitizer.0.4.2", "data.rds"),
+  file.path(tdir, "trivial.unitizer")
+)
+unitizer:::read_line_set_vals('N')
+out <- unitizer:::capture_output(
+  try(unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE))
+)
+out[] <- lapply(out, blat_vers)
+out
+
+unitizer:::read_line_set_vals(c('Y','Q'))
+out <- unitizer:::capture_output(
+  unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE)
+)
+out[] <- lapply(out, blat_vers)
+out
+
+unitizer:::read_line_set_vals(NULL)
+unlink(tdir, recursive=TRUE)
+
 # - "Rename" -------------------------------------------------------------------
 
 setClass("untzUpgrTest", slots = c(a = "character"))
@@ -25,7 +53,7 @@ validObject(x.rename)
 test.file <- file.path(TMP.DIR, "tests.R")
 cat("1 + 1", file = test.file)
 unitizer:::capture_output(unitize(test.file, auto.accept = "new"))
-version <- unlist(strsplit(as.character(packageVersion("unitizer")), 
+version <- unlist(strsplit(as.character(packageVersion("unitizer")),
     ".", fixed = TRUE))
 version[1] <- as.character(as.numeric(version[1]) + 1)
 version.new <- paste0(version, collapse = ".")
