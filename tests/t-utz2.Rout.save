@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -180,10 +182,6 @@ Error in : object 'U' not found
 
 | Changes discarded.
 > 
-> # test_that("unreviewed variations", {
-> #     expect_equal_to_reference(unitizer:::clean_eval_exp(txt0),
-> #         file.path("helper", "refobjs", "unitize2_unreview.rds"))
-> # })
 > # - "Re-eval" ------------------------------------------------------------------
 > 
 > # Test re-eval
@@ -515,14 +513,6 @@ Store ID: package:utzflm/tests/unitizer/unitizer.fastlm.unitizer
 You chose NOT to save these changes to the unitizer store
 
 > 
-> # test_that("Re-eval", {
-> #     expect_equal_to_reference(txt1a, file.path("helper", "refobjs",
-> #         "unitize2_rerun_a.rds"))
-> #     expect_equal_to_reference(txt1b, file.path("helper", "refobjs",
-> #         "unitize2_rerun_b.rds"))
-> #     expect_equal_to_reference(untz1.clean, file.path("helper",
-> #         "refobjs", "unitize2_rerun_res.rds"))
-> # })
 > # - "Section Extra" ------------------------------------------------------------
 > 
 > # Make sure that deleted items from a section are still marked from that
@@ -577,11 +567,6 @@ Levels: Y N
 [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 
 > 
-> # test_that("Section Extra", {
-> #     expect_equal_to_reference(`attributes<-`(untz.2, NULL), file.path("helper",
-> #         "refobjs", "unitize2_del_sec.rds"))
-> # })
-> 
 > # - "warning when comp funs produce output" ------------------------------------
 > 
 > # Sections with comp funs that output to stdout/stderr
@@ -593,11 +578,6 @@ Levels: Y N
 > out <- unitizer:::capture_output(
 +   unitize(f.sec, auto.accept = "new", interactive.mode = FALSE
 + ) )
-> 
-> # test_that("warning when comp funs produce output", {
-> #     expect_warning(unitizer:::capture_output(unitize(file.path(temp.loc,
-> #         "sects.R"), interactive.mode = FALSE)), "Test comparison functions appear to have produced output")
-> # })
 > 
 > unitize(f.sec, interactive.mode = FALSE)
 
@@ -627,11 +607,6 @@ I'm outputting to both 2
 > any(grepl("`get_unitizer` error", out$message))
 [1] FALSE
 > 
-> # test_that("Corner Case Files", {
-> #     expect_true(any(grepl("Empty unitizer", empty.capt$output)))
-> #     expect_true(any(grepl("No valid unitizers available", badname.capt$message)))
-> # })
-> 
 > any(grepl("Empty unitizer", empty.capt$output))
 [1] TRUE
 > any(grepl("No valid unitizers available", badname.capt$message))
@@ -653,11 +628,6 @@ I'm outputting to both 2
 +     state = environment(), interactive.mode = TRUE))
 > unlink(c(temp.reeval, temp.reeval.utz), recursive = TRUE)
 > 
-> # test_that("Re-eval change", {
-> #     expect_true(sum(grepl("Unable to find test", reeval.capt$message)) ==
-> #         1L)
-> # })
-> 
 > # - "Condition fail" -----------------------------------------------------------
 > 
 > # Fail test with conditions
@@ -677,11 +647,6 @@ I'm outputting to both 2
 + unitizer:::capture_output(
 +   unitize(temp.cond, state = environment(), interactive.mode = TRUE)
 + )
-> # test_that("Condition fail", {
-> #     expect_true(sum(grepl("Conditions mismatch", cond.capt$output)) ==
-> #         1L)
-> # })
-> 
 > sum(grepl("Conditions mismatch", cond.capt$output)) == 1L
 [1] TRUE
 > unlink(c(temp.cond, temp.cond.utz), recursive = TRUE)
@@ -710,22 +675,9 @@ I'm outputting to both 2
 > force.capt <- unitizer:::capture_output(unitize_dir(temp.forceup.base.dir,
 +     state = environment(), interactive.mode = TRUE))
 > unlink(temp.forceup.base.dir, recursive = TRUE)
-> #
-> # test_that("Force", {
-> #     expect_true(sum(grepl("Toggling force update mode ON", force.capt$message)) ==
-> #         1L)
-> #     expect_true(sum(grepl("You are about to .* with re-evaluated",
-> #         force.capt$message)) == 1L)
-> # })
-> 
-> 
-> # expect_true(sum(grepl("Toggling force update mode ON", force.capt$message)) ==
-> #     1L)
 > sum(grepl("Toggling force update mode ON", force.capt$message)) ==
 +     1L
 [1] TRUE
-> # expect_true(sum(grepl("You are about to .* with re-evaluated",
-> #     force.capt$message)) == 1L)
 > sum(grepl("You are about to .* with re-evaluated", force.capt$message)) ==
 +     1L
 [1] TRUE
@@ -740,13 +692,6 @@ I'm outputting to both 2
 > bad.comp.capt <- unitizer:::capture_output(unitize(temp.bad.comp,
 +     interactive.mode = TRUE))
 > unlink(temp.bad.comp)
-> #
-> # test_that("Force", {
-> #     expect_true(sum(grepl("Unable to compare value", bad.comp.capt$message)) ==
-> #         1L)
-> #     expect_true(sum(grepl("Corrupted", bad.comp.capt$output)) >=
-> #         1L)
-> # })
 > 
 > sum(grepl("Unable to compare value", bad.comp.capt$message)) == 1L
 [1] TRUE
@@ -756,13 +701,6 @@ I'm outputting to both 2
 > # - "bad map" ------------------------------------------------------------------
 > 
 > # Bad store mapping functions
-> # test_that("bad map", {
-> #     expect_error(capture.output(unitize_dir(test.dir, store.ids = function(x) stop("Bad store map fun")),
-> #         type = "message"), "attempting to use it to convert test file")
-> # })
-> 
-> # expect_error(capture.output(unitize_dir(test.dir, store.ids = function(x) stop("Bad store map fun")),
-> #     type = "message"), "attempting to use it to convert test file")
 > 
 > try(unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map fun")))
 
@@ -775,4 +713,4 @@ Error in unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map f
 > 
 > proc.time()
    user  system elapsed 
-  11.60    2.37   15.94 
+  10.16    1.85   13.31 

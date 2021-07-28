@@ -18,10 +18,6 @@ unitizer:::read_line_set_vals(
 out <- unitizer:::capture_output(unitize(FLM.TEST.FILE, interactive.mode = TRUE))
 unitizer:::clean_eval_exp(out)
 
-# test_that("unreviewed variations", {
-#     expect_equal_to_reference(unitizer:::clean_eval_exp(txt0),
-#         file.path("helper", "refobjs", "unitize2_unreview.rds"))
-# })
 # - "Re-eval" ------------------------------------------------------------------
 
 # Test re-eval
@@ -38,14 +34,6 @@ print(untz1)
 # remove temp file names and display
 invisible(lapply(untz1, function(x) {print(x); cat('\n')}))
 
-# test_that("Re-eval", {
-#     expect_equal_to_reference(txt1a, file.path("helper", "refobjs",
-#         "unitize2_rerun_a.rds"))
-#     expect_equal_to_reference(txt1b, file.path("helper", "refobjs",
-#         "unitize2_rerun_b.rds"))
-#     expect_equal_to_reference(untz1.clean, file.path("helper",
-#         "refobjs", "unitize2_rerun_res.rds"))
-# })
 # - "Section Extra" ------------------------------------------------------------
 
 # Make sure that deleted items from a section are still marked from that
@@ -70,11 +58,6 @@ out.2 <- unitizer:::capture_output(
 attributes(untz.2) <- NULL
 untz.2
 
-# test_that("Section Extra", {
-#     expect_equal_to_reference(`attributes<-`(untz.2, NULL), file.path("helper",
-#         "refobjs", "unitize2_del_sec.rds"))
-# })
-
 # - "warning when comp funs produce output" ------------------------------------
 
 # Sections with comp funs that output to stdout/stderr
@@ -85,11 +68,6 @@ f.sec <- file.path(temp.loc, "sects.R")
 out <- unitizer:::capture_output(
   unitize(f.sec, auto.accept = "new", interactive.mode = FALSE
 ) )
-
-# test_that("warning when comp funs produce output", {
-#     expect_warning(unitizer:::capture_output(unitize(file.path(temp.loc,
-#         "sects.R"), interactive.mode = FALSE)), "Test comparison functions appear to have produced output")
-# })
 
 unitize(f.sec, interactive.mode = FALSE)
 unlink(temp.loc, recursive = TRUE)
@@ -107,11 +85,6 @@ temp.bad <- paste0(tempfile())
 cat("\n", file = temp.bad)
 badname.capt <- unitizer:::capture_output(try(unitize(temp.bad)))
 any(grepl("`get_unitizer` error", out$message))
-
-# test_that("Corner Case Files", {
-#     expect_true(any(grepl("Empty unitizer", empty.capt$output)))
-#     expect_true(any(grepl("No valid unitizers available", badname.capt$message)))
-# })
 
 any(grepl("Empty unitizer", empty.capt$output))
 any(grepl("No valid unitizers available", badname.capt$message))
@@ -132,11 +105,6 @@ reeval.capt <- unitizer:::capture_output(unitize(temp.reeval,
     state = environment(), interactive.mode = TRUE))
 unlink(c(temp.reeval, temp.reeval.utz), recursive = TRUE)
 
-# test_that("Re-eval change", {
-#     expect_true(sum(grepl("Unable to find test", reeval.capt$message)) ==
-#         1L)
-# })
-
 # - "Condition fail" -----------------------------------------------------------
 
 # Fail test with conditions
@@ -156,11 +124,6 @@ cond.capt <-
 unitizer:::capture_output(
   unitize(temp.cond, state = environment(), interactive.mode = TRUE)
 )
-# test_that("Condition fail", {
-#     expect_true(sum(grepl("Conditions mismatch", cond.capt$output)) ==
-#         1L)
-# })
-
 sum(grepl("Conditions mismatch", cond.capt$output)) == 1L
 unlink(c(temp.cond, temp.cond.utz), recursive = TRUE)
 
@@ -188,21 +151,8 @@ unitizer:::read_line_set_vals(c("2", "1", "Y", "O", "Q", "Q"))
 force.capt <- unitizer:::capture_output(unitize_dir(temp.forceup.base.dir,
     state = environment(), interactive.mode = TRUE))
 unlink(temp.forceup.base.dir, recursive = TRUE)
-#
-# test_that("Force", {
-#     expect_true(sum(grepl("Toggling force update mode ON", force.capt$message)) ==
-#         1L)
-#     expect_true(sum(grepl("You are about to .* with re-evaluated",
-#         force.capt$message)) == 1L)
-# })
-
-
-# expect_true(sum(grepl("Toggling force update mode ON", force.capt$message)) ==
-#     1L)
 sum(grepl("Toggling force update mode ON", force.capt$message)) ==
     1L
-# expect_true(sum(grepl("You are about to .* with re-evaluated",
-#     force.capt$message)) == 1L)
 sum(grepl("You are about to .* with re-evaluated", force.capt$message)) ==
     1L
 # - "Compare Funs" -------------------------------------------------------------
@@ -216,13 +166,6 @@ unitizer:::read_line_set_vals(c("Q"))
 bad.comp.capt <- unitizer:::capture_output(unitize(temp.bad.comp,
     interactive.mode = TRUE))
 unlink(temp.bad.comp)
-#
-# test_that("Force", {
-#     expect_true(sum(grepl("Unable to compare value", bad.comp.capt$message)) ==
-#         1L)
-#     expect_true(sum(grepl("Corrupted", bad.comp.capt$output)) >=
-#         1L)
-# })
 
 sum(grepl("Unable to compare value", bad.comp.capt$message)) == 1L
 sum(grepl("Corrupted", bad.comp.capt$output)) >= 1L
@@ -230,13 +173,6 @@ sum(grepl("Corrupted", bad.comp.capt$output)) >= 1L
 # - "bad map" ------------------------------------------------------------------
 
 # Bad store mapping functions
-# test_that("bad map", {
-#     expect_error(capture.output(unitize_dir(test.dir, store.ids = function(x) stop("Bad store map fun")),
-#         type = "message"), "attempting to use it to convert test file")
-# })
-
-# expect_error(capture.output(unitize_dir(test.dir, store.ids = function(x) stop("Bad store map fun")),
-#     type = "message"), "attempting to use it to convert test file")
 
 try(unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map fun")))
 
