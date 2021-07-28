@@ -1,13 +1,14 @@
 source(file.path("_helper", "init.R"))
 source(file.path("aammrtf", "mock.R"))
 
-toy.stor <- readRDS("interactive/unitizer/misc.unitizer/data.rds")
+toy.path <- file.path("_helper", "unitizers", "misc.unitizer")
+toy.stor <- readRDS(file.path(toy.path, "data.rds"))
 
 # - "Error Cases" --------------------------------------------------------------
 
 try(get_unitizer(1))
 try(get_unitizer(letters))
-try(get_unitizer("interactive"))
+try(get_unitizer("_helper"))
 try(get_unitizer("t-get.R"))
 try(set_unitizer(1))
 try(set_unitizer(letters))
@@ -25,7 +26,7 @@ tmp.fake.utz <- paste0(tmp.dir, "/fake.unitizer")
 
 # expect_false(get_unitizer("asldkfjskfa"))
 get_unitizer("asldkfjskfa") # FALSE
-all.equal(get_unitizer("interactive/unitizer/misc.unitizer"), toy.stor)
+all.equal(get_unitizer(toy.path), toy.stor)
 is(toy.stor, "unitizer")
 dir.create(tmp.fake.utz)
 fake.utz <- file.path(tmp.fake.utz, "data.rds")

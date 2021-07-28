@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
@@ -20,7 +20,8 @@ Type 'q()' to quit R.
 > source(file.path("_helper", "init.R"))
 > source(file.path("aammrtf", "mock.R"))
 > 
-> toy.stor <- readRDS("interactive/unitizer/misc.unitizer/data.rds")
+> toy.path <- file.path("_helper", "unitizers", "misc.unitizer")
+> toy.stor <- readRDS(file.path(toy.path, "data.rds"))
 > 
 > # - "Error Cases" --------------------------------------------------------------
 > 
@@ -30,8 +31,8 @@ Error in get_unitizer.default(1) :
 > try(get_unitizer(letters))
 Error in get_unitizer.character(letters) : 
   Argument `store.id` must be a 1 length character vector
-> try(get_unitizer("interactive"))
-Error in get_unitizer.character("interactive") : 
+> try(get_unitizer("_helper"))
+Error in get_unitizer.character("_helper") : 
   Argument `store.id` does not appear to refer to a unitizer directory
 > try(get_unitizer("t-get.R"))
 Error in get_unitizer.character("t-get.R") : 
@@ -64,7 +65,7 @@ Error in set_unitizer.character("tests/# ;!./# \\/", toy.stor) :
 > # expect_false(get_unitizer("asldkfjskfa"))
 > get_unitizer("asldkfjskfa") # FALSE
 [1] FALSE
-> all.equal(get_unitizer("interactive/unitizer/misc.unitizer"), toy.stor)
+> all.equal(get_unitizer(toy.path), toy.stor)
 [1] TRUE
 > is(toy.stor, "unitizer")
 [1] TRUE
@@ -434,4 +435,4 @@ Selected file: zzz.R
 > 
 > proc.time()
    user  system elapsed 
-  1.752   0.167   1.934 
+  1.812   0.185   2.197 

@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -31,7 +33,6 @@ Setup Demos
 > 
 > base.dir <- file.path(FLM, "tests", "extra")
 > in.pkg.file <- file.path(base.dir, "inpkg.R")
-> old.opt <- options(width = 80L)
 > 
 > unitizer:::read_line_set_vals(c("Q"))
 > txt1 <- unitizer:::capture_output(unitize(in.pkg.file, interactive.mode = TRUE))
@@ -662,13 +663,9 @@ unitizer> Q
 > txt8 <- unitizer:::capture_output(unitize(FLM.TEST.FILE,
 +     interactive.mode = TRUE))
 > 
-> # expect_true(any(grepl("qualified with L", txt8$message)))
 > any(grepl("qualified with L", txt8$message))
 [1] TRUE
-> # test_that("demo changes", {
-> #     expect_match(paste0(txt5$output, collapse = ""), "Pass Fail <untitled>     2    2")
-> #     expect_match(paste0(txt5$message, collapse = ""), "| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:| - Replacing 2 out of 2 failed tests| unitizer updated.")
-> # })
+> 
 > # - "demo changes" -------------------------------------------------------------
 > #
 > # Now actually accept the changes
@@ -747,7 +744,6 @@ unitizer> Y
 | unitizer updated.
 
 > unitizer:::read_line_set_vals(NULL)
-> options(old.opt)
 > 
 > # - "get_package_dir" ----------------------------------------------------------
 > 
@@ -770,4 +766,4 @@ character(0)
 > 
 > proc.time()
    user  system elapsed 
-  13.80    2.96   20.35 
+  11.84    2.41   15.21 
