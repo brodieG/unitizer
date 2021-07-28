@@ -12,7 +12,6 @@ setwd(FLM)   # For whole test file to avoid temp file display
 
 base.dir <- file.path(FLM, "tests", "extra")
 in.pkg.file <- file.path(base.dir, "inpkg.R")
-old.opt <- options(width = 80L)
 
 unitizer:::read_line_set_vals(c("Q"))
 txt1 <- unitizer:::capture_output(unitize(in.pkg.file, interactive.mode = TRUE))
@@ -118,19 +117,14 @@ unitizer:::read_line_set_vals(c("-2147483648L", "Q"))
 txt8 <- unitizer:::capture_output(unitize(FLM.TEST.FILE,
     interactive.mode = TRUE))
 
-# expect_true(any(grepl("qualified with L", txt8$message)))
 any(grepl("qualified with L", txt8$message))
-# test_that("demo changes", {
-#     expect_match(paste0(txt5$output, collapse = ""), "Pass Fail <untitled>     2    2")
-#     expect_match(paste0(txt5$message, collapse = ""), "| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:| - Replacing 2 out of 2 failed tests| unitizer updated.")
-# })
+
 # - "demo changes" -------------------------------------------------------------
 #
 # Now actually accept the changes
 unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
 untz5 <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
 unitizer:::read_line_set_vals(NULL)
-options(old.opt)
 
 # - "get_package_dir" ----------------------------------------------------------
 
