@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -572,7 +570,7 @@ Levels: Y N
 > # Sections with comp funs that output to stdout/stderr
 > temp.loc <- tempfile()
 > dir.create(temp.loc)
-> file.copy(file.path("_helper", "sects.R"), temp.loc)
+> file.copy(file.path("_helper", "unitizers", "sects.R"), temp.loc)
 [1] TRUE
 > f.sec <- file.path(temp.loc, "sects.R")
 > out <- unitizer:::capture_output(
@@ -713,4 +711,4 @@ Error in unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map f
 > 
 > proc.time()
    user  system elapsed 
-  10.16    1.85   13.31 
+  10.70    2.12   14.92 

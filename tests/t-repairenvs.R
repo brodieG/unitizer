@@ -36,11 +36,13 @@ items.heal <- unitizer:::healEnvs(items.picked, my.unitizer)
 
 # copy files and then try messing up environment for the object
 file_test("-d", file.path("_helper"))
-store <- file.path("_helper", "trivial.unitizer")
+store <- file.path("_helper", "unitizers", "trivial.unitizer")
 store.new <- file.path(TMP.DIR, store)
 dir.create(store.new, recursive = TRUE)
-cpy.files <- c(list.files(store, full.names = TRUE), file.path("helper",
-    "trivial.R"))
+cpy.files <- c(
+  list.files(store, full.names = TRUE),
+  file.path("helper", "unitizers", "trivial.R")
+)
 file.copy(cpy.files, file.path(TMP.DIR, cpy.files), overwrite = TRUE)
 
 untz <- unitizer:::load_unitizers(

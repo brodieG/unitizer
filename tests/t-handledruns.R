@@ -2,9 +2,9 @@ source(file.path("_helper", "init.R"))
 
 # - "Ensure we get warning if we try to run in handlers" -----------------------
 
-try(unitize("_helper/trivial.R"))
-tryCatch(unitize("_helper/trivial.R"))
-withRestarts(unitize("_helper/trivial.R"))
+try(unitize("_helper/unitizers/trivial.R"))
+tryCatch(unitize("_helper/unitizers/trivial.R"))
+withRestarts(unitize("_helper/unitizers/trivial.R"))
 
 # need to figure out why running this without `try` in covr causes cover to
 # fail with
@@ -15,7 +15,7 @@ withRestarts(unitize("_helper/trivial.R"))
 
 try(
   withRestarts(
-    unitize("_helper/trivial.R"), 
+    unitize("_helper/unitizers/trivial.R"), 
     unitizerInteractiveFail = function() NULL
   )
 )

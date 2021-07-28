@@ -3,7 +3,8 @@ source(file.path("_helper", "init.R"))
 # - "Upgrade works" ------------------------------------------------------------
 
 # this is also now tested as part of load
-unitizer <- get_unitizer(file.path("_helper", "trivial.unitizer.0.4.2"))
+unitizer <-
+  get_unitizer(file.path("_helper", "unitizers", "trivial.unitizer.0.4.2"))
 try(validObject(unitizer, complete = TRUE))
 as.character(unitizer@version)
 unitizer.up <- unitizer:::upgrade_internal(unitizer) # warning
@@ -16,9 +17,9 @@ blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
 tdir <- tempfile()
 dir.create(tdir)
 dir.create(file.path(tdir, "trivial.unitizer"))
-file.copy(file.path("_helper", "trivial.R"), tdir)
+file.copy(file.path("_helper", "unitizers", "trivial.R"), tdir)
 file.copy(
-  file.path("_helper", "trivial.unitizer.0.4.2", "data.rds"),
+  file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
   file.path(tdir, "trivial.unitizer")
 )
 unitizer:::read_line_set_vals('N')

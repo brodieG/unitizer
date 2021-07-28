@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -22,7 +20,8 @@ Type 'q()' to quit R.
 > # - "Upgrade works" ------------------------------------------------------------
 > 
 > # this is also now tested as part of load
-> unitizer <- get_unitizer(file.path("_helper", "trivial.unitizer.0.4.2"))
+> unitizer <-
++   get_unitizer(file.path("_helper", "unitizers", "trivial.unitizer.0.4.2"))
 > try(validObject(unitizer, complete = TRUE))
 Error in validObject(object[[x]], complete = TRUE) : 
   invalid class "unitizerItem" object: 1: slots in class definition but not in object: "call.dep", "section.id", "section.name", "glob.indices", "state"
@@ -45,10 +44,10 @@ Warning in addSlot(object, "jump.to.test", 0L) :
 > tdir <- tempfile()
 > dir.create(tdir)
 > dir.create(file.path(tdir, "trivial.unitizer"))
-> file.copy(file.path("_helper", "trivial.R"), tdir)
+> file.copy(file.path("_helper", "unitizers", "trivial.R"), tdir)
 [1] TRUE
 > file.copy(
-+   file.path("_helper", "trivial.unitizer.0.4.2", "data.rds"),
++   file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
 +   file.path(tdir, "trivial.unitizer")
 + )
 [1] TRUE
@@ -180,4 +179,4 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 > 
 > proc.time()
    user  system elapsed 
-  2.021   0.127   2.156 
+  2.204   0.142   2.379 

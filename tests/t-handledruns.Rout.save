@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
@@ -19,7 +19,7 @@ Type 'q()' to quit R.
 > 
 > # - "Ensure we get warning if we try to run in handlers" -----------------------
 > 
-> try(unitize("_helper/trivial.R"))
+> try(unitize("_helper/unitizers/trivial.R"))
 
 Warning in check_call_stack() :
   It appears you are running unitizer inside an error handling function such as 
@@ -31,7 +31,7 @@ Warning in history_capt(history) :
   Unable to capture history in non-interactive mode.
 | 4/4 tests passed; nothing to review.
 
-> tryCatch(unitize("_helper/trivial.R"))
+> tryCatch(unitize("_helper/unitizers/trivial.R"))
 
 Warning in check_call_stack() :
   It appears you are running unitizer inside an error handling function such as 
@@ -43,7 +43,7 @@ Warning in history_capt(history) :
   Unable to capture history in non-interactive mode.
 | 4/4 tests passed; nothing to review.
 
-> withRestarts(unitize("_helper/trivial.R"))
+> withRestarts(unitize("_helper/unitizers/trivial.R"))
 
 Warning in history_capt(history) :
   Unable to capture history in non-interactive mode.
@@ -59,7 +59,7 @@ Warning in history_capt(history) :
 > 
 > try(
 +   withRestarts(
-+     unitize("_helper/trivial.R"), 
++     unitize("_helper/unitizers/trivial.R"), 
 +     unitizerInteractiveFail = function() NULL
 +   )
 + )
@@ -78,4 +78,4 @@ of `unitize`.  If you did not define this restart contact maintainer.
 > 
 > proc.time()
    user  system elapsed 
-  1.850   0.163   2.065 
+  1.673   0.127   1.815 
