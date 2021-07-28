@@ -194,7 +194,8 @@ if(getRversion() < '4.0')
   "^editor$", "^papersize$", "^bitmapType$",  "^menu\\.graphics$",
   "^unitizer\\."
 )
-.unitizer.namespace.keep <- c("data.table", "crayon", "tools")
+## Need `covr` so tests run under it otherwise nasty stuff happens
+.unitizer.namespace.keep <- c("data.table", "crayon", "tools", "covr")
 
 .unitizer.base.packages <- c(
   "package:stats", "package:graphics", "package:grDevices", "package:utils",
