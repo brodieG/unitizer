@@ -127,7 +127,7 @@
 #' its default value, you will have to use the same value for that parameter in
 #' future \code{unitize} or \code{unitize_dir} runs.
 #'
-#' @section Alternate Use Cases
+#' @section Alternate Use Cases:
 #'
 #' If you wish to process \code{testthat} files for use with the standard R
 #' \dQuote{.Rout} / \dQuote{.Rout.save process} you can set the \code{unitize}

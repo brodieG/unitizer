@@ -10,6 +10,7 @@ testthat_transcribe_file(
   keep.testthat.call = TRUE,
   prompt = "always",
   interactive.mode,
+  use.sects = TRUE,
   ...
 )
 }
@@ -35,6 +36,10 @@ us to force prompting in non-interactive mode; note that \code{unitize}
 and \code{unitize_dir} are always called in non-interactive mode by these
 functions, this parameter only controls prompts generated directly by these
 functions.}
+
+\item{use.sects}{TRUE (default) or FALSE whether to translate
+\code{test_that} sections to \code{unitizer_sect} or simply to turn them
+into comment banners.}
 
 \item{...}{params to pass on to \code{testthat_translate_name}}
 }
