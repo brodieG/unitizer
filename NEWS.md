@@ -2,7 +2,8 @@
 
 ## v1.4.15
 
-* Internal tests switched to `aammrtf`.
+* Test suite switched to `aammrtf`, removing suggests dependencies to `testthat`
+  and `covr` and thereby dramatically reducing the test-time dependency load.
 * Upgrade process modified so that old `unitizer` that pass tests are not
   required to be upgraded.
 * `show.progress` parameter added to control chattiness of progress updates.
