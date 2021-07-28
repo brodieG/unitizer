@@ -203,50 +203,6 @@ load_unitizers <- function(
   }
   new("unitizerObjectList", .items=unitizers)
 }
-# Warn if Unitizers Were Upgraded
-#
-# We used to warn/prompt for upgrade at load time, but now we auto-upgrade and
-# only warn prior to review.  This allow us to silently upgrade unitizers that
-# will not be stored.  One possible issue is this means once a unitizer is out
-# of date it will get upgraded every time its tests are run, but the upgrade is
-# thrown away (e.g. on CRAN).  We should measure how expensive this is.
-#
-# @param x unitizerList
-
-warn_upgrades <- function(x) {
-  toup.v <- vapply(x, slot, 'upgraded.from', '')
-  toup.idx <- which(nzchar(toup.v))
-  chr.ids <- vapply(x, slot, 'id', '')
-
-  many <- length(toup.idx) > 1L
-  meta_word_cat(
-    paste0(
-      "\nThe following unitizer", if(many) "s",
-      " will be upgraded to version '",
-      as.character(packageVersion("unitizer")), "':\n"
-    ),
-    as.character(
-      UL(
-        paste0(
-          chr.ids[toup.idx], " (at '", toup.v[toup.idx] , "')"
-      ) ) ,
-      width=getOption("width") - 2L
-    )
-  )
-  if(!interactive.mode && !force.upgrade)
-    stop("Cannot upgrade unitizers in non-interactive mode")
-
-  pick <- if(interactive.mode) {
-    meta_word_msg("unitizer upgrades are IRREVERSIBLE.  Proceed?")
-    unitizer_prompt(
-      "Upgrade unitizer stores?", hist.con=NULL,
-      valid.opts=c(Y="[Y]es", N="[N]o"), global=global,
-      browse.env=
-    )
-  } else "Y"
-}
-
-
 # Need to make sure we do not unintentionally store a bunch of references to
 # objects or namespaces we do not want:
 #

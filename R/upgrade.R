@@ -278,7 +278,7 @@ removeSlots <- function(object, slots.to.remove) {
 }
 # Intended for use only within unitize_core loop
 
-upgrade_warn <- function(unitizers, interactive.mode) {
+upgrade_warn <- function(unitizers, interactive.mode, global) {
   review <- to_review(summary(unitizers, silent=TRUE))
   upgraded <- vapply(as.list(unitizers), slot, '', 'upgraded.from')
   up.rev <- which(review & nzchar(upgraded))
@@ -289,7 +289,7 @@ upgrade_warn <- function(unitizers, interactive.mode) {
     meta_word_cat(
       paste0(
         "\nThe following unitizer", if(many) "s", " will be upgrade to ",
-        "version '", as.character(getPackageVersion('unitizer')), "':\n"
+        "version '", as.character(packageVersion('unitizer')), "':\n"
       ),
       as.character(UL(paste0(to.up.ids, " (at '", upgraded[up.rev], "'"))),
       width=getOption("width") - 2L

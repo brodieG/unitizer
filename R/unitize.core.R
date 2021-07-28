@@ -468,7 +468,7 @@ unitize_core <- function(
 
       if(!upgrade.warned) {
         upgrade.warned <- TRUE
-        upgrade_warn(unitizers[valid], interactive.mode)
+        upgrade_warn(unitizers[valid], interactive.mode, global)
       }
       # Gather user input, and store tests as required.  Any unitizers that
       # the user marked for re-evaluation will be re-evaluated in this loop
