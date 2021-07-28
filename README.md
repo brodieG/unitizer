@@ -7,8 +7,9 @@ rmarkdown::render('README.Rmd', output_format=rmarkdown::md_document())
 unitizeR - Interactive R Unit Tests
 ===================================
 
-[![](https://travis-ci.org/brodieG/unitizer.svg?branch=master)](https://travis-ci.org/brodieG/unitizer)
-[![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://codecov.io/github/brodieG/unitizer?branch=master)
+[![R build
+status](https://github.com/brodieG/unitizer/workflows/R-CMD-check/badge.svg)](https://github.com/brodieG/unitizer/actions)
+[![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://app.codecov.io/gh/brodieG/unitizer?branch=master)
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
 [![Dependencies
 direct/recursive](https://tinyverse.netlify.app/badge/unitizer)](https://tinyverse.netlify.app/)
@@ -52,11 +53,10 @@ Are you tired of the `deparse`/`dput` then copy-paste R objects into
 test file dance, or do you use `testthat::expect_equal_to_reference` or
 other snapshot testing a lot?
 
-With `unitizer` you interactively review your code, as you would when
-informally testing it by typing it at the R prompt. Then, with a single
-keystroke, `unitizer` stores the code, the value and any conditions
-(warnings, errors, etc.) it produced, and turns the lot into a formal
-regression test.
+With `unitizer` you interactively review your code as you would when
+typing it at the R prompt. Then, with a single keystroke, you tell
+`unitizer` to store the code, and any values, warnings, or errors it
+produced, thereby creating a formal regression test.
 
 ### Streamlined Debugging
 
@@ -158,8 +158,7 @@ Thank you to:
     [ffmpeg team](http://ffmpeg.org/about.html) for ffmpeg.
 -   All open source developers out there that make their work freely
     available for others to use.
--   [Github](https://github.com/), [Travis-CI](https://travis-ci.org/),
-    [Codecov](https://codecov.io/),
+-   [Github](https://github.com/), [Codecov](https://about.codecov.io/),
     [Vagrant](https://www.vagrantup.com/),
     [Docker](https://www.docker.com/), [Ubuntu](https://ubuntu.com/),
     [Brew](https://brew.sh/) for providing infrastructure that greatly
