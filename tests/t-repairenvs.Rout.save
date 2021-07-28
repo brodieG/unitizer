@@ -1,0 +1,168 @@
+
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> exps <- expression(1 + 1, a <- 54, b <- 38, a + b, e <- 5 * a,
++     a^2, f <- e * a, matrix(rep(f, 20)))
+> my.unitizer <- new("unitizer", id = 1, zero.env = new.env())
+> # add ref.exps as new items
+> coi(my.unitizer <- my.unitizer + exps)
+> my.unitizer2 <- new("unitizer", id = 2, zero.env = new.env())
+> # now convert them to reference items
+> coi(my.unitizer2 <- my.unitizer2 + my.unitizer@items.new)
+> # - "messed up env ancestry repair works" --------------------------------------
+> 
+> # Purposefully mess up the environments
+> parent.env(my.unitizer2@items.ref[[2]]@env) <- baseenv()
+> x <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
+Error in parent.env(env) : the empty environment has no parent
+Error in run_ls(env = x@env, stop.env = base.env, all.names = TRUE, store.env = ref.env.store) : 
+  Specified `stop.env` does not appear to be in parent environments.
+Warning in repairEnvs(items.final) :
+  Detected corrupted environment history; we will attempt to repair, but keep in mind that even when repaired the test environments may be missleading.  For example, the objects other than `.new` or `.ref` when reviewing tests at the `unitzer` prompt may not be those you expect or those reported by `ls`.  To fully restore environments re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist after an attempt to repair, please contact maintainer.
+> old.opt <- options(unitizer.max.env.depth = 20)
+> res <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
+Error in try(while (!identical(env, stop.env)) { : 
+  Logic error: not finding `stop.env` after 20 iterations; contact package maintainer if this is an error.
+Error in run_ls(env = x@env, stop.env = base.env, all.names = TRUE, store.env = ref.env.store) : 
+  Specified `stop.env` does not appear to be in parent environments.
+Warning in repairEnvs(items.final) :
+  Detected corrupted environment history; we will attempt to repair, but keep in mind that even when repaired the test environments may be missleading.  For example, the objects other than `.new` or `.ref` when reviewing tests at the `unitzer` prompt may not be those you expect or those reported by `ls`.  To fully restore environments re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist after an attempt to repair, please contact maintainer.
+> is(res, "unitizerItems")
+[1] TRUE
+> ref.anc <- unitizer:::env_ancestry(x@base.env)
+> itm.anc <- unitizer:::env_ancestry(x[[1L]]@env)
+> # Items should belong to base env for reference
+> identical(rev(ref.anc), head(rev(itm.anc), length(ref.anc)))
+[1] TRUE
+> options(old.opt)
+> 
+> # - "re-assigning to ignored environments handled properly" --------------------
+> 
+> # now `a + b` could try to re-assign to `a <- 54`, but that is same env as
+> # `a + b` b/c it is ignored
+> items.picked <- my.unitizer@items.new[-3L]
+> # expect_error(items.heal <- unitizer:::healEnvs(items.picked,
+> #     my.unitizer), NA)
+> # no error
+> items.heal <- unitizer:::healEnvs(items.picked, my.unitizer)
+> 
+> # - "full repair process works" ------------------------------------------------
+> 
+> # copy files and then try messing up environment for the object
+> file_test("-d", file.path("_helper"))
+[1] TRUE
+> store <- file.path("_helper", "unitizers", "trivial.unitizer")
+> store.new <- file.path(TMP.DIR, store)
+> dir.create(store.new, recursive = TRUE)
+> cpy.files <- c(
++   list.files(store, full.names = TRUE),
++   file.path("helper", "unitizers", "trivial.R")
++ )
+> file.copy(cpy.files, file.path(TMP.DIR, cpy.files), overwrite = TRUE)
+[1]  TRUE FALSE
+> 
+> untz <- unitizer:::load_unitizers(
++   list(store.new), NA_character_,
++   par.frame = .GlobalEnv, interactive.mode = TRUE, mode = "unitize",
++   show.progress=0L
++ )
+Warning in unitizer:::load_unitizers(list(store.new), NA_character_, par.frame = .GlobalEnv,  :
+  Upgraded test file does not match original test file ('trivial.R' vs 'NA').
+Warning in .Object$initialize(...) :
+  Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
+> # Break env chain, store, and reload
+> untz[[1L]]@items.ref.calls.deparse[[5L]]
+[1] "y * x"
+> parent.env(untz[[1L]]@items.ref[[5L]]@env) <- baseenv()
+> # warning
+> unitizer:::store_unitizer(untz[[1L]])
+| unitizer updated.
+
+> untz.rep <- repair_environments(store.new)
+Warning in .Object$initialize(...) :
+  Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
+Warning in repairEnvs(x@items.ref) :
+  Detected corrupted environment history; we will attempt to repair, but keep in mind that even when repaired the test environments may be missleading.  For example, the objects other than `.new` or `.ref` when reviewing tests at the `unitzer` prompt may not be those you expect or those reported by `ls`.  To fully restore environments re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist after an attempt to repair, please contact maintainer.
+| unitizer updated.
+
+> # this should not give warnings
+> unitizer:::healEnvs(untz.rep@items.ref, untz.rep)
+An object of class "unitizerItems"
+Slot "base.env":
+<environment: 0x7fc73bb487c8>
+
+Slot ".items":
+[[1]]
+~~~ Reference Test ~~~
+TRUE
+* value: logi[1]
+* output: 9 chars
+
+Access components with `$`, e.g. `.REF$value`; see `help("$", "unitizer")`
+
+[[2]]
+~~~ Reference Test ~~~
+x <- 1 + 1
+* value: unitizerDummy
+
+Access components with `$`, e.g. `.REF$value`; see `help("$", "unitizer")`
+
+[[3]]
+~~~ Reference Test ~~~
+x + 2
+* value: num[1]
+* output: 6 chars
+
+Access components with `$`, e.g. `.REF$value`; see `help("$", "unitizer")`
+
+[[4]]
+~~~ Reference Test ~~~
+y <- x
+* value: unitizerDummy
+
+Access components with `$`, e.g. `.REF$value`; see `help("$", "unitizer")`
+
+[[5]]
+~~~ Reference Test ~~~
+y * x
+* value: num[1]
+* output: 6 chars
+
+Access components with `$`, e.g. `.REF$value`; see `help("$", "unitizer")`
+
+[[6]]
+~~~ Reference Test ~~~
+y/x + 2
+* value: num[1]
+* output: 6 chars
+
+Access components with `$`, e.g. `.REF$value`; see `help("$", "unitizer")`
+
+
+Slot ".pointer":
+[1] 0
+
+Slot ".seek.fwd":
+[1] TRUE
+
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  1.037   0.106   1.130 

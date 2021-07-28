@@ -1,0 +1,182 @@
+
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> # - "Upgrade works" ------------------------------------------------------------
+> 
+> # this is also now tested as part of load
+> unitizer <-
++   get_unitizer(file.path("_helper", "unitizers", "trivial.unitizer.0.4.2"))
+> try(validObject(unitizer, complete = TRUE))
+Error in validObject(object[[x]], complete = TRUE) : 
+  invalid class "unitizerItem" object: 1: slots in class definition but not in object: "call.dep", "section.id", "section.name", "glob.indices", "state"
+invalid class "unitizerItem" object: 2: In slot "data" of class "unitizerItemData": invalid object for slot "value" in class "unitizerItemData": got class "logical", should be or extend class "list"
+> as.character(unitizer@version)
+[1] "0.4.2"
+> unitizer.up <- unitizer:::upgrade_internal(unitizer) # warning
+Warning in addSlot(object, "cons", NULL) :
+  Slot `cons` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "jump.to.test", 0L) :
+  Slot `jump.to.test` does not exist in current version of `unitizer` so not added to object.
+> validObject(unitizer.up)
+[1] TRUE
+> identical(unitizer.up@version, as.character(packageVersion("unitizer")))
+[1] TRUE
+> 
+> # - Upgrade Warnings in Unitize ------------------------------------------------
+> 
+> blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
+> tdir <- tempfile()
+> dir.create(tdir)
+> dir.create(file.path(tdir, "trivial.unitizer"))
+> file.copy(file.path("_helper", "unitizers", "trivial.R"), tdir)
+[1] TRUE
+> file.copy(
++   file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
++   file.path(tdir, "trivial.unitizer")
++ )
+[1] TRUE
+> unitizer:::read_line_set_vals('N')
+> out <- unitizer:::capture_output(
++   try(unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE))
++ )
+> out[] <- lapply(out, blat_vers)
+> out
+- Output -----------------------------------------------------------------------
+
+
+| 
+| The following unitizer will be upgrade to version '<version>':
+| 
+| - trivial.unitizer (at '<version>'
+
+unitizer> N
+
+- Message ----------------------------------------------------------------------
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Warning in addSlot(object, "cons", NULL) :
+  Slot `cons` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "jump.to.test", 0L) :
+  Slot `jump.to.test` does not exist in current version of `unitizer` so not added to object.
+Warning in load_unitizers(store.ids[active], test.files[active], par.frame = util.frame,  :
+  Upgraded test file does not match original test file ('NA' vs 'trivial.R').
+| unitizer upgrades are IRREVERSIBLE and not backwards compatible. 
+| Proceed?
+
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  Cannot proceed without upgrading unitizers.
+> 
+> unitizer:::read_line_set_vals(c('Y','Q'))
+> out <- unitizer:::capture_output(
++   unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE)
++ )
+> out[] <- lapply(out, blat_vers)
+> out
+- Output -----------------------------------------------------------------------
+
+
+| 
+| The following unitizer will be upgrade to version '<version>':
+| 
+| - trivial.unitizer (at '<version>'
+
+unitizer> Y
+
++------------------------------------------------------------------------------+
+| unitizer for: trivial.R                                                      |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     1    -    3
+...........................
+                1    -    3
+
+- New --------------------------------------------------------------------------
+
+| The 3 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> x <- 1 + 1
+> x + 2
+[1] 4
+
+unitizer> Q
+
+| unitizer unchanged.
+
+- Message ----------------------------------------------------------------------
+
+Warning in addSlot(object, "cons", NULL) :
+  Slot `cons` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "jump.to.test", 0L) :
+  Slot `jump.to.test` does not exist in current version of `unitizer` so not added to object.
+Warning in load_unitizers(store.ids[active], test.files[active], par.frame = util.frame,  :
+  Upgraded test file does not match original test file ('NA' vs 'trivial.R').
+| unitizer upgrades are IRREVERSIBLE and not backwards compatible. 
+| Proceed?
+
+| No changes recorded.
+> 
+> unitizer:::read_line_set_vals(NULL)
+> unlink(tdir, recursive=TRUE)
+> 
+> # - "Rename" -------------------------------------------------------------------
+> 
+> setClass("untzUpgrTest", slots = c(a = "character"))
+> x <- new("untzUpgrTest", a = letters)
+> validObject(x)
+[1] TRUE
+> setClass("untzUpgrTest", slots = c(b = "character"))
+> try(validObject(x))
+Error in validObject(x) : 
+  invalid class "untzUpgrTest" object: slots in class definition but not in object: "b"
+> try(capture.output(unitizer:::renameSlot(x, "c", "b"), type = "message"))
+Error in unitizer:::renameSlot(x, "c", "b") : 
+  Old slot `c` doesn't exist in object
+> x.rename <- unitizer:::renameSlot(x, "a", "b")
+> validObject(x.rename)
+[1] TRUE
+> 
+> # - "Later but valid version" --------------------------------------------------
+> test.file <- file.path(TMP.DIR, "tests.R")
+> cat("1 + 1", file = test.file)
+> unitizer:::capture_output(unitize(test.file, auto.accept = "new"))
+> version <- unlist(strsplit(as.character(packageVersion("unitizer")),
++     ".", fixed = TRUE))
+> version[1] <- as.character(as.numeric(version[1]) + 1)
+> version.new <- paste0(version, collapse = ".")
+> unitizer.rds <- readRDS(file.path(TMP.DIR, "tests.unitizer", "data.rds"))
+> unitizer.rds@version <- version.new
+> # this should work
+> !nchar(unitizer:::unitizer_valid(unitizer.rds))
+[1] TRUE
+> # now lets cause an error
+> unitizer.rds@eval.time <- runif(5)
+> grepl("NB: ", unitizer:::unitizer_valid(unitizer.rds))
+[1] TRUE
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  2.204   0.142   2.379 

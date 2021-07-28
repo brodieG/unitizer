@@ -168,6 +168,9 @@
 #'   off (default)
 #' @param use.diff TRUE or FALSE, whether to use diffs when there is an error,
 #'   if FALSE uses \code{\link{all.equal}} instead.
+#' @param show.progress TRUE or FALSE or integer(1L) in 0:3, whether to show
+#'   progress updates for each part of the process (TRUE or > 0), for each file
+#'   processed (TRUE or > 1), and for each test processed (TRUE or > 2).
 #' @return \code{unitize} and company are intended to be used primarily for
 #'   the interactive environment and side effects.  The functions do return
 #'   summary data about test outcomes and user input as
@@ -186,7 +189,8 @@ unitize <- function(
   interactive.mode=interactive(),
   force.update=FALSE,
   auto.accept=character(0L),
-  use.diff=getOption("unitizer.use.diff")
+  use.diff=getOption("unitizer.use.diff"),
+  show.progress=getOption("unitizer.show.progress", TRUE)
 ) {
   # Initial spacer, must be done in each top level call
 
@@ -203,14 +207,18 @@ unitize <- function(
       test.file.inf, list(store.id.inf), state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode,  force.update=force.update,
-      auto.accept=auto.accept, mode="unitize", use.diff=use.diff
+      auto.accept=auto.accept, mode="unitize", use.diff=use.diff,
+      show.progress=show.progress
     )[[1L]]
   )
 }
 #' @rdname unitize
 #' @export
 
-review <- function(store.id=NULL) {
+review <- function(
+  store.id=NULL, use.diff=getOption("unitizer.use.diff"),
+  show.progress=getOption("unitizer.show.progress", TRUE)
+) {
   if(!interactive_mode()) stop("`review` only available in interactive mode")
   # Initial spacer, must be done in each top level call
 
@@ -227,7 +235,8 @@ review <- function(store.id=NULL) {
       force.update=FALSE,
       auto.accept=character(0L),
       mode="review",
-      use.diff=TRUE
+      use.diff=use.diff,
+      show.progress=show.progress
     )[[1L]]
   )
 }
@@ -244,7 +253,8 @@ unitize_dir <- function(
   interactive.mode=interactive(),
   force.update=FALSE,
   auto.accept=character(0L),
-  use.diff=getOption("unitizer.use.diff")
+  use.diff=getOption("unitizer.use.diff"),
+  show.progress=getOption("unitizer.show.progress", TRUE)
 ) {
   # Validations
   if(
@@ -293,6 +303,7 @@ unitize_dir <- function(
       state=state,
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode, force.update=force.update,
-      auto.accept=auto.accept, mode="unitize", use.diff=use.diff
+      auto.accept=auto.accept, mode="unitize", use.diff=use.diff,
+      show.progress=show.progress
   ) )
 }

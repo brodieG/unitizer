@@ -1,0 +1,70 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> # - "int.pos" ------------------------------------------------------------------
+> 
+> unitizer:::is.int.pos.1L(c(1, 2, 3))  # FALSE
+[1] FALSE
+> unitizer:::is.int.pos.1L(1)
+[1] TRUE
+> unitizer:::is.int.pos.1L(1)
+[1] TRUE
+> unitizer:::is.int.pos.1L(-1)           # FALSE
+[1] FALSE
+> unitizer:::is.int.pos.1L(NA_integer_)  # FALSE
+[1] FALSE
+> unitizer:::is.int.pos.2L(1:2)
+[1] TRUE
+> unitizer:::is.int.pos.2L(c(1, 2))
+[1] TRUE
+> 
+> # - "is.valid_two_arg" ---------------------------------------------------------
+> 
+> f1 <- function(x, y) NULL
+> f2 <- function(...) NULL
+> f3 <- function(x, ...) NULL
+> f4 <- function(x, y, z) NULL
+> f5 <- function(x, y, z = 3) NULL
+> f6 <- function(x) NULL
+> unitizer:::is.two_arg_fun(f1)
+[1] TRUE
+> unitizer:::is.two_arg_fun(f2)
+[1] TRUE
+> unitizer:::is.two_arg_fun(f3)
+[1] TRUE
+> unitizer:::is.two_arg_fun(f4)
+[1] "cannot have any non-optional arguments other than first two"
+> unitizer:::is.two_arg_fun(f5)
+[1] TRUE
+> unitizer:::is.two_arg_fun(f6)
+[1] "does not have at least two arguments"
+> unitizer:::is.two_arg_fun(1)
+[1] "is not a function"
+> 
+> # - "is.valid_capt_setting" ----------------------------------------------------
+> 
+> capt.test <- unitizer:::is.valid_capt_setting(c(T, T))
+| value must be logical(2L) containing TRUE 
+| / FALSE and with names `c("output", "message")
+
+> capt.test
+[1] FALSE
+> 
+> proc.time()
+   user  system elapsed 
+  0.650   0.088   0.724 

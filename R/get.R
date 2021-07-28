@@ -212,8 +212,9 @@ get_unitizer.unitizer_results <- function(store.id) {
 #' Infers Possible Unitizer Path From Context
 #'
 #' Used by most \code{unitizer} functions that operate on \code{unitizer}s to
-#' make it easy to specify the most likely intended \code{unitizer} in a
-#' package or a directory.
+#' make it easy in interactive use to specify the most likely intended
+#' \code{unitizer} in a package or a directory.  For `R CMD check` and similar
+#' testing should not rely on this functionality.
 #'
 #' This is implemented as an S3 generic to allow third parties to define
 #' inference methods for other types of \code{store.id}, but the documentation

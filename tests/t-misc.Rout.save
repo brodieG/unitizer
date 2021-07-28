@@ -1,0 +1,672 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
+> 
+> # - "Text wrapping" ------------------------------------------------------------
+> 
+> var <- "humpty dumpty sat on a truck and had a big dump"
+> # expect_true(all(nchar(unlist(unitizer:::text_wrap(var, 10))) <=
+> writeLines(unlist(unitizer:::text_wrap(var, 10)))
+humpty dum
+pty sat on
+ a truck a
+nd had a b
+ig dump
+> all(nchar(unlist(unitizer:::text_wrap(var, 10))) <= 10)
+[1] TRUE
+> 
+> var2 <- rep(var, 4)
+> # expect_true(all(nchar(wrp <- unlist(unitizer:::text_wrap(var2,
+> #     c(20, 15)))) <= 20) && length(wrp) == 14)
+> writeLines(unlist(unitizer:::text_wrap(var2, c(20, 15))))
+humpty dumpty sat on
+ a truck and had a b
+ig dump
+humpty dumpty s
+at on a truck a
+nd had a big du
+mp
+humpty dumpty sat on
+ a truck and had a b
+ig dump
+humpty dumpty s
+at on a truck a
+nd had a big du
+mp
+> all(nchar(wrp <- unlist(unitizer:::text_wrap(var2, c(20, 15)))) <=
++     20) && length(wrp) == 14
+[1] TRUE
+> 
+> # - "Headers" ------------------------------------------------------------------
+> 
+> # these basically require visual inspection
+> 
+> unitizer:::H1("hello world")
++------------------------------------------------------------------------------+
+| hello world                                                                  |
++------------------------------------------------------------------------------+
+
+> unitizer:::H2("hello world")
+= hello world ==================================================================
+
+> unitizer:::H3("hello world")
+- hello world ------------------------------------------------------------------
+
+> 
+> # cause an error
+> try(print(unitizer:::H1(rep_len("hello world", 10))))
+Error in header(x, 1L) : 
+  Argument `x` must be a one length character vector
+> 
+> h.w.long <- paste0(rep_len("hello world", 10), collapse = " ")
+> unitizer:::H1(h.w.long)
++------------------------------------------------------------------------------+
+| hello world hello world hello world hello world hello world hello world      |
+| hello world hello world hello world hello world                              |
++------------------------------------------------------------------------------+
+
+> unitizer:::H2(h.w.long)
+= hello world hello world hello world hello world hello world hello world h... =
+
+> print(unitizer:::H2("No margin"), margin = "none") # no extra line below
+= No margin ====================================================================
+> 
+> # - "Valid Names convert names to valid" ---------------------------------------
+> 
+> # expect_equal(unitizer:::valid_names("hello"), "hello")
+> unitizer:::valid_names("hello")
+[1] "hello"
+> # expect_equal(unitizer:::valid_names(".hello"), ".hello")
+> unitizer:::valid_names(".hello")
+[1] ".hello"
+> # expect_equal(unitizer:::valid_names("1hello"), "`1hello`")
+> unitizer:::valid_names("1hello")
+[1] "`1hello`"
+> # expect_equal(unitizer:::valid_names("hello kitty"), "`hello kitty`")
+> unitizer:::valid_names("hello kitty")
+[1] "`hello kitty`"
+> # expect_equal(unitizer:::valid_names("h3llo"), "`h3llo`")
+> unitizer:::valid_names("h3llo")
+[1] "`h3llo`"
+> # expect_equal(unitizer:::valid_names("h_llo"), "h_llo")
+> unitizer:::valid_names("h_llo")
+[1] "h_llo"
+> # expect_equal(unitizer:::valid_names("$hot"), "`$hot`")
+> unitizer:::valid_names("$hot")
+[1] "`$hot`"
+> # expect_equal(unitizer:::valid_names("HELLO"), "HELLO")
+> unitizer:::valid_names("HELLO")
+[1] "HELLO"
+> 
+> # - "strtrunc" -----------------------------------------------------------------
+> 
+> # expect_equal(unitizer:::strtrunc("hollywood is for starlets",
+> #     5), "ho...")
+> unitizer:::strtrunc("hollywood is for starlets", 5)
+[1] "ho..."
+> # expect_error(unitizer:::strtrunc(5, "hollywood is for starlets"))
+> try(unitizer:::strtrunc(5, "hollywood is for starlets"))
+Error in unitizer:::strtrunc(5, "hollywood is for starlets") : 
+  Argument `x` must be character
+> 
+> # - "environment name tools" ---------------------------------------------------
+> 
+> env1 <- new.env(parent = globalenv())
+> env2 <- new.env(parent = env1)
+> env3 <- new.env(parent = env2)
+> env4 <- new.env(parent = env3)
+> # expect_true(is.character(ename <- unitizer:::env_name(env3)) &&
+> #     identical(length(ename), 1L))
+> is.character(ename <- unitizer:::env_name(env3)) && identical(length(ename), 1L)
+[1] TRUE
+> # expect_true(is.character(envanc <- unitizer:::env_ancestry(env4)) &&
+> #     identical(length(envanc), 5L) && identical(envanc[[5L]],
+> #     "R_GlobalEnv"))
+> is.character(envanc <- unitizer:::env_ancestry(env4)) &&
++   identical(length(envanc), 5L) && identical(envanc[[5L]], "R_GlobalEnv")
+[1] TRUE
+> 
+> # - "deparse peek" -------------------------------------------------------------
+> 
+> expr1 <- quote(1 + 1 + 3)
+> expr2 <- quote(for (i in 1:100) {
++     loop.val <- sample(1:1000, 200, replace = TRUE)
++     loop.val <- loop.val * 200/3000 * mean(runif(20000))
++ })
+> # expect_equal("1 + 1 + 3", unitizer:::deparse_peek(expr1, 20L))
+> unitizer:::deparse_peek(expr1, 20L)
+[1] "1 + 1 + 3"
+> 
+> # expect_error(unitizer:::deparse_peek(expr1, 3L))
+> try(unitizer:::deparse_peek(expr1, 3L))
+Error in unitizer:::deparse_peek(expr1, 3L) : 
+  Argument `len` must be an integer greater than four
+> # expect_equal("1 ...", unitizer:::deparse_peek(expr1, 5L))
+> unitizer:::deparse_peek(expr1, 5L)
+[1] "1 ..."
+> 
+> # expect_equal("for (i in 1:100) {    loop.val <- sam...", unitizer:::deparse_peek(expr2,
+> #     40L))
+> unitizer:::deparse_peek(expr2, 40L)
+[1] "for (i in 1:100) {    loop.val <- sam..."
+> 
+> # - "deparse fun" --------------------------------------------------------------
+> 
+> # expect_identical(unitizer:::deparse_fun(quote(fun)), "fun")
+> unitizer:::deparse_fun(quote(fun))
+[1] "fun"
+> # expect_identical(unitizer:::deparse_fun(quote(function(x) NULL)),
+> #     NA_character_)
+> unitizer:::deparse_fun(quote(function(x) NULL))
+[1] NA
+> # expect_identical(unitizer:::deparse_fun("hello"), character(0L))
+> unitizer:::deparse_fun("hello")
+character(0)
+> 
+> # - "deparse_prompt" -----------------------------------------------------------
+> 
+> # expect_identical(unitizer:::deparse_prompt(quote(if (TRUE) {
+> #     25
+> # } else {
+> #     42
+> # })), c("> if (TRUE) {", "+     25", "+ } else {", "+     42",
+> #     "+ }"))
+> unitizer:::deparse_prompt(quote(if (TRUE) {
++     25
++ } else {
++     42
++ }))
+[1] "> if (TRUE) {" "+     25"      "+ } else {"    "+     42"     
+[5] "+ }"          
+> 
+> # - "deparse_mixed" ------------------------------------------------------------
+> 
+> b <- setNames(1:3, letters[1:3])
+> x <- quote(1 + b)
+> x[[3]] <- b
+> # expect_equal(unitizer:::deparse_mixed(x), "quote(1 + 1:3)")
+> unitizer:::deparse_mixed(x)
+[1] "quote(1 + 1:3)"
+> y <- quote(1 + 3 + b)
+> y[[3]] <- b
+> # expect_equal(unitizer:::deparse_mixed(y), "quote(1 + 3 + 1:3)")
+> unitizer:::deparse_mixed(y)
+[1] "quote(1 + 3 + 1:3)"
+> 
+> # - "(Un)ordered Lists" --------------------------------------------------------
+> 
+> vec <- c("hello htere how are you blah blah blah blah blah",
++     "this is helpful you know", "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
++     letters[1:10])
+> 
+> # expect_equal(as.character(unitizer:::OL(vec), width = 100L),
+> #     c(" 1. hello htere how are you blah blah blah blah blah",
+> #         " 2. this is helpful you know", " 3. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut ",
+> #         "    labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco ",
+> #         "    laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in ",
+> #         "    voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat ",
+> #         "    non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+> #         " 4. a", " 5. b", " 6. c", " 7. d", " 8. e", " 9. f",
+> #         "10. g", "11. h", "12. i", "13. j"))
+> writeLines(as.character(unitizer:::OL(vec), width = 100L))
+ 1. hello htere how are you blah blah blah blah blah
+ 2. this is helpful you know
+ 3. Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut 
+    labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
+    laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in 
+    voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat 
+    non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+ 4. a
+ 5. b
+ 6. c
+ 7. d
+ 8. e
+ 9. f
+10. g
+11. h
+12. i
+13. j
+> 
+> # expect_equal(as.character(unitizer:::UL(vec), width = 20L), c("- hello htere how ",
+> #     "  are you blah blah ", "  blah blah blah", "- this is helpful ",
+> #     "  you know", "- Lorem ipsum dolor ", "  sit amet, consec-",
+> #     "  tetur adipisicing ", "  elit, sed do ", "  eiusmod tempor ",
+> #     "  incididunt ut ", "  labore et dolore ", "  magna aliqua. Ut ",
+> #     "  enim ad minim ", "  veniam, quis ", "  nostrud exer-",
+> #     "  citation ullamco ", "  laboris nisi ut ", "  aliquip ex ea ",
+> #     "  commodo consequat.", "  Duis aute irure ", "  dolor in reprehen-",
+> #     "  derit in voluptate", "  velit esse cillum ", "  dolore eu fugiat ",
+> #     "  nulla pariatur. ", "  Excepteur sint ", "  occaecat cupidatat",
+> #     "  non proident, sunt", "  in culpa qui ", "  officia deserunt ",
+> #     "  mollit anim id est", "  laborum.", "- a", "- b", "- c",
+> #     "- d", "- e", "- f", "- g", "- h", "- i", "- j"))
+> 
+> writeLines(as.character(unitizer:::UL(vec), width = 20L))
+- hello htere how 
+  are you blah blah 
+  blah blah blah
+- this is helpful 
+  you know
+- Lorem ipsum dolor 
+  sit amet, consec-
+  tetur adipisicing 
+  elit, sed do 
+  eiusmod tempor 
+  incididunt ut 
+  labore et dolore 
+  magna aliqua. Ut 
+  enim ad minim 
+  veniam, quis 
+  nostrud exer-
+  citation ullamco 
+  laboris nisi ut 
+  aliquip ex ea 
+  commodo consequat.
+  Duis aute irure 
+  dolor in reprehen-
+  derit in voluptate
+  velit esse cillum 
+  dolore eu fugiat 
+  nulla pariatur. 
+  Excepteur sint 
+  occaecat cupidatat
+  non proident, sunt
+  in culpa qui 
+  officia deserunt 
+  mollit anim id est
+  laborum.
+- a
+- b
+- c
+- d
+- e
+- f
+- g
+- h
+- i
+- j
+> 
+> # test_that("Messing with traceback", {
+> #   warning("Missing traceback tests")
+> #   # Main problem with this is that there may not be a good way to cause a trace
+> #   # back to register while not also stopping execution of this file, so not
+> #   # sure if this can be tested
+> # } )
+> 
+> # - "Compare Conditions" -------------------------------------------------------
+> 
+> lst1 <- new("conditionList", .items = list(simpleWarning("warning",
++     quote(yo + yo)), simpleWarning("warning2", quote(yo2 + yo)),
++     simpleWarning("warning3", quote(yo3 + yo)), simpleError("error1",
++         quote(make_an_error()))))
+> lst2 <- new("conditionList", .items = list(simpleWarning("warning",
++     quote(yo + yo)), simpleWarning("warning2", quote(yo2 + yo)),
++     simpleError("error1", quote(make_an_error()))))
+> 
+> all.equal(lst1, lst1)
+[1] TRUE
+> # expect_equal("Condition count mismatch; expected 4 (got 3)",
+> #     all.equal(lst1, lst2))
+> all.equal(lst1, lst2)#
+[1] "Condition count mismatch; expected 4 (got 3)"
+> # expect_equal("There is one condition mismatch at index [[3]]",
+> #     all.equal(lst2, lst1[1L:3L]))
+> all.equal(lst2, lst1[1L:3L])
+[1] "There is one condition mismatch at index [[3]]"
+> # expect_equal("There are 2 condition mismatches, first one at index [[1]]",
+> #     all.equal(lst2, lst1[2L:4L]))
+> all.equal(lst2, lst1[2L:4L])
+[1] "There are 2 condition mismatches, first one at index [[1]]"
+> attr(lst1[[3L]], "unitizer.printed") <- TRUE
+> # expect_equal("There is one condition mismatch at index [[3]]",
+> #     all.equal(lst2, lst1[1L:3L]))
+> all.equal(lst2, lst1[1L:3L])
+[1] "There is one condition mismatch at index [[3]]"
+> # expect_equal(c("Condition type mismatch, `target` is 'Error', but `current` is 'Warning'",
+> #     "Condition mismatch may involve print/show methods; carefully review conditions with `.NEW$conditions` and `.REF$conditions` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch"),
+> #     all.equal(lst2[[3]], lst1[[3]]))
+> all.equal(lst2[[3]], lst1[[3]])
+[1] "Condition type mismatch, `target` is 'Error', but `current` is 'Warning'"                                                                                                                                                                                   
+[2] "Condition mismatch may involve print/show methods; carefully review conditions with `.NEW$conditions` and `.REF$conditions` as just typing `.ref` or `.new` at the prompt will invoke print/show methods, which themselves may be the cause of the mismatch"
+> 
+> attr(lst1[[3L]], "unitizer.printed") <- NULL
+> lst1[[2L]] <- simpleWarning("warning2", quote(yo2 + yoyo))
+> # expect_equal("There is one condition mismatch at index [[2]]",
+> #     all.equal(lst2, lst1[c(1L:2L, 4L)]))
+> all.equal(lst2, lst1[c(1L:2L, 4L)])
+[1] "There is one condition mismatch at index [[2]]"
+> 
+> # single condition display with a more complex condition
+> large.cond <- simpleWarning(paste0(collapse = "\n", c("This is a complicated warning:",
++     as.character(unitizer:::UL(c("one warning", "two warning",
++         "three warning"))))), quote(make_a_warning()))
+> lst3 <- new("conditionList", .items = list(large.cond))
+> show1 <- capture.output(show(lst3))
+> all.equal(show1, rds("misc_cndlistshow1"))
+[1] TRUE
+> 
+> attr(lst3[[1L]], "unitizer.printed") <- TRUE
+> lst3[[2L]] <- simpleWarning("warning2", quote(yo2 + yoyo))
+> lst3
+Condition list with 2 conditions:
+1. [print] Warning in make_a_warning() : This is a complicated warning:
+   - one warning
+   - two warning
+   - three warning
+2. Warning in yo2 + yoyo : warning2
+
+[print] means condition was issued by a print or show method for an auto-printed
+result.
+> 
+> # empty condition
+> lst3[0]
+Empty condition list
+> 
+> # - "Compare Functions With Traces" --------------------------------------------
+> 
+> fun.a <- base::library
+> identical(fun.a, base::library)
+[1] TRUE
+> trace(library, where = .BaseNamespaceEnv)
+Tracing function "library" in package "namespace:base"
+[1] "library"
+> identical(fun.a, base::library)  # FALSE
+[1] FALSE
+> unitizer:::identical_fun(fun.a, base::library)
+[1] TRUE
+> unitizer:::identical_fun(base::library, fun.a)  # FALSE
+[1] FALSE
+> untrace(library, where = .BaseNamespaceEnv)
+Untracing function "library" in package "namespace:base"
+> # expect_error(unitizer:::identical_fun(1, base::library))
+> try(unitizer:::identical_fun(1, base::library))
+Error in unitizer:::identical_fun(1, base::library) : 
+  Arguments `x` and `y` must both be functions.
+> # expect_error(unitizer:::identical_fun(base::library, 1))
+> try(unitizer:::identical_fun(base::library, 1))
+Error in unitizer:::identical_fun(base::library, 1) : 
+  Arguments `x` and `y` must both be functions.
+> unitizer:::identical_fun(base::print, base::print)
+[1] TRUE
+> # make sure all.equal dispatches properly out of namespace
+> 
+> # expect_equal(evalq(all.equal(new("conditionList", .items = list(simpleWarning("warning",
+> #     quote(yo + yo)), simpleWarning("warning2", quote(yo2 + yo)),
+> #     simpleWarning("warning3", quote(yo3 + yo)), simpleError("error1",
+> #         quote(make_an_error())))), new("conditionList", .items = list(simpleWarning("warning",
+> #     quote(yo + yo)), simpleWarning("warning2", quote(yo2 + yo)),
+> #     simpleError("error1", quote(make_an_error()))))), envir = getNamespace("stats")),
+> #     "Condition count mismatch; expected 4 (got 3)")
+> evalq(all.equal(new("conditionList", .items = list(simpleWarning("warning",
++     quote(yo + yo)), simpleWarning("warning2", quote(yo2 + yo)),
++     simpleWarning("warning3", quote(yo3 + yo)), simpleError("error1",
++         quote(make_an_error())))), new("conditionList", .items = list(simpleWarning("warning",
++     quote(yo + yo)), simpleWarning("warning2", quote(yo2 + yo)),
++     simpleError("error1", quote(make_an_error()))))), envir = getNamespace("stats"))
+[1] "Condition count mismatch; expected 4 (got 3)"
+> 
+> # - "word_cat" -----------------------------------------------------------------
+> 
+> str <- "Humpty dumpty sat on a wall and took a big fall.  All the kings horses and men couldn't put humpty dumpty together again"
+> # expect_equal(capture.output(unitizer:::word_cat(str, width = 20L)),
+> #     c("Humpty dumpty sat on", "a wall and took a ", "big fall.  All the ",
+> #         "kings horses and men", "couldn't put humpty ", "dumpty together ",
+> #         "again"))
+> unitizer:::word_cat(str, width = 20L)
+Humpty dumpty sat on
+a wall and took a 
+big fall.  All the 
+kings horses and men
+couldn't put humpty 
+dumpty together 
+again
+> # expect_error(unitizer:::word_cat(stop("boom"), width = 20L, sep = " "),
+> #     "boom")
+> try(unitizer:::word_cat(stop("boom"), width = 20L, sep = " "))
+Error in word_wrap_split(..., width = width, tolerance = tolerance, sep = sep) : 
+  boom
+> str2 <- rep("goodbye goodbye")
+> str1 <- rep("hello hello hello", 2)
+> # expect_equal(c("hello hello ", "hello hello ", "hello hello ",
+> #     "goodbye ", "goodbye"), capture.output())
+> unitizer:::word_cat(str1, str2, width = 14L)
+hello hello 
+hello hello 
+hello hello 
+goodbye 
+goodbye
+> 
+> # Make sure default works
+> old.width <- options(width = 20L)
+> # expect_equal(capture.output(unitizer:::word_cat(str)), c("Humpty dumpty sat on",
+> #     "a wall and took a ", "big fall.  All the ", "kings horses and men",
+> #     "couldn't put humpty ", "dumpty together ", "again"))
+> unitizer:::word_cat(str)
+Humpty dumpty sat on
+a wall and took a 
+big fall.  All the 
+kings horses and men
+couldn't put humpty 
+dumpty together 
+again
+> options(old.width)
+> 
+> # - "relativize_path" ----------------------------------------------------------
+> 
+> base <- file.path(system.file(package = "unitizer"), "expkg")
+> wd <- file.path(base, "infer")
+> p1 <- file.path(wd, "R")
+> p2 <- file.path(base, "unitizerdummypkg1")
+> # expect_equal(unitizer:::relativize_path(p1, wd), "R")
+> unitizer:::relativize_path(p1, wd)
+[1] "R"
+> # expect_equal(unitizer:::relativize_path(p2, wd), "../unitizerdummypkg1")
+> unitizer:::relativize_path(p2, wd)
+[1] "../unitizerdummypkg1"
+> # expect_equal(unitizer:::relativize_path(c(p1, p2), wd), c("R",
+> #     "../unitizerdummypkg1"))
+> unitizer:::relativize_path(c(p1, p2), wd)
+[1] "R"                    "../unitizerdummypkg1"
+> # expect_equal(unitizer:::relativize_path(c(p1, p2), wd), c("R",
+> #     "../unitizerdummypkg1"))
+> unitizer:::relativize_path(c(p1, p2), wd)
+[1] "R"                    "../unitizerdummypkg1"
+> # expect_equal(unitizer:::relativize_path(c(p1, p2, file.path("notarealpath",
+> #     "foo")), wd), c("R", "../unitizerdummypkg1", file.path("notarealpath",
+> #     "foo")))
+> unitizer:::relativize_path(
++   c(p1, p2, file.path("notarealpath", "foo")), wd
++ )
+[1] "R"                    "../unitizerdummypkg1" "notarealpath/foo"    
+> # expect_equal(unitizer:::relativize_path("/a/b/c/d/e/x.txt"),
+> #     "/a/b/c/d/e/x.txt")
+> unitizer:::relativize_path("/a/b/c/d/e/x.txt")
+[1] "/a/b/c/d/e/x.txt"
+> all.equal(
++   unitizer:::relativize_path("/a/b/c/d/e/x.txt", only.if.shorter = FALSE),
++   do.call(
++     file.path,
++     c(
++       as.list(
++         rep(
++           "..",
++           length(unlist(strsplit(getwd(), .Platform$file.sep, fixed = TRUE))) -
++           1L
++       ) ),
++       list("a/b/c/d/e/x.txt")
++ ) ) )
+[1] TRUE
+> 
+> # - "path_clean" ---------------------------------------------------------------
+> 
+> try(unitizer:::path_clean(list()))
+Error in unitizer:::path_clean(list()) : 
+  Argument `path` must be character
+> unitizer:::path_clean(file.path("a", "", "b", "c"))
+[1] "a/b/c"
+> 
+> # - "unitizer:::merge_lists" ---------------------------------------------------
+> 
+> unitizer:::merge_lists(list(a = 1, b = 2), list(c = 3))
+$a
+[1] 1
+
+$b
+[1] 2
+
+$c
+[1] 3
+
+> unitizer:::merge_lists(list(a = 1, b = 2, c = 3), list(d = 5, c = 5))
+$a
+[1] 1
+
+$b
+[1] 2
+
+$c
+[1] 5
+
+$d
+[1] 5
+
+> unitizer:::merge_lists(list(a = 1, b = 2, c = 3), list(a = NULL, d = 5, c = 5))
+$a
+NULL
+
+$b
+[1] 2
+
+$c
+[1] 5
+
+$d
+[1] 5
+
+> 
+> # - "filename to storeid" ------------------------------------------------------
+> 
+> filename_to_storeid("tests.R")
+[1] "tests.unitizer"
+> filename_to_storeid("tests.rock")
+Warning in filename_to_storeid("tests.rock") :
+  Unable to translate file name 'tests.rock' to `store.id` because it does not match regex '\.[rR]$', please provide explicit `store.id` or rename to end in '.R'.  Returning in NULL for `store.id`.
+NULL
+> 
+> # - "pretty_path" --------------------------------------------------------------
+> # not supposed to exist
+> res <- unitizer:::pretty_path("xadfasdfxcfasdfasd")  # warn
+> 
+> if(FALSE) {
++   # "fails CRAN"
++   # expect_identical(res, "xadfasdfxcfasdfasd")
++   res
++   unitizer:::pretty_path(normalizePath("."))
++   unitizer:::pretty_path(file.path(system.file(package = "stats"),
++     "DESCRIPTION"))
++ }
+> # - "quit" ---------------------------------------------------------------------
+> 
+> # for some reason cover tests run via travis can't handle the with_mock,
+> # so we just use truly-quit=FALSE; UPDATE (mabye du to compiler?)
+> # with_mock(
+> #   quit=function(...) stop("quit!\n"), {
+> #     unitizer:::read_line_set_vals("y")
+> #     expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
+> #     unitizer:::read_line_set_vals("n")
+> #     capture.output(uq2 <- unitizer:::unitizer_quit())
+> #     expect_equal(uq2, NULL)
+> #     unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
+> #     expect_error(capture.output(unitizer:::unitizer_quit()), "quit!")
+> #   }
+> # )
+> unitizer:::read_line_set_vals("y")
+> capture.output(q.res.1 <- unitizer:::unitizer_quit(truly.quit = FALSE))
+| You are attempting to quit R from within `unitizer`.  If you do so 
+| you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` 
+| gracefully.  Are you sure you want to exit R?
+
+[1] "Quit R? [y/n]: y"
+> q.res.1
+[1] TRUE
+> unitizer:::read_line_set_vals("n")
+> capture.output(q.res.2 <- unitizer:::unitizer_quit(truly.quit = FALSE))
+| You are attempting to quit R from within `unitizer`.  If you do so 
+| you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` 
+| gracefully.  Are you sure you want to exit R?
+
+[1] "Quit R? [y/n]: n"
+> q.res.2  # FALSE
+[1] FALSE
+> unitizer:::read_line_set_vals(c("q", "q", "q", "q", "q", "q"))
+> capture.output(q.res.3 <- unitizer:::unitizer_quit(truly.quit = FALSE))
+| You are attempting to quit R from within `unitizer`.  If you do so 
+| you will lose any unsaved `unitizers`.  Use `Q` to quit `unitizer` 
+| gracefully.  Are you sure you want to exit R?
+
+| Sorry, could not understand you, quitting then.
+
+[1] "Quit R? [y/n]: q" "Quit R? [y/n]: q" "Quit R? [y/n]: q" "Quit R? [y/n]: q"
+[5] "Quit R? [y/n]: q" "Quit R? [y/n]: q"
+> q.res.3
+[1] TRUE
+> unitizer:::read_line_set_vals(NULL)
+> 
+> # - "mock_item" ----------------------------------------------------------------
+> 
+> is(mock_item(), "unitizerItem")
+[1] TRUE
+> 
+> # - "diff conditionList" -------------------------------------------------------
+> 
+> cond1 <- new("conditionList", .items = list(simpleWarning("hello",
++     call = quote(fun())), simpleWarning("goodbye", call = quote(fun()))))
+> is(diffobj::diffObj(cond1, cond1), "Diff")
+[1] TRUE
+> 
+> # - "Condition object structure" -----------------------------------------------
+> 
+> # We're assuming a particular structure for the condition object in
+> # `faux_prompt` and `unitizer_prompt` so we put in a test here to make sure it
+> # doesn't change
+> cond <- simpleError("hello")
+> is.list(cond)
+[1] TRUE
+> identical(names(cond), c("message", "call"))
+[1] TRUE
+> identical(class(cond), c("simpleError", "error", "condition"))
+[1] TRUE
+> 
+> # - "options" ------------------------------------------------------------------
+> 
+> # not great tests...
+> 
+> old.opts <- options()
+> new.opts <- unitizer:::options_zero()
+> 
+> all(names(new.opts) %in% names(old.opts))
+[1] TRUE
+> length(new.opts) <= length(old.opts)
+[1] TRUE
+> options(old.opts)
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  1.014   0.127   1.142 

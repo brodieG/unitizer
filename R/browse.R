@@ -1,17 +1,17 @@
 # Copyright (C) 2021 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 #' @include unitizer.R
@@ -204,7 +204,7 @@ setMethod(
                 if(identical(y@review, 0L)) {
                   y.tmp <- review_prompt(y, new.env(parent=x@base.env))
                   if(identical(y.tmp, "Q")) {
-                    invokeRestart("earlyExit")
+                    invokeRestart("unitizerEarlyExit")
                   } else if(!is(y.tmp, "unitizerBrowse")) {
                     # nocov start
                     stop(
@@ -225,7 +225,7 @@ setMethod(
             # called by this function, as well as functions called by functions
             # called by this function.
 
-            earlyExit=function(mode="quit", extra=NULL) {
+            unitizerEarlyExit=function(mode="quit", extra=NULL) {
               if(identical(mode, "quit")) {
                 user.quit <<- TRUE
                 if(is(extra, "unitizerBrowse"))
@@ -747,7 +747,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           txt.alt <- sprintf(
             "State mismatch; see %s.",
             if(x@use.diff) "`.DIFF$state` for details"
-            else "`.NEW$state` and `.REF`$state"
+            else "`.NEW$state` and `.REF$state`"
           )
           diffs@state <- new(
             "unitizerItemTestsErrorsDiff", err=FALSE,
@@ -797,7 +797,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     if(!x@interactive) {   # can't proceed in non-interactive
       x@interactive.error <- TRUE
-      invokeRestart("earlyExit", extra=x)
+      invokeRestart("unitizerEarlyExit", extra=x)
     }
     x@human <- TRUE
 
@@ -938,7 +938,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       } else if (isTRUE(grepl("^RR?$", x.mod))) {           # Re-eval
         x <- toggleReeval(x, x.mod)
         Sys.sleep(0.3)  # so people can see the toggle message
-        invokeRestart("earlyExit", extra=x)
+        invokeRestart("unitizerEarlyExit", extra=x)
       } else if (isTRUE(grepl("^O$", x.mod))) {             # Force update
         x <- toggleForceUp(x)
         next
@@ -995,7 +995,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
               valid.opts=c(Y="[Y]es", N="[N]o"), global=x@global,
               browse.env=new.env(parent=parent.env(base.env.pri))
             )
-            if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
+            if(identical(act.conf, "Q"))
+              invokeRestart("unitizerEarlyExit", extra=x)
             if(identical(act.conf, "N")) {
               x@last.id <- x@last.id - 1L  # Otherwise we advance to next test
               return(x)
@@ -1011,10 +1012,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@mapping@review.val[rev.ind] <- act
         x@last.id <- max(rev.ind)
       } else if (identical(x.mod, "Q")) {
-        invokeRestart("earlyExit", extra=x)
+        invokeRestart("unitizerEarlyExit", extra=x)
       } else if (identical(x.mod, "QQ")) {
         x@multi.quit <- TRUE
-        invokeRestart("earlyExit", extra=x)
+        invokeRestart("unitizerEarlyExit", extra=x)
       } else {
         # nocov start
         stop(

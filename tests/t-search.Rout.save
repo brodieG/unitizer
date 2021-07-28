@@ -1,0 +1,485 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> source(file.path("_helper", "pkgs.R"))
+Install Packages
+Setup Demos
+> 
+> unitizer.dummy.list <- list(A = 1, B = 2, C = 3)
+> unitizer.dummy.list.2 <- list(A = 13, B = 24, C = 35)
+> # can't unload `unitizer`, ruins `covr`
+> try(detach("package:unitizer"), silent = TRUE)
+> try(detach("package:unitizerdummypkg1", unload = TRUE), silent = TRUE)
+> try(detach("package:unitizerdummypkg2", unload = TRUE), silent = TRUE)
+> while ("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
+> state.set <- setNames(rep(2L, length(unitizer:::.unitizer.global.settings.names)),
++     unitizer:::.unitizer.global.settings.names)
+> library(unitizer)
+> library(unitizerdummypkg1, lib.loc = TMP.LIB)
+> library(unitizerdummypkg2, lib.loc = TMP.LIB)
+> 
+> # - "Detecting packages" -------------------------------------------------------
+> 
+> unitizer:::is.loaded_package("package:unitizer")
+[1] TRUE
+> unitizer:::is.loaded_package("unitizer")   # FALSE
+[1] FALSE
+> unitizer:::is.loaded_package("package:stats")
+[1] TRUE
+> try(unitizer:::is.loaded_package(1))
+Error in unitizer:::is.loaded_package(1) : 
+  Argument `pkg.name` must be character 1L
+> try(unitizer:::is.loaded_package(letters))
+Error in unitizer:::is.loaded_package(letters) : 
+  Argument `pkg.name` must be character 1L
+> unitizer:::is.loaded_package("Autoloads")  # FALSE
+[1] FALSE
+> is.list(pkg.dat <- unitizer:::get_package_data())
+[1] TRUE
+> all(
++   vapply(
++     pkg.dat, function(x) is.list(x) && identical(names(x),
++     c("names", "lib.loc", "version")), logical(1L)
++ ) )
+[1] TRUE
+> 
+> # - "Path Compression" ---------------------------------------------------------
+> 
+> search.init.full <- unitizer:::search_as_envs()
+> search.init <- search.init.full$search.path
+> 
+> head(unitizer:::compress_search_data(search.init.full), 3L)
+[1] ".GlobalEnv"                       "package:unitizerdummypkg2 (v0.1)"
+[3] "package:unitizerdummypkg1 (v0.1)"
+> 
+> # - "Moving Objects on Search Path Works" --------------------------------------
+> 
+> if (length(search.init) < 6L) stop("Unexpetedly short search path")
+> untz.glob <- unitizer:::unitizerGlobal$new(enable.which = state.set,
++     set.global = TRUE)
+> 
+> try(unitizer:::move_on_path(5L, 2L, untz.glob))
+Error in unitizer:::move_on_path(5L, 2L, untz.glob) : 
+  old.pos > new.pos is not TRUE
+> try(unitizer:::move_on_path(1L, 2L, untz.glob))
+Error in unitizer:::move_on_path(1L, 2L, untz.glob) : 
+  new.pos > 1L is not TRUE
+> unitizer:::move_on_path(2L, 5L, untz.glob)
+> # can't compare actual environments as they change when detached and
+> # re-attached
+> 
+> all.equal(
++   names(unitizer:::search_as_envs()$search.path),
++   names(search.init[c(1L, 5L, 2L:4L, 6L:length(search.init))])
++ )
+[1] TRUE
+> # Now let's undo the previous move, by pushing second pack back to
+> # original position
+> for (i in rep(5L, 3L)) unitizer:::move_on_path(2L, 5L, untz.glob)
+> unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init.full)
+[1] TRUE
+> untz.glob$release()
+> 
+> # - "Search Path Journaling Works" ---------------------------------------------
+> 
+> try(detach("package:unitizer"), silent = TRUE)
+> try(detach("package:unitizerdummypkg1", unload = TRUE), silent = TRUE)
+> try(detach("package:unitizerdummypkg2", unload = TRUE), silent = TRUE)
+> library(unitizer)
+> # Initialize a global tracking object.  Doing it funny here because we don't
+> # want to run the search_path_trim command yet, and that would happen if we
+> # did a normal init
+> # will be modified later
+> search.ref <- NULL
+> search.init <- unitizer:::search_as_envs()
+> untz.glob <- unitizer:::unitizerGlobal$new(enable.which = state.set,
++     set.global = TRUE)
+> 
+> stat.tpl <- new("unitizerGlobalStatus", search.path = 2L, working.directory = 2L,
++     options = 2L, random.seed = 2L, namespaces = 2L)
+> # these need to be done outside of `test_that` b/c `test_that` sets the
+> # rlang_trace_top_env option
+> st.0 <- untz.glob$indices.last
+> st.1 <- untz.glob$state()
+> 
+> # Note, these are intended to be run without the shimming in place
+> identical(untz.glob$status, stat.tpl)
+[1] TRUE
+> 
+> # state should only be recorded if it changes
+> st.0
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 1
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 1
+
+> identical(st.0, st.1)
+[1] TRUE
+> # Add a package
+> library("unitizerdummypkg1", lib.loc = TMP.LIB)
+> st.2 <- untz.glob$state()
+> # have two recorded states
+> st.2@search.path
+[1] 2
+> # should have one more item
+> diff(sapply(untz.glob$tracking@search.path, function(x) length(x$search.path)))
+[1] 1
+> environmentName(untz.glob$tracking@search.path[[2L]]$search.path[[2L]])
+[1] "package:unitizerdummypkg1"
+> sp.tmp <- untz.glob$tracking@search.path
+> # note we compare attribute separately because subsetting drops them
+> identical(sp.tmp[[1L]]$search.path, sp.tmp[[2L]]$search.path[-2L])
+[1] TRUE
+> 
+> identical(
++   sp.tmp[[1L]]$ns.dat,
++   sp.tmp[[2L]]$ns.dat[names(sp.tmp[[2L]]$ns.dat) != "unitizerdummypkg1"]
++ )
+[1] TRUE
+> # Add another package at a different position
+> library("unitizerdummypkg2", pos = 4L, lib.loc = TMP.LIB)
+> st.3 <- untz.glob$state()
+> diff(sapply(untz.glob$tracking@search.path, function(x) length(x$search.path)))
+[1] 1 1
+> environmentName(
++   untz.glob$tracking@search.path[[st.3@search.path]]$search.path[[4L]]
++ )
+[1] "package:unitizerdummypkg2"
+> # Attach a list
+> attach(unitizer.dummy.list)
+> search.ref <- untz.glob$state()
+> environmentName(
++   untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]
++ )
+[1] "unitizer.dummy.list"
+> identical(
++   as.list(
++     untz.glob$tracking@search.path[[search.ref@search.path]]$search.path[[2L]]
++   ),
++   unitizer.dummy.list
++ )
+[1] TRUE
+> # And one more, but modified
+> unitizer.dummy.list.2 <- list(A = 13, B = 24, C = 35)
+> attach(unitizer.dummy.list.2, pos = 4L, name = "unitizer.dummy.list")
+The following objects are masked _by_ unitizer.dummy.list (pos = 2):
+
+    A, B, C
+
+> st.4 <- untz.glob$state()
+> curr.sp.ind <- untz.glob$indices.last@search.path
+> environmentName(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]])
+[1] "unitizer.dummy.list"
+> # Make sure search path is lining up
+> all.equal(
++   names(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path), search()
++ )
+[1] TRUE
+> identical(
++   as.list(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[4L]]),
++   unitizer.dummy.list.2
++ )
+[1] TRUE
+> identical(
++   as.list(untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[2L]]),
++   unitizer.dummy.list
++ )
+[1] TRUE
+> # should still point to same environment
+> identical(
++   untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[[2L]],
++   untz.glob$tracking@search.path[[curr.sp.ind]]$search.path[[2L]]
++ )
+[1] TRUE
+> # state shouldn't have changed
+> identical(untz.glob$state(), st.4)
+[1] TRUE
+> 
+> # detach some stuff
+> # this is the first list
+> detach(2L)
+> untz.glob$state()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 6
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 3
+
+> curr.sp.ind <- untz.glob$indices.last@search.path
+> identical(
++   untz.glob$tracking@search.path[[curr.sp.ind]]$search.path,
++   untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[-2L]
++ )
+[1] TRUE
+> detach("package:unitizerdummypkg2")
+> untz.glob$state()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 7
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 3
+
+> curr.sp.ind <- untz.glob$indices.last@search.path
+> identical(
++   untz.glob$tracking@search.path[[curr.sp.ind]]$search.path,
++   untz.glob$tracking@search.path[[curr.sp.ind - 1L]]$search.path[-5L]
++ )
+[1] TRUE
+> 
+> # - "Resetting search path" ----------------------------------------------------
+> 
+> identical(
++   as.list(as.environment("unitizer.dummy.list")), unitizer.dummy.list.2
++ )
+[1] TRUE
+> # set to just after we added the original dummy list
+> untz.glob$reset(search.ref)
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 4
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 3
+
+> identical(as.list(as.environment("unitizer.dummy.list")), unitizer.dummy.list)
+[1] TRUE
+> # Confirm we actually set to expected path
+> # NOTE: not sure if with updates this can work
+> all.equal(
++   names(unitizer:::search_as_envs()$search.path),
++   names(untz.glob$tracking@search.path[[search.ref@search.path]]$search.path)
++ )
+[1] TRUE
+> # Reset to very beginning
+> untz.glob$resetFull()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 1
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 1
+
+> untz.glob$release()
+> # compare with all.equal to make sure we use S4 method
+> unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
+[1] TRUE
+> 
+> # - "Search Path Trim / Restore" -----------------------------------------------
+> 
+> search.init <- unitizer:::search_as_envs()
+> untz.glob <- unitizer:::unitizerGlobal$new(enable.which = state.set,
++     set.global = TRUE)
+> library(unitizerdummypkg1, lib.loc = TMP.LIB)
+> library(unitizerdummypkg2, lib.loc = TMP.LIB)
+> unitizer:::search_path_trim(global = untz.glob)
+> untz.glob$state()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 2
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 2
+
+> sp.keep <- unitizer:::keep_sp_default()
+> identical(
++   search(), 
++   sp.keep[match(names(search.init$search.path), sp.keep, nomatch = 0L)]
++ )
+[1] TRUE
+> untz.glob$resetFull()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 1
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 1
+
+> untz.glob$release()
+> unitizer:::search_dat_equal(unitizer:::search_as_envs(), search.init)
+[1] TRUE
+> try(detach("package:unitizerdummypkg1", unload = TRUE), silent = TRUE)
+> try(detach("package:unitizerdummypkg2", unload = TRUE), silent = TRUE)
+> while ("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
+> 
+> # - "Loaded Namespaces don't cause issues" -------------------------------------
+> 
+> # had a problem earlier trying to re-attach namespaces
+> loadNamespace("unitizerdummypkg1", lib.loc = TMP.LIB)
+<environment: namespace:unitizerdummypkg1>
+> untz.glob <- unitizer:::unitizerGlobal$new(enable.which = state.set,
++     set.global = TRUE)
+> unitizer:::search_path_trim(global = untz.glob)
+> unitizer:::namespace_trim(global = untz.glob)
+> untz.glob$state()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 2
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 2
+
+> loadNamespace("unitizerdummypkg2", lib.loc = TMP.LIB)
+<environment: namespace:unitizerdummypkg2>
+> untz.glob$state()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 3
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 3
+
+> "unitizerdummypkg1" %in% loadedNamespaces()  # FALSE
+[1] FALSE
+> "unitizerdummypkg2" %in% loadedNamespaces()
+[1] TRUE
+> untz.glob$resetFull()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 1
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 1
+
+> untz.glob$release()
+> "unitizerdummypkg1" %in% loadedNamespaces()
+[1] TRUE
+> "unitizerdummypkg2" %in% loadedNamespaces()  # FALSE
+[1] FALSE
+> unloadNamespace("unitizerdummypkg1")
+> 
+> # - "Prevent Namespace Unload Works" -------------------------------------------
+> 
+> old.opt <- options(unitizer.namespace.keep = "unitizerdummypkg1")
+> loadNamespace("unitizerdummypkg1", lib.loc = TMP.LIB)
+<environment: namespace:unitizerdummypkg1>
+> glb <- unitizer:::unitizerGlobal$new(set.global = TRUE)
+> glb$status@options <- 2L
+> unitizer:::unload_namespaces("unitizerdummypkg1", global = glb)
+NULL
+> glb$ns.opt.conflict@conflict
+[1] TRUE
+> glb$ns.opt.conflict@namespaces
+[1] "unitizerdummypkg1"
+> unloadNamespace("unitizerdummypkg1")
+> options(old.opt)
+> glb$release()
+> 
+> # - "Generate unique names" ----------------------------------------------------
+> 
+> unitizer:::unitizerUniqueNames(list(search.path = c(goodbye = "0",
++     hello = "1", goodbye = "2", goodbye = "3")))
+[1] "goodbye"   "hello"     "goodbye.1" "goodbye.2"
+> 
+> 
+> proc.time()
+   user  system elapsed 
+   5.52    1.67    9.49 
