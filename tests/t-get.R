@@ -280,7 +280,7 @@ unitizer:::read_line_set_vals(NULL)
 out <- unitizer:::capture_output(
   unitizer:::infer_unitizer_location(NULL, interactive = FALSE)
 )
-grepl("too many to unambiguously", out$message)
+any(grepl("too many to unambiguously", out$message))
 fake.class <- structure(list(), class = "thisclassdoesn'texist")
 identical(infer(fake.class), fake.class)
 

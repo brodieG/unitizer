@@ -7,6 +7,8 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
+  Natural language support but running in an English locale
+
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -409,9 +411,11 @@ Selected file: zzz.R
 > 
 > # Non standard inferences
 > # warn
-> invisible(unitizer:::infer_unitizer_location(NULL, interactive = FALSE))
-Warning in infer_unitizer_location.character(def.dir, ...) :
-  4 possible targets; too many to unambiguously infer desired file
+> out <- unitizer:::capture_output(
++   unitizer:::infer_unitizer_location(NULL, interactive = FALSE)
++ )
+> any(grepl("too many to unambiguously", out$message))
+[1] TRUE
 > fake.class <- structure(list(), class = "thisclassdoesn'texist")
 > identical(infer(fake.class), fake.class)
 [1] TRUE
@@ -430,4 +434,4 @@ Warning in infer_unitizer_location.character(def.dir, ...) :
 > 
 > proc.time()
    user  system elapsed 
-  2.069   0.227   2.412 
+  1.752   0.167   1.934 
