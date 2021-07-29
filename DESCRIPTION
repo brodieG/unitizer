@@ -5,11 +5,7 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-<<<<<<< HEAD
-Version: 1.4.14.9001
-=======
-Version: 1.4.14
->>>>>>> development
+Version: 1.4.14.9002
 Authors@R: c(
     person(
     "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
@@ -28,17 +24,11 @@ Imports:
 VignetteBuilder: knitr
 Suggests:
     knitr,
-<<<<<<< HEAD
     rmarkdown
 License: GPL-2 | GPL-3
-=======
-    rmarkdown,
-    testthat
-License: GPL (>= 2)
->>>>>>> development
 URL: https://github.com/brodieG/unitizer
 BugReports: https://github.com/brodieG/unitizer/issues
-Collate: 
+Collate:
     'asciiml.R'
     'capture.R'
     'is.R'
