@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -112,6 +114,37 @@ Error in "(})" : <text>:1:2: unexpected '}'
 1: (}
      ^
 > 
+> ## Test the new readLines based read_line
+> ## This test will not work in interactive mode, requiring input
+> unitizer:::read_line_set_vals(NULL)
+> unitizer:::faux_prompt()
+> 1 +
++ 1
+expression(1 + 1)
+> 
+> ## This one embeds a CTRL+C to test interrupt, but we can't test this without
+> ## read_line_setvals
+> 
+> unitizer:::read_line_set_vals(c("1 +", "\x03", "2 + ", "1"))
+> unitizer:::faux_prompt()
+> 1 +
++ 
+
+> 2 + 
++ 1
+expression(2 + 1)
+> 
+> unitizer:::read_line_set_vals(c("\x03", "2 + ", "1"))
+> unitizer:::faux_prompt()
+> 
+
+
+| Type "Q" at the prompt to quit unitizer.
+
+> 2 + 
++ 1
+expression(2 + 1)
+> 
 > # - "unitizer prompt" ----------------------------------------------------------
 > 
 > # Some of this needs to be done outside of testthat due to sinking
@@ -208,4 +241,4 @@ unitizer> 2L
 > 
 > proc.time()
    user  system elapsed 
-  0.811   0.117   0.970 
+  0.672   0.087   0.749 

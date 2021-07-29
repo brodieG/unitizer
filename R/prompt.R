@@ -390,13 +390,20 @@ exit_fun <- function(y, env, valid.vals) {
   }
   return(y[[1L]])
 }
+## Based on Lisa Bruine's tip that `readLines(con=stdin(), n=1)` can replace
+## `readline`.  In theory we could junk the entire read_line_setvals which is no
+## longer needed (was used when we used `readline` originally).  Unfortunately
+## no way to directly pass a CTRL+C with this mechanism so we can't test
+## properly for bailout mid-input.
+
 #' @keywords internal
 #' @rdname unitizer_prompt
 
 read_line <- function(prompt="") {
   stopifnot(is.chr1(prompt))
   if(is.null(.global$prompt.vals)) {
-    readline(prompt)  # nocov can't test this in non-interactive
+    cat(prompt)
+    readLines(con=stdin(), n=1)
   } else if(!is.character(.global$prompt.vals)) {
     stop( # nocov start
       "Internal Error: internal object `.global$prompt.vals` has unexpected ",

@@ -24,21 +24,54 @@
 faux_prompt <- function(
   prompt=getOption("prompt"), continue=getOption("continue")
 ) {
-  res <- character()
+  prompt.start <- prompt
+  res <- ""
+  res.parse <- NULL
+  reset <- FALSE
   old.opt <- options(warn=1L)
   on.exit(options(old.opt))
   repeat {
-    res.parse <- tryCatch({
-        res <- paste0(res, read_line(prompt), if(length(res)) '\n' else "")
-        parsed <- parse(text=res)
-      },
-      error=function(e) {
-        if(!isTRUE(grepl(" unexpected end of input\n", conditionMessage(e)))) {
-          e$call <- if(length(res)) res else NULL
-          stop(e)
+    withRestarts(
+      withCallingHandlers(
+        res.parse <- tryCatch({
+            new <- read_line(prompt)
+            if(
+              nzchar(new) && charToRaw(substr(new, nchar(new), nchar(new))) == 3
+            ) {
+              # Fake interrupt on receiving 0x03 (CTRL+C, we assume no encodings
+              # out there use this internally...).  Can figure out how to
+              # programatically send a CTRL+C to the console.
+              invokeRestart("unitizerInterrupt")
+            }
+            res <- paste0(res, new, if(nzchar(res)) '\n' else "")
+            parsed <- parse(text=res)
+          },
+          error=function(e) {
+            ## Fix me: won't work in non-English locales?
+            if(!isTRUE(grepl(" unexpected end of input\n", conditionMessage(e)))) {
+              e$call <- if(nzchar(res)) res else NULL
+              stop(e)
+            }
+        } ),
+        interrupt=function(e) {
+          invokeRestart("unitizerInterrupt")
         }
-    } )
-    prompt <- `continue`
+      ),
+      unitizerInterrupt=function(e) {
+        reset <<- TRUE
+      }
+    )
+    if(reset) {
+      cat("\n")
+      if(!nzchar(res)) {
+        cat("\n")
+        meta_word_cat("Type \"Q\" at the prompt to quit unitizer.")
+      }
+      prompt <- prompt.start
+      res <- ""
+      reset <- FALSE
+    } else prompt <- `continue`
+
     if(is.expression(res.parse)) {
       return(res.parse)
   } }
