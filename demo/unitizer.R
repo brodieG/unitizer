@@ -9,7 +9,7 @@ unitizer_check_demo_state()
 #
 # 1. v0.1.0: a slow version that is known to produce the correct results
 # 2. v0.1.1: initial (flawed) attempt at optimizing our functions
-# 2. v0.1.2: fixes to regressions introduced in v0.1.1
+# 3. v0.1.2: fixes to regressions introduced in v0.1.1
 #
 # See Also: `?unitizer::demo`, `?unitize`, `vignette("unitizer")`
 
