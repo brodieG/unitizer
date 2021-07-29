@@ -2,8 +2,7 @@
 
 ## v1.4.15
 
-* Test suite switched to `aammrtf`, removing suggests dependencies to `testthat`
-  and `covr` and thereby dramatically reducing the test-time dependency load.
+* Test suite switched to `aammrtf`, removing suggests dependency to `testthat`.
 * Upgrade process modified so that old `unitizer` that pass tests are not
   required to be upgraded.
 * `show.progress` parameter added to control chattiness of progress updates.
@@ -11,6 +10,11 @@
   `unitizers`, or remove them from the review list (e.g. by moving them out of
   the primary `unitizer` directory).
 * `review` exposes `use.diff` and `show.progress` parameters.
+* [#277](https://github.com/brodieG/unitizer/issues/277): Handle CTRL+C
+  interrupts so they do not kill the `unitizer` session (h/t
+  [@milesmcbain](https://milesmcbain.micro.blog/2021/06/10/debugging-cantrip-from.html)).
+* Switch user input intake to `readLines` over `readline` for testing corner
+  cases (h/t [Lisa Bruine](https://debruine.github.io/posts/interactive-test/)).
 
 ## v1.4.13-14
 

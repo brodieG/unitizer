@@ -391,10 +391,9 @@ exit_fun <- function(y, env, valid.vals) {
   return(y[[1L]])
 }
 ## Based on Lisa Bruine's tip that `readLines(con=stdin(), n=1)` can replace
-## `readline`.  In theory we could junk the entire read_line_setvals which is no
-## longer needed (was used when we used `readline` originally).  Unfortunately
-## no way to directly pass a CTRL+C with this mechanism so we can't test
-## properly for bailout mid-input.
+## `readline`.  For most testing we could now avoid `read_line_setvals`, but it
+## is still needed to test CTRL+C, so we keep it (and also to avoid updating all
+## the existing tests).
 
 #' @keywords internal
 #' @rdname unitizer_prompt
