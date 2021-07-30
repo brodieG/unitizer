@@ -187,7 +187,7 @@ ns.conf3 <- unitizer:::capture_output(
       file.path(FLM.TEST.DIR, "fastlm2.R"), state = "pristine",
       interactive.mode = FALSE
 ) ) )
-ns.conf3$message <- ns.conf3$message[-9]
+ns.conf3$message <- ns.conf3$message[-grep('unloaded', ns.conf3$message)]
 ns.conf3
 
 # - "Removing Tests" -----------------------------------------------------------

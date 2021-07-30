@@ -323,7 +323,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     inspect.all="logical",      # force inspection of all elements
     # user has triggered at least one navigation command
     navigating="logical",
-    browsing="logical",         # current test selected via browse
+    browsing="integer",         # current test selected via browse
     human="logical",            # whether user has had any interaction at all
     # so navprompt can communicate back re-eval status
     re.eval="integer",
@@ -352,7 +352,7 @@ setClass("unitizerBrowse", contains="unitizerList",
     review=1L,
     inspect.all=FALSE,
     navigating=FALSE,
-    browsing=FALSE,
+    browsing=0L,
     human=FALSE,
     re.eval=0L,
     force.up=FALSE,
@@ -373,12 +373,12 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@start.at.browser` must be TRUE or FALSE")
     if(!is.TF(object@navigating))
       return("Slot `@navigating` must be TRUE or FALSE")
-    if(!is.TF(object@browsing))
-      return("Slot `@browsing` must be TRUE or FALSE")
-    if(!is.TF(object@auto.accept))
-      return("Slot `@auto.accept` must be TRUE or FALSE")
+    if(!is.int.1L(object@browsing) && object@browsing >= 0L)
+      return("Slot `browsing` must be positive integer scalar")
     if(!is.int.1L(object@jumping.to) && object@jumping.to >= 0L)
       return("Slot `jumping.to` must be positive integer scalar")
+    if(!is.TF(object@auto.accept))
+      return("Slot `@auto.accept` must be TRUE or FALSE")
     if(!is.TF(object@force.up))
       return("Slot `force.up` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))

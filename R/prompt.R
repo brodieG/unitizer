@@ -315,8 +315,10 @@ review_prompt <- function(x, nav.env) {
   # Set last.id to test just before the one we want to review as process will
   # then cause desired test to be reviewed
 
-  x@last.id <- as.integer(nav.id) - 1L
-  x@browsing <- TRUE
+  id <- as.integer(nav.id)
+  offset <- (!x@inspect.all) * find_lead_offset(nav.id, x@mapping)
+  x@last.id <- id - (1L + offset)
+  x@browsing <- id
   x@navigating <- TRUE
   return(x)
 }

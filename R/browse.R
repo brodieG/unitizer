@@ -162,12 +162,7 @@ setMethod(
             )
             # nocov end
           }
-          # Scroll back to first non-test preceeding our bookmark
-          id.target <- y@mapping@item.id[id.map]
-          cur.sect.eligible <-
-            y@mapping@sec.id[id.map] == y@mapping@sec.id &
-            y@mapping@item.id.ord < y@mapping@item.id.ord[id.map]
-          ign.adj <- sum(cumsum(rev(!y@mapping@ignored[cur.sect.eligible])) == 0)
+          ign.adj <- find_lead_offset(id.map, y@mapping)
           y@last.id <- y@mapping@item.id[id.map] - (1L + ign.adj)
           y@jumping.to <- id.map
         }
@@ -495,6 +490,26 @@ setMethod(
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
+
+# Find offset the first ignored test contiguous to our test
+
+find_lead_offset <- function(id, mapping) {
+  if(!is.int.1L(id) || id < 0)
+    stop("Internal Error: bad id.") # nocov
+  if(!is(mapping, "unitizerBrowseMapping"))
+    stop("Internal Error: bad mapping object.") # nocov
+
+  if(id > length(mapping@item.id)) {
+    # No unreviewed tests returns one more than end
+    0L
+  } else {
+    cur.sect.eligible <-
+      mapping@sec.id[id] == mapping@sec.id &
+      mapping@item.id.ord < mapping@item.id.ord[id]
+    sum(cumsum(rev(!mapping@ignored[cur.sect.eligible])) == 0)
+  }
+}
+
 # Bring up Review of Next test
 #
 # Generally we will go from one test to the next, where the next test is
@@ -509,8 +524,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
     browsed <- x@browsing
     jumping <- x@jumping.to
-    x@browsing <- FALSE
-    x@jumping.to <- 0L
+    x@browsing <- x@jumping.to <- 0L
     last.id <- x@last.id
     curr.id <- x@last.id + 1L
     x@last.id <- curr.id
