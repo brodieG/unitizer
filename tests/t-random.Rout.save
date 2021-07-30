@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
@@ -25,7 +25,7 @@ Type 'q()' to quit R.
 > cat("sample(1:100)\n", file = file)
 > set.seed(1)
 > coi(unitize(file, auto.accept = "new"))
-Warning in history_capt(history) :
+Warning in history_capt(history, interactive.mode) :
   Unable to capture history in non-interactive mode.
 | Auto-accepting changes...
 | unitizer updated.
@@ -33,7 +33,7 @@ Warning in history_capt(history) :
 > # changing seed should have no effect on result
 > set.seed(23)
 > coi(res <- unitize(file))
-Warning in history_capt(history) :
+Warning in history_capt(history, interactive.mode) :
   Unable to capture history in non-interactive mode.
 | 1/1 test passed; nothing to review.
 
@@ -44,4 +44,4 @@ Warning in history_capt(history) :
 > 
 > proc.time()
    user  system elapsed 
-  1.548   0.143   1.758 
+  1.456   0.128   1.612 
