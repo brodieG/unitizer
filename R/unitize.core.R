@@ -1010,7 +1010,8 @@ check_call_stack <- function() {
   reserved.restarts <- c(
     "unitizerInteractiveFail",   # Need to be interactive to continue
     "unitizerUserNoUpgrade",     # User denied approval to continue
-    "unitizerEarlyExit"          # Internally used to Q from a unitizer
+    "unitizerEarlyExit",         # Internally used to Q from a unitizer
+    "unitizerInterrupt"          # In faux prompt to catch CTRL+C
   )
   if(any(res.err <- reserved.restarts %in% restart.names)) {
     many <- sum(res.err) > 1L
