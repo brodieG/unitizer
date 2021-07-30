@@ -162,8 +162,14 @@ setMethod(
             )
             # nocov end
           }
-          y@last.id <- y@mapping@item.id[id.map] - 1L
-          y@jumping.to <- TRUE
+          # Scroll back to first non-test preceeding our bookmark
+          id.target <- y@mapping@item.id[id.map]
+          cur.sect.eligible <-
+            y@mapping@sec.id[id.map] == y@mapping@sec.id &
+            y@mapping@item.id.ord < y@mapping@item.id.ord[id.map]
+          ign.adj <- sum(cumsum(rev(!y@mapping@ignored[cur.sect.eligible])) == 0)
+          y@last.id <- y@mapping@item.id[id.map] - (1L + ign.adj)
+          y@jumping.to <- id.map
         }
       }
       # `repeat` loop allows us to keep going if at the last minute we decide
@@ -503,7 +509,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
     browsed <- x@browsing
     jumping <- x@jumping.to
-    x@browsing <- x@jumping.to <- FALSE
+    x@browsing <- FALSE
+    x@jumping.to <- 0L
     last.id <- x@last.id
     curr.id <- x@last.id + 1L
     x@last.id <- curr.id
@@ -660,7 +667,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         prev.is.expr <- FALSE
         meta_word_msg(
           sep="",
-          "Jumping to test #", x@mapping@item.id.ord[[curr.id]], " because ",
+          "Jumping to test #", x@mapping@item.id.ord[[jumping]], " because ",
           "that was the test under review when test re-run was requested.",
           if(!is.null(unitizer@bookmark) && unitizer@bookmark@parse.mod)
             cc(
