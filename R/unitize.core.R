@@ -639,7 +639,7 @@ unitize_browse <- function(
   }
   if(show.progress > 0) over_print("Prepping Unitizers...")
 
-  hist.obj <- history_capt(history)
+  hist.obj <- history_capt(history, interactive.mode)
   on.exit(history_release(hist.obj))
 
   # Get summaries

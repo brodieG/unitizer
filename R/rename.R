@@ -54,7 +54,7 @@ setMethod("editCalls", c("unitizer", "language", "language"),
       "This is an experimental function; make sure you backup any unitizers ",
       "before you edit them", immediate.=TRUE
     )
-    if(!interactive_mode() && interactive.only)
+    if(!interactive() && interactive.only)
       stop("Set interactive.only to FALSE to run in non-interactive mode")
     i <- 0L
     if(interactive.only) {

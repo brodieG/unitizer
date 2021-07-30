@@ -148,13 +148,13 @@ filename_to_storeid <- function(x) {
 #
 # @keywords internal
 
-history_capt <- function(hist.file=NULL) {
+history_capt <- function(hist.file=NULL, interactive.mode) {
   # set up local history
 
   if(is.null(hist.file)) return(list(con=NULL, file=NULL))
   # nocov start
   if(!interactive()) {
-    if(!interactive_mode()) {
+    if(!interactive.mode) {
       warning(
         "Unable to capture history in non-interactive mode.",
         immediate.=TRUE
