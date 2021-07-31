@@ -7,6 +7,8 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
+  Natural language support but running in an English locale
+
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -45,6 +47,12 @@ Warning in history_capt(history, interactive.mode) :
 
 > withRestarts(unitize("_helper/unitizers/trivial.R"))
 
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
 Warning in history_capt(history, interactive.mode) :
   Unable to capture history in non-interactive mode.
 | 4/4 tests passed; nothing to review.
@@ -78,4 +86,4 @@ of `unitize`.  If you did not define this restart contact maintainer.
 > 
 > proc.time()
    user  system elapsed 
-  1.672   0.131   1.841 
+   1.72    0.14    1.97 
