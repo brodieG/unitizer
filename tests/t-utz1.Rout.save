@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -843,7 +845,7 @@ Error in fastlm(1:100, 1:10) :
 +       file.path(FLM.TEST.DIR, "fastlm2.R"), state = "pristine",
 +       interactive.mode = FALSE
 + ) ) )
-> ns.conf3$message <- ns.conf3$message[-9]
+> ns.conf3$message <- ns.conf3$message[-grep('unloaded', ns.conf3$message)]
 > ns.conf3
 - Output -----------------------------------------------------------------------
 
@@ -856,6 +858,8 @@ Warning in check_call_stack() :
 couraged as it may cause unpredictable behavior from unitizer in the event tests
 produce conditions / errors.  We strongly recommend you re-run your tests 
 outside of such handling functions.
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
 | `unitizer` was unable to run with `options` state tracking enabled starting 
 | with the first test file because the following namespaces could not be 
 
@@ -870,6 +874,8 @@ workarounds.
 > extra.dir <- file.path(FLM.TEST.DIR, "..", "extra")
 > unitize(file.path(extra.dir, "del1.R"), auto.accept = "new", interactive.mode = FALSE)
 
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
 +------------------------------------------------------------------------------+
 | unitizer for: extra/del1.R                                                   |
 +------------------------------------------------------------------------------+
@@ -1073,6 +1079,10 @@ unitizer> U
 | The 2 tests in this section failed because the new evaluations do not match 
 | the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
 | [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
 
 # Our fast computations do not produce the same results as our
 # original tests so they fail.  If you need more detail than the
@@ -1478,6 +1488,8 @@ Warning in check_call_stack() :
 couraged as it may cause unpredictable behavior from unitizer in the event tests
 produce conditions / errors.  We strongly recommend you re-run your tests 
 outside of such handling functions.
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
 | Summary of files in common directory 'unitizer':
 | 
 |                        Pass Fail
@@ -1892,6 +1904,10 @@ unitizer> Y
 | Jumping to test #4 because that was the test under review when test re-run was
 | requested.
 
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
 # Our fast computations do not produce the same results as our
 # original tests so they fail.  If you need more detail than the
 # provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
@@ -2032,6 +2048,10 @@ unitizer> Y
 
 | Jumping to test #4 because that was the test under review when test re-run was
 | requested.
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
 
 # Our fast computations do not produce the same results as our
 # original tests so they fail.  If you need more detail than the
@@ -2938,4 +2958,4 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
 > 
 > proc.time()
    user  system elapsed 
-  27.89    4.53   38.48 
+  23.15    3.46   28.54 

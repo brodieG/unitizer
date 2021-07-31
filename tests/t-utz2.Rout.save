@@ -586,6 +586,8 @@ I'm outputting to stderr
 I'm outputting to both 1
 I'm outputting to both 2
 
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
 | 3/3 tests passed; nothing to review.
 
 > unlink(temp.loc, recursive = TRUE)
@@ -711,4 +713,4 @@ Error in unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map f
 > 
 > proc.time()
    user  system elapsed 
-  10.70    2.12   14.92 
+  10.75    1.99   14.30 

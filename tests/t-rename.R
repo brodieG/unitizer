@@ -11,10 +11,12 @@ identical(
   gsub("\\bx\\b", "y", x@items.ref.calls.deparse)
 )
 
-unitizer:::read_line_set_vals("Y")  # warn
-x.edit2 <- editCalls(x, quote(x), quote(y), interactive.only = TRUE)
-unitizer:::read_line_set_vals("N")  # message
-x.edit3 <- editCalls(x, quote(x), quote(y), interactive.only = TRUE)
+# warn
+x.edit2 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
+Y
+# message
+x.edit3 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
+N
 identical(x.edit3, x)
 
 unitizer:::read_line_set_vals(NULL)

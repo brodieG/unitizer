@@ -34,15 +34,15 @@ Warning in .local(x, lang.old, lang.new, ...) :
 + )
 [1] TRUE
 > 
-> unitizer:::read_line_set_vals("Y")  # warn
-> x.edit2 <- editCalls(x, quote(x), quote(y), interactive.only = TRUE)
+> # warn
+> x.edit2 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
 Warning in .local(x, lang.old, lang.new, ...) :
   This is an experimental function; make sure you backup any unitizers before you edit them
 | Do you wish to proceed ([Y]es/[N]o)? 
 
 unitizer> Y
-> unitizer:::read_line_set_vals("N")  # message
-> x.edit3 <- editCalls(x, quote(x), quote(y), interactive.only = TRUE)
+> # message
+> x.edit3 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
 Warning in .local(x, lang.old, lang.new, ...) :
   This is an experimental function; make sure you backup any unitizers before you edit them
 | Do you wish to proceed ([Y]es/[N]o)? 
@@ -59,4 +59,4 @@ Exiting without edits
 > 
 > proc.time()
    user  system elapsed 
-  0.711   0.096   0.794 
+  0.728   0.099   0.827 

@@ -219,9 +219,7 @@ review <- function(
   store.id=NULL, use.diff=getOption("unitizer.use.diff"),
   show.progress=getOption("unitizer.show.progress", TRUE)
 ) {
-  if(!interactive_mode()) stop("`review` only available in interactive mode")
   # Initial spacer, must be done in each top level call
-
   cat("\n")
 
   invisible(
