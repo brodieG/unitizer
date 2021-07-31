@@ -600,13 +600,26 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     prev.is.expr <- TRUE
 
+    # Will the test actually require user review
+    # Need to add ignored tests as default action is N, though note that ignored
+    # tests are treated specially in `healEnvs` and are either included or
+    # removed based on what happens to the subsequent non-ignored test.
+    # reviewed items are skipped unless we're actively navigating to support
+    # `auto.accept`
+
+    will.review <- x@inspect.all ||
+      !(
+        x@mapping@ignored[[curr.id]] || ignore.passed ||
+        (x@mapping@reviewed[[curr.id]] && !x@navigating)
+      )
+
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
     # conditions, or if we just got here via a browse statement
 
     if(
       (
-        !identical(last.reviewed.sec, curr.sec) && !ignore.sec ||
+        (!identical(last.reviewed.sec, curr.sec) && !ignore.sec) ||
         browsed || jumping
       ) && multi.sect
     ) {
@@ -671,12 +684,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
     diffs <- NULL
 
     if(!ignore.sub.sec || x@review == 0L) {
-      if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
+      if(
+        x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review") &&
+        will.review
+      ) {
         prev.is.expr <- FALSE
         meta_word_msg(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\"", sep=""
-      ) }
+        )
+      }
       if(jumping) {
         prev.is.expr <- FALSE
         meta_word_msg(
@@ -799,20 +816,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
       } else if (out.std || out.err) cat("\n")
     }
-    # Need to add ignored tests as default action is N, though note that ignored
-    # tests are treated specially in `healEnvs` and are either included or
-    # removed based on what happens to the subsequent non-ignored test.
 
-    if(!x@inspect.all) {
-      if(
-        x@mapping@ignored[[curr.id]] || ignore.passed ||
-        (x@mapping@reviewed[[curr.id]] && !x@navigating)
-      ) {
-        # reviewed items are skipped unless we're actively navigating to support
-        # `auto.accept`
-        return(x)
-      }
-    }
+    if(!will.review) return(x)
+
     # If we get past this point, then we will need some sort of human input, so
     # we mark the browse object
 
