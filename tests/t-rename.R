@@ -12,11 +12,11 @@ identical(
 )
 
 # warn
+unitizer:::read_line_set_vals("Y")
 x.edit2 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
-Y
 # message
+unitizer:::read_line_set_vals("N")
 x.edit3 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
-N
 identical(x.edit3, x)
 
 unitizer:::read_line_set_vals(NULL)

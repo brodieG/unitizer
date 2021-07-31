@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -26,6 +24,9 @@ Type 'q()' to quit R.
 > 
 > # Relates to #278.  Tests both Review and Browse
 > 
+> unitizer:::read_line_set_vals(
++   c("R", "Y", "B", "7", "R", "Y", "B", "9", "R", "Y", "Q")
++ )
 > unitize(nav, interactive.mode=TRUE)
 
 +------------------------------------------------------------------------------+
@@ -244,4 +245,4 @@ unitizer> Q
 > 
 > proc.time()
    user  system elapsed 
-  2.195   0.156   3.311 
+  2.198   0.152   3.311 

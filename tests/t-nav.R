@@ -7,16 +7,8 @@ nav <- file.path("_helper", "unitizers", "nav.R")
 
 # Relates to #278.  Tests both Review and Browse
 
+unitizer:::read_line_set_vals(
+  c("R", "Y", "B", "7", "R", "Y", "B", "9", "R", "Y", "Q")
+)
 unitize(nav, interactive.mode=TRUE)
-R
-Y
-B
-7
-R
-Y
-B
-9
-R
-Y
-Q
 
