@@ -7,7 +7,14 @@
 \usage{
 editCalls(x, lang.old, lang.new, ...)
 
-\S4method{editCalls}{unitizer,language,language}(x, lang.old, lang.new, interactive.only = TRUE, ...)
+\S4method{editCalls}{unitizer,language,language}(
+  x,
+  lang.old,
+  lang.new,
+  interactive.mode = interactive(),
+  interactive.only = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{a unitizer object}
@@ -17,6 +24,10 @@ editCalls(x, lang.old, lang.new, ...)
 \item{lang.new}{the new name of the function}
 
 \item{...}{unused}
+
+\item{interactive.mode}{logical(1L) whether to run in interactive mode (
+request user input when needed) or not (error if user input is required,
+e.g. if all tests do not pass).}
 
 \item{interactive.only}{logical(1L) set to FALSE if you want to allow this to
 run in non-interactive mode, but warnings will be suppressed and will

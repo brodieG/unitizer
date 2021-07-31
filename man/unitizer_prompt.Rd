@@ -8,7 +8,6 @@
 \alias{exit_fun}
 \alias{read_line}
 \alias{read_line_set_vals}
-\alias{interactive_mode}
 \title{Interactively Retrieve User Input}
 \usage{
 unitizer_prompt(
@@ -51,8 +50,6 @@ exit_fun(y, env, valid.vals)
 read_line(prompt = "")
 
 read_line_set_vals(vals)
-
-interactive_mode()
 }
 \arguments{
 \item{text}{the prompt text to display}
@@ -155,9 +152,6 @@ from pre-specified values.
 \code{read_line} and \code{read_line_set_vals} are utility functions that
 are used to implement a version of \code{\link{readline}} that can be
 automated for testing.
-
-\code{interactive_mode} returns interactive status, accounting for whether
-we are in faux-interactive mode as set by \code{read_line_set_vals}
 }
 \seealso{
 browse_unitizer_items
