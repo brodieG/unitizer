@@ -319,7 +319,7 @@ options_update <- function(tar.opts) {
   # random seed to use by default, "Wichman-Hill" because default seed is large
   unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
   unitizer.max.env.depth=20000L,
-  unitizer.use.diff=TRUE,
+  unitizer.use.diff=TRUE
   # unitizer.show.progress=TRUE,  # can't be install time if we want interactive()
 )
 
