@@ -50,17 +50,6 @@ cat("just a file\n", file = just.a.file)
 err <- capture.output(try(set_unitizer(just.a.file, toy.stor)), type='message')
 any(grepl('not a directory', err))
 
-# try to write to read only
-# seems to be case that root can always write so defeats this test
-if (identical(.Platform$OS.type, "unix")) {
-    ro.dir <- tempfile()
-    on.exit(unlink(ro.dir))
-    dir.create(ro.dir, mode = "0500")
-    if (!identical(try(system("whoami", intern = TRUE), silent = TRUE),
-        "root")) {
-        try(capture.output(set_unitizer(ro.dir, toy.stor), type = "message"))
-    }
-}
 # - "load/store_unitizer" ------------------------------------------------------
 
 # Several different stores in different states (i.e. requiring upgrade,
@@ -282,6 +271,7 @@ out <- unitizer:::capture_output(
   unitizer:::infer_unitizer_location(NULL, interactive = FALSE)
 )
 any(grepl("too many to unambiguously", out$message))
+
 fake.class <- structure(list(), class = "thisclassdoesn'texist")
 identical(infer(fake.class), fake.class)
 

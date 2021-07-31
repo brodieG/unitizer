@@ -42,7 +42,25 @@ Error in unitizer:::as.store_id_chr(structure("hello", class = "untz_stochrerr")
 + )
 [1] "<unknown-test-file>"
 > 
+> # - read only ------------------------------------------------------------------
+> 
+> # try to write to read only
+> # seems to be case that root can always write so defeats this test
+> if (identical(.Platform$OS.type, "unix")) {
++   toy.path <- file.path("_helper", "unitizers", "misc.unitizer")
++   toy.stor <- readRDS(file.path(toy.path, "data.rds"))
++ 
++   ro.dir <- tempfile()
++   on.exit(unlink(ro.dir))
++   dir.create(ro.dir, mode = "0500")
++   if (!identical(try(system("whoami", intern = TRUE), silent = TRUE),
++       "root")) {
++       try(capture.output(set_unitizer(ro.dir, toy.stor), type = "message"))
++   }
++ }
+Error in set_unitizer.character(ro.dir, toy.stor) : 
+  Failed setting unitizer; see prior error messages for details.
 > 
 > proc.time()
    user  system elapsed 
-  0.673   0.096   0.839 
+  0.650   0.091   0.742 

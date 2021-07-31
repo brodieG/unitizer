@@ -4,7 +4,7 @@ source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 test.file <- file.path(
   "_helper", "ref-objs", "translate", "testthat", "test-translate2.R"
 )
-target.dir.base <- file.path(TMP.DIR, tempfile())
+target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
 target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
 
 # - "Prompt to create dir" -----------------------------------------------------
