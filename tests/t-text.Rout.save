@@ -1,0 +1,334 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> # - "cap_first" ----------------------------------------------------------------
+> 
+> set.seed(1, "Mersenne-Twister")
+> words <- replicate(2, paste0(sample(letters, 5), collapse = ""))
+> WORDS <- toupper(words)
+> 
+> unitizer:::cap_first(c("", letters[1:2], letters[25:26], words, WORDS))
+[1] ""      "A"     "B"     "Y"     "Z"     "Gjnue" "Xzpob" "GJNUE" "XZPOB"
+> 
+> unitizer:::decap_first(c("", letters[1:2], letters[25:26], words, WORDS))
+[1] ""      "a"     "b"     "y"     "z"     "gjnue" "xzpob" "gJNUE" "xZPOB"
+> 
+> # - "header" -------------------------------------------------------------------
+> 
+> try(unitizer:::header("hello world", letters))
+Error in unitizer:::header("hello world", letters) : 
+  Argument `level` must be 1 length integer-like and in 1:3
+> try(unitizer:::header(letters, 1))
+Error in unitizer:::header(letters, 1) : 
+  Argument `x` must be a one length character vector
+> 
+> # - "word_wrap" ----------------------------------------------------------------
+> 
+> lorem1 <- "Today, with Kiernan on the stand offering confirmation, Howard walked the jury through the enormous amount of data pulled from Ulbricht's computer. Defense lawyers haven't had a chance yet to respond to this evidence—that will likely come tomorrow. The mountain they have to climb looks higher than ever, though. Last week, Ulbricht's lawyer outlined a defense in which Ulbricht walked away from the marketplace he created and was \"lured back.\" But what will explain the dozens of folders of data on this laptop, with data from the upper echelons of Silk Road management—mixed with the most intimate details of Ulbricht's personal life?"
+> lorem2 <- "/Volumes/FIXED/folder1/folder2/folder.2345/folderabac/file.text.batch"
+> lorem3 <- "\"untz.state.test\", \"add.smooth\", \"bitmapType\", \"browser\", \"browserNLdisabled\", \"CBoundsCheck\", \"check.bounds\", \"citation.bibtex.max\", \"continue\", \"contrasts\""
+> range(nchar(head(unitizer:::word_wrap(lorem1, 25L), -1L)))
+[1] 18 25
+> t.rn <- range(nchar(head(unitizer:::word_wrap(lorem1, 25L, 3L), 
++     -1L)))
+> # for some reason can't get test to produce same thing in windows when
+> # running all tests vs. single one at the prompt; the > 20 is a cop-out that
+> # should catch both the expected case (23) and what actually happens when
+> # you run the tests on windows
+> # expect_true(min(t.rn) > 20 && max(t.rn) <= 25)
+> min(t.rn) > 20 && max(t.rn) <= 25
+[1] TRUE
+> 
+> unitizer:::word_wrap(substr(lorem1, 1, 147), 45L, 3L)
+[1] "Today, with Kiernan on the stand offering co-"
+[2] "nfirmation, Howard walked the jury through "  
+[3] "the enormous amount of data pulled from Ulb-" 
+[4] "richt's computer."                            
+> unitizer:::word_wrap(substr(lorem1, 1, 147), 45L, 3L, FALSE)
+[1] "Today, with Kiernan on the stand offering con"
+[2] "firmation, Howard walked the jury through the"
+[3] "enormous amount of data pulled from Ulbricht'"
+[4] "s computer."                                  
+> unitizer:::word_wrap(lorem2, 15L, 3L)
+[1] "/Volumes/FIXED/" "folder1/fol-"    "der2/folder.23-" "45/folderabac/" 
+[5] "file.text.batch"
+> unitizer:::word_wrap(lorem2, 15L, 8L)
+[1] "/Volumes/FIXED/" "folder1/"        "folder2/folder." "2345/fol-"      
+[5] "derabac/file."   "text.batch"     
+> 
+> unitizer:::word_wrap(lorem3, 76L, 8L)
+[1] "\"untz.state.test\", \"add.smooth\", \"bitmapType\", \"browser\", \"browserNLdisab-"
+[2] "led\", \"CBoundsCheck\", \"check.bounds\", \"citation.bibtex.max\", \"continue\", " 
+[3] "\"contrasts\""                                                                      
+> unitizer:::word_wrap("hello sunset \nthere moonrise", width = 12L)
+[1] "hello sunset" "there "       "moonrise"    
+> 
+> x1 <- c("this is supposed to be a particularly long string\nthat allows us to test the behavior of bullets once we start seeing\nsome wrapping kicking in which was a problem once upon a time")
+> 
+> unitizer:::word_wrap(x1, unlist = FALSE, width = 80L)
+[[1]]
+[1] "this is supposed to be a particularly long string"                  
+[2] "that allows us to test the behavior of bullets once we start seeing"
+[3] "some wrapping kicking in which was a problem once upon a time"      
+
+> com <- "# this is supposed to be a relatively long comment that will get re-flowed"
+> old.opt <- options(crayon.enabled = FALSE)
+> unitizer:::word_comment(com, width = 30L)
+[1] "# this is supposed to be a "    "#relatively long comment that "
+[3] "#will get re-flowed"           
+> unitizer:::word_wrap(c("\nhello\nthere", "\nhow"))
+[1] ""      "hello" "there" ""      "how"  
+> # too narrow
+> no.wrap <- "hello I won't be wrapped"
+> unitizer:::word_wrap(no.wrap, width = 3)  # warning
+Warning in unitizer:::word_wrap(no.wrap, width = 3) :
+  Display width too narrow to properly wrap text; setting to 80L
+[1] "hello I won't be wrapped"
+> options(old.opt)
+> 
+> # - "bullets" ------------------------------------------------------------------
+> 
+> x <- c("there was once a time when the fantastic unicorns could fly", 
++     "bugs bunny ate carrots and drank milk while hunting ducks")
+> xx <- unitizer:::UL(x)
+> 
+> as.character(xx, width = 30L)
+[1] "- there was once a time when "  "  the fantastic unicorns could"
+[3] "  fly"                          "- bugs bunny ate carrots and " 
+[5] "  drank milk while hunting "    "  ducks"                       
+> print(xx, width = 80L)
+- there was once a time when the fantastic unicorns could fly
+- bugs bunny ate carrots and drank milk while hunting ducks
+> yy <- unitizer:::OL(x)
+> as.character(yy, width = 30L)
+[1] "1. there was once a time when " "   the fantastic unicorns "    
+[3] "   could fly"                   "2. bugs bunny ate carrots and "
+[5] "   drank milk while hunting "   "   ducks"                      
+> # hopefully always C locale collation in tests?
+> sort(as.character(unitizer:::OL(rep(letters, 2), style = "LETTERS")))
+ [1] " A. a" " B. b" " C. c" " D. d" " E. e" " F. f" " G. g" " H. h" " I. i"
+[10] " J. j" " K. k" " L. l" " M. m" " N. n" " O. o" " P. p" " Q. q" " R. r"
+[19] " S. s" " T. t" " U. u" " V. v" " W. w" " X. x" " Y. y" " Z. z" "AA. a"
+[28] "AB. b" "AC. c" "AD. d" "AE. e" "AF. f" "AG. g" "AH. h" "AI. i" "AJ. j"
+[37] "AK. k" "AL. l" "AM. m" "AN. n" "AO. o" "AP. p" "AQ. q" "AR. r" "AS. s"
+[46] "AT. t" "AU. u" "AV. v" "AW. w" "AX. x" "AY. y" "AZ. z"
+> xl <- as.list(x)
+> y <- unitizer:::UL(c(xl, list(unitizer:::OL(c(xl, list(unitizer:::UL(x))))), 
++     "yowza it is raining toads today!"))
+> as.character(y, width = 30)
+ [1] "- there was once a time when "  "  the fantastic unicorns could"
+ [3] "  fly"                          "- bugs bunny ate carrots and " 
+ [5] "  drank milk while hunting "    "  ducks"                       
+ [7] "  1. there was once a time "    "     when the fantastic "      
+ [9] "     unicorns could fly"        "  2. bugs bunny ate carrots "  
+[11] "     and drank milk while "     "     hunting ducks"            
+[13] "    - there was once a time "   "      when the fantastic "     
+[15] "      unicorns could fly"       "    - bugs bunny ate carrots " 
+[17] "      and drank milk while "    "      hunting ducks"           
+[19] "- yowza it is raining toads "   "  today!"                      
+> try(unitizer:::as.character.bullet(hello, 1:10))
+Error in unitizer:::as.character.bullet(hello, 1:10) : 
+  Argument `width` must be a one length positive numeric.
+> # Extra args to word_wrap
+> try(as.character(unitizer:::OL(c("hello", "there")), unlist = TRUE))
+Error in as.character.bullet(unitizer:::OL(c("hello", "there")), unlist = TRUE) : 
+  You may not specify `unlist` as part of `...` as that argument is used internally
+> as.character(unitizer:::OL("asdfasdfqwerjhdfkasdfasdfasd"), width = 20L)
+[1] "1. asdfasdfqwerjhdf-" "   kasdfasdfasd"     
+> as.character(unitizer:::OL("asdfasdfqwerjhdfkasdfasdfasd"), width = 20L, 
++     hyphens = FALSE)
+[1] "1. asdfasdfqwerjhdfk" "   asdfasdfasd"      
+> 
+> # - "substr_const" -------------------------------------------------------------
+> 
+> unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L)
+[1] "ab  " "abcd" "abc "
+> unitizer:::substr_cons(c("ab", "abcde", "abce"), 4L, justify = "right")
+[1] "  ab" "abcd" " abc"
+> unitizer:::substr_cons(c("NEW", "PASS", "FAIL", "DELETED", "Error"), 4L)
+[1] "NEW " "PASS" "FAIL" "DEL " "Err "
+> 
+> # - "str_reduce_unique" --------------------------------------------------------
+> 
+> str1 <- c("abcdef", "abcdefgh", "abcql")
+> res1 <- c("def", "defgh", "ql")
+> unitizer:::str_reduce_unique(str1)
+[1] "def"   "defgh" "ql"   
+> unitizer:::str_reduce_unique(str1, from = "right")
+[1] "abcdef"   "abcdefgh" "abcql"   
+> str2 <- vapply(strsplit(str1, ""), function(x) paste0(rev(x), 
++     collapse = ""), "")
+> res2 <- vapply(strsplit(res1, ""), function(x) paste0(rev(x), 
++     collapse = ""), "")
+> all.equal(unitizer:::str_reduce_unique(str2, from = "right"), res2)
+[1] TRUE
+> unitizer:::str_reduce_unique("aaa")
+[1] ""
+> identical(unitizer:::str_reduce_unique(rep("aaa", 5L)), rep("", 5L))
+[1] TRUE
+> 
+> # - "strtrunc" -----------------------------------------------------------------
+> 
+> str1 <- c(paste0(letters, collapse = ""), paste0(LETTERS, collapse = ""))
+> unitizer:::strtrunc(str1, 10L)
+[1] "abcdefg..." "ABCDEFG..."
+> unitizer:::strtrunc(str1, 10L, from = "left")
+[1] "...tuvwxyz" "...TUVWXYZ"
+> unitizer:::strtrunc(c("abc", "cab"), 3L)
+[1] "abc" "cab"
+> try(unitizer:::strtrunc(c("abc", "cab"), 2L))
+Error in unitizer:::strtrunc(c("abc", "cab"), 2L) : 
+  `nchar.max` too small, make bigger or make `ctd` shorter.
+> 
+> # - "oneline" ------------------------------------------------------------------
+> 
+> dep <- c("res <- data %>% group_by(ID) %>% summarise(date2 = nth(date, ", 
++     "    2), time2 = nth(time, 2), first_date = first(date), last_date = last(date), ", 
++     "    first_time = first(time), last_time = last(time))")
+> unitizer:::one_line(dep)
+[1] "res <- data %>% group_by(ID) %>% summarise(date2 = nth(date, 2), time2 = nth(time, 2), first_date = first(date), last_date = last(date), first_time = first(time), last_time = last(time))"
+> unitizer:::one_line(dep, 50)
+[1] "res <- data %>% group_by(ID) %>% summarise(date..."
+> 
+> # - "let_comb_fun" -------------------------------------------------------------
+> 
+> (unitizer:::make_let_combn_fun(letters))(12)
+ [1] "a." "b." "c." "d." "e." "f." "g." "h." "i." "j." "k." "l."
+> 
+> # - "cc" -----------------------------------------------------------------------
+> 
+> unitizer:::cc("a", "b")
+[1] "ab"
+> unitizer:::cc(c("a", "b"), "c")
+[1] "abc"
+> unitizer:::cc(c("a", "b"), "c", c = " ")
+[1] "a b c"
+> 
+> # - "screen_out" ---------------------------------------------------------------
+> 
+> string <- "once upon a time in a fairy land very far away lived a green dragon"
+> unitizer:::screen_out(string, max.len = c(3L, 2L), width = 13L)
+once upon a 
+time in a 
+... truncated 4 lines
+> 
+> # - "text_wrap" ----------------------------------------------------------------
+> 
+> try(unitizer:::text_wrap(list(1, 2, 3), 5))
+Error in unitizer:::text_wrap(list(1, 2, 3), 5) : 
+  Arguments `x` and `width` must be character and integer like (all values >= 1) respectively
+> try(unitizer:::text_wrap(letters, 1:3))
+Error in unitizer:::text_wrap(letters, 1:3) : 
+  Argument `x` must be a multiple in length of argument `width`
+> 
+> # - "capture_output" -----------------------------------------------------------
+> 
+> capt <- unitizer:::capture_output({
++     cat("hello")
++     cat("goodbye", file = stderr())
++ })
+> capt
+- Output -----------------------------------------------------------------------
+
+hello
+- Message ----------------------------------------------------------------------
+
+goodbye
+> sum(grepl("Output|Message", capture.output(print(capt))))
+[1] 2
+> 
+> # - "meta_word_cat" ------------------------------------------------------------
+> 
+> unitizer:::meta_word_cat("hello")
+| hello
+
+> capture.output(unitizer:::meta_word_cat("hello", trail.nl = FALSE))
+[1] "| hello"
+> # Newline issues
+> unitizer:::meta_word_cat("hello\n", sep = "")
+| hello
+
+> unitizer:::meta_word_cat("hello", "there")
+| hello
+| there
+
+> unitizer:::meta_word_cat("hello", "there", sep = " ")
+| hello there
+
+> 
+> # - "meta_word_msg" ------------------------------------------------------------
+> 
+> unitizer:::meta_word_msg("hello")
+| hello
+
+> txt <- "hello there how are you this wraps"
+> unitizer:::meta_word_msg(txt, width = 20)
+| hello there how 
+| are you this wraps
+
+> # legacy fun
+> unitizer:::word_msg("hello")
+hello
+> 
+> # - "desc" ---------------------------------------------------------------------
+> 
+> obj1 <- list(a = iris, b = lm(dist ~ speed, cars), 1:10, matrix(letters, 
++     2))
+> desc(obj1, 80)
+[1] "list(a=data.frame[150,5], b=lm[12], int[10], chr mat[2,13])"
+> desc(obj1, 40)
+[1] "list[4]"
+> desc(iris, 80)
+[1] "data.frame[150,5]"
+> desc(iris, 200)
+[1] "data.frame(Sepal.Length=num[150], Sepal.Width=num[150], Petal.Length=num[150], Petal.Width=num[150], Species=fct[150])"
+> desc(list(NULL, 1L))
+[1] "list(NULL, int[1])"
+> desc(NULL)
+[1] "NULL"
+> unitizer:::desc(NULL)
+[1] "NULL"
+> unitizer:::desc(lm(y ~ x, data.frame(y = 1:10, x = runif(10))))
+[1] "lm[12]"
+> unitizer:::desc(new("unitizerItem", call = quote(1 + 1), env = new.env()))
+[1] "unitizerItem"
+> unitizer:::desc(array(1:27, dim = rep(3, 3)))
+[1] "array[3,3,3]"
+> unitizer:::desc(data.frame(a = letters[1:10], b = 1:10, stringsAsFactors = TRUE))
+[1] "data.frame(a=fct[10], b=int[10])"
+> 
+> # - "char_to_eng" --------------------------------------------------------------
+> 
+> unitizer:::char_to_eng(character(), "", "")
+[1] ""
+> unitizer:::char_to_eng(letters[1:4], "", "")
+[1] "a, b, c, and d"
+> unitizer:::char_to_eng(letters[1:2], "", "")
+[1] "a, and b"
+> unitizer:::char_to_eng(letters[1], "", "")
+[1] "a"
+> unitizer:::char_to_eng(letters[1])
+[1] "a was"
+> unitizer:::char_to_eng(letters[1:2])
+[1] "a, and b were"
+> 
+> 
+> proc.time()
+   user  system elapsed 
+   1.12    0.16    2.27 

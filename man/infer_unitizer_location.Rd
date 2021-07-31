@@ -36,8 +36,9 @@ character(1L) an inferred path, or \code{store.id} with a warning if
 }
 \description{
 Used by most \code{unitizer} functions that operate on \code{unitizer}s to
-make it easy to specify the most likely intended \code{unitizer} in a
-package or a directory.
+make it easy in interactive use to specify the most likely intended
+\code{unitizer} in a package or a directory.  For `R CMD check` and similar
+testing should not rely on this functionality.
 }
 \details{
 This is implemented as an S3 generic to allow third parties to define

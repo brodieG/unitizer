@@ -1,0 +1,246 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> lst <- new("unitizerList")
+> 
+> # - "unitizerList basic tests" -------------------------------------------------
+> 
+> length(lst) == 0L
+[1] TRUE
+> is(lst <- unitizer:::append(lst, 5), "unitizerList")
+[1] TRUE
+> length(lst) == 1L
+[1] TRUE
+> is(
++   lst <- unitizer:::append(
++     lst, list("booyah", list(1:3), matrix(1:9, nrow = 3))
++   ), "unitizerList"
++ )
+[1] TRUE
+> length(lst) == 4L
+[1] TRUE
+> is(lst[3L], "unitizerList")
+[1] TRUE
+> is(lst[[3L]], "list")
+[1] TRUE
+> lst <- unitizer:::append(lst, list(data.frame(a = letters[1:3])), 2L)
+> is(lst[[3L]], "data.frame")
+[1] TRUE
+> length(lst[1:4]) == 4L
+[1] TRUE
+> lst[[4L]] <- "boo"
+> is(lst[[4L]], "character")
+[1] TRUE
+> lst[4L:5L] <- letters[1:2]
+> 
+> c(lst[[4L]], lst[[5L]])
+[1] "a" "b"
+> lst[[4L]]
+[1] "a"
+> 
+> is(unitizer:::as.list(lst), "list")
+[1] TRUE
+> length(unitizer:::as.list(lst)) == 5L
+[1] TRUE
+> is(unitizer:::as.expression(lst), "expression")
+[1] TRUE
+> 
+> try(unitizer:::getItem(lst))  # error
+Error in .local(x, ...) : 
+  Internal pointer for `x` not initialized; initialize with `nextItem`
+> lst <- unitizer:::nextItem(lst)
+> unitizer:::getItem(lst)
+[1] 5
+> lst <- unitizer:::nextItem(lst)
+> unitizer:::getItem(lst)
+[1] "booyah"
+> lst <- unitizer:::prevItem(lst)
+> unitizer:::getItem(lst)
+[1] 5
+> lst <<- lst  # leftover from testthat testing?
+> 
+> # - "unitizerList pointer seeking" ---------------------------------------------
+> 
+> for (i in 1:10) lst <- unitizer:::nextItem(lst)
+> try(unitizer:::getItem(lst))
+Error in .local(x, ...) : Internal pointer for `x` is corrupted
+> unitizer:::done(lst)
+[1] TRUE
+> is(lst <- unitizer:::reset(lst, "back"), "unitizerList")
+[1] TRUE
+> try(unitizer:::reset(lst, letters))
+Error in .local(x, ...) : 
+  Argument `position` must be `NULL`, or "front" or "back"
+> try(unitizer:::reset(lst, NA_character_))
+Error in .local(x, ...) : 
+  Argument `position` must be `NULL`, or "front" or "back"
+> try(unitizer:::getItem(lst))
+Error in .local(x, ...) : 
+  Internal pointer for `x` not initialized; initialize with `prevItem`
+> lst <- unitizer:::prevItem(lst)
+> unitizer:::getItem(lst) == "b"
+[1] TRUE
+> while (!unitizer:::done(lst)) {
++     item <- unitizer:::getItem(lst)
++     lst <- unitizer:::prevItem(lst)
++ }
+> item == 5L
+[1] TRUE
+> try(unitizer:::getItem(lst))
+Error in .local(x, ...) : 
+  Internal pointer for `x` outside of range for `x`; test for this condition with `done`, or reset with `reset`
+> withCallingHandlers(
++   lst[[4]] <- "new value",
++   warning = function() stop("A Warning!")
++ )
+> 
+> for (i in 1:5) lst <- unitizer:::nextItem(lst)
+> lst@.pointer
+[1] 5
+> 
+> # - "unitizerList value replacement and pointer adjustments" -------------------
+> 
+> lst[[4]] <- NULL
+> lst@.pointer
+[1] 4
+> unitizer:::reset(lst, "back")
+An object of class "unitizerList"
+Slot ".items":
+[[1]]
+[1] 5
+
+[[2]]
+[1] "booyah"
+
+[[3]]
+  a
+1 a
+2 b
+3 c
+
+[[4]]
+[1] "b"
+
+
+Slot ".pointer":
+[1] 5
+
+Slot ".seek.fwd":
+[1] FALSE
+
+> lst.len <- length(lst)
+> identical(lst@.pointer, lst.len)
+[1] TRUE
+> lst[2:3] <- letters[1:2]
+> identical(lst@.pointer, lst.len)
+[1] TRUE
+> lst[2:3] <- list(NULL, NULL)
+> identical(lst@.pointer, lst.len)
+[1] TRUE
+> lst[2:3] <- NULL
+> identical(lst@.pointer, lst.len - 2L)
+[1] TRUE
+> 
+> lst <- unitizer:::reset(lst, "front")
+> for (i in 1:2) lst <- unitizer:::nextItem(lst)
+> curr.point <- lst@.pointer
+> lst[[3]] <- NULL
+> identical(curr.point, lst@.pointer)
+[1] TRUE
+> lst <- unitizer:::append(lst, list(5, 6, "blaskdjf"), 1L)
+> identical(curr.point + 3L, lst@.pointer)
+[1] TRUE
+> lst <- unitizer:::append(lst, list(matrix(1:9, nrow = 3)), 5L)
+> identical(curr.point + 3L, lst@.pointer)
+[1] TRUE
+> 
+> # - "Append Factors Works" -----------------------------------------------------
+> 
+> vec <- factor(letters[1:3], levels = letters)
+> vec2 <- factor(letters[10:15], levels = letters)
+> 
+> all.equal(structure(c(1L, 2L, 3L, 10L, 11L, 12L, 13L, 14L,
++   15L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h",
++   "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
++   "u", "v", "w", "x", "y", "z"), class = "factor"), append(vec,
++   vec2))
+[1] TRUE
+> all.equal(structure(c(1L, 2L, 10L, 11L, 12L, 13L, 14L, 15L,
++   3L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h", "i",
++   "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
++   "v", "w", "x", "y", "z"), class = "factor"), append(vec,
++   vec2, 2))
+[1] TRUE
+> 
+> all.equal(structure(c(10L, 11L, 12L, 13L, 1L, 2L, 3L, 14L,
++   15L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h",
++   "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
++   "u", "v", "w", "x", "y", "z"), class = "factor"), append(vec2,
++   vec, 4))
+[1] TRUE
+> try(append(vec2, vec, 20))
+Error in append(vec2, vec, 20) : 
+  Argument after must be integer like between 0 and length(x)
+> try(append(vec2, vec, -5))
+Error in append(vec2, vec, -5) : 
+  Argument after must be integer like between 0 and length(x)
+> 
+> # - "List coersion works even inside apply functions" --------------------------
+> 
+> ulist <- new("unitizerList", .items = list("a", 1, 2, "b"))
+> identical(lapply(ulist, identity), ulist@.items)
+[1] TRUE
+> 
+> # - "Errors" -------------------------------------------------------------------
+> 
+> setClass("uhtsdfoqiuerhzb", slots = c(a = "integer"))
+> dummy <- new("uhtsdfoqiuerhzb", a = 1L)
+> lst2 <- new("unitizerList", .items = list(1, 2, 3))
+> try(append(lst2, 5, after = -1))
+Error in append(lst2, 5, after = -1) : 
+  Argument `after` must be a length 1 numeric greater than zero
+> try(append(lst2, dummy))
+Error in as.list.default(values) : 
+  no method for coercing this S4 class to a vector
+Error in append(lst2, dummy) : 
+  Unable to coerce argument `values` to appropriate type; see previous errors for details.
+> 
+> lst3 <- new("unitizerList", .items = expression(1, 2, 3))
+> try(append(lst3, dummy))
+Error in as.expression.default(values) : 
+  no method for coercing this S4 class to a vector
+Error in append(lst3, dummy) : 
+  Unable to coerce argument `values` to appropriate type; see previous errors for details.
+> 
+> # - "Set Names" ----------------------------------------------------------------
+> 
+> nlst <- new("unitizerList", .items = list(a = "a", b = "b"))
+> names(nlst) <- toupper(names(nlst))
+> as.list(nlst)
+$A
+[1] "a"
+
+$B
+[1] "b"
+
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  0.747   0.099   0.838 

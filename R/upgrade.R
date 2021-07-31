@@ -98,7 +98,8 @@ upgrade_internal <- function(object) {
   # Make sure ref item ids are reasonable
 
   if(ver < "0.5.3") {
-    for(i in seq(len=length(object@items.ref))) object@items.ref[[i]]@id <- i
+    for(i in seq(length.out=length(object@items.ref)))
+      object@items.ref[[i]]@id <- i
   }
   # - 0.9.0 --------------------------------------------------------------------
 
@@ -196,12 +197,20 @@ upgrade_internal <- function(object) {
     object <- addSlot(object, "bookmark", NULL)
     object <- removeSlots(object, "jump.to.test")
   }
+  # - 1.4.15 --------------------------------------------------------------------
+
+  if(ver < "1.4.15") {
+    object <- addSlot(object, "upgraded.from", "")
+    object <- addSlot(object, "best.name", "")
+    object <- addSlot(object, "show.progress", PROGRESS.MAX)
+  }
   # - Keep at End---------------------------------------------------------------
 
   # Always make sure that any added upgrades require a version bump as we always
   # set version to current version, not the last version that required upgrades
 
   object@version <- as.character(packageVersion("unitizer"))
+  object@upgraded.from <- as.character(ver)
 
   # - Done ---------------------------------------------------------------------
 
@@ -268,5 +277,40 @@ removeSlots <- function(object, slots.to.remove) {
     slots[!slots %in% slots.to.remove], slot, object=object, simplify=FALSE
   )
   do.call("new", c(class(object), slot.vals))
+}
+# Intended for use only within unitize_core loop
+
+upgrade_warn <- function(unitizers, interactive.mode, global) {
+  review <- to_review(summary(unitizers, silent=TRUE))
+  upgraded <- vapply(as.list(unitizers), slot, '', 'upgraded.from')
+  up.rev <- which(review & nzchar(upgraded))
+
+  if(length(up.rev)) {
+    many <- length(up.rev) > 1L
+    to.up.ids <- vapply(as.list(unitizers)[up.rev], slot, '', 'best.name')
+    meta_word_cat(
+      paste0(
+        "\nThe following unitizer", if(many) "s", " will be upgrade to ",
+        "version '", as.character(packageVersion('unitizer')), "':\n"
+      ),
+      as.character(UL(paste0(to.up.ids, " (at '", upgraded[up.rev], "'"))),
+      width=getOption("width") - 2L
+    )
+    if(!interactive.mode) invokeRestart("unitizerInteractiveFail")
+    else {
+      meta_word_msg(
+        "unitizer upgrades are IRREVERSIBLE and not backwards compatible. ",
+        "Proceed?"
+      )
+      pick <- unitizer_prompt(
+        "Upgrade unitizer stores?", hist.con=NULL,
+        valid.opts=c(Y="[Y]es", N="[N]o"), global=global,
+        browse.env=  # missing?
+      )
+      if(!identical(pick, 'Y'))
+        invokeRestart("unitizerUserNoUpgrade")
+    }
+  }
+  invisible(NULL)
 }
 

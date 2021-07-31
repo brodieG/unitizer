@@ -1,6 +1,22 @@
 # `unitizer` NEWS
 
-## v1.4.13
+## v1.4.15
+
+* Test suite switched to `aammrtf`, removing suggests dependency to `testthat`.
+* Upgrade process modified so that old `unitizer` that pass tests are not
+  required to be upgraded.
+* `show.progress` parameter added to control chattiness of progress updates.
+* Invalid `unitizers` now prevent review of valid `unitizers`.  Fix the invalid
+  `unitizers`, or remove them from the review list (e.g. by moving them out of
+  the primary `unitizer` directory).
+* `review` exposes `use.diff` and `show.progress` parameters.
+* [#278](https://github.com/brodieG/unitizer/issues/278): Show more context when
+  returning to a test via browser or on re-evaluation.
+* [#277](https://github.com/brodieG/unitizer/issues/277): Handle CTRL+C
+  interrupts so they do not kill the `unitizer` session (h/t
+  [@milesmcbain](https://milesmcbain.micro.blog/2021/06/10/debugging-cantrip-from.html)).
+
+## v1.4.13-14
 
 * `unitizer` no longer directly accesses `.Traceback` to set traces in
   interactive sessions.  Instead, `traceback()` and `.traceback()` are masked

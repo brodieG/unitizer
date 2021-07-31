@@ -16,10 +16,15 @@ unitize(
   interactive.mode = interactive(),
   force.update = FALSE,
   auto.accept = character(0L),
-  use.diff = getOption("unitizer.use.diff")
+  use.diff = getOption("unitizer.use.diff"),
+  show.progress = getOption("unitizer.show.progress", TRUE)
 )
 
-review(store.id = NULL)
+review(
+  store.id = NULL,
+  use.diff = getOption("unitizer.use.diff"),
+  show.progress = getOption("unitizer.show.progress", TRUE)
+)
 
 unitize_dir(
   test.dir = NULL,
@@ -32,7 +37,8 @@ unitize_dir(
   interactive.mode = interactive(),
   force.update = FALSE,
   auto.accept = character(0L),
-  use.diff = getOption("unitizer.use.diff")
+  use.diff = getOption("unitizer.use.diff"),
+  show.progress = getOption("unitizer.show.progress", TRUE)
 )
 }
 \arguments{
@@ -109,6 +115,10 @@ off (default)}
 
 \item{use.diff}{TRUE or FALSE, whether to use diffs when there is an error,
 if FALSE uses \code{\link{all.equal}} instead.}
+
+\item{show.progress}{TRUE or FALSE or integer(1L) in 0:3, whether to show
+progress updates for each part of the process (TRUE or > 0), for each file
+processed (TRUE or > 1), and for each test processed (TRUE or > 2).}
 
 \item{test.dir}{the directory to run the tests on; if NULL will use the
 \dQuote{tests/unitizer} package folder if it exists, or \dQuote{.} if it

@@ -1,0 +1,398 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> source(file.path("_helper", "pkgs.R"))
+Install Packages
+Setup Demos
+> source(file.path("aammrtf", "mock.R"))
+> 
+> old.state <- tracingState(TRUE)
+> 
+> # - "trace_at_end" -------------------------------------------------------------
+> 
+> if (is(unitizer:::trace_test_fun, "functionWithTrace"))
++   untrace("trace_test_fun", where = asNamespace("unitizer"))
+> unitizer:::trace_at_end("trace_test_fun", quote(if (!inherits(.res,
++     "try-error")) cat(sprintf("x: %d\n", .res$value))), print = FALSE,
++     where = asNamespace("unitizer"))
+Tracing function "trace_test_fun" in package "namespace:unitizer"
+> coi(unitizer:::trace_test_fun())
+> tracingState(FALSE)
+[1] TRUE
+> identical(capture.output(unitizer:::trace_test_fun()), character())
+[1] TRUE
+> tracingState(TRUE)
+[1] FALSE
+> 
+> err <- try(unitizer:::trace_test_fun(stop("hello")), silent = TRUE)
+> cond <- attr(err, "condition")
+> conditionMessage(cond)
+[1] "hello"
+> conditionCall(cond)
+unitizer:::trace_test_fun(stop("hello"))
+> # return/missing etc. corner cases
+> f <- function(x, y, z = 5) {
++     if (missing(x)) {
++         return(TRUE)
++     }
++     else if (z > 5) {
++         stop("OMG, z > 5")
++     }
++     else if (identical(substitute(y), "hey")) {
++         "substitute!"
++     }
++     else FALSE
++ }
+> unitizer:::trace_at_end("f", quote(cat("hello\n")), FALSE, environment())
+> res <- f()
+hello
+> res
+[1] TRUE
+> res2 <- f(1)
+hello
+> res2  # FALSE
+[1] FALSE
+> err <- try(f(1, z = 6), silent = TRUE)
+hello
+> is(err, "try-error")
+[1] TRUE
+> attr(err, "condition")
+<simpleError in f(1, z = 6): OMG, z > 5>
+> res3 <- f(1, y = "hey")
+hello
+> res3
+[1] "substitute!"
+> 
+> # - "Parent Env Stays on Top" --------------------------------------------------
+> 
+> try(detach("package:unitizerdummypkg1", unload = TRUE), silent = TRUE)
+> while ("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
+> unitizer.dummy.list <- list(z = 23, x = 1, y = "hello")
+> my.env <- new.env()
+> state.set <- c(search.path = 2L)
+> # make sure to unset this at end
+> untz.glob <- unitizer:::unitizerGlobal$new(par.env = my.env,
++     enable.which = state.set, set.global = TRUE)
+> untz.glob$shimFuns()
+[1] TRUE
+> sp <- search()
+> curr2 <- sp[[2L]]
+> 
+> 
+> identical(environmentName(parent.env(my.env)), curr2)
+[1] TRUE
+> library("unitizerdummypkg1", lib.loc = TMP.LIB)
+> identical(environmentName(parent.env(my.env)), "package:unitizerdummypkg1")
+[1] TRUE
+> attach(unitizer.dummy.list)
+> identical(environmentName(parent.env(my.env)), "unitizer.dummy.list")
+[1] TRUE
+> detach("unitizer.dummy.list")
+> identical(environmentName(parent.env(my.env)), "package:unitizerdummypkg1")
+[1] TRUE
+> detach("package:unitizerdummypkg1", unload = TRUE)
+> identical(environmentName(parent.env(my.env)), curr2)
+[1] TRUE
+> untz.glob$checkShims()
+[1] TRUE
+> 
+> # - "Parent env tracking with search path manip" -------------------------------
+> 
+> untz.glob$state()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 1
+
+Slot "options":
+[1] 0
+
+Slot "working.directory":
+[1] 0
+
+Slot "random.seed":
+[1] 0
+
+Slot "namespaces":
+[1] 0
+
+> keep.more <- c(getOption("unitizer.search.path.keep.base"))
+> unitizer:::search_path_trim(keep.more, global = untz.glob)
+> untz.glob$state()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 1
+
+Slot "options":
+[1] 0
+
+Slot "working.directory":
+[1] 0
+
+Slot "random.seed":
+[1] 0
+
+Slot "namespaces":
+[1] 0
+
+> identical(environmentName(parent.env(my.env)), search()[[2L]])
+[1] TRUE
+> untz.glob$resetFull()
+An object of class "unitizerGlobalIndices"
+Slot "search.path":
+[1] 1
+
+Slot "options":
+[1] 1
+
+Slot "working.directory":
+[1] 1
+
+Slot "random.seed":
+[1] 1
+
+Slot "namespaces":
+[1] 1
+
+> identical(environmentName(parent.env(my.env)), curr2)
+[1] TRUE
+> 
+> # - "Disable Unshims, etc." ----------------------------------------------------
+> 
+> untz.glob$unshimFuns()
+[1] TRUE
+> !any(vapply(list(library, detach, attach), inherits, logical(1L),
++     "functionWithTrace"))
+[1] TRUE
+> untz.glob$release()
+> 
+> # - "Checks, errors, etc." -----------------------------------------------------
+> 
+> # make sure to unset this at end
+> untz.glob <- unitizer:::unitizerGlobal$new(par.env = my.env,
++     enable.which = state.set, set.global = TRUE)
+> tracingState(FALSE)
+[1] TRUE
+> untz.glob$shimFuns() # warning
+Warning in untz.glob$shimFuns() :
+  Unable to shim required functions to run with `par.env=NULL` because tracing state is FALSE. Setting `par.env=.GlobalEnv`.
+[1] FALSE
+> parent.env(my.env)
+<environment: R_GlobalEnv>
+> tracingState(TRUE)
+[1] FALSE
+> untz.glob$release()
+> untz.glob <- unitizer:::unitizerGlobal$new(par.env = my.env,
++     set.global = TRUE)
+> trace("library", quote(cat("I am traced\n")), where = .BaseNamespaceEnv)
+Tracing function "library" in package "namespace:base"
+[1] "library"
+> lib.trace <- library
+> untz.glob$shimFuns()  # warning
+Warning in untz.glob$shimFuns() :
+  Unable to shim required functions to run with `par.env=NULL` because they are already traced. Setting `par.env=.GlobalEnv`.
+[1] FALSE
+> parent.env(my.env)
+<environment: R_GlobalEnv>
+> inherits(attach, "functionWithTrace")  # FALSE
+[1] FALSE
+> inherits(detach, "functionWithTrace")  # FALSE
+[1] FALSE
+> inherits(library, "functionWithTrace")
+[1] TRUE
+> identical(lib.trace, library)
+[1] TRUE
+> untrace("library", where = .BaseNamespaceEnv)
+Untracing function "library" in package "namespace:base"
+> untz.glob$release()
+> untz.glob <- unitizer:::unitizerGlobal$new(par.env = my.env,
++     set.global = TRUE)
+> untz.glob$shimFuns()
+[1] TRUE
+> trace("attach", quote(cat("I am traced\n")), where = .BaseNamespaceEnv)
+Tracing function "attach" in package "namespace:base"
+[1] "attach"
+> attach.trace <- attach
+> untz.glob$checkShims()   # warning
+Warning in untz.glob$checkShims() :
+  Traced functions unexpectedly changed, disabling clean parent env
+Warning in unshimFuns() :
+  `attach` was not untraced because they were modified by something other than unitizer.
+`FALSE`, `TRUE`, and `FALSE` were not untraced for unknown reasons; please report to maintainer.
+
+you should consider manually untracing the function, or restarting your R session to restore function to original value.
+[1] FALSE
+> parent.env(my.env)
+<environment: R_GlobalEnv>
+> inherits(detach, "functionWithTrace")    # FALSE
+[1] FALSE
+> inherits(library, "functionWithTrace")   # FALSE
+[1] FALSE
+> inherits(attach, "functionWithTrace")
+[1] TRUE
+> identical(attach.trace, attach)
+[1] TRUE
+> untrace("attach", where = .BaseNamespaceEnv)
+Untracing function "attach" in package "namespace:base"
+> untz.glob$release()
+> untz.glob <- unitizer:::unitizerGlobal$new(par.env = my.env,
++     set.global = TRUE)
+> untz.glob$shimFuns()
+[1] TRUE
+> tracingState(FALSE)
+[1] TRUE
+> untz.glob$checkShims()   # warning
+Warning in untz.glob$checkShims() :
+  Tracing state off, so disabling clean parent env
+[1] FALSE
+> parent.env(my.env)
+<environment: R_GlobalEnv>
+> tracingState(TRUE)
+[1] FALSE
+> inherits(detach, "functionWithTrace")    # FALSE
+[1] FALSE
+> inherits(library, "functionWithTrace")   # FALSE
+[1] FALSE
+> inherits(attach, "functionWithTrace")    # FALSE
+[1] FALSE
+> # try tracing some stuff that shouldn't be
+> untz.glob$shimFuns("baljevzxhjLsdc")     # Warning
+Warning in untz.glob$shimFuns("baljevzxhjLsdc") :
+  Unable to shim required functions to run with `par.env=NULL` because some cannot be found. Setting `par.env=.GlobalEnv`.
+[1] FALSE
+> # test unexpected message or behavior from `trace_at_end`
+> try(untz.glob$shimFun("sum"))
+Error in untz.glob$shimFun("sum") : Internal Error: missing shim data
+> 
+> mock(unitizer:::trace_at_end, quote(stop("trace_at_end fail")))
+> any(
++   grepl(
++     "trace_at_end fail",
++     capture.output(
++       trace.fail <- untz.glob$shimFun("library"), type = "message"
++     ),
++     fixed = TRUE
++   )
++ )
+[1] TRUE
+> unmock(unitizer:::trace_at_end)
+> 
+> trace.fail   # FALSE
+[1] FALSE
+> mock(unitizer:::trace_at_end, quote(message("random message")))
+> untz.glob$shimFun("library")
+random message
+Warning in untz.glob$shimFun("library") :
+  Function `library` was not traced even though tracing attempt did not produce errors.
+[1] FALSE
+> unmock(unitizer:::trace_at_end)
+> 
+> mock(unitizer:::trace_at_end, quote(TRUE))
+> dont.trace <- untz.glob$shimFun("library") # Warning "not traced"
+Warning in untz.glob$shimFun("library") :
+  Function `library` was not traced even though tracing attempt did not produce errors.
+> unmock(unitizer:::trace_at_end)
+> 
+> dont.trace        # FALSE
+[1] FALSE
+> untz.glob$release()
+> # untrace condition
+> untz.glob <- unitizer:::unitizerGlobal$new(par.env = my.env, set.global = TRUE)
+> untz.glob$shimFuns()
+[1] TRUE
+> 
+> mock(
++   unitizer:::untrace_utz,
++   quote({
++     message("untrace dummy")
++     base::untrace(what = what, signature = signature, where = where)
++   })
++ )
+> untz.glob$unshimFuns()  # message untrace dummy
+untrace dummy
+untrace dummy
+untrace dummy
+[1] TRUE
+> unmock(unitizer:::untrace_utz)
+> untz.glob$release()
+> 
+> try(detach("package:unitizerdummypkg1", unload = TRUE), silent = TRUE)
+> 
+> while ("unitizer.dummy.list" %in% search()) try(detach("unitizer.dummy.list"))
+> 
+> # - "find_returns" -------------------------------------------------------------
+> 
+> fun <- function() {
++     if (TRUE)
++         return(1)
++     else {
++         {
++             2 + 2
++             identity(c(1, 2, return(3), {
++                 list(1, 2, 5)
++                 return(return(4))
++             }))
++             return(5)
++         }
++         return(6)
++     }
++     if (TRUE)
++         return(7)
++     else return(8)
++     return(9)
++     return(10)
++ }
+> ret.loc <- unitizer:::find_returns(fun)
+> ret.loc
+[[1]]
+[1] 2 3
+
+[[2]]
+[1] 2 4 2 3 2 4
+
+[[3]]
+[1] 2 4 2 3 2 5 3
+
+[[4]]
+[1] 2 4 2 4
+
+[[5]]
+[1] 2 4 3
+
+[[6]]
+[1] 3 3
+
+[[7]]
+[1] 3 4
+
+[[8]]
+[1] 4
+
+[[9]]
+[1] 5
+
+> 
+> # Validate visually that this worked
+> 
+> all(vapply(unitizer:::get_returns(fun, ret.loc), function(x) x[[1L]] ==
++     quote(return), logical(1L)))
+[1] TRUE
+> 
+> 
+> proc.time()
+   user  system elapsed 
+   5.36    1.49    8.08 

@@ -13,6 +13,8 @@ testthat_translate_file(
   keep.testthat.call = TRUE,
   prompt = "always",
   interactive.mode = interactive(),
+  use.sects = TRUE,
+  unitize = TRUE,
   ...
 )
 
@@ -24,6 +26,8 @@ testthat_translate_dir(
   keep.testthat.call = TRUE,
   force = FALSE,
   interactive.mode = interactive(),
+  use.sects = TRUE,
+  unitize = TRUE,
   ...
 )
 
@@ -61,6 +65,13 @@ and \code{unitize_dir} are always called in non-interactive mode by these
 functions, this parameter only controls prompts generated directly by these
 functions.}
 
+\item{use.sects}{TRUE (default) or FALSE whether to translate
+\code{test_that} sections to \code{unitizer_sect} or simply to turn them
+into comment banners.}
+
+\item{unitize}{TRUE (default) or FALSE whether to run \code{unitize} after
+the files are translated.}
+
 \item{...}{params to pass on to \code{testthat_translate_name}}
 
 \item{dir.name}{a path to the \code{testthat} directory to convert}
@@ -96,22 +107,6 @@ a file path or a character vector (see \code{target.dir})
 Converts a \bold{copy} of an existing \code{testthat} test file to a
 \code{unitizer} test file and test store, or a directory of such files to
 a corresponding \code{unitizer} directory.  See examples.
-}
-\note{
-In order for the conversion to succeed \code{testthat} must be
-installed on your system.  We do not rely on \code{NAMESPACE} imports to
-avoid an import dependency on \code{testthat} that is only required for these
-ancillary functions, especially since none of the \code{testthat} functions
-are called.  We use the functions as the \code{definition} argument of
-\code{match.call} to find the \code{object} argument.
-
-Translation of \code{testthat} is not strictly necessary; you can just
-copy them to a new location and \code{unitize} them.  \code{unitizer} will
-just capture the results of the \code{expect_*} functions and will alert
-you if those change.  You can then just review the tests that change.
-While this may seem pointless, one benefit is that you are dropped into
-the environment of the test that failed, so you can inspect variables, etc.
-without further ado.
 }
 \section{Disclaimers}{
 
@@ -161,21 +156,20 @@ work properly.
 \section{How the Conversion Works}{
 
 
-We start by identifying calls to exported \code{testthat} functions
-that have an \code{object} argument.  Generally speaking this includes
-functions of the form \code{expect_*} (e.g. \code{expect_equal}).  We then
-extract the \code{object} parameter and replace the original \code{expect_*}
-statement with just the \code{object} parameter.  For example
-\preformatted{expect_equal(my_fun(25), 1:10)}
-becomes
-\preformatted{my_fun(25)}
+For a subset of the \code{expect_*} functions we extract the \code{object}
+parameter and discard the rest of the expectation.  For example
+\preformatted{expect_equal(my_fun(25), 1:10)} becomes
+\preformatted{my_fun(25)}.  The idea is that on unitizing the expression the
+result will be output to screen and can be reviewed and accepted.
 Not all \code{expect_*} functions are substituted.  For example,
 \code{expect_is} and \code{expect_that} are left unchanged because the tests
 for those functions do not or might not actually test the values of
-\code{object}.  For example, \code{expect_is} tests the \bold{class} of
-\code{object}.  It is perfectly fine to \code{unitize} an \code{expect_*}
-call unsubstituted.  \code{unitizer} captures conditions, values, etc., so if
-an \code{expect_*} test starts failing, it will be detected.
+\code{object}.  \code{expect_gt} and similar are also left unchanged as that
+would require more work than simply extracting the \code{object} parameter.
+
+It is perfectly fine to \code{unitize} an \code{expect_*} call unsubstituted.
+\code{unitizer} captures conditions, values, etc., so if an \code{expect_*}
+test starts failing, it will be detected.
 
 \code{unitizer} will then evaluate and store the results of such expressions.
 Since in theory we just checked our \code{testthat} tests were working,
@@ -227,6 +221,14 @@ See \code{\link{unitizerState}} for details on how to modify state tracking.
 If your tests were translated with the \code{state} parameter changed from
 its default value, you will have to use the same value for that parameter in
 future \code{unitize} or \code{unitize_dir} runs.
+}
+
+\section{Alternate Use Cases}{
+
+
+If you wish to process \code{testthat} files for use with the standard R
+\dQuote{.Rout} / \dQuote{.Rout.save process} you can set the \code{unitize}
+and \code{use.sects} parameters to FALSE.
 }
 
 \examples{

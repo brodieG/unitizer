@@ -1,0 +1,48 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> # - "Construction works" -------------------------------------------------------
+> 
+> # invalid slot
+> try(new("unitizerChanges", removed = 1:3))
+Error in validObject(.Object) : 
+  invalid class "unitizerChanges" object: slot `@`removed must be of length 2
+> # invalid/ got character
+> try(new("unitizerChanges", failed = letters[1:2]))
+Error in validObject(.Object) : 
+  invalid class "unitizerChanges" object: invalid object for slot "failed" in class "unitizerChanges": got class "character", should be or extend class "integer"
+> 
+> # - "Output as expected" -------------------------------------------------------
+> 
+> my.changes <- new("unitizerChanges", failed = c(1L, 10L), new = c(1L, 
++     5L), removed = c(2L, 4L), corrupted = c(3L, 8L))
+> show(my.changes)
+- Replacing 1 out of 10 failed tests
+- Adding 1 out of 5 new tests
+- Removing 2 out of 4 removed tests
+- Replacing 3 out of 8 tests with errors
+> 
+> # - "Length Works" -------------------------------------------------------------
+> 
+> length(my.changes) # 7
+[1] 7
+> 
+> proc.time()
+   user  system elapsed 
+  0.775   0.120   0.991 

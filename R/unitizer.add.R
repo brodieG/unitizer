@@ -132,7 +132,9 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]
       # record name for attempting to match deleted tests to section
       item@section.name <- e1@sections[[item@section.id]]@title
-      over_print(deparse(item@call)[[1L]], append=TRUE)
+      if(e1@show.progress > 2L)
+        over_print(deparse(item@call)[[1L]], append=TRUE)
+
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
       # ignored items share environment with subsequent items
@@ -167,7 +169,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     } }
     # Finalize
 
-    over_print("")
+    if(e1@show.progress > 2L) over_print("")
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
     on.exit()
     close_and_clear(e1@global$cons)

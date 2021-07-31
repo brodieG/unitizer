@@ -48,9 +48,6 @@ NULL
 #' are used to implement a version of \code{\link{readline}} that can be
 #' automated for testing.
 #'
-#' \code{interactive_mode} returns interactive status, accounting for whether
-#' we are in faux-interactive mode as set by \code{read_line_set_vals}
-#'
 #' @keywords internal
 #' @seealso browse_unitizer_items
 #' @param text the prompt text to display
@@ -108,13 +105,6 @@ unitizer_prompt <- function(
   valid.opts, hist.con=NULL, exit.condition=function(exp, env) FALSE,
   global, warn.sticky=FALSE, ...
 ) {
-  if(!interactive_mode())
-    # nocov start
-    stop(
-      "Internal Error: attempting to use interactive unitizer environment in ",
-      "non-interactive session."
-    )
-    # nocov end
   if(!is.null(hist.con) && (!inherits(hist.con, "file") || !isOpen(hist.con)))
     stop("Argument `hist.con` must be an open file connection or NULL")
   if(!is.environment(browse.env)) {
@@ -325,8 +315,10 @@ review_prompt <- function(x, nav.env) {
   # Set last.id to test just before the one we want to review as process will
   # then cause desired test to be reviewed
 
-  x@last.id <- as.integer(nav.id) - 1L
-  x@browsing <- TRUE
+  id <- as.integer(nav.id)
+  offset <- (!x@inspect.all) * find_lead_offset(nav.id, x@mapping)
+  x@last.id <- id - (1L + offset)
+  x@browsing <- id
   x@navigating <- TRUE
   return(x)
 }
@@ -337,8 +329,6 @@ simple_prompt <- function(
   message, values=c("Y", "N"), prompt="unitizer> ", attempts=5L,
   case.sensitive=FALSE
 ) {
-  if(!interactive_mode())
-    stop("This function is only available in interactive mode")
   if(!is.character(message)) stop("Argument `message` must be character")
   if(!is.character(values) || length(values) < 1L || any(is.na(values)))
     stop("Argument `values` must be character with no NAs")
@@ -390,12 +380,18 @@ exit_fun <- function(y, env, valid.vals) {
   }
   return(y[[1L]])
 }
+## Tried to switch to `readLines` based on Lisa Bruine's tip that
+## `readLines(con=stdin(), n=1)` can replace `readline`.  Unfortunately if we do
+## that, at least on OS X, a backspace after any input is typed in will delete
+## the prompt.  Also, no way to test CTRL+C.  So we reverted it.
+
 #' @keywords internal
 #' @rdname unitizer_prompt
 
 read_line <- function(prompt="") {
   stopifnot(is.chr1(prompt))
   if(is.null(.global$prompt.vals)) {
+    # Sadly readLines(con=stdin(), n=1) doesn't quite work.
     readline(prompt)  # nocov can't test this in non-interactive
   } else if(!is.character(.global$prompt.vals)) {
     stop( # nocov start
@@ -423,10 +419,3 @@ read_line_set_vals <- function(vals) {
   stopifnot(is.character(vals) || is.null(vals))
   .global$prompt.vals <- vals
 }
-#' @keywords internal
-#' @rdname unitizer_prompt
-
-interactive_mode <- function() {
-  interactive() || is.character(.global$prompt.vals)
-}
-
