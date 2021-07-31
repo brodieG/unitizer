@@ -15,8 +15,6 @@
 * [#277](https://github.com/brodieG/unitizer/issues/277): Handle CTRL+C
   interrupts so they do not kill the `unitizer` session (h/t
   [@milesmcbain](https://milesmcbain.micro.blog/2021/06/10/debugging-cantrip-from.html)).
-* Switch user input intake to `readLines` over `readline` for testing corner
-  cases (h/t [Lisa Bruine](https://debruine.github.io/posts/interactive-test/)).
 
 ## v1.4.13-14
 

@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -116,7 +114,7 @@ Error in "(})" : <text>:1:2: unexpected '}'
 > 
 > ## Test the new readLines based read_line
 > ## This test will not work in interactive mode, requiring input
-> unitizer:::read_line_set_vals(NULL)
+> unitizer:::read_line_set_vals(c("1 +", "1"))
 > unitizer:::faux_prompt()
 > 1 +
 + 1
@@ -124,7 +122,6 @@ expression(1 + 1)
 > 
 > ## This one embeds a CTRL+C to test interrupt, but we can't test this without
 > ## read_line_setvals
-> 
 > unitizer:::read_line_set_vals(c("1 +", "\x03", "2 + ", "1"))
 > unitizer:::faux_prompt()
 > 1 +
@@ -241,4 +238,4 @@ unitizer> 2L
 > 
 > proc.time()
    user  system elapsed 
-  0.672   0.087   0.749 
+  0.717   0.101   0.819 

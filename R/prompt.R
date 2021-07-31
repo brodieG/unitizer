@@ -380,10 +380,10 @@ exit_fun <- function(y, env, valid.vals) {
   }
   return(y[[1L]])
 }
-## Based on Lisa Bruine's tip that `readLines(con=stdin(), n=1)` can replace
-## `readline`.  For most testing we could now avoid `read_line_setvals`, but it
-## is still needed to test CTRL+C, so we keep it (and also to avoid updating all
-## the existing tests).
+## Tried to switch to `readLines` based on Lisa Bruine's tip that
+## `readLines(con=stdin(), n=1)` can replace `readline`.  Unfortunately if we do
+## that, at least on OS X, a backspace after any input is typed in will delete
+## the prompt.  Also, no way to test CTRL+C.  So we reverted it.
 
 #' @keywords internal
 #' @rdname unitizer_prompt
@@ -391,8 +391,8 @@ exit_fun <- function(y, env, valid.vals) {
 read_line <- function(prompt="") {
   stopifnot(is.chr1(prompt))
   if(is.null(.global$prompt.vals)) {
-    cat(prompt)
-    readLines(con=stdin(), n=1)
+    # Sadly readLines(con=stdin(), n=1) doesn't quite work.
+    readline(prompt)  # nocov can't test this in non-interactive
   } else if(!is.character(.global$prompt.vals)) {
     stop( # nocov start
       "Internal Error: internal object `.global$prompt.vals` has unexpected ",

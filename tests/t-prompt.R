@@ -41,14 +41,11 @@ try(unitizer:::faux_prompt(prompt = "> ", continue = "+ "))
 
 ## Test the new readLines based read_line
 ## This test will not work in interactive mode, requiring input
-unitizer:::read_line_set_vals(NULL)
+unitizer:::read_line_set_vals(c("1 +", "1"))
 unitizer:::faux_prompt()
-1 +
-1
 
 ## This one embeds a CTRL+C to test interrupt, but we can't test this without
 ## read_line_setvals
-
 unitizer:::read_line_set_vals(c("1 +", "\x03", "2 + ", "1"))
 unitizer:::faux_prompt()
 
