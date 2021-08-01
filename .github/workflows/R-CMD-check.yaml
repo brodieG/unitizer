@@ -35,7 +35,9 @@ jobs:
       RSPM: ${{ matrix.config.rspm }}
       # don't treat missing suggested packages as error
       _R_CHECK_FORCE_SUGGESTS_: false
-      _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_: false
+      # trick CMD check into checking subdirs, which then whitelists
+      # non-CRAN packages
+      _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_: true
 
     steps:
       - uses: actions/checkout@v2

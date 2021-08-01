@@ -102,7 +102,7 @@ NULL
 
 > unlink(target.dir, recursive = TRUE)
 > 
-> target.dir.base <- file.path(TMP.DIR, tempfile())
+> target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
 > target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
 > 
 > test.dir <- file.path("_helper", "ref-objs", "translate", "testthat")
@@ -157,4 +157,4 @@ NULL
 > 
 > proc.time()
    user  system elapsed 
-  3.002   0.226   3.423 
+  2.598   0.186   2.887 
