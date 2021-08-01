@@ -7,6 +7,8 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
+  Natural language support but running in an English locale
+
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -210,28 +212,6 @@ Error in validObject(state) :
 +   unitizer:::as.state(unitizer:::unitizerStateRaw(par.env = "stats")),
 +   unitizer:::unitizerStateProcessed(par.env = getNamespace("stats"))
 + )
-[1] TRUE
-> # This fails on winbuilder machines? Not entirely clear why it would given that
-> # the only obvious difference in the dir structure is that the test dirs are
-> # tests_x64, etc., instead of just tests, but the code doesn't care about that.
-> # A bit of a red herring is that the winbuilder artifact dir is not actually
-> # the directory the tests are run in (we know because we ran a pwd() in one of
-> # our tests).  Maybe make this NOT_CRAN?
-> 
-> in.pkg.state <- try(
-+   unitizer:::as.state(
-+     unitizer:::unitizerStateRaw(par.env = in_pkg()), test.files = getwd()
-+   ),
-+   silent=TRUE
-+ )
-> if (inherits(in.pkg.state, "try-error")) {
-+     TRUE   # see comments above
-+ } else {
-+     identical(
-+       in.pkg.state,
-+       unitizer:::unitizerStateProcessed(par.env = getNamespace("unitizer"))
-+     )
-+ }
 [1] TRUE
 > state@options <- 0L
 > state.proc <- unitizer:::as.unitizerStateProcessed(state)
@@ -480,4 +460,4 @@ list()
 > 
 > proc.time()
    user  system elapsed 
-  1.092   0.136   1.456 
+  0.882   0.161   1.669 

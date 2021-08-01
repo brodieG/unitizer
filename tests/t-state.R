@@ -125,27 +125,6 @@ identical(
   unitizer:::as.state(unitizer:::unitizerStateRaw(par.env = "stats")),
   unitizer:::unitizerStateProcessed(par.env = getNamespace("stats"))
 )
-# This fails on winbuilder machines? Not entirely clear why it would given that
-# the only obvious difference in the dir structure is that the test dirs are
-# tests_x64, etc., instead of just tests, but the code doesn't care about that.
-# A bit of a red herring is that the winbuilder artifact dir is not actually
-# the directory the tests are run in (we know because we ran a pwd() in one of
-# our tests).  Maybe make this NOT_CRAN?
-
-in.pkg.state <- try(
-  unitizer:::as.state(
-    unitizer:::unitizerStateRaw(par.env = in_pkg()), test.files = getwd()
-  ),
-  silent=TRUE
-)
-if (inherits(in.pkg.state, "try-error")) {
-    TRUE   # see comments above
-} else {
-    identical(
-      in.pkg.state,
-      unitizer:::unitizerStateProcessed(par.env = getNamespace("unitizer"))
-    )
-}
 state@options <- 0L
 state.proc <- unitizer:::as.unitizerStateProcessed(state)
 state.raw <- unitizer:::as.unitizerStateRaw(state.proc)

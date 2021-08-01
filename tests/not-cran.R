@@ -33,3 +33,19 @@ if (identical(.Platform$OS.type, "unix")) {
       try(capture.output(set_unitizer(ro.dir, toy.stor), type = "message"))
   }
 }
+# - "as.state" -----------------------------------------------------------------
+
+# This fails on winbuilder machines? Not entirely clear why it would given that
+# the only obvious difference in the dir structure is that the test dirs are
+# tests_x64, etc., instead of just tests, but the code doesn't care about that.
+# A bit of a red herring is that the winbuilder artifact dir is not actually
+# the directory the tests are run in (we know because we ran a pwd() in one of
+# our tests).
+
+in.pkg.state <- unitizer:::as.state(
+  unitizer:::unitizerStateRaw(par.env = in_pkg()), test.files = getwd()
+)
+identical(
+  in.pkg.state,
+  unitizer:::unitizerStateProcessed(par.env = getNamespace("unitizer"))
+)
