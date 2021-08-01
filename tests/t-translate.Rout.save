@@ -7,6 +7,8 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
+  Natural language support but running in an English locale
+
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -21,7 +23,7 @@ Type 'q()' to quit R.
 > test.file <- file.path(
 +   "_helper", "ref-objs", "translate", "testthat", "test-translate2.R"
 + )
-> target.dir.base <- file.path(TMP.DIR, tempfile())
+> target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
 > target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
 > 
 > # - "Prompt to create dir" -----------------------------------------------------
@@ -100,7 +102,7 @@ NULL
 
 > unlink(target.dir, recursive = TRUE)
 > 
-> target.dir.base <- file.path(TMP.DIR, tempfile())
+> target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
 > target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
 > 
 > test.dir <- file.path("_helper", "ref-objs", "translate", "testthat")
@@ -155,4 +157,4 @@ NULL
 > 
 > proc.time()
    user  system elapsed 
-  3.423   0.274   5.092 
+  2.598   0.186   2.887 

@@ -134,15 +134,14 @@ Thank you to:
 -   CRAN maintainers, for patiently shepherding packages onto CRAN and
     maintaining the repository, and Uwe Ligges in particular for
     maintaining [Winbuilder](http://win-builder.r-project.org/).
--   [Hadley Wickham](https://github.com/hadley) for
-    [testthat](https://cran.r-project.org/package=testthat) from which
-    we borrow many concepts and use for internal tests, and for his many
-    other packages.
 -   [Gábor Csárdi](https://github.com/gaborcsardi) for
     [crayon](https://cran.r-project.org/package=crayon) through which we
     can add a new dimension to the R experience.
 -   [Jim Hester](https://github.com/jimhester) because
     [covr](https://cran.r-project.org/package=covr) rocks.
+-   [Hadley Wickham](https://github.com/hadley) for
+    [testthat](https://cran.r-project.org/package=testthat) from which
+    we borrow many concepts, and for his many other packages.
 -   [Dirk Eddelbuettel](https://github.com/eddelbuettel) and [Carl
     Boettiger](https://github.com/cboettig) for the
     [rocker](https://github.com/rocker-org/rocker) project, and [Gábor

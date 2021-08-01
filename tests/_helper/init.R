@@ -15,7 +15,6 @@ USE.PKGS <- FALSE
 options(
   useFancyQuotes=FALSE,
   unitizer.tmp.lib.loc=TMP.LIB,
-  unitizer.restarts.ok=TRUE,
   unitizer.state='recommended',
   diffobj.pager='off',
   unitizer.show.progress=FALSE,

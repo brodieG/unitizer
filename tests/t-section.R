@@ -49,6 +49,7 @@ unitizer_sect("hello")  # warn
 # - "Custom Comparison Functions" ----------------------------------------------
 
 # Run expressions with different comparison functions
+set.seed(1)
 expr.1 <- expression(50 + runif(1)/10^10, message("Hello There",
     runif(1)), cat("Hello there", runif(1)), stop("Yo", runif(1)))
 expr.2 <- expression(50 + runif(1)/10^10, message("Hello There",

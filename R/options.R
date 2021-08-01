@@ -150,9 +150,6 @@ NULL
 #'     before quitting; this is to avoid accidentally quitting after running a
 #'     \code{unitizer} with many slow running tests and having to re-run them
 #'     again.
-#'   \item \code{unitizer.restarts.ok} TRUE or FALSE, suppresses warnings when
-#'     running inside a `withRestarts` block, which is normally a warning.
-#'     Needed due to `test_that` adding a `withRestart`
 #' }
 #'
 #' @name unitizer.opts
@@ -322,11 +319,8 @@ options_update <- function(tar.opts) {
   # random seed to use by default, "Wichman-Hill" because default seed is large
   unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
   unitizer.max.env.depth=20000L,
-  unitizer.use.diff=TRUE,
+  unitizer.use.diff=TRUE
   # unitizer.show.progress=TRUE,  # can't be install time if we want interactive()
-  # whether to warn if `unitizer` is run in `withRestarts` context, added b/c
-  # testthat added a restart in 80a81fd
-  unitizer.restarts.ok=FALSE
 )
 
 #' Checks that options meet expectations before anything gets run

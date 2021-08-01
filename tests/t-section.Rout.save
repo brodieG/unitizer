@@ -7,6 +7,8 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
+  Natural language support but running in an English locale
+
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -93,6 +95,7 @@ NULL
 > # - "Custom Comparison Functions" ----------------------------------------------
 > 
 > # Run expressions with different comparison functions
+> set.seed(1)
 > expr.1 <- expression(50 + runif(1)/10^10, message("Hello There",
 +     runif(1)), cat("Hello there", runif(1)), stop("Yo", runif(1)))
 > expr.2 <- expression(50 + runif(1)/10^10, message("Hello There",
@@ -156,4 +159,4 @@ NULL
 > 
 > proc.time()
    user  system elapsed 
-  1.065   0.132   1.231 
+  1.006   0.156   1.467 
