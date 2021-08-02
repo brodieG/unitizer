@@ -1,6 +1,6 @@
+source(file.path("aammrtf", "mock.R"))
 source(file.path("_helper", "init.R"))
 source(file.path("_helper", "pkgs.R"))
-source(file.path("aammrtf", "mock.R"))
 
 old.state <- tracingState(TRUE)
 
