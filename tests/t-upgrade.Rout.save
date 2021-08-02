@@ -1,5 +1,5 @@
 
-R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
@@ -51,6 +51,7 @@ Warning in addSlot(object, "jump.to.test", 0L) :
 +   file.path(tdir, "trivial.unitizer")
 + )
 [1] TRUE
+> odir <- setwd(tdir)
 > unitizer:::read_line_set_vals('N')
 > out <- unitizer:::capture_output(
 +   try(unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE))
@@ -139,6 +140,7 @@ Warning in load_unitizers(store.ids[active], test.files[active], par.frame = uti
 | No changes recorded.
 > 
 > unitizer:::read_line_set_vals(NULL)
+> setwd(odir)
 > unlink(tdir, recursive=TRUE)
 > 
 > # - "Rename" -------------------------------------------------------------------
@@ -179,4 +181,4 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 > 
 > proc.time()
    user  system elapsed 
-  2.204   0.142   2.379 
+  2.157   0.152   2.369 
