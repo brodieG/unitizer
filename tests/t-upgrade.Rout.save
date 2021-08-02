@@ -7,6 +7,8 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
+  Natural language support but running in an English locale
+
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -62,9 +64,9 @@ Warning in addSlot(object, "jump.to.test", 0L) :
 
 
 | 
-| The following unitizer will be upgrade to version '<version>':
+| The following unitizer will be upgraded to version '<version>':
 | 
-| - trivial.unitizer (at '<version>'
+| - trivial.unitizer (at '<version>')
 
 unitizer> N
 
@@ -98,9 +100,9 @@ Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  :
 
 
 | 
-| The following unitizer will be upgrade to version '<version>':
+| The following unitizer will be upgraded to version '<version>':
 | 
-| - trivial.unitizer (at '<version>'
+| - trivial.unitizer (at '<version>')
 
 unitizer> Y
 
@@ -181,4 +183,4 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 > 
 > proc.time()
    user  system elapsed 
-  2.157   0.152   2.369 
+   2.33    0.16    2.58 
