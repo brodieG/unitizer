@@ -290,10 +290,10 @@ upgrade_warn <- function(unitizers, interactive.mode, global) {
     to.up.ids <- vapply(as.list(unitizers)[up.rev], slot, '', 'best.name')
     meta_word_cat(
       paste0(
-        "\nThe following unitizer", if(many) "s", " will be upgrade to ",
+        "\nThe following unitizer", if(many) "s", " will be upgraded to ",
         "version '", as.character(packageVersion('unitizer')), "':\n"
       ),
-      as.character(UL(paste0(to.up.ids, " (at '", upgraded[up.rev], "'"))),
+      as.character(UL(paste0(to.up.ids, " (at '", upgraded[up.rev], "')"))),
       width=getOption("width") - 2L
     )
     if(!interactive.mode) invokeRestart("unitizerInteractiveFail")

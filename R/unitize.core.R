@@ -300,39 +300,25 @@ unitize_core <- function(
       # nocov end
   } }
   if(identical(global$status@working.directory, 2L)) {
-    if(length(unique(dirname(test.files)) == 1L)) {
-      path <- dirname(test.files[[1L]])
-      pat <- sprintf("(.*\\%s).*", file.path(".Rcheck", "tests", ""))
-      test.dir <- if(grepl(pat, path)) {
-        sub(pat, "\\1", path)
-      } else if(
+    # If likely in a test directory don't change directory.  Might be safer to
+    # check for the R_TESTS environment variable.
+    wd <- getwd()
+    test.dir <- if(grepl("-tests$", wd)) {  # tools::testInstalledPackage
+      wd
+    } else if (grepl("tests", wd) && grepl("\\.Rcheck", dirname(wd))) {
+      wd
+    } else if(length(unique(dirname(test.files)) == 1L)) {
+      if(
         length(par.dir <- get_package_dir(test.files[[1L]])) &&
         file_test("-d", file.path(par.dir, "tests"))
       ) {
+        # Use parent package dir test folder
         file.path(par.dir, "tests")
       } else {
         # File doesn't seem to be in package, so set wd to be the same as
         # the file
-
-        path
+        dirname(test.files[[1L]])
       }
-      if(!is.null(test.dir)) {
-        dir.set <- try(setwd(test.dir))
-        if(inherits(dir.set, 'try-error')) {
-          # nocov start there really shouldn't be a way to trigger this warning
-          test.dir.err <-
-            if(!is.chr1(test.dir)) "<not character(1L)>" else test.dir
-          warning(
-            word_wrap(collapse="\n",
-              cc(
-                "Working directory state tracking is in mode 2, but we ",
-                "failed setting director to '", test.dir.err, "' so we are  ",
-                "leaving the working directory unchanged."
-            ) ),
-            immediate.=TRUE
-          )
-          # nocov end
-      } }
     } else {
       # nocov start
       # currently no way to get here since there is no way to specify multiple
@@ -352,7 +338,25 @@ unitize_core <- function(
         "contact maintainer"
       )
       # nocov end
-  } }
+    }
+    if(!is.null(test.dir)) {
+      dir.set <- try(setwd(test.dir))
+      if(inherits(dir.set, 'try-error')) {
+        # nocov start there really shouldn't be a way to trigger this warning
+        test.dir.err <-
+          if(!is.chr1(test.dir)) "<not character(1L)>" else test.dir
+        warning(
+          word_wrap(collapse="\n",
+            cc(
+              "Working directory state tracking is in mode 2, but we ",
+              "failed setting director to '", test.dir.err, "' so we are  ",
+              "leaving the working directory unchanged."
+          ) ),
+          immediate.=TRUE
+        )
+        # nocov end
+    } }
+  }
   # - Parse / Load -------------------------------------------------------------
 
   # Handle pre-load data
