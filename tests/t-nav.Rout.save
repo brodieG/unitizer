@@ -1,0 +1,248 @@
+
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> nav <- file.path("_helper", "unitizers", "nav.R")
+> 
+> # Simple navigation tests that don't require complex unitizers
+> 
+> # - "Re-run bookmark" -----=----------------------------------------------------
+> 
+> # Relates to #278.  Tests both Review and Browse
+> 
+> unitizer:::read_line_set_vals(
++   c("R", "Y", "B", "7", "R", "Y", "B", "9", "R", "Y", "Q")
++ )
+> unitize(nav, interactive.mode=TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: _helper/unitizers/nav.R                                        |
++------------------------------------------------------------------------------+
+
+    Pass Fail  New
+ A     -    -    2
+ B     -    -    2
+..................
+       -    -    4
+
+= A ============================================================================
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> a <- 42
+> a + 1
+[1] 43
+
+unitizer> R
+
+| Toggling re-run mode ON for this unitizer
+
+= Finalize Unitizer ============================================================
+
+| You have 4 unreviewed tests; press `B` to browse tests, `U` to go to first 
+| unreviewed test.
+
+| You made no changes to the unitizer so there is no need to update it.  While 
+| unnecessary, you can force an update by typing O at the prompt.
+
+| Re-run unitizer ([Y]es, [P]rev, [B]rowse, [U]nreviewed, [R]erun, f[O]rce)?
+
+unitizer> Y
+
+| unitizer unchanged.
+
++------------------------------------------------------------------------------+
+| unitizer for: _helper/unitizers/nav.R                                        |
++------------------------------------------------------------------------------+
+
+    Pass Fail  New
+ A     -    -    2
+ B     -    -    2
+..................
+       -    -    4
+
+= A ============================================================================
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+| Jumping to test #3 because that was the test under review when test re-run was
+| requested.
+
+> a <- 42
+> a + 1
+[1] 43
+
+unitizer> B
+
+= <untitled> ==============
+  *1. z <- 24   .  .    -:-
+= A =======================
+  *2. a <- 42   .  .    -:-
+   3. a + 1  .  .  .  New:-
+   4. a + 2  .  .  .  New:-
+= B =======================
+  *5. b <- 25   .  .    -:-
+  *6. bb <- 26  .  .    -:-
+   7. b + 1  .  .  .  New:-
+  *8. bbb <- 27 .  .    -:-
+   9. b + 2  .  .  .  New:-
+
+| What test do you wish to review (input a test number, [U]nreviewed)?
+
+unitizer> 7
+= B ============================================================================
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> b <- 25
+> bb <- 26
+> b + 1
+[1] 26
+
+unitizer> R
+
+| Toggling re-run mode ON for this unitizer
+
+= Finalize Unitizer ============================================================
+
+| You have 4 unreviewed tests; press `B` to browse tests, `U` to go to first 
+| unreviewed test.
+
+| You made no changes to the unitizer so there is no need to update it.  While 
+| unnecessary, you can force an update by typing O at the prompt.
+
+| Re-run unitizer ([Y]es, [P]rev, [B]rowse, [U]nreviewed, [R]erun, f[O]rce)?
+
+unitizer> Y
+
+| unitizer unchanged.
+
++------------------------------------------------------------------------------+
+| unitizer for: _helper/unitizers/nav.R                                        |
++------------------------------------------------------------------------------+
+
+    Pass Fail  New
+ A     -    -    2
+ B     -    -    2
+..................
+       -    -    4
+
+= B ============================================================================
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+| Jumping to test #7 because that was the test under review when test re-run was
+| requested.
+
+> b <- 25
+> bb <- 26
+> b + 1
+[1] 26
+
+unitizer> B
+
+= <untitled> ==============
+  *1. z <- 24   .  .    -:-
+= A =======================
+  *2. a <- 42   .  .    -:-
+   3. a + 1  .  .  .  New:-
+   4. a + 2  .  .  .  New:-
+= B =======================
+  *5. b <- 25   .  .    -:-
+  *6. bb <- 26  .  .    -:-
+   7. b + 1  .  .  .  New:-
+  *8. bbb <- 27 .  .    -:-
+   9. b + 2  .  .  .  New:-
+
+| What test do you wish to review (input a test number, [U]nreviewed)?
+
+unitizer> 9
+= B ============================================================================
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> bbb <- 27
+> b + 2
+[1] 27
+
+unitizer> R
+
+| Toggling re-run mode ON for this unitizer
+
+= Finalize Unitizer ============================================================
+
+| You have 4 unreviewed tests; press `B` to browse tests, `U` to go to first 
+| unreviewed test.
+
+| You made no changes to the unitizer so there is no need to update it.  While 
+| unnecessary, you can force an update by typing O at the prompt.
+
+| Re-run unitizer ([Y]es, [P]rev, [B]rowse, [U]nreviewed, [R]erun, f[O]rce)?
+
+unitizer> Y
+
+| unitizer unchanged.
+
++------------------------------------------------------------------------------+
+| unitizer for: _helper/unitizers/nav.R                                        |
++------------------------------------------------------------------------------+
+
+    Pass Fail  New
+ A     -    -    2
+ B     -    -    2
+..................
+       -    -    4
+
+= B ============================================================================
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+| Jumping to test #9 because that was the test under review when test re-run was
+| requested.
+
+> bbb <- 27
+> b + 2
+[1] 27
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  2.198   0.152   3.311 

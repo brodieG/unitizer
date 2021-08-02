@@ -38,6 +38,7 @@ setGeneric("editCalls", function(x, lang.old, lang.new, ...)
 )
 #' @export
 #' @rdname editCalls
+#' @inheritParams unitize
 #' @param interactive.only logical(1L) set to FALSE if you want to allow this to
 #'   run in non-interactive mode, but warnings will be suppressed and will
 #'   proceed without prompting, obviously...
@@ -49,16 +50,19 @@ setGeneric("editCalls", function(x, lang.old, lang.new, ...)
 #' }
 
 setMethod("editCalls", c("unitizer", "language", "language"),
-  function(x, lang.old, lang.new, interactive.only=TRUE, ...) {
+  function(
+    x, lang.old, lang.new, interactive.mode=interactive(), 
+    interactive.only=TRUE, ...
+  ) {
     warning(
       "This is an experimental function; make sure you backup any unitizers ",
       "before you edit them", immediate.=TRUE
     )
-    if(!interactive_mode() && interactive.only)
+    if(!interactive.mode && interactive.only)
       stop("Set interactive.only to FALSE to run in non-interactive mode")
     i <- 0L
     if(interactive.only) {
-      u.inp <-simple_prompt(
+      u.inp <- simple_prompt(
         "Do you wish to proceed ([Y]es/[N]o)? "
       )
       if(!identical(u.inp, "Y")){

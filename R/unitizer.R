@@ -104,6 +104,13 @@ setClassUnion(
 # @slot sections a list of \code{\link{unitizerSection-class}}
 # @slot section.map a map of every item in \code{items.new} to a section
 # @slot changes contains summary data on the test results
+# @slot upgraded.from character(1L) whether the unitizer was upgraded from load
+#   and from what version, "" if it was not upgraded.
+# @slot best.name character(1L) a friendlier name derived from test and unitizer
+#   locations.
+# @slot show.progress integer(1L) level of chattiness in progress reporting,
+#   carried here as otherwise no way to feed it through the `+` method when
+#   adding tests.
 
 setClass(
   "unitizer",
@@ -164,7 +171,14 @@ setClass(
 
     changes="unitizerChanges",       # Summary of user changes
     res.data="data.frameOrNULL",     # details of test evaluation and user review
-    bookmark="unitizerBrowseBookmarkOrNULL"  # used for re-eval navigation
+    bookmark="unitizerBrowseBookmarkOrNULL",  # used for re-eval navigation
+
+    # fields to support >1.4.14 functionality
+
+    upgraded.from="character",       # was upgraded on load
+    best.name="character",
+    show.progress="integer"
+
   ),
   prototype(
     version=as.character(packageVersion("unitizer")),
@@ -177,7 +191,9 @@ setClass(
     updated=FALSE,
     updated.at.least.once=FALSE,
     bookmark=NULL,
-    global=unitizerGlobal$new(enable.which=character())  # dummy so tests will run
+    global=unitizerGlobal$new(enable.which=character()),  # dummy so tests will run
+    upgraded.from="",
+    show.progress=0L
   ),
   validity=function(object) {
     if(!is.object(object@id) && is.character(object@id)) { # default id format

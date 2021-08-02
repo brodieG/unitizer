@@ -262,6 +262,9 @@ setMethod("bookmarked", "unitizerObjectList", function(x, ...) {
 # @slot item.id.rel non-unique, unique within each sec/sub.sec
 # @slot item.id.orig the original id of the item used to re-order tests in the
 #   order they show up in the original files
+# @slot item.id.ord seems to be like item.id.orig, except that deleted items
+#   will be moved to a different location (end)?  This was not documented
+#   originally.  See `getIdOrder`.
 # @slot item.ref whether a test is a reference test or not
 # @slot reviewed whether a test has been reviewed
 # @slot review.val what action the user decided ("N") is default
@@ -313,14 +316,14 @@ setClass("unitizerBrowse", contains="unitizerList",
     last.id="integer",          # so that `reviewNext` knows what to show next
     # so that `reviewNext` knows what headers to display
     last.reviewed="integer",
-    jumping.to="logical",       # indicate there was a re-eval jump
+    jumping.to="integer",       # what test to re-eval jump to, 0 if none
     hist.con="ANY",             # should be 'fileOrNULL', but setOldClass` issues
     mode="character",
     review="integer",           # counter to figure out when browse/review menu
     inspect.all="logical",      # force inspection of all elements
     # user has triggered at least one navigation command
     navigating="logical",
-    browsing="logical",         # current test selected via browse
+    browsing="integer",         # current test selected via browse
     human="logical",            # whether user has had any interaction at all
     # so navprompt can communicate back re-eval status
     re.eval="integer",
@@ -343,13 +346,13 @@ setClass("unitizerBrowse", contains="unitizerList",
     mapping=new("unitizerBrowseMapping"),
     last.id=0L,
     last.reviewed=0L,
-    jumping.to=FALSE,
+    jumping.to=0L,
     hist.con=NULL,
     mode="unitize",
     review=1L,
     inspect.all=FALSE,
     navigating=FALSE,
-    browsing=FALSE,
+    browsing=0L,
     human=FALSE,
     re.eval=0L,
     force.up=FALSE,
@@ -370,12 +373,12 @@ setClass("unitizerBrowse", contains="unitizerList",
       return("Slot `@start.at.browser` must be TRUE or FALSE")
     if(!is.TF(object@navigating))
       return("Slot `@navigating` must be TRUE or FALSE")
-    if(!is.TF(object@browsing))
-      return("Slot `@browsing` must be TRUE or FALSE")
+    if(!is.int.1L(object@browsing) && object@browsing >= 0L)
+      return("Slot `browsing` must be positive integer scalar")
+    if(!is.int.1L(object@jumping.to) && object@jumping.to >= 0L)
+      return("Slot `jumping.to` must be positive integer scalar")
     if(!is.TF(object@auto.accept))
       return("Slot `@auto.accept` must be TRUE or FALSE")
-    if(!is.TF(object@jumping.to))
-      return("Slot `jumping.to` must be TRUE or FALSE")
     if(!is.TF(object@force.up))
       return("Slot `force.up` must be TRUE or FALSE")
     if(length(object@re.eval) != 1L || !isTRUE(object@re.eval %in% 0:2))

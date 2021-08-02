@@ -28,17 +28,18 @@ NULL
 #' the location specified by the store id.
 #'
 #' @seealso \code{\link{unitize}}
+#' @inheritParams unitize
 #' @export
 #' @param x either a unitizer, or a store id (see \code{\link{unitize}})
 #' @return a \code{unitizer} object
 
-repair_environments <- function(x) {
+repair_environments <- function(x, interactive.mode=interactive()) {
   save <- FALSE
   if(!is(x, "unitizer")) {
     unitizer <- try(
       load_unitizers(
         list(x), test.files=NA_character_, par.frame=baseenv(),
-        interactive.mode=interactive_mode(), mode="unitize"
+        interactive.mode=interactive.mode, mode="unitize", show.progress=0L
       )[[1L]]
     )
     if(inherits(unitizer, "try-error"))

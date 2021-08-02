@@ -2,6 +2,8 @@
 ^\.Rproj\.user$
 ^DEVNOTES\.md$
 ^CRAN\.md$
+\.Rout$
+\.Rout.fail$
 ^\.travis\.yml$
 ^extra$
 \.Rdata
@@ -10,3 +12,5 @@
 ^scratch
 ^README\.Rmd$
 ^README\.html$
+startup.Rs
+not-cran

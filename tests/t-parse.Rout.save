@@ -1,0 +1,1348 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> txt <- "# This is an early comment\n\n  hello <- 25\n\n  # multi\n  # line\n  # comment\n\n  matrix(1:9, 3)  # and another!\n\n  unitizer_sect(\"here is a section\", {\n    # test that were not crazy\n\n    1 + 1 == 2   # TRUE hopefully\n\n    # Still not crazy\n\n    2 * 2 == 2 ^ 2\n    # Tada\n  } )\n  sample(1:10)\n\n  # and this comment belongs to whom?\n\n  runif(20)\n  print(\"woo\")  # and I?\n  "
+> all <- unitizer:::parse_dat_get(text = txt)
+> prs <- all$expr
+> dat <- all$dat
+> dat$parent <- pmax(0L, dat$parent)
+> # With R4.0 some of the ids started changing
+> normalize_id <- function(dat) {
++     idu <- sort(unique(dat[["id"]]))
++     id <- with(dat, match(id, idu))
++     parent <- with(dat, ifelse(parent == 0L, 0L, match(parent, 
++         idu)))
++     dat[["id"]] <- id
++     dat[["parent"]] <- parent
++     dat
++ }
+> dat <- normalize_id(dat)
+> dat.split <- dat.split.2 <- par.ids.3 <- NULL
+> if.text <- "if # IFFY\n(x > 3 # ifcond\n){ hello\n #whome to attach?\n} else #final\ngoodbye"
+> 
+> # - "Top Level Parents Identified Correctly" -----------------------------------
+> 
+> # "Identified top level parents?"
+> par.ids <- with(dat, unitizer:::top_level_parse_parents(id, parent))
+> par.ids
+ [1]  0  0  7  7  7  7  7  0  0  0  0 24 24 24 24 24 24 24 24 24 24 24 24 24  0
+[26]  0 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64 64
+[51] 64 64 64 64 64 64 64 64 64 64 64 64 64 64  0 75 75 75 75 75 75 75 75 75 75
+[76]  0  0 83 83 83 83 83 83  0 90 90 90 90 90 90  0
+> dat.split <- split(dat, par.ids)
+> 
+> # "Identified sub-level top level parents correctly"
+> par.ids.2 <- with(dat.split$`64`, unitizer:::top_level_parse_parents(id, 
++     parent, 64L))
+> par.ids.2
+ [1] 28 64 64 31 64 64 64 62 62 62 62 62 62 62 62 62 62 62 62 62 62 62 62 62 62
+[26] 62 62 62 62 62 62 62 62 62 62 62 62 64
+> dat.split.2 <- split(dat.split$`64`, par.ids.2)
+> 
+> # "Parent relationships in `unitizer_sect` piece."
+> 
+> par.ids.3 <- with(dat.split.2$`62`, unitizer:::top_level_parse_parents(id, 
++     parent, 62L))
+> par.ids.3
+ [1] 62 62 62 44 44 44 44 44 44 44 44 44 62 62 62 59 59 59 59 59 59 59 59 59 59
+[26] 59 59 59 62 62
+> 
+> # - "Comments Are Assigned" ----------------------------------------------------
+> 
+> # "Did we assign comments correctly to topmost level?"
+> lapply(unitizer:::comments_assign(prs, dat.split$`0`), attr, "comment")
+[[1]]
+[1] "# This is an early comment"
+
+[[2]]
+[1] "# multi"        "# line"         "# comment"      "# and another!"
+
+[[3]]
+NULL
+
+[[4]]
+NULL
+
+[[5]]
+[1] "# and this comment belongs to whom?"
+
+[[6]]
+[1] "# and I?"
+
+> 
+> # "No comments here so no changes should occur"
+> all.equal(unitizer:::comments_assign(prs[[3]], dat.split.2$`64`), prs[[3]])
+[1] TRUE
+> 
+> # "Comments in `unitizer_sect` body assigned correctly"
+> lapply(unitizer:::comments_assign(prs[[3]][[3]], split(dat.split.2$`62`, 
++     par.ids.3)$`62`), attr, "comment")
+[[1]]
+NULL
+
+[[2]]
+[1] "# test that were not crazy" "# TRUE hopefully"          
+
+[[3]]
+[1] "# Still not crazy"
+
+> 
+> # - "Ancestry Descend" ---------------------------------------------------------
+> 
+> x <- unitizer:::parse_dat_get(text = "1 + 1; fun(x, fun(y + z))")$dat
+> x <- normalize_id(x)
+> 
+> unitizer:::ancestry_descend(x$id, x$parent, 0)
+      children level
+ [1,]        7     0
+ [2,]        6     0
+ [3,]       26     0
+ [4,]        2     1
+ [5,]        3     1
+ [6,]        5     1
+ [7,]       10     1
+ [8,]        9     1
+ [9,]       13     1
+[10,]       12     1
+[11,]       24     1
+[12,]       25     1
+[13,]        1     2
+[14,]        4     2
+[15,]        8     2
+[16,]       11     2
+[17,]       16     2
+[18,]       15     2
+[19,]       23     2
+[20,]       21     2
+[21,]       14     3
+[22,]       19     3
+[23,]       18     3
+[24,]       22     3
+[25,]       17     4
+[26,]       20     4
+> 
+> # - "Clean up Parse Data" ------------------------------------------------------
+> 
+> dat <- unitizer:::parse_dat_get(text = "{function(x) NULL;; #comment\n}")$dat
+> # set negative ids to be top level parents
+> dat <- transform(dat, parent = ifelse(parent < 0, 0L, parent))
+> dat <- normalize_id(dat)
+> 
+> # "Ancestry Descend"
+> dat.anc <- unitizer:::ancestry_descend(dat$id, dat$parent, 0L)
+> dat.anc
+      children level
+ [1,]       15     0
+ [2,]        1     1
+ [3,]       13     1
+ [4,]       12     1
+ [5,]       14     1
+ [6,]       11     2
+ [7,]       10     2
+ [8,]        9     3
+ [9,]        8     3
+[10,]        2     4
+[11,]        3     4
+[12,]        4     4
+[13,]        5     4
+[14,]        7     4
+[15,]        6     5
+> 
+> # "Excise `exprlist`"
+> unitizer:::prsdat_fix_exprlist(dat, dat.anc)$token
+ [1] "expr"           "'{'"            "expr"           "FUNCTION"      
+ [5] "'('"            "SYMBOL_FORMALS" "')'"            "NULL_CONST"    
+ [9] "expr"           "COMMENT"        "'}'"           
+> 
+> dat.1 <- unitizer:::parse_dat_get(text = "{1 ; ; ;2;}")$dat
+> # set negative ids to be top level parents
+> dat.1 <- transform(dat.1, parent = ifelse(parent < 0, 0L, parent))
+> dat.1 <- normalize_id(dat.1)
+> 
+> # "Another `exprlist` test"
+> unname(
++   as.list(
++     unitizer:::prsdat_fix_exprlist(
++       dat.1, 
++       unitizer:::ancestry_descend(dat.1$id, dat.1$parent, 0L)
++     )[c("parent", "token")]
++ ) )
+[[1]]
+[1]  0 14  3 14 10 14 14
+
+[[2]]
+[1] "expr"      "'{'"       "NUM_CONST" "expr"      "NUM_CONST" "expr"     
+[7] "'}'"      
+
+> dat.2 <- unitizer:::parse_dat_get(text = "{NULL; yowza; #comment\nhello\n}")$dat
+> # set negative ids to be top level parents
+> dat.2 <- transform(dat.2, parent = ifelse(parent < 0, 0L, parent))
+> dat.2 <- normalize_id(dat.2)
+> 
+> # "Yet another `exprlist`"
+> unname(
++   as.list(
++     unitizer:::prsdat_fix_exprlist(
++       dat.2, unitizer:::ancestry_descend(dat.2$id, dat.2$parent, 0L)
++     )[c("parent", "token")]
++ ) )
+[[1]]
+ [1]  0 13  3 13  7 13 13 11 13 13
+
+[[2]]
+ [1] "expr"       "'{'"        "NULL_CONST" "expr"       "SYMBOL"    
+ [6] "expr"       "COMMENT"    "SYMBOL"     "expr"       "'}'"       
+
+> 
+> dat.2a <- normalize_id(
++   unitizer:::parse_dat_get(text = "for(i in x) {if(x) break else next}")$dat
++ )
+> # "`for` cleanup"
+> 
+> as.list(unitizer:::prsdat_fix_for(dat.2a[-1L, ]))
+$line1
+ [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+$col1
+ [1]  1  5 10 10 13 13 14 14 16 17 17 18 20 20 26 31 31 35
+
+$line2
+ [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+
+$col2
+ [1]  3  5 10 10 35 13 34 15 16 17 17 18 24 24 29 34 34 35
+
+$id
+ [1]  1  3  5  7 22  9 21 10 11 12 14 13 15 16 17 18 19 20
+
+$parent
+ [1] 23 23  7 23 23 22 22 21 21 14 21 21 16 21 21 19 21 22
+
+$token
+ [1] "FOR"    "SYMBOL" "SYMBOL" "expr"   "expr"   "'{'"    "expr"   "IF"    
+ [9] "'('"    "SYMBOL" "expr"   "')'"    "BREAK"  "expr"   "ELSE"   "NEXT"  
+[17] "expr"   "'}'"   
+
+$terminal
+ [1]  TRUE  TRUE  TRUE FALSE FALSE  TRUE FALSE  TRUE  TRUE  TRUE FALSE  TRUE
+[13]  TRUE FALSE  TRUE  TRUE FALSE  TRUE
+
+$text
+ [1] "for"   "i"     "x"     ""      ""      "{"     ""      "if"    "("    
+[10] "x"     ""      ")"     "break" ""      "else"  "next"  ""      "}"    
+
+> 
+> dat.3 <- normalize_id(unitizer:::parse_dat_get(text = if.text)$dat)
+> 
+> # "`if` cleanup"
+> 
+> unname(as.list(unitizer:::prsdat_fix_if(dat.3[-1, ])[c("id", "token")]))
+[[1]]
+ [1]  1  2 11  4  6  5  7  8  9 17 12 13 14 15 16 19 20 21
+
+[[2]]
+ [1] "IF"        "COMMENT"   "expr"      "SYMBOL"    "expr"      "GT"       
+ [7] "NUM_CONST" "expr"      "COMMENT"   "expr"      "'{'"       "SYMBOL"   
+[13] "expr"      "COMMENT"   "'}'"       "COMMENT"   "SYMBOL"    "expr"     
+
+> 
+> # - "Full Parse Works Properly" ------------------------------------------------
+> 
+> # "Full Comment Parse"
+> unitizer:::comm_extract(unitizer:::parse_with_comments(text = txt))
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+[1] "# This is an early comment"
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+NULL
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+NULL
+
+
+
+[[3]]
+[[3]][[1]]
+[1] "# multi"        "# line"         "# comment"      "# and another!"
+
+[[3]][[2]]
+[[3]][[2]][[1]]
+NULL
+
+
+[[3]][[3]]
+[[3]][[3]][[1]]
+NULL
+
+[[3]][[3]][[2]]
+[[3]][[3]][[2]][[1]]
+NULL
+
+
+[[3]][[3]][[3]]
+[[3]][[3]][[3]][[1]]
+NULL
+
+
+[[3]][[3]][[4]]
+[[3]][[3]][[4]][[1]]
+NULL
+
+
+
+[[3]][[4]]
+[[3]][[4]][[1]]
+NULL
+
+
+
+[[4]]
+[[4]][[1]]
+NULL
+
+[[4]][[2]]
+[[4]][[2]][[1]]
+NULL
+
+
+[[4]][[3]]
+[[4]][[3]][[1]]
+NULL
+
+
+[[4]][[4]]
+[[4]][[4]][[1]]
+NULL
+
+[[4]][[4]][[2]]
+[[4]][[4]][[2]][[1]]
+NULL
+
+
+[[4]][[4]][[3]]
+[[4]][[4]][[3]][[1]]
+[1] "# test that were not crazy" "# TRUE hopefully"          
+
+[[4]][[4]][[3]][[2]]
+[[4]][[4]][[3]][[2]][[1]]
+NULL
+
+
+[[4]][[4]][[3]][[3]]
+[[4]][[4]][[3]][[3]][[1]]
+NULL
+
+[[4]][[4]][[3]][[3]][[2]]
+[[4]][[4]][[3]][[3]][[2]][[1]]
+NULL
+
+
+[[4]][[4]][[3]][[3]][[3]]
+[[4]][[4]][[3]][[3]][[3]][[1]]
+NULL
+
+
+[[4]][[4]][[3]][[3]][[4]]
+[[4]][[4]][[3]][[3]][[4]][[1]]
+NULL
+
+
+
+[[4]][[4]][[3]][[4]]
+[[4]][[4]][[3]][[4]][[1]]
+NULL
+
+
+
+[[4]][[4]][[4]]
+[[4]][[4]][[4]][[1]]
+[1] "# Still not crazy"
+
+[[4]][[4]][[4]][[2]]
+[[4]][[4]][[4]][[2]][[1]]
+NULL
+
+
+[[4]][[4]][[4]][[3]]
+[[4]][[4]][[4]][[3]][[1]]
+NULL
+
+[[4]][[4]][[4]][[3]][[2]]
+[[4]][[4]][[4]][[3]][[2]][[1]]
+NULL
+
+
+[[4]][[4]][[4]][[3]][[3]]
+[[4]][[4]][[4]][[3]][[3]][[1]]
+NULL
+
+
+[[4]][[4]][[4]][[3]][[4]]
+[[4]][[4]][[4]][[3]][[4]][[1]]
+NULL
+
+
+
+[[4]][[4]][[4]][[4]]
+[[4]][[4]][[4]][[4]][[1]]
+NULL
+
+[[4]][[4]][[4]][[4]][[2]]
+[[4]][[4]][[4]][[4]][[2]][[1]]
+NULL
+
+
+[[4]][[4]][[4]][[4]][[3]]
+[[4]][[4]][[4]][[4]][[3]][[1]]
+NULL
+
+
+[[4]][[4]][[4]][[4]][[4]]
+[[4]][[4]][[4]][[4]][[4]][[1]]
+NULL
+
+
+
+
+
+
+[[5]]
+[[5]][[1]]
+NULL
+
+[[5]][[2]]
+[[5]][[2]][[1]]
+NULL
+
+
+[[5]][[3]]
+[[5]][[3]][[1]]
+NULL
+
+[[5]][[3]][[2]]
+[[5]][[3]][[2]][[1]]
+NULL
+
+
+[[5]][[3]][[3]]
+[[5]][[3]][[3]][[1]]
+NULL
+
+
+[[5]][[3]][[4]]
+[[5]][[3]][[4]][[1]]
+NULL
+
+
+
+
+[[6]]
+[[6]][[1]]
+[1] "# and this comment belongs to whom?"
+
+[[6]][[2]]
+[[6]][[2]][[1]]
+NULL
+
+
+[[6]][[3]]
+[[6]][[3]][[1]]
+NULL
+
+
+
+[[7]]
+[[7]][[1]]
+[1] "# and I?"
+
+[[7]][[2]]
+[[7]][[2]][[1]]
+NULL
+
+
+[[7]][[3]]
+[[7]][[3]][[1]]
+NULL
+
+
+
+> 
+> # "EQ_SUB and SYMBOL_SUB test"
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = "structure(1:3, # the data\nclass # the label\n=#the equal sign\n'hello' # the class\n)"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+[1] "# the data"
+
+[[2]][[3]][[2]]
+[[2]][[3]][[2]][[1]]
+NULL
+
+
+[[2]][[3]][[3]]
+[[2]][[3]][[3]][[1]]
+NULL
+
+
+[[2]][[3]][[4]]
+[[2]][[3]][[4]][[1]]
+NULL
+
+
+
+[[2]]$class
+[[2]]$class[[1]]
+[1] "# the label"     "#the equal sign" "# the class"    
+
+
+
+> 
+> # "Function with `exprlist`"
+> 
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = "function(x #first arg\n, y=25 #second arg with default\n) {x + y; # first comment\n; yo #second comment\n x / y; #lastcomment \n;}"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+[1] "#first arg"
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+NULL
+
+[[2]][[3]]$x
+[[2]][[3]]$x[[1]]
+NULL
+
+
+[[2]][[3]]$y
+[[2]][[3]]$y[[1]]
+NULL
+
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+[1] "#second arg with default"
+
+[[2]][[4]][[2]]
+[[2]][[4]][[2]][[1]]
+NULL
+
+
+[[2]][[4]][[3]]
+[[2]][[4]][[3]][[1]]
+[1] "# first comment"
+
+[[2]][[4]][[3]][[2]]
+[[2]][[4]][[3]][[2]][[1]]
+NULL
+
+
+[[2]][[4]][[3]][[3]]
+[[2]][[4]][[3]][[3]][[1]]
+NULL
+
+
+[[2]][[4]][[3]][[4]]
+[[2]][[4]][[3]][[4]][[1]]
+NULL
+
+
+
+[[2]][[4]][[4]]
+[[2]][[4]][[4]][[1]]
+[1] "#second comment"
+
+
+[[2]][[4]][[5]]
+[[2]][[4]][[5]][[1]]
+[1] "#lastcomment "
+
+[[2]][[4]][[5]][[2]]
+[[2]][[4]][[5]][[2]][[1]]
+NULL
+
+
+[[2]][[4]][[5]][[3]]
+[[2]][[4]][[5]][[3]][[1]]
+NULL
+
+
+[[2]][[4]][[5]][[4]]
+[[2]][[4]][[5]][[4]][[1]]
+NULL
+
+
+
+
+[[2]][[5]]
+[[2]][[5]][[1]]
+NULL
+
+[[2]][[5]][[2]]
+[[2]][[5]][[2]][[1]]
+NULL
+
+
+[[2]][[5]][[3]]
+[[2]][[5]][[3]][[1]]
+NULL
+
+
+[[2]][[5]][[4]]
+[[2]][[5]][[4]][[1]]
+NULL
+
+
+[[2]][[5]][[5]]
+[[2]][[5]][[5]][[1]]
+NULL
+
+
+[[2]][[5]][[6]]
+[[2]][[5]][[6]][[1]]
+NULL
+
+
+[[2]][[5]][[7]]
+[[2]][[5]][[7]][[1]]
+NULL
+
+
+[[2]][[5]][[8]]
+[[2]][[5]][[8]][[1]]
+NULL
+
+
+[[2]][[5]][[9]]
+[[2]][[5]][[9]][[1]]
+NULL
+
+
+
+
+> 
+> # "`for` loop"
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = "for(i #in counter\nin 1:10#incounter again\n) {x + y; # first comment\n; next; yo #second comment\n x / y; break; #lastcomment \n;}"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+[1] "#in counter"
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+[1] "#incounter again"
+
+[[2]][[4]][[2]]
+[[2]][[4]][[2]][[1]]
+NULL
+
+
+[[2]][[4]][[3]]
+[[2]][[4]][[3]][[1]]
+NULL
+
+
+[[2]][[4]][[4]]
+[[2]][[4]][[4]][[1]]
+NULL
+
+
+
+[[2]][[5]]
+[[2]][[5]][[1]]
+NULL
+
+[[2]][[5]][[2]]
+[[2]][[5]][[2]][[1]]
+NULL
+
+
+[[2]][[5]][[3]]
+[[2]][[5]][[3]][[1]]
+[1] "# first comment"
+
+[[2]][[5]][[3]][[2]]
+[[2]][[5]][[3]][[2]][[1]]
+NULL
+
+
+[[2]][[5]][[3]][[3]]
+[[2]][[5]][[3]][[3]][[1]]
+NULL
+
+
+[[2]][[5]][[3]][[4]]
+[[2]][[5]][[3]][[4]][[1]]
+NULL
+
+
+
+[[2]][[5]][[4]]
+[[2]][[5]][[4]][[1]]
+NULL
+
+
+[[2]][[5]][[5]]
+[[2]][[5]][[5]][[1]]
+[1] "#second comment"
+
+
+[[2]][[5]][[6]]
+[[2]][[5]][[6]][[1]]
+NULL
+
+[[2]][[5]][[6]][[2]]
+[[2]][[5]][[6]][[2]][[1]]
+NULL
+
+
+[[2]][[5]][[6]][[3]]
+[[2]][[5]][[6]][[3]][[1]]
+NULL
+
+
+[[2]][[5]][[6]][[4]]
+[[2]][[5]][[6]][[4]][[1]]
+NULL
+
+
+
+[[2]][[5]][[7]]
+[[2]][[5]][[7]][[1]]
+[1] "#lastcomment "
+
+
+
+
+> 
+> # "`if` statement"
+> unitizer:::comm_extract(unitizer:::parse_with_comments(text = if.text))
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+[1] "# IFFY"
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+[1] "# ifcond"
+
+[[2]][[3]][[2]]
+[[2]][[3]][[2]][[1]]
+NULL
+
+
+[[2]][[3]][[3]]
+[[2]][[3]][[3]][[1]]
+NULL
+
+
+[[2]][[3]][[4]]
+[[2]][[3]][[4]][[1]]
+NULL
+
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+NULL
+
+[[2]][[4]][[2]]
+[[2]][[4]][[2]][[1]]
+NULL
+
+
+[[2]][[4]][[3]]
+[[2]][[4]][[3]][[1]]
+NULL
+
+
+
+[[2]][[5]]
+[[2]][[5]][[1]]
+[1] "#final"
+
+
+
+> 
+> # "formula"
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = ". + x # hello\n#yowza\n~#bust a move\ny"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+[1] "# hello"
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+NULL
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+NULL
+
+
+
+[[3]]
+[[3]][[1]]
+[1] "#yowza"
+
+[[3]][[2]]
+[[3]][[2]][[1]]
+[1] "#bust a move"
+
+
+[[3]][[3]]
+[[3]][[3]][[1]]
+NULL
+
+
+
+> 
+> # "`repeat`"
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = "repeat #first\n{runif(10); #comm\nbreak;}"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+[1] "#first"
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+NULL
+
+[[2]][[3]][[2]]
+[[2]][[3]][[2]][[1]]
+NULL
+
+
+[[2]][[3]][[3]]
+[[2]][[3]][[3]][[1]]
+[1] "#comm"
+
+[[2]][[3]][[3]][[2]]
+[[2]][[3]][[3]][[2]][[1]]
+NULL
+
+
+[[2]][[3]][[3]][[3]]
+[[2]][[3]][[3]][[3]][[1]]
+NULL
+
+
+
+[[2]][[3]][[4]]
+[[2]][[3]][[4]][[1]]
+NULL
+
+
+
+
+> 
+> # "S4 slot"
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(text = "test@#comment\nhello <- 3")
++ )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+NULL
+
+[[2]][[3]][[2]]
+[[2]][[3]][[2]][[1]]
+[1] "#comment"
+
+
+[[2]][[3]][[3]]
+[[2]][[3]][[3]][[1]]
+NULL
+
+
+[[2]][[3]][[4]]
+[[2]][[3]][[4]][[1]]
+NULL
+
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+NULL
+
+
+
+> 
+> #  "`while`"
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = "while(x > 5 # a comment\n) { hello; goodbye } #yay"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+[1] "# a comment"
+
+[[2]][[3]][[2]]
+[[2]][[3]][[2]][[1]]
+NULL
+
+
+[[2]][[3]][[3]]
+[[2]][[3]][[3]][[1]]
+NULL
+
+
+[[2]][[3]][[4]]
+[[2]][[3]][[4]][[1]]
+NULL
+
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+NULL
+
+[[2]][[4]][[2]]
+[[2]][[4]][[2]][[1]]
+NULL
+
+
+[[2]][[4]][[3]]
+[[2]][[4]][[3]][[1]]
+NULL
+
+
+[[2]][[4]][[4]]
+[[2]][[4]][[4]][[1]]
+NULL
+
+
+
+
+> 
+> txt2 <- "library(functools)\n    fun <- function(a=1, bravo, card=25, ..., xar=list(\"aurochs\", 1), z) {}\n\n    # Need to add tests:\n    # - with complex objects? (did I mean in the definition? Or the call??)\n    (NULL)\n    # These should be identical to match.call()\n\n    body(fun) <- parse(text=\"{print(match_call()); print(match.call())}\")\n\n    calls <- c(\n      'fun(54, \"hello\", \"wowo\", \"blergh\", 8, 9)',\n      'fun(54, \"hello\", \"wowo\", \"blergh\", a=8, z=9)',\n      'fun(54, \"hello\", z=\"wowo\", \"blergh\", 8, 9)',\n      'fun(54, \"hello\", z=\"wowo\", x=\"blergh\", 8, 9)',\n      'fun(54, c=\"hello\", z=\"wowo\", xar=3, 8, 9)'\n    )\n    invisible(lapply(calls, function(x){cat(\"-- New Call --\", x, sep=\"\n\"); eval(parse(text=x))}))\n  "
+> test.comp <- unitizer:::comm_extract(unitizer:::parse_with_comments(text = txt2))
+> 
+> # "A more complex test"
+> lapply(test.comp[4:5], `[[`, 1)
+[[1]]
+[1] "# Need to add tests:"                                                   
+[2] "# - with complex objects? (did I mean in the definition? Or the call??)"
+
+[[2]]
+[1] "# These should be identical to match.call()"
+
+> 
+> # "Added SYMBOL_PACKAGE token"
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = "# a comment before\nunitizer:::browse()  #a comment after"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+[1] "# a comment before" "#a comment after"  
+
+
+> # "Added SYMBOL_PACKAGE token v2" 
+> unitizer:::comm_extract(
++   unitizer:::parse_with_comments(
++     text = "# a comment before\nunitizer::browse()  #a comment after"
++ ) )
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+[1] "# a comment before" "#a comment after"  
+
+
+> # LBB used to break stuff
+> txt3 <- "# This is an early comment\n    hello <- 25\n    # multi\n    hello[[1]]  # and another!"
+> # "LBB test"
+> unitizer:::comm_extract(unitizer:::parse_with_comments(text = txt3))
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+[1] "# This is an early comment"
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+NULL
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+NULL
+
+
+
+[[3]]
+[[3]][[1]]
+[1] "# multi"        "# and another!"
+
+[[3]][[2]]
+[[3]][[2]][[1]]
+NULL
+
+
+[[3]][[3]]
+[[3]][[3]][[1]]
+NULL
+
+
+[[3]][[4]]
+[[3]][[4]][[1]]
+NULL
+
+
+
+> 
+> # - "Weird missing comment on `res` works" -------------------------------------
+> 
+> txt3 <- "# Calls to `library` and assignments are not normally considered tests, so\n# you will not be prompted to review them\n\nlibrary(utzflm)\nx <- 1:100\ny <- x ^ 2\nres <- fastlm(x, y)\n\nres                     # first reviewable expression\nget_slope(res)\nget_rsq(res)\n\nfastlm(x, head(y))      # This should cause an error; press Y to add to store"
+> expr <- unitizer:::parse_with_comments(text = txt3)
+> my.unitizer <- new("unitizer", id = 1, zero.env = new.env())
+> capture.output(my.unitizer <- my.unitizer + expr)
+character(0)
+> 
+> lapply(unitizer:::as.list(my.unitizer@items.new), slot, "comment")
+[[1]]
+[1] "# Calls to `library` and assignments are not normally considered tests, so"
+[2] "# you will not be prompted to review them"                                 
+
+[[2]]
+character(0)
+
+[[3]]
+character(0)
+
+[[4]]
+character(0)
+
+[[5]]
+[1] "# first reviewable expression"
+
+[[6]]
+character(0)
+
+[[7]]
+character(0)
+
+[[8]]
+[1] "# This should cause an error; press Y to add to store"
+
+> 
+> # - "exprlist excission with negative par ids" ---------------------------------
+> 
+> txt <- "# For random tests\n\nunitizer_sect(\"blah\", {\n  identity(1);\n})\n"
+> prs.dat <- unitizer:::parse_dat_get(text = txt)$dat
+> # set negative ids to be top level parents
+> prs.dat <- transform(prs.dat, parent = ifelse(parent < 0, 0L, 
++     parent))
+> prs.dat <- normalize_id(prs.dat)
+> ancestry <- with(prs.dat, unitizer:::ancestry_descend(id, parent, 
++     0L))
+> x <- unitizer:::prsdat_fix_exprlist(prs.dat, ancestry)
+> unname(as.matrix(x[, 5:6]))
+      [,1] [,2]
+ [1,]    1    0
+ [2,]   21    0
+ [3,]    2    4
+ [4,]    4   21
+ [5,]    3   21
+ [6,]    5    7
+ [7,]    7   21
+ [8,]    6   21
+ [9,]   19   21
+[10,]    8   19
+[11,]   15   19
+[12,]    9   11
+[13,]   11   15
+[14,]   10   15
+[15,]   12   13
+[16,]   13   15
+[17,]   14   15
+[18,]   18   19
+[19,]   20   21
+> 
+> # - "empty symbols handled okay" -----------------------------------------------
+> 
+> # the empty second argument to `[` caused problems before
+> txt <- "mtcars[1:10,]\n"
+> # shouldn't cause error
+> unitizer:::parse_with_comments(text = txt)
+expression(mtcars[1:10,])
+> 
+> # - "uncommenting works" -------------------------------------------------------
+> 
+> unitizer:::uncomment(expr[[1]])
+library(utzflm)
+> 
+> # "don't blow away function arg names"
+> unitizer:::uncomment(quote(function(a, b) NULL))
+function(a, b) NULL
+> #
+> # Recover comments and uncomment
+> txt <- ".alike(  # FALSE, match.call disabled\n  quote(fun(b=fun2(x, y), 1, 3)),  # first sub.call\n  quote(fun(NULL, fun2(a, b), 1)), # second sub.call\n  alike_settings(lang.mode=1))"
+> exp <- unitizer:::parse_with_comments(text = txt)
+> candc <- unitizer:::comm_and_call_extract(exp)
+> 
+> candc$call[[1L]]
+.alike(quote(fun(b = fun2(x, y), 1, 3)), quote(fun(NULL, fun2(a, 
+    b), 1)), alike_settings(lang.mode = 1))
+> 
+> candc$comments
+[1] "# FALSE, match.call disabled" "# first sub.call"            
+[3] "# second sub.call"           
+> 
+> # - "failing parses produce proper errors" -------------------------------------
+> 
+> txt <- "this is a + syntax error that cannot be parsed"
+> try(capture.output(unitizer:::parse_tests(text = txt), type = "message"))
+Error in value[[3L]](cond) : 
+  Unable to parse test file; see previous messages
+> f <- tempfile()
+> on.exit(unlink(f))
+> cat(txt, "\n", sep = "", file = f)
+> try(capture.output(unitizer:::parse_tests(f), type = "message"))
+Error in value[[3L]](cond) : 
+  Unable to parse test file; see previous messages
+> # try in normal mode (just fall back to normal parse)
+> try(unitizer:::parse_tests(text = txt, comments = FALSE))
+Error in parse(text = text, keep.source = FALSE) : 
+  <text>:1:6: unexpected symbol
+1: this is
+         ^
+> 
+> any(
++   grepl(
++     "unexpected symbol",
++     capture.output(try(unitizer:::parse_tests(f, comments = FALSE)), type='message'),
++ ) )
+[1] TRUE
+> 
+> # - "NULL, constants, and new tokens" ------------------------------------------
+> 
+> txt <- c("a = 2", "# ho how", "b = 3", "", "b + a  # oh here", 
++     "", "b + # oh there", "a   # bear", "", "NULL")
+> unitizer:::comm_extract(unitizer:::parse_with_comments(text = txt))
+[[1]]
+NULL
+
+[[2]]
+[[2]][[1]]
+NULL
+
+[[2]][[2]]
+[[2]][[2]][[1]]
+NULL
+
+
+[[2]][[3]]
+[[2]][[3]][[1]]
+NULL
+
+
+[[2]][[4]]
+[[2]][[4]][[1]]
+NULL
+
+
+
+[[3]]
+[[3]][[1]]
+[1] "# ho how"
+
+[[3]][[2]]
+[[3]][[2]][[1]]
+NULL
+
+
+[[3]][[3]]
+[[3]][[3]][[1]]
+NULL
+
+
+[[3]][[4]]
+[[3]][[4]][[1]]
+NULL
+
+
+
+[[4]]
+[[4]][[1]]
+[1] "# oh here"
+
+[[4]][[2]]
+[[4]][[2]][[1]]
+NULL
+
+
+[[4]][[3]]
+[[4]][[3]][[1]]
+NULL
+
+
+[[4]][[4]]
+[[4]][[4]][[1]]
+NULL
+
+
+
+[[5]]
+[[5]][[1]]
+NULL
+
+[[5]][[2]]
+[[5]][[2]][[1]]
+[1] "# oh there"
+
+
+[[5]][[3]]
+[[5]][[3]][[1]]
+NULL
+
+
+[[5]][[4]]
+[[5]][[4]][[1]]
+NULL
+
+
+
+[[6]]
+[[6]][[1]]
+NULL
+
+
+> with.const <- unitizer:::parse_with_comments(text = "3 # comment on const")
+> unitizer:::symb_mark_rem(with.const[[1]])
+[1] 3
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  1.117   0.125   1.273 

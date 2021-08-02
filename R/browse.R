@@ -1,17 +1,17 @@
 # Copyright (C) 2021 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 #' @include unitizer.R
@@ -162,8 +162,9 @@ setMethod(
             )
             # nocov end
           }
-          y@last.id <- y@mapping@item.id[id.map] - 1L
-          y@jumping.to <- TRUE
+          ign.adj <- find_lead_offset(id.map, y@mapping)
+          y@last.id <- y@mapping@item.id[id.map] - (1L + ign.adj)
+          y@jumping.to <- id.map
         }
       }
       # `repeat` loop allows us to keep going if at the last minute we decide
@@ -204,7 +205,7 @@ setMethod(
                 if(identical(y@review, 0L)) {
                   y.tmp <- review_prompt(y, new.env(parent=x@base.env))
                   if(identical(y.tmp, "Q")) {
-                    invokeRestart("earlyExit")
+                    invokeRestart("unitizerEarlyExit")
                   } else if(!is(y.tmp, "unitizerBrowse")) {
                     # nocov start
                     stop(
@@ -225,7 +226,7 @@ setMethod(
             # called by this function, as well as functions called by functions
             # called by this function.
 
-            earlyExit=function(mode="quit", extra=NULL) {
+            unitizerEarlyExit=function(mode="quit", extra=NULL) {
               if(identical(mode, "quit")) {
                 user.quit <<- TRUE
                 if(is(extra, "unitizerBrowse"))
@@ -489,6 +490,26 @@ setMethod(
     )
 } )
 setGeneric("reviewNext", function(x, ...) standardGeneric("reviewNext"))
+
+# Find offset the first ignored test contiguous to our test
+
+find_lead_offset <- function(id, mapping) {
+  if(!is.int.1L(id) || id < 0)
+    stop("Internal Error: bad id.") # nocov
+  if(!is(mapping, "unitizerBrowseMapping"))
+    stop("Internal Error: bad mapping object.") # nocov
+
+  if(id > length(mapping@item.id)) {
+    # No unreviewed tests returns one more than end
+    0L
+  } else {
+    cur.sect.eligible <-
+      mapping@sec.id[id] == mapping@sec.id &
+      mapping@item.id.ord < mapping@item.id.ord[id]
+    sum(cumsum(rev(!mapping@ignored[cur.sect.eligible])) == 0)
+  }
+}
+
 # Bring up Review of Next test
 #
 # Generally we will go from one test to the next, where the next test is
@@ -503,7 +524,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
   function(x, unitizer, ...) {
     browsed <- x@browsing
     jumping <- x@jumping.to
-    x@browsing <- x@jumping.to <- FALSE
+    x@browsing <- x@jumping.to <- 0L
     last.id <- x@last.id
     curr.id <- x@last.id + 1L
     x@last.id <- curr.id
@@ -579,13 +600,26 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     prev.is.expr <- TRUE
 
+    # Will the test actually require user review
+    # Need to add ignored tests as default action is N, though note that ignored
+    # tests are treated specially in `healEnvs` and are either included or
+    # removed based on what happens to the subsequent non-ignored test.
+    # reviewed items are skipped unless we're actively navigating to support
+    # `auto.accept`
+
+    will.review <- x@inspect.all ||
+      !(
+        x@mapping@ignored[[curr.id]] || ignore.passed ||
+        (x@mapping@reviewed[[curr.id]] && !x@navigating)
+      )
+
     # Print Section title if appropriate, basically if not all the items are
     # ignored, or alternatively if one of the ignored items produced new
     # conditions, or if we just got here via a browse statement
 
     if(
       (
-        !identical(last.reviewed.sec, curr.sec) && !ignore.sec ||
+        (!identical(last.reviewed.sec, curr.sec) && !ignore.sec) ||
         browsed || jumping
       ) && multi.sect
     ) {
@@ -650,17 +684,21 @@ setMethod("reviewNext", c("unitizerBrowse"),
     diffs <- NULL
 
     if(!ignore.sub.sec || x@review == 0L) {
-      if(x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review")) {
+      if(
+        x@mapping@reviewed[[curr.id]] && !identical(x@mode, "review") &&
+        will.review
+      ) {
         prev.is.expr <- FALSE
         meta_word_msg(
           "You are re-reviewing a test; previous selection was: \"",
           x@mapping@review.val[[curr.id]], "\"", sep=""
-      ) }
+        )
+      }
       if(jumping) {
         prev.is.expr <- FALSE
         meta_word_msg(
           sep="",
-          "Jumping to test #", x@mapping@item.id.ord[[curr.id]], " because ",
+          "Jumping to test #", x@mapping@item.id.ord[[jumping]], " because ",
           "that was the test under review when test re-run was requested.",
           if(!is.null(unitizer@bookmark) && unitizer@bookmark@parse.mod)
             cc(
@@ -747,7 +785,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
           txt.alt <- sprintf(
             "State mismatch; see %s.",
             if(x@use.diff) "`.DIFF$state` for details"
-            else "`.NEW$state` and `.REF`$state"
+            else "`.NEW$state` and `.REF$state`"
           )
           diffs@state <- new(
             "unitizerItemTestsErrorsDiff", err=FALSE,
@@ -778,26 +816,15 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
       } else if (out.std || out.err) cat("\n")
     }
-    # Need to add ignored tests as default action is N, though note that ignored
-    # tests are treated specially in `healEnvs` and are either included or
-    # removed based on what happens to the subsequent non-ignored test.
 
-    if(!x@inspect.all) {
-      if(
-        x@mapping@ignored[[curr.id]] || ignore.passed ||
-        (x@mapping@reviewed[[curr.id]] && !x@navigating)
-      ) {
-        # reviewed items are skipped unless we're actively navigating to support
-        # `auto.accept`
-        return(x)
-      }
-    }
+    if(!will.review) return(x)
+
     # If we get past this point, then we will need some sort of human input, so
     # we mark the browse object
 
     if(!x@interactive) {   # can't proceed in non-interactive
       x@interactive.error <- TRUE
-      invokeRestart("earlyExit", extra=x)
+      invokeRestart("unitizerEarlyExit", extra=x)
     }
     x@human <- TRUE
 
@@ -938,7 +965,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
       } else if (isTRUE(grepl("^RR?$", x.mod))) {           # Re-eval
         x <- toggleReeval(x, x.mod)
         Sys.sleep(0.3)  # so people can see the toggle message
-        invokeRestart("earlyExit", extra=x)
+        invokeRestart("unitizerEarlyExit", extra=x)
       } else if (isTRUE(grepl("^O$", x.mod))) {             # Force update
         x <- toggleForceUp(x)
         next
@@ -995,7 +1022,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
               valid.opts=c(Y="[Y]es", N="[N]o"), global=x@global,
               browse.env=new.env(parent=parent.env(base.env.pri))
             )
-            if(identical(act.conf, "Q")) invokeRestart("earlyExit", extra=x)
+            if(identical(act.conf, "Q"))
+              invokeRestart("unitizerEarlyExit", extra=x)
             if(identical(act.conf, "N")) {
               x@last.id <- x@last.id - 1L  # Otherwise we advance to next test
               return(x)
@@ -1011,10 +1039,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
         x@mapping@review.val[rev.ind] <- act
         x@last.id <- max(rev.ind)
       } else if (identical(x.mod, "Q")) {
-        invokeRestart("earlyExit", extra=x)
+        invokeRestart("unitizerEarlyExit", extra=x)
       } else if (identical(x.mod, "QQ")) {
         x@multi.quit <- TRUE
-        invokeRestart("earlyExit", extra=x)
+        invokeRestart("unitizerEarlyExit", extra=x)
       } else {
         # nocov start
         stop(

@@ -1,0 +1,64 @@
+
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> # - "Rename Works" -------------------------------------------------------------
+> 
+> x <- readRDS("_helper/unitizers/trivial.unitizer/data.rds")
+> x.edit <- editCalls(x, quote(x), quote(y), interactive.only = FALSE)
+Warning in .local(x, lang.old, lang.new, ...) :
+  This is an experimental function; make sure you backup any unitizers before you edit them
+> x.edit@items.ref.calls.deparse
+[1] "TRUE"       "y <- 1 + 1" "y + 2"      "y <- y"     "y * y"     
+[6] "y/y + 2"   
+> !identical(x@items.ref.calls.deparse, x.edit@items.ref.calls.deparse)
+[1] TRUE
+> identical(
++   x.edit@items.ref.calls.deparse,
++   gsub("\\bx\\b", "y", x@items.ref.calls.deparse)
++ )
+[1] TRUE
+> 
+> # warn
+> unitizer:::read_line_set_vals("Y")
+> x.edit2 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
+Warning in .local(x, lang.old, lang.new, ...) :
+  This is an experimental function; make sure you backup any unitizers before you edit them
+| Do you wish to proceed ([Y]es/[N]o)? 
+
+unitizer> Y
+> # message
+> unitizer:::read_line_set_vals("N")
+> x.edit3 <- editCalls(x, quote(x), quote(y), interactive.mode = TRUE)
+Warning in .local(x, lang.old, lang.new, ...) :
+  This is an experimental function; make sure you backup any unitizers before you edit them
+| Do you wish to proceed ([Y]es/[N]o)? 
+
+unitizer> N
+Exiting without edits
+> identical(x.edit3, x)
+[1] TRUE
+> 
+> unitizer:::read_line_set_vals(NULL)
+> x.edit@items.ref.calls.deparse
+[1] "TRUE"       "y <- 1 + 1" "y + 2"      "y <- y"     "y * y"     
+[6] "y/y + 2"   
+> 
+> proc.time()
+   user  system elapsed 
+  0.736   0.101   0.845 

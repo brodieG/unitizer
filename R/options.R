@@ -1,17 +1,17 @@
 # Copyright (C) 2021 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 #' @include search.R
@@ -150,9 +150,6 @@ NULL
 #'     before quitting; this is to avoid accidentally quitting after running a
 #'     \code{unitizer} with many slow running tests and having to re-run them
 #'     again.
-#'   \item \code{unitizer.restarts.ok} TRUE or FALSE, suppresses warnings when
-#'     running inside a `withRestarts` block, which is normally a warning.
-#'     Needed due to `test_that` adding a `withRestart`
 #' }
 #'
 #' @name unitizer.opts
@@ -181,10 +178,12 @@ NULL
   show.coef.Pvalues = TRUE, show.error.messages = TRUE,
   show.signif.stars = TRUE,
   str = list(strict.width = "no", digits.d = 3, vec.len = 4),
-  str.dendrogram.last = "`", stringsAsFactors = TRUE, timeout = 60,
-  ts.eps = 1e-05, ts.S.compat = FALSE, useFancyQuotes = TRUE, verbose = FALSE,
-  warn = 0, warning.length = 1000L, width = 80L
+  str.dendrogram.last = "`", timeout = 60,
+  ts.eps = 1e-05, ts.S.compat = FALSE, useFancyQuotes = TRUE,
+  verbose = FALSE, warn = 0, warning.length = 1000L, width = 80L
 )
+if(getRversion() < '4.0')
+  .unitizer.opts.base <- c(.unitizer.opts.base, list(stringsAsFactors=TRUE))
 
 .unitizer.opts.asis <- c(
   "^browser$", "^device$", "^dvipscmd$", "^mailer$", "^pager$",  "^pdfviewer$",
@@ -192,7 +191,8 @@ NULL
   "^editor$", "^papersize$", "^bitmapType$",  "^menu\\.graphics$",
   "^unitizer\\."
 )
-.unitizer.namespace.keep <- c("data.table", "covr", "crayon", "tools")
+## Need `covr` so tests run under it otherwise nasty stuff happens
+.unitizer.namespace.keep <- c("data.table", "crayon", "tools", "covr")
 
 .unitizer.base.packages <- c(
   "package:stats", "package:graphics", "package:grDevices", "package:utils",
@@ -319,10 +319,8 @@ options_update <- function(tar.opts) {
   # random seed to use by default, "Wichman-Hill" because default seed is large
   unitizer.seed= list(seed=42L, kind="Wichmann-Hill"),
   unitizer.max.env.depth=20000L,
-  unitizer.use.diff=TRUE,
-  # whether to warn if `unitizer` is run in `withRestarts` context, added b/c
-  # testthat added a restart in 80a81fd
-  unitizer.restarts.ok=FALSE
+  unitizer.use.diff=TRUE
+  # unitizer.show.progress=TRUE,  # can't be install time if we want interactive()
 )
 
 #' Checks that options meet expectations before anything gets run

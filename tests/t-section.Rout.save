@@ -1,0 +1,162 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> expr.1 <- expression(1 + 1, b <- 5, matrix(integer(), nrow = b,
++     ncol = b))
+> expr.2 <- {
++     1 + 1
++     b <- 5
++     matrix(integer(), nrow = b, ncol = b)
++ }
+> expr.3 <- quote(expression(1 + 1, b <- 5, matrix(integer(), nrow = b,
++     ncol = b)))
+> expr.4 <- quote({
++     1 + 1
++     b <- 5
++     matrix(integer(), nrow = b, ncol = b)
++ })
+> # - "simple tests" -------------------------------------------------------------
+> 
+> try(unitizer_sect(1:3))
+Error in unitizer_sect(1:3) : 
+  Argument `title` must be a 1 length character vector.
+> try(unitizer_sect(letters))
+Error in unitizer_sect(letters) : 
+  Argument `title` must be a 1 length character vector.
+> try(unitizer_sect("mytest", expr.1, 1:3))
+Error in unitizer_sect("mytest", expr.1, 1:3) : 
+  Argument `details` must be character
+> # note the following two produce error messages, but it's not actually an error,
+> # it's just that there are multiple errors and `expect_error` only suppresses
+> # the last one, not the preceding ones.
+> try(unitizer_sect("mytest", expr.1, letters, letters))
+Error in unitizer_sect("mytest", expr.1, letters, letters) : 
+  Argument `compare` must be "testFuns" or a function
+> try(unitizer_sect("mytest", expr.1, letters, identity))
+Error in unitizer_sect("mytest", expr.1, letters, identity) : 
+  Argument `compare`, if a function, must accept two arguments and require no more than two (does not have at least two arguments)
+> try(unitizer_sect("mytest", expr.2))
+Error in unitizer_sect("mytest", expr.2) : 
+  Argument `expr` must be an expression, or an unevaluated call that evaluates to an expression or `{`.
+> try(unitizer_sect("mytest", matrix(1:9, nrow = 3)))
+Error in unitizer_sect("mytest", matrix(1:9, nrow = 3)) : 
+  Argument `expr` must be an expression, or an unevaluated call that evaluates to an expression or `{`.
+> is(sect.1 <- unitizer_sect("mytest", expr.1), "unitizerSectionExpression")
+[1] TRUE
+> identical(unitizer:::as.expression(sect.1), expr.1)
+[1] TRUE
+> 
+> is(sect.2 <- unitizer_sect("mytest", {
++     1 + 1
++     b <- 5
++     matrix(integer(), nrow = b, ncol = b)
++ }), "unitizerSectionExpression")
+[1] TRUE
+> identical(sect.1, sect.2)
+[1] TRUE
+> is(sect.3 <- unitizer_sect("mytest", expr.3), "unitizerSectionExpression")
+[1] TRUE
+> identical(sect.1, sect.3)
+[1] TRUE
+> is(sect.4 <- unitizer_sect("mytest", expr.4), "unitizerSectionExpression")
+[1] TRUE
+> identical(sect.1, sect.4)
+[1] TRUE
+> is(sect.5 <- unitizer_sect("mytest", expression(1 + 1,
++     b <- 5, matrix(integer(), nrow = b, ncol = b))), "unitizerSectionExpression")
+[1] TRUE
+> identical(sect.1, sect.5)
+[1] TRUE
+> is(sect.1 <- unitizer_sect("mytest", expr.1, compare = identical),
++     "unitizerSectionExpression")
+[1] TRUE
+> unitizer_sect("hello")  # warn
+Warning in unitizer_sect("hello") : `unitizer_sect` "hello" is empty.
+NULL
+> 
+> # - "Custom Comparison Functions" ----------------------------------------------
+> 
+> # Run expressions with different comparison functions
+> set.seed(1)
+> expr.1 <- expression(50 + runif(1)/10^10, message("Hello There",
++     runif(1)), cat("Hello there", runif(1)), stop("Yo", runif(1)))
+> expr.2 <- expression(50 + runif(1)/10^10, message("Hello There",
++     runif(1)), cat("Hello there", runif(1)), stop("Yo", runif(1)))
+> expr.3 <- expression(unitizer_sect("change comp funs", compare = identical,
++     {
++         50 + runif(1)/10^10
++         message("Hello There", runif(1))
++         cat("Hello there", runif(1))
++         stop("Yo", runif(1))
++     }))
+> expr.4 <- expression(
++   unitizer_sect(
++     "change comp funs",
++     compare = testFuns(
++       value = identical, output = all.equal, message = all.equal,
++       conditions = function(x, y) TRUE),
++       {
++         50 + runif(1)/10^10
++         message("Hello There", runif(1))
++         cat("Hello there", runif(1))
++         stop("Yo", runif(1))
++ }))
+> my.unitizer <- new("unitizer", id = 1, zero.env = new.env())
+> coi(my.unitizer <- my.unitizer + expr.1)
+> my.unitizer2 <- new("unitizer", id = 2, zero.env = new.env())
+> # make previous items into reference items
+> coi(my.unitizer2 <- my.unitizer2 + my.unitizer@items.new)
+> # now add back items to compare
+> coi(my.unitizer2 <- my.unitizer2 + expr.2)
+> my.unitizer3 <- new("unitizer", id = 3, zero.env = new.env())
+> # make previous items into reference items
+> coi(my.unitizer3 <- my.unitizer3 + my.unitizer@items.new)
+> # now add back items to compare
+> coi(my.unitizer3 <- my.unitizer3 + expr.3)
+> my.unitizer4 <- new("unitizer", id = 4, zero.env = new.env())
+> # make previous items into reference items
+> coi(my.unitizer4 <- my.unitizer4 + my.unitizer@items.new)
+> # now add back items to compare
+> coi(my.unitizer4 <- my.unitizer4 + expr.4)
+> 
+> my.unitizer2@tests.result
+     value conditions output message aborted
+[1,]  TRUE       TRUE   TRUE    TRUE    TRUE
+[2,]  TRUE      FALSE   TRUE    TRUE    TRUE
+[3,]  TRUE       TRUE   TRUE    TRUE    TRUE
+[4,]  TRUE      FALSE   TRUE    TRUE    TRUE
+> my.unitizer3@tests.result
+     value conditions output message aborted
+[1,] FALSE       TRUE   TRUE    TRUE    TRUE
+[2,]  TRUE      FALSE   TRUE    TRUE    TRUE
+[3,]  TRUE       TRUE   TRUE    TRUE    TRUE
+[4,]  TRUE      FALSE   TRUE    TRUE    TRUE
+> my.unitizer4@tests.result
+     value conditions output message aborted
+[1,] FALSE       TRUE   TRUE    TRUE    TRUE
+[2,]  TRUE       TRUE   TRUE   FALSE    TRUE
+[3,]  TRUE       TRUE  FALSE    TRUE    TRUE
+[4,]  TRUE       TRUE   TRUE   FALSE    TRUE
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  1.006   0.156   1.467 

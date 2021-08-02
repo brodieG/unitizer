@@ -170,9 +170,9 @@ At any point you may quit `unitizer` by typing `Q` at the `unitizer` prompt.  If
 * You did not make any changes to the `unitizer` (e.g. if you chose `N` at failed tests, you are keeping the reference value, so the `unitizer` is not actually changing).
 * And test evaluation took less than `getOption("unitizer.prompt.b4.quit.time")` seconds (currently 10 seconds).
 
-Note that if you quit using `quit()` or `q()` you will lose any unsaved changes.
-The same will happen if you interrupt evaluation with CTRL+C (or ESC in
-RStudio), or if you are in a debugged function and quit the browser with 'Q'.
+If you end up in the R debugger from a `unitizer` (e.g. via `debug` or
+`recover`), quitting the debugger with "Q" will force-exit you from the session
+without a chance to save any changes.
 
 ### Differences in `review` Mode
 

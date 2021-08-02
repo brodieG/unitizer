@@ -4,10 +4,14 @@
 \alias{repair_environments}
 \title{Repair Environment Chains}
 \usage{
-repair_environments(x)
+repair_environments(x, interactive.mode = interactive())
 }
 \arguments{
 \item{x}{either a unitizer, or a store id (see \code{\link{unitize}})}
+
+\item{interactive.mode}{logical(1L) whether to run in interactive mode (
+request user input when needed) or not (error if user input is required,
+e.g. if all tests do not pass).}
 }
 \value{
 a \code{unitizer} object

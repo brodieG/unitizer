@@ -1,0 +1,85 @@
+
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> # Most tests involving global are scattered all over the place, just putting a
+> # few extra ones that are very specifically about global here
+> #
+> # - "Singleton Implementation Working" -----------------------------------------
+> 
+> invisible(unitizer:::unitizerGlobal$new()) # warn
+Warning in .Object$initialize(...) :
+  Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
+> glob.first <- unitizer:::unitizerGlobal$new(set.global = TRUE)
+> try(unitizer:::unitizerGlobal$new(set.global = TRUE))
+Error in .Object$initialize(...) : 
+  Internal Error: global tracking object already exists; this should never happen; contact maintainer
+> try(unitizer:::unitizerGlobal$new())
+Error in .Object$initialize(...) : 
+  Internal Error: global tracking object already exists; this should never happen; contact maintainer
+> glob.first$release()
+> 
+> # - "Dummy Display" ------------------------------------------------------------
+> 
+> show(new("unitizerDummy"))  # not recorded
+<object not recorded>
+> 
+> # - "Disable / Enable" ---------------------------------------------------------
+> 
+> suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
+> glob$disable()
+An object of class "unitizerGlobalStatus"
+Slot "search.path":
+[1] 0
+
+Slot "options":
+[1] 0
+
+Slot "working.directory":
+[1] 0
+
+Slot "random.seed":
+[1] 0
+
+Slot "namespaces":
+[1] 0
+
+> glob$enable(c(search.path = 2L))  # warn state setting
+Warning in glob$enable(c(search.path = 2L)) :
+  State setting for `search.path` has already been disabled and cannot be re-enabled
+An object of class "unitizerGlobalStatus"
+Slot "search.path":
+[1] 0
+
+Slot "options":
+[1] 0
+
+Slot "working.directory":
+[1] 0
+
+Slot "random.seed":
+[1] 0
+
+Slot "namespaces":
+[1] 0
+
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  0.775   0.109   0.887 

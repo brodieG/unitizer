@@ -1,0 +1,89 @@
+
+R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("_helper", "init.R"))
+> 
+> # - "Ensure we get warning if we try to run in handlers" -----------------------
+> 
+> try(unitize("_helper/unitizers/trivial.R"))
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
+| 4/4 tests passed; nothing to review.
+
+> tryCatch(unitize("_helper/unitizers/trivial.R"))
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
+| 4/4 tests passed; nothing to review.
+
+> withRestarts(unitize("_helper/unitizers/trivial.R"))
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
+| 4/4 tests passed; nothing to review.
+
+> 
+> # need to figure out why running this without `try` in covr causes cover to
+> # fail with
+> # Error in aggregate.data.frame(mf[1L], mf[-1L], FUN = FUN, ...) :
+> #   no rows to aggregate
+> 
+> # - "Ensure we get error if we try to do something stupid..." ------------------
+> 
+> try(
++   withRestarts(
++     unitize("_helper/unitizers/trivial.R"), 
++     unitizerInteractiveFail = function() NULL
++   )
++ )
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Error in check_call_stack() : 
+  "unitizerInteractiveFail" restart is already defined; unitizer relies on this 
+restart to manage evaluation so unitizer will not run if it is defined outside 
+of `unitize`.  If you did not define this restart contact maintainer.
+> 
+> 
+> proc.time()
+   user  system elapsed 
+   1.72    0.14    1.97 

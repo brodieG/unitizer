@@ -1,17 +1,17 @@
 # Copyright (C) 2021 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 # Runs The Basic Stuff
@@ -39,7 +39,7 @@
 
 unitize_core <- function(
   test.files, store.ids, state, pre, post, history, interactive.mode,
-  force.update, auto.accept, mode, use.diff
+  force.update, auto.accept, mode, use.diff, show.progress
 ) {
   # - Validation / Setup -------------------------------------------------------
 
@@ -93,6 +93,13 @@ unitize_core <- function(
   if(!is.TF(force.update)) stop("Argument `force.update` must be TRUE or FALSE")
   if(!is.TF(use.diff))
     stop("Argument `use.diff` must be TRUE or FALSE")
+  if(
+    !is.TF(show.progress) &&
+    !isTRUE(show.progress %in% (seq_len(PROGRESS.MAX + 1L) - 1L))
+  )
+    stop("Argument `show.progress` must be TRUE or FALSE or in 0:", PROGRESS.MAX)
+  if(is.logical(show.progress))
+    show.progress <- show.progress * PROGRESS.MAX
 
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components
@@ -253,22 +260,7 @@ unitize_core <- function(
     # nocov end
   # - Set Global State ---------------------------------------------------------
 
-  on.exit(
-    {
-      reset_and_unshim(global)
-      meta_word_msg(
-        "Unexpectedly exited before storing unitizer; ",
-        if(length(test.files) < 2L)
-          "tests were not saved or changed." else c(
-          "if you were reviewing a unitizer changes to that unitizer were not ",
-          "saved.  Note that any unitizers you *completed* review of should ",
-          "have been saved."
-        ),
-        sep=""
-      )
-    },
-    add=TRUE
-  )
+  on.exit(reset_and_unshim(global), add=TRUE)
   if(set.shim.funs) global$shimFuns()
 
   # Set the zero state if needed; `seach.path` should be done first so that we
@@ -365,20 +357,20 @@ unitize_core <- function(
 
   # Handle pre-load data
 
-  over_print("Preloads...")
+  if(show.progress > 0) over_print("Preloads...")
   pre.load.frame <- source_files(pre, gpar.frame)
   if(!is.environment(pre.load.frame))
     stop("Argument `pre` could not be interpreted:\n", pre.load.frame)
 
   global$state("init")  # mark post pre-load state
 
-  # Maked base functions
+  # Masked base functions
 
   util.frame <- new.env(parent=pre.load.frame)
   assign("quit", unitizer_quit, envir=util.frame)
   assign("q", unitizer_quit, envir=util.frame)
 
-  over_print("Loading unitizer data...")
+  if(show.progress > 0) over_print("Loading unitizer data...")
   eval.which <- seq_along(store.ids)
   start.len <- length(eval.which)
   valid <- rep(TRUE, length(eval.which))
@@ -390,76 +382,97 @@ unitize_core <- function(
 
   # - Evaluate / Browse --------------------------------------------------------
 
-  # Parse, and use `eval.which` to determine which tests to evaluate
+  # Because of the nature of how we capture errors, we cannot wrap this entire
+  # block in a try-catch. We also must ensure that the reset and unshim business
+  # which we registered on.exit earlier is run if there is an unexpected
+  # failure, and that the user is informed this happened.  To handle expected
+  # failure cases, with use restarts, which is a horrible hack but we painted
+  # ourselves into a corner.  We could not do it, but then users would get a
+  # confusing message about unexpected failure, when it really was expected.
 
-  while(
-    (length(eval.which) || mode == identical(mode, "review")) && length(valid)
-  ) {
-    # kind of implied in `eval.which` after first loop
+  expected.exit.reason <- ""
+  upgrade.warned <- FALSE
+  withRestarts(
+    # Parse, and use `eval.which` to determine which tests to evaluate.  This
+    # loops will keep going so long as there are unitizers requiring review.
 
-    active <- intersect(eval.which, which(valid))
+    while(
+      (length(eval.which) || mode == identical(mode, "review")) && length(valid)
+    ) {
+      # kind of implied in `eval.which` after first loop
 
-    # Parse tests
+      active <- intersect(eval.which, which(valid))
 
-    tests.parsed.prev <- tests.parsed
-    if(identical(mode, "unitize")) {
-      over_print("Parsing tests...")
-      tests.parsed[active] <- lapply(
-        test.files[active],
-        function(x) {
-          over_print(paste("Parsing", relativize_path(x)))
-          parse_tests(x, comments=TRUE)
-    } ) }
-    over_print("")
+      # Parse tests
 
-    # Retrieve bookmarks so they are not blown away by re-load; make sure to
-    # mark those that have had changes to the parse data
+      tests.parsed.prev <- tests.parsed
+      if(identical(mode, "unitize")) {
+        if(show.progress > 0) over_print("Parsing tests...")
+        tests.parsed[active] <- lapply(
+          test.files[active],
+          function(x) {
+            if(show.progress > 1)
+              over_print(paste("Parsing", relativize_path(x)))
+            parse_tests(x, comments=TRUE)
+      } ) }
+      if(show.progress > 0) over_print("")
 
-    bookmarks <- lapply(
-      seq_along(unitizers), function(i) {
-        utz <- unitizers[[i]]
-        if(is(utz, "unitizer") && is(utz@bookmark, "unitizerBrowseBookmark")) {
-          # compare expressions without attributes
-          if(
-            !isTRUE(
-              all.equal(
-                as.list(tests.parsed.prev[[i]]), as.list(tests.parsed[[i]]),
-                check.attributes=FALSE
-            ) )
-          ) {
-            utz@bookmark@parse.mod <- TRUE
-          }
-          utz@bookmark
-    } } )
-    # Load / create all the unitizers; note loading envs with references to
-    # namespace envs can cause state to change so we need to record it here;
-    # also, `global` is attached to the `unitizer` here
+      # Retrieve bookmarks so they are not blown away by re-load; make sure to
+      # mark those that have had changes to the parse data
 
-    unitizers[active] <- load_unitizers(
-      store.ids[active], test.files[active], par.frame=util.frame,
-      interactive.mode=interactive.mode, mode=mode, global=global
-    )
-    global$state()
-    valid <- vapply(as.list(unitizers), is, logical(1L), "unitizer")
+      bookmarks <- lapply(
+        seq_along(unitizers), function(i) {
+          utz <- unitizers[[i]]
+          if(is(utz, "unitizer") && is(utz@bookmark, "unitizerBrowseBookmark")) {
+            # compare expressions without attributes
+            if(
+              !isTRUE(
+                all.equal(
+                  as.list(tests.parsed.prev[[i]]), as.list(tests.parsed[[i]]),
+                  check.attributes=FALSE
+              ) )
+            ) {
+              utz@bookmark@parse.mod <- TRUE
+            }
+            utz@bookmark
+      } } )
+      # Load / create all the unitizers; note loading envs with references to
+      # namespace envs can cause state to change so we need to record it here;
+      # also, `global` is attached to the `unitizer` here
 
-    # Reset the bookmarks
-
-    for(i in seq_along(unitizers))
-      if(valid[[i]]) unitizers[[i]]@bookmark <- bookmarks[[i]]
-
-    # Now evaluate, whether a unitizer is evaluated or not is a function of
-    # the slot @eval, set just above as they are loaded
-
-    if(identical(mode, "unitize"))
-      unitizers[valid] <- unitize_eval(
-        tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
-        global=global
+      unitizers[active] <- load_unitizers(
+        store.ids[active], test.files[active], par.frame=util.frame,
+        interactive.mode=interactive.mode, mode=mode, global=global,
+        show.progress=show.progress
       )
-    # Gather user input, and store tests as required.  Any unitizers that
-    # the user marked for re-evaluation will be re-evaluated in this loop
+      global$state()
 
-    interactive.fail <- FALSE
-    withRestarts(
+      # Reset the bookmarks
+
+      for(i in seq_along(unitizers))
+        if(valid[[i]]) unitizers[[i]]@bookmark <- bookmarks[[i]]
+
+      # Now evaluate, whether a unitizer is evaluated or not is a function of
+      # the slot @eval, set just above as they are loaded
+
+      if(identical(mode, "unitize"))
+        unitizers[valid] <- unitize_eval(
+          tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
+          global=global, show.progress=show.progress
+        )
+      # Check whether any unitizers were upgraded and require review.  We used
+      # to ask before upgrade, but now we just upgrade and check before we
+      # review.  This is so we can upgrade unitizers without forcing an
+      # interactive session if the class changed so folks don't have to resubmit
+      # to CRAN each time we do this.
+
+      if(!upgrade.warned) {
+        upgrade.warned <- TRUE
+        upgrade_warn(unitizers[valid], interactive.mode, global)
+      }
+      # Gather user input, and store tests as required.  Any unitizers that
+      # the user marked for re-evaluation will be re-evaluated in this loop
+
       unitizers[valid] <- unitize_browse(
         unitizers=unitizers[valid],
         mode=mode,
@@ -468,36 +481,40 @@ unitize_core <- function(
         auto.accept=auto.accept,
         history=history,
         global=global,
-        use.diff=use.diff
-      ),
-      unitizerInteractiveFail=function(e) interactive.fail <<- TRUE
-    )
-    if(interactive.fail) { # blergh, cop out
-      on.exit(NULL)
-      reset_and_unshim(global)
-      stop("Cannot proceed in non-interactive mode.")
-    }
-    # Track whether updated, valid, etc.
+        use.diff=use.diff,
+        show.progress=show.progress
+      )
+      # Track whether updated, valid, etc.
 
-    updated.new <-
-      vapply(as.list(unitizers[valid]), slot, logical(1L), "updated")
-    updated[valid][updated.new] <- TRUE
+      updated.new <-
+        vapply(as.list(unitizers[valid]), slot, logical(1L), "updated")
+      updated[valid][updated.new] <- TRUE
 
-    eval.which.valid <- which(
-      vapply(as.list(unitizers[valid]), slot, logical(1L), "eval")
-    )
-    eval.which <- which(valid)[eval.which.valid]
-    if(identical(mode, "review")) break
-  }
+      eval.which.valid <- which(
+        vapply(as.list(unitizers[valid]), slot, logical(1L), "eval")
+      )
+      eval.which <- which(valid)[eval.which.valid]
+      if(identical(mode, "review")) break
+    },
+    # Expected Failure restarts
+
+    unitizerInteractiveFail=function(e)
+      expected.exit.reason <<- "in non-interactive mode",
+    unitizerUserNoUpgrade=function(e)
+      expected.exit.reason <<- "without upgrading unitizers"
+  )
+  on.exit(NULL)              # maybe to avoid inf loop if err in reset?
+  reset_and_unshim(global)
+
+  if(nzchar(expected.exit.reason))
+    stop("Cannot proceed ", expected.exit.reason, ".")
+
   # since we reload the unitizer, we need to note whether it was updated at
   # least once since that info is lost
 
   for(i in which(updated)) unitizers[[i]]@updated.at.least.once <- TRUE
 
   # - Finalize -----------------------------------------------------------------
-
-  on.exit(NULL)
-  reset_and_unshim(global)
 
   # return env on success, char on error
 
@@ -524,7 +541,7 @@ unitize_core <- function(
 # @return a list of unitizers
 # @keywords internal
 
-unitize_eval <- function(tests.parsed, unitizers, global) {
+unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
   test.len <- length(tests.parsed)
   if(!identical(test.len, length(unitizers)))
     # nocov start
@@ -550,7 +567,7 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
       # CHECK WHETHER THIS MODE IS ENABLED, OR IS IT HANDLED INERNALLY?)
 
       tests <- new("unitizerTests") + test.dat
-      if(test.len > 1L)
+      if(test.len > 1L & show.progress > 1)
         over_print(
           paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": ")
         )
@@ -611,7 +628,7 @@ unitize_eval <- function(tests.parsed, unitizers, global) {
 
 unitize_browse <- function(
   unitizers, mode, interactive.mode, force.update, auto.accept, history, global,
-  use.diff
+  use.diff, show.progress
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -620,20 +637,16 @@ unitize_browse <- function(
     meta_word_msg("No valid unitizers available to review.")
     return(unitizers)
   }
-  over_print("Prepping Unitizers...")
+  if(show.progress > 0) over_print("Prepping Unitizers...")
 
-  hist.obj <- history_capt(history)
+  hist.obj <- history_capt(history, interactive.mode)
   on.exit(history_release(hist.obj))
 
   # Get summaries
 
   test.len <- length(unitizers)
   summaries <- summary(unitizers, silent=TRUE)
-  totals <- vapply(as.list(summaries), slot, summaries[[1L]]@totals, "totals")
-
-  # First row will be passed
-
-  to.review <- colSums(totals[-1L, , drop=FALSE]) > 0L
+  to.review <- to_review(summaries)
 
   # Determine implied review mode (all tests passed in a particular unitizer,
   # but user may still pick it to review); we got lazy and tried to leverage
@@ -660,7 +673,7 @@ unitize_browse <- function(
   eval.which <- integer(0L)
 
   if(length(auto.accept)) {
-    over_print("Applying auto-accepts...")
+    if(show.progress > 0) over_print("Applying auto-accepts...")
     for(i in seq_along(untz.browsers)) {
       auto.accepted <- 0L
       for(auto.val in auto.accept) {
@@ -682,7 +695,7 @@ unitize_browse <- function(
   # Browse, or fail depending on interactive mode
 
   reviewed <- int.error <- logical(test.len)
-  over_print("")
+  if(show.progress > 0) over_print("")
 
   # Re-used message
 
@@ -944,6 +957,15 @@ unitize_browse <- function(
   }
   unitizers
 }
+# @param x unitizerList summaries
+# @return logical same length as `x` with TRUE for each unitizer requiring
+#   review.
+
+to_review <- function(x) {
+  totals <- vapply(as.list(x), slot, x[[1L]]@totals, "totals")
+  # First row will be passed
+  colSums(totals[-1L, , drop=FALSE]) > 0L
+}
 # Check Not Running in Undesirable Environments
 #
 # Make sure not running inside withCallingHandlers / withRestarts / tryCatch
@@ -962,13 +984,7 @@ check_call_stack <- function() {
         function(x)
           is.symbol(x[[1]]) &&
           as.character(x[[1]]) %in%
-          c(
-            "withCallingHandlers",
-            # testthat added a restart in 80a81fd (2.3.1 or 2.3.0), so need
-            # a way of ignoring this for tests unitizer tests.
-            if(!isTRUE(getOption('unitizer.restarts.ok'))) "withRestarts",
-            "tryCatch"
-          )
+          c("withCallingHandlers", "withRestarts", "tryCatch")
     ) )
   )
     warning(
@@ -984,8 +1000,13 @@ check_call_stack <- function() {
       immediate.=TRUE
     )
   restarts <- computeRestarts()
-  restart.names <- vapply(restarts, `[[`, character(1L), 1L)
-  reserved.restarts <- c("unitizerInteractiveFail")
+  restart.names <- vapply(restarts, "[[", character(1L), 1L)
+  reserved.restarts <- c(
+    "unitizerInteractiveFail",   # Need to be interactive to continue
+    "unitizerUserNoUpgrade",     # User denied approval to continue
+    "unitizerEarlyExit",         # Internally used to Q from a unitizer
+    "unitizerInterrupt"          # In faux prompt to catch CTRL+C
+  )
   if(any(res.err <- reserved.restarts %in% restart.names)) {
     many <- sum(res.err) > 1L
     stop(
@@ -1082,3 +1103,5 @@ confirm_quit <- function(unitizers) {
   }
   TRUE
 }
+
+PROGRESS.MAX <- 3L
