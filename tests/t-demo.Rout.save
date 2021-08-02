@@ -1,13 +1,11 @@
 
-R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -17,13 +15,11 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> source(file.path("aammrtf", "mock.R"))
 > source(file.path("_helper", "init.R"))
 > source(file.path("_helper", "pkgs.R"))
 Install Packages
 Setup Demos
-> source(file.path("aammrtf", "mock.R"))
-> 
-> setwd(FLM)   # For whole test file to avoid temp file display
 > 
 > # Mostly makes sure the demo steps work, but since it is a convenient way of
 > # generating a unitizer with actual errors and so forth, we use it to test a few
@@ -766,4 +762,4 @@ character(0)
 > 
 > proc.time()
    user  system elapsed 
-  11.84    2.41   15.21 
+  11.66    2.41   15.16 

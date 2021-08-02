@@ -1,6 +1,6 @@
+source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 source(file.path("_helper", "init.R"))
 source(file.path("_helper", "pkgs.R"))
-source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 
 # - "custom history file" ------------------------------------------------------
 
