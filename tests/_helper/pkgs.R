@@ -49,3 +49,5 @@ FLM.TEST.DIR <- file.path(FLM, "tests", "unitizer")
 FLM.TEST.FILE <- file.path(FLM.TEST.DIR, "fastlm1.R")
 FLM.TEST.STORE <- file.path(FLM.TEST.DIR, "fastlm1.unitizer")
 
+setwd(FLM)   # For whole test file to avoid temp file display
+
