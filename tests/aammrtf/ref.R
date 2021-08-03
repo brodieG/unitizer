@@ -48,20 +48,20 @@ make_ref_obj_funs <- function(
         old.dir <- setwd(dir); on.exit(setwd(old.dir))
         saveRDS(
           x,
-          file.path(obj.dir, name, sprintf("%s.rds", i)), version=2
+          file.path(name, sprintf("%s.rds", i)), version=2
         )
       },
     txt=
       function(x) {
         old.dir <- setwd(dir); on.exit(setwd(old.dir))
-        readLines(file.path(obj.dir, name, sprintf("%s.txt", x)))
+        readLines(file.path(name, sprintf("%s.txt", x)))
       },
     txt_save=
       function(x, i) {
         old.dir <- setwd(dir); on.exit(setwd(old.dir))
         writeLines(
           x,
-          file.path(obj.dir, NAME, sprintf("%s.txt", i))
+          file.path(NAME, sprintf("%s.txt", i))
         )
       }
   )
