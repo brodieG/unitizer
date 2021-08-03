@@ -15,11 +15,11 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> source(file.path("aammrtf", "mock.R"))
 > source(file.path("_helper", "init.R"))
 > source(file.path("_helper", "pkgs.R"))
 Install Packages
 Setup Demos
-> source(file.path("aammrtf", "mock.R"))
 > 
 > old.state <- tracingState(TRUE)
 > 
@@ -395,4 +395,4 @@ untrace dummy
 > 
 > proc.time()
    user  system elapsed 
-   5.36    1.49    8.08 
+   4.83    1.32    6.59 

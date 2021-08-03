@@ -22,6 +22,7 @@ file.copy(
   file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
   file.path(tdir, "trivial.unitizer")
 )
+odir <- setwd(tdir)
 unitizer:::read_line_set_vals('N')
 out <- unitizer:::capture_output(
   try(unitize(file.path(tdir, "trivial.R"), interactive.mode=TRUE))
@@ -37,6 +38,7 @@ out[] <- lapply(out, blat_vers)
 out
 
 unitizer:::read_line_set_vals(NULL)
+setwd(odir)
 unlink(tdir, recursive=TRUE)
 
 # - "Rename" -------------------------------------------------------------------

@@ -115,9 +115,10 @@ these elements of state are not managed:
     added a test in the middle of the file that uses the random seed).
   \item Working Directory: can be set to the tests directory
     inside the package directory if the test files appear to be inside the
-    folder structure of a package.  This mimics R CMD check behavior.  If
-    test files are not inside a package directory structure then can be set
-    to the test files' directory.
+    folder structure of a package, and the test file does not appear to be
+    run as part of a check run (e.g. R CMD check,
+    `tools::testInstalledPakage`).  If test files are not inside a package
+    directory structure then can be set to the test files' directory.
   \item Search Path: can be set to what you would
     typically find in a freshly loaded vanilla R session.  This means any non
     default packages that are loaded when you run your tests are unloaded

@@ -1,6 +1,7 @@
 # Temporary dirs, etc., to cleanup on exit.  See _helper/pkgs.R for their
 # use.
 
+START.DIR <- getwd()
 TMP.DIR <- tempfile()
 TMP.LIB <- file.path(TMP.DIR, 'utz-tmp-lib')
 if(!isTRUE(dir.create(TMP.DIR)))
