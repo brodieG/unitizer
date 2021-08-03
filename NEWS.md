@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.15.9000
+
+Non-CRAN release to fix test issues under `covr` and on older R versions.
+
 ## v1.4.15
 
 * Test suite switched to `aammrtf`, removing suggests dependency to `testthat`.
