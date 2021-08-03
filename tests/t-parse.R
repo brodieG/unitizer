@@ -1,3 +1,4 @@
+source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 source(file.path("_helper", "init.R"))
 
 txt <- "# This is an early comment\n\n  hello <- 25\n\n  # multi\n  # line\n  # comment\n\n  matrix(1:9, 3)  # and another!\n\n  unitizer_sect(\"here is a section\", {\n    # test that were not crazy\n\n    1 + 1 == 2   # TRUE hopefully\n\n    # Still not crazy\n\n    2 * 2 == 2 ^ 2\n    # Tada\n  } )\n  sample(1:10)\n\n  # and this comment belongs to whom?\n\n  runif(20)\n  print(\"woo\")  # and I?\n  "
@@ -245,9 +246,20 @@ any(
 
 # - "NULL, constants, and new tokens" ------------------------------------------
 
+# These were added with 3.6.3?  Previously, it seems that the equal assign did
+# not generate a master expression to wrap all the pieces, which means these
+# tests just don't work because all the eq_assign at the top level end up with
+# the same parent and the parser gets confused.
+
 txt <- c("a = 2", "# ho how", "b = 3", "", "b + a  # oh here", 
     "", "b + # oh there", "a   # bear", "", "NULL")
-unitizer:::comm_extract(unitizer:::parse_with_comments(text = txt))
+if(getRversion() >= "3.6.3") {
+  identical(
+    unitizer:::comm_extract(unitizer:::parse_with_comments(text = txt)),
+    rds('parse-eq')
+  )
+} else TRUE
+
 with.const <- unitizer:::parse_with_comments(text = "3 # comment on const")
 unitizer:::symb_mark_rem(with.const[[1]])
 
