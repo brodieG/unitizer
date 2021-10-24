@@ -212,6 +212,12 @@ unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N",
 untz7a <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
 attr(untz7a, "test.file") <- basename(attr(untz7a, "test.file"))
 attr(untz7a, "store.id") <- basename(attr(untz7a, "store.id"))
+path <- attr(untz7a, "test.file")
+path
+getwd()
+(path.norm <- unitizer:::normalize_path(path, mustWork=FALSE))
+(rel.path <- unitizer:::relativize_path(path.norm, wd=NULL, only.if.shorter=TRUE))
+(pkg.dir <- unitizer:::get_package_dir(path.norm))
 untz7a
 
 # - "review dir" ---------------------------------------------------------------
