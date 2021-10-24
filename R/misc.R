@@ -213,10 +213,17 @@ history_write <- function(hist.con, data) {
 ## Variation on 'normalizePath' with \code{winslash} Pre-Specified, additionally
 ## will only return the normalized path if the path actually exists, if not it
 ## just returns the input.
+##
+## Note, for a file that doesn't exist, normalizePath may (windows?) or not (OS
+## X) prepend the working directory.
+##
+## @param exists check whether the expanded path actually exists, and if it does
+##   not return the original path.  Set to TRUE for consistent behavior across
+##   platforms.
 
-normalize_path <- function(path, mustWork=NA) {
+normalize_path <- function(path, mustWork=NA, exists=FALSE) {
   res <- normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
-  if(isTRUE(mustWork)) {
+  if(isTRUE(mustWork) || exists) {
     res.exists <- file.exists(res)
     res[!res.exists] <- path[!res.exists]
   }
@@ -244,7 +251,7 @@ normalize_path <- function(path, mustWork=NA) {
 #   resulting \code{path} is shorter than the input
 # @keywords internal
 
-relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
+relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE, exists=FALSE) {
   if(!is.character(path) || any(is.na(path)))
     stop("Argument `path` must be character and may not contain NAs")
   if(!is.TF(only.if.shorter))
@@ -255,12 +262,12 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   )
     stop("Argument `wd` must be NULL or a reference of to a directory")
   if(is.null(wd)) wd <- getwd()
-  wd <- try(normalize_path(wd, mustWork=TRUE), silent=TRUE)
+  wd <- try(normalize_path(wd, mustWork=TRUE, exists=exists), silent=TRUE)
   res <- if(
     !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
     identical(length(.Platform$file.sep), 1L)
   ) {
-    norm <- normalize_path(path, mustWork=FALSE)
+    norm <- normalize_path(path, mustWork=FALSE, exists=exists)
     to.norm <- TRUE  # used to be only for existing files, but can't recall why
 
     # Break up into pieces; we re-append "" to make sure the root shows up if
@@ -302,8 +309,8 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   } else res
 }
 pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
-  path.norm <- normalize_path(path, mustWork=FALSE)
-  rel.path <- relativize_path(path.norm, wd, only.if.shorter)
+  path.norm <- normalize_path(path, mustWork=FALSE, exists=TRUE)
+  rel.path <- relativize_path(path.norm, wd, only.if.shorter, exists=TRUE)
   pkg.dir <- get_package_dir(path.norm)
   if(
     !length(pkg.dir) ||
