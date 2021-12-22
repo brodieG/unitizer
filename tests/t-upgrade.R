@@ -36,7 +36,35 @@ out <- unitizer:::capture_output(
 )
 out[] <- lapply(out, blat_vers)
 out
+unitizer:::read_line_set_vals(NULL)
+setwd(odir)
+unlink(tdir, recursive=TRUE)
 
+# - Upgrade Multiple Unitizers Unitize -----------------------------------------
+
+tdir <- tempfile()
+dir.create(tdir)
+dir.create(file.path(tdir, "trivial1.unitizer"))
+dir.create(file.path(tdir, "trivial2.unitizer"))
+file.copy(
+  file.path("_helper", "unitizers", "trivial.R"),
+  file.path(tdir, c("trivial1.R", "trivial2.R"))
+)
+file.copy(
+  file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
+  file.path(tdir, "trivial1.unitizer")
+)
+file.copy(
+  file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
+  file.path(tdir, "trivial2.unitizer")
+)
+odir <- setwd(tdir)
+unitizer:::read_line_set_vals(c('Y','Q'))
+out <- unitizer:::capture_output(
+  unitize_dir(tdir, interactive.mode=TRUE)
+)
+out[] <- lapply(out, blat_vers)
+out
 unitizer:::read_line_set_vals(NULL)
 setwd(odir)
 unlink(tdir, recursive=TRUE)
