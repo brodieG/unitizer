@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R Under development (unstable) (2021-11-21 r81221) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
@@ -140,7 +140,80 @@ Warning in load_unitizers(store.ids[active], test.files[active], par.frame = uti
 | Proceed?
 
 | No changes recorded.
+> unitizer:::read_line_set_vals(NULL)
+> setwd(odir)
+> unlink(tdir, recursive=TRUE)
 > 
+> # - Upgrade Multiple Unitizers Unitize -----------------------------------------
+> 
+> tdir <- tempfile()
+> dir.create(tdir)
+> dir.create(file.path(tdir, "trivial1.unitizer"))
+> dir.create(file.path(tdir, "trivial2.unitizer"))
+> file.copy(
++   file.path("_helper", "unitizers", "trivial.R"),
++   file.path(tdir, c("trivial1.R", "trivial2.R"))
++ )
+[1] TRUE TRUE
+> file.copy(
++   file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
++   file.path(tdir, "trivial1.unitizer")
++ )
+[1] TRUE
+> file.copy(
++   file.path("_helper", "unitizers", "trivial.unitizer.0.4.2", "data.rds"),
++   file.path(tdir, "trivial2.unitizer")
++ )
+[1] TRUE
+> odir <- setwd(tdir)
+> unitizer:::read_line_set_vals(c('Y','Q'))
+> out <- unitizer:::capture_output(
++   unitize_dir(tdir, interactive.mode=TRUE)
++ )
+> out[] <- lapply(out, blat_vers)
+> out
+- Output -----------------------------------------------------------------------
+
+
+| 
+| The following unitizers will be upgraded to version '<version>':
+| 
+| - trivial1.unitizer (at '<version>')
+| - trivial2.unitizer (at '<version>')
+
+unitizer> Y
+
+| Summary of files in common directory '.':
+| 
+|                 Pass Fail  New
+| *1. trivial1.R     1    -    3
+| *2. trivial2.R     1    -    3
+| ..............................
+|                    2    -    6
+| Legend:
+| * `unitizer` requires review
+
+| Type number of unitizer to review, 'A' to review all that require review
+
+unitizer> Q
+
+- Message ----------------------------------------------------------------------
+
+Warning in addSlot(object, "cons", NULL) :
+  Slot `cons` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "jump.to.test", 0L) :
+  Slot `jump.to.test` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "cons", NULL) :
+  Slot `cons` does not exist in current version of `unitizer` so not added to object.
+Warning in addSlot(object, "jump.to.test", 0L) :
+  Slot `jump.to.test` does not exist in current version of `unitizer` so not added to object.
+Warning in load_unitizers(store.ids[active], test.files[active], par.frame = util.frame,  :
+  Upgraded test file does not match original test file ('NA' vs 'trivial1.R').
+Warning in load_unitizers(store.ids[active], test.files[active], par.frame = util.frame,  :
+  Upgraded test file does not match original test file ('NA' vs 'trivial2.R').
+| unitizer upgrades are IRREVERSIBLE and not backwards compatible. 
+| Proceed?
+
 > unitizer:::read_line_set_vals(NULL)
 > setwd(odir)
 > unlink(tdir, recursive=TRUE)
@@ -181,6 +254,3 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 [1] TRUE
 > 
 > 
-> proc.time()
-   user  system elapsed 
-   2.33    0.16    2.58 
