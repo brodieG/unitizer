@@ -1,5 +1,13 @@
 # `unitizer` NEWS
 
+## v1.4.16
+
+* [#285](https://github.com/brodieG/unitizer/issues/285): Relax condition call
+  comparison to allow for variability in call constructions.
+* [#283](https://github.com/brodieG/unitizer/issues/283): Multi-unitizer upgrade
+  regression introduced in 1.4.15.
+* Address CRAN failures due to path inconsistencies on Windows machines.
+
 ## v1.4.15.9000
 
 Non-CRAN release to fix test issues under `covr` and on older R versions.
