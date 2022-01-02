@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
+R Under development (unstable) (2021-11-21 r81221) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -1160,6 +1162,15 @@ unitizer> Q
 
 > attr(untz7a, "test.file") <- basename(attr(untz7a, "test.file"))
 > attr(untz7a, "store.id") <- basename(attr(untz7a, "store.id"))
+> path <- attr(untz7a, "test.file")
+> path
+[1] "fastlm1.R"
+> (path.norm <- unitizer:::normalize_path(path, mustWork=FALSE))
+[1] "fastlm1.R"
+> (rel.path <- unitizer:::relativize_path(path.norm, wd=NULL, only.if.shorter=TRUE))
+[1] "fastlm1.R"
+> (pkg.dir <- unitizer:::get_package_dir(path.norm))
+[1] "."
 > untz7a
 Test File: fastlm1.R
 Store ID: fastlm1.unitizer
@@ -2954,6 +2965,3 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
   Cannot proceed with invalid or out of date unitizers.  You must either fix or remove them.
 > unitizer:::read_line_set_vals(NULL)
 > 
-> proc.time()
-   user  system elapsed 
-   23.3     3.6    29.3 
