@@ -181,7 +181,7 @@ all.equal.condition <- function(target, current, ...) {
     !isTRUE(all.equal(conditionMessage(target), conditionMessage(current)))
   ) {
     err.msg <- paste0(type.targ, " condition messages do not match")
-  } else if(!isTRUE(all.equal(conditionCall(target), conditionCall(current)))) {
+  } else if(!isTRUE(compare_condition_calls(target, current))) {
     err.msg <- paste0(type.targ, " condition calls do not match")
   }
   if(length(err.msg) && (target.printed || current.printed)) {
@@ -196,6 +196,40 @@ all.equal.condition <- function(target, current, ...) {
   if(length(err.msg)) return(err.msg)
   TRUE
 }
+## Compare Two Calls Generously
+##
+## Designed to minimize false positive errors caused by instability in C level
+## errors issued whether the code is byte-compiled or not (e.g. when run under
+## `covr`, or iterating at the prompt).
+
+compare_condition_calls <- function(target, current) {
+  tar.c <- conditionCall(target)
+  cur.c <- conditionCall(current)
+  if(!is.null(tar.c) && is.null(cur.c)) {
+    # Only check the things that are present in both
+    tar.l <- as.list(tar.c)
+    cur.l <- as.list(cur.c)
+    if(length(tar.l) && length(tar.c)) {
+      if(!isTRUE(all.equal(tar.l[[1]], cur.l[[1]]))) {
+        # Function different
+        FALSE
+      } else {
+        # compare comon names
+        tar.n <- names(tar.l)
+        cur.n <- names(cur.n)
+        common.n <- intersect(tar.n, cur.n)
+        common.n[nzchar(common.n)]
+        isTRUE(all.equal(tar.l[common.n], cur.l[common.n]))
+      }
+    } else {
+      TRUE
+    }
+  } else {
+    # If one of the calls is NULL, let it match
+    TRUE
+  }
+}
+
 #' Prints A list of Conditions
 #'
 #' S4 method for \code{\link{conditionList}} objects.
