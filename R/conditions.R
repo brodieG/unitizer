@@ -205,21 +205,23 @@ all.equal.condition <- function(target, current, ...) {
 compare_condition_calls <- function(target, current) {
   tar.c <- conditionCall(target)
   cur.c <- conditionCall(current)
-  if(!is.null(tar.c) && is.null(cur.c)) {
+  if(!is.null(tar.c) && !is.null(cur.c)) {
     # Only check the things that are present in both
     tar.l <- as.list(tar.c)
     cur.l <- as.list(cur.c)
-    if(length(tar.l) && length(tar.c)) {
+    if(length(tar.l) && length(cur.l)) {
       if(!isTRUE(all.equal(tar.l[[1]], cur.l[[1]]))) {
         # Function different
         FALSE
       } else {
-        # compare comon names
+        # compare comon names.  We don't compare unnamed arguments, in theory we
+        # should by using some kind of match.call style arrangement.
         tar.n <- names(tar.l)
-        cur.n <- names(cur.n)
+        cur.n <- names(cur.l)
         common.n <- intersect(tar.n, cur.n)
-        common.n[nzchar(common.n)]
-        isTRUE(all.equal(tar.l[common.n], cur.l[common.n]))
+        common.n <- common.n[nzchar(common.n)]
+        if(length(common.n)) isTRUE(all.equal(tar.l[common.n], cur.l[common.n]))
+        else TRUE
       }
     } else {
       TRUE
