@@ -3,10 +3,13 @@
 ## v1.4.16
 
 * [#285](https://github.com/brodieG/unitizer/issues/285): Relax condition call
-  comparison to allow for variability in call constructions.
+* [#284](https://github.com/brodieG/unitizer/issues/284): Handle CTRL+C
+  interrupts while multi-line editing.
 * [#283](https://github.com/brodieG/unitizer/issues/283): Multi-unitizer upgrade
   regression introduced in 1.4.15.
 * Address CRAN failures due to path inconsistencies on Windows machines.
+* [#279](https://github.com/brodieG/unitizer/issues/279): Multi-line input
+  parsing works in non-English locales.
 
 ## v1.4.15.9000
 
