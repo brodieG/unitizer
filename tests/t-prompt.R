@@ -52,6 +52,13 @@ unitizer:::faux_prompt()
 unitizer:::read_line_set_vals(c("\x03", "2 + ", "1"))
 unitizer:::faux_prompt()
 
+## Test that changing language doesn't affect partial parsing
+lang <- Sys.getenv("LANGUAGE", unset=NA)
+Sys.setenv("LANGUAGE"="fr")
+unitizer:::read_line_set_vals(c("1 +", "1"))
+unitizer:::faux_prompt(prompt = "> ", continue = "+ ")
+if(is.na(lang)) Sys.unsetenv("LANGUAGE") else Sys.setenv("LANGUAGE"=lang)
+
 # - "unitizer prompt" ----------------------------------------------------------
 
 # Some of this needs to be done outside of testthat due to sinking
