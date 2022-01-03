@@ -30,6 +30,11 @@ faux_prompt <- function(
   reset <- FALSE
   old.opt <- options(warn=1L)
   on.exit(options(old.opt))
+  lang <- Sys.getenv("LANGUAGE", unset=NA)
+  Sys.setenv("LANGUAGE"="en")  # needed for "unexpected end of input"
+  on.exit(
+    if(is.na(lang)) Sys.unsetenv("LANGUAGE") else Sys.setenv("LANGUAGE"=lang)
+  )
   repeat {
     withRestarts(
       withCallingHandlers(
@@ -47,7 +52,6 @@ faux_prompt <- function(
             parsed <- parse(text=res)
           },
           error=function(e) {
-            ## Fix me: won't work in non-English locales?
             if(!isTRUE(grepl(" unexpected end of input\n", conditionMessage(e)))) {
               e$call <- if(nzchar(res)) res else NULL
               stop(e)
