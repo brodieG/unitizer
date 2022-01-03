@@ -122,12 +122,23 @@ unitizer_prompt <- function(
   repeat {
     prompt.txt <- sprintf("%s> ", "unitizer")
 
-    val <- tryCatch(
-      faux_prompt(prompt.txt),
-      simpleError=function(e) e
+    interrupted <- FALSE
+    withRestarts(
+      withCallingHandlers(
+        val <- tryCatch(
+          faux_prompt(prompt.txt),
+          simpleError=function(e) e
+        ),
+        interrupt=function(e) invokeRestart("unitizerInterrupt")
+      ),
+      unitizerInterrupt=function(e) interrupted <<- TRUE
     )
     on.exit(NULL)
 
+    if(interrupted) {
+      cat("\n")
+      return(character())
+    }
     if(inherits(val, "simpleError")) {
       cond.chr <- as.character(val)
       cat(cond.chr, file=stderr())
