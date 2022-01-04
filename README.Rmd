@@ -42,7 +42,7 @@ Thank you to:
 * R Core for developing and maintaining such a wonderfully language.
 * CRAN maintainers, for patiently shepherding packages onto CRAN and maintaining
   the repository, and Uwe Ligges in particular for maintaining
-  [Winbuilder](http://win-builder.r-project.org/).
+  [Winbuilder](https://win-builder.r-project.org/).
 * [Gábor Csárdi](https://github.com/gaborcsardi) for
   [crayon](https://cran.r-project.org/package=crayon) through which we can
   add a new dimension to the R experience.

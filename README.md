@@ -4,8 +4,8 @@
 rmarkdown::render('README.Rmd', output_format=rmarkdown::md_document())
 
 -->
-unitizeR - Interactive R Unit Tests
-===================================
+
+# unitizeR - Interactive R Unit Tests
 
 [![R build
 status](https://github.com/brodieG/unitizer/workflows/R-CMD-check/badge.svg)](https://github.com/brodieG/unitizer/actions)
@@ -17,8 +17,7 @@ direct/recursive](https://tinyverse.netlify.app/badge/unitizer)](https://tinyver
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
-TL;DR
------
+## TL;DR
 
 `unitizer` simplifies creation, review, and debugging of tests in R. It
 automatically stores R expressions and the values they produce, so
@@ -44,8 +43,7 @@ Or check out the
 [screencast](http://htmlpreview.github.io/?https://github.com/brodieG/unitizer/blob/rc/extra/gifshow.html)
 to see `unitizer` in action.
 
-Why Another Testing Framework?
-------------------------------
+## Why Another Testing Framework?
 
 ### Automated Test Formalization
 
@@ -86,8 +84,7 @@ painstakingly updating many tests?
 The diffs for the failed tests let you immediately confirm only what you
 intended changed. Then you can update each test with a single keystroke.
 
-Usage
------
+## Usage
 
 `unitizer` stores R expressions and the result of evaluating them so
 that it can detect code regressions. This is akin to saving test output
@@ -99,7 +96,7 @@ review them.
 To use `unitizer`:
 
 -   Write test expressions as you would when informally testing code on
-    the command line, and save them to a file (e.g. “my\_file\_name.R”).
+    the command line, and save them to a file (e.g. “my\_file\_name.R”).
 -   Run `unitize("my_file_name.R")` and follow the prompts.
 -   Continue developing your package.
 -   Re-run `unitize("my_file_name.R")`; if any tests fail you will be
@@ -107,8 +104,7 @@ To use `unitizer`:
 
 `unitizer` can run in a non-interactive mode for use with `R CMD check`.
 
-Documentation
--------------
+## Documentation
 
 -   `help(package="unitizer")`, in particular `?unitize`
 -   `demo(package="unitizer")`
@@ -116,8 +112,7 @@ Documentation
     for a list of vignettes, or skip straight to the [Introduction
     vignette](https://cran.r-project.org/package=unitizer/vignettes/u1_intro.html)
 
-Related Packages
-----------------
+## Related Packages
 
 -   [`testthat`](https://cran.r-project.org/package=testthat).
 -   [`tinytest`](https://cran.r-project.org/package=tinytest), which is
@@ -125,15 +120,14 @@ Related Packages
     [`diffobj`](https://cran.r-project.org/package=diffobj) diffs.
 -   [`RUnit`](https://cran.r-project.org/package=RUnit).
 
-Acknowledgments
----------------
+## Acknowledgments
 
 Thank you to:
 
 -   R Core for developing and maintaining such a wonderfully language.
 -   CRAN maintainers, for patiently shepherding packages onto CRAN and
     maintaining the repository, and Uwe Ligges in particular for
-    maintaining [Winbuilder](http://win-builder.r-project.org/).
+    maintaining [Winbuilder](https://win-builder.r-project.org/).
 -   [Gábor Csárdi](https://github.com/gaborcsardi) for
     [crayon](https://cran.r-project.org/package=crayon) through which we
     can add a new dimension to the R experience.
@@ -165,7 +159,6 @@ Thank you to:
 -   [Free Software Foundation](https://www.fsf.org/) for developing the
     GPL license and promotion of the free software movement.
 
-About the Author
-----------------
+## About the Author
 
 Brodie Gaslam is a hobbyist programmer based in the US East Coast.
