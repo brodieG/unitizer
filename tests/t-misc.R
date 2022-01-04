@@ -328,6 +328,11 @@ unitizer:::relativize_path(
 # expect_equal(unitizer:::relativize_path("/a/b/c/d/e/x.txt"),
 #     "/a/b/c/d/e/x.txt")
 unitizer:::relativize_path("/a/b/c/d/e/x.txt", exists = TRUE)
+unitizer:::relativize_path(
+   "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
+  )
+.Platform$file.sep
+getwd()
 all.equal(
   unitizer:::relativize_path(
    "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
