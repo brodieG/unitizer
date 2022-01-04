@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-01-01 r81419) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -20,9 +20,9 @@ Type 'q()' to quit R.
 > source(file.path("_helper", "init.R"))
 > source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > 
-> test.file <- file.path(
-+   "_helper", "ref-objs", "translate", "testthat", "test-translate2.R"
-+ )
+> test.file.dir <- file.path("_helper", "ref-objs", "translate")
+> test.file <- file.path(test.file.dir, "testthat", "test-translate2.R")
+> test.file.min <- file.path(test.file.dir, "testthat2", "test-translate-min.R")
 > target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
 > target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
 > 
@@ -103,10 +103,9 @@ NULL
 > unlink(target.dir, recursive = TRUE)
 > 
 > target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
-> target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
+> target.dir <- file.path(target.dir.base, "_helper", "translate", "unitizer")
 > 
 > test.dir <- file.path("_helper", "ref-objs", "translate", "testthat")
-> target.dir <- file.path(target.dir.base, "_helper", "translate", "unitizer")
 > 
 > # - "translate a dir" ----------------------------------------------------------
 > 
@@ -154,7 +153,50 @@ NULL
 + ) ) )
 [1] TRUE
 > 
+> # - minimal --------------------------------------------------------------------
 > 
-> proc.time()
-   user  system elapsed 
-  2.598   0.186   2.887 
+> # to test parameters
+> 
+> writeLines(
++   readLines(
++     testthat_translate_file(
++       test.file.min, target.dir, prompt = "never", interactive.mode = TRUE,
++       unitize = FALSE
++ ) ) )
+# Minimal translation
+# test_that("simple tests", {
+#     expect_equal(fun0(a), 1:10)
+# })
+unitizer_sect("simple tests", {
+    # expect_equal(fun0(a), 1:10)
+    fun0(a)
+})
+> writeLines(
++   readLines(
++     testthat_translate_file(
++       test.file.min, target.dir, prompt = "never", interactive.mode = TRUE,
++       use.sects = FALSE, unitize = FALSE
++ ) ) )
+# Minimal translation
+# test_that("simple tests", {
+#     expect_equal(fun0(a), 1:10)
+# })
+# - "simple tests" -------------------------------------------------------------
+
+
+# expect_equal(fun0(a), 1:10)
+fun0(a)
+> writeLines(
++   readLines(
++     testthat_translate_file(
++       test.file.min, target.dir, prompt = "never", interactive.mode = TRUE,
++       use.sects = FALSE, keep.testthat.call = FALSE, unitize = FALSE
++ ) ) )
+# Minimal translation
+# - "simple tests" -------------------------------------------------------------
+
+
+fun0(a)
+> 
+> 
+> 
