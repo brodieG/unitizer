@@ -618,31 +618,6 @@ testthat_translate_name <- function(
     )
   file.path(target.dir, base.new)
 }
-# Determine if a Function Meets Translatable Profile
-
-testthat_translatable_fun <- function(x) {
-  # Look at non default formals
-
-  if(!is.function(x)) return(FALSE)
-  frms <- formals(x)
-  frms.missing <- logical(length(frms))
-  for(i in seq_along(frms)) {
-    frm <- frms[[i]]  # required for `missing`
-    if(missing(frm)) frms.missing[[i]] <- TRUE
-  }
-  # Get names of non defaults
-
-  val.names <- names(frms)[names(frms) != "..." & frms.missing]
-
-  # Determine whether we want to convert
-
-  if(!"object" %in% val.names) return(FALSE)
-  if(length(val.names) == 1L) return(TRUE)
-  val.names.extra <- val.names[val.names != "object"]
-  if(any(c("expected", "regexp") %in% val.names.extra))
-    return(TRUE)
-  return(FALSE)
-}
 # Pull out parameter from call
 #
 # @param target.params parameters required in the matched call
@@ -671,18 +646,6 @@ testthat_match_call <- function(call, fun, target.params) {
   }
   list(call=call.matched, msg=fail.msg)
 }
-# Confirm that `testthat` Is Attached
-#
-# Would normally do this via NAMESPACE, but do not want to introduce an
-# explicit dependency to \code{testthat} since it is only required for the
-# conversion to \code{unitizer}
-
-is_testthat_attached <- function() {
-  if(inherits(try(as.environment("package:testthat"), silent=TRUE), "try-error"))
-    stop("Package `testthat` must be loaded and attached to search path")
-  TRUE
-}
-
 # Signature of translatable funs
 
 tt_trans_funs <- list(
