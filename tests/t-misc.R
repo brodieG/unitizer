@@ -328,14 +328,10 @@ unitizer:::relativize_path(
 # expect_equal(unitizer:::relativize_path("/a/b/c/d/e/x.txt"),
 #     "/a/b/c/d/e/x.txt")
 unitizer:::relativize_path("/a/b/c/d/e/x.txt", exists = TRUE)
-unitizer:::relativize_path(
-   "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
-  )
-.Platform$file.sep
-getwd()
+wd <- sub("^[a-zA-Z]:", "", getwd())
 all.equal(
   unitizer:::relativize_path(
-   "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
+    "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
   ),
   do.call(
     file.path,
@@ -343,8 +339,7 @@ all.equal(
       as.list(
         rep(
           "..",
-          length(unlist(strsplit(getwd(), .Platform$file.sep, fixed = TRUE))) -
-          1L
+          length(unlist(strsplit(wd, .Platform$file.sep, fixed = TRUE))) - 1L
       ) ),
       list("a/b/c/d/e/x.txt")
 ) ) )
