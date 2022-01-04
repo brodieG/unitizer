@@ -214,9 +214,9 @@ attr(untz7a, "test.file") <- basename(attr(untz7a, "test.file"))
 attr(untz7a, "store.id") <- basename(attr(untz7a, "store.id"))
 path <- attr(untz7a, "test.file")
 path
-(path.norm <- unitizer:::normalize_path(path, mustWork=FALSE))
-(rel.path <- unitizer:::relativize_path(path.norm, wd=NULL, only.if.shorter=TRUE))
-(pkg.dir <- unitizer:::get_package_dir(path.norm))
+(path.norm <- unitizer:::normalize_path(path, mustWork=FALSE, exists=TRUE))
+(rel.path <- unitizer:::relativize_path(path.norm, wd=NULL, only.if.shorter=TRUE, exists=TRUE))
+(pkg.dir <- unitizer:::get_package_dir(path.norm, exists=TRUE))
 untz7a
 
 # - "review dir" ---------------------------------------------------------------

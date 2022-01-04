@@ -486,12 +486,12 @@ is_package_dir <- function(name, has.tests=FALSE) {
 
   TRUE
 }
-get_package_dir <- function(name=getwd(), has.tests=FALSE) {
+get_package_dir <- function(name=getwd(), has.tests=FALSE, exists=FALSE) {
   stopifnot(
     is.character(name), !any(is.na(name)), is.TF(has.tests),
     as.logical(length(name))
   )
-  name <- normalize_path(name, mustWork=FALSE)
+  name <- normalize_path(name, mustWork=FALSE, exists=exists)
   if(length(name) > 1L) name <- attr(unique_path(name), "common_dir")
   is.package <- FALSE
   prev.dir <- par.dir <- name
