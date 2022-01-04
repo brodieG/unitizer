@@ -532,8 +532,22 @@ again
 > #     "/a/b/c/d/e/x.txt")
 > unitizer:::relativize_path("/a/b/c/d/e/x.txt", exists = TRUE)
 [1] "/a/b/c/d/e/x.txt"
-> unitizer:::relativize_path("/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists=TRUE)
-[1] "../../../../../a/b/c/d/e/x.txt"
+> all.equal(
++   unitizer:::relativize_path(
++    "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
++   ),
++   do.call(
++     file.path,
++     c(
++       as.list(
++         rep(
++           "..",
++           length(unlist(strsplit(getwd(), .Platform$file.sep, fixed = TRUE))) -
++           1L
++       ) ),
++       list("a/b/c/d/e/x.txt")
++ ) ) )
+[1] TRUE
 > 
 > # - "path_clean" ---------------------------------------------------------------
 > 
