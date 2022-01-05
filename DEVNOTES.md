@@ -19,6 +19,9 @@ So fix here is to change normalize_path to test for file, and if not, return the
 unchanged file (and hope for the best?).  Indeed we confirm that non-existent
 files on windows are still normalized to the working directory.
 
+Additional complexity that on windows (someetimes?) we can expect drive letters,
+so it's not always clear what is an absolute path.
+
 ### Old R Versions
 
 We got it working on 3.5, but there are still failures on 3.3.  Should go back

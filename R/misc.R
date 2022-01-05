@@ -245,6 +245,17 @@ normalize_path <- function(path, mustWork=NA, exists=FALSE) {
 #     directory attached as an attribute
 # }
 #
+# There are many types of windows paths that may not be handled correctly.
+#
+# https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats
+#
+# A big problem is if we try to combine a drive letter path "d:/a/b/c" with an
+# absolute path relative to the drive "/a/b/c".  In theory the code isn't
+# difficult; we could analyze the two paths and per windows rules we know we can
+# just add the working directory letter to the path, but then the testing of it
+# becomes annoying (essentially need to reproduce this functions code in the
+# test proper, which becomes silly).  So we're just not testing that scenario.
+#
 # @param wd NULL or character(1L) resolving to a directory, if NULL will be
 #   resolved to \code{getwd}; used primarily for testing
 # @param only.if.shorter logical(1L) whether to relativize only if the
