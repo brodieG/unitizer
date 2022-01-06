@@ -1,13 +1,11 @@
 
-R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-01-01 r81419) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -17,8 +15,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > source(file.path("_helper", "init.R"))
+> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > 
 > txt <- "# This is an early comment\n\n  hello <- 25\n\n  # multi\n  # line\n  # comment\n\n  matrix(1:9, 3)  # and another!\n\n  unitizer_sect(\"here is a section\", {\n    # test that were not crazy\n\n    1 + 1 == 2   # TRUE hopefully\n\n    # Still not crazy\n\n    2 * 2 == 2 ^ 2\n    # Tada\n  } )\n  sample(1:10)\n\n  # and this comment belongs to whom?\n\n  runif(20)\n  print(\"woo\")  # and I?\n  "
 > all <- unitizer:::parse_dat_get(text = txt)
@@ -1272,4 +1270,4 @@ Error in parse(text = text, keep.source = FALSE) :
 > 
 > proc.time()
    user  system elapsed 
-  1.095   0.136   1.370 
+  1.103   0.115   1.228 

@@ -1,5 +1,5 @@
-source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 source(file.path("_helper", "init.R"))
+source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 
 txt <- "# This is an early comment\n\n  hello <- 25\n\n  # multi\n  # line\n  # comment\n\n  matrix(1:9, 3)  # and another!\n\n  unitizer_sect(\"here is a section\", {\n    # test that were not crazy\n\n    1 + 1 == 2   # TRUE hopefully\n\n    # Still not crazy\n\n    2 * 2 == 2 ^ 2\n    # Tada\n  } )\n  sample(1:10)\n\n  # and this comment belongs to whom?\n\n  runif(20)\n  print(\"woo\")  # and I?\n  "
 all <- unitizer:::parse_dat_get(text = txt)

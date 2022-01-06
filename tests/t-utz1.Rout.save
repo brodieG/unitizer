@@ -7,8 +7,6 @@ R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
 
-  Natural language support but running in an English locale
-
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
@@ -17,8 +15,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > source(file.path("_helper", "init.R"))
+> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > source(file.path("_helper", "pkgs.R"))
 Install Packages
 Setup Demos
@@ -2965,3 +2963,6 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
   Cannot proceed with invalid or out of date unitizers.  You must either fix or remove them.
 > unitizer:::read_line_set_vals(NULL)
 > 
+> proc.time()
+   user  system elapsed 
+  23.65    3.58   28.88 
