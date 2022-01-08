@@ -9,7 +9,7 @@ rmarkdown::render('README.Rmd', output_format=rmarkdown::md_document())
 
 [![R build
 status](https://github.com/brodieG/unitizer/workflows/R-CMD-check/badge.svg)](https://github.com/brodieG/unitizer/actions)
-[![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=master)](https://app.codecov.io/gh/brodieG/unitizer?branch=master)
+[![](https://codecov.io/github/brodieG/unitizer/coverage.svg?branch=rc)](https://app.codecov.io/gh/brodieG/unitizer?branch=rc)
 [![](http://www.r-pkg.org/badges/version/unitizer)](https://cran.r-project.org/package=unitizer)
 [![Dependencies
 direct/recursive](https://tinyverse.netlify.app/badge/unitizer)](https://tinyverse.netlify.app/)

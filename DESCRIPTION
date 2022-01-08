@@ -71,7 +71,7 @@ Collate:
     'translate.R'
     'unitize.R'
     'unitize.core.R'
-    'unitizer-package.r'
+    'unitizer-package.R'
     'unitizer.add.R'
     'upgrade.R'
 RoxygenNote: 7.1.1
