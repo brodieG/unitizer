@@ -87,6 +87,8 @@ jobs:
           path: check
 
       - name: Test coverage
-        if: github.ref == 'refs/heads/master'
+        # Only run cov on rc so that failure due to small coverage reductions
+        # don't cause the master branch to show as a CI fail.
+        if: github.ref == 'refs/heads/rc'
         run: covr::codecov()
         shell: Rscript {0}
