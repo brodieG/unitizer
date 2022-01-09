@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Brodie Gaslam
+# Copyright (C) 2022 Brodie Gaslam
 #
 # This file is part of "unitizer"
 #
@@ -153,7 +153,7 @@ load_unitizers <- function(
   for(i in valid.idx) {
     unitizers[[i]]@id <- norm_store_id(store.ids[[i]])
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
-    unitizers[[i]]@best.name <- chr.ids[valid.idx]
+    unitizers[[i]]@best.name <- chr.ids[i]
     unitizers[[i]]@show.progress <- show.progress
 
     parent.env(unitizers[[i]]@zero.env) <- par.frame

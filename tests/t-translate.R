@@ -1,9 +1,9 @@
 source(file.path("_helper", "init.R"))
 source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 
-test.file <- file.path(
-  "_helper", "ref-objs", "translate", "testthat", "test-translate2.R"
-)
+test.file.dir <- file.path("_helper", "ref-objs", "translate")
+test.file <- file.path(test.file.dir, "testthat", "test-translate2.R")
+test.file.min <- file.path(test.file.dir, "testthat2", "test-translate-min.R")
 target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
 target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
 
@@ -54,10 +54,9 @@ lapply(unitizer:::as.list(untz@items.ref), function(x) x@data@value[[1L]])
 unlink(target.dir, recursive = TRUE)
 
 target.dir.base <- file.path(TMP.DIR, basename(tempfile()))
-target.dir <- file.path(target.dir.base, "helper", "translate", "unitizer")
+target.dir <- file.path(target.dir.base, "_helper", "translate", "unitizer")
 
 test.dir <- file.path("_helper", "ref-objs", "translate", "testthat")
-target.dir <- file.path(target.dir.base, "_helper", "translate", "unitizer")
 
 # - "translate a dir" ----------------------------------------------------------
 
@@ -77,4 +76,28 @@ any(
     capture.output(
       try(testthat_translate_dir(test.dir, target.dir)), type='message'
 ) ) )
+
+# - minimal --------------------------------------------------------------------
+
+# to test parameters
+
+writeLines(
+  readLines(
+    testthat_translate_file(
+      test.file.min, target.dir, prompt = "never", interactive.mode = TRUE,
+      unitize = FALSE
+) ) )
+writeLines(
+  readLines(
+    testthat_translate_file(
+      test.file.min, target.dir, prompt = "never", interactive.mode = TRUE,
+      use.sects = FALSE, unitize = FALSE
+) ) )
+writeLines(
+  readLines(
+    testthat_translate_file(
+      test.file.min, target.dir, prompt = "never", interactive.mode = TRUE,
+      use.sects = FALSE, keep.testthat.call = FALSE, unitize = FALSE
+) ) )
+
 

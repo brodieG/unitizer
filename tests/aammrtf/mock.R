@@ -1,11 +1,10 @@
-# Copyright (C) 2021 Brodie Gaslam
+# Copyright (C) 2022 Brodie Gaslam
 
 # This file is part of "aammrtf - An Almost Most Minimal R Test Framework"
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
+# the Free Software Foundation, either version 2 or 3 of the License.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -47,4 +46,3 @@ unmock <- function(f, where=f)  {
     suppressMessages(
       eval(bquote(untrace(.(substitute(f)), where=.(where))), parent.frame()) 
 ) ) }
-

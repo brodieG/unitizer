@@ -1,4 +1,4 @@
-# Copyright (C) 2021 Brodie Gaslam
+# Copyright (C) 2022 Brodie Gaslam
 # 
 # This file is part of "unitizer"
 # 
@@ -213,10 +213,17 @@ history_write <- function(hist.con, data) {
 ## Variation on 'normalizePath' with \code{winslash} Pre-Specified, additionally
 ## will only return the normalized path if the path actually exists, if not it
 ## just returns the input.
+##
+## Note, for a file that doesn't exist, normalizePath may (windows?) or not (OS
+## X) prepend the working directory.
+##
+## @param exists check whether the expanded path actually exists, and if it does
+##   not return the original path.  Set to TRUE for consistent behavior across
+##   platforms.
 
-normalize_path <- function(path, mustWork=NA) {
+normalize_path <- function(path, mustWork=NA, exists=FALSE) {
   res <- normalizePath(path, winslash=.Platform$file.sep, mustWork=mustWork)
-  if(isTRUE(mustWork)) {
+  if(isTRUE(mustWork) || exists) {
     res.exists <- file.exists(res)
     res[!res.exists] <- path[!res.exists]
   }
@@ -238,13 +245,24 @@ normalize_path <- function(path, mustWork=NA) {
 #     directory attached as an attribute
 # }
 #
+# There are many types of windows paths that may not be handled correctly.
+#
+# https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats
+#
+# A big problem is if we try to combine a drive letter path "d:/a/b/c" with an
+# absolute path relative to the drive "/a/b/c".  In theory the code isn't
+# difficult; we could analyze the two paths and per windows rules we know we can
+# just add the working directory letter to the path, but then the testing of it
+# becomes annoying (essentially need to reproduce this functions code in the
+# test proper, which becomes silly).  So we're just not testing that scenario.
+#
 # @param wd NULL or character(1L) resolving to a directory, if NULL will be
 #   resolved to \code{getwd}; used primarily for testing
 # @param only.if.shorter logical(1L) whether to relativize only if the
 #   resulting \code{path} is shorter than the input
 # @keywords internal
 
-relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
+relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE, exists=FALSE) {
   if(!is.character(path) || any(is.na(path)))
     stop("Argument `path` must be character and may not contain NAs")
   if(!is.TF(only.if.shorter))
@@ -255,12 +273,12 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   )
     stop("Argument `wd` must be NULL or a reference of to a directory")
   if(is.null(wd)) wd <- getwd()
-  wd <- try(normalize_path(wd, mustWork=TRUE), silent=TRUE)
+  wd <- try(normalize_path(wd, mustWork=TRUE, exists=exists), silent=TRUE)
   res <- if(
     !inherits(wd, "try-error") && is.character(.Platform$file.sep) &&
     identical(length(.Platform$file.sep), 1L)
   ) {
-    norm <- normalize_path(path, mustWork=FALSE)
+    norm <- normalize_path(path, mustWork=FALSE, exists=exists)
     to.norm <- TRUE  # used to be only for existing files, but can't recall why
 
     # Break up into pieces; we re-append "" to make sure the root shows up if
@@ -302,8 +320,8 @@ relativize_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
   } else res
 }
 pretty_path <- function(path, wd=NULL, only.if.shorter=TRUE) {
-  path.norm <- normalize_path(path, mustWork=FALSE)
-  rel.path <- relativize_path(path.norm, wd, only.if.shorter)
+  path.norm <- normalize_path(path, mustWork=FALSE, exists=TRUE)
+  rel.path <- relativize_path(path.norm, wd, only.if.shorter, exists=TRUE)
   pkg.dir <- get_package_dir(path.norm)
   if(
     !length(pkg.dir) ||

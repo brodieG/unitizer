@@ -7,6 +7,28 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## v1.4.15.9000
+
+### Windows dir issues
+
+Works on winbuilder.  Most likely explanation is that the CRAN machines when
+given a random file name in `normalizePath(blah, mustWork=FALSE)` produce a full
+normalized path for `blah` irrespective of whether `blah` exists or not.
+
+So fix here is to change normalize_path to test for file, and if not, return the
+unchanged file (and hope for the best?).  Indeed we confirm that non-existent
+files on windows are still normalized to the working directory.
+
+Additional complexity that on windows (someetimes?) we can expect drive letters,
+so it's not always clear what is an absolute path.
+
+### Old R Versions
+
+We got it working on 3.5, but there are still failures on 3.3.  Should go back
+and see if we can figure out what's going on.
+
+Also, do we want to backport the eq-assign fix (probably not)?
+
 ## Color Options
 
 Right now a total mess; need a unified way of addressing color usage in:

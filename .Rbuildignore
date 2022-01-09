@@ -13,4 +13,3 @@
 ^README\.Rmd$
 ^README\.html$
 startup.Rs
-not-cran

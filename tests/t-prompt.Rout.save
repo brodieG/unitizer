@@ -1,11 +1,13 @@
 
-R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
+R Under development (unstable) (2021-11-21 r81221) -- "Unsuffered Consequences"
 Copyright (C) 2021 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -142,6 +144,16 @@ expression(2 + 1)
 + 1
 expression(2 + 1)
 > 
+> ## Test that changing language doesn't affect partial parsing
+> lang <- Sys.getenv("LANGUAGE", unset=NA)
+> Sys.setenv("LANGUAGE"="fr")
+> unitizer:::read_line_set_vals(c("1 +", "1"))
+> unitizer:::faux_prompt(prompt = "> ", continue = "+ ")
+> 1 +
++ 1
+expression(1 + 1)
+> if(is.na(lang)) Sys.unsetenv("LANGUAGE") else Sys.setenv("LANGUAGE"=lang)
+> 
 > # - "unitizer prompt" ----------------------------------------------------------
 > 
 > # Some of this needs to be done outside of testthat due to sinking
@@ -236,6 +248,3 @@ unitizer> 2L
 [1] 2
 > 
 > 
-> proc.time()
-   user  system elapsed 
-  0.717   0.101   0.819 

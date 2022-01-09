@@ -63,13 +63,15 @@ untz.2
 # Sections with comp funs that output to stdout/stderr
 temp.loc <- tempfile()
 dir.create(temp.loc)
-file.copy(file.path("_helper", "unitizers", "sects.R"), temp.loc)
+file.copy(file.path(START.DIR, "_helper", "unitizers", "sects.R"), temp.loc)
 f.sec <- file.path(temp.loc, "sects.R")
+odir <- setwd(temp.loc)
 out <- unitizer:::capture_output(
   unitize(f.sec, auto.accept = "new", interactive.mode = FALSE
 ) )
 
 unitize(f.sec, interactive.mode = FALSE)
+setwd(odir)
 unlink(temp.loc, recursive = TRUE)
 
 # - "Corner Case Files" --------------------------------------------------------

@@ -1,13 +1,11 @@
 
-R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-01-01 r81419) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -18,10 +16,10 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > source(file.path("_helper", "init.R"))
+> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > source(file.path("_helper", "pkgs.R"))
 Install Packages
 Setup Demos
-> source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > 
 > # - "custom history file" ------------------------------------------------------
 > 
@@ -549,11 +547,11 @@ Summary of tests (accept/total):
 * unitizer was not saved
 $ unitizer was saved in prior evaluation
 
-Test files in common directory 'package:utzflm/tests/unitizer'
+Test files in common directory 'tests/unitizer'
 > untz3a.first <- untz3a[[1L]]
 > print(untz3a.first)
-Test File: package:utzflm/tests/unitizer/fastlm1.R
-Store ID: package:utzflm/tests/unitizer/fastlm1.unitizer
+Test File: tests/unitizer/fastlm1.R
+Store ID: tests/unitizer/fastlm1.unitizer
 
   id                           call ignored status user reviewed
 1  1 library(utzflm, lib.loc = g...       * Passed    Y    FALSE
@@ -590,7 +588,7 @@ You chose NOT to save these changes to the unitizer store
 > setClass("uhtsdfoqiuerhzb", slots=c(a='integer'))
 > attr(untz3a.first.bad, "store.id") <- new("uhtsdfoqiuerhzb")
 > print(untz3a.first.bad)
-Test File: package:utzflm/tests/unitizer/fastlm1.R
+Test File: tests/unitizer/fastlm1.R
 Store ID: <untranslateable store.id>
 
   id                           call ignored status user reviewed
@@ -726,7 +724,7 @@ Summary of tests (accept/total):
 * unitizer was not saved
 $ unitizer was saved in prior evaluation
 
-Test files in common directory 'package:utzflm/tests/unitizer'
+Test files in common directory 'tests/unitizer'
 > identical(
 +   vapply(get_unitizer(untz3b), class, character(1L)), rep("unitizer", 3L)
 + )
@@ -1162,6 +1160,15 @@ unitizer> Q
 
 > attr(untz7a, "test.file") <- basename(attr(untz7a, "test.file"))
 > attr(untz7a, "store.id") <- basename(attr(untz7a, "store.id"))
+> path <- attr(untz7a, "test.file")
+> path
+[1] "fastlm1.R"
+> (path.norm <- unitizer:::normalize_path(path, mustWork=FALSE, exists=TRUE))
+[1] "fastlm1.R"
+> (rel.path <- unitizer:::relativize_path(path.norm, wd=NULL, only.if.shorter=TRUE, exists=TRUE))
+[1] "fastlm1.R"
+> (pkg.dir <- unitizer:::get_package_dir(path.norm, exists=TRUE))
+[1] "."
 > untz7a
 Test File: fastlm1.R
 Store ID: fastlm1.unitizer
@@ -2958,4 +2965,4 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
 > 
 > proc.time()
    user  system elapsed 
-  23.15    3.46   28.54 
+  23.65    3.58   28.88 

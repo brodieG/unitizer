@@ -1,6 +1,6 @@
 source(file.path("_helper", "init.R"))
-source(file.path("_helper", "pkgs.R"))
 source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
+source(file.path("_helper", "pkgs.R"))
 
 # - "custom history file" ------------------------------------------------------
 
@@ -212,6 +212,11 @@ unitizer:::read_line_set_vals(c("P", "B", "3", "N", "U", "N",
 untz7a <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
 attr(untz7a, "test.file") <- basename(attr(untz7a, "test.file"))
 attr(untz7a, "store.id") <- basename(attr(untz7a, "store.id"))
+path <- attr(untz7a, "test.file")
+path
+(path.norm <- unitizer:::normalize_path(path, mustWork=FALSE, exists=TRUE))
+(rel.path <- unitizer:::relativize_path(path.norm, wd=NULL, only.if.shorter=TRUE, exists=TRUE))
+(pkg.dir <- unitizer:::get_package_dir(path.norm, exists=TRUE))
 untz7a
 
 # - "review dir" ---------------------------------------------------------------

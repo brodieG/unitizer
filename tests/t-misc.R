@@ -199,8 +199,9 @@ all.equal(lst2[[3]], lst1[[3]])
 
 attr(lst1[[3L]], "unitizer.printed") <- NULL
 lst1[[2L]] <- simpleWarning("warning2", quote(yo2 + yoyo))
-# expect_equal("There is one condition mismatch at index [[2]]",
-#     all.equal(lst2, lst1[c(1L:2L, 4L)]))
+# This used to produce "one condition mismatch at index [[2]]", but with the
+# relation of condition call comparison, no longer fails.  Arguably this one
+# should still fail as none of the parameters are named.
 all.equal(lst2, lst1[c(1L:2L, 4L)])
 
 # single condition display with a more complex condition
@@ -217,6 +218,35 @@ lst3
 
 # empty condition
 lst3[0]
+
+# Conditions with mismatched calls (due to instability in call generation for C
+# errors issue285)
+lst4a <- new("conditionList", 
+  .items = list(
+    simpleWarning("A", quote(fun(a=b, c=d))),
+    simpleWarning("B", quote(fun(a=b, c=d))),
+    simpleWarning("C", quote(fun(a=b, c=d))),
+    simpleWarning("D", quote(fun(a, c=d))),
+    simpleWarning("E", quote(fun())),
+    simpleWarning("F"),
+    simpleWarning("G", quote(fun(a=b, c=d))),
+    simpleWarning("H", quote(fun(a=b, c=d))),
+    simpleWarning("I", quote(foo(a=b, c=d)))
+))
+lst4b <- new("conditionList", 
+  .items = list(
+    simpleWarning("A", quote(fun(a=b, c=d))),
+    simpleWarning("B", quote(fun(a=B, c=d))),
+    simpleWarning("C", quote(fun(b, c=d))),
+    simpleWarning("D", quote(fun(a=b, c=d))),
+    simpleWarning("E", quote(fun(a=b, c=d))),
+    simpleWarning("F", quote(fun(a=b, c=d))),
+    simpleWarning("G"),
+    simpleWarning("H", quote(fun())),
+    simpleWarning("I", quote(bar(a=b, c=d)))
+))
+all.equal(lst4a, lst4b)
+all.equal(lst4a[c(2, 9)], lst4b[c(2, 9)])
 
 # - "Compare Functions With Traces" --------------------------------------------
 
@@ -297,20 +327,25 @@ unitizer:::relativize_path(
 )
 # expect_equal(unitizer:::relativize_path("/a/b/c/d/e/x.txt"),
 #     "/a/b/c/d/e/x.txt")
-unitizer:::relativize_path("/a/b/c/d/e/x.txt")
-all.equal(
-  unitizer:::relativize_path("/a/b/c/d/e/x.txt", only.if.shorter = FALSE),
-  do.call(
-    file.path,
-    c(
-      as.list(
-        rep(
-          "..",
-          length(unlist(strsplit(getwd(), .Platform$file.sep, fixed = TRUE))) -
-          1L
-      ) ),
-      list("a/b/c/d/e/x.txt")
-) ) )
+unitizer:::relativize_path("/a/b/c/d/e/x.txt", exists = TRUE)
+# ## This was too difficult to get to behave consistently across windows and
+# ## other platforms (see docs)
+# wd <- sub("^[a-zA-Z]:", "", getwd())
+# all.equal(
+#   unitizer:::relativize_path(
+#     "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
+#   ),
+#   do.call(
+#     file.path,
+#     c(
+#       as.list(
+#         rep(
+#           "..",
+#           length(unlist(strsplit(wd, .Platform$file.sep, fixed = TRUE))) -
+#           1L
+#       ) ),
+#       list("a/b/c/d/e/x.txt")
+# ) ) )
 
 # - "path_clean" ---------------------------------------------------------------
 

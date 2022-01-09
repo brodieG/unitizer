@@ -1,8 +1,6 @@
+source(file.path("aammrtf", "mock.R"))
 source(file.path("_helper", "init.R"))
 source(file.path("_helper", "pkgs.R"))
-source(file.path("aammrtf", "mock.R"))
-
-setwd(FLM)   # For whole test file to avoid temp file display
 
 # Mostly makes sure the demo steps work, but since it is a convenient way of
 # generating a unitizer with actual errors and so forth, we use it to test a few

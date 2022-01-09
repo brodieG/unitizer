@@ -4,17 +4,31 @@ source(file.path("_helper", "init.R"))
 
 # - "test file / store manip" ------------------------------------------------
 
-unitizer:::as.store_id_chr(file.path(getwd(), "hello"))
-try(unitizer:::as.store_id_chr(structure("hello", class = "untz_stochrerr")))
 as.character.custstore <- function(x, ...) x
-unitizer:::best_store_name(
-  structure(list("hello", class = "custstore")), "hello"
-)
-unitizer:::best_store_name(
-  structure(list("hello", class = "custstore")), NA_character_
-)
-unitizer:::best_file_name(
-  structure(list("hello", class = "custstore")), NA_character_
+stopifnot(
+  all.equal(unitizer:::as.store_id_chr(file.path(getwd(), "hello")), "hello"),
+  grepl(
+    "Unable to convert store id to character",
+    try(unitizer:::as.store_id_chr(structure("hello", class = "untz_stochrerr"))),
+  ),
+  all.equal(
+    unitizer:::best_store_name(
+      structure(list("hello", class = "custstore")), "hello"
+    ),
+    "unitizer for test file 'hello'"
+  ),
+  all.equal(
+    unitizer:::best_store_name(
+      structure(list("hello", class = "custstore")), NA_character_
+    ),
+    "<untranslateable-unitizer-id>"
+  ),
+  all.equal(
+    unitizer:::best_file_name(
+      structure(list("hello", class = "custstore")), NA_character_
+    ),
+    "<unknown-test-file>"
+  )
 )
 
 # - read only ------------------------------------------------------------------
@@ -28,9 +42,13 @@ if (identical(.Platform$OS.type, "unix")) {
   ro.dir <- tempfile()
   on.exit(unlink(ro.dir))
   dir.create(ro.dir, mode = "0500")
-  if (!identical(try(system("whoami", intern = TRUE), silent = TRUE),
-      "root")) {
-      try(capture.output(set_unitizer(ro.dir, toy.stor), type = "message"))
+  if (!identical(try(system("whoami", intern = TRUE), silent = TRUE), "root")) {
+    err <- try(
+      capture.output(set_unitizer(ro.dir, toy.stor), type = "message"),
+    )
+    stopifnot(
+      grepl("Failed setting unitizer", conditionMessage(attr(err, 'condition')))
+    )
   }
 }
 # - "as.state" -----------------------------------------------------------------
@@ -45,7 +63,9 @@ if (identical(.Platform$OS.type, "unix")) {
 in.pkg.state <- unitizer:::as.state(
   unitizer:::unitizerStateRaw(par.env = in_pkg()), test.files = getwd()
 )
-identical(
-  in.pkg.state,
-  unitizer:::unitizerStateProcessed(par.env = getNamespace("unitizer"))
+stopifnot(
+  identical(
+    in.pkg.state,
+    unitizer:::unitizerStateProcessed(par.env = getNamespace("unitizer"))
+  )
 )
