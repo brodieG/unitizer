@@ -24,7 +24,8 @@ options(
   crayon.enabled = FALSE,
   diffobj.term.colors = 1,
   digits=3,
-  warn=1
+  warn=1,
+  aammrtf.ref.objs=file.path("_helper/ref-objs")
 )
 if(isTRUE(getOption("showErrorCalls"))) options(showErrorCalls=FALSE)
 library(unitizer)

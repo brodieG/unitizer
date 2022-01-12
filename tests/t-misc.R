@@ -327,20 +327,25 @@ unitizer:::relativize_path(
 )
 # expect_equal(unitizer:::relativize_path("/a/b/c/d/e/x.txt"),
 #     "/a/b/c/d/e/x.txt")
-unitizer:::relativize_path("/a/b/c/d/e/x.txt")
-all.equal(
-  unitizer:::relativize_path("/a/b/c/d/e/x.txt", only.if.shorter = FALSE),
-  do.call(
-    file.path,
-    c(
-      as.list(
-        rep(
-          "..",
-          length(unlist(strsplit(getwd(), .Platform$file.sep, fixed = TRUE))) -
-          1L
-      ) ),
-      list("a/b/c/d/e/x.txt")
-) ) )
+unitizer:::relativize_path("/a/b/c/d/e/x.txt", exists = TRUE)
+# ## This was too difficult to get to behave consistently across windows and
+# ## other platforms (see docs)
+# wd <- sub("^[a-zA-Z]:", "", getwd())
+# all.equal(
+#   unitizer:::relativize_path(
+#     "/a/b/c/d/e/x.txt", only.if.shorter = FALSE, exists = TRUE
+#   ),
+#   do.call(
+#     file.path,
+#     c(
+#       as.list(
+#         rep(
+#           "..",
+#           length(unlist(strsplit(wd, .Platform$file.sep, fixed = TRUE))) -
+#           1L
+#       ) ),
+#       list("a/b/c/d/e/x.txt")
+# ) ) )
 
 # - "path_clean" ---------------------------------------------------------------
 
