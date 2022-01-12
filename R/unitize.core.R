@@ -470,7 +470,8 @@ unitize_core <- function(
       # interactive session if the class changed so folks don't have to resubmit
       # to CRAN each time we do this.
 
-      if(!upgrade.warned) {
+      if(!upgrade.warned && interactive.mode) {
+        # Don't warn about upgrade in non-interactive as we won't save them
         upgrade.warned <- TRUE
         upgrade_warn(unitizers[valid], interactive.mode, global)
       }
