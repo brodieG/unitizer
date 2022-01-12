@@ -470,7 +470,8 @@ unitize_core <- function(
       # interactive session if the class changed so folks don't have to resubmit
       # to CRAN each time we do this.
 
-      if(!upgrade.warned) {
+      if(!upgrade.warned && interactive.mode) {
+        # Don't warn about upgrade in non-interactive as we won't save them
         upgrade.warned <- TRUE
         upgrade_warn(unitizers[valid], interactive.mode, global)
       }
@@ -914,11 +915,23 @@ unitize_browse <- function(
           for(i in which(int.error)) {
             untz <- unitizers[[i]]
             delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
+            rem.show <-
+              which(!ignored(untz@items.ref) & is.na(untz@items.ref.map))
             meta_word_msg(
               paste0(
                 "  * ",
-                format(paste0(untz@tests.status[delta.show], ": ")),
-                untz@items.new.calls.deparse[delta.show],
+                format(
+                  paste0(
+                    c(
+                      as.character(untz@tests.status[delta.show]),
+                      rep_len("Removed", length(rem.show))
+                    ),
+                    ": "
+                ) ),
+                c(
+                  untz@items.new.calls.deparse[delta.show],
+                  untz@items.ref.calls.deparse[rem.show]
+                ),
                 collapse="\n"
               ),
               "\nin '", relativize_path(untz@test.file.loc), "'\n",

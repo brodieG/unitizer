@@ -1,5 +1,11 @@
 # `unitizer` NEWS
 
+## v1.4.18
+
+* [#288](https://github.com/brodieG/unitizer/issues/288): Prevent upgrade prompt
+  in non-interactive mode interrupting result display (regression introduced in
+  1.4.15).
+
 ## v1.4.16-17
 
 * [#285](https://github.com/brodieG/unitizer/issues/285): Relax condition call
