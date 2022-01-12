@@ -1,0 +1,26 @@
+# Release Steps
+
+## 1.4.18
+
+[ ] Add tests for upgrade blocking test output.
+
+## Standard
+
+[ ] Coverage
+
+Make sure to check codecov as the algorithms are different (and better?) there.
+
+[ ] R CMD check --ascran
+[ ] winbuilder    r81416
+[ ] CI
+[ ] Other locale (e.g. 8859-15, not "latin1")
+[ ] R 3.2
+[ ] R 3.3
+[ ] Review documentation
+
+Github Actions doesn't work anymore with the default Rstudio setup, so we've
+just been running locally on our 3.3 version (or on docker?).
+
+[ ] Revdep
+[ ] CRAN policy
+
