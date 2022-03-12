@@ -7,6 +7,41 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## v1.4.17.9000
+
+### Deparse Issues
+
+Astonishing we got this far without running into it more frequently, but the
+matching of calls on deparse suffers from several issues, particularly
+instability with different locales, etc, but could also be affected by numerical
+precision.
+
+Storing the parsed data is out of the question due to file size (unitizer.R is a
+~750 line file):
+
+```
+> x <- parse('../unitizer/R/unitizer.R')
+> f.lang <- tempfile()
+> f.char <- tempfile()
+> saveRDS(x, f.lang)
+> saveRDS(deparse(x), f.char)
+> file.size(f.lang)
+[1] 76612
+> file.size(f.char)
+[1] 5431
+```
+
+Likely best solution is to parse/deparse in same machine:
+
+```
+> system.time(deparse( parse('../unitizer/R/unitizer.R')))
+   user  system elapsed 
+  0.010   0.000   0.011 
+```
+
+But really need to test with a big test file with all the `unitizer_sect`
+removed to get the full count and the full cost of doing so.
+
 ## v1.4.15.9000
 
 ### Windows dir issues
