@@ -194,6 +194,11 @@ For example, when running tests:
     by that of previous tests.
   \item Output and Message streams are sunk so any attempt to debug directly
     will be near-impossible as you won't see anything.
+  \item For portable tests it is best to use ASCII only string literals
+    (avoiding even escaped bytes or Unicode characters), round numbers, etc.,
+    because \code{unitizer} uses deparsed test expressions as indices
+    to retrieve reference values.  See \code{vignette('u1_intro',
+    package='unitizer')} for details and work-arounds.
 }
 
 When reviewing them:
