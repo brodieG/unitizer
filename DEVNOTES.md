@@ -31,16 +31,14 @@ Storing the parsed data is out of the question due to file size (unitizer.R is a
 [1] 5431
 ```
 
-Likely best solution is to parse/deparse in same machine:
+Parse/deparse cycle on load is technically feasible from a computing cost
+perspective, but it is not guaranteed to work as some locales will accept random
+bytes as valid (because they are) so they are parsed directly into those bytes,
+but then attempting to parse in another locale fails.
 
-```
-> system.time(deparse( parse('../unitizer/R/unitizer.R')))
-   user  system elapsed 
-  0.010   0.000   0.011 
-```
-
-But really need to test with a big test file with all the `unitizer_sect`
-removed to get the full count and the full cost of doing so.
+We could try to record the locale and iconv, or even try to use RDS3 which
+appears to translate, but really we probably will just document for now.  We
+could add a warning too?
 
 ## v1.4.15.9000
 
@@ -54,7 +52,7 @@ So fix here is to change normalize_path to test for file, and if not, return the
 unchanged file (and hope for the best?).  Indeed we confirm that non-existent
 files on windows are still normalized to the working directory.
 
-Additional complexity that on windows (someetimes?) we can expect drive letters,
+Additional complexity that on windows (sometimes?) we can expect drive letters,
 so it's not always clear what is an absolute path.
 
 ### Old R Versions

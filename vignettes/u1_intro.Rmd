@@ -140,7 +140,7 @@ test_me(14523.2342520)    # could be deparsed differently
 Similarly issues may arise with non-ASCII characters, so use:
 
 ```{r eval=FALSE}
-chr <- "hello\u044F"
+chr <- "hello\u044F"      # could be deparsed differently
 fun_to_test(chr)
 ```
 
