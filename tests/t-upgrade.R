@@ -1,4 +1,5 @@
 source(file.path("_helper", "init.R"))
+blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
 
 # - "Upgrade works" ------------------------------------------------------------
 
@@ -13,7 +14,6 @@ identical(unitizer.up@version, as.character(packageVersion("unitizer")))
 
 # - Upgrade Warnings in Unitize ------------------------------------------------
 
-blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
 tdir <- tempfile()
 dir.create(tdir)
 dir.create(file.path(tdir, "trivial.unitizer"))
@@ -97,6 +97,30 @@ unitizer.rds@version <- version.new
 unitizer.rds@eval.time <- runif(5)
 grepl("NB: ", unitizer:::unitizer_valid(unitizer.rds))
 
-# - "Failing Test w/ Upgrade ---------------------------------------------------
+# - "Failing Test w/ Upgrade" --------------------------------------------------
 
+# Unitizer will fail, but also requires an upgrade.  This ensures the failure is
+# shown despite the need for an upgrade.
+tdir <- tempfile()
+dir.create(tdir)
+dir.create(file.path(tdir, "fail-and-upgrade.unitizer"))
+file.copy(file.path("_helper", "unitizers", "fail-and-upgrade.R"), tdir)
+file.copy(
+  file.path("_helper", "unitizers", "fail-and-upgrade.unitizer", "data.rds"),
+  file.path(tdir, "fail-and-upgrade.unitizer")
+)
+odir <- setwd(tdir)
+try(unitize(file.path("fail-and-upgrade.R")))
+
+# Confirm upgrade needed
+capture.output(unitizer:::read_line_set_vals(c('Y', 'Q')))
+out <- unitizer:::capture_output(
+  unitize(file.path("fail-and-upgrade.R"), interactive.mode=TRUE)
+)
+out[] <- lapply(out, blat_vers)
+out
+
+unitizer:::read_line_set_vals(NULL)
+setwd(odir)
+unlink(tdir, recursive=TRUE)
 

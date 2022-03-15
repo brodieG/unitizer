@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2021-11-21 r81221) -- "Unsuffered Consequences"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -18,6 +18,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > source(file.path("_helper", "init.R"))
+> blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
 > 
 > # - "Upgrade works" ------------------------------------------------------------
 > 
@@ -42,7 +43,6 @@ Warning in addSlot(object, "jump.to.test", 0L) :
 > 
 > # - Upgrade Warnings in Unitize ------------------------------------------------
 > 
-> blat_vers <- function(x) sub("'\\d+(?:\\.\\d+)*'", "'<version>'", x)
 > tdir <- tempfile()
 > dir.create(tdir)
 > dir.create(file.path(tdir, "trivial.unitizer"))
@@ -236,6 +236,7 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 [1] TRUE
 > 
 > # - "Later but valid version" --------------------------------------------------
+> 
 > test.file <- file.path(TMP.DIR, "tests.R")
 > cat("1 + 1", file = test.file)
 > unitizer:::capture_output(unitize(test.file, auto.accept = "new"))
@@ -253,4 +254,136 @@ Error in unitizer:::renameSlot(x, "c", "b") :
 > grepl("NB: ", unitizer:::unitizer_valid(unitizer.rds))
 [1] TRUE
 > 
+> # - "Failing Test w/ Upgrade" --------------------------------------------------
 > 
+> # Unitizer will fail, but also requires an upgrade.  This ensures the failure is
+> # shown despite the need for an upgrade.
+> tdir <- tempfile()
+> dir.create(tdir)
+> dir.create(file.path(tdir, "fail-and-upgrade.unitizer"))
+> file.copy(file.path("_helper", "unitizers", "fail-and-upgrade.R"), tdir)
+[1] TRUE
+> file.copy(
++   file.path("_helper", "unitizers", "fail-and-upgrade.unitizer", "data.rds"),
++   file.path(tdir, "fail-and-upgrade.unitizer")
++ )
+[1] TRUE
+> odir <- setwd(tdir)
+> try(unitize(file.path("fail-and-upgrade.R")))
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
++------------------------------------------------------------------------------+
+| unitizer for: fail-and-upgrade.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     -    1
+......................
+                -    1
+
+- Failed -----------------------------------------------------------------------
+
+| The following test failed because the new evaluation does not match the 
+| reference value from the store. Overwrite with new result ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+# fails with newer versions of unitizer so we can make sure upgrade shows error
+# and doesn't just gag at the upgrade prompt
+
+> packageVersion("unitizer") < "1.4.15"
+[1] FALSE
+
+| Value mismatch: 
+
+< .ref       > .new     
+@@ 1 @@      @@ 1 @@    
+< [1] TRUE   > [1] FALSE
+
+| State mismatch; see `.DIFF$state` for details.
+
+| User input required to proceed, but we are in non-interactive mode.
+
+| unitizer unchanged.
+
+|   * Fail: packageVersion("unitizer") < "1.4.15"
+| in 'fail-and-upgrade.R'
+
+| Newly evaluated tests do not match unitizer (Fail: 1); see above for more 
+| info, or run in interactive mode.
+
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  Cannot proceed in non-interactive mode.
+> 
+> # Confirm upgrade needed
+> capture.output(unitizer:::read_line_set_vals(c('Y', 'Q')))
+character(0)
+> out <- unitizer:::capture_output(
++   unitize(file.path("fail-and-upgrade.R"), interactive.mode=TRUE)
++ )
+> out[] <- lapply(out, blat_vers)
+> out
+- Output -----------------------------------------------------------------------
+
+
+| 
+| The following unitizer will be upgraded to version '<version>':
+| 
+| - fail-and-upgrade.unitizer (at '<version>')
+
+unitizer> Y
+
++------------------------------------------------------------------------------+
+| unitizer for: fail-and-upgrade.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     -    1
+......................
+                -    1
+
+- Failed -----------------------------------------------------------------------
+
+| The following test failed because the new evaluation does not match the 
+| reference value from the store. Overwrite with new result ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+# fails with newer versions of unitizer so we can make sure upgrade shows error
+# and doesn't just gag at the upgrade prompt
+
+> packageVersion("unitizer") < "1.4.15"
+[1] FALSE
+
+| Value mismatch: 
+
+< .ref       > .new     
+@@ 1 @@      @@ 1 @@    
+< [1] TRUE   > [1] FALSE
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Q
+
+| unitizer unchanged.
+
+- Message ----------------------------------------------------------------------
+
+| unitizer upgrades are IRREVERSIBLE and not backwards compatible. 
+| Proceed?
+
+| No changes recorded.
+> 
+> unitizer:::read_line_set_vals(NULL)
+> setwd(odir)
+> unlink(tdir, recursive=TRUE)
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  2.109   0.142   2.278 

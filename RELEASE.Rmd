@@ -2,7 +2,7 @@
 
 ## 1.4.18
 
-[ ] Add tests for upgrade blocking test output.
+[x] Add tests for upgrade blocking test output.
 [x] Check 289 using "fansi_1.0.1"  # won't fix
 [x] Make sure there is no way to force accept upgrades in non-interactive (or at
 least that it's not a problem).  Seems like it might be doable with some
