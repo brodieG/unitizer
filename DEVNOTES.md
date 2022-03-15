@@ -7,6 +7,39 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## v1.4.17.9000
+
+### Deparse Issues
+
+Astonishing we got this far without running into it more frequently, but the
+matching of calls on deparse suffers from several issues, particularly
+instability with different locales, etc, but could also be affected by numerical
+precision.
+
+Storing the parsed data is out of the question due to file size (unitizer.R is a
+~750 line file):
+
+```
+> x <- parse('../unitizer/R/unitizer.R')
+> f.lang <- tempfile()
+> f.char <- tempfile()
+> saveRDS(x, f.lang)
+> saveRDS(deparse(x), f.char)
+> file.size(f.lang)
+[1] 76612
+> file.size(f.char)
+[1] 5431
+```
+
+Parse/deparse cycle on load is technically feasible from a computing cost
+perspective, but it is not guaranteed to work as some locales will accept random
+bytes as valid (because they are) so they are parsed directly into those bytes,
+but then attempting to parse in another locale fails.
+
+We could try to record the locale and iconv, or even try to use RDS3 which
+appears to translate, but really we probably will just document for now.  We
+could add a warning too?
+
 ## v1.4.15.9000
 
 ### Windows dir issues
@@ -19,7 +52,7 @@ So fix here is to change normalize_path to test for file, and if not, return the
 unchanged file (and hope for the best?).  Indeed we confirm that non-existent
 files on windows are still normalized to the working directory.
 
-Additional complexity that on windows (someetimes?) we can expect drive letters,
+Additional complexity that on windows (sometimes?) we can expect drive letters,
 so it's not always clear what is an absolute path.
 
 ### Old R Versions
