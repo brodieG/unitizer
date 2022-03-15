@@ -81,6 +81,7 @@ x.rename <- unitizer:::renameSlot(x, "a", "b")
 validObject(x.rename)
 
 # - "Later but valid version" --------------------------------------------------
+
 test.file <- file.path(TMP.DIR, "tests.R")
 cat("1 + 1", file = test.file)
 unitizer:::capture_output(unitize(test.file, auto.accept = "new"))
@@ -95,4 +96,7 @@ unitizer.rds@version <- version.new
 # now lets cause an error
 unitizer.rds@eval.time <- runif(5)
 grepl("NB: ", unitizer:::unitizer_valid(unitizer.rds))
+
+# - "Failing Test w/ Upgrade ---------------------------------------------------
+
 
