@@ -1089,14 +1089,14 @@ reset_and_unshim <- function(global) {
     meta_word_msg(
       "Failed unshimming library/detach/attach; you may want to restart",
       "your R session to reset them to their original values (or you",
-      "can `untrace` them manually)"
+      "can `untrace` them manually)."
     )
   if(!success.release)
     meta_word_msg(
       "Failed releasing global tracking object; you will not be able to",
       "instantiate another `unitizer` session.  This should not happen, ",
       "please contact the maintainer.  In the meantime, restarting your R",
-      "session should restore functionality"
+      "session should restore functionality."
     )
   success.clear && success.unshim
 }

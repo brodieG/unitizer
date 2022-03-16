@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -479,7 +481,30 @@ NULL
 +     hello = "1", goodbye = "2", goodbye = "3")))
 [1] "goodbye"   "hello"     "goodbye.1" "goodbye.2"
 > 
+> # - "Fake Package Re-attach" ---------------------------------------------------
+> 
+> # Make sure that aspects of search path management other than search path
+> # survive a failure caused by bad search path env (#252, #253).
+> 
+> owd <- getwd()
+> test.f <- paste0(tempfile(), ".R")
+> writeLines("
++ f <- tempfile()
++ dir.create(f)
++ setwd(f)
++ # Package assumed non-existing; R could disallow this in the future
++ # which could change the test.
++ attach(list(x=42), name='package:adfaadcxuqyojfnkfadsf')
++ 1 + 1", test.f)
+> out <- unitizer:::capture_output(
++   try(unitize(test.f, state='recommended', interactive.mode=FALSE))
++ )
+> any(grepl("mismatch between actual search path and tracked", out$message))
+[1] TRUE
+> identical(owd, getwd())  # confirm working directory restored
+[1] TRUE
+> 
 > 
 > proc.time()
    user  system elapsed 
-   5.52    1.67    9.49 
+  3.534   0.721   4.428 
