@@ -5,6 +5,12 @@
 * [#288](https://github.com/brodieG/unitizer/issues/288): Prevent upgrade prompt
   in non-interactive mode interrupting result display (regression introduced in
   1.4.15).
+* [#252](https://github.com/brodieG/unitizer/issues/252),
+  [#253](https://github.com/brodieG/unitizer/issues/252): Better documentation
+  of feature incompatibility with `devtools::load_all`, and more graceful
+  recovery from failures caused by the incompatibility.  This only affects
+  `unitizer` sessions run with package search path management enabled (h/t
+  @blset).
 
 ## v1.4.16-17
 
