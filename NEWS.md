@@ -11,6 +11,8 @@
   recovery from failures caused by the incompatibility.  This only affects
   `unitizer` sessions run with package search path management enabled (h/t
   @blset).
+* [#247](https://github.com/brodieG/unitizer/issues/247): Disallow running
+  `unitizer` without first attaching it to the search path.
 
 ## v1.4.16-17
 
