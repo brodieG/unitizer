@@ -180,3 +180,19 @@ try(unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map fun"))
 
 unitizer:::read_line_set_vals(NULL)
 
+# - "Multiple Bookmarks" -------------------------------------------------------
+
+# In review-all mode should not move to next unitizer until the review bookmark
+# is cleared.
+
+temp.dir <- tempfile()
+dir.create(temp.dir)
+writeLines("'hello'\n'world'", file.path(temp.dir, "a.R"))
+writeLines("2 + 1\n3 + 2", file.path(temp.dir, "b.R"))
+writeLines("pi\n2 * pi\nsqrt(pi)", file.path(temp.dir, "c.R"))
+unitizer:::read_line_set_vals(
+  c("A","N","N","Y","Y","R","Y","Q","Y","R","Y","Y","Y","Y","Q")
+)
+unitize_dir(temp.dir, interactive.mode=TRUE)
+unlink(temp.dir)
+
