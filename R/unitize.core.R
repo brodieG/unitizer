@@ -43,6 +43,11 @@ unitize_core <- function(
 ) {
   # - Validation / Setup -------------------------------------------------------
 
+  if(!'package:unitizer' %in% search())
+    stop(
+      "`unitizer` package must be attached to the search path, ",
+      "e.g. with `library(unitizer)`"
+    )
   if(!is.chr1(mode) || !mode %in% c("unitize", "review"))
     # nocov start
     stop("Internal Error: incorrect value for `mode`; contact maintainer")
