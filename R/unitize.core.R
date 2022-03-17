@@ -898,6 +898,9 @@ unitize_browse <- function(
                 new("unitizerBrowseBookmark", call=NA_character_)
             break
           } else if(identical(browse.res@re.eval, 2L)) {
+            # All re-eval clears the bookmarks (there should only be one, but
+            # we're lazy here and clear all)
+            for(j in seq.int(test.len)) unitizers[[j]]@bookmark <- NULL
             eval.which <- seq.int(test.len)
             break
           } else if(browse.res@multi.quit) break
