@@ -13,6 +13,8 @@
   @blset).
 * [#247](https://github.com/brodieG/unitizer/issues/247): Disallow running
   `unitizer` without first attaching it to the search path.
+* [#245](https://github.com/brodieG/unitizer/issues/245): Fix re-run bookmarking
+  when reviewing multiple unitizers with `unitize_dir`.
 
 ## v1.4.16-17
 

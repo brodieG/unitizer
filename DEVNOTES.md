@@ -9,6 +9,27 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## v1.4.17.9000
 
+### Multiple Bookmarks
+
+Challenge is that we eval all the unitizers, and then browse all of them, but if
+we just want to re-eval one we don't have a good way to interrupt?
+
+So what behavior do we want?  Ideally when we exit with R, we want to return to
+that exact unitizer and continue on from there in the original order.
+
+Why do we allow only one bookmark?  The RR option effectively requires multiple
+ones.  Actually, maybe it's okay if we only care about returning to the specific
+point of a single re-eval, which is likely what we want.  Does RR even make
+sense outside of the top level "select-a-unitizer" level?
+
+Currently the bookmarked status would allow us to pick which unitizers to review
+after reloading (browse.which).  The problem is that a bookmark is complicated
+(see `unitizerBookmarkOrNULL`), and it's presence allow is used to determine
+whether a unitizer is bookmarked, but we would need to add a semantic to the
+bookmark that's just "start from the beginning" if we add bookmarks to all
+subsequent that are not explicitly bookmarked.  I guess we could do this,
+although if feels hacky.
+
 ### Deparse Issues
 
 Astonishing we got this far without running into it more frequently, but the

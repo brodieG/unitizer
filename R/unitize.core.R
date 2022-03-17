@@ -712,7 +712,7 @@ unitize_browse <- function(
   # - Interactive --------------------------------------------------------------
 
   # Check if any unitizer has bookmark set, and if so jump directly to
-  # that unitizer
+  # that unitizer (note we can only bookmark one at a time)
 
   bookmarked <- bookmarked(unitizers)
   if(test.len > 1L && !any(bookmarked)) show(summaries)
@@ -885,19 +885,25 @@ unitize_browse <- function(
           unitizers[[i]]@res.data <- browse.res@data
           int.error[[i]] <- browse.res@interactive.error
 
-          # Check to see if any need to be re-evaled, and if so, mark unitizers
-          # and return
+          # Check for breakout conditions; re-eval will cause a break-out (i.e.
+          # we stop review and resume later.
 
-          eval.which <- unique(
-            c(
-              eval.which,
-              if(identical(browse.res@re.eval, 1L)) {
-                i
-              } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
-          ) )
-          # Break out of review loop if signaled
-
-          if(browse.res@multi.quit) break
+          if(identical(browse.res@re.eval, 1L)) {
+            eval.which <- i
+            # Dummy-bookmark all subsequent unitizers so that they are
+            # re-reviewed if they were scheduled for review via e.g. 'A'
+            to.rebookmark <- pick.num[pick.num > i]
+            for(j in to.rebookmark)
+              unitizers[[j]]@bookmark <-
+                new("unitizerBrowseBookmark", call=NA_character_)
+            break
+          } else if(identical(browse.res@re.eval, 2L)) {
+            # All re-eval clears the bookmarks (there should only be one, but
+            # we're lazy here and clear all)
+            for(j in seq.int(test.len)) unitizers[[j]]@bookmark <- NULL
+            eval.which <- seq.int(test.len)
+            break
+          } else if(browse.res@multi.quit) break
         }
         # Update bookmarks (in reality, we're just clearing the bookmark if it
         # was previously set, as setting the bookmark will break out of this
@@ -974,7 +980,6 @@ unitize_browse <- function(
     for(i in eval.which) unitizers[[i]]@eval <- TRUE
   } else {
     # this one may not be necessary
-
     for(i in seq_along(unitizers)) unitizers[[i]]@eval <- FALSE
   }
   unitizers

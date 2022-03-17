@@ -233,14 +233,6 @@ setMethod("bookmarked", "unitizerObjectList", function(x, ...) {
       is(y, "unitizer") && is(y@bookmark, "unitizerBrowseBookmark"),
     logical(1L)
   )
-  if(!length(which(bookmarked)) %in% 0:1) {
-    # nocov start
-    stop(
-      "Internal Error: no more than one unitizer may be bookmarked at any ",
-      "given time; contact maintainer"
-    )
-    # nocov end
-  }
   bookmarked
 } )
 # Keeps track of All Test Review Data

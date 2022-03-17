@@ -142,31 +142,33 @@ setMethod(
       # before re-eval
 
       if(!is.null(x@bookmark)) {
-        cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
-        cand.match.len <- length(cand.match)
-        if(!cand.match.len || x@bookmark@id > cand.match.len) {
-          meta_word_msg(
-            cc(
-              "Unable to find test you toggled re-eval from; starting ",
-              "from beginning."
-          ) )
-        } else {
-          match.id <- cand.match[x@bookmark@id]
-          id.map <-
-            which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
-          if(!length(id.map) == 1L) {
-            # nocov start
-            stop(
-              "Internal Error: unable to find bookmarked test; contact ",
-              "maintainer."
-            )
-            # nocov end
-          }
-          ign.adj <- find_lead_offset(id.map, y@mapping)
-          y@last.id <- y@mapping@item.id[id.map] - (1L + ign.adj)
-          y@jumping.to <- id.map
-        }
-      }
+        # NA bookmark just means start from beginning (don't set jumping.to).
+        # Used to have a subset of all the unitizes in a directory re-reviewed
+        if(!is.na(x@bookmark@call)) {
+          cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
+          cand.match.len <- length(cand.match)
+          if(!cand.match.len || x@bookmark@id > cand.match.len) {
+            meta_word_msg(
+              cc(
+                "Unable to find test you toggled re-eval from; starting ",
+                "from beginning."
+            ) )
+          } else {
+            match.id <- cand.match[x@bookmark@id]
+            id.map <-
+              which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
+            if(!length(id.map) == 1L) {
+              # nocov start
+              stop(
+                "Internal Error: unable to find bookmarked test; contact ",
+                "maintainer."
+              )
+              # nocov end
+            }
+            ign.adj <- find_lead_offset(id.map, y@mapping)
+            y@last.id <- y@mapping@item.id[id.map] - (1L + ign.adj)
+            y@jumping.to <- id.map
+      } } }
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
 
