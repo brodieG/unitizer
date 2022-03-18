@@ -712,8 +712,8 @@ Error in unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map f
 > # - "Multiple Bookmarks" -------------------------------------------------------
 > # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
-> # In review-all mode should not move to next unitizer until the review bookmark
-> # is cleared.
+> # Issue 245: In review-all mode should not move to next unitizer until the
+> # review bookmark is cleared.
 > 
 > temp.dir <- tempfile()
 > dir.create(temp.dir)
@@ -1043,7 +1043,61 @@ unitizer> Q
 > unitizer:::read_line_set_vals(NULL)
 > unlink(temp.dir, recursive=TRUE)
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> # - "Non-Standard Conditions" --------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> 
+> # Issue 272: some conditions don't produce any output, but for `unitizer` we
+> # consider normally non-test expressions that produce conditions as tests.  So
+> # we need a mechanism for clarifying what happened.
+> 
+> temp.dir <- tempfile()
+> temp.file <- file.path(temp.dir, 'a.R')
+> dir.create(temp.dir)
+> 
+> unitizer:::read_line_set_vals("Q")
+> writeLines(
++   c(
++     "cond <- simpleCondition('hello')",
++     "class(cond) <- c('svgchop_unsupported', 'svgchop', class(cond))",
++     "invisible(signalCondition(cond))"
++   ),
++   temp.file
++ )
+> unitize(temp.file, interactive.mode=TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: a.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    1
+...........................
+                -    -    1
+
+- New --------------------------------------------------------------------------
+
+| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
+| [R]erun, [Q]uit, [H]elp)?
+
+> cond <- simpleCondition("hello")
+> class(cond) <- c("svgchop_unsupported", "svgchop", class(cond))
+> invisible(signalCondition(cond))
+
+| Test silently signalled conditions (use e.g. .NEW$conditions[[1]] to inspect):
+
+Condition list with 1 condition:
+1. svgchop_unsupported: hello
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> unitizer:::read_line_set_vals(NULL)
+> unlink(temp.dir, recursive=TRUE)
 > 
 > proc.time()
    user  system elapsed 
-   7.58    1.20   10.91 
+   9.38    1.20   12.68 

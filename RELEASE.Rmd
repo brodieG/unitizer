@@ -5,9 +5,12 @@
 [x] Add tests for upgrade blocking test output.
 [x] Check 289 using "fansi_1.0.1"  # won't fix
 [x] Make sure there is no way to force accept upgrades in non-interactive (or at
-least that it's not a problem).  Seems like it might be doable with some
-combination of auto.accept and force.update (maybe), but then if you're using
-those non-interactively...
+    least that it's not a problem).  Seems like it might be doable with some
+    combination of auto.accept and force.update (maybe), but then if you're
+    using those non-interactively...
+
+[ ] Check whether the parse/deparse cycle in browser does not fail with e.g.
+    invalid latin-1 locale.
 
 ## Standard
 

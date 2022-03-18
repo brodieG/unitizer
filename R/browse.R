@@ -721,6 +721,8 @@ setMethod("reviewNext", c("unitizerBrowse"),
       }
       parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
       if(inherits(parsed.call, "try-error")) {
+        # Hmm, what about non-ASCII parse issues here?  Shouldn't this fail e.g.
+        # with test stored in latin-1 but run in UTF-8?
         # nocov start
         stop("Internal Error: malformed call stored; contact maintainer.")
         # nocov end
@@ -816,8 +818,24 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
         if(!is.null(diffs@state)) diffs@state@show.diff <- TRUE
 
-      } else if (out.std || out.err) cat("\n")
-    }
+      }
+      else if (out.std || out.err) cat("\n")
+      else if (!item.main@ignore && length(item.main@data@conditions)) {
+        # No visible output, but conditions issued.  Say something as otherwise
+        # confusing why unitizer prompt appears.
+        cat("\n")
+        meta_word_cat(
+          paste0(
+            "Test silently signalled conditions (use ",
+            "e.g. .", if(item.main@reference) "REF" else "NEW",
+            "$conditions[[1]] to inspect):\n"
+        ) )
+        screen_out(
+          capture.output(show(item.main@data@conditions)),
+          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
+        )
+        cat("\n")
+    } }
 
     if(!will.review) return(x)
 

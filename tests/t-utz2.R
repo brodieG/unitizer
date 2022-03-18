@@ -203,8 +203,8 @@ unitizer:::read_line_set_vals(NULL)
 # - "Multiple Bookmarks" -------------------------------------------------------
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-# In review-all mode should not move to next unitizer until the review bookmark
-# is cleared.
+# Issue 245: In review-all mode should not move to next unitizer until the
+# review bookmark is cleared.
 
 temp.dir <- tempfile()
 dir.create(temp.dir)
@@ -227,3 +227,28 @@ unitize_dir(temp.dir, interactive.mode=TRUE)
 unitizer:::read_line_set_vals(NULL)
 unlink(temp.dir, recursive=TRUE)
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+# - "Non-Standard Conditions" --------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+# Issue 272: some conditions don't produce any output, but for `unitizer` we
+# consider normally non-test expressions that produce conditions as tests.  So
+# we need a mechanism for clarifying what happened.
+
+temp.dir <- tempfile()
+temp.file <- file.path(temp.dir, 'a.R')
+dir.create(temp.dir)
+
+unitizer:::read_line_set_vals("Q")
+writeLines(
+  c(
+    "cond <- simpleCondition('hello')",
+    "class(cond) <- c('svgchop_unsupported', 'svgchop', class(cond))",
+    "invisible(signalCondition(cond))"
+  ),
+  temp.file
+)
+unitize(temp.file, interactive.mode=TRUE)
+
+unitizer:::read_line_set_vals(NULL)
+unlink(temp.dir, recursive=TRUE)
