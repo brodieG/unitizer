@@ -215,11 +215,14 @@ eval_with_capture <- function(
 ) {
   stopifnot(is(global, "unitizerGlobal"))
   # These used to be parameters, but now that we have `global` we use that
-  # instead
-
+  # instead; note that the options come in as NULL quietly in some tests where
+  # we're e.g. directly accessing the unitizers instead of using `unitize`, and
+  # those NULLs ar just dropped implicitly by the way we call `set_capture`.
   cons <- global$cons
-  disable.capt <- global$unitizer.opts[["unitizer.disable.capt"]] | !with.capture
+  disable.capt <- global$unitizer.opts[["unitizer.disable.capt"]]
   max.capt.chars <- global$unitizer.opts[["unitizer.max.capture.chars"]]
+
+  if(!is.null(disable.capt)) disable.capt <- disable.capt | !with.capture
 
   # Disable error handler; warn gets set to one when we eval the expression
 
@@ -236,6 +239,7 @@ eval_with_capture <- function(
   } else {
     capt.cons <- cons
   }
+  # disable.capt and max.capt.chars could be NULL in some cases (see above)
   set_args <- list()
   set_args[["capt.disabled"]] <- disable.capt
   capt.cons <- do.call(set_capture, c(list(capt.cons), set_args))

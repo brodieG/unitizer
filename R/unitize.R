@@ -223,7 +223,7 @@ unitize <- function(
       interactive.mode=interactive.mode,  force.update=force.update,
       auto.accept=auto.accept, mode="unitize", use.diff=use.diff,
       show.progress=show.progress,
-      transcript=getOption("unitizer.transcript", !interactive.mode)
+      transcript=transcript
     )[[1L]]
   )
 }
@@ -232,8 +232,7 @@ unitize <- function(
 
 review <- function(
   store.id=NULL, use.diff=getOption("unitizer.use.diff"),
-  show.progress=getOption("unitizer.show.progress", TRUE),
-  transcript=getOption("unitizer.transcript", !interactive.mode)
+  show.progress=getOption("unitizer.show.progress", TRUE)
 ) {
   # Initial spacer, must be done in each top level call
   cat("\n")
@@ -251,7 +250,7 @@ review <- function(
       mode="review",
       use.diff=use.diff,
       show.progress=show.progress,
-      transcript=getOption("unitizer.transcript", !interactive.mode)
+      transcript=FALSE
     )[[1L]]
   )
 }
@@ -321,6 +320,6 @@ unitize_dir <- function(
       interactive.mode=interactive.mode, force.update=force.update,
       auto.accept=auto.accept, mode="unitize", use.diff=use.diff,
       show.progress=show.progress,
-      transcript=getOption("unitizer.transcript", !interactive.mode)
+      transcript=transcript
   ) )
 }
