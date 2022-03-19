@@ -20,6 +20,7 @@ options(
   diffobj.pager='off',
   unitizer.show.progress=FALSE,
   unitizer.color = FALSE,
+  unitizer.transcript = FALSE,
   width = 80L,
   crayon.enabled = FALSE,
   diffobj.term.colors = 1,
