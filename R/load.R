@@ -35,7 +35,7 @@
 load_unitizers <- function(
   store.ids, test.files, par.frame, interactive.mode, mode, force.upgrade=FALSE,
   global=unitizerGlobal$new(),
-  show.progress
+  show.progress, transcript
 ) {
   if(!is.character(test.files))
     stop("Argument `test.files` must be character")
@@ -49,6 +49,8 @@ load_unitizers <- function(
     stop("Argument `store.ids` may not contain NULL values.")
   if(!isTRUE(show.progress %in% c(0L, seq_len(PROGRESS.MAX))))
     stop("Argument `show.progress` must be in 0:", PROGRESS.MAX)
+  if(!is.TF(transcript))
+    stop("Argument `transcript` must be TRUE or FALSE")
 
   stopifnot(isTRUE(interactive.mode) || identical(interactive.mode, FALSE))
   stopifnot(is.chr1plain(mode), !is.na(mode), mode %in% c("unitize", "review"))
@@ -155,6 +157,7 @@ load_unitizers <- function(
     unitizers[[i]]@test.file.loc <- norm_file(test.files[[i]])
     unitizers[[i]]@best.name <- chr.ids[i]
     unitizers[[i]]@show.progress <- show.progress
+    unitizers[[i]]@transcript <- transcript
 
     parent.env(unitizers[[i]]@zero.env) <- par.frame
     unitizers[[i]]@global <- global

@@ -39,7 +39,7 @@
 
 unitize_core <- function(
   test.files, store.ids, state, pre, post, history, interactive.mode,
-  force.update, auto.accept, mode, use.diff, show.progress
+  force.update, auto.accept, mode, use.diff, show.progress, transcript
 ) {
   # - Validation / Setup -------------------------------------------------------
 
@@ -105,6 +105,8 @@ unitize_core <- function(
     stop("Argument `show.progress` must be TRUE or FALSE or in 0:", PROGRESS.MAX)
   if(is.logical(show.progress))
     show.progress <- show.progress * PROGRESS.MAX
+  if(!is.TF(transcript))
+    stop("Argument `transcript` must be TRUE or FALSE")
 
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components
@@ -187,7 +189,7 @@ unitize_core <- function(
   global <- unitizerGlobal$new(
     enable.which=reproducible.state,
     unitizer.opts=opts.untz,  # need to reconcile with normal options
-    set.global=TRUE
+    set.global=TRUE, transcript=transcript
   )
   set.shim.funs <- FALSE
   if(is.null(par.env)) {
@@ -366,7 +368,7 @@ unitize_core <- function(
 
   # Handle pre-load data
 
-  if(show.progress > 0) over_print("Preloads...")
+  if(show.progress > 0) over_print("Preloads...", overwrite=!transcript)
   pre.load.frame <- source_files(pre, gpar.frame)
   if(!is.environment(pre.load.frame))
     stop("Argument `pre` could not be interpreted:\n", pre.load.frame)
@@ -379,7 +381,8 @@ unitize_core <- function(
   assign("quit", unitizer_quit, envir=util.frame)
   assign("q", unitizer_quit, envir=util.frame)
 
-  if(show.progress > 0) over_print("Loading unitizer data...")
+  if(show.progress > 0)
+    over_print("Loading unitizer data...", overwrite=!transcript)
   eval.which <- seq_along(store.ids)
   start.len <- length(eval.which)
   valid <- rep(TRUE, length(eval.which))
@@ -416,15 +419,18 @@ unitize_core <- function(
 
       tests.parsed.prev <- tests.parsed
       if(identical(mode, "unitize")) {
-        if(show.progress > 0) over_print("Parsing tests...")
+        if(show.progress > 0)
+          over_print("Parsing tests...", overwrite=!transcript)
         tests.parsed[active] <- lapply(
           test.files[active],
           function(x) {
             if(show.progress > 1)
-              over_print(paste("Parsing", relativize_path(x)))
+              over_print(
+                paste("Parsing", relativize_path(x)), overwrite=!transcript
+              )
             parse_tests(x, comments=TRUE)
       } ) }
-      if(show.progress > 0) over_print("")
+      if(show.progress > 0) over_print("", overwrite=!transcript)
 
       # Retrieve bookmarks so they are not blown away by re-load; make sure to
       # mark those that have had changes to the parse data
@@ -452,7 +458,7 @@ unitize_core <- function(
       unitizers[active] <- load_unitizers(
         store.ids[active], test.files[active], par.frame=util.frame,
         interactive.mode=interactive.mode, mode=mode, global=global,
-        show.progress=show.progress
+        show.progress=show.progress, transcript=transcript
       )
       global$state()
 
@@ -467,7 +473,7 @@ unitize_core <- function(
       if(identical(mode, "unitize"))
         unitizers[valid] <- unitize_eval(
           tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
-          global=global, show.progress=show.progress
+          global=global, show.progress=show.progress, transcript=transcript
         )
       # Check whether any unitizers were upgraded and require review.  We used
       # to ask before upgrade, but now we just upgrade and check before we
@@ -492,7 +498,8 @@ unitize_core <- function(
         history=history,
         global=global,
         use.diff=use.diff,
-        show.progress=show.progress
+        show.progress=show.progress,
+        transcript=transcript
       )
       # Track whether updated, valid, etc.
 
@@ -551,7 +558,9 @@ unitize_core <- function(
 # @return a list of unitizers
 # @keywords internal
 
-unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
+unitize_eval <- function(
+  tests.parsed, unitizers, global, show.progress, transcript
+) {
   test.len <- length(tests.parsed)
   if(!identical(test.len, length(unitizers)))
     # nocov start
@@ -579,7 +588,8 @@ unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
       tests <- new("unitizerTests") + test.dat
       if(test.len > 1L & show.progress > 1)
         over_print(
-          paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": ")
+          paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": "),
+          overwrite=!transcript
         )
       unitizers[[i]] <- unitizer + tests
       global$resetInit()
@@ -638,7 +648,7 @@ unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
 
 unitize_browse <- function(
   unitizers, mode, interactive.mode, force.update, auto.accept, history, global,
-  use.diff, show.progress
+  use.diff, show.progress, transcript
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -647,7 +657,8 @@ unitize_browse <- function(
     meta_word_msg("No valid unitizers available to review.")
     return(unitizers)
   }
-  if(show.progress > 0) over_print("Prepping Unitizers...")
+  if(show.progress > 0)
+    over_print("Prepping Unitizers...", overwrite=!transcript)
 
   hist.obj <- history_capt(history, interactive.mode)
   on.exit(history_release(hist.obj))
@@ -683,7 +694,8 @@ unitize_browse <- function(
   eval.which <- integer(0L)
 
   if(length(auto.accept)) {
-    if(show.progress > 0) over_print("Applying auto-accepts...")
+    if(show.progress > 0)
+      over_print("Applying auto-accepts...", overwrite=!transcript)
     for(i in seq_along(untz.browsers)) {
       auto.accepted <- 0L
       for(auto.val in auto.accept) {
@@ -705,7 +717,7 @@ unitize_browse <- function(
   # Browse, or fail depending on interactive mode
 
   reviewed <- int.error <- logical(test.len)
-  if(show.progress > 0) over_print("")
+  if(show.progress > 0) over_print("", overwrite=!transcript)
 
   # Re-used message
 
@@ -1132,3 +1144,5 @@ confirm_quit <- function(unitizers) {
 }
 
 PROGRESS.MAX <- 3L
+
+

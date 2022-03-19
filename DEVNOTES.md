@@ -9,6 +9,36 @@ fixing, or hare-brained ideas for features.  Read at your own risk.
 
 ## v1.4.17.9000
 
+### Output Capture
+
+Need to figure out if we can if we can disable capture without then messing up
+the display of the test.  Might not be possible?  This is indeed a problem as we
+loose the message data stream which we do display once we get to the failed
+test.  The conditions should still be there.
+
+Need to try a test that does this.
+
+Also need to figure out how to get rid of `"<unitizer sink test>"`.
+
+We need some option to set the progress mode:
+
+* progress detail level
+* overwrite or newline
+* show evaluation transcript
+
+The last two could default to TRUE for interactive.  Should probably be S4.
+
+```
+unitizer_progress <- function(level=TRUE, transcript=!interactive()) {
+  structure(c(level=level, transcript=transcript), class='utz_transcript')
+}
+```
+
+One weirdness is that "transcript" and "progress" feel somewhat separate, but
+the trick is the overwrite vs newline.  Maybe there is a transcript mode
+modifier.  This makes most sense.  Maybe in the future we provide more control
+at the transcript level.
+
 ### Multiple Bookmarks
 
 Challenge is that we eval all the unitizers, and then browse all of them, but if

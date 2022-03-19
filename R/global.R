@@ -359,18 +359,20 @@ unitizerGlobal <- setRefClass(
     shim.funs="list",
 
     indices.init="unitizerGlobalIndices",
-    indices.last="unitizerGlobalIndices"
+    indices.last="unitizerGlobalIndices",
+
+    transcript="logical"
   ),
   methods=list(
     initialize=function(
       ..., disabled=FALSE, enable.which=integer(0L),
       par.env=new.env(parent=baseenv()),
       unitizer.opts=options()[grep("^unitizer\\.", names(options()))],
-      set.global=FALSE
+      set.global=FALSE, transcript=FALSE
     ) {
       obj <- callSuper(
         ..., par.env=par.env, unitizer.opts=unitizer.opts,
-        locked=FALSE
+        locked=FALSE, transcript=transcript
       )
       enable(enable.which)
       state()

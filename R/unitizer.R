@@ -120,6 +120,8 @@ setClassUnion(
 # @slot show.progress integer(1L) level of chattiness in progress reporting,
 #   carried here as otherwise no way to feed it through the `+` method when
 #   adding tests.
+# @slot transcript logical(1L) TRUE or FALSE whether to operate in transcript
+#   mode.
 
 setClass(
   "unitizer",
@@ -186,8 +188,8 @@ setClass(
 
     upgraded.from="character",       # was upgraded on load
     best.name="character",
-    show.progress="integer"
-
+    show.progress="integer",
+    transcript="logical"
   ),
   prototype(
     version=as.character(packageVersion("unitizer")),
@@ -202,7 +204,8 @@ setClass(
     bookmark=NULL,
     global=unitizerGlobal$new(enable.which=character()),  # dummy so tests will run
     upgraded.from="",
-    show.progress=0L
+    show.progress=0L,
+    transcript=FALSE
   ),
   validity=function(object) {
     if(!is.object(object@id) && is.character(object@id)) { # default id format

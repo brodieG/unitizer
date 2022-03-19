@@ -252,3 +252,10 @@ unitize(temp.file, interactive.mode=TRUE)
 
 unitizer:::read_line_set_vals(NULL)
 unlink(temp.dir, recursive=TRUE)
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+# - "Output Transcript in non-Interactive" -------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+# Issue 286: don't capture output in non-interactive.
+
