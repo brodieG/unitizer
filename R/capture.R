@@ -234,7 +234,7 @@ unsink_cons <- function(cons) {
   ) {
     attr(cons@out.c, "waive") <- TRUE
   } else {
-    if(!is_stdout_sink(cons@out.c, cons@out.f)) {
+    if(!is_stdout_sink(cons@out.f)) {
       attr(cons@out.c, "waive") <- TRUE
     } else sink()
   }
@@ -293,7 +293,7 @@ close_and_clear <- function(cons) {
     level.extra <- out.level - cons@stdout.level - 1L
 
     if(level.extra > 0) replicate(level.extra, sink())
-    if(!is_stdout_sink(cons@out.c, cons@out.f)){
+    if(!is_stdout_sink(cons@out.f)){
       # nocov start
       replicate(sink.number(), sink())
       meta_word_msg(
@@ -328,9 +328,9 @@ close_and_clear <- function(cons) {
 # what we write so when we retrieve the value our junk write should not be
 # visible
 
-is_stdout_sink <- function(con, desc) {
-  stopifnot(inherits(con,  "file") && isOpen(con), is.chr1(desc))
-  identical(summary(con)[['description']], desc)
+is_stdout_sink <- function(desc) {
+  stopifnot(is.chr1(desc))
+  identical(summary(stdout())[['description']], desc)
 }
 # Connection Tracking Objects
 
