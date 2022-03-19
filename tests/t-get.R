@@ -68,7 +68,7 @@ load.try <- unitizer:::capture_output(
   try(
     unitizer:::load_unitizers(store.ids, rep(NA_character_,
       length(store.ids)), par.frame = par.frame, interactive.mode = FALSE,
-      mode = "unitize", force.upgrade = FALSE, show.progress=0L
+      mode = "unitize", force.upgrade = FALSE, show.progress=0L, transcript=FALSE
 ) ) )
 any(grepl('could not be loaded', load.try$message))
 any(grepl('could not be upgraded', load.try$message))
@@ -80,7 +80,7 @@ out <- unitizer:::capture_output(
   unitizer:::load_unitizers(
     store.ids[4], rep(NA_character_, length(store.ids))[4],
     par.frame = par.frame, interactive.mode = FALSE, mode = "unitize",
-    force.upgrade = TRUE, show.progress=0L
+    force.upgrade = TRUE, show.progress=0L, transcript=FALSE
   )
 )
 any(grepl('Upgraded test file does not match original', out$message))
@@ -92,7 +92,7 @@ out <- unitizer:::capture_output(
       list(structure("hello", class = "unitizer_error_store")),
       NA_character_, par.frame = par.frame,
       interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE,
-      show.progress=0L
+      show.progress=0L, transcript=FALSE
   ) )
 )
 inherits(invalid.store, "try-error")
@@ -106,7 +106,7 @@ out <- unitizer:::capture_output(
     unitizer:::load_unitizers(
       store.ids, rep(NA_character_, length(store.ids)), par.frame = par.frame,
       interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE,
-      global = glob, show.progress=0L
+      global = glob, show.progress=0L, transcript=FALSE
 ) ) )
 inherits(untzs, "try-error")
 any(grepl('could not be loaded', out$message))
@@ -118,7 +118,7 @@ any(grepl('Cannot proceed', out$message))
 untzs <- unitizer:::load_unitizers(
   store.ids[4], NA_character_, par.frame = par.frame,
   interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE,
-  global = glob, show.progress=0L
+  global = glob, show.progress=0L, transcript=FALSE
 )
 mock(unitizer:::set_unitizer, quote(stop("set fail")))
 try(unitizer:::store_unitizer(untzs[[1]]))
@@ -130,7 +130,7 @@ reload <- unitizer:::as.list(untzs)
 untzs1a <- unitizer:::load_unitizers(
   reload, rep(NA_character_, length(reload)), par.frame = par.frame,
   interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE,
-  show.progress=0L
+  show.progress=0L, transcript=FALSE
 )
 all(vapply(unitizer:::as.list(untzs1a), is, logical(1L), "unitizer"))
 
@@ -139,7 +139,7 @@ all(vapply(unitizer:::as.list(untzs1a), is, logical(1L), "unitizer"))
 
 untzs2 <- unitizer:::load_unitizers(
   list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode = FALSE,
-  mode = "unitize", force.upgrade = FALSE, show.progress=0L
+  mode = "unitize", force.upgrade = FALSE, show.progress=0L, transcript=FALSE
 )
 is(untzs2[[1L]], "unitizer")
 identical(parent.env(untzs2[[1L]]@zero.env), par.frame)
@@ -151,7 +151,7 @@ unitizer:::store_unitizer(untzs2[[1L]])
 # warning Instantiated global object without
 untzs2.1 <- unitizer:::load_unitizers(
   list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode = FALSE,
-  mode = "unitize", force.upgrade = FALSE, show.progress=0L
+  mode = "unitize", force.upgrade = FALSE, show.progress=0L, transcript=FALSE
 )
 untzs2.1[[1L]]@eval.time # 33
 unlink(c(tmp.sub.dir2, tmp.sub.dir3, tmp.sub.dir), recursive = TRUE)

@@ -48,7 +48,7 @@ file.copy(cpy.files, file.path(TMP.DIR, cpy.files), overwrite = TRUE)
 untz <- unitizer:::load_unitizers(
   list(store.new), NA_character_,
   par.frame = .GlobalEnv, interactive.mode = TRUE, mode = "unitize",
-  show.progress=0L
+  show.progress=0L, transcript=FALSE
 )
 # Break env chain, store, and reload
 untz[[1L]]@items.ref.calls.deparse[[5L]]

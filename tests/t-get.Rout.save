@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -115,7 +115,7 @@ Error in get_unitizer.character(tmp.fake.utz) :
 +   try(
 +     unitizer:::load_unitizers(store.ids, rep(NA_character_,
 +       length(store.ids)), par.frame = par.frame, interactive.mode = FALSE,
-+       mode = "unitize", force.upgrade = FALSE, show.progress=0L
++       mode = "unitize", force.upgrade = FALSE, show.progress=0L, transcript=FALSE
 + ) ) )
 > any(grepl('could not be loaded', load.try$message))
 [1] TRUE
@@ -130,7 +130,7 @@ Error in get_unitizer.character(tmp.fake.utz) :
 +   unitizer:::load_unitizers(
 +     store.ids[4], rep(NA_character_, length(store.ids))[4],
 +     par.frame = par.frame, interactive.mode = FALSE, mode = "unitize",
-+     force.upgrade = TRUE, show.progress=0L
++     force.upgrade = TRUE, show.progress=0L, transcript=FALSE
 +   )
 + )
 > any(grepl('Upgraded test file does not match original', out$message))
@@ -143,7 +143,7 @@ Error in get_unitizer.character(tmp.fake.utz) :
 +       list(structure("hello", class = "unitizer_error_store")),
 +       NA_character_, par.frame = par.frame,
 +       interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE,
-+       show.progress=0L
++       show.progress=0L, transcript=FALSE
 +   ) )
 + )
 > inherits(invalid.store, "try-error")
@@ -159,7 +159,7 @@ Error in get_unitizer.character(tmp.fake.utz) :
 +     unitizer:::load_unitizers(
 +       store.ids, rep(NA_character_, length(store.ids)), par.frame = par.frame,
 +       interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE,
-+       global = glob, show.progress=0L
++       global = glob, show.progress=0L, transcript=FALSE
 + ) ) )
 > inherits(untzs, "try-error")
 [1] TRUE
@@ -175,7 +175,7 @@ Error in get_unitizer.character(tmp.fake.utz) :
 > untzs <- unitizer:::load_unitizers(
 +   store.ids[4], NA_character_, par.frame = par.frame,
 +   interactive.mode = FALSE, mode = "unitize", force.upgrade = TRUE,
-+   global = glob, show.progress=0L
++   global = glob, show.progress=0L, transcript=FALSE
 + )
 Warning in addSlot(object, "cons", NULL) :
   Slot `cons` does not exist in current version of `unitizer` so not added to object.
@@ -196,7 +196,7 @@ Error in unitizer:::store_unitizer(untzs[[1]]) :
 > untzs1a <- unitizer:::load_unitizers(
 +   reload, rep(NA_character_, length(reload)), par.frame = par.frame,
 +   interactive.mode = FALSE, mode = "unitize", force.upgrade = FALSE,
-+   show.progress=0L
++   show.progress=0L, transcript=FALSE
 + )
 Warning in .Object$initialize(...) :
   Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
@@ -208,7 +208,7 @@ Warning in .Object$initialize(...) :
 > 
 > untzs2 <- unitizer:::load_unitizers(
 +   list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode = FALSE,
-+   mode = "unitize", force.upgrade = FALSE, show.progress=0L
++   mode = "unitize", force.upgrade = FALSE, show.progress=0L, transcript=FALSE
 + )
 Warning in .Object$initialize(...) :
   Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
@@ -226,7 +226,7 @@ Warning in .Object$initialize(...) :
 > # warning Instantiated global object without
 > untzs2.1 <- unitizer:::load_unitizers(
 +   list(tmp.sub.dir2), NA_character_, par.frame, interactive.mode = FALSE,
-+   mode = "unitize", force.upgrade = FALSE, show.progress=0L
++   mode = "unitize", force.upgrade = FALSE, show.progress=0L, transcript=FALSE
 + )
 Warning in .Object$initialize(...) :
   Instantiated global object without global namespace registry; you should only see this warning you are using `repair_environments`.
@@ -423,4 +423,4 @@ Selected file: zzz.R
 > 
 > proc.time()
    user  system elapsed 
-  1.969   0.181   2.256 
+  1.294   0.102   1.412 
