@@ -34,6 +34,8 @@ deparse_fun <- function(x) {
 }
 # Deparse, But Make It Look Like It Would On Prompt
 #
+# Supports already deparsed expressions
+#
 # @param expr an expression or call
 # @return character vector
 
@@ -42,8 +44,11 @@ deparse_prompt <- function(expr) {
   prompt <- getOption("prompt")
   continue <- getOption("continue")
   pad.len <- max(nchar(c(prompt, continue)))
-  expr.deparsed <-
+  expr.deparsed <- if(is.character(expr)) {
+    unlist(strsplit(expr, "\n"))
+  } else {
     deparse(expr, width.cutoff=min(60L, (getOption("width") - pad.len)))
+  }
   if(length(expr.deparsed) < 1L) {
     # nocov start
     stop("Internal Error: don't know what to do with zero length expr")

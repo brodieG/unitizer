@@ -721,7 +721,11 @@ setMethod("reviewNext", c("unitizerBrowse"),
       }
       # We used to check whether the stored deparsed call could do the deparse
       # round-trip, but that isn't guranateed to work e.g. due to encoding, etc.
-      cat(deparse_prompt(item.main@call), sep="\n")
+      # Reference items only have the already-deparsed call (which we don't want
+      # to reparse due to the encoding problem).
+      call <- if(item.main@reference) item.main@call.dep
+      else item.main@call
+      cat(deparse_prompt(call), sep="\n")
       history_write(x@hist.con, item.main@call.dep)
 
       # show the message, and set the trace if relevant; options need to be
