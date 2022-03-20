@@ -185,7 +185,7 @@ more details.
 
 In order to properly capture output, `unitizer` will modify streams and options.  In particular, it will do the following:
 
-* Temporarily set `options(warn>=1L)` during expression evaluation.
+* Temporarily set `options(warn=1L)` during expression evaluation.
 * Temporarily set `options(error=NULL)` during expression evaluation.
 * Use `sink()` to capture any output to `stdout`.
 * Use `sink(type="message")` to capture output to `stderr`.

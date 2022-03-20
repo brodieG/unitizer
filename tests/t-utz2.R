@@ -252,3 +252,19 @@ unitize(temp.file, interactive.mode=TRUE)
 
 unitizer:::read_line_set_vals(NULL)
 unlink(temp.dir, recursive=TRUE)
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+# - "Output Transcript in non-Interactive" -------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+# Issue 286: don't capture output in non-interactive.
+
+temp.dir <- tempfile()
+temp.file <- file.path(temp.dir, 'a.R')
+dir.create(temp.dir)
+writeLines("1 + 1", temp.file)
+old.opt <- options(unitizer.transcript=NULL, unitizer.show.progress=TRUE)
+unitize(temp.file, auto.accept="new")
+options(old.opt)
+unlink(temp.dir, recursive=TRUE)
+

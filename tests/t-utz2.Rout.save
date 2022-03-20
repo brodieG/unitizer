@@ -1098,6 +1098,49 @@ unitizer> Q
 > unitizer:::read_line_set_vals(NULL)
 > unlink(temp.dir, recursive=TRUE)
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> # - "Output Transcript in non-Interactive" -------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> 
+> # Issue 286: don't capture output in non-interactive.
+> 
+> temp.dir <- tempfile()
+> temp.file <- file.path(temp.dir, 'a.R')
+> dir.create(temp.dir)
+> writeLines("1 + 1", temp.file)
+> old.opt <- options(unitizer.transcript=NULL, unitizer.show.progress=TRUE)
+> unitize(temp.file, auto.accept="new")
+
+Preloads...
+Loading unitizer data...
+Parsing tests...
+Parsing a.R
+Evaluating tests...
+
+1 + 1
+[1] 2
+
+Prepping Unitizers...
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
+Applying auto-accepts...
+
++------------------------------------------------------------------------------+
+| unitizer for: a.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    1
+...........................
+                -    -    1
+
+| Auto-accepting changes...
+| unitizer updated.
+
+> options(old.opt)
+> unlink(temp.dir, recursive=TRUE)
+> 
+> 
 > proc.time()
    user  system elapsed 
-   9.38    1.20   12.68 
+   9.80    1.31   13.29 

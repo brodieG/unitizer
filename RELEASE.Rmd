@@ -11,6 +11,7 @@
 
 [ ] Check whether the parse/deparse cycle in browser does not fail with e.g.
     invalid latin-1 locale.
+[ ] Switch to simplermarkdown?
 
 ## Standard
 

@@ -756,6 +756,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
             stderr()
           )
           out.err <- TRUE
+        } else if(unitizer@transcript) {
+          cat("\n")
+          meta_word_msg(
+            paste0(
+              "Running in transcript mode: stderr was not captured so if there ",
+              "was any it would have been output during evaluation; see ",
+              "earlier output."
+            ),
+            trail.nl=!(out.std || out.err)
+          )
         }
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
