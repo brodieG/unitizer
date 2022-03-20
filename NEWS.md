@@ -18,6 +18,8 @@
   `unitizer` without first attaching it to the search path.
 * [#245](https://github.com/brodieG/unitizer/issues/245): Fix re-run bookmarking
   when reviewing multiple unitizers with `unitize_dir`.
+* We no longer attempt to do a parse/deparse round trip when displaying recorded
+  test expressions as the round trip could fail in some cases.
 
 ## v1.4.16-17
 
