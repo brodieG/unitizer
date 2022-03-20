@@ -124,12 +124,12 @@ processed (TRUE or > 1), and for each test processed (TRUE or > 2).}
 
 \item{transcript}{TRUE (default in non-interactive mode) or FALSE (default in
 interactive mode) enables direct output of stdout/stderr immediately during
-test evaluation instead of being captured for display during review.  This
-also causes progress updates to display on new lines instead of overlaying
-on the same line.  One limitation of running in this mode is that stderr is
-no longer captured at all so will not appear during review as it does in
-non-transcript mode (although it will be present in the output at the point
-the test was evaluated).}
+test evaluation instead of being captured for later display during review.
+This also causes progress updates to display on new lines instead of
+overlaying on the same line.  One limitation of running in this mode is
+that stderr is no longer captured at all so will not appear during review
+as it does in non-transcript mode (although it will be present in the
+output at the point the test was evaluated).}
 
 \item{test.dir}{the directory to run the tests on; if NULL will use the
 \dQuote{tests/unitizer} package folder if it exists, or \dQuote{.} if it
@@ -153,7 +153,7 @@ does not.  See \code{\link{infer_unitizer_location}}) for details.}
   the interactive environment and side effects.  The functions do return
   summary data about test outcomes and user input as
   \code{unitizer_result} objects, or for \code{unitize_dir} as
-  \code{unitizer_results} objects, invisbly.  See
+  \code{unitizer_results} objects, invisibly.  See
   \code{\link{unitizer_result}}.
 }
 \description{

@@ -2,6 +2,9 @@
 
 ## v1.4.18
 
+* [#286](https://github.com/brodieG/unitizer/issues/286): Add a "transcript"
+  mode where test output can better be interpreted as a log, intended
+  non-interactive mode.
 * [#288](https://github.com/brodieG/unitizer/issues/288): Prevent upgrade prompt
   in non-interactive mode interrupting result display (regression introduced in
   1.4.15).
