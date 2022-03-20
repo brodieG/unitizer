@@ -430,7 +430,6 @@ unitize_core <- function(
               )
             parse_tests(x, comments=TRUE)
       } ) }
-      if(show.progress > 0) over_print("", overwrite=!transcript)
 
       # Retrieve bookmarks so they are not blown away by re-load; make sure to
       # mark those that have had changes to the parse data
@@ -470,11 +469,16 @@ unitize_core <- function(
       # Now evaluate, whether a unitizer is evaluated or not is a function of
       # the slot @eval, set just above as they are loaded
 
-      if(identical(mode, "unitize"))
+      if(identical(mode, "unitize")) {
+        if(show.progress > 0) {
+          over_print("Evaluating tests...", overwrite=!transcript)
+          over_print("", overwrite=!transcript)
+        }
         unitizers[valid] <- unitize_eval(
           tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
           global=global, show.progress=show.progress, transcript=transcript
         )
+      }
       # Check whether any unitizers were upgraded and require review.  We used
       # to ask before upgrade, but now we just upgrade and check before we
       # review.  This is so we can upgrade unitizers without forcing an
@@ -586,7 +590,7 @@ unitize_eval <- function(
       # CHECK WHETHER THIS MODE IS ENABLED, OR IS IT HANDLED INERNALLY?)
 
       tests <- new("unitizerTests") + test.dat
-      if(test.len > 1L & show.progress > 1)
+      if(test.len > 1L && show.progress > 1L)
         over_print(
           paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": "),
           overwrite=!transcript

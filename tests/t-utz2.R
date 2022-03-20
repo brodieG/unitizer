@@ -259,3 +259,12 @@ unlink(temp.dir, recursive=TRUE)
 
 # Issue 286: don't capture output in non-interactive.
 
+temp.dir <- tempfile()
+temp.file <- file.path(temp.dir, 'a.R')
+dir.create(temp.dir)
+writeLines("1 + 1", temp.file)
+old.opt <- options(unitizer.transcript=NULL, unitizer.show.progress=TRUE)
+unitize(temp.file, auto.accept="new")
+options(old.opt)
+unlink(temp.dir, recursive=TRUE)
+
