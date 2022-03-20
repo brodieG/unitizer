@@ -204,7 +204,7 @@ upgrade_internal <- function(object) {
     object <- addSlot(object, "best.name", "")
     object <- addSlot(object, "show.progress", PROGRESS.MAX)
   }
-  if(ver < "1.4.17.9000") {
+  if(ver < "1.4.17.9006") {
     object <- addSlot(object, "transcript", FALSE)
   }
   # - Keep at End---------------------------------------------------------------
