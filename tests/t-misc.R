@@ -104,17 +104,13 @@ unitizer:::deparse_fun("hello")
 
 # - "deparse_prompt" -----------------------------------------------------------
 
-# expect_identical(unitizer:::deparse_prompt(quote(if (TRUE) {
-#     25
-# } else {
-#     42
-# })), c("> if (TRUE) {", "+     25", "+ } else {", "+     42",
-#     "+ }"))
-unitizer:::deparse_prompt(quote(if (TRUE) {
+suppressWarnings(glob <- unitizer:::unitizerGlobal$new())
+item <- unitizer:::exec(quote(if (TRUE) {
     25
 } else {
     42
-}))
+}), new.env(), glob)
+unitizer:::deparse_prompt(item)
 
 # - "deparse_mixed" ------------------------------------------------------------
 
