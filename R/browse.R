@@ -719,15 +719,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
         cat("\n")
       }
-      parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
-      if(inherits(parsed.call, "try-error")) {
-        # Hmm, what about non-ASCII parse issues here?  Shouldn't this fail e.g.
-        # with test stored in latin-1 but run in UTF-8?
-        # nocov start
-        stop("Internal Error: malformed call stored; contact maintainer.")
-        # nocov end
-      }
-      cat(deparse_prompt(parsed.call), sep="\n")
+      # We used to check whether the stored deparsed call could do the deparse
+      # round-trip, but that isn't guranateed to work e.g. due to encoding, etc.
+      cat(deparse_prompt(item.main@call), sep="\n")
       history_write(x@hist.con, item.main@call.dep)
 
       # show the message, and set the trace if relevant; options need to be
