@@ -34,20 +34,19 @@ deparse_fun <- function(x) {
 }
 # Deparse, But Make It Look Like It Would On Prompt
 #
-# Supports already deparsed expressions
-#
-# @param expr an expression or call
 # @return character vector
 
-deparse_prompt <- function(expr) {
-  # if(!is.call(expr) || !is.expression(expr)) stop("Argument `expr` must be an expression ")
+deparse_prompt <- function(item) {
   prompt <- getOption("prompt")
   continue <- getOption("continue")
   pad.len <- max(nchar(c(prompt, continue)))
-  expr.deparsed <- if(is.character(expr)) {
-    unlist(strsplit(expr, "\n"))
+
+  # We don't have the reference all available, and we can't parse/deparse due to
+  # roundtrip issues with e.g. encodings.
+  expr.deparsed <- if(item@reference) {
+    unlist(strsplit(item@call.dep, "\n"))
   } else {
-    deparse(expr, width.cutoff=min(60L, (getOption("width") - pad.len)))
+    deparse(item@call, width.cutoff=min(60L, (getOption("width") - pad.len)))
   }
   if(length(expr.deparsed) < 1L) {
     # nocov start
