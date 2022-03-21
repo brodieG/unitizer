@@ -277,8 +277,8 @@ options_update <- function(tar.opts) {
   # Attempt to ANSI colorize output, TRUE to force, FALSE to force off, NULL to
   # auto-detect based on terminal capability
   unitizer.color=NULL,
-  unitizer.disable.capt=
-    c(output=FALSE, message=FALSE),        # Will prevent capture
+  # TRUE will prevent capture of corresponding stream
+  unitizer.disable.capt=c(output=FALSE, message=FALSE),
   # How many lines to display when showing test values, or truncate to if exceeds
   unitizer.test.out.lines=c(50L, 15L),
   # How many lines to display when showing test errors, or truncate to if exceeds

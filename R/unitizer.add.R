@@ -105,7 +105,15 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     repeat {
       if(done(e2 <- nextItem(e2))) break
 
-      item <- exec(getItem(e2), test.env, e1@global)
+      # We used to show this after exec because we wanted to swallow the
+      # unitizer_sect calls (speculation); we'll just let them be shown so they
+      # run before exec.
+      call <- getItem(e2)
+      if(e1@show.progress > 2L) over_print(
+        deparse(call)[[1L]], append=TRUE, overwrite=!e1@transcript
+      )
+
+      item <- exec(call, test.env, e1@global)
 
       # If item is a section, added to the store and update the tests with the
       # contents of the section, and re-loop (this is how we handle nested
@@ -132,8 +140,6 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
       item@section.id <- e1@section.parent[[e1@section.map[[i]]]]
       # record name for attempting to match deleted tests to section
       item@section.name <- e1@sections[[item@section.id]]@title
-      if(e1@show.progress > 2L)
-        over_print(deparse(item@call)[[1L]], append=TRUE)
 
       e1 <- e1 + item  # store evaluated test and compare it to reference one
 
@@ -169,7 +175,7 @@ setMethod("+", c("unitizer", "unitizerTestsOrExpression"), valueClass="unitizer"
     } }
     # Finalize
 
-    if(e1@show.progress > 2L) over_print("")
+    if(e1@show.progress > 2L) over_print("", overwrite=!e1@transcript)
     e1@eval.time <- (proc.time() - start.time)[["elapsed"]]
     on.exit()
     close_and_clear(e1@global$cons)

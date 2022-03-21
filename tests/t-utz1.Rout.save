@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2022-01-01 r81419) -- "Unsuffered Consequences"
+R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
 Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -15,6 +17,18 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> # - "No Attach Test" -----------------------------------------------------------
+> 
+> f <- paste0(tempfile(), ".R")
+> writeLines("1 + 1", f)
+> try(unitizer::unitize(f))
+
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  `unitizer` package must be attached to the search path, e.g. with `library(unitizer)`
+> unlink(f)
+> 
+> # - "Usual Setup" --------------------------------------------------------------
+> 
 > source(file.path("_helper", "init.R"))
 > source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 > source(file.path("_helper", "pkgs.R"))
@@ -2038,57 +2052,6 @@ unitizer> Y
 
 | unitizer unchanged.
 
-+------------------------------------------------------------------------------+
-| unitizer for: unitizer/fastlm1.R                                             |
-+------------------------------------------------------------------------------+
-
-             Pass Fail
- <untitled>     2    2
-......................
-                2    2
-
-- Failed -----------------------------------------------------------------------
-
-| The 2 tests in this section failed because the new evaluations do not match 
-| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
-| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
-
-| Jumping to test #4 because that was the test under review when test re-run was
-| requested.
-
-> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
-> dat <- data.frame(x = 1:100, y = (1:100)^2)
-> res <- fastlm(dat$x, dat$y)
-
-# Our fast computations do not produce the same results as our
-# original tests so they fail.  If you need more detail than the
-# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
-#
-# You should reject these tests by typing 'N' at the prompt since
-# they are incorrect.
-
-> res
-intercept     slope       rsq 
--3.54e+13  7.01e+11  9.39e-01 
-attr(,"class")
-[1] "fastlm"
-
-| Value mismatch: 
-
-< .ref                            > .new                          
-@@ 1,4 @@                         @@ 1,4 @@                       
-  intercept     slope       rsq     intercept     slope       rsq 
-< -1717.000   101.000     0.939   > -3.54e+13  7.01e+11  9.39e-01 
-  attr(,"class")                    attr(,"class")                
-  [1] "fastlm"                      [1] "fastlm"                  
-
-| State mismatch; see `.DIFF$state` for details.
-
-unitizer> Q
-
-| No changes recorded.
-| unitizer unchanged.
-
 | Summary of files in common directory 'unitizer':
 | 
 |                        Pass Fail
@@ -2965,4 +2928,4 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
 > 
 > proc.time()
    user  system elapsed 
-  23.65    3.58   28.88 
+  17.53    2.05   20.94 

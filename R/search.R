@@ -599,8 +599,9 @@ reattach <- function(pos, name, type, data, extra=NULL, global) {
     if(inherits(lib.try, "try-error")) {
       # nocov start
       warning(
-        "Internal Warning: unable to fully restore search path; see prior ",
-        "error. Contact maintainer if this warning persists.",
+        "Warning: unable to fully restore search path; see prior ",
+        "error, and consult `?unitizerState`, searching for \"Caveats\". ",
+        "Contact maintainer if your problem is not covered by documentation.",
         immediate.=TRUE
       )
       global$state()

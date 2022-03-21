@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -224,13 +226,10 @@ $message
 > c1 <- file(f1, "w+b")
 > c2 <- file(f2, "w+b")
 > sink(c2)
-> unitizer:::is_stdout_sink(c1)
+> unitizer:::is_stdout_sink(f1)
 > sink()
-> try(unitizer:::is_stdout_sink(f1)) # error
-Error in unitizer:::is_stdout_sink(f1) : 
-  inherits(con, "file") && isOpen(con) is not TRUE
 > sink(c1)
-> unitizer:::is_stdout_sink(c1)
+> unitizer:::is_stdout_sink(f1)
 > sink()
 > close(c1)
 > close(c2)
@@ -310,4 +309,4 @@ message
 > 
 > proc.time()
    user  system elapsed 
-  0.851   0.138   1.061 
+  0.533   0.071   0.599 

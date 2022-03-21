@@ -242,3 +242,24 @@ glb$release()
 unitizer:::unitizerUniqueNames(list(search.path = c(goodbye = "0",
     hello = "1", goodbye = "2", goodbye = "3")))
 
+# - "Fake Package Re-attach" ---------------------------------------------------
+
+# Make sure that aspects of search path management other than search path
+# survive a failure caused by bad search path env (#252, #253).
+
+owd <- getwd()
+test.f <- paste0(tempfile(), ".R")
+writeLines("
+f <- tempfile()
+dir.create(f)
+setwd(f)
+# Package assumed non-existing; R could disallow this in the future
+# which could change the test.
+attach(list(x=42), name='package:adfaadcxuqyojfnkfadsf')
+1 + 1", test.f)
+out <- unitizer:::capture_output(
+  try(unitize(test.f, state='recommended', interactive.mode=FALSE))
+)
+any(grepl("mismatch between actual search path and tracked", out$message))
+identical(owd, getwd())  # confirm working directory restored
+

@@ -7,6 +7,90 @@ See git repo **[issues](https://github.com/brodieG/unitizer/issues)**.
 This section contains developer notes for things that are unresolved, need
 fixing, or hare-brained ideas for features.  Read at your own risk.
 
+## v1.4.17.9000
+
+### Output Capture
+
+Need to figure out if we can if we can disable capture without then messing up
+the display of the test.  Might not be possible?  This is indeed a problem as we
+loose the message data stream which we do display once we get to the failed
+test.  The conditions should still be there.
+
+Need to try a test that does this.
+
+Also need to figure out how to get rid of `"<unitizer sink test>"`.
+
+We need some option to set the progress mode:
+
+* progress detail level
+* overwrite or newline
+* show evaluation transcript
+
+The last two could default to TRUE for interactive.  Should probably be S4.
+
+```
+unitizer_progress <- function(level=TRUE, transcript=!interactive()) {
+  structure(c(level=level, transcript=transcript), class='utz_transcript')
+}
+```
+
+One weirdness is that "transcript" and "progress" feel somewhat separate, but
+the trick is the overwrite vs newline.  Maybe there is a transcript mode
+modifier.  This makes most sense.  Maybe in the future we provide more control
+at the transcript level.
+
+### Multiple Bookmarks
+
+Challenge is that we eval all the unitizers, and then browse all of them, but if
+we just want to re-eval one we don't have a good way to interrupt?
+
+So what behavior do we want?  Ideally when we exit with R, we want to return to
+that exact unitizer and continue on from there in the original order.
+
+Why do we allow only one bookmark?  The RR option effectively requires multiple
+ones.  Actually, maybe it's okay if we only care about returning to the specific
+point of a single re-eval, which is likely what we want.  Does RR even make
+sense outside of the top level "select-a-unitizer" level?
+
+Currently the bookmarked status would allow us to pick which unitizers to review
+after reloading (browse.which).  The problem is that a bookmark is complicated
+(see `unitizerBookmarkOrNULL`), and it's presence allow is used to determine
+whether a unitizer is bookmarked, but we would need to add a semantic to the
+bookmark that's just "start from the beginning" if we add bookmarks to all
+subsequent that are not explicitly bookmarked.  I guess we could do this,
+although if feels hacky.
+
+### Deparse Issues
+
+Astonishing we got this far without running into it more frequently, but the
+matching of calls on deparse suffers from several issues, particularly
+instability with different locales, etc, but could also be affected by numerical
+precision.
+
+Storing the parsed data is out of the question due to file size (unitizer.R is a
+~750 line file):
+
+```
+> x <- parse('../unitizer/R/unitizer.R')
+> f.lang <- tempfile()
+> f.char <- tempfile()
+> saveRDS(x, f.lang)
+> saveRDS(deparse(x), f.char)
+> file.size(f.lang)
+[1] 76612
+> file.size(f.char)
+[1] 5431
+```
+
+Parse/deparse cycle on load is technically feasible from a computing cost
+perspective, but it is not guaranteed to work as some locales will accept random
+bytes as valid (because they are) so they are parsed directly into those bytes,
+but then attempting to parse in another locale fails.
+
+We could try to record the locale and iconv, or even try to use RDS3 which
+appears to translate, but really we probably will just document for now.  We
+could add a warning too?
+
 ## v1.4.15.9000
 
 ### Windows dir issues
@@ -19,7 +103,7 @@ So fix here is to change normalize_path to test for file, and if not, return the
 unchanged file (and hope for the best?).  Indeed we confirm that non-existent
 files on windows are still normalized to the working directory.
 
-Additional complexity that on windows (someetimes?) we can expect drive letters,
+Additional complexity that on windows (sometimes?) we can expect drive letters,
 so it's not always clear what is an absolute path.
 
 ### Old R Versions

@@ -202,8 +202,8 @@ get_text <- function(
     )
     if(err.con.num != 2) sink(err.con, type="message")
 
-    # Reset writing point to last point read
-
+    # Reset writing point to last point read (this might not work on windows,
+    # see ?seek)
     pos <- seek(con, origin="current", rw="read")
     seek(con, pos, rw="write")
   }
@@ -234,7 +234,7 @@ unsink_cons <- function(cons) {
   ) {
     attr(cons@out.c, "waive") <- TRUE
   } else {
-    if(!is_stdout_sink(cons@out.c)) {
+    if(!is_stdout_sink(cons@out.f)) {
       attr(cons@out.c, "waive") <- TRUE
     } else sink()
   }
@@ -293,7 +293,7 @@ close_and_clear <- function(cons) {
     level.extra <- out.level - cons@stdout.level - 1L
 
     if(level.extra > 0) replicate(level.extra, sink())
-    if(!is_stdout_sink(cons@out.c)){
+    if(!is_stdout_sink(cons@out.f)){
       # nocov start
       replicate(sink.number(), sink())
       meta_word_msg(
@@ -328,12 +328,9 @@ close_and_clear <- function(cons) {
 # what we write so when we retrieve the value our junk write should not be
 # visible
 
-is_stdout_sink <- function(con) {
-  stopifnot(inherits(con,  "file") && isOpen(con))
-  test.str <- "\n\n<unitizer sink test>\n\n"
-  cat(test.str)
-  test.str.echo <- get_text(con)
-  identical(test.str, test.str.echo)
+is_stdout_sink <- function(desc) {
+  stopifnot(is.chr1(desc))
+  identical(summary(stdout())[['description']], desc)
 }
 # Connection Tracking Objects
 

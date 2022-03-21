@@ -39,7 +39,8 @@ repair_environments <- function(x, interactive.mode=interactive()) {
     unitizer <- try(
       load_unitizers(
         list(x), test.files=NA_character_, par.frame=baseenv(),
-        interactive.mode=interactive.mode, mode="unitize", show.progress=0L
+        interactive.mode=interactive.mode, mode="unitize", show.progress=0L,
+        transcript=!interactive.mode
       )[[1L]]
     )
     if(inherits(unitizer, "try-error"))

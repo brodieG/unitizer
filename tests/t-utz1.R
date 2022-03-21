@@ -1,3 +1,12 @@
+# - "No Attach Test" -----------------------------------------------------------
+
+f <- paste0(tempfile(), ".R")
+writeLines("1 + 1", f)
+try(unitizer::unitize(f))
+unlink(f)
+
+# - "Usual Setup" --------------------------------------------------------------
+
 source(file.path("_helper", "init.R"))
 source(file.path("aammrtf", "ref.R")); make_ref_obj_funs("refobjs")
 source(file.path("_helper", "pkgs.R"))

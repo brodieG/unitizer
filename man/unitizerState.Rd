@@ -64,7 +64,7 @@ level by adding \code{options(unitizer.state='suggested')} in your
 \code{.Rprofile}, although if you intend to do this be sure to read the
 \dQuote{CRAN non-compliance} section.
 }
-\section{CRAN non-compliance}{
+\section{CRAN Non-Compliance and Other Caveats}{
 
 
 In the default state management mode, this package fully complies with CRAN
@@ -77,8 +77,21 @@ only traced during \code{unitize} evaluation and are untraced on exit.
 Unfortunately this tracing is against CRAN policies, which is why it is
 disabled by default.
 
+Arguably other aspects of state management employed outside of
+\code{state="default"} _could_ be considered CRAN non-compliant, but none of
+these are deployed unless you explicitly chose to do so.  Additionally,
+\code{unitizer} limits state manipulation to the evaluation of its processes
+and restores state on exit.  Some exceptional failures may prevent restoring
+state fully.
+
+If state management were to fail fail in an unhandled form, the simplest
+work-around is to turn off state management altogether with
+\code{state="default"}. If it is a particular aspect of state management
+(e.g. search paths with packages attached with \code{devtools::load_all}),
+you can disable just that aspect of state (see "Custom Control" section).
+
 For more details see the reproducible tests vignette with:
-\code{vignette(package='unitizer', 'unitizer_reproducible_tests')}
+\code{vignette(package='unitizer', 'u4_reproducible-tests')}
 }
 
 \section{Overview}{
@@ -147,7 +160,9 @@ To manage the search path \code{unitizer} detaches
 and re-attaches packages.  This is not always the same as loading a package
 into a fresh R session as detaching a package does not necessarily undo every
 action that a package takes when it is loaded.  See \code{\link{detach}} for
-potential pitfalls of enabling this setting.
+potential pitfalls of enabling this setting.  Additionally, packages attached
+in non-standard ways (e.g. \code{devtools::load_all}) may not re-attach
+properly.
 
 You can modify what aspects of state are managed by using the \code{state}
 parameter to \code{\link{unitize}}.  If you are satisfied with basic default

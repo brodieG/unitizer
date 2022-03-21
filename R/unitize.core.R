@@ -39,10 +39,15 @@
 
 unitize_core <- function(
   test.files, store.ids, state, pre, post, history, interactive.mode,
-  force.update, auto.accept, mode, use.diff, show.progress
+  force.update, auto.accept, mode, use.diff, show.progress, transcript
 ) {
   # - Validation / Setup -------------------------------------------------------
 
+  if(!'package:unitizer' %in% search())
+    stop(
+      "`unitizer` package must be attached to the search path, ",
+      "e.g. with `library(unitizer)`"
+    )
   if(!is.chr1(mode) || !mode %in% c("unitize", "review"))
     # nocov start
     stop("Internal Error: incorrect value for `mode`; contact maintainer")
@@ -100,6 +105,8 @@ unitize_core <- function(
     stop("Argument `show.progress` must be TRUE or FALSE or in 0:", PROGRESS.MAX)
   if(is.logical(show.progress))
     show.progress <- show.progress * PROGRESS.MAX
+  if(!is.TF(transcript))
+    stop("Argument `transcript` must be TRUE or FALSE")
 
   # Validate state; note that due to legacy code we disassemble state into the
   # par.env and other components
@@ -182,7 +189,7 @@ unitize_core <- function(
   global <- unitizerGlobal$new(
     enable.which=reproducible.state,
     unitizer.opts=opts.untz,  # need to reconcile with normal options
-    set.global=TRUE
+    set.global=TRUE, transcript=transcript
   )
   set.shim.funs <- FALSE
   if(is.null(par.env)) {
@@ -361,7 +368,7 @@ unitize_core <- function(
 
   # Handle pre-load data
 
-  if(show.progress > 0) over_print("Preloads...")
+  if(show.progress > 0) over_print("Preloads...", overwrite=!transcript)
   pre.load.frame <- source_files(pre, gpar.frame)
   if(!is.environment(pre.load.frame))
     stop("Argument `pre` could not be interpreted:\n", pre.load.frame)
@@ -374,7 +381,8 @@ unitize_core <- function(
   assign("quit", unitizer_quit, envir=util.frame)
   assign("q", unitizer_quit, envir=util.frame)
 
-  if(show.progress > 0) over_print("Loading unitizer data...")
+  if(show.progress > 0)
+    over_print("Loading unitizer data...", overwrite=!transcript)
   eval.which <- seq_along(store.ids)
   start.len <- length(eval.which)
   valid <- rep(TRUE, length(eval.which))
@@ -411,15 +419,17 @@ unitize_core <- function(
 
       tests.parsed.prev <- tests.parsed
       if(identical(mode, "unitize")) {
-        if(show.progress > 0) over_print("Parsing tests...")
+        if(show.progress > 0)
+          over_print("Parsing tests...", overwrite=!transcript)
         tests.parsed[active] <- lapply(
           test.files[active],
           function(x) {
             if(show.progress > 1)
-              over_print(paste("Parsing", relativize_path(x)))
+              over_print(
+                paste("Parsing", relativize_path(x)), overwrite=!transcript
+              )
             parse_tests(x, comments=TRUE)
       } ) }
-      if(show.progress > 0) over_print("")
 
       # Retrieve bookmarks so they are not blown away by re-load; make sure to
       # mark those that have had changes to the parse data
@@ -447,7 +457,7 @@ unitize_core <- function(
       unitizers[active] <- load_unitizers(
         store.ids[active], test.files[active], par.frame=util.frame,
         interactive.mode=interactive.mode, mode=mode, global=global,
-        show.progress=show.progress
+        show.progress=show.progress, transcript=transcript
       )
       global$state()
 
@@ -459,18 +469,24 @@ unitize_core <- function(
       # Now evaluate, whether a unitizer is evaluated or not is a function of
       # the slot @eval, set just above as they are loaded
 
-      if(identical(mode, "unitize"))
+      if(identical(mode, "unitize")) {
+        if(show.progress > 0) {
+          over_print("Evaluating tests...", overwrite=!transcript)
+          over_print("", overwrite=!transcript)
+        }
         unitizers[valid] <- unitize_eval(
           tests.parsed=tests.parsed[valid], unitizers=unitizers[valid],
-          global=global, show.progress=show.progress
+          global=global, show.progress=show.progress, transcript=transcript
         )
+      }
       # Check whether any unitizers were upgraded and require review.  We used
       # to ask before upgrade, but now we just upgrade and check before we
       # review.  This is so we can upgrade unitizers without forcing an
       # interactive session if the class changed so folks don't have to resubmit
       # to CRAN each time we do this.
 
-      if(!upgrade.warned) {
+      if(!upgrade.warned && interactive.mode) {
+        # Don't warn about upgrade in non-interactive as we won't save them
         upgrade.warned <- TRUE
         upgrade_warn(unitizers[valid], interactive.mode, global)
       }
@@ -486,7 +502,8 @@ unitize_core <- function(
         history=history,
         global=global,
         use.diff=use.diff,
-        show.progress=show.progress
+        show.progress=show.progress,
+        transcript=transcript
       )
       # Track whether updated, valid, etc.
 
@@ -545,7 +562,9 @@ unitize_core <- function(
 # @return a list of unitizers
 # @keywords internal
 
-unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
+unitize_eval <- function(
+  tests.parsed, unitizers, global, show.progress, transcript
+) {
   test.len <- length(tests.parsed)
   if(!identical(test.len, length(unitizers)))
     # nocov start
@@ -571,9 +590,10 @@ unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
       # CHECK WHETHER THIS MODE IS ENABLED, OR IS IT HANDLED INERNALLY?)
 
       tests <- new("unitizerTests") + test.dat
-      if(test.len > 1L & show.progress > 1)
+      if(test.len > 1L && show.progress > 1L)
         over_print(
-          paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": ")
+          paste0(sprintf(tpl, i), " ", basename(unitizer@test.file.loc), ": "),
+          overwrite=!transcript
         )
       unitizers[[i]] <- unitizer + tests
       global$resetInit()
@@ -632,7 +652,7 @@ unitize_eval <- function(tests.parsed, unitizers, global, show.progress) {
 
 unitize_browse <- function(
   unitizers, mode, interactive.mode, force.update, auto.accept, history, global,
-  use.diff, show.progress
+  use.diff, show.progress, transcript
 ) {
   # - Prep ---------------------------------------------------------------------
 
@@ -641,7 +661,8 @@ unitize_browse <- function(
     meta_word_msg("No valid unitizers available to review.")
     return(unitizers)
   }
-  if(show.progress > 0) over_print("Prepping Unitizers...")
+  if(show.progress > 0)
+    over_print("Prepping Unitizers...", overwrite=!transcript)
 
   hist.obj <- history_capt(history, interactive.mode)
   on.exit(history_release(hist.obj))
@@ -677,7 +698,8 @@ unitize_browse <- function(
   eval.which <- integer(0L)
 
   if(length(auto.accept)) {
-    if(show.progress > 0) over_print("Applying auto-accepts...")
+    if(show.progress > 0)
+      over_print("Applying auto-accepts...", overwrite=!transcript)
     for(i in seq_along(untz.browsers)) {
       auto.accepted <- 0L
       for(auto.val in auto.accept) {
@@ -699,14 +721,14 @@ unitize_browse <- function(
   # Browse, or fail depending on interactive mode
 
   reviewed <- int.error <- logical(test.len)
-  if(show.progress > 0) over_print("")
+  if(show.progress > 0) over_print("", overwrite=!transcript)
 
   # Re-used message
 
   # - Interactive --------------------------------------------------------------
 
   # Check if any unitizer has bookmark set, and if so jump directly to
-  # that unitizer
+  # that unitizer (note we can only bookmark one at a time)
 
   bookmarked <- bookmarked(unitizers)
   if(test.len > 1L && !any(bookmarked)) show(summaries)
@@ -879,19 +901,25 @@ unitize_browse <- function(
           unitizers[[i]]@res.data <- browse.res@data
           int.error[[i]] <- browse.res@interactive.error
 
-          # Check to see if any need to be re-evaled, and if so, mark unitizers
-          # and return
+          # Check for breakout conditions; re-eval will cause a break-out (i.e.
+          # we stop review and resume later.
 
-          eval.which <- unique(
-            c(
-              eval.which,
-              if(identical(browse.res@re.eval, 1L)) {
-                i
-              } else if(identical(browse.res@re.eval, 2L)) seq.int(test.len)
-          ) )
-          # Break out of review loop if signaled
-
-          if(browse.res@multi.quit) break
+          if(identical(browse.res@re.eval, 1L)) {
+            eval.which <- i
+            # Dummy-bookmark all subsequent unitizers so that they are
+            # re-reviewed if they were scheduled for review via e.g. 'A'
+            to.rebookmark <- pick.num[pick.num > i]
+            for(j in to.rebookmark)
+              unitizers[[j]]@bookmark <-
+                new("unitizerBrowseBookmark", call=NA_character_)
+            break
+          } else if(identical(browse.res@re.eval, 2L)) {
+            # All re-eval clears the bookmarks (there should only be one, but
+            # we're lazy here and clear all)
+            for(j in seq.int(test.len)) unitizers[[j]]@bookmark <- NULL
+            eval.which <- seq.int(test.len)
+            break
+          } else if(browse.res@multi.quit) break
         }
         # Update bookmarks (in reality, we're just clearing the bookmark if it
         # was previously set, as setting the bookmark will break out of this
@@ -914,11 +942,23 @@ unitize_browse <- function(
           for(i in which(int.error)) {
             untz <- unitizers[[i]]
             delta.show <- untz@tests.status != "Pass" & !ignored(untz@items.new)
+            rem.show <-
+              which(!ignored(untz@items.ref) & is.na(untz@items.ref.map))
             meta_word_msg(
               paste0(
                 "  * ",
-                format(paste0(untz@tests.status[delta.show], ": ")),
-                untz@items.new.calls.deparse[delta.show],
+                format(
+                  paste0(
+                    c(
+                      as.character(untz@tests.status[delta.show]),
+                      rep_len("Removed", length(rem.show))
+                    ),
+                    ": "
+                ) ),
+                c(
+                  untz@items.new.calls.deparse[delta.show],
+                  untz@items.ref.calls.deparse[rem.show]
+                ),
                 collapse="\n"
               ),
               "\nin '", relativize_path(untz@test.file.loc), "'\n",
@@ -956,7 +996,6 @@ unitize_browse <- function(
     for(i in eval.which) unitizers[[i]]@eval <- TRUE
   } else {
     # this one may not be necessary
-
     for(i in seq_along(unitizers)) unitizers[[i]]@eval <- FALSE
   }
   unitizers
@@ -1076,14 +1115,14 @@ reset_and_unshim <- function(global) {
     meta_word_msg(
       "Failed unshimming library/detach/attach; you may want to restart",
       "your R session to reset them to their original values (or you",
-      "can `untrace` them manually)"
+      "can `untrace` them manually)."
     )
   if(!success.release)
     meta_word_msg(
       "Failed releasing global tracking object; you will not be able to",
       "instantiate another `unitizer` session.  This should not happen, ",
       "please contact the maintainer.  In the meantime, restarting your R",
-      "session should restore functionality"
+      "session should restore functionality."
     )
   success.clear && success.unshim
 }
@@ -1109,3 +1148,5 @@ confirm_quit <- function(unitizers) {
 }
 
 PROGRESS.MAX <- 3L
+
+

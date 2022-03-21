@@ -218,7 +218,7 @@ setMethod("show", "unitizerItem",
           cond.types,
           factor(
             cond.types,
-            levels=c("error", "warning", "message", "other condition")),
+            levels=c("error", "warning", "message", "other")),
           length
       ) )
       cat(

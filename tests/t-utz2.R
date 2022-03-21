@@ -5,7 +5,9 @@ source(file.path("_helper", "pkgs.R"))
 
 library(unitizer)
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "unreviewed variations" ----------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Test unreviewed
 # Accept one and go to unreviewed
@@ -18,7 +20,9 @@ unitizer:::read_line_set_vals(
 out <- unitizer:::capture_output(unitize(FLM.TEST.FILE, interactive.mode = TRUE))
 unitizer:::clean_eval_exp(out)
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "Re-eval" ------------------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Test re-eval
 # Re-eval and jump back to file 1
@@ -34,7 +38,9 @@ print(untz1)
 # remove temp file names and display
 invisible(lapply(untz1, function(x) {print(x); cat('\n')}))
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "Section Extra" ------------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Make sure that deleted items from a section are still marked from that
 # section upgrade to version two to use the files that are set up for that
@@ -58,7 +64,9 @@ out.2 <- unitizer:::capture_output(
 attributes(untz.2) <- NULL
 untz.2
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "warning when comp funs produce output" ------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Sections with comp funs that output to stdout/stderr
 temp.loc <- tempfile()
@@ -92,7 +100,9 @@ any(grepl("Empty unitizer", empty.capt$output))
 any(grepl("No valid unitizers available", badname.capt$message))
 unlink(c(temp.empty, temp.bad))
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "Re-eval change" -----------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # re-eval reeval with a modified file
 temp.reeval.base <- paste0(tempfile(), "-reeval")
@@ -107,7 +117,9 @@ reeval.capt <- unitizer:::capture_output(unitize(temp.reeval,
     state = environment(), interactive.mode = TRUE))
 unlink(c(temp.reeval, temp.reeval.utz), recursive = TRUE)
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "Condition fail" -----------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Fail test with conditions
 temp.cond.base <- paste0(tempfile(), "-cond")
@@ -129,7 +141,9 @@ unitizer:::capture_output(
 sum(grepl("Conditions mismatch", cond.capt$output)) == 1L
 unlink(c(temp.cond, temp.cond.utz), recursive = TRUE)
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "Force" --------------------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 #
 # Toggle force update, in order for this to work we need to create a situation
 # where in a `unitize_dir`, one file passes, the other doesn't, and we review
@@ -157,7 +171,10 @@ sum(grepl("Toggling force update mode ON", force.capt$message)) ==
     1L
 sum(grepl("You are about to .* with re-evaluated", force.capt$message)) ==
     1L
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "Compare Funs" -------------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Bad comparison functions
 temp.bad.comp <- paste0(tempfile(), ".R")
@@ -172,11 +189,82 @@ unlink(temp.bad.comp)
 sum(grepl("Unable to compare value", bad.comp.capt$message)) == 1L
 sum(grepl("Corrupted", bad.comp.capt$output)) >= 1L
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 # - "bad map" ------------------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Bad store mapping functions
 
 try(unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map fun")))
 
 unitizer:::read_line_set_vals(NULL)
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+# - "Multiple Bookmarks" -------------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+# Issue 245: In review-all mode should not move to next unitizer until the
+# review bookmark is cleared.
+
+temp.dir <- tempfile()
+dir.create(temp.dir)
+writeLines("'hello'\n'world'", file.path(temp.dir, "a.R"))
+writeLines("2 + 1\n3 + 2", file.path(temp.dir, "b.R"))
+writeLines("pi\n2 * pi\nsqrt(pi)", file.path(temp.dir, "c.R"))
+unitizer:::read_line_set_vals(
+  c("A","N","N","Y","Y","R","Y","Q","Y","R","Y","Y","Y","Y","Q")
+)
+unitize_dir(temp.dir, interactive.mode=TRUE)
+
+# Make sure re-eval all clears all bookmarks
+unlink(
+  list.files(temp.dir, full.names=TRUE, pattern="\\.unitizer$"),
+  recursive=TRUE
+)
+unitizer:::read_line_set_vals(c("A","Q","Y","RR","Y","Q"))
+unitize_dir(temp.dir, interactive.mode=TRUE)
+
+unitizer:::read_line_set_vals(NULL)
+unlink(temp.dir, recursive=TRUE)
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+# - "Non-Standard Conditions" --------------------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+# Issue 272: some conditions don't produce any output, but for `unitizer` we
+# consider normally non-test expressions that produce conditions as tests.  So
+# we need a mechanism for clarifying what happened.
+
+temp.dir <- tempfile()
+temp.file <- file.path(temp.dir, 'a.R')
+dir.create(temp.dir)
+
+unitizer:::read_line_set_vals("Q")
+writeLines(
+  c(
+    "cond <- simpleCondition('hello')",
+    "class(cond) <- c('svgchop_unsupported', 'svgchop', class(cond))",
+    "invisible(signalCondition(cond))"
+  ),
+  temp.file
+)
+unitize(temp.file, interactive.mode=TRUE)
+
+unitizer:::read_line_set_vals(NULL)
+unlink(temp.dir, recursive=TRUE)
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+# - "Output Transcript in non-Interactive" -------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+# Issue 286: don't capture output in non-interactive.
+
+temp.dir <- tempfile()
+temp.file <- file.path(temp.dir, 'a.R')
+dir.create(temp.dir)
+writeLines("1 + 1", temp.file)
+old.opt <- options(unitizer.transcript=NULL, unitizer.show.progress=TRUE)
+unitize(temp.file, auto.accept="new")
+options(old.opt)
+unlink(temp.dir, recursive=TRUE)
 

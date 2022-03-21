@@ -140,7 +140,7 @@ test_me(14523.2342520)    # could be deparsed differently
 Similarly issues may arise with non-ASCII characters, so use:
 
 ```{r eval=FALSE}
-chr <- "hello\u044F"
+chr <- "hello\u044F"      # could be deparsed differently
 fun_to_test(chr)
 ```
 
@@ -166,9 +166,10 @@ tracked and managed:
 * Loaded namespaces
 
 State management is turned off by default because it requires tracing some base
-functions which is against CRAN policy.  If you wish to enable this feature use
-`unitize(..., state='suggested')` or `options(unitizer.state='suggested')`.
-For more details see `?unitizerState` and the [reproducible tests
+functions which is against CRAN policy, and generally affects session state in
+uncommon ways.  If you wish to enable this feature use `unitize(...,
+state='suggested')` or `options(unitizer.state='suggested')`.  For more details
+including potential pitfalls see `?unitizerState` and the [reproducible tests
 vignette](u4_reproducible-tests.html).
 
 ### Beware of Force Quitting from `unitizer`

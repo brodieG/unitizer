@@ -157,7 +157,7 @@ The "Selection:" bit is prompting you to type 1-4 as per above.  We will investi
 
 ### Running `unitizer` Crashes R
 
-Every R crash we have discovered while using `unitizer` was eventually traced to a third party package.  Some of the crashes were linked to issues attaching/detaching packages.  If you think you might be having an issue with this you can always run with `clean.search.path=FALSE` and `clean.env=FALSE` to avoid search path manipulation.
+Every R crash we have discovered while using `unitizer` was eventually traced to a third party package.  Some of the crashes were linked to issues attaching/detaching packages.  If you think you might be having an issue with this you can always turn this feature off via the `state` parameter (not the feature is off by default).
 
 ### Different Outcomes in Interactive vs. Non Interactive
 

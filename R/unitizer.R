@@ -26,15 +26,23 @@ NULL
 .unitizer.tests.levels <- c("Pass", "Fail", "New", "Deleted", "Error")
 
 # Allow us to find a specific test based on deparse call and id
-# `parse.mod` indicates whether the parse is not the same as it was when the
-# bookmark was set, which indicates the bookmark may not be correct any more
+#
+# @param call deparsed call, if NA means just start with first test, the NA case
+#   is used to bookmark the entire unitizer when multiple unitizers are being
+#   reviewed.
+# @param id used to disambiguate a specific call when multiple ones match in a
+#   single unitizer.
+# @param parse.mod indicates whether the parse is not the same as it was when 
+#   the bookmark was set, which indicates the bookmark may not be correct any
+#   more.  This is set by comparing the old parsed expressions for the unitizer
+#   to the new ones after re-load.
 
 setClass("unitizerBrowseBookmark",
   slots=c(call="character", id="integer", parse.mod="logical"),
   prototype=list(call="", id=0L, parse.mod=FALSE),
   validity=function(object) {
-    if(!is.chr1(object@call))
-      return("Slot `@call` must be character(1L) and not NA")
+    if(!is.character(object@call) || length(object@call) != 1L)
+      return("Slot `@call` must be character(1L)")
     if(!length(object@id) == 1L || object@id < 0L)
       return("Slot `@id` must be integer(1L) and positive")
     if(!is.TF(object@parse.mod))
@@ -82,8 +90,9 @@ setClassUnion(
 #   new items will show up as NA here
 # @slot items.new.calls.deparse a character vector of the deparsed calls in
 #   \code{items.new}
-# @slot items.new.calls.deparse integer() tracks what instance of a particular
-#   deparse string this is to allow us to disambiguate duplicate tests for
+# @slot items.new.calls.deparse.id integer() tracks what instance of a
+#   particular deparse string this is to allow us to disambiguate duplicate tests
+#   (e.g. for bookmarks).  Should auto-increment.
 # @slot items.envs contains the environments for each call
 # @slot tests.fail vector highlighting which tests failed
 # @slot tests.new vector highlighting which tests did not exist in reference
@@ -111,6 +120,8 @@ setClassUnion(
 # @slot show.progress integer(1L) level of chattiness in progress reporting,
 #   carried here as otherwise no way to feed it through the `+` method when
 #   adding tests.
+# @slot transcript logical(1L) TRUE or FALSE whether to operate in transcript
+#   mode.
 
 setClass(
   "unitizer",
@@ -177,8 +188,8 @@ setClass(
 
     upgraded.from="character",       # was upgraded on load
     best.name="character",
-    show.progress="integer"
-
+    show.progress="integer",
+    transcript="logical"
   ),
   prototype(
     version=as.character(packageVersion("unitizer")),
@@ -193,7 +204,8 @@ setClass(
     bookmark=NULL,
     global=unitizerGlobal$new(enable.which=character()),  # dummy so tests will run
     upgraded.from="",
-    show.progress=0L
+    show.progress=0L,
+    transcript=FALSE
   ),
   validity=function(object) {
     if(!is.object(object@id) && is.character(object@id)) { # default id format

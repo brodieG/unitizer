@@ -62,6 +62,11 @@
 #'     by that of previous tests.
 #'   \item Output and Message streams are sunk so any attempt to debug directly
 #'     will be near-impossible as you won't see anything.
+#'   \item For portable tests it is best to use ASCII only string literals
+#'     (avoiding even escaped bytes or Unicode characters), round numbers, etc.,
+#'     because \code{unitizer} uses deparsed test expressions as indices
+#'     to retrieve reference values.  See \code{vignette('u1_intro',
+#'     package='unitizer')} for details and work-arounds.
 #' }
 #'
 #' When reviewing them:
@@ -157,9 +162,9 @@
 #'   e.g. if all tests do not pass).
 #' @param force.update logical(1L) if TRUE will give the option to re-store a
 #'   unitizer after re-evaluating all the tests even if all tests passed.
-#'   you can also toggle this option from the unitizer prompt by typing \code{O},
-#'   though \code{force.update=TRUE} will force update irrespective of what
-#'   you do with \code{O} at the prompt
+#'   You can also toggle this option from the unitizer prompt by typing \code{O}
+#'   (capital letter "o"), though \code{force.update=TRUE} will force update
+#'   irrespective of whether you type \code{O} at the prompt
 #' @param auto.accept character(X) ADVANCED USE ONLY: YOU CAN EASILY DESTROY
 #'   YOUR \code{unitizer} WITH THIS; whether to auto-accept tests without
 #'   prompting, use values in \code{c("new", "failed", "deleted", "error")} to
@@ -171,11 +176,19 @@
 #' @param show.progress TRUE or FALSE or integer(1L) in 0:3, whether to show
 #'   progress updates for each part of the process (TRUE or > 0), for each file
 #'   processed (TRUE or > 1), and for each test processed (TRUE or > 2).
+#' @param transcript TRUE (default in non-interactive mode) or FALSE (default in
+#'   interactive mode) enables direct output of stdout/stderr immediately during
+#'   test evaluation instead of being captured for later display during review.
+#'   This also causes progress updates to display on new lines instead of
+#'   overlaying on the same line.  One limitation of running in this mode is
+#'   that stderr is no longer captured at all so will not appear during review
+#'   as it does in non-transcript mode (although it will be present in the
+#'   output at the point the test was evaluated).
 #' @return \code{unitize} and company are intended to be used primarily for
 #'   the interactive environment and side effects.  The functions do return
 #'   summary data about test outcomes and user input as
 #'   \code{unitizer_result} objects, or for \code{unitize_dir} as
-#'   \code{unitizer_results} objects, invisbly.  See
+#'   \code{unitizer_results} objects, invisibly.  See
 #'   \code{\link{unitizer_result}}.
 #' @seealso \code{\link{unitizerState}}, \code{\link{unitizer.opts}},
 #'   \code{\link{get_unitizer}}, \code{\link{infer_unitizer_location}},
@@ -190,7 +203,8 @@ unitize <- function(
   force.update=FALSE,
   auto.accept=character(0L),
   use.diff=getOption("unitizer.use.diff"),
-  show.progress=getOption("unitizer.show.progress", TRUE)
+  show.progress=getOption("unitizer.show.progress", TRUE),
+  transcript=getOption("unitizer.transcript", !interactive.mode)
 ) {
   # Initial spacer, must be done in each top level call
 
@@ -208,7 +222,8 @@ unitize <- function(
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode,  force.update=force.update,
       auto.accept=auto.accept, mode="unitize", use.diff=use.diff,
-      show.progress=show.progress
+      show.progress=show.progress,
+      transcript=transcript
     )[[1L]]
   )
 }
@@ -234,7 +249,8 @@ review <- function(
       auto.accept=character(0L),
       mode="review",
       use.diff=use.diff,
-      show.progress=show.progress
+      show.progress=show.progress,
+      transcript=FALSE
     )[[1L]]
   )
 }
@@ -252,7 +268,8 @@ unitize_dir <- function(
   force.update=FALSE,
   auto.accept=character(0L),
   use.diff=getOption("unitizer.use.diff"),
-  show.progress=getOption("unitizer.show.progress", TRUE)
+  show.progress=getOption("unitizer.show.progress", TRUE),
+  transcript=getOption("unitizer.transcript", !interactive.mode)
 ) {
   # Validations
   if(
@@ -302,6 +319,7 @@ unitize_dir <- function(
       pre=pre, post=post, history=history,
       interactive.mode=interactive.mode, force.update=force.update,
       auto.accept=auto.accept, mode="unitize", use.diff=use.diff,
-      show.progress=show.progress
+      show.progress=show.progress,
+      transcript=transcript
   ) )
 }

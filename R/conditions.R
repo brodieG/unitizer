@@ -328,7 +328,14 @@ setMethod("show", "conditionList",
 
 get_condition_type <- function(x) {
   if(!inherits(x, "condition")) stop("Argument `x` must be a condition")
-  classes <- rev(class(x))
-  if(length(classes) < 2L || classes[[1L]] != "condition") "Unknown"
-  cap_first(classes[[2L]])
+  classes <- class(x)
+  if(length(classes) < 2L || classes[[length(classes)]] != "condition") "Unknown"
+  else if(identical(classes, c("simpleError", "error", "condition")))
+    "Error"
+  else if(identical(classes, c("simpleWarning", "warning", "condition")))
+    "Warning"
+  else if(identical(classes, c("simpleMessage", "message", "condition")))
+    "Message"
+  else classes[[1L]]
 }
+

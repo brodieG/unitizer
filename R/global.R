@@ -1,17 +1,17 @@
 # Copyright (C) 2022 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 #' @include is.R
@@ -359,18 +359,20 @@ unitizerGlobal <- setRefClass(
     shim.funs="list",
 
     indices.init="unitizerGlobalIndices",
-    indices.last="unitizerGlobalIndices"
+    indices.last="unitizerGlobalIndices",
+
+    transcript="logical"
   ),
   methods=list(
     initialize=function(
       ..., disabled=FALSE, enable.which=integer(0L),
       par.env=new.env(parent=baseenv()),
       unitizer.opts=options()[grep("^unitizer\\.", names(options()))],
-      set.global=FALSE
+      set.global=FALSE, transcript=FALSE
     ) {
       obj <- callSuper(
         ..., par.env=par.env, unitizer.opts=unitizer.opts,
-        locked=FALSE
+        locked=FALSE, transcript=transcript
       )
       enable(enable.which)
       state()
@@ -485,17 +487,30 @@ unitizerGlobal <- setRefClass(
       '
       stopifnot(is(to, "unitizerGlobalIndices"))
 
+      success <- TRUE
       if(status@search.path && to@search.path){
-        search_path_update(to@search.path, .self)
+        fail <-
+          inherits(try(search_path_update(to@search.path, .self)), "try-error")
+        success <- success && !fail
       }
-      if(status@namespaces && to@namespaces)
-        namespace_update(to@namespaces, .self)
-      if(status@options && to@options)
-        options_update(tracking@options[[to@options]])
-      if(status@working.directory && to@working.directory)
-        setwd(
-          tracking@working.directory[[to@working.directory]]
+      if(status@namespaces && to@namespaces) {
+        fail <-
+          inherits(try(namespace_update(to@namespaces, .self)), "try-error")
+        success <- success && !fail
+      }
+      if(status@options && to@options) {
+        fail <- inherits(
+          try(options_update(tracking@options[[to@options]])), "try-error"
         )
+        success <- success && !fail
+      }
+      if(status@working.directory && to@working.directory) {
+        fail <- inherits(
+          try(setwd(tracking@working.directory[[to@working.directory]])),
+          "try-error"
+        )
+        success <- success && !fail
+      }
       if(status@random.seed && to@random.seed) {
         if(is.null(tracking@random.seed[[to@random.seed]])) {
           if(exists(".Random.seed", .GlobalEnv, inherits=FALSE))
@@ -504,6 +519,7 @@ unitizerGlobal <- setRefClass(
           assign(
             ".Random.seed", tracking@random.seed[[to@random.seed]], .GlobalEnv
       ) } }
+      if(!success) stop("Global state reset failed, see prior error.")
       indices.last <<- to
       indices.last
     },
