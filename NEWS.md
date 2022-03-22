@@ -2,12 +2,18 @@
 
 ## v1.4.18
 
-* [#286](https://github.com/brodieG/unitizer/issues/286): Add a "transcript"
-  mode where test output can better be interpreted as a log, intended
-  non-interactive mode.
+* [#289](https://github.com/brodieG/unitizer/issues/289): Better document
+  pitfalls of non-ASCII in e.g. literals in tests.  Related: we no longer
+  attempt to do a parse/deparse round trip when displaying recorded test
+  expressions as the round trip could fail in some cases.
 * [#288](https://github.com/brodieG/unitizer/issues/288): Prevent upgrade prompt
   in non-interactive mode interrupting result display (regression introduced in
   1.4.15).
+* [#286](https://github.com/brodieG/unitizer/issues/286): Add a "transcript"
+  mode where test output can better be interpreted as a log, intended
+  non-interactive mode.
+* [#272](https://github.com/brodieG/unitizer/issues/272): Highlight silently
+  emitted conditions in tests that have otherwise no other output.
 * [#252](https://github.com/brodieG/unitizer/issues/252),
   [#253](https://github.com/brodieG/unitizer/issues/252): Better documentation
   of feature incompatibility with `devtools::load_all`, and more graceful
@@ -18,8 +24,6 @@
   `unitizer` without first attaching it to the search path.
 * [#245](https://github.com/brodieG/unitizer/issues/245): Fix re-run bookmarking
   when reviewing multiple unitizers with `unitize_dir`.
-* We no longer attempt to do a parse/deparse round trip when displaying recorded
-  test expressions as the round trip could fail in some cases.
 
 ## v1.4.16-17
 
