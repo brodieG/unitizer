@@ -267,7 +267,7 @@ path have changes since the reference test was stored, you will be alerted.
 ### Potential Issues
 
 When `unitizer` manipulates the search path it restores the original one by
-using `library/attach` on any previously detached objects or packages.  This
+using `library`/`attach` on any previously detached objects or packages.  This
 generally works fine, but detaching and re-attaching packages is not and cannot
 be the same as loading a package or attaching an environment for the first time.
 For example, S3 method registration is not undone when detaching a package, or
