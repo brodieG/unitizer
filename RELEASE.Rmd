@@ -21,16 +21,16 @@
 Make sure to check codecov as the algorithms are different (and better?) there.
 
 [x] R CMD check --ascran
-[ ] winbuilder    r81416
+[x] winbuilder
 [x] CI
 [x] Other locale (e.g. 8859-15, not "latin1")
 [x] R 3.2 - aammmrtf::mock does not seem to work
 [x] R 3.3 - some error message instability
-[ ] Review documentation
+[x] Review documentation
 
 Github Actions doesn't work anymore with the default Rstudio setup, so we've
 just been running locally on our re-built versions.
 
-[ ] Revdep
+[x] Revdep
 [ ] CRAN policy
 
