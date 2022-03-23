@@ -123,8 +123,11 @@ vignette](u2_tests.html)).
 ### Test Expressions Are Stored Deparsed
 
 This means you need to be careful with expressions that may deparse differently
-on different machines.  For example, in order to avoid round issues with
-numerics, it is better to use:
+on different machines or with different settings.  Unstable deparsing will
+prevent tests [from matching](u2_tests.html#matching-tests) their previously
+stored evaluations.
+
+For example, in order to avoid round issues with numerics, it is better to use:
 
 ```{r, eval=FALSE}
 num.var <- 14523.2342520  # assignments are not considered tests
@@ -140,8 +143,8 @@ test_me(14523.2342520)    # could be deparsed differently
 Similarly issues may arise with non-ASCII characters, so use:
 
 ```{r eval=FALSE}
-chr <- "hello\u044F"
-fun_to_test(chr)
+chr <- "hello\u044F"      # assignments are not considered tests
+fun_to_test(chr)          # safe
 ```
 
 Instead of:
@@ -150,14 +153,17 @@ Instead of:
 fun_to_test("hello\u044F") # could be deparsed differently
 ```
 
+This issue does not affect the result of running the test as that is never
+deparsed.
+
 ### Increase Reproducibility with Advanced State Management
 
 `unitizer` can track and manage many aspects of state to make your tests more
-reproducible.  For example, `unitizer` can reset your search path to what is
-is found in a fresh R session prior to running tests to avoid conflicts with
-whatever libraries you happen to have loaded at the time.  Your session state is
-restored when `unitizer` exits.  The following aspects of state can be actively
-tracked and managed:
+reproducible.  For example, `unitizer` can reset your R package search path to
+what is is found in a fresh R session prior to running tests to avoid conflicts
+with whatever libraries you happen to have loaded at the time.  Your session
+state is restored when `unitizer` exits.  The following aspects of state can be
+actively tracked and managed:
 
 * Search path (including removing the global environment from search path)
 * Random seed
@@ -166,19 +172,19 @@ tracked and managed:
 * Loaded namespaces
 
 State management is turned off by default because it requires tracing some base
-functions which is against CRAN policy.  If you wish to enable this feature use
-`unitize(..., state='suggested')` or `options(unitizer.state='suggested')`.
-For more details see `?unitizerState` and the [reproducible tests
+functions which is against CRAN policy, and generally affects session state in
+uncommon ways.  If you wish to enable this feature use `unitize(...,
+state='suggested')` or `options(unitizer.state='suggested')`.  For more details
+including potential pitfalls see `?unitizerState` and the [reproducible tests
 vignette](u4_reproducible-tests.html).
 
-### Beware of Force Quitting from `unitizer`
+### Beware of `browser`/`debug`/`recover`
 
-If you interrupt evaluation with CTRL+C (or with ESC in RStudio), or if you
-`browser`/`debug` and quit with 'Q', you will exit `unitizer` with no
-opportunity to save any modifications you made during `unitizer` review.  Make
-sure you quit by typing 'Q' at the `unitizer` prompt.  If you are in `browser`,
-you will need to let the browsed function finish evaluation to return to the
-`unitizer` prompt, and only then quit.
+If you enter the interactive browser as e.g. invoked by `debug` you should
+exit it by allowing evaluation to complete (e.g. by hitting "c" until control
+returns to the `unitizer` prompt).  If you instead hit "Q" while in browser mode
+you will completely exit the `unitizer` session losing any modifications you
+made to the tests under review.
 
 ### Reference Objects
 
@@ -192,11 +198,7 @@ In order to re-create the feel of the R prompt within `unitizer` we resorted to 
   environment; because R looks up objects in parent environments it appears that
   all tests are evaluated in one environment (see [interactive environment
   vignette](u3_interactive-env.html))
-* We provide modified versions of `quit`/`q` and `ls` (see [esoteric topics
-  vignette](u5_miscellaneous.html)) at the `unitizer` prompt
-* `traceback` should work when reviewing tests that produce errors, but only
-  because we capture the trace with `sys.calls` and write it to
-  `base::.Traceback` during review
+* We [mask some base functions](#masked-functions).
 * `.Last.value` will not work
 * We sink `stdout` and `stderr` during test evaluation to capture those streams
   (see [details on tests vignette](u2_tests.html)), though we take care to
@@ -218,17 +220,16 @@ interaction will be challenging because you will have to do it with `stderr` and
 
 Doing so will cause `unitize` to quit if any test expressions throw conditions.  See discussion in [error handling](u5_miscellaneous.html#running-unitize-within-error-handling-blocks).
 
-### Some Base Functions are Masked at the `unitizer` Prompt
+### Masked Functions
 
-`q` and `quit` are masked to give the user an opportunity to cancel the quit
+Some base functions are masked at the `unitizer` prompt:
+
+* `q` and `quit` are masked to give the user an opportunity to cancel the quit
 action in case they meant to quit from `unitizer` instead of R.  Use Q to
 quit from `unitizer`, as you would from `browser`.
+* `ls` is masked with a specialized version for use in `unitizer`.
+* `traceback` is masked to report the most recent error in the order presented
+  by the `unitizer` prompt.
 
-`ls` is masked with a specialized version for use in `unitizer`.
-
-In both cases you can still access the original functions by preceding them
-with `base::`
-
-See [miscellaneous topics
-vignette](u5_miscellaneous.html#overriden-functions).
+See [miscellaneous topics vignette](u5_miscellaneous.html#overriden-functions).
 

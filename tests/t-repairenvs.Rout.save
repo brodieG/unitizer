@@ -1,11 +1,13 @@
 
-R version 4.0.5 Patched (2021-05-28 r80517) -- "Shake and Throw"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -80,7 +82,7 @@ Warning in repairEnvs(items.final) :
 > untz <- unitizer:::load_unitizers(
 +   list(store.new), NA_character_,
 +   par.frame = .GlobalEnv, interactive.mode = TRUE, mode = "unitize",
-+   show.progress=0L
++   show.progress=0L, transcript=FALSE
 + )
 Warning in unitizer:::load_unitizers(list(store.new), NA_character_, par.frame = .GlobalEnv,  :
   Upgraded test file does not match original test file ('trivial.R' vs 'NA').
@@ -105,7 +107,7 @@ Warning in repairEnvs(x@items.ref) :
 > unitizer:::healEnvs(untz.rep@items.ref, untz.rep)
 An object of class "unitizerItems"
 Slot "base.env":
-<environment: 0x7fc73bb487c8>
+<environment: 0x7f8becce00c0>
 
 Slot ".items":
 [[1]]
@@ -165,4 +167,4 @@ Slot ".seek.fwd":
 > 
 > proc.time()
    user  system elapsed 
-  1.037   0.106   1.130 
+   1.20    0.07    1.27 

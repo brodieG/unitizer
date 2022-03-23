@@ -35,7 +35,15 @@ You can force assignments to become tests by wrapping them in parentheses:
 a <- my_fun(25)     # this is not a test
 (a <- my_fun(42))   # this is a test
 ```
-The actual rule `unitizer` uses to decide whether an expression is a test or not is whether it returns invisibly.  Wrapping parentheses around an expression that returns invisibly makes it visible, which is why assignments in parentheses become tests.  Conversely, you can wrap an expression in `invisible(...)` to prevent it from being treated as a test.
+
+The actual rule `unitizer` uses to decide whether an expression is a test or not is whether it returns invisibly without signalling conditions.  Wrapping parentheses around an expression that returns invisibly makes it visible, which is why assignments in parentheses become tests.  Conversely, you can wrap an expression in `invisible(...)` to prevent it from being treated as a test so long as it does not signal conditions.
+
+Recall that newly evaluated tests are matched to reference tests by deparsing the test expression.  Some expressions such as strings with non-ASCII bytes (even in their escaped form) or numbers with long decimal tails will deparse differently on different systems, and thus may cause tests to fail to match.  You can still use these by storing them in a variable, as the assignment step is not a test:
+
+```
+chr <- "hello\u044F" # this is not a test
+fun_to_test(chr)     # this is a test
+```
 
 ### `unitizer` Test Components
 
@@ -178,7 +186,7 @@ more details.
 
 In order to properly capture output, `unitizer` will modify streams and options.  In particular, it will do the following:
 
-* Temporarily set `options(warn>=1L)` during expression evaluation.
+* Temporarily set `options(warn=1L)` during expression evaluation.
 * Temporarily set `options(error=NULL)` during expression evaluation.
 * Use `sink()` to capture any output to `stdout`.
 * Use `sink(type="message")` to capture output to `stderr`.
@@ -217,9 +225,9 @@ a particular test was in "Section A" when it was first `unitize`d, but in the
 current version of the test file it is in "Section X", that test will be matched
 to the current one in "Section X".
 
-Some expressions may deparse differently on different systems (e.g. numbers with
-decimal places, non-ASCII characters) so tests containing them may not match
-correctly across systems.  See the [Introductory
+Some expressions may deparse differently on different systems or with different
+settings (e.g. numbers with decimal places, non-ASCII characters) so tests
+containing them may not match correctly across them.  See the [Introductory
 Vignette](u1_intro.html#test-expressions-are-stored-deparsed) for how to avoid
 problems with this.
 

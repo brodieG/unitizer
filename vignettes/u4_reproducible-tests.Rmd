@@ -267,39 +267,38 @@ path have changes since the reference test was stored, you will be alerted.
 ### Potential Issues
 
 When `unitizer` manipulates the search path it restores the original one by
-using `library/attach` on any previously detached objects or packages.  This
+using `library`/`attach` on any previously detached objects or packages.  This
 generally works fine, but detaching and re-attaching packages is not and cannot
 be the same as loading a package or attaching an environment for the first time.
 For example, S3 method registration is not undone when detaching a package, or
 even unloading its namespace.  See discussion in `?detach` and in
 `?unitizerState`.
 
-Another good example of problematic behavior are attaching environments that
-contain references to themselves, as the `tools:rstudio` environment attached 
-by `Rstudio` does.  It contains functions that have for environment the
-`tools:rstudio` environment.  The problem is that once that environment is
-detached from the search path, those functions no longer have access to the
-search path.  Re-attaching the environment to the search path does not solve the
-problem because `attach` attaches a _copy_ of the environment, not the
-environment itself.  This new environment will contain the same objects as the
-original environment, but all the functions therein will have for environment
-the original detached environment, not the copy that is attached to
-the search path.
+One known problem is the use of `devtools::load_all` and similar which place a
+pretend package environment on the search path.  Such packages cannot be
+re-loaded with `library` so the re-attach process will fail (see
+[#252](https://github.com/brodieG/unitizer/issues/252)).
 
-There are a few possible solutions to this problem.  For now we have adopted the
-simplest which is to keep the `tools:rstudio` environment on the search path
-even search path tracking is enabled (you can over-ride this by changing
-`search.path.keep`, or, if you have environments on your search path with
-similar properties, add their names to `search.path.keep`).  Other options
+Another issue is attached environments that contain references to themselves, as
+the `tools:rstudio` environment attached by `Rstudio` does.  It contains
+functions that have for environment the `tools:rstudio` environment.  The
+problem is that once that environment is detached from the search path, those
+functions no longer have access to the search path.  Re-attaching the
+environment to the search path does not solve the problem because `attach`
+attaches a _copy_ of the environment, not the environment itself.  This new
+environment will contain the same objects as the original environment, but all
+the functions therein will have for environment the original detached
+environment, not the copy that is attached to the search path.
+
+For the specific `tools::rstudio` problem we work around the issue by keeping it
+on the search path even search path tracking is enabled (you can over-ride this
+by changing `search.path.keep`, or, if you have environments on your search path
+with similar properties, add their names to `search.path.keep`).  Other options
 include re-attaching with `parent.env<-` instead of `attach`, but messing with
 the search path in that way seems to be exactly what R core warns about in
 `?parent.env`:
 
 > The replacement function parent.env<- is extremely dangerous as it can be used to destructively change environments in ways that violate assumptions made by the internal C code. It may be removed in the near future.
-
-Another possibility would be to re-set the environments of functions inside
-detached environments that have for parent the detached environment, but we do
-not do this currently.
 
 ## Global Options
 

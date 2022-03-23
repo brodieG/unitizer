@@ -1,17 +1,17 @@
 # Copyright (C) 2022 Brodie Gaslam
-# 
+#
 # This file is part of "unitizer"
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 #' @include unitizer.R
@@ -109,7 +109,9 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
     }
     x.to.eval <- `attributes<-`(x, NULL)
 
-    res <- eval_with_capture(x.to.eval, test.env, global=global)
+    res <- eval_with_capture(
+      x.to.eval, test.env, global=global, with.capture=!global$transcript
+    )
     global$cons <- res$cons  # Need to recover connections
     if(res$aborted & is_unitizer_sect)  # check to see if `unitizer_sect` failed
       stop(
@@ -156,7 +158,8 @@ setMethod("exec", "ANY", valueClass="unitizerItem",
 #   the `unitizer_prompt` in browsing test results.
 
 eval_user_exp <- function(
-  unitizerUSEREXP, env, global, with.display=TRUE, warn.sticky=FALSE
+  unitizerUSEREXP, env, global, with.display=TRUE,
+  warn.sticky=FALSE, with.display.unitizer_sect=FALSE
 ) {
   if(!is(global, "unitizerGlobal") && !is.null(global)) {
     # nocov start
@@ -176,7 +179,11 @@ eval_user_exp <- function(
   res <- user_exp_handle(exp, env, "", unitizerUSEREXP)
   if(
     !res$aborted && res$value$visible && length(unitizerUSEREXP) &&
-    with.display
+    with.display &&
+    (
+      !is(res$value$value, "unitizerSectionExpression") ||
+      with.display.unitizer_sect
+    )
   ) {
     res2 <- user_exp_display(res$value$value, env, unitizerUSEREXP)
     res$conditions <- append(res$conditions, res2$conditions)
@@ -195,16 +202,27 @@ eval_user_exp <- function(
     res[-1L]
   )
 }
+# @param with.display output result of evaluation after evaluation
+# @param with.capture turns capture on and off for each expression, different
+#   from with.display as this will allow display of e.g. segfaults, etc.  Gives
+#   more fine grained control than "unitizer.disable.capt" as that does it for
+#   every use of this function, whereas we might only want it for test
+#   expressions.
+
 eval_with_capture <- function(
-  x, test.env=new.env(), global, with.display=TRUE, with.state=TRUE
+  x, test.env=new.env(), global, with.display=TRUE, with.state=TRUE,
+  with.capture=TRUE
 ) {
   stopifnot(is(global, "unitizerGlobal"))
   # These used to be parameters, but now that we have `global` we use that
-  # instead
-
+  # instead; note that the options come in as NULL quietly in some tests where
+  # we're e.g. directly accessing the unitizers instead of using `unitize`, and
+  # those NULLs ar just dropped implicitly by the way we call `set_capture`.
   cons <- global$cons
   disable.capt <- global$unitizer.opts[["unitizer.disable.capt"]]
   max.capt.chars <- global$unitizer.opts[["unitizer.max.capture.chars"]]
+
+  if(!is.null(disable.capt)) disable.capt <- disable.capt | !with.capture
 
   # Disable error handler; warn gets set to one when we eval the expression
 
@@ -221,6 +239,7 @@ eval_with_capture <- function(
   } else {
     capt.cons <- cons
   }
+  # disable.capt and max.capt.chars could be NULL in some cases (see above)
   set_args <- list()
   set_args[["capt.disabled"]] <- disable.capt
   capt.cons <- do.call(set_capture, c(list(capt.cons), set_args))

@@ -1,0 +1,36 @@
+# Release Steps
+
+## 1.4.18
+
+[x] Add tests for upgrade blocking test output.
+[x] Check 289 using "fansi_1.0.1"  # won't fix
+[x] Make sure there is no way to force accept upgrades in non-interactive (or at
+    least that it's not a problem).  Seems like it might be doable with some
+    combination of auto.accept and force.update (maybe), but then if you're
+    using those non-interactively...
+
+[x] Check whether the parse/deparse cycle in browser does not fail with e.g.
+    invalid latin-1 locale.
+[ ] Switch to simplermarkdown?  Abandoning for now due to lack of re-usable
+    blocks.  Need to study how to implement that.
+
+## Standard
+
+[x] Coverage
+
+Make sure to check codecov as the algorithms are different (and better?) there.
+
+[x] R CMD check --ascran
+[x] winbuilder
+[x] CI
+[x] Other locale (e.g. 8859-15, not "latin1")
+[x] R 3.2 - aammmrtf::mock does not seem to work
+[x] R 3.3 - some error message instability
+[x] Review documentation
+
+Github Actions doesn't work anymore with the default Rstudio setup, so we've
+just been running locally on our re-built versions.
+
+[x] Revdep
+[ ] CRAN policy
+

@@ -353,12 +353,16 @@ word_comment <- function(
 ## @param min.width integer(1L) minimum character width to print to
 ## @param max.width integer(1L) max width to print to
 ## @param append to last non-append \code{x} value
+## @param overwrite previous line
 ## @return NULL used only for side effect of cating to screen
 
 over_print <- (
   function() {
     prev.val <- ""
-    function(x, append=FALSE, min.width=30L, max.width=getOption("width")) {
+    function(
+      x, append=FALSE, min.width=30L, max.width=getOption("width"),
+      overwrite=interactive()  # should be controllable from top level
+    ) {
       if(!is.character(x) || length(x) != 1L || is.na(x))
         stop("Argument `x` must be character(1L) and not NA")
       if(!is.integer(min.width) || length(min.width) != 1L)
@@ -367,11 +371,14 @@ over_print <- (
         stop("Argument `max.width` must be integer(1L)")
       if(!isTRUE(append) && !identical(append, FALSE))
         stop("Argument `append` must be TRUE or FALSE")
+      if(!isTRUE(overwrite) && !identical(overwrite, FALSE))
+        stop("Argument `overwrite` must be TRUE or FALSE")
 
       cat(
         c(
-          "\r", rep(" ", max(min.width, max.width)), "\r",
-          substr(paste0(if(append) prev.val, x), 1L, max(min.width, max.width))
+          if(overwrite) c("\r", rep(" ", max(min.width, max.width)), "\r"),
+          substr(paste0(if(append) prev.val, x), 1L, max(min.width, max.width)),
+          if(!overwrite) "\n"
         ),
         sep=""
       )

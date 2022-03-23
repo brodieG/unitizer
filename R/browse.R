@@ -142,31 +142,33 @@ setMethod(
       # before re-eval
 
       if(!is.null(x@bookmark)) {
-        cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
-        cand.match.len <- length(cand.match)
-        if(!cand.match.len || x@bookmark@id > cand.match.len) {
-          meta_word_msg(
-            cc(
-              "Unable to find test you toggled re-eval from; starting ",
-              "from beginning."
-          ) )
-        } else {
-          match.id <- cand.match[x@bookmark@id]
-          id.map <-
-            which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
-          if(!length(id.map) == 1L) {
-            # nocov start
-            stop(
-              "Internal Error: unable to find bookmarked test; contact ",
-              "maintainer."
-            )
-            # nocov end
-          }
-          ign.adj <- find_lead_offset(id.map, y@mapping)
-          y@last.id <- y@mapping@item.id[id.map] - (1L + ign.adj)
-          y@jumping.to <- id.map
-        }
-      }
+        # NA bookmark just means start from beginning (don't set jumping.to).
+        # Used to have a subset of all the unitizes in a directory re-reviewed
+        if(!is.na(x@bookmark@call)) {
+          cand.match <- which(x@bookmark@call == x@items.new.calls.deparse)
+          cand.match.len <- length(cand.match)
+          if(!cand.match.len || x@bookmark@id > cand.match.len) {
+            meta_word_msg(
+              cc(
+                "Unable to find test you toggled re-eval from; starting ",
+                "from beginning."
+            ) )
+          } else {
+            match.id <- cand.match[x@bookmark@id]
+            id.map <-
+              which(y@mapping@item.id.orig == match.id & !y@mapping@item.ref)
+            if(!length(id.map) == 1L) {
+              # nocov start
+              stop(
+                "Internal Error: unable to find bookmarked test; contact ",
+                "maintainer."
+              )
+              # nocov end
+            }
+            ign.adj <- find_lead_offset(id.map, y@mapping)
+            y@last.id <- y@mapping@item.id[id.map] - (1L + ign.adj)
+            y@jumping.to <- id.map
+      } } }
       # `repeat` loop allows us to keep going if at the last minute we decide
       # we are not ready to exit the unitizer
 
@@ -717,13 +719,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
         )
         cat("\n")
       }
-      parsed.call <- try(parse(text=item.main@call.dep)[[1L]])
-      if(inherits(parsed.call, "try-error")) {
-        # nocov start
-        stop("Internal Error: malformed call stored; contact maintainer.")
-        # nocov end
-      }
-      cat(deparse_prompt(parsed.call), sep="\n")
+      cat(deparse_prompt(item.main), sep="\n")
       history_write(x@hist.con, item.main@call.dep)
 
       # show the message, and set the trace if relevant; options need to be
@@ -752,6 +748,16 @@ setMethod("reviewNext", c("unitizerBrowse"),
             stderr()
           )
           out.err <- TRUE
+        } else if(unitizer@transcript) {
+          cat("\n")
+          meta_word_msg(
+            paste0(
+              "Running in transcript mode: stderr was not captured so if there ",
+              "was any it would have been output during evaluation; see ",
+              "earlier output."
+            ),
+            trail.nl=!(out.std || out.err)
+          )
         }
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
@@ -814,8 +820,24 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
         if(!is.null(diffs@state)) diffs@state@show.diff <- TRUE
 
-      } else if (out.std || out.err) cat("\n")
-    }
+      }
+      else if (out.std || out.err) cat("\n")
+      else if (!item.main@ignore && length(item.main@data@conditions)) {
+        # No visible output, but conditions issued.  Say something as otherwise
+        # confusing why unitizer prompt appears.
+        cat("\n")
+        meta_word_cat(
+          paste0(
+            "Test silently signalled conditions (use ",
+            "e.g. .", if(item.main@reference) "REF" else "NEW",
+            "$conditions[[1]] to inspect):\n"
+        ) )
+        screen_out(
+          capture.output(show(item.main@data@conditions)),
+          max.len=unitizer@global$unitizer.opts[["unitizer.test.out.lines"]]
+        )
+        cat("\n")
+    } }
 
     if(!will.review) return(x)
 

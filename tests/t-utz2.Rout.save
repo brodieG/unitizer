@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2021-07-17 r80639) -- "Unsuffered Consequences"
-Copyright (C) 2021 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-01-01 r81419) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin17.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -24,7 +26,9 @@ Setup Demos
 > 
 > library(unitizer)
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "unreviewed variations" ----------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Test unreviewed
 > # Accept one and go to unreviewed
@@ -180,7 +184,9 @@ Error in : object 'U' not found
 
 | Changes discarded.
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "Re-eval" ------------------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Test re-eval
 > # Re-eval and jump back to file 1
@@ -413,31 +419,6 @@ unitizer> Y
 
 | unitizer updated.
 
-+------------------------------------------------------------------------------+
-| unitizer for: unitizer/unitizer.fastlm.R                                     |
-+------------------------------------------------------------------------------+
-
-             Pass Fail  New
- <untitled>     1    -    2
-...........................
-                1    -    2
-
-- New --------------------------------------------------------------------------
-
-| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
-| [B]rowse, [R]erun, [Q]uit, [H]elp)?
-
-| Jumping to test #6 because that was the test under review when test re-run was
-| requested.
-
-> get_rsq(res)
-[1] 0.862
-
-unitizer> Q
-
-| No changes recorded.
-| unitizer unchanged.
-
 | Summary of files in common directory 'unitizer':
 | 
 |                        Pass Fail  New
@@ -511,7 +492,9 @@ Store ID: tests/unitizer/unitizer.fastlm.unitizer
 You chose NOT to save these changes to the unitizer store
 
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "Section Extra" ------------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Make sure that deleted items from a section are still marked from that
 > # section upgrade to version two to use the files that are set up for that
@@ -565,7 +548,9 @@ Levels: Y N
 [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE
 
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "warning when comp funs produce output" ------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Sections with comp funs that output to stdout/stderr
 > temp.loc <- tempfile()
@@ -615,7 +600,9 @@ Warning in history_capt(history, interactive.mode) :
 [1] FALSE
 > unlink(c(temp.empty, temp.bad))
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "Re-eval change" -----------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # re-eval reeval with a modified file
 > temp.reeval.base <- paste0(tempfile(), "-reeval")
@@ -630,7 +617,9 @@ Warning in history_capt(history, interactive.mode) :
 +     state = environment(), interactive.mode = TRUE))
 > unlink(c(temp.reeval, temp.reeval.utz), recursive = TRUE)
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "Condition fail" -----------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Fail test with conditions
 > temp.cond.base <- paste0(tempfile(), "-cond")
@@ -653,7 +642,9 @@ Warning in history_capt(history, interactive.mode) :
 [1] TRUE
 > unlink(c(temp.cond, temp.cond.utz), recursive = TRUE)
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "Force" --------------------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > #
 > # Toggle force update, in order for this to work we need to create a situation
 > # where in a `unitize_dir`, one file passes, the other doesn't, and we review
@@ -683,7 +674,10 @@ Warning in history_capt(history, interactive.mode) :
 > sum(grepl("You are about to .* with re-evaluated", force.capt$message)) ==
 +     1L
 [1] TRUE
+> 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "Compare Funs" -------------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Bad comparison functions
 > temp.bad.comp <- paste0(tempfile(), ".R")
@@ -700,7 +694,9 @@ Warning in history_capt(history, interactive.mode) :
 > sum(grepl("Corrupted", bad.comp.capt$output)) >= 1L
 [1] TRUE
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > # - "bad map" ------------------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Bad store mapping functions
 > 
@@ -712,7 +708,436 @@ Error in unitize_dir(FLM.TEST.DIR, store.ids = function(x) stop("Bad store map f
 > 
 > unitizer:::read_line_set_vals(NULL)
 > 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> # - "Multiple Bookmarks" -------------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
-> proc.time()
-   user  system elapsed 
-  10.21    1.97   13.73 
+> # Issue 245: In review-all mode should not move to next unitizer until the
+> # review bookmark is cleared.
+> 
+> temp.dir <- tempfile()
+> dir.create(temp.dir)
+> writeLines("'hello'\n'world'", file.path(temp.dir, "a.R"))
+> writeLines("2 + 1\n3 + 2", file.path(temp.dir, "b.R"))
+> writeLines("pi\n2 * pi\nsqrt(pi)", file.path(temp.dir, "c.R"))
+> unitizer:::read_line_set_vals(
++   c("A","N","N","Y","Y","R","Y","Q","Y","R","Y","Y","Y","Y","Q")
++ )
+> unitize_dir(temp.dir, interactive.mode=TRUE)
+
+| Summary of files in common directory '.':
+| 
+|          Pass Fail  New
+| *1. a.R     -    -    2
+| *2. b.R     -    -    2
+| *3. c.R     -    -    3
+| .......................
+|             -    -    7
+| Legend:
+| * `unitizer` requires review
+
+| Type number of unitizer to review, 'A' to review all that require review
+
+unitizer> A
+
++------------------------------------------------------------------------------+
+| unitizer for: a.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    2
+...........................
+                -    -    2
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+> "hello"
+[1] "hello"
+
+unitizer> N
+
+> "world"
+[1] "world"
+
+unitizer> N
+
+= Finalize Unitizer ============================================================
+
+| You made no changes to the unitizer so there is no need to update it.  While 
+| unnecessary, you can force an update by typing O at the prompt.
+
+| Exit unitizer ([Y]es, [P]rev, [B]rowse, [R]erun, f[O]rce, [QQ]uit All)?
+
+unitizer> Y
+
+| unitizer unchanged.
+
++------------------------------------------------------------------------------+
+| unitizer for: b.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    2
+...........................
+                -    -    2
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+> 2 + 1
+[1] 3
+
+unitizer> Y
+
+> 3 + 2
+[1] 5
+
+unitizer> R
+
+| Toggling re-run mode ON for this unitizer
+
+= Finalize Unitizer ============================================================
+
+| You have 1 unreviewed tests; press `B` to browse tests, `U` to go to first 
+| unreviewed test.
+
+| You will IRREVERSIBLY modify 'b.unitizer' by:
+| - Adding 1 out of 2 new tests
+
+| Update unitizer and re-run unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [U]
+| nreviewed, [R]erun, [QQ]uit All)?
+
+unitizer> Y
+
+| unitizer updated.
+
++------------------------------------------------------------------------------+
+| unitizer for: b.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     1    -    1
+...........................
+                1    -    1
+
+- New --------------------------------------------------------------------------
+
+| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
+| [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+| Jumping to test #2 because that was the test under review when test re-run was
+| requested.
+
+> 3 + 2
+[1] 5
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
++------------------------------------------------------------------------------+
+| unitizer for: c.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    3
+...........................
+                -    -    3
+
+- New --------------------------------------------------------------------------
+
+| The 3 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+> pi
+[1] 3.14
+
+unitizer> Y
+
+> 2 * pi
+[1] 6.28
+
+unitizer> R
+
+| Toggling re-run mode ON for this unitizer
+
+= Finalize Unitizer ============================================================
+
+| You have 2 unreviewed tests; press `B` to browse tests, `U` to go to first 
+| unreviewed test.
+
+| You will IRREVERSIBLY modify 'c.unitizer' by:
+| - Adding 1 out of 3 new tests
+
+| Update unitizer and re-run unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [U]
+| nreviewed, [R]erun, [QQ]uit All)?
+
+unitizer> Y
+
+| unitizer updated.
+
++------------------------------------------------------------------------------+
+| unitizer for: c.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     1    -    2
+...........................
+                1    -    2
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+| Jumping to test #2 because that was the test under review when test re-run was
+| requested.
+
+> 2 * pi
+[1] 6.28
+
+unitizer> Y
+
+> sqrt(pi)
+[1] 1.77
+
+unitizer> Y
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'c.unitizer' by:
+| - Adding 2 out of 2 new tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> Y
+
+| unitizer updated.
+
+| Summary of files in common directory '.':
+| 
+|          Pass Fail  New
+| *1. a.R     -    -    2
+| *2. b.R     1    -    1
+| $3. c.R     ?    ?    ?
+| .......................
+|             ?    ?    ?
+| Legend:
+| * `unitizer` requires review
+| $ `unitizer` has been modified and needs to be re-run to recompute summary
+
+| Type number of unitizer to review, 'A' to review all that require review, 'R' 
+| to re-run all updated
+
+unitizer> Q
+
+> 
+> # Make sure re-eval all clears all bookmarks
+> unlink(
++   list.files(temp.dir, full.names=TRUE, pattern="\\.unitizer$"),
++   recursive=TRUE
++ )
+> unitizer:::read_line_set_vals(c("A","Q","Y","RR","Y","Q"))
+> unitize_dir(temp.dir, interactive.mode=TRUE)
+
+| Summary of files in common directory '.':
+| 
+|          Pass Fail  New
+| *1. a.R     -    -    2
+| *2. b.R     -    -    2
+| *3. c.R     -    -    3
+| .......................
+|             -    -    7
+| Legend:
+| * `unitizer` requires review
+
+| Type number of unitizer to review, 'A' to review all that require review
+
+unitizer> A
+
++------------------------------------------------------------------------------+
+| unitizer for: a.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    2
+...........................
+                -    -    2
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+> "hello"
+[1] "hello"
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
++------------------------------------------------------------------------------+
+| unitizer for: b.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    2
+...........................
+                -    -    2
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+> 2 + 1
+[1] 3
+
+unitizer> Y
+
+> 3 + 2
+[1] 5
+
+unitizer> RR
+
+| Toggling re-run mode ON for all loaded unitizers
+
+= Finalize Unitizer ============================================================
+
+| You have 1 unreviewed tests; press `B` to browse tests, `U` to go to first 
+| unreviewed test.
+
+| You will IRREVERSIBLY modify 'b.unitizer' by:
+| - Adding 1 out of 2 new tests
+
+| Update unitizer and re-run all loaded unitizers ([Y]es, [N]o, [P]rev, [B]
+| rowse, [U]nreviewed, [R]erun, [QQ]uit All)?
+
+unitizer> Y
+
+| unitizer updated.
+
+| Summary of files in common directory '.':
+| 
+|          Pass Fail  New
+| *1. a.R     -    -    2
+| *2. b.R     1    -    1
+| *3. c.R     -    -    3
+| .......................
+|             1    -    6
+| Legend:
+| * `unitizer` requires review
+
+| Type number of unitizer to review, 'A' to review all that require review
+
+unitizer> Q
+
+> 
+> unitizer:::read_line_set_vals(NULL)
+> unlink(temp.dir, recursive=TRUE)
+> 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> # - "Non-Standard Conditions" --------------------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> 
+> # Issue 272: some conditions don't produce any output, but for `unitizer` we
+> # consider normally non-test expressions that produce conditions as tests.  So
+> # we need a mechanism for clarifying what happened.
+> 
+> temp.dir <- tempfile()
+> temp.file <- file.path(temp.dir, 'a.R')
+> dir.create(temp.dir)
+> 
+> unitizer:::read_line_set_vals("Q")
+> writeLines(
++   c(
++     "cond <- simpleCondition('hello')",
++     "class(cond) <- c('svgchop_unsupported', 'svgchop', class(cond))",
++     "invisible(signalCondition(cond))"
++   ),
++   temp.file
++ )
+> unitize(temp.file, interactive.mode=TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: a.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    1
+...........................
+                -    -    1
+
+- New --------------------------------------------------------------------------
+
+| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
+| [R]erun, [Q]uit, [H]elp)?
+
+> cond <- simpleCondition("hello")
+> class(cond) <- c("svgchop_unsupported", "svgchop", class(cond))
+> invisible(signalCondition(cond))
+
+| Test silently signalled conditions (use e.g. .NEW$conditions[[1]] to inspect):
+
+Condition list with 1 condition:
+1. svgchop_unsupported: hello
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> unitizer:::read_line_set_vals(NULL)
+> unlink(temp.dir, recursive=TRUE)
+> 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> # - "Output Transcript in non-Interactive" -------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> 
+> # Issue 286: don't capture output in non-interactive.
+> 
+> temp.dir <- tempfile()
+> temp.file <- file.path(temp.dir, 'a.R')
+> dir.create(temp.dir)
+> writeLines("1 + 1", temp.file)
+> old.opt <- options(unitizer.transcript=NULL, unitizer.show.progress=TRUE)
+> unitize(temp.file, auto.accept="new")
+
+Preloads...
+Loading unitizer data...
+Parsing tests...
+Parsing a.R
+Evaluating tests...
+
+1 + 1
+[1] 2
+
+Prepping Unitizers...
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
+Applying auto-accepts...
+
++------------------------------------------------------------------------------+
+| unitizer for: a.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    1
+...........................
+                -    -    1
+
+| Auto-accepting changes...
+| unitizer updated.
+
+> options(old.opt)
+> unlink(temp.dir, recursive=TRUE)
+> 
+> 
