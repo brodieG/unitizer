@@ -12,7 +12,8 @@ try(get_unitizer("_helper"))
 try(get_unitizer("t-get.R"))
 try(set_unitizer(1))
 try(set_unitizer(letters))
-try(set_unitizer("a"))
+# 4.3 changed reporting of missing argument errors
+tryCatch(set_unitizer("a"), error=function(e) conditionMessage(e))
 try(set_unitizer("a", "blergh"))
 !file.exists("a") # TRUE
 try(suppressWarnings(set_unitizer("tests/# ;!./# \\/", toy.stor)))
