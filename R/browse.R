@@ -451,7 +451,7 @@ setMethod(
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
       base.env=x@base.env, test.file.loc=x@test.file.loc,
-      state.ref=state.merged$states
+      state.ref=state.merged$states, global=x@global
     )
     unitizer <- unitizer + state.merged$items
 
