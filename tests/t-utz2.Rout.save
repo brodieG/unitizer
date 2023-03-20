@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2022-01-01 r81419) -- "Unsuffered Consequences"
-Copyright (C) 2022 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin17.0 (64-bit)
+R Under development (unstable) (2023-03-16 r83985) -- "Unsuffered Consequences"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -1103,27 +1103,33 @@ unitizer> Q
 > # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 > 
 > # Issue 286: don't capture output in non-interactive.
+> # We need `try` because we're testing what happens when the unitizer fails.
 > 
 > temp.dir <- tempfile()
 > temp.file <- file.path(temp.dir, 'a.R')
 > dir.create(temp.dir)
-> writeLines("1 + 1", temp.file)
+> writeLines('warning("boom")', temp.file)  # can't use error b/c try below
 > old.opt <- options(unitizer.transcript=NULL, unitizer.show.progress=TRUE)
-> unitize(temp.file, auto.accept="new")
+> try(unitize(temp.file))
 
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
 Preloads...
 Loading unitizer data...
 Parsing tests...
 Parsing a.R
 Evaluating tests...
 
-1 + 1
-[1] 2
+warning("boom")
+Warning in withVisible(warning("boom")) : boom
 
 Prepping Unitizers...
 Warning in history_capt(history, interactive.mode) :
   Unable to capture history in non-interactive mode.
-Applying auto-accepts...
 
 +------------------------------------------------------------------------------+
 | unitizer for: a.R                                                            |
@@ -1134,9 +1140,131 @@ Applying auto-accepts...
 ...........................
                 -    -    1
 
-| Auto-accepting changes...
-| unitizer updated.
+- New --------------------------------------------------------------------------
 
+| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
+| [R]erun, [Q]uit, [H]elp)?
+
+> warning("boom")
+
+| Test signalled conditions (use e.g. .NEW$conditions[[1]] to inspect):
+
+Condition list with 1 condition:
+1. Warning: boom
+
+| User input required to proceed, but we are in non-interactive mode.
+
+| unitizer unchanged.
+
+|   * New: warning("boom")
+| in 'a.R'
+
+| Newly evaluated tests do not match unitizer (New: 1); see above for more info,
+| or run in interactive mode.
+
+| Running in transcript mode: only stderr text that is also part of a signalled 
+| condition is in the test review section (scroll up to the evaluation section 
+| for the rest). See `transcript` parameter in `?unitize`.
+
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  Cannot proceed in non-interactive mode.
+> options(old.opt)
+> unlink(temp.dir, recursive=TRUE)
+> 
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> # - "Display All Tests in non-Interactive" -------------------------------------
+> # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+> 
+> # Issue 293: don't stop after first failing test
+> # We need `try` because we're testing what happens when the unitizer fails.
+> 
+> temp.dir <- tempfile()
+> temp.file.a <- file.path(temp.dir, 'a.R')
+> temp.file.b <- file.path(temp.dir, 'b.R')
+> dir.create(temp.dir)
+> writeLines(c("1 + 1", "warning('hello')"), temp.file.a)
+> writeLines(c("2 + 1", "warning('goodbye')"), temp.file.b)
+> try(unitize_dir(temp.dir, transcript=FALSE))
+
+Warning in check_call_stack() :
+  It appears you are running unitizer inside an error handling function such as 
+`withCallingHanlders`, `tryCatch`, or `withRestarts`.  This is strongly dis-
+couraged as it may cause unpredictable behavior from unitizer in the event tests
+produce conditions / errors.  We strongly recommend you re-run your tests 
+outside of such handling functions.
+Warning in history_capt(history, interactive.mode) :
+  Unable to capture history in non-interactive mode.
+| Summary of files in common directory '.':
+| 
+|          Pass Fail  New
+| *1. a.R     -    -    2
+| *2. b.R     -    -    2
+| .......................
+|             -    -    4
+| Legend:
+| * `unitizer` requires review
+
++------------------------------------------------------------------------------+
+| unitizer for: a.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    2
+...........................
+                -    -    2
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+> 1 + 1
+[1] 2
+
+> warning("hello")
+Warning: hello
+
+| User input required to proceed, but we are in non-interactive mode.
+
+| unitizer unchanged.
+
++------------------------------------------------------------------------------+
+| unitizer for: b.R                                                            |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    2
+...........................
+                -    -    2
+
+- New --------------------------------------------------------------------------
+
+| The 2 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [QQ]uit All, [Q]uit, [H]elp)?
+
+> 2 + 1
+[1] 3
+
+> warning("goodbye")
+Warning: goodbye
+
+| User input required to proceed, but we are in non-interactive mode.
+
+| unitizer unchanged.
+
+|   * New: 1 + 1
+|   * New: warning("hello")
+| in 'a.R'
+
+|   * New: 2 + 1
+|   * New: warning("goodbye")
+| in 'b.R'
+
+| Newly evaluated tests do not match unitizer (New: 4); see above for more info,
+| or run in interactive mode.
+
+Error in unitize_core(test.files = test.files, store.ids = store.ids,  : 
+  Cannot proceed in non-interactive mode.
 > options(old.opt)
 > unlink(temp.dir, recursive=TRUE)
 > 

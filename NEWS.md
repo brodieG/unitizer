@@ -2,6 +2,8 @@
 
 ## v1.4.19
 
+* [#293](https://github.com/brodieG/unitizer/issues/293): Output all failed
+  tests in non-interactive mode, instead of just the first one.
 * [#292](https://github.com/brodieG/unitizer/issues/292): Clarify warnings about
   stderr in transcript mode.
 * Fully unhook the evaluation environment chain prior to storing unitizers.

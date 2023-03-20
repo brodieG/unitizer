@@ -748,18 +748,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             stderr()
           )
           out.err <- TRUE
-        } else if(unitizer@transcript) {
-          cat("\n")
-          meta_word_msg(
-            paste0(
-              "Running in transcript mode: stderr was not captured.  Only ",
-              "stderr text that is also part of a signalled condition is ",
-              "visible here (scroll up to see the rest). See `transcript` ",
-              "parameter in `?unitize`."
-            ),
-            trail.nl=!(out.std || out.err)
-          )
-        }
+        } 
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
       # If test failed, show details of failure; note this should mean there
@@ -829,8 +818,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         cat("\n")
         meta_word_cat(
           paste0(
-            "Test silently signalled conditions (use ",
-            "e.g. .", if(item.main@reference) "REF" else "NEW",
+            "Test ", if(!unitizer@transcript) "silently ",
+            "signalled conditions (use ", "e.g. .",
+            if(item.main@reference) "REF" else "NEW",
             "$conditions[[1]] to inspect):\n"
         ) )
         screen_out(
@@ -847,7 +837,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     if(!x@interactive) {   # can't proceed in non-interactive
       x@interactive.error <- TRUE
-      invokeRestart("unitizerEarlyExit", extra=x)
+      x@mapping@reviewed[curr.id] <- TRUE
+      x@mapping@review.val[curr.id] <- 'N'
+      return(x)
     }
     x@human <- TRUE
 
