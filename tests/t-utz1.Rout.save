@@ -1,13 +1,11 @@
 
-R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
-Copyright (C) 2022 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin17.0 (64-bit)
+R Under development (unstable) (2023-03-16 r83985) -- "Unsuffered Consequences"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -1553,6 +1551,17 @@ Warning in history_capt(history, interactive.mode) :
 
 | State mismatch; see `.DIFF$state` for details.
 
+> get_intercept(res)
+[1] -3945281
+
+| Value mismatch: 
+
+< .ref          > .new        
+@@ 1 @@         @@ 1 @@       
+< [1] -277      > [1] -3945281
+
+| State mismatch; see `.DIFF$state` for details.
+
 | User input required to proceed, but we are in non-interactive mode.
 
 | unitizer unchanged.
@@ -2928,4 +2937,4 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
 > 
 > proc.time()
    user  system elapsed 
-  17.53    2.05   20.94 
+  6.143   0.846   7.732 
