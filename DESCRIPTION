@@ -74,5 +74,5 @@ Collate:
     'unitizer-package.R'
     'unitizer.add.R'
     'upgrade.R'
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Roxygen: list(load = "installed")
