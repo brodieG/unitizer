@@ -974,6 +974,17 @@ unitize_browse <- function(
             ),
             "); see above for more info, or run in interactive mode."
           )
+          if(transcript) {
+            meta_word_msg(
+              paste0(
+                "Running in transcript mode: only ",
+                "stderr text that is also part of a signalled condition is ",
+                "in the test review section (scroll up to the evaluation ",
+                "section for the rest). See `transcript` ",
+                "parameter in `?unitize`."
+              )
+            )
+          }
           invokeRestart("unitizerInteractiveFail")
         }
         # - Simple Outcomes / no-review -----------------------------------------

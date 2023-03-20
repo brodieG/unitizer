@@ -748,18 +748,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             stderr()
           )
           out.err <- TRUE
-        } else if(unitizer@transcript) {
-          cat("\n")
-          meta_word_msg(
-            paste0(
-              "Running in transcript mode: stderr was not captured.  Only ",
-              "stderr text that is also part of a signalled condition is ",
-              "visible here (scroll up to see the rest). See `transcript` ",
-              "parameter in `?unitize`."
-            ),
-            trail.nl=!(out.std || out.err)
-          )
-        }
+        } 
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
       # If test failed, show details of failure; note this should mean there
