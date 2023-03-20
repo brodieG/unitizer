@@ -752,9 +752,10 @@ setMethod("reviewNext", c("unitizerBrowse"),
           cat("\n")
           meta_word_msg(
             paste0(
-              "Running in transcript mode: stderr was not captured so if there ",
-              "was any it would have been output during evaluation; see ",
-              "earlier output."
+              "Running in transcript mode: stderr was not captured.  Only ",
+              "stderr text that is also part of a signalled condition is ",
+              "visible here (scroll up to see the rest). See `transcript` ",
+              "parameter in `?unitize`."
             ),
             trail.nl=!(out.std || out.err)
           )
