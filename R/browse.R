@@ -818,8 +818,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         cat("\n")
         meta_word_cat(
           paste0(
-            "Test silently signalled conditions (use ",
-            "e.g. .", if(item.main@reference) "REF" else "NEW",
+            "Test ", if(!unitizer@transcript) "silently ",
+            "signalled conditions (use ", "e.g. .",
+            if(item.main@reference) "REF" else "NEW",
             "$conditions[[1]] to inspect):\n"
         ) )
         screen_out(
