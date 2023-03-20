@@ -9,7 +9,8 @@
 * Fully unhook the evaluation environment chain prior to storing unitizers.
   Previously only the portions of the chain part of the unitizer was unhooked,
   but with some tests it becomes possible to capture environments created during
-  the `pre` expression evaluations.
+  the `pre` expression evaluations.  This could cause warnings about package
+  environments being unavailable on reload of RDSes.
 
 ## v1.4.18
 
