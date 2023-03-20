@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
-Copyright (C) 2022 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin17.0 (64-bit)
+R Under development (unstable) (2023-03-16 r83985) -- "Unsuffered Consequences"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -43,9 +43,9 @@ Error in set_unitizer.default(1) :
 > try(set_unitizer(letters))
 Error in set_unitizer.character(letters) : 
   Argument `store.id` must be a 1 length character vector
-> try(set_unitizer("a"))
-Error in is(unitizer, "unitizer") : 
-  argument "unitizer" is missing, with no default
+> # 4.3 changed reporting of missing argument errors
+> tryCatch(set_unitizer("a"), error=function(e) conditionMessage(e))
+[1] "argument \"unitizer\" is missing, with no default"
 > try(set_unitizer("a", "blergh"))
 Error in set_unitizer.character("a", "blergh") : 
   Argument `unitizer` must be a unitizer
@@ -421,6 +421,3 @@ Selected file: zzz.R
 > unlink(tmp.dir, recursive = TRUE)
 > 
 > 
-> proc.time()
-   user  system elapsed 
-  1.294   0.102   1.412 

@@ -221,6 +221,10 @@ store_unitizer <- function(unitizer) {
   old.par.env <- parent.env(unitizer@zero.env)
   on.exit(parent.env(unitizer@zero.env) <- old.par.env)
   parent.env(unitizer@zero.env) <- baseenv()
+  global.par.env <- unitizer@global$par.env
+  old.global.par.env.par <- parent.env(global.par.env)
+  on.exit(parent.env(global.par.env) <- old.global.par.env.par, add=TRUE)
+  parent.env(global.par.env) <- baseenv()
 
   # zero out connections we'v been using
 
