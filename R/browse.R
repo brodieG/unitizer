@@ -847,7 +847,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     if(!x@interactive) {   # can't proceed in non-interactive
       x@interactive.error <- TRUE
-      invokeRestart("unitizerEarlyExit", extra=x)
+      x@mapping@reviewed[curr.id] <- TRUE
+      x@mapping@review.val[curr.id] <- 'N'
+      return(x)
     }
     x@human <- TRUE
 
