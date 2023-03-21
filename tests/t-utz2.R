@@ -258,13 +258,31 @@ unlink(temp.dir, recursive=TRUE)
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 # Issue 286: don't capture output in non-interactive.
+# We need `try` because we're testing what happens when the unitizer fails.
 
 temp.dir <- tempfile()
 temp.file <- file.path(temp.dir, 'a.R')
 dir.create(temp.dir)
-writeLines("1 + 1", temp.file)
+writeLines('warning("boom")', temp.file)  # can't use error b/c try below
 old.opt <- options(unitizer.transcript=NULL, unitizer.show.progress=TRUE)
-unitize(temp.file, auto.accept="new")
+try(unitize(temp.file))
+options(old.opt)
+unlink(temp.dir, recursive=TRUE)
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+# - "Display All Tests in non-Interactive" -------------------------------------
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+# Issue 293: don't stop after first failing test
+# We need `try` because we're testing what happens when the unitizer fails.
+
+temp.dir <- tempfile()
+temp.file.a <- file.path(temp.dir, 'a.R')
+temp.file.b <- file.path(temp.dir, 'b.R')
+dir.create(temp.dir)
+writeLines(c("1 + 1", "warning('hello')"), temp.file.a)
+writeLines(c("2 + 1", "warning('goodbye')"), temp.file.b)
+try(unitize_dir(temp.dir, transcript=FALSE))
 options(old.opt)
 unlink(temp.dir, recursive=TRUE)
 

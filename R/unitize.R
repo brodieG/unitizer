@@ -177,13 +177,15 @@
 #'   progress updates for each part of the process (TRUE or > 0), for each file
 #'   processed (TRUE or > 1), and for each test processed (TRUE or > 2).
 #' @param transcript TRUE (default in non-interactive mode) or FALSE (default in
-#'   interactive mode) enables direct output of stdout/stderr immediately during
-#'   test evaluation instead of being captured for later display during review.
-#'   This also causes progress updates to display on new lines instead of
-#'   overlaying on the same line.  One limitation of running in this mode is
-#'   that stderr is no longer captured at all so will not appear during review
-#'   as it does in non-transcript mode (although it will be present in the
-#'   output at the point the test was evaluated).
+#'   interactive mode) causes immediate output of stdout/stderr during test
+#'   evaluation instead of deferred display during test review.  This also
+#'   causes progress updates to display on new lines instead of overlaying on
+#'   the same line.  One limitation of running in this mode is that stderr is no
+#'   longer captured at all so is unavailable in the review stage.  stderr
+#'   text that is also part of a signalled condition (e.g. "boom" in
+#'   `stop("boom")`) is still shown with the conditions in the review step.  To
+#'   see direct stderr output in transcript mode scroll up to the test
+#'   evaluation point.
 #' @return \code{unitize} and company are intended to be used primarily for
 #'   the interactive environment and side effects.  The functions do return
 #'   summary data about test outcomes and user input as

@@ -451,7 +451,7 @@ setMethod(
     unitizer <- new(
       "unitizer", id=x@id, changes=x@changes, zero.env=x@zero.env,
       base.env=x@base.env, test.file.loc=x@test.file.loc,
-      state.ref=state.merged$states
+      state.ref=state.merged$states, global=x@global
     )
     unitizer <- unitizer + state.merged$items
 
@@ -748,17 +748,7 @@ setMethod("reviewNext", c("unitizerBrowse"),
             stderr()
           )
           out.err <- TRUE
-        } else if(unitizer@transcript) {
-          cat("\n")
-          meta_word_msg(
-            paste0(
-              "Running in transcript mode: stderr was not captured so if there ",
-              "was any it would have been output during evaluation; see ",
-              "earlier output."
-            ),
-            trail.nl=!(out.std || out.err)
-          )
-        }
+        } 
         if(length(item.main@trace)) set_trace(item.main@trace)
       }
       # If test failed, show details of failure; note this should mean there
@@ -828,8 +818,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
         cat("\n")
         meta_word_cat(
           paste0(
-            "Test silently signalled conditions (use ",
-            "e.g. .", if(item.main@reference) "REF" else "NEW",
+            "Test ", if(!unitizer@transcript) "silently ",
+            "signalled conditions (use ", "e.g. .",
+            if(item.main@reference) "REF" else "NEW",
             "$conditions[[1]] to inspect):\n"
         ) )
         screen_out(
@@ -846,7 +837,9 @@ setMethod("reviewNext", c("unitizerBrowse"),
 
     if(!x@interactive) {   # can't proceed in non-interactive
       x@interactive.error <- TRUE
-      invokeRestart("unitizerEarlyExit", extra=x)
+      x@mapping@reviewed[curr.id] <- TRUE
+      x@mapping@review.val[curr.id] <- 'N'
+      return(x)
     }
     x@human <- TRUE
 

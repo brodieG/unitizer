@@ -114,6 +114,8 @@ To use `unitizer`:
 
 ## Related Packages
 
+-   [`aammrtf`](https://github.com/brodieG/aammrtf), a minimal version
+    of `unitizer`, used by `unitizer` for its own tests.
 -   [`testthat`](https://cran.r-project.org/package=testthat).
 -   [`tinytest`](https://cran.r-project.org/package=tinytest), which is
     extended by [`ttdo`](https://cran.r-project.org/package=ttdo) for

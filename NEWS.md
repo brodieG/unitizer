@@ -1,5 +1,17 @@
 # `unitizer` NEWS
 
+## v1.4.19
+
+* [#293](https://github.com/brodieG/unitizer/issues/293): Output all failed
+  tests in non-interactive mode, instead of just the first one.
+* [#292](https://github.com/brodieG/unitizer/issues/292): Clarify warnings about
+  stderr in transcript mode.
+* Fully unhook the evaluation environment chain prior to storing unitizers.
+  Previously only the portions of the chain part of the unitizer was unhooked,
+  but with some tests it becomes possible to capture environments created during
+  the `pre` expression evaluations.  This could cause warnings about package
+  environments being unavailable on reload of RDSes.
+
 ## v1.4.18
 
 * [#289](https://github.com/brodieG/unitizer/issues/289): Better document
