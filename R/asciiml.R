@@ -218,7 +218,6 @@ print.bullet <- function(x, width=0L, ...) {
 #' @export
 #' @param x object to render
 #' @param width how many characters to wrap at
-#' @param pre what to pre-pend to each bullet
 #' @param ... dots, other arguments to pass to \code{word_wrap}
 #' @return character vector containing rendered object, where each element
 #'   corresponds to a line

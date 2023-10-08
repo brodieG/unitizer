@@ -624,7 +624,7 @@ summ_matrix_to_text <- function(
 #' are already sunk, and will unsink them the same way.
 #'
 #' @keywords internal
-#' @param a quoted to evaluate
+#' @param expr a quoted expression to evaluate
 #' @param env an environment to evaluate them in
 #' @return a list with stdout and stderr captured separately, classed as
 #'   "captured_output"
