@@ -1,17 +1,17 @@
-# Copyright (C) 2022 Brodie Gaslam
-# 
-# This file is part of "unitizer"
-# 
+# Copyright (C) Brodie Gaslam
+#
+# This file is part of "unitizer - Interactive R Unit Tests"
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # Go to <https://www.r-project.org/Licenses/GPL-2> for a copy of the license.
 
 #' Demo Details and Helper Functions
@@ -50,8 +50,6 @@
 #' and \code{unitizer_cleanup_demo} perform janitorial functions.  None of
 #' these functions are intended for use outside of the unitizer demo.
 #'
-#' @aliases fastlm_dir show_file unitizer_check_demo_state unitizer_cleanup_demo
-#'   `[Press ENTER to Continue]`
 #' @rdname demo
 #' @name unitizer_demo
 #' @param f path to a file
