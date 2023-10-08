@@ -3,6 +3,7 @@
 \docType{package}
 \name{unitizer}
 \alias{unitizer}
+\alias{unitizer-package}
 \title{unitizer}
 \description{
 Simplifies regression tests by comparing objects produced by test
