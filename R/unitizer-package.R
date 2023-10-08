@@ -29,5 +29,6 @@
 #'   savehistory
 #' @name unitizer
 #' @docType package
+#' @aliases unitizer-package
 
 NULL
