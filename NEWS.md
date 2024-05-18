@@ -1,5 +1,9 @@
 # `unitizer` NEWS
 
+## v1.4.21
+
+* Suppress test caused to fail by checks added to `parent.env<-` in r-devel r86545.
+
 ## v1.4.20
 
 * Add explicit alias for `fansi-package` now that it is no longer 
