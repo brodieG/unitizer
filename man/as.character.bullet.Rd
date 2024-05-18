@@ -12,8 +12,6 @@
 \item{width}{how many characters to wrap at}
 
 \item{...}{dots, other arguments to pass to \code{word_wrap}}
-
-\item{pre}{what to pre-pend to each bullet}
 }
 \value{
 character vector containing rendered object, where each element
