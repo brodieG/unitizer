@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2022-02-01 r81609) -- "Unsuffered Consequences"
-Copyright (C) 2022 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin17.0 (64-bit)
+R version 4.3.2 (2023-10-31) -- "Eye Holes"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin20 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -29,30 +29,21 @@ Type 'q()' to quit R.
 > coi(my.unitizer2 <- my.unitizer2 + my.unitizer@items.new)
 > # - "messed up env ancestry repair works" --------------------------------------
 > 
-> # Purposefully mess up the environments
-> parent.env(my.unitizer2@items.ref[[2]]@env) <- baseenv()
-> x <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
-Error in parent.env(env) : the empty environment has no parent
-Error in run_ls(env = x@env, stop.env = base.env, all.names = TRUE, store.env = ref.env.store) : 
-  Specified `stop.env` does not appear to be in parent environments.
-Warning in repairEnvs(items.final) :
-  Detected corrupted environment history; we will attempt to repair, but keep in mind that even when repaired the test environments may be missleading.  For example, the objects other than `.new` or `.ref` when reviewing tests at the `unitzer` prompt may not be those you expect or those reported by `ls`.  To fully restore environments re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist after an attempt to repair, please contact maintainer.
-> old.opt <- options(unitizer.max.env.depth = 20)
-> res <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
-Error in try(while (!identical(env, stop.env)) { : 
-  Logic error: not finding `stop.env` after 20 iterations; contact package maintainer if this is an error.
-Error in run_ls(env = x@env, stop.env = base.env, all.names = TRUE, store.env = ref.env.store) : 
-  Specified `stop.env` does not appear to be in parent environments.
-Warning in repairEnvs(items.final) :
-  Detected corrupted environment history; we will attempt to repair, but keep in mind that even when repaired the test environments may be missleading.  For example, the objects other than `.new` or `.ref` when reviewing tests at the `unitzer` prompt may not be those you expect or those reported by `ls`.  To fully restore environments re-unitize with `unitize(..., force.update=TRUE)`.  If errors persist after an attempt to repair, please contact maintainer.
-> is(res, "unitizerItems")
-[1] TRUE
-> ref.anc <- unitizer:::env_ancestry(x@base.env)
-> itm.anc <- unitizer:::env_ancestry(x[[1L]]@env)
-> # Items should belong to base env for reference
-> identical(rev(ref.anc), head(rev(itm.anc), length(ref.anc)))
-[1] TRUE
-> options(old.opt)
+> # # Purposefully mess up the environments
+> # # UPDATE: these tests don't work since parent.env<- added checks for circular
+> # # environment chains in r86545.  We could probably restore functionality by
+> # # using a different parent env but would have to figure out what the intended
+> # # logic was.
+> # parent.env(my.unitizer2@items.ref[[2]]@env) <- baseenv()
+> # x <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
+> # old.opt <- options(unitizer.max.env.depth = 20)
+> # res <- unitizer:::healEnvs(my.unitizer2@items.ref, my.unitizer2)
+> # is(res, "unitizerItems")
+> # ref.anc <- unitizer:::env_ancestry(x@base.env)
+> # itm.anc <- unitizer:::env_ancestry(x[[1L]]@env)
+> # # Items should belong to base env for reference
+> # identical(rev(ref.anc), head(rev(itm.anc), length(ref.anc)))
+> # options(old.opt)
 > 
 > # - "re-assigning to ignored environments handled properly" --------------------
 > 
@@ -107,7 +98,7 @@ Warning in repairEnvs(x@items.ref) :
 > unitizer:::healEnvs(untz.rep@items.ref, untz.rep)
 An object of class "unitizerItems"
 Slot "base.env":
-<environment: 0x7f8becce00c0>
+<environment: 0x7fa830fc8278>
 
 Slot ".items":
 [[1]]
@@ -165,6 +156,3 @@ Slot ".seek.fwd":
 
 > 
 > 
-> proc.time()
-   user  system elapsed 
-   1.20    0.07    1.27 
