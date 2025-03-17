@@ -126,7 +126,9 @@ deparse_mixed <- function(expr, width.cutoff = 500L, control = "all", ...) {
         if(!is.language(expr[[i]])) {
           expr[[i]] <-
             parse(
-              text=deparse(expr[[i]], width.cutoff, control, ...),
+              text=deparse(
+                  expr[[i]], width.cutoff=width.cutoff, control=control, ...
+              ),
               keep.source=FALSE
             )[[1L]]
         } else expr[[i]] <- Recall(expr[[i]])
