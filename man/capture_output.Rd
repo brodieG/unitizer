@@ -10,9 +10,9 @@ capture_output(expr, env = parent.frame())
 \method{print}{captured_output}(x, ...)
 }
 \arguments{
-\item{env}{an environment to evaluate them in}
+\item{expr}{a quoted expression to evaluate}
 
-\item{a}{quoted to evaluate}
+\item{env}{an environment to evaluate them in}
 }
 \value{
 a list with stdout and stderr captured separately, classed as
