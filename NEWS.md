@@ -1,5 +1,10 @@
 # `unitizer` NEWS
 
+## v1.4.22
+
+* Fix unnamed arguments error in a call to `deparse` that manifested with
+  improvements changes in r-devel.
+
 ## v1.4.21
 
 * Suppress test caused to fail by checks added to `parent.env<-` in r-devel r86545.
