@@ -4,6 +4,8 @@
 
 * Fix unnamed arguments error in a call to `deparse` that manifested with
   improvements changes in r-devel.
+* Fix bad `all.equal` method NAMESPACE entries (h/t @MichaelChirico), see
+  [source issue](https://github.com/r-lib/roxygen2/issues/1587) for details.
 
 ## v1.4.21
 
