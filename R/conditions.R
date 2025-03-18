@@ -146,12 +146,14 @@ setMethod("all.equal", "conditionList",
 } )
 # So that S3 dispatch works
 #' @rdname all.equal.condition
-#' @export
+#' @method all.equal conditionList
+#' @exportS3Method all.equal conditionList
 
 all.equal.conditionList <- function(target, current, ...)
   all.equal(target, current, ...)
 
-#' @export
+#' @method all.equal condition
+#' @exportS3Method all.equal condition
 #' @rdname all.equal.condition
 
 all.equal.condition <- function(target, current, ...) {
