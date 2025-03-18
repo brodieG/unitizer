@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [rc]
+    branches: [worflow-debug]
   pull_request:
     # branches: [master, development]
 
