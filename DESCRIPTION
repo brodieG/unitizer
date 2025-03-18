@@ -10,6 +10,10 @@ Authors@R: c(
     person(
     "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
     role=c("aut", "cre")),
+    person(
+    "Michael", "https://github.com/MichaelChirico", 
+    email="michaelchirico4@gmail.com",
+    role=c("ctb")),
     person(family="R Core Team",
     email="R-core@r-project.org", role="cph",
     comment="Traceback function sources."
