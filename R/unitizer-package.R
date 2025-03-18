@@ -28,7 +28,6 @@
 #'   loadhistory modifyList object.size packageVersion remove.packages
 #'   savehistory
 #' @name unitizer
-#' @docType package
 #' @aliases unitizer-package
 
-NULL
+"_PACKAGE"
