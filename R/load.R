@@ -385,6 +385,8 @@ as.store_id_chr <- function(x) {
   target
 }
 # for testing only; needs to be in namespace
+#' Can't have undocumented methods anymore.
+#' @noRd
 
 as.character.untz_stochrerr <- function(x, ...) stop("I am an error")
 
