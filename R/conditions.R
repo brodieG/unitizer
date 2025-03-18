@@ -78,7 +78,7 @@ conditionList <- setClass("conditionList", contains="unitizerList")
 #'
 #' @noRd
 
-all.equal <- function(target, current, ...) base::all.equal(target, current, ...)
+all.equal <- NULL
 
 #' Compare Conditions
 #'
