@@ -24,6 +24,7 @@ Useful links:
 
 Other contributors:
 \itemize{
+  \item Michael https://github.com/MichaelChirico \email{michaelchirico4@gmail.com} [contributor]
   \item  R Core Team \email{R-core@r-project.org} (Traceback function sources.) [copyright holder]
 }
 
