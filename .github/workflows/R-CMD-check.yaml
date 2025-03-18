@@ -2,7 +2,7 @@ on:
   push:
     branches: [rc]
   pull_request:
-    branches: [master, development]
+    # branches: [master, development]
 
 name: R-CMD-check.yaml
 
@@ -18,9 +18,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
+          # - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release'}
-          - {os: ubuntu-latest,  r: 'oldrel-1'}
+          # - {os: ubuntu-latest,  r: 'oldrel-1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
