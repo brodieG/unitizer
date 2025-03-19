@@ -23,6 +23,124 @@ Type 'q()' to quit R.
 Install Packages
 Setup Demos
 > 
+> # Mostly makes sure the demo steps work, but since it is a convenient way of
+> # generating a unitizer with actual errors and so forth, we use it to test a few
+> # other things as well in the context of those unitizers
+> 
+> # - "in_pkg" -------------------------------------------------------------------
+> 
+> base.dir <- file.path(FLM, "tests", "extra")
+> in.pkg.file <- file.path(base.dir, "inpkg.R")
+> 
+> unitizer:::read_line_set_vals(c("Q"))
+> txt1 <- unitizer:::capture_output(unitize(in.pkg.file, interactive.mode = TRUE))
+> # `sub` needed due to inconsistencies in R 3.4 and 3.3 for top level error
+> # messages
+> txt1$message <- sub("^Error.*:", "", txt1$message)
+> txt1
+- Output -----------------------------------------------------------------------
+
+
++------------------------------------------------------------------------------+
+| unitizer for: extra/inpkg.R                                                  |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    1
+...........................
+                -    -    1
+
+- New --------------------------------------------------------------------------
+
+| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
+| [R]erun, [Q]uit, [H]elp)?
+
+# should fail normally, but return TRUE if run in fastlm
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> hidden_fun()
+
+unitizer> Q
+
+| unitizer unchanged.
+
+- Message ----------------------------------------------------------------------
+
+ could not find function "hidden_fun"
+| No changes recorded.
+> unitizer:::read_line_set_vals(c("Q"))
+> unitize(in.pkg.file, state = in_pkg(), interactive.mode = TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: extra/inpkg.R                                                  |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    1
+...........................
+                -    -    1
+
+- New --------------------------------------------------------------------------
+
+| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
+| [R]erun, [Q]uit, [H]elp)?
+
+# should fail normally, but return TRUE if run in fastlm
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> hidden_fun()
+[1] TRUE
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> unitizer:::read_line_set_vals(c("Q"))
+> try(unitize(in.pkg.file, state = in_pkg("ASDFASDFA"), interactive.mode = TRUE))
+
+Error in loadNamespace(name) : there is no package called 'ASDFASDFA'
+Error in in_pkg_to_env(x.raw@par.env, test.files) : 
+  Unable to load "ASDFASDFA" namespace to use as parent environment; see `?
+unitizerState` for instructions on how to specify a package namespace as a 
+parent environment for tests.
+Error in as.state(state, test.files) : 
+  Unable to convert `par.env` value to a namespace environment
+Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  : 
+  Argument `state` could not be evaluated.
+> 
+> # - "copy fastlm dir works" ----------------------------------------------------
+> 
+> sort(tolower(list.files(".")))
+[1] "description"   "man"           "namespace"     "r"            
+[5] "tests"         "utzflm.rcheck"
+> readLines(file.path(".", "DESCRIPTION"))[[5L]]  # v0.1.0
+[1] "Version: 0.1.0"
+> update_fastlm(".", version = "0.1.1")
+> readLines(file.path(".", "DESCRIPTION"))[[5L]]
+[1] "Version: 0.1.1"
+> update_fastlm(".", version = "0.1.2")
+> readLines(file.path(".", "DESCRIPTION"))[[5L]]
+[1] "Version: 0.1.2"
+> 
+> # - "show_file" ----------------------------------------------------------------
+> 
+> f <- tempfile()
+> cat("this is a\ntest code\nfile\n", file = f)
+> file.show <- capture.output(show_file(f))
+> file.show[[1L]]
+[1] "+---------------+"
+> start.file <- grep("+---+-----------+", file.show, fixed = TRUE)
+> length(start.file)  # 2
+[1] 2
+> writeLines(file.show[start.file[[1L]]:start.file[[2L]]])
++---+-----------+
+| 1 | this is a |
+| 2 | test code |
+| 3 | file      |
++---+-----------+
+> unlink(f)
+> 
 > # Run actual demo bits; note we want to force `interactive.mode=TRUE` so that
 > # `read_line_vals` values are used as user input; note that until we fix
 > # / rationalize how sinking behaves within unitizer when the standard streams
