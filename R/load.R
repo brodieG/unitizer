@@ -224,7 +224,7 @@ store_unitizer <- function(unitizer) {
   global.par.env <- unitizer@global$par.env
   old.global.par.env.par <- parent.env(global.par.env)
   on.exit(parent.env(global.par.env) <- old.global.par.env.par, add=TRUE)
-  # if(getOption('unitizer.store.dump.envs', FALSE)) dump_env_ancestry(unitizer)
+  if(getOption('unitizer.store.dump.envs', FALSE)) dump_env_ancestry(unitizer)
   parent.env(global.par.env) <- baseenv()
 
   # zero out connections we'v been using
@@ -258,7 +258,7 @@ store_unitizer <- function(unitizer) {
 
   for(i in seq_along(unitizer@items.new)) unitizer@items.new[[i]]@call <- NULL
 
-  if(getOption('unitizer.store.dump.envs', FALSE)) dump_env_ancestry(unitizer)
+  # if(getOption('unitizer.store.dump.envs', FALSE)) dump_env_ancestry(unitizer)
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {

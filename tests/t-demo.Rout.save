@@ -232,6 +232,21 @@ unitizer> Y
   0x00000000
   0x00000000
   base
+@global
+  Reference class object of class "unitizerGlobal"
+  namespace:unitizer
+  0x00000000
+  namespace:base
+  R_GlobalEnv
+  package:unitizer
+  package:stats
+  package:graphics
+  package:grDevices
+  package:utils
+  package:datasets
+  package:methods
+  0x00000000
+  base
 @items.new@base.env
     0x00000000
     0x00000000
