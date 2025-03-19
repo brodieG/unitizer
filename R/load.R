@@ -224,7 +224,7 @@ store_unitizer <- function(unitizer) {
   global.par.env <- unitizer@global$par.env
   old.global.par.env.par <- parent.env(global.par.env)
   on.exit(parent.env(global.par.env) <- old.global.par.env.par, add=TRUE)
-  if(getOption('unitizer.store.dump.envs', FALSE)) dump_env_ancestry(unitizer)
+  # if(getOption('unitizer.store.dump.envs', FALSE)) dump_env_ancestry(unitizer)
   parent.env(global.par.env) <- baseenv()
 
   # zero out connections we'v been using
