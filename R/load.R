@@ -234,6 +234,10 @@ store_unitizer <- function(unitizer) {
   # to avoid taking up a bunch of storage on large object
 
   unitizer@global <- NULL
+  # Try to workaround Heisenbug where @global seems to somehow get stored in the
+  # RDS in some hard to pin down circumstances on GA.
+  if(typeof(slot(unitizer, 'global')) != NULL)
+    stop("Internal error: failed to unlink global state tracker.")
 
   rm(list=ls(unitizer@base.env, all.names=TRUE), envir=unitizer@base.env)
 
