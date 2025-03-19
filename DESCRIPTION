@@ -5,11 +5,15 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-Version: 1.4.21
+Version: 1.4.22
 Authors@R: c(
     person(
     "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
     role=c("aut", "cre")),
+    person(
+    "Michael", "https://github.com/MichaelChirico", 
+    email="michaelchirico4@gmail.com",
+    role=c("ctb")),
     person(family="R Core Team",
     email="R-core@r-project.org", role="cph",
     comment="Traceback function sources."
@@ -74,5 +78,6 @@ Collate:
     'unitizer-package.R'
     'unitizer.add.R'
     'upgrade.R'
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Roxygen: list(load = "installed")
+Encoding: UTF-8
