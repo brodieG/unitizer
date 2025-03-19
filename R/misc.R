@@ -31,6 +31,28 @@ env_ancestry <- function(env, stop.env=globalenv()) {
   }
   out
 }
+# Recursively traverse object dumping all environment ancestries
+
+dump_env_ancestry <- function(x, stop.env=baseenv(), index=character()) {
+  if(is.environment(x)) {
+    ancestry <- env_ancestry(x, stop.env)
+    if(length(index)) writeLines(paste0(index, collapse=""))
+    writeLines(sprintf("%s%s", strrep(" ", length(index) * 2), ancestry))
+  } else if(is.list(x)) {
+    i.names <- 
+      if(is.null(names(x))) sprintf("[[%d]]", seq_along(x))
+      else sprintf("[['%s']]", names(x))
+    for(i in seq_along(x)) 
+      dump_env_ancestry(x[[i]], stop.env, c(index, i.names[[i]]))
+  } else if (isS4(x)) {
+    slot.names <- slotNames(x)
+    for(slot.name in slot.names) {
+      dump_env_ancestry(
+        slot(x, slot.name), stop.env, c(index, sprintf("@%s", slot.name))
+      )
+    }
+  }
+}
 # Gets Environment Name / Memory Code
 #
 # Captures the name that \code{`\link{print.default}`} displays when one

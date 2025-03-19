@@ -14,10 +14,8 @@ source(file.path("_helper", "pkgs.R"))
 # does not exist so it doesn't get overwritten with subsequent updates
 # Note the initial install happens in the test running script
 
-options(warn=2)
 unitizer:::update_fastlm(".", version = "0.1.0")
 inst_pak(".")
 unitizer:::read_line_set_vals(c("Y", "Y"))
 untz <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
-is(untz, "unitizer_result")
-print(untz)
+stop('boom!')

@@ -224,9 +224,8 @@ store_unitizer <- function(unitizer) {
   global.par.env <- unitizer@global$par.env
   old.global.par.env.par <- parent.env(global.par.env)
   on.exit(parent.env(global.par.env) <- old.global.par.env.par, add=TRUE)
-  writeLines(c('Before', env_ancestry(global.par.env, baseenv()), ''))
+  dump_env_ancestry(unitizer)
   parent.env(global.par.env) <- baseenv()
-  writeLines(c('After', env_ancestry(global.par.env, baseenv()), ''))
 
   # zero out connections we'v been using
 
@@ -255,6 +254,7 @@ store_unitizer <- function(unitizer) {
 
   for(i in seq_along(unitizer@items.new)) unitizer@items.new[[i]]@call <- NULL
 
+  dump_env_ancestry(unitizer)
   success <- try(set_unitizer(unitizer@id, unitizer))
 
   if(!inherits(success, "try-error")) {
