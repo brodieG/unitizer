@@ -224,6 +224,12 @@ store_unitizer <- function(unitizer) {
   global.par.env <- unitizer@global$par.env
   old.global.par.env.par <- parent.env(global.par.env)
   on.exit(parent.env(global.par.env) <- old.global.par.env.par, add=TRUE)
+  # Gratuitous env_ancestry call to remove heisenbug that led to environments
+  # being captured in the RDS when running via Github Actions only.  We put this
+  # here before the `parent.env(global.par.env) <- call` w/o thinking about it,
+  # but now looking at it we wonder if it makes sense this way.  Works though.
+  if(!length(env_ancestry(unitizer@global)))
+    stop("Internal Error: shouldn't happen.")
   parent.env(global.par.env) <- baseenv()
 
   # zero out connections we'v been using
