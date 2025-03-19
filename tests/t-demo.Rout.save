@@ -155,7 +155,7 @@ Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  :
 > 
 > unitizer:::update_fastlm(".", version = "0.1.0")
 > inst_pak(".")
-> unitizer:::read_line_set_vals(c("Y", "Y"))
+> unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
 > untz <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
 
 +------------------------------------------------------------------------------+
@@ -163,14 +163,14 @@ Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  :
 +------------------------------------------------------------------------------+
 
              Pass Fail  New
- <untitled>     -    -    1
+ <untitled>     -    -    4
 ...........................
-                -    -    1
+                -    -    4
 
 - New --------------------------------------------------------------------------
 
-| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
-| [R]erun, [Q]uit, [H]elp)?
+| The 4 tests in this section are new. Add tests to store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [R]erun, [Q]uit, [H]elp)?
 
 # Assignments and calls to `library` are not considered tests by
 # `unitizer` so you will not need to review them
@@ -194,10 +194,31 @@ attr(,"class")
 
 unitizer> Y
 
+# There are three more tests to review; accept them with 'Y'
+
+> get_slope(res)
+[1] 101
+
+unitizer> Y
+
+> get_rsq(res)
+[1] 0.939
+
+unitizer> Y
+
+# This last test is expected to cause an error; press 'Y' to
+# accept it so future checks can confirm the same error persists
+
+> fastlm(1:100, 1:10)
+Error in fastlm(1:100, 1:10) : 
+  Arguments `x` and `y` must be the same length.
+
+unitizer> Y
+
 = Finalize Unitizer ============================================================
 
 | You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
-| - Adding 1 out of 1 new tests
+| - Adding 4 out of 4 new tests
 
 | Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
 
@@ -259,6 +280,30 @@ unitizer> Y
         0x00000000
         0x00000000
         base
+@items.ref@.items[[5]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[6]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[7]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
 @zero.env
   0x00000000
   base
@@ -300,6 +345,30 @@ unitizer> Y
         0x00000000
         0x00000000
         base
+@items.ref@.items[[5]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[6]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[7]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
 | unitizer updated.
 
 > untz
@@ -311,4 +380,7 @@ Store ID: tests/unitizer/fastlm1.unitizer
 2  2 dat <- data.frame(x = 1:100...       *    New    N    FALSE
 3  3    res <- fastlm(dat$x, dat$y)       *    New    N    FALSE
 4  4                            res            New    Y     TRUE
+5  5                 get_slope(res)            New    Y     TRUE
+6  6                   get_rsq(res)            New    Y     TRUE
+7  7            fastlm(1:100, 1:10)            New    Y     TRUE
 > 

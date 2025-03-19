@@ -13,3 +13,13 @@ res <- fastlm(dat$x, dat$y)
 # accept the test by typing 'Y' at the prompt.  Enter 'H' for help.
 
 res
+
+# There are three more tests to review; accept them with 'Y'
+
+get_slope(res)
+get_rsq(res)
+
+# This last test is expected to cause an error; press 'Y' to
+# accept it so future checks can confirm the same error persists
+
+fastlm(1:100, 1:10)
