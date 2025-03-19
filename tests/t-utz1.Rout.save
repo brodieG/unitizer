@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2023-03-16 r83985) -- "Unsuffered Consequences"
-Copyright (C) 2023 The R Foundation for Statistical Computing
-Platform: aarch64-apple-darwin20 (64-bit)
+R version 4.4.3 (2025-02-28) -- "Trophy Case"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin20
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -277,6 +279,8 @@ unitizer> Q
 > 
 > unitizer:::read_line_set_vals(c("A", "Y", "Y", "Y", "Y", "Y",
 +     "Q", "Q", "R", "A", "Y", "Y", "Q", "Q"))
+> 
+> tmp.opt <- options(unitizer.store.dump.envs=TRUE)
 > untz3a <- unitize_dir(FLM.TEST.DIR, interactive.mode = TRUE)
 
 | Summary of files in common directory 'unitizer':
@@ -360,6 +364,151 @@ unitizer> Y
 
 unitizer> Y
 
+@zero.env
+  0x00000000
+  base
+@base.env
+  0x00000000
+  0x00000000
+  base
+@global
+  Reference class object of class "unitizerGlobal"
+  namespace:unitizer
+  0x00000000
+  namespace:base
+  R_GlobalEnv
+  package:unitizer
+  package:stats
+  package:graphics
+  package:grDevices
+  package:utils
+  package:datasets
+  package:methods
+  0x00000000
+  base
+@items.new@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@.items[[1]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[2]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[3]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[4]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[5]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[6]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[7]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@zero.env
+  0x00000000
+  base
+@base.env
+  0x00000000
+  0x00000000
+  base
+@items.new@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@.items[[1]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[2]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[3]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[4]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[5]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[6]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[7]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
 | unitizer updated.
 
 +------------------------------------------------------------------------------+
@@ -496,6 +645,139 @@ unitizer> Y
 
 unitizer> Y
 
+@zero.env
+  0x00000000
+  base
+@base.env
+  0x00000000
+  0x00000000
+  base
+@global
+  Reference class object of class "unitizerGlobal"
+  namespace:unitizer
+  0x00000000
+  namespace:base
+  R_GlobalEnv
+  package:unitizer
+  package:stats
+  package:graphics
+  package:grDevices
+  package:utils
+  package:datasets
+  package:methods
+  0x00000000
+  base
+@items.new@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@.items[[1]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[2]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[3]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[4]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[5]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[6]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[7]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@zero.env
+  0x00000000
+  base
+@base.env
+  0x00000000
+  0x00000000
+  base
+@items.new@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@.items[[1]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[2]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[3]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[4]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[5]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[6]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[7]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
 | unitizer updated.
 
 +------------------------------------------------------------------------------+
@@ -543,6 +825,7 @@ unitizer> Q
 
 unitizer> Q
 
+> options(tmp.opt)
 > untz3a.get.all <- vapply(get_unitizer(untz3a), class, character(1L))
 > identical(untz3a.get.all, c("unitizer", "unitizer", "logical"))
 [1] TRUE
@@ -2935,6 +3218,3 @@ Error in load_unitizers(store.ids[active], test.files[active], par.frame = util.
   Cannot proceed with invalid or out of date unitizers.  You must either fix or remove them.
 > unitizer:::read_line_set_vals(NULL)
 > 
-> proc.time()
-   user  system elapsed 
-  6.143   0.846   7.732 

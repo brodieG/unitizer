@@ -114,7 +114,10 @@ unitize_dir(FLM.TEST.DIR, interactive.mode = TRUE)
 
 unitizer:::read_line_set_vals(c("A", "Y", "Y", "Y", "Y", "Y",
     "Q", "Q", "R", "A", "Y", "Y", "Q", "Q"))
+
+tmp.opt <- options(unitizer.store.dump.envs=TRUE)
 untz3a <- unitize_dir(FLM.TEST.DIR, interactive.mode = TRUE)
+options(tmp.opt)
 untz3a.get.all <- vapply(get_unitizer(untz3a), class, character(1L))
 identical(untz3a.get.all, c("unitizer", "unitizer", "logical"))
 print(untz3a)
