@@ -156,7 +156,7 @@ Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  :
 > unitizer:::update_fastlm(".", version = "0.1.0")
 > inst_pak(".")
 > unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
-> old.opt <- options(unitizer.store.dump.envs=TRUE)
+> # old.opt <- options(unitizer.store.dump.envs=TRUE)
 > untz <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
 
 +------------------------------------------------------------------------------+
@@ -225,154 +225,9 @@ unitizer> Y
 
 unitizer> Y
 
-@zero.env
-  0x00000000
-  base
-@base.env
-  0x00000000
-  0x00000000
-  base
-@global
-  Reference class object of class "unitizerGlobal"
-  namespace:unitizer
-  0x00000000
-  namespace:base
-  R_GlobalEnv
-  package:unitizer
-  package:stats
-  package:graphics
-  package:grDevices
-  package:utils
-  package:datasets
-  package:methods
-  0x00000000
-  base
-@items.new@base.env
-    0x00000000
-    0x00000000
-    0x00000000
-    base
-@items.ref@base.env
-    0x00000000
-    0x00000000
-    0x00000000
-    base
-@items.ref@.items[[1]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[2]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[3]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[4]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[5]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[6]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[7]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@zero.env
-  0x00000000
-  base
-@base.env
-  0x00000000
-  0x00000000
-  base
-@items.new@base.env
-    0x00000000
-    0x00000000
-    0x00000000
-    base
-@items.ref@base.env
-    0x00000000
-    0x00000000
-    0x00000000
-    base
-@items.ref@.items[[1]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[2]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[3]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[4]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[5]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[6]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
-@items.ref@.items[[7]]@env
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        0x00000000
-        base
 | unitizer updated.
 
-> options(old.opt)
+> # options(old.opt)
 > is(untz, "unitizer_result")
 [1] TRUE
 > print(untz)
