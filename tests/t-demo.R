@@ -18,4 +18,4 @@ unitizer:::update_fastlm(".", version = "0.1.0")
 inst_pak(".")
 unitizer:::read_line_set_vals(c("Y", "Y"))
 untz <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
-stop('boom!')
+untz

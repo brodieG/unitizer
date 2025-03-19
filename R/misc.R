@@ -33,9 +33,10 @@ env_ancestry <- function(env, stop.env=globalenv()) {
 }
 # Recursively traverse object dumping all environment ancestries
 
+
 dump_env_ancestry <- function(x, stop.env=baseenv(), index=character()) {
   if(is.environment(x)) {
-    ancestry <- env_ancestry(x, stop.env)
+    ancestry <- clean_env_name(env_ancestry(x, stop.env))
     if(length(index)) writeLines(paste0(index, collapse=""))
     writeLines(sprintf("%s%s", strrep(" ", length(index) * 2), ancestry))
   } else if(is.list(x)) {
@@ -52,6 +53,9 @@ dump_env_ancestry <- function(x, stop.env=baseenv(), index=character()) {
       )
     }
   }
+}
+clean_env_name <- function(x) {
+  sub("0x[0-9a-f]+", "0x00000000", x)
 }
 # Gets Environment Name / Memory Code
 #

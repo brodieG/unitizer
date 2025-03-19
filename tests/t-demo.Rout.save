@@ -1,0 +1,196 @@
+
+R version 4.4.3 (2025-02-28) -- "Trophy Case"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source(file.path("aammrtf", "mock.R"))
+> source(file.path("_helper", "init.R"))
+> source(file.path("_helper", "pkgs.R"))
+Install Packages
+Setup Demos
+> 
+> # Run actual demo bits; note we want to force `interactive.mode=TRUE` so that
+> # `read_line_vals` values are used as user input; note that until we fix
+> # / rationalize how sinking behaves within unitizer when the standard streams
+> # come in sunk, we won't be able to fully test everything, since for example
+> # the display of the captured stdout just won't happen.
+> 
+> # - "demo create worked" -------------------------------------------------------
+> 
+> # In tests, initial version of package should be 0.1.0; the test store
+> # does not exist so it doesn't get overwritten with subsequent updates
+> # Note the initial install happens in the test running script
+> 
+> unitizer:::update_fastlm(".", version = "0.1.0")
+> inst_pak(".")
+> unitizer:::read_line_set_vals(c("Y", "Y"))
+> untz <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail  New
+ <untitled>     -    -    1
+...........................
+                -    -    1
+
+- New --------------------------------------------------------------------------
+
+| The following test is new. Add test to store ([Y]es, [N]o, [P]rev, [B]rowse, 
+| [R]erun, [Q]uit, [H]elp)?
+
+# Assignments and calls to `library` are not considered tests by
+# `unitizer` so you will not need to review them
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# The `unitizer>` prompt is like the standard R prompt. You may
+# enter expressions such as `lm(y ~ x, dat)$coefficients`, or
+# `str(res)`.
+#
+# Once you are done reviewing, you need to tell `unitizer` you
+# accept the test by typing 'Y' at the prompt.  Enter 'H' for help.
+
+> res
+intercept     slope       rsq 
+-1717.000   101.000     0.939 
+attr(,"class")
+[1] "fastlm"
+
+unitizer> Y
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Adding 1 out of 1 new tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> Y
+
+@zero.env
+  0x00000000
+  base
+@base.env
+  0x00000000
+  0x00000000
+  base
+@global
+  Reference class object of class "unitizerGlobal"
+  namespace:unitizer
+  0x00000000
+  namespace:base
+  R_GlobalEnv
+  package:unitizer
+  package:stats
+  package:graphics
+  package:grDevices
+  package:utils
+  package:datasets
+  package:methods
+  0x00000000
+  base
+@items.new@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@.items[[1]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[2]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[3]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[4]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@zero.env
+  0x00000000
+  base
+@base.env
+  0x00000000
+  0x00000000
+  base
+@items.new@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@base.env
+    0x00000000
+    0x00000000
+    0x00000000
+    base
+@items.ref@.items[[1]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[2]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[3]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+@items.ref@.items[[4]]@env
+        0x00000000
+        0x00000000
+        0x00000000
+        0x00000000
+        base
+| unitizer updated.
+
+> untz
+Test File: tests/unitizer/fastlm1.R
+Store ID: tests/unitizer/fastlm1.unitizer
+
+  id                           call ignored status user reviewed
+1  1 library(utzflm, lib.loc = g...       *    New    N    FALSE
+2  2 dat <- data.frame(x = 1:100...       *    New    N    FALSE
+3  3    res <- fastlm(dat$x, dat$y)       *    New    N    FALSE
+4  4                            res            New    Y     TRUE
+> 
