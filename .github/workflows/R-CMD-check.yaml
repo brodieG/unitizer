@@ -2,7 +2,7 @@ on:
   push:
     branches: [rc]
   pull_request:
-    # branches: [master, development]
+    branches: [development]
 
 name: R-CMD-check.yaml
 
