@@ -156,6 +156,7 @@ Error in unitize_core(test.file.inf, list(store.id.inf), state = state,  :
 > unitizer:::update_fastlm(".", version = "0.1.0")
 > inst_pak(".")
 > unitizer:::read_line_set_vals(c("Y", "Y", "Y", "Y", "Y"))
+> old.opt <- options(unitizer.store.dump.envs=TRUE)
 > untz <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
 
 +------------------------------------------------------------------------------+
@@ -371,7 +372,10 @@ unitizer> Y
         base
 | unitizer updated.
 
-> untz
+> options(old.opt)
+> is(untz, "unitizer_result")
+[1] TRUE
+> print(untz)
 Test File: tests/unitizer/fastlm1.R
 Store ID: tests/unitizer/fastlm1.unitizer
 
@@ -383,4 +387,525 @@ Store ID: tests/unitizer/fastlm1.unitizer
 5  5                 get_slope(res)            New    Y     TRUE
 6  6                   get_rsq(res)            New    Y     TRUE
 7  7            fastlm(1:100, 1:10)            New    Y     TRUE
+> # Re-running doesn't change unitizer
+> untz2 <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
+| 4/4 tests passed; nothing to review.
+
+> print(untz2)
+Test File: tests/unitizer/fastlm1.R
+Store ID: tests/unitizer/fastlm1.unitizer
+
+  id                           call ignored status user reviewed
+1  1 library(utzflm, lib.loc = g...       * Passed    Y    FALSE
+2  2 dat <- data.frame(x = 1:100...       * Passed    Y    FALSE
+3  3    res <- fastlm(dat$x, dat$y)       * Passed    Y    FALSE
+4  4                            res         Passed    Y    FALSE
+5  5                 get_slope(res)         Passed    Y    FALSE
+6  6                   get_rsq(res)         Passed    Y    FALSE
+7  7            fastlm(1:100, 1:10)         Passed    Y    FALSE
+
+You chose NOT to save these changes to the unitizer store
+> # Rejecting failed tests does not change unitizer
+> update_fastlm(".", version = "0.1.1")
+> inst_pak(".")
+> 
+> unitizer:::read_line_set_vals(c("N", "N", "Y"))
+> unitizer:::capture_output(
++   untz3 <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
++ )
+> print(untz3)
+Test File: tests/unitizer/fastlm1.R
+Store ID: tests/unitizer/fastlm1.unitizer
+
+  id                           call ignored status user reviewed
+1  1 library(utzflm, lib.loc = g...       * Failed    N    FALSE
+2  2 dat <- data.frame(x = 1:100...       * Failed    N    FALSE
+3  3    res <- fastlm(dat$x, dat$y)       * Failed    N    FALSE
+4  4                            res         Failed    N     TRUE
+5  5                 get_slope(res)         Failed    N     TRUE
+6  6                   get_rsq(res)         Passed    Y    FALSE
+7  7            fastlm(1:100, 1:10)         Passed    Y    FALSE
+
+You chose NOT to save these changes to the unitizer store
+> 
+> # - "demo review" --------------------------------------------------------------
+> 
+> # review is always in interactive mode
+> unitizer:::read_line_set_vals(c("5", "Q"))
+> review(FLM.TEST.STORE)
+
++------------------------------------------------------------------------------+
+| unitizer for: tests/unitizer/fastlm1.unitizer                                |
++------------------------------------------------------------------------------+
+
+  *1. library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc")) .        -:-
+  *2. dat <- data.frame(x = 1:100, y = (1:100)^2)   .  .  .  .  .  .        -:-
+  *3. res <- fastlm(dat$x, dat$y) .  .  .  .  .  .  .  .  .  .  .  .        -:-
+   4. res .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   5. get_slope(res)  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   6. get_rsq(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   7. fastlm(1:100, 1:10)   .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+
+| What test do you wish to review (input a test number, [U]nreviewed)?
+
+unitizer> 5
+- Passed -----------------------------------------------------------------------
+
+| The 4 tests in this section passed. Keep tests in store ([Y]es, [N]o, [P]rev, 
+| [B]rowse, [Q]uit, [H]elp)?
+
+# There are three more tests to review; accept them with 'Y'
+
+> get_slope(res)
+[1] 101
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> # - "use.diff" -----------------------------------------------------------------
+> 
+> # Use this opportunity to make sure `use.diff=FALSE` works as intended
+> unitizer:::read_line_set_vals("Q")
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE, use.diff = FALSE)
+
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+intercept     slope       rsq 
+-3.54e+13  7.01e+11  9.39e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[1] "Mean relative difference: 1.99e+10"
+
+| State mismatch; see `.NEW$state` and `.REF$state`.
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> unitizer:::read_line_set_vals(c(".DIFF$state", "Q"))
+> 
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE, use.diff = FALSE)
+
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+intercept     slope       rsq 
+-3.54e+13  7.01e+11  9.39e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+[1] "Mean relative difference: 1.99e+10"
+
+| State mismatch; see `.NEW$state` and `.REF$state`.
+
+unitizer> .DIFF$state
+| State mismatch:
+
+Attributes: < Component "search.path": 1 string mismatch >
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> # - "failing diff" -------------------------------------------------------------
+> 
+> unitizer:::read_line_set_vals("Q")
+> mock(diffobj::diffObj, quote(stop("A failing diff.")))
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+intercept     slope       rsq 
+-3.54e+13  7.01e+11  9.39e-01 
+attr(,"class")
+[1] "fastlm"
+
+Error in diffObj(curr.err@.ref, curr.err@.new, tar.banner = make_cont(".ref"),  : 
+  A failing diff.
+| Value: <diff failed>
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> unmock(diffobj::diffObj)
+> 
+> # - "multi-accept" -------------------------------------------------------------
+> 
+> # Test what happens if we back out of a multi-accept
+> 
+> unitizer:::read_line_set_vals(c("YY", "N", "Q"))
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+intercept     slope       rsq 
+-3.54e+13  7.01e+11  9.39e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+< .ref                            > .new                          
+@@ 1,4 @@                         @@ 1,4 @@                       
+  intercept     slope       rsq     intercept     slope       rsq 
+< -1717.000   101.000     0.939   > -3.54e+13  7.01e+11  9.39e-01 
+  attr(,"class")                    attr(,"class")                
+  [1] "fastlm"                      [1] "fastlm"                  
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> YY
+
+  4. res .  .  .  .  .  Failed:-
+  5. get_slope(res)  .  Failed:-
+
+Choose 'Y' for the 2 tests shown above ([Y]es, [N]o)?
+unitizer> N
+
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+intercept     slope       rsq 
+-3.54e+13  7.01e+11  9.39e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+< .ref                            > .new                          
+@@ 1,4 @@                         @@ 1,4 @@                       
+  intercept     slope       rsq     intercept     slope       rsq 
+< -1717.000   101.000     0.939   > -3.54e+13  7.01e+11  9.39e-01 
+  attr(,"class")                    attr(,"class")                
+  [1] "fastlm"                      [1] "fastlm"                  
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Q
+
+| No changes recorded.
+| unitizer unchanged.
+
+> 
+> # - "multi-input" --------------------------------------------------------------
+> 
+> # Or if we request to go to unreviewed when there are none
+> unitizer:::read_line_set_vals(c("YY", "Y", "B", "U", "Q"))
+> unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+intercept     slope       rsq 
+-3.54e+13  7.01e+11  9.39e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+< .ref                            > .new                          
+@@ 1,4 @@                         @@ 1,4 @@                       
+  intercept     slope       rsq     intercept     slope       rsq 
+< -1717.000   101.000     0.939   > -3.54e+13  7.01e+11  9.39e-01 
+  attr(,"class")                    attr(,"class")                
+  [1] "fastlm"                      [1] "fastlm"                  
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> YY
+
+  4. res .  .  .  .  .  Failed:-
+  5. get_slope(res)  .  Failed:-
+
+Choose 'Y' for the 2 tests shown above ([Y]es, [N]o)?
+unitizer> Y
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Replacing 2 out of 2 failed tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> B
+
+  *1. library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc")) .        -:-
+  *2. dat <- data.frame(x = 1:100, y = (1:100)^2)   .  .  .  .  .  .        -:-
+  *3. res <- fastlm(dat$x, dat$y) .  .  .  .  .  .  .  .  .  .  .  .        -:-
+   4. res .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:Y
+   5. get_slope(res)  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Failed:Y
+   6. get_rsq(res) .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+   7. fastlm(1:100, 1:10)   .  .  .  .  .  .  .  .  .  .  .  .  .  .   Passed:-
+
+| What test do you wish to review (input a test number, [U]nreviewed)?
+
+unitizer> U
+
+| No unreviewed tests.
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Replacing 2 out of 2 failed tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> Q
+
+| Changes discarded.
+| unitizer unchanged.
+
+> 
+> # - "warn in parse" ------------------------------------------------------------
+> 
+> # Make sure parse warnings are issued
+> unitizer:::read_line_set_vals(c("-2147483648L", "Q"))
+> txt8 <- unitizer:::capture_output(unitize(FLM.TEST.FILE,
++     interactive.mode = TRUE))
+> 
+> any(grepl("qualified with L", txt8$message))
+[1] TRUE
+> 
+> # - "demo changes" -------------------------------------------------------------
+> #
+> # Now actually accept the changes
+> unitizer:::read_line_set_vals(c("Y", "Y", "Y"))
+> untz5 <- unitize(FLM.TEST.FILE, interactive.mode = TRUE)
+
++------------------------------------------------------------------------------+
+| unitizer for: unitizer/fastlm1.R                                             |
++------------------------------------------------------------------------------+
+
+             Pass Fail
+ <untitled>     2    2
+......................
+                2    2
+
+- Failed -----------------------------------------------------------------------
+
+| The 2 tests in this section failed because the new evaluations do not match 
+| the reference values from the store. Overwrite with new results ([Y]es, [N]o, 
+| [P]rev, [B]rowse, [R]erun, [Q]uit, [H]elp)?
+
+> library(utzflm, lib.loc = getOption("unitizer.tmp.lib.loc"))
+> dat <- data.frame(x = 1:100, y = (1:100)^2)
+> res <- fastlm(dat$x, dat$y)
+
+# Our fast computations do not produce the same results as our
+# original tests so they fail.  If you need more detail than the
+# provided diff you may use `.new`/`.NEW` or `.ref`/`.REF`.
+#
+# You should reject these tests by typing 'N' at the prompt since
+# they are incorrect.
+
+> res
+intercept     slope       rsq 
+-3.54e+13  7.01e+11  9.39e-01 
+attr(,"class")
+[1] "fastlm"
+
+| Value mismatch: 
+
+< .ref                            > .new                          
+@@ 1,4 @@                         @@ 1,4 @@                       
+  intercept     slope       rsq     intercept     slope       rsq 
+< -1717.000   101.000     0.939   > -3.54e+13  7.01e+11  9.39e-01 
+  attr(,"class")                    attr(,"class")                
+  [1] "fastlm"                      [1] "fastlm"                  
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Y
+
+# This one is also incorrect; reject with 'N'
+
+> get_slope(res)
+[1] 7.01e+11
+
+| Value mismatch: 
+
+< .ref          > .new        
+@@ 1 @@         @@ 1 @@       
+< [1] 101       > [1] 7.01e+11
+
+| State mismatch; see `.DIFF$state` for details.
+
+unitizer> Y
+
+= Finalize Unitizer ============================================================
+
+| You will IRREVERSIBLY modify 'unitizer/fastlm1.unitizer' by:
+| - Replacing 2 out of 2 failed tests
+
+| Update unitizer ([Y]es, [N]o, [P]rev, [B]rowse, [R]erun)?
+
+unitizer> Y
+
+| unitizer updated.
+
+> unitizer:::read_line_set_vals(NULL)
+> 
+> # - "get_package_dir" ----------------------------------------------------------
+> 
+> # These were in t-get but we moved them here to avoid re-loading pkgs.R
+> 
+> unitizer:::get_package_dir(f)  # empty
+character(0)
+> test.dir.1 <- file.path(".", "utzflm.Rcheck", "utzflm", "R")
+> identical(
++   unitizer:::get_package_dir(test.dir.1),
++   normalizePath(dirname(test.dir.1), winslash = "/")
++ )
+[1] TRUE
+> test.dir.2 <- file.path(".", "utzflm.Rcheck")
+> identical(
++   unitizer:::get_package_dir(file.path(test.dir.2, "tests", "tests.R")),
++   normalizePath(file.path(test.dir.2, "utzflm"), winslash = "/")
++ )
+[1] TRUE
 > 
