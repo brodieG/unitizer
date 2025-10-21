@@ -5,7 +5,7 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-Version: 1.4.22
+Version: 1.4.22.9000
 Authors@R: c(
     person(
     "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
@@ -78,6 +78,6 @@ Collate:
     'unitizer-package.R'
     'unitizer.add.R'
     'upgrade.R'
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Roxygen: list(load = "installed")
 Encoding: UTF-8
