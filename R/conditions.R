@@ -70,6 +70,16 @@ mock_item <- function() {
 
 conditionList <- setClass("conditionList", contains="unitizerList")
 
+#' Stub to pacify Roxygen
+#'
+#' At some point between 7.2.3 and 7.3.2 2025 roxygen started breaking with
+#' undocumented methods.  In particular, it's a problem for generics that are
+#' documented in e.g. base as is the case with all.equal.
+#'
+#' @noRd
+
+all.equal <- NULL
+
 #' Compare Conditions
 #'
 #' Tests that issue warnings or `stop` produce \code{\link{condition}} objects.

@@ -62,12 +62,14 @@ setMethod("all.equal", c("unitizerStateRaw", "unitizerStateRaw"),
 # which happens when we're doing `in_pkg`; will only work if the first argument
 # is `unitizerDummy`, which should be the most common use case
 
-#' @export
+#' @method all.equal unitizerDummy
+#' @exportS3Method all.equal unitizerDummy
 
 all.equal.unitizerDummy <- function(target, current, ...) {
   all.equal(target, current, ...)
 }
-#' @export
+#' @method all.equal unitizerStateRaw
+#' @exportS3Method all.equal unitizerStateRaw
 
 all.equal.unitizerStateRaw <- function(target, current, ...) {
   all.equal(target, current, ...)
@@ -76,7 +78,8 @@ all.equal.unitizerStateRaw <- function(target, current, ...) {
 # specifically an all.equal that returns garbage for testing; unfortunately
 # this needs to be exported to be useable (blergh) (IS THIS STILL USED?)
 # nocov start
-#' @export
+#' @method all.equal unitizer_glob_state_test
+#' @exportS3Method all.equal unitizer_glob_state_test
 
 all.equal.unitizer_glob_state_test <- function(target, current, ...)
   list(1, 2, list("woohoo"))
