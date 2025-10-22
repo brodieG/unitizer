@@ -116,6 +116,7 @@ copy_fastlm_to_tmpdir <- function() {
   dir <- file.path(tempfile(), "utzflm")
   if(inherits(try(dir.create(dir, recursive=TRUE)), "try-error"))
     stop("Unable to create temporary directory '", dir, "'")
+  dir <- normalizePath(dir)
   untz.dir <- system.file(package="unitizer")
   fastlm.dir <- file.path(untz.dir, "expkg", "flm0")
   fastlm.files <- list.files(

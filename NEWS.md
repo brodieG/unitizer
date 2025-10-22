@@ -1,5 +1,12 @@
 # `unitizer` NEWS
 
+## v1.4.23
+
+* Fix CRAN M1 Mac additional issues related to test failing because we used a
+  library path in un-normalized form for temp test packages, but the unload
+  namespace mechanism uses the normalized form to de-register cached rdb files.
+  Seems this was caused by a MacOS change rather than R, but not 100% sure.
+
 ## v1.4.22
 
 * Fix unnamed arguments error in a call to `deparse` that manifested with
