@@ -9,6 +9,9 @@ if(!isTRUE(dir.create(TMP.DIR)))
 if(!isTRUE(dir.create(TMP.LIB)))
   stop("Unable to create temp library directory")
 
+TMP.DIR <- normalizePath(TMP.DIR)
+TMP.LIB <- normalizePath(TMP.LIB)
+
 USE.PKGS <- FALSE
 
 # Global options

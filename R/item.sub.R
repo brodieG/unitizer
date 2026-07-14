@@ -319,7 +319,7 @@ setMethod("show", "unitizerItemTestsErrorsDiff",
 #' Like all.equal but Returns Empty String If Not all.equal
 #'
 #' Used as the default value comparison function since when values mismatch
-#' we use \code{\link{diffObj}} which would make the text output from
+#' we use \code{\link[diffobj]{diffObj}} which would make the text output from
 #' \code{\link{all.equal}} somewhat redundant.
 #'
 #' @export

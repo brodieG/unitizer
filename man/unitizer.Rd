@@ -11,3 +11,21 @@ code with earlier versions of those same objects.  If objects are unchanged
 the tests pass.  `unitizer` provides an interactive interface to review
 failing tests or new tests.  See vignettes for details.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/brodieG/unitizer}
+  \item Report bugs at \url{https://github.com/brodieG/unitizer/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Brodie Gaslam \email{brodie.gaslam@yahoo.com}
+
+Other contributors:
+\itemize{
+  \item Michael https://github.com/MichaelChirico \email{michaelchirico4@gmail.com} [contributor]
+  \item  R Core Team \email{R-core@r-project.org} (Traceback function sources.) [copyright holder]
+}
+
+}

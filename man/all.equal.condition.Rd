@@ -9,9 +9,9 @@
 \usage{
 \S4method{all.equal}{conditionList,ANY}(target, current, ...)
 
-\method{all}{equal.conditionList}(target, current, ...)
+\method{all.equal}{conditionList}(target, current, ...)
 
-\method{all}{equal.condition}(target, current, ...)
+\method{all.equal}{condition}(target, current, ...)
 }
 \arguments{
 \item{target}{the list of conditions that we are matching against}
