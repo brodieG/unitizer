@@ -5,7 +5,7 @@ Description: Simplifies regression tests by comparing objects produced by test
     the tests pass, otherwise execution stops with error details.  If in
     interactive mode, tests can be reviewed through the provided interactive
     environment.
-Version: 1.4.23
+Version: 1.4.24
 Authors@R: c(
     person(
     "Brodie", "Gaslam", email="brodie.gaslam@yahoo.com",
@@ -14,7 +14,7 @@ Authors@R: c(
     "Michael", "https://github.com/MichaelChirico", 
     email="michaelchirico4@gmail.com",
     role=c("ctb")),
-    person(family="R Core Team",
+    person(given="R Core Team",
     email="R-core@r-project.org", role="cph",
     comment="Traceback function sources."
     )    )

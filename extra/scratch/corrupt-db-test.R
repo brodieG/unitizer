@@ -39,7 +39,7 @@ unlink(list.dirs(FLM.TEST.DIR, recursive = FALSE), recursive = TRUE)
 
   invisible(file.copy(cpy.from, cpy.to, overwrite=TRUE))
 }
-install.packages(FLM, repos=NULL, type='src', lib=TMP.LIB, quiet=TRUE)
+install.packages(FLM, repos=NULL, type='source', lib=TMP.LIB, quiet=TRUE)
 
 new.md5 <- tools::md5sum(rdb.file)
 new.size <- file.size(rdb.file)

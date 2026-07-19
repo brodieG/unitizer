@@ -162,7 +162,7 @@ NULL
   add.smooth = TRUE, browserNLdisabled = FALSE, CBoundsCheck = FALSE,
   check.bounds = FALSE, citation.bibtex.max = 1, continue = "+ ",
   contrasts = structure(
-    c("contr.treatment", "contr.poly"), .Names = c("unordered", "ordered")
+    c("contr.treatment", "contr.poly"), names = c("unordered", "ordered")
   ),
   defaultPackages =
     c("datasets", "utils", "grDevices", "graphics", "stats", "methods"),
@@ -173,7 +173,7 @@ NULL
   help.try.all.packages = FALSE, internet.info = 2, keep.source = TRUE,
   keep.source.pkgs = FALSE, locatorBell = TRUE, max.print = 99999L,
   na.action = "na.omit", nwarnings = 50L, OutDec = ".", prompt = "> ",
-  repos = structure("http://cran.r-project.org", .Names = "CRAN"),
+  repos = structure("http://cran.r-project.org", names = "CRAN"),
   rl_word_breaks = " \t\n\"\\'`><=%;,|&{()}", scipen = 0,
   show.coef.Pvalues = TRUE, show.error.messages = TRUE,
   show.signif.stars = TRUE,

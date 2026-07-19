@@ -1,3 +1,15 @@
+# Force parse data promises to avoid captured envs as of covr 3.6.5
+if (identical(Sys.getenv("R_COVR"), "true")) {
+  # covr >= 3.6.5 (#588): force lazy parseData promises so srcfile envs
+  # serialize cleanly
+  invisible(eapply(asNamespace("unitizer"),
+    function(x) if (is.function(x)) try(utils::getParseData(x), silent = TRUE)))
+  # covr >= 3.6.5 (importFrom(httr)): covr now eagerly loads httr, R6, curl,
+  # etc.; treat everything loaded at test start as baseline so state resets
+  # don't try to unload namespaces pinned by covr's import chain
+  options(unitizer.namespace.keep =
+    union(getOption("unitizer.namespace.keep"), loadedNamespaces()))
+}
 # Temporary dirs, etc., to cleanup on exit.  See _helper/pkgs.R for their
 # use.
 

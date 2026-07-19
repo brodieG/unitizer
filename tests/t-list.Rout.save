@@ -176,20 +176,20 @@ Slot ".seek.fwd":
 > vec2 <- factor(letters[10:15], levels = letters)
 > 
 > all.equal(structure(c(1L, 2L, 3L, 10L, 11L, 12L, 13L, 14L,
-+   15L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h",
++   15L), levels = c("a", "b", "c", "d", "e", "f", "g", "h",
 +   "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
 +   "u", "v", "w", "x", "y", "z"), class = "factor"), append(vec,
 +   vec2))
 [1] TRUE
 > all.equal(structure(c(1L, 2L, 10L, 11L, 12L, 13L, 14L, 15L,
-+   3L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h", "i",
++   3L), levels = c("a", "b", "c", "d", "e", "f", "g", "h", "i",
 +   "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u",
 +   "v", "w", "x", "y", "z"), class = "factor"), append(vec,
 +   vec2, 2))
 [1] TRUE
 > 
 > all.equal(structure(c(10L, 11L, 12L, 13L, 1L, 2L, 3L, 14L,
-+   15L), .Label = c("a", "b", "c", "d", "e", "f", "g", "h",
++   15L), levels = c("a", "b", "c", "d", "e", "f", "g", "h",
 +   "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
 +   "u", "v", "w", "x", "y", "z"), class = "factor"), append(vec2,
 +   vec, 4))

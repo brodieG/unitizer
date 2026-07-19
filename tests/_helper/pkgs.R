@@ -32,7 +32,7 @@ inst_pak <- function(pkg) {
   )
   Sys.setenv(R_TESTS="")
   pkg.inst <- try(
-    install.packages(pkg, repos=NULL, type='src', lib=TMP.LIB, quiet=TRUE)
+    install.packages(pkg, repos=NULL, type='source', lib=TMP.LIB, quiet=TRUE)
   )
   if(inherits(pkg.inst, "try-error")) stop("install error")
 }

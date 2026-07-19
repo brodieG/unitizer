@@ -1,5 +1,10 @@
 # `unitizer` NEWS
 
+## v1.4.24
+
+* Fix tests for changes to `structure()` in r90216.
+* Fix incorrect install.packages(type='src') uses in tests.
+
 ## v1.4.23
 
 * Fix CRAN M1 Mac additional issues related to test failing because we used a
